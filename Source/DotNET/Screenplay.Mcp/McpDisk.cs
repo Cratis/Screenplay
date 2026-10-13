@@ -44,7 +44,7 @@ internal sealed partial class McpDisk(McpRoot root, Action<string, string>? move
             journal.VerifyReleaseBaseline(applied: false);
             Backup(changes, journal);
             Install(changes, journal);
-            if (journal.Record.ReleaseBaseline is null) InstallState(files, state, journal);
+            InstallIdentityState(files, state, journal);
             InstallNotes(files, journal);
             InstallReleaseBaseline(files, journal);
             root.Verify(proposal.Workspace);

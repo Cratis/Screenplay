@@ -87,8 +87,7 @@ sealed class McpTools
                 McpVisualization.ToolName => _workspaces.Visualize(arguments),
                 _ => DispatchRead(name, arguments)
             };
-            return name.StartsWith("propose", StringComparison.Ordinal) || name == "expand-layout"
-                ? _workspaces.WithReleaseBaseline(arguments, Execute) : Execute();
+            return _workspaces.WithReleaseBaseline(name, arguments, Execute);
         }
         catch (McpFailure failure) when (failure.Code != 0)
         {

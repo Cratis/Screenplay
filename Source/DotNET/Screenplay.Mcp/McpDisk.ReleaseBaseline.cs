@@ -12,6 +12,12 @@ internal sealed partial class McpDisk
         if (journal.Record.ReleaseBaseline is { } baseline) McpManagedFiles.WritePrivate(journal.ReleaseBaselineStage, baseline.After);
     }
 
+    // The identity state is not installed separately when the admission journals a release baseline.
+    void InstallIdentityState(McpManagedFiles files, McpStatePlan state, McpRecoveryJournal journal)
+    {
+        if (journal.Record.ReleaseBaseline is null) InstallState(files, state, journal);
+    }
+
     void InstallReleaseBaseline(McpManagedFiles files, McpRecoveryJournal journal)
     {
         if (journal.Record.ReleaseBaseline is not { } baseline) return;

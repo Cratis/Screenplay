@@ -96,10 +96,10 @@ internal sealed partial class WorkspaceRefactoring
     {
         if (events.Length == 0) return null;
         if (request.ReleaseBaseline?.Status == "unreadable") return WorkspaceConflictKind.UnreadableReleaseBaseline;
+        if (request.NewGeneration) return null;
         var bases = events.Select(owner => WorkspaceEventMutability.For(request.ReleaseBaseline, owner.EventContractId, ((EventSyntax)owner.Node).Generation)).ToArray();
-        if (!request.NewGeneration && bases.Any(value => value.Basis == "baselined")) return WorkspaceConflictKind.BaselinedRevisionImmutable;
-        if (!request.NewGeneration && !request.EventNeverPersisted && bases.Any(value => value.Basis == "noBaseline")) return WorkspaceConflictKind.EventContractChangeRequiresDecision;
-        return null;
+        if (bases.Any(value => value.Basis == "baselined")) return WorkspaceConflictKind.BaselinedRevisionImmutable;
+        return !request.EventNeverPersisted && bases.Any(value => value.Basis == "noBaseline") ? WorkspaceConflictKind.EventContractChangeRequiresDecision : null;
     }
 
     WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspacePropertyAssertionProvenance? assertions)

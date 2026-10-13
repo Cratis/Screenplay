@@ -71,7 +71,7 @@ public static class ReleaseBaselineStore
             RequireKeys(json.RootElement, ["schema", "schemaVersion", "applicationIdentity", "entries"]);
             foreach (var entry in json.RootElement.GetProperty("entries").EnumerateArray()) RequireEntry(entry);
             var envelope = json.RootElement.Deserialize<Envelope>(Options) ?? throw new InvalidReleaseBaseline("Empty release baseline.");
-            if (envelope.Schema != "cratis.screenplay.release-baseline" || envelope.SchemaVersion != 1 || envelope.ApplicationIdentity != application.ToString())
+            if (!Supported(envelope, application))
             {
                 throw new InvalidReleaseBaseline("Unsupported release baseline schema/version or another application's identity.");
             }
@@ -91,7 +91,7 @@ public static class ReleaseBaselineStore
     public static byte[] Serialize(ReleaseBaselineDocument document)
     {
         _ = ApplicationIdentity.Parse(document.ApplicationIdentity);
-        if (document.Entries.IsDefault || document.Entries.Length > 10000 || document.Entries.Select(entry => (entry.Event, entry.Revision)).Distinct().Count() != document.Entries.Length)
+        if (!ValidEntries(document.Entries))
         {
             throw new InvalidReleaseBaseline("Release baseline requires at most 10000 unique event revisions.");
         }
@@ -108,22 +108,40 @@ public static class ReleaseBaselineStore
     /// <returns>The brev1 revision.</returns>
     public static string Revision(byte[]? canonical) => canonical is null ? AbsentRevision : $"brev1:{Convert.ToHexString(SHA256.HashData(canonical)).ToLowerInvariant()}";
 
+    static bool Supported(Envelope envelope, ApplicationIdentity application)
+    {
+        if (envelope.Schema != "cratis.screenplay.release-baseline" || envelope.SchemaVersion != 1) return false;
+        return envelope.ApplicationIdentity == application.ToString();
+    }
+
+    static bool ValidEntries(ImmutableArray<ReleaseBaselineEntry> entries)
+    {
+        if (entries.IsDefault || entries.Length > 10000) return false;
+        return entries.Select(entry => (entry.Event, entry.Revision)).Distinct().Count() == entries.Length;
+    }
+
     static string EntryJson(ReleaseBaselineEntry entry)
     {
         _ = EventContractId.Parse(entry.Event);
-        if (entry.Revision == 0 || entry.AdmittedAt == default || entry.AdmittedAt.Offset != TimeSpan.Zero) throw new InvalidReleaseBaseline("Invalid revision or UTC admission instant.");
+        if (entry.Revision == 0 || !UtcInstant(entry.AdmittedAt)) throw new InvalidReleaseBaseline("Invalid revision or UTC admission instant.");
         ModelNotesValidation.Text(entry.EventType);
         ModelNotesValidation.Text(entry.AdmittedIn);
-        if (entry.LastAddress.Kind != "Event" || entry.LastAddress.Parts.IsDefaultOrEmpty) throw new InvalidReleaseBaseline("Invalid event display address.");
-        foreach (var part in entry.LastAddress.Parts)
+        ValidateAddress(entry.LastAddress);
+        var schema = ReleaseSchemaCanonical.Normalize(entry.Schema);
+        if (schema.EventType != entry.EventType || ReleaseSchemaCanonical.Hash(schema) != entry.SchemaHash) throw new InvalidReleaseBaseline("Resolved schema hash or stored name mismatch.");
+        return JsonSerializer.Serialize(entry with { Schema = schema }, Options);
+    }
+
+    static bool UtcInstant(DateTimeOffset value) => value != default && value.Offset == TimeSpan.Zero;
+
+    static void ValidateAddress(ModelNotesAddress address)
+    {
+        if (address.Kind != "Event" || address.Parts.IsDefaultOrEmpty) throw new InvalidReleaseBaseline("Invalid event display address.");
+        foreach (var part in address.Parts)
         {
             if (!Enum.TryParse<SemanticAddressPartKind>(part.Kind, out var kind) || !Enum.IsDefined(kind)) throw new InvalidReleaseBaseline("Invalid display address part.");
             ModelNotesValidation.Text(part.Key);
         }
-
-        var schema = ReleaseSchemaCanonical.Normalize(entry.Schema);
-        if (schema.EventType != entry.EventType || ReleaseSchemaCanonical.Hash(schema) != entry.SchemaHash) throw new InvalidReleaseBaseline("Resolved schema hash or stored name mismatch.");
-        return JsonSerializer.Serialize(entry with { Schema = schema }, Options);
     }
 
     static void RequireKeys(JsonElement value, string[] keys)
@@ -148,15 +166,21 @@ public static class ReleaseBaselineStore
         foreach (var property in properties.EnumerateArray())
         {
             RequireKeys(property, ["name", "optional", "collection", "type"]);
-            var type = property.GetProperty("type");
-            RequireKeys(type, ["kind"]);
-            if (type.TryGetProperty("compliance", out var compliance) && compliance.TryGetProperty("personal", out var personal)) RequireKeys(personal, ["criminal"]);
-            if (type.TryGetProperty("properties", out var nested)) RequireProperties(nested);
-            if (type.TryGetProperty("members", out var members))
-            {
-                foreach (var member in members.EnumerateArray()) RequireKeys(member, ["name", "number"]);
-            }
+            RequireType(property.GetProperty("type"));
         }
+    }
+
+    static void RequireType(JsonElement type)
+    {
+        RequireKeys(type, ["kind"]);
+        if (type.TryGetProperty("compliance", out var compliance) && compliance.TryGetProperty("personal", out var personal)) RequireKeys(personal, ["criminal"]);
+        if (type.TryGetProperty("properties", out var nested)) RequireProperties(nested);
+        if (type.TryGetProperty("members", out var members)) RequireMembers(members);
+    }
+
+    static void RequireMembers(JsonElement members)
+    {
+        foreach (var member in members.EnumerateArray()) RequireKeys(member, ["name", "number"]);
     }
 
     sealed record Envelope(string Schema, int SchemaVersion, string ApplicationIdentity, ImmutableArray<ReleaseBaselineEntry> Entries);

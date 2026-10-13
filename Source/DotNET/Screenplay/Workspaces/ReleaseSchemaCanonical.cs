@@ -72,16 +72,26 @@ public static class ReleaseSchemaCanonical
 
     static ReleaseSchemaType NormalizeType(ReleaseSchemaType type, int depth) => type.Kind switch
     {
-        "primitive" when type.Ref is null && type.Members is null && type.Properties is null => NormalizePrimitive(type),
-        "enum" when type.Ref is null && type.Primitive is null && type.Compliance is null && type.Properties is null && type.Members is { } members => type with { Members = NormalizeMembers(members) },
-        "composite" when type.Ref is null && type.Primitive is null && type.Compliance is null && type.Members is null && type.Properties is { } properties => type with { Properties = NormalizeProperties(properties, depth + 1) },
-        "ref" when type.Primitive is null && type.Compliance is null && type.Members is null && type.Properties is null && type.Ref is > 0 && type.Ref <= depth => type,
+        "primitive" when Absent(type.Ref, type.Members, type.Properties) => NormalizePrimitive(type),
+        "enum" when Absent(type.Ref, type.Primitive, type.Compliance, type.Properties) && type.Members is { } members => type with { Members = NormalizeMembers(members) },
+        "composite" when Absent(type.Ref, type.Primitive, type.Compliance, type.Members) && type.Properties is { } properties => type with { Properties = NormalizeProperties(properties, depth + 1) },
+        "ref" when Absent(type.Primitive, type.Compliance, type.Members, type.Properties) && ValidRef(type.Ref, depth) => type,
         _ => throw new InvalidReleaseBaseline("Invalid resolved stored type.")
     };
 
+    static bool Absent(params object?[] values) => values.All(value => value is null);
+
+    static bool ValidRef(int? reference, int depth) => reference is > 0 && reference <= depth;
+
+    static bool ValidPrimitive(string? name)
+    {
+        if (!Enum.TryParse<SemanticPrimitiveType>(name, out var primitive) || !Enum.IsDefined(primitive)) return false;
+        return primitive != SemanticPrimitiveType.Unknown && primitive.ToString() == name;
+    }
+
     static ReleaseSchemaType NormalizePrimitive(ReleaseSchemaType type)
     {
-        if (!Enum.TryParse<SemanticPrimitiveType>(type.Primitive, out var primitive) || !Enum.IsDefined(primitive) || primitive == SemanticPrimitiveType.Unknown || primitive.ToString() != type.Primitive)
+        if (!ValidPrimitive(type.Primitive))
         {
             throw new InvalidReleaseBaseline("Invalid stored primitive.");
         }
@@ -105,9 +115,15 @@ public static class ReleaseSchemaCanonical
         }
     }
 
+    static bool UniqueMembers(ImmutableArray<ReleaseSchemaMember> members)
+    {
+        if (members.IsDefaultOrEmpty) return false;
+        return members.Select(member => member.Name).Distinct(StringComparer.Ordinal).Count() == members.Length && members.Select(member => member.Number).Distinct().Count() == members.Length;
+    }
+
     static ImmutableArray<ReleaseSchemaMember> NormalizeMembers(ImmutableArray<ReleaseSchemaMember> members)
     {
-        if (members.IsDefaultOrEmpty || members.Select(member => member.Name).Distinct(StringComparer.Ordinal).Count() != members.Length || members.Select(member => member.Number).Distinct().Count() != members.Length)
+        if (!UniqueMembers(members))
         {
             throw new InvalidReleaseBaseline("Stored enum members must be nonempty and unique.");
         }

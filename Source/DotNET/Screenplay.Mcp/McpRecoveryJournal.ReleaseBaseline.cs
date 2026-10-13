@@ -32,23 +32,33 @@ internal sealed partial class McpRecoveryJournal
         yield return OperationPath(root, operationId, "baseline-rollback");
     }
 
+    static bool ValidReleaseBaselineAccess(McpReleaseBaselineJournal baseline)
+    {
+        if ((baseline.Before is null) != (baseline.Access is null)) return false;
+        return baseline.Access is null || baseline.Access.Path == ".screenplay/release-baseline.json";
+    }
+
     void ValidateReleaseBaseline()
     {
         if (Record.ReleaseBaseline is not { } baseline) return;
-        var before = ReleaseBaselineStore.ReadBytes(baseline.Before, Before.IdentityCatalog.Application);
-        var after = ReleaseBaselineStore.ReadBytes(baseline.After, After.IdentityCatalog.Application);
-        if (before.Status == "unreadable" || after.Status != "valid" || !baseline.After.AsSpan().SequenceEqual(ReleaseBaselineStore.Serialize(after.Document!)))
-        {
-            throw new McpFailure("Recovery journal release baseline images are invalid.");
-        }
-
-        if ((baseline.Before is null) != (baseline.Access is null) || (baseline.Access is not null && baseline.Access.Path != ".screenplay/release-baseline.json"))
+        ValidateReleaseBaselineImages(baseline);
+        if (!ValidReleaseBaselineAccess(baseline))
         {
             throw new McpFailure("Recovery journal release baseline access rules are invalid.");
         }
 
         if (Before.Revision != After.Revision || !McpManagedFiles.Equal(Record.BeforeState, Record.AfterState)) throw new McpFailure("Release baseline recovery must not change model or identity state.");
         baseline.Access?.Validate();
+    }
+
+    void ReleaseBaselineImageFailure() => throw new McpFailure("Recovery journal release baseline images are invalid.");
+
+    void ValidateReleaseBaselineImages(McpReleaseBaselineJournal baseline)
+    {
+        var before = ReleaseBaselineStore.ReadBytes(baseline.Before, Before.IdentityCatalog.Application);
+        var after = ReleaseBaselineStore.ReadBytes(baseline.After, After.IdentityCatalog.Application);
+        if (before.Status == "unreadable" || after.Status != "valid") ReleaseBaselineImageFailure();
+        if (!baseline.After.AsSpan().SequenceEqual(ReleaseBaselineStore.Serialize(after.Document!))) ReleaseBaselineImageFailure();
     }
 
     void CleanupReleaseBaseline()

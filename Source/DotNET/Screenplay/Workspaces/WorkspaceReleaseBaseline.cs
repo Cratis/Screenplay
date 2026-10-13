@@ -16,7 +16,8 @@ public static class WorkspaceReleaseBaseline
     /// <returns>The shared structural verdict.</returns>
     public static ReleaseBaselineResult Check(ScreenplayWorkspace before, ScreenplayWorkspace candidate, ReleaseBaselineRead baseline)
     {
-        if (baseline.Status == "absent" || ReferenceEquals(before, candidate) || ContractsEqual(before, candidate)) return new(null, []);
+        if (baseline.Status == "absent") return new(null, []);
+        if (ReferenceEquals(before, candidate) || ContractsEqual(before, candidate)) return new(null, []);
         return baseline.Status == "unreadable"
             ? new(null, [], "UnreadableReleaseBaseline", baseline.Reason)
             : ReleaseBaseline.Check(candidate, baseline);

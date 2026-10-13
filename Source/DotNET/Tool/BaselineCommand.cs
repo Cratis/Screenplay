@@ -17,30 +17,41 @@ static class BaselineCommand
         if (options is null) return 2;
         try
         {
-            var root = new McpRoot(options.Root);
-            McpRecoveryJournal.RefusePending(root);
-            var files = new McpManagedFiles(root);
-            var stateBytes = files.Read(McpState.FileName);
-            if (stateBytes is null) return Fail(error, "PersistedIdentitiesRequired: release baselines require .screenplay/identities.json.");
-            var state = McpState.Deserialize(stateBytes);
-            var workspace = options.Action == "check" ? state.OpenForReleaseBaselineCheck(root) : state.Open(root);
-            var before = files.Read(ReleaseBaselineStore.FileName, ReleaseBaselineStore.MaximumBytes);
-            var baseline = ReleaseBaselineStore.ReadBytes(before, workspace.IdentityCatalog.Application);
-            if (options.Action == "check") return Report(ReleaseBaseline.Check(workspace, baseline), output, error);
-            var shipped = options.FromEsm is null ? null : ReadShipped(options.FromEsm);
-            var admission = ReleaseBaseline.Admit(workspace, baseline, options.Release!, DateTimeOffset.UtcNow, shipped);
-            var verdict = Report(admission, output, error);
-            if (verdict != 0) return verdict;
-            var after = ReleaseBaselineStore.Serialize(admission.Document!);
-            var result = new McpDisk(root).Apply(new McpReleaseBaselineProposal(workspace, before, after), new(stateBytes, stateBytes));
-            if (!result.Success) return Fail(error, $"{result.FailureKind}: {result.Status}; {string.Join("; ", result.Recovery)}");
-            output.WriteLine($"Admitted {admission.Document!.Entries.Length} event revision(s) in release baseline {ReleaseBaselineStore.Revision(after)}.");
-            return 0;
+            return Execute(options, output, error);
         }
         catch (Exception exception) when (exception is McpFailure or InvalidSemanticContract or InvalidReleaseBaseline or IOException or UnauthorizedAccessException)
         {
             return Fail(error, exception.Message);
         }
+    }
+
+    static int Execute(BaselineOptions options, TextWriter output, TextWriter error)
+    {
+        var root = new McpRoot(options.Root);
+        McpRecoveryJournal.RefusePending(root);
+        var files = new McpManagedFiles(root);
+        var stateBytes = files.Read(McpState.FileName);
+        if (stateBytes is null) return Fail(error, "PersistedIdentitiesRequired: release baselines require .screenplay/identities.json.");
+        var state = McpState.Deserialize(stateBytes);
+        var workspace = options.Action == "check" ? state.OpenForReleaseBaselineCheck(root) : state.Open(root);
+        var before = files.Read(ReleaseBaselineStore.FileName, ReleaseBaselineStore.MaximumBytes);
+        var baseline = ReleaseBaselineStore.ReadBytes(before, workspace.IdentityCatalog.Application);
+        if (options.Action == "check") return Report(ReleaseBaseline.Check(workspace, baseline), output, error);
+        var admission = Admit(options, workspace, baseline, output, error, out var verdict);
+        if (admission is null) return verdict;
+        var after = ReleaseBaselineStore.Serialize(admission.Document!);
+        var result = new McpDisk(root).Apply(new McpReleaseBaselineProposal(workspace, before, after), new(stateBytes, stateBytes));
+        if (!result.Success) return Fail(error, $"{result.FailureKind}: {result.Status}; {string.Join("; ", result.Recovery)}");
+        output.WriteLine($"Admitted {admission.Document!.Entries.Length} event revision(s) in release baseline {ReleaseBaselineStore.Revision(after)}.");
+        return 0;
+    }
+
+    static ReleaseBaselineResult? Admit(BaselineOptions options, ScreenplayWorkspace workspace, ReleaseBaselineRead baseline, TextWriter output, TextWriter error, out int verdict)
+    {
+        var shipped = options.FromEsm is null ? null : ReadShipped(options.FromEsm);
+        var admission = ReleaseBaseline.Admit(workspace, baseline, options.Release!, DateTimeOffset.UtcNow, shipped);
+        verdict = Report(admission, output, error);
+        return verdict == 0 ? admission : null;
     }
 
     static ExecutableSemanticModel ReadShipped(string path)
@@ -70,20 +81,32 @@ static class BaselineCommand
 
     static BaselineOptions? Parse(string[] args, TextWriter error)
     {
-        if (args.Length < 3 || args[0] != "baseline" || args[1] is not ("admit" or "check")) return Invalid(error);
-        string? release = null;
-        string? from = null;
+        if (!KnownAction(args) || !TryReadAdmitOptions(args, out var release, out var from)) return Invalid(error);
+        if (args[1] == "admit" && string.IsNullOrWhiteSpace(release)) return Invalid(error);
+        return new(args[1], args[2], release, from);
+    }
+
+    static bool KnownAction(string[] args)
+    {
+        if (args.Length < 3 || args[0] != "baseline") return false;
+        return args[1] == "admit" || args[1] == "check";
+    }
+
+    static bool TryReadAdmitOptions(string[] args, out string? release, out string? from)
+    {
+        release = null;
+        from = null;
         for (var index = 3; index < args.Length; index++)
         {
             var option = args[index];
-            if (args[1] != "admit" || ++index >= args.Length || args[index].StartsWith("--", StringComparison.Ordinal)) return Invalid(error);
+            if (args[1] != "admit") return false;
+            if (++index >= args.Length || args[index].StartsWith("--", StringComparison.Ordinal)) return false;
             if (option == CliCommandCatalog.Release.Name && release is null) release = args[index];
             else if (option == CliCommandCatalog.FromEsm.Name && from is null) from = args[index];
-            else return Invalid(error);
+            else return false;
         }
 
-        if (args[1] == "admit" && string.IsNullOrWhiteSpace(release)) return Invalid(error);
-        return new(args[1], args[2], release, from);
+        return true;
     }
 
     static BaselineOptions? Invalid(TextWriter error)

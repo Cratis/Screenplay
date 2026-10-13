@@ -19,15 +19,7 @@ public static class ReleaseBaseline
     {
         if (baseline.Status == "unreadable") return new(null, [], "UnreadableReleaseBaseline", baseline.Reason);
         if (baseline.Document!.ApplicationIdentity != candidate.IdentityCatalog.Application.ToString()) return new(null, [], "UnreadableReleaseBaseline", "Another application's identity.");
-        if (!candidate.Compilation.Success)
-        {
-            var revisions = WorkspaceSyntaxIndex.Create(candidate).Entries
-                .Where(entry => entry.Node is EventSyntax && entry.EventContractId is not null)
-                .Select(entry => (entry.EventContractId!.Value.ToString(), ((EventSyntax)entry.Node).Generation)).ToHashSet();
-            var missing = baseline.Document.Entries.Where(entry => !revisions.Contains((entry.Event, entry.Revision)))
-                .Select(entry => new ReleaseBaselineViolation("BaselinedRevisionMissing", entry.Event, entry.Revision)).ToImmutableArray();
-            return new(null, missing, "ModelDoesNotBind", "Release baseline checks require an executable model; only missing revisions were verified.");
-        }
+        if (!candidate.Compilation.Success) return CheckMissingOnly(candidate, baseline.Document);
         var current = Resolve(candidate, candidate.Compilation.Value!.Model);
         return new(null, Violations(baseline.Document.Entries, current));
     }
@@ -41,23 +33,9 @@ public static class ReleaseBaseline
     /// <returns>The monotonic document or a typed refusal.</returns>
     public static ReleaseBaselineResult Admit(ScreenplayWorkspace workspace, ReleaseBaselineRead baseline, string release, DateTimeOffset at, ExecutableSemanticModel? shipped = null)
     {
-        var check = Check(workspace, baseline);
-        if (check.Failure is not null) return check;
-        if (!workspace.Compilation.Success) return new(null, [], "ModelDoesNotBind", "Release admission requires an executable model.");
-        if (string.IsNullOrWhiteSpace(release) || release != release.Trim() || release.Length > 16384 || at == default || at.Offset != TimeSpan.Zero)
-        {
-            return new(null, [], "InvalidAdmission", "Admission requires a nonempty trimmed release label and a UTC instant.");
-        }
-
+        if (AdmissionRefusal(workspace, baseline, release, at, shipped) is { } refusal) return refusal;
         var model = workspace.Compilation.Value!.Model;
-        if (shipped is not null && shipped.Application.Id != model.Application.Id) return new(null, [], "ShippedApplicationMismatch", "The shipped ESM belongs to another application.");
         var selected = Resolve(workspace, shipped ?? model, shipped is not null);
-        if (shipped is not null)
-        {
-            var mismatch = StoredNameMismatch(workspace, selected);
-            if (mismatch is not null) return mismatch;
-        }
-
         var document = baseline.Document!;
 
         // Admission is monotonic: missing entries remain frozen, but an overlapping changed entry cannot be re-admitted.
@@ -66,6 +44,33 @@ public static class ReleaseBaseline
         var existing = document.Entries.Select(entry => (entry.Event, entry.Revision)).ToHashSet();
         var additions = selected.Where(entry => !existing.Contains((entry.Event, entry.Revision))).Select(entry => entry with { AdmittedIn = release, AdmittedAt = at });
         return new(document with { Entries = [.. document.Entries.Concat(additions).OrderBy(entry => entry.Event, StringComparer.Ordinal).ThenBy(entry => entry.Revision)] }, []);
+    }
+
+    static ReleaseBaselineResult CheckMissingOnly(ScreenplayWorkspace candidate, ReleaseBaselineDocument document)
+    {
+        var revisions = WorkspaceSyntaxIndex.Create(candidate).Entries
+            .Where(entry => entry.Node is EventSyntax && entry.EventContractId is not null)
+            .Select(entry => (entry.EventContractId!.Value.ToString(), ((EventSyntax)entry.Node).Generation)).ToHashSet();
+        var missing = document.Entries.Where(entry => !revisions.Contains((entry.Event, entry.Revision)))
+            .Select(entry => new ReleaseBaselineViolation("BaselinedRevisionMissing", entry.Event, entry.Revision)).ToImmutableArray();
+        return new(null, missing, "ModelDoesNotBind", "Release baseline checks require an executable model; only missing revisions were verified.");
+    }
+
+    static ReleaseBaselineResult? AdmissionRefusal(ScreenplayWorkspace workspace, ReleaseBaselineRead baseline, string release, DateTimeOffset at, ExecutableSemanticModel? shipped)
+    {
+        var check = Check(workspace, baseline);
+        if (check.Failure is not null) return check;
+        if (!workspace.Compilation.Success) return new(null, [], "ModelDoesNotBind", "Release admission requires an executable model.");
+        if (!ValidAdmission(release, at)) return new(null, [], "InvalidAdmission", "Admission requires a nonempty trimmed release label and a UTC instant.");
+        if (shipped is null) return null;
+        if (shipped.Application.Id != workspace.Compilation.Value!.Model.Application.Id) return new(null, [], "ShippedApplicationMismatch", "The shipped ESM belongs to another application.");
+        return StoredNameMismatch(workspace, Resolve(workspace, shipped, true));
+    }
+
+    static bool ValidAdmission(string release, DateTimeOffset at)
+    {
+        if (string.IsNullOrWhiteSpace(release) || release != release.Trim() || release.Length > 16384) return false;
+        return at != default && at.Offset == TimeSpan.Zero;
     }
 
     static ReleaseBaselineResult? StoredNameMismatch(ScreenplayWorkspace workspace, ImmutableArray<ReleaseBaselineEntry> selected)
@@ -121,31 +126,36 @@ public static class ReleaseBaseline
     static string? Difference(JsonElement before, JsonElement after, string path)
     {
         if (before.ValueKind != after.ValueKind) return path;
-        if (before.ValueKind == JsonValueKind.Object)
+        return before.ValueKind switch
         {
-            foreach (var property in before.EnumerateObject())
-            {
-                if (!after.TryGetProperty(property.Name, out var value)) return $"{path}.{property.Name}";
-                var difference = Difference(property.Value, value, $"{path}.{property.Name}");
-                if (difference is not null) return difference;
-            }
+            JsonValueKind.Object => ObjectDifference(before, after, path),
+            JsonValueKind.Array => ArrayDifference(before, after, path),
+            _ => before.GetRawText() == after.GetRawText() ? null : path
+        };
+    }
 
-            return after.EnumerateObject().Where(property => !before.TryGetProperty(property.Name, out _)).Select(property => $"{path}.{property.Name}").FirstOrDefault();
+    static string? ObjectDifference(JsonElement before, JsonElement after, string path)
+    {
+        foreach (var property in before.EnumerateObject())
+        {
+            if (!after.TryGetProperty(property.Name, out var value)) return $"{path}.{property.Name}";
+            var difference = Difference(property.Value, value, $"{path}.{property.Name}");
+            if (difference is not null) return difference;
         }
 
-        if (before.ValueKind == JsonValueKind.Array)
-        {
-            var previous = before.EnumerateArray().ToArray();
-            var next = after.EnumerateArray().ToArray();
-            for (var index = 0; index < Math.Min(previous.Length, next.Length); index++)
-            {
-                var difference = Difference(previous[index], next[index], $"{path}[{index}]");
-                if (difference is not null) return difference;
-            }
+        return after.EnumerateObject().Where(property => !before.TryGetProperty(property.Name, out _)).Select(property => $"{path}.{property.Name}").FirstOrDefault();
+    }
 
-            return previous.Length == next.Length ? null : $"{path}[{Math.Min(previous.Length, next.Length)}]";
+    static string? ArrayDifference(JsonElement before, JsonElement after, string path)
+    {
+        var previous = before.EnumerateArray().ToArray();
+        var next = after.EnumerateArray().ToArray();
+        for (var index = 0; index < Math.Min(previous.Length, next.Length); index++)
+        {
+            var difference = Difference(previous[index], next[index], $"{path}[{index}]");
+            if (difference is not null) return difference;
         }
 
-        return before.GetRawText() == after.GetRawText() ? null : path;
+        return previous.Length == next.Length ? null : $"{path}[{Math.Min(previous.Length, next.Length)}]";
     }
 }

@@ -103,33 +103,45 @@ sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, 
 
     ScreenplayWorkspace Open(McpRoot root, bool checkReleaseBaseline)
     {
+        var documents = ReadMappedDocuments(root, checkReleaseBaseline);
+        return checkReleaseBaseline ? CompileRetainingCatalog(root, documents) : OpenReconciled(root, documents);
+    }
+
+    ImmutableArray<WorkspaceDocument> ReadMappedDocuments(McpRoot root, bool checkReleaseBaseline)
+    {
         foreach (var mapping in Mappings)
         {
             _ = root.PathFor(mapping.Path);
         }
 
         var actual = root.Read(allowEmpty: true).ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
-        if (checkReleaseBaseline
-            ? actual.Keys.Any(path => !Mappings.Any(mapping => mapping.Path.Value == path))
-            : actual.Count != Mappings.Length || Mappings.Any(mapping => !actual.ContainsKey(mapping.Path.Value)))
+        if (HasMappingConflict(actual, checkReleaseBaseline))
         {
             throw new McpFailure("IdentityMappingConflict: mapped .play files are missing, renamed, or accompanied by unmapped files. Restore the mapped paths, then use an MCP proposal to move/add/delete documents explicitly.");
         }
 
-        var documents = Mappings.Where(mapping => actual.ContainsKey(mapping.Path.Value)).Select(mapping => WorkspaceDocument.Create(
+        return [.. Mappings.Where(mapping => actual.ContainsKey(mapping.Path.Value)).Select(mapping => WorkspaceDocument.Create(
             mapping.Id,
             mapping.StableKey,
             mapping.Path,
-            actual[mapping.Path.Value].Bytes.AsSpan())).ToImmutableArray();
-        if (checkReleaseBaseline)
-        {
-            var loaded = McpAttachmentContents.Load(root, documents);
-            var compilation = documents.IsEmpty ? ScreenplayWorkspace.EmptyCompilation() : new SemanticModelCompiler().Compile(
-                ApplicationName, ScreenplayWorkspace.CreateDocumentSet(documents, Catalog, loaded.Contents));
-            compilation = compilation with { Diagnostics = [.. compilation.Diagnostics, .. loaded.Diagnostics] };
-            return ScreenplayWorkspace.CreateValidated(ApplicationName, documents, Catalog, compilation, loaded.Contents, loaded.Diagnostics);
-        }
+            actual[mapping.Path.Value].Bytes.AsSpan()))];
+    }
 
+    bool HasMappingConflict(Dictionary<string, WorkspaceDocument> actual, bool checkReleaseBaseline) => checkReleaseBaseline
+        ? actual.Keys.Any(path => !Mappings.Any(mapping => mapping.Path.Value == path))
+        : actual.Count != Mappings.Length || Mappings.Any(mapping => !actual.ContainsKey(mapping.Path.Value));
+
+    ScreenplayWorkspace CompileRetainingCatalog(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
+    {
+        var loaded = McpAttachmentContents.Load(root, documents);
+        var compilation = documents.IsEmpty ? ScreenplayWorkspace.EmptyCompilation() : new SemanticModelCompiler().Compile(
+            ApplicationName, ScreenplayWorkspace.CreateDocumentSet(documents, Catalog, loaded.Contents));
+        compilation = compilation with { Diagnostics = [.. compilation.Diagnostics, .. loaded.Diagnostics] };
+        return ScreenplayWorkspace.CreateValidated(ApplicationName, documents, Catalog, compilation, loaded.Contents, loaded.Diagnostics);
+    }
+
+    ScreenplayWorkspace OpenReconciled(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
+    {
         ScreenplayWorkspace workspace;
         try
         {

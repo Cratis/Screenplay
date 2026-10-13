@@ -261,6 +261,19 @@ internal sealed partial class McpWorkspaces
         McpRecoveryJournal.RefusePending(Root);
     }
 
+    static void RequireCompilable(IMcpProposal proposal, ScreenplayWorkspace candidate)
+    {
+        // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
+        var analysis = McpWorkspaceAnalysis.For(candidate);
+        if (!proposal.Accepted || !analysis.Source.Compilation.Success)
+        {
+            var issues = string.Join(" | ", analysis.Source.Compilation.Diagnostics.Concat(candidate.Compilation.Diagnostics)
+                .Select(diagnostic => $"{diagnostic.Code} {diagnostic.Location.Line}:{diagnostic.Location.Column} {diagnostic.Message}")
+                .Take(8));
+            throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
+        }
+    }
+
     static object? DescribeMove(WorkspaceMoveReport? report) => report is null ? null : new
     {
         identityMigrations = report.IdentityMigrations.Select(migration => new { migration.Domain, migration.Id, previousAddress = McpSemanticAddresses.Describe(migration.PreviousAddress), currentAddress = McpSemanticAddresses.Describe(migration.CurrentAddress) }),
@@ -391,24 +404,11 @@ internal sealed partial class McpWorkspaces
             _ = Root.PathFor(document.Path);
         }
 
-        // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
-        var analysis = McpWorkspaceAnalysis.For(candidate);
-        if (!proposal.Accepted || !analysis.Source.Compilation.Success)
+        RequireCompilable(proposal, candidate);
+        var baselinePlan = PlanBaseline(proposal, arguments);
+        if (BaselineRefusal(proposal, candidate, baselinePlan) is { } refusal)
         {
-            var issues = string.Join(" | ", analysis.Source.Compilation.Diagnostics.Concat(candidate.Compilation.Diagnostics)
-                .Select(diagnostic => $"{diagnostic.Code} {diagnostic.Location.Line}:{diagnostic.Location.Column} {diagnostic.Message}")
-                .Take(8));
-            throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
-        }
-
-        var baselinePlan = _planningBaseline ?? ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
-        var currentBaseline = ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
-        CheckBaselinePin(arguments, currentBaseline.Read);
-        if (!SameBaseline(baselinePlan, currentBaseline)) throw new McpFailure("StaleReleaseBaseline: the baseline changed during planning.") { FailureKind = "StaleReleaseBaseline" };
-        var baselineCheck = WorkspaceReleaseBaseline.Check(proposal.Before, candidate, baselinePlan.Read);
-        if (!baselineCheck.Success)
-        {
-            return McpJson.ToolResult(new { success = false, failureKind = baselineCheck.Kind, baselineCheck.Reason, violations = baselineCheck.Violations }, true);
+            return refusal;
         }
 
         if (_proposals.Count >= 16)
@@ -428,7 +428,7 @@ internal sealed partial class McpWorkspaces
             proposalId = id,
             repairEvidence = evidence,
             releaseBaselineRevision = baselinePlan.Read.Revision,
-            eventRename = proposal is McpAuthoringProposal renamed ? renamed.Result.EventRenameReport : null,
+            eventRename = EventRenameReport(proposal),
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal policy ? policy.ReferencePolicy.ToString() : null,
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),

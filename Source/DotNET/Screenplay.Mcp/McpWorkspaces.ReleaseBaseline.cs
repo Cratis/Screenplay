@@ -14,14 +14,19 @@ internal sealed partial class McpWorkspaces
     readonly ConditionalWeakTable<IMcpProposal, BaselinePlan> _baselinePlans = [];
     BaselinePlan? _planningBaseline;
 
-    internal object WithReleaseBaseline(JsonElement arguments, Func<object> propose)
+    internal object WithReleaseBaseline(string tool, JsonElement arguments, Func<object> call)
     {
+        if (!PlansProposal(tool))
+        {
+            return call();
+        }
+
         var workspace = Current();
         _planningBaseline = ReadBaselinePlan(workspace.IdentityCatalog.Application);
         CheckBaselinePin(arguments, _planningBaseline.Read);
         try
         {
-            return propose();
+            return call();
         }
         finally
         {
@@ -36,13 +41,32 @@ internal sealed partial class McpWorkspaces
         CheckBaselinePin(arguments, baseline);
         if (baseline.Revision is not null) CheckContinuation(arguments, "expectedReleaseBaselineRevision", baseline.Revision);
         var check = baseline.Status == "valid" ? ReleaseBaseline.Check(workspace, baseline) : null;
-        var items = baseline.Document?.Entries.Select(entry =>
-        {
-            var violation = check?.Violations.SingleOrDefault(value => value.Event == entry.Event && value.Revision == entry.Revision);
-            return new { entry.Event, entry.Revision, entry.EventType, entry.LastAddress, entry.AdmittedIn, entry.AdmittedAt, status = violation?.Kind switch { "BaselinedRevisionChanged" => "changed", "BaselinedRevisionMissing" => "missing", _ => check?.Failure is not null ? "unknown" : "unchanged" }, path = violation?.Path };
-        });
+        var items = baseline.Document?.Entries.Select(entry => DescribeBaselineEntry(entry, check));
         return McpJson.ToolResult(new { releaseBaseline = DescribeBaseline(baseline, check), page = items is null ? null : McpPaging.Page(items, arguments, baseline.Revision!) });
     }
+
+    static bool PlansProposal(string tool) => tool.StartsWith("propose", StringComparison.Ordinal) || tool == "expand-layout";
+
+    static object? BaselineRefusal(IMcpProposal proposal, ScreenplayWorkspace candidate, BaselinePlan plan)
+    {
+        var check = WorkspaceReleaseBaseline.Check(proposal.Before, candidate, plan.Read);
+        return check.Success ? null : McpJson.ToolResult(new { success = false, failureKind = check.Kind, check.Reason, violations = check.Violations }, true);
+    }
+
+    static WorkspaceEventRenameReport? EventRenameReport(IMcpProposal proposal) => proposal is McpAuthoringProposal authored ? authored.Result.EventRenameReport : null;
+
+    static object DescribeBaselineEntry(ReleaseBaselineEntry entry, ReleaseBaselineResult? check)
+    {
+        var violation = check?.Violations.SingleOrDefault(value => value.Event == entry.Event && value.Revision == entry.Revision);
+        return new { entry.Event, entry.Revision, entry.EventType, entry.LastAddress, entry.AdmittedIn, entry.AdmittedAt, status = EntryStatus(violation, check), path = violation?.Path };
+    }
+
+    static string EntryStatus(ReleaseBaselineViolation? violation, ReleaseBaselineResult? check) => violation?.Kind switch
+    {
+        "BaselinedRevisionChanged" => "changed",
+        "BaselinedRevisionMissing" => "missing",
+        _ => check?.Failure is not null ? "unknown" : "unchanged"
+    };
 
     static void CheckBaselinePin(JsonElement arguments, ReleaseBaselineRead baseline)
     {
@@ -62,6 +86,15 @@ internal sealed partial class McpWorkspaces
         violations = baseline.Status == "unreadable" || check?.Failure is not null ? (int?)null : check?.Violations.Length ?? 0,
         checkFailure = check?.Failure
     };
+
+    BaselinePlan PlanBaseline(IMcpProposal proposal, JsonElement arguments)
+    {
+        var planned = _planningBaseline ?? ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
+        var current = ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
+        CheckBaselinePin(arguments, current.Read);
+        if (!SameBaseline(planned, current)) throw new McpFailure("StaleReleaseBaseline: the baseline changed during planning.") { FailureKind = "StaleReleaseBaseline" };
+        return planned;
+    }
 
     BaselinePlan ReadBaselinePlan(ApplicationIdentity application)
     {
