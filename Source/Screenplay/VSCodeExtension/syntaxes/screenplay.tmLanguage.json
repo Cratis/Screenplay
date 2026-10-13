@@ -235,7 +235,7 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "comment": "Redelivery selects an existing given occurrence and one reaction; syntax-only.",
+                    "comment": "Redelivery selects an existing given occurrence and one reaction; executable from ESM v17.",
                     "match": "^\\s*(when)\\s+(redelivered)\\s+([\\w.]+)\\s+(to)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
                 },

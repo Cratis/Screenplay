@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+// Explicit no-event assertions are executable from ESM v17, not preview syntax.
+// The outcome-less scenario intentionally remains invalid at binding.
+
 module Work
   feature Recording
     slice StateChange Nothing

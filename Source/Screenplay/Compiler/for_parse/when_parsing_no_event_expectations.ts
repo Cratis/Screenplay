@@ -23,8 +23,11 @@ describe('when parsing no event expectations', () => {
         expect(toSyntaxJson(specification)).not.toHaveProperty('thenNoEvents');
     });
 
+    it('should accept no events after an append', () => {
+        parse('        when append Happened', '        then no events').diagnostics.should.be.empty;
+    });
+
     for (const steps of [
-        ['when append Happened', 'then no events'],
         ['when DoNothing', 'then no events', 'then Happened'],
         ['when DoNothing', 'then Happened', 'then no events'],
         ['when DoNothing', 'then no events', 'then events in any order'],

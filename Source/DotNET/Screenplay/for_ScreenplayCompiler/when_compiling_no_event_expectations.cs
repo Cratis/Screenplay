@@ -22,8 +22,9 @@ public class when_compiling_no_event_expectations : given.a_compiler
     [Fact] void should_not_invent_an_event_type() => _explicit.Value!.ThenEvents.ShouldBeEmpty();
     [Fact] void should_keep_omission_distinct_in_syntax() => _omitted.Value!.ThenNoEvents.ShouldBeFalse();
 
+    [Fact] void should_accept_no_events_after_an_append() => _compiler.CompileSpecification("specification NothingFollows\n  when append Happened\n  then no events").Success.ShouldBeTrue();
+
     [Theory]
-    [InlineData("when append Happened\n  then no events")]
     [InlineData("when DoNothing\n  then no events\n  then Happened")]
     [InlineData("when DoNothing\n  then Happened\n  then no events")]
     [InlineData("when DoNothing\n  then no events\n  then events in any order")]

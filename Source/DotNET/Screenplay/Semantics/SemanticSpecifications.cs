@@ -161,6 +161,16 @@ public sealed record SemanticSpecification(
     /// <summary>Gets the appended event action, mutually exclusive with <see cref="When"/>.</summary>
     public SemanticSpecificationAppend? WhenAppended { get; init; }
 
+    /// <summary>
+    /// Gets recovery delivery of an existing given fact to one reaction.
+    /// </summary>
+    public SemanticSpecificationRedelivery? WhenRedelivered { get; init; }
+
+    /// <summary>
+    /// Gets whether the action must append no new facts, excluding an append action's own fact.
+    /// </summary>
+    public bool ThenNoEvents { get; init; }
+
     /// <summary>Gets whether then-events are compared without regard to occurrence order.</summary>
     public bool ThenEventsInAnyOrder { get; init; }
 

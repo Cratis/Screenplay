@@ -44,7 +44,7 @@ internal static class SpecificationRedeliveryValidator
         }
     }
 
-    static bool? Matches(SpecificationEventSyntax given, SpecificationRedeliverySyntax action, EventSyntax @event, ConsistencyDeclarations declarations, ApplicationSyntax application)
+    internal static bool? Matches(SpecificationEventSyntax given, SpecificationRedeliverySyntax action, EventSyntax @event, ConsistencyDeclarations declarations, ApplicationSyntax application)
     {
         // Binding retains a null source for a given without 'for'; the producer supplies its type,
         // not a concrete identity. Do not invent a destination or count an undecidable locator as zero.

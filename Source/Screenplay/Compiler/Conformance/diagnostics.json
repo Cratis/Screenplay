@@ -861,9 +861,9 @@
             "diagnostics": ["PLAY0097@10"]
         },
         {
-            "name": "An append action cannot assert no events",
+            "name": "An append action can assert that no events follow",
             "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when append Happened", "        then no events"],
-            "diagnostics": ["PLAY0545@6"]
+            "diagnostics": []
         },
         {
             "name": "No events conflicts with an event outcome regardless of order",

@@ -785,7 +785,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths ([#129](https://github.com/Cratis/Screenplay/issues/129)), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including reaction refusal branches and `$refusal` values (#433), query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths ([#129](https://github.com/Cratis/Screenplay/issues/129)), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -1044,7 +1044,7 @@ See [Imports](imports.md).
 
 ### Refusal branches, redelivery and no-event assertions
 
-Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268` naming the unadmitted feature.
+Refusal branches and `$refusal` values remain syntax-only: source-valid models fail binding with `PLAY0268` naming those features. Redelivery and `then no events` bind and execute from ESM v17; earlier strict readers reject their canonical members.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1056,7 +1056,7 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning and selects released ESM v10. Refusal branches remain syntax-only. |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
-| `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+| `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after an action, including `when append`; read-model, query and response assertions may accompany it. |
 
 ### Reaction command identity
 
@@ -1071,7 +1071,7 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0651` | Warning | C# binder only: the declared system identity definitely cannot satisfy an invoked command's effective gate. Claim conditions and other unknown results are not treated as definite denial. |
 | `PLAY0652` | Warning / Information | Opt-in `privilege` completeness: each producer of an elevated reaction's trigger event must require every declared system role. Ungated commands, captures and reaction productions produce Warning; opaque gates produce Information because they cannot be compared. Clock and application triggers have no producer and are silent. |
 
-See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
+See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications) and [Specification syntax](specifications.md#syntax).
 
 ### Specification actions
 

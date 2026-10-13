@@ -12,7 +12,7 @@ import { typeReferenceText } from './TypeReferenceSymbol';
 
 export const eventSourceAvailability = 'Event sources, streams and declarative command routes are admitted in executable semantic model (ESM) v8. A route classifies events; it does not supply an identity destination. Property-path mappings and handler routes remain unadmitted (PLAY0268).';
 
-export const specificationRouteAvailability = 'Specification event routes, including example routes, are admitted in executable semantic model (ESM) v8. Redelivery remains unadmitted (PLAY0268) (#433), independently of its locator route.';
+export const specificationRouteAvailability = 'Specification event routes, including example routes, are admitted in executable semantic model (ESM) v8. Redelivery is executable from ESM v17, independently of its locator route.';
 
 const routePrefix = sourceStreamPattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
 const keyPrefix = sourceStreamPattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');

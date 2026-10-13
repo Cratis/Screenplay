@@ -69,17 +69,8 @@ internal static class SemanticScenario
                         },
                         clock);
                     break;
-                case { WhenClock: { } advance }:
-                    failure = Advance(plan, loop, clock!.Value, Instant(advance));
-                    break;
-                case { WhenTrigger: { } fired }:
-                    failure = Fire(plan, loop, fired, clock);
-                    break;
-                case { WhenCapture: { } presented }:
-                    failure = Present(plan, loop, expected, presented, occurrence);
-                    break;
                 default:
-                    failure = null;
+                    failure = PerformAutomaticAction(plan, loop, expected, clock);
                     break;
             }
         }
@@ -96,6 +87,30 @@ internal static class SemanticScenario
 
         var execution = SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller);
         return execution is SemanticAccepted acceptedScenario ? acceptedScenario with { Response = response } : execution;
+    }
+
+    static SemanticExecutionResult? PerformAutomaticAction(
+        SemanticExecutionPlan plan,
+        SemanticReactionLoop loop,
+        SemanticSpecification expected,
+        DateTimeOffset? clock)
+    {
+        switch (expected)
+        {
+            case { WhenRedelivered: { } redelivered }:
+                var reaction = plan.Reactions.Single(reaction => reaction.Id == redelivered.Reaction);
+                var givenFact = loop.World.Facts[redelivered.Given];
+                return loop.Redeliver(reaction, givenFact, clock);
+            case { WhenClock: { } advance }:
+                return Advance(plan, loop, clock!.Value, Instant(advance));
+            case { WhenTrigger: { } fired }:
+                return Fire(plan, loop, fired, clock);
+            case { WhenCapture: { } presented }:
+                var occurrence = clock is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
+                return Present(plan, loop, expected, presented, occurrence);
+            default:
+                return null;
+        }
     }
 
     static SemanticExecutionRequest CommandRequest(SemanticSpecificationCommand when) =>

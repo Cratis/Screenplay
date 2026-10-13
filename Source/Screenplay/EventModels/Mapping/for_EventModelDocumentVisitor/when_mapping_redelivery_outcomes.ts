@@ -73,12 +73,12 @@ describe('when mapping redelivery outcomes', () => {
         specifications[4].thenNoEvents!.should.be.true;
         (specifications[1].thenNoEvents === undefined).should.be.true;
     });
-    it('should render redelivery and no-event intent with an explicit admission boundary', () => {
+    it('should render redelivery and no-event expectations as assertions', () => {
         const markup = headerOf(document, 0);
         markup.should.contain('when redelivered Approved to Claimer for &quot;invoice-1&quot;');
         markup.should.contain('then no events');
-        markup.should.contain('Syntax-only (PLAY0268)');
-        markup.should.contain('not executable assertions');
+        markup.should.not.contain('Syntax-only (PLAY0268)');
+        markup.should.not.contain('not executable assertions');
     });
     it('should render no-event expectations for other actions too', () => {
         headerOf(document, 4).should.contain('then no events');

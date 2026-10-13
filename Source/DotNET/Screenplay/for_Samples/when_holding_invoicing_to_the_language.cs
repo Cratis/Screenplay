@@ -25,11 +25,8 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
-        ("refusals, redelivery, `then no events`", 433,
-            [
-                ("Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play", [typeof(InvocationRefusalSyntax), typeof(RefusalExpressionSyntax), typeof(SpecificationRedeliverySyntax)]),
-                ("Source/Screenplay/Compiler/Conformance/no-events.play", [])
-            ])
+        ("refusal branches and `$refusal` values", 433,
+            [("Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play", [typeof(InvocationRefusalSyntax), typeof(RefusalExpressionSyntax)])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
@@ -86,10 +83,6 @@ public class when_holding_invoicing_to_the_language : Specification
                 }
 
                 if (preview.Issue == 285) _exact = application;
-                if (fixture.Path.EndsWith("no-events.play", StringComparison.Ordinal) && !SyntaxNodes.Under(application).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents))
-                {
-                    _fixtureFindings.Add($"{fixture.Path}: missing explicit then no events");
-                }
             }
         }
 
@@ -123,7 +116,8 @@ public class when_holding_invoicing_to_the_language : Specification
         SyntaxNodes.Under(_dispatches).OfType<SliceSyntax>().Any(slice => slice.Direction == TranslationDirection.Inbound &&
             SyntaxNodes.Under(slice).OfType<EventSyntax>().Any(@event => @event.Origin == "carrier") &&
             slice.Captures.Any(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source))).ShouldBeTrue();
-    [Fact] void should_keep_explicit_no_event_assertions_out_of_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents).ShouldBeFalse();
+    [Fact] void should_show_explicit_no_event_assertions_in_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents && specification.WhenAppended is not null).ShouldBeTrue();
+    [Fact] void should_show_recovery_redelivery_in_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.WhenRedelivered is not null && specification.Given.Any() && specification.ThenEvents.Any()).ShouldBeTrue();
     [Fact] void should_keep_exact_numeric_mode_out_of_invoicing() => _invoicing.SourceOptions.NumericMode.ShouldEqual(NumericMode.Legacy);
     [Fact] void should_demonstrate_exact_numeric_mode_in_its_preview_fixture() => _exact.SourceOptions.NumericMode.ShouldEqual(NumericMode.Exact);
     [Fact] void should_keep_the_documented_preview_table_equal_to_the_enforced_list() => _documentedPreview.ShouldEqual(Preview.Select(preview => $"| {preview.Construct} | #{preview.Issue} | {string.Join(", ", preview.Fixtures.Select(fixture => $"`{fixture.Path}`"))} |"));

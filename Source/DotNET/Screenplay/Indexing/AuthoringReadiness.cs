@@ -139,10 +139,9 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
                 .Concat(Feature(command.Handler is not null, "command handlers"))
                 .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
-                Feature(specification.ThenNoEvents, "explicit no-event assertions (#433)")
-                .Concat(specification.Given.Concat(specification.ThenEvents)
+                specification.Given.Concat(specification.ThenEvents)
                     .Concat(specification.WhenAppended is { } appended ? [appended] : [])
-                    .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
+                    .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream))
                 .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Reactions).Concat(slice.ReadModels ?? []).Concat(slice.Queries).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
@@ -153,7 +152,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         };
 
         return [.. LocalFeatures().Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
-            .Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
+            .Concat(Feature(ReactionRefusals(node), "reaction refusal branches and $refusal values (#433)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
@@ -315,7 +314,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
 
         public override void VisitNode(SyntaxNode node)
         {
-            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax) Unadmitted = true;
+            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax) Unadmitted = true;
         }
     }
 }

@@ -44,7 +44,7 @@ describe('when authoring refusals and redelivery', () => {
         expect(content).toContain('not authorization');
         expect(content).toContain('not yet executable');
         const redelivery = '  when redelivered Approved to R';
-        expect(hoverContent(['specification Recovery', redelivery], 1, 'redelivered', 8, 19)).toContain('not yet executable');
+        expect(hoverContent(['specification Recovery', redelivery], 1, 'redelivered', 8, 19)).toContain('Executable from ESM v17');
     });
     it('should explain refusal values within the branch', () => {
         const lines = [...invocation, '      on refused', '        produces Refused', '          reason = $refusal.reason'];

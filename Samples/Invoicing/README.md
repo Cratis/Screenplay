@@ -36,6 +36,10 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 `PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line selects released ESM v10; the reference authenticates the system identity with that role, while claim conditions remain unknown and a final unknown denies. It does not supply audit identity. Source compilation remains warning-free.
 
+## Recovery and no-event assertions
+
+`IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. Refusal branches and `$refusal` values remain preview syntax in their dedicated fixture; redelivery does not promise once-only external effects.
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |
@@ -115,7 +119,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
 | `direction outbound`, a `public event`, and an event-target `projection` that folds private events into it | InvoiceSentPublication; the inbound half (`direction inbound`, an event `from "origin"`, `source events`) is in the Commerce sample's ReceiveCarrierDispatches, because Invoicing's `all` projection would consume any foreign event |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |
-| `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
+| `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when redelivered`, `then no events`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
 | `example` with structured values, indented and inline overrides | RegisterInvoice: `AcmeInvoice` supplies repeated command inputs without hiding the caller or outcome |
 | `seed` - two blocks | bottom of the file |
 
@@ -125,6 +129,8 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 
 Automation and translate slices are driven by time, by application triggers and by capture source records, and the specifications say so:
 
+- `IgnoringAZeroValuePayment` asserts with `then no events` that nothing follows the appended payment.
+- `RecoveringAnUndeliveredOverdueReminder` redelivers an existing fact to one observer with `when redelivered`.
 - `IssuingTheWeeklyDigestOnMondayMorning` lets the clock reach Monday 07:30 with `when clock`.
 - `SynchronizingWhenSomeoneAsks` fires the `BillingDirectorySyncRequested` trigger with `when trigger`.
 - `SeeingAnInvoicePaidInTheLegacySystem` hands the legacy capture the record as it was (`given capture`) and as it is now (`when capture`).

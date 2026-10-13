@@ -115,9 +115,6 @@ function specificationName(specification: SpecificationSyntax, onCards: readonly
     }
     if (specification.whenRedelivered != null) details.push(`when ${redeliveryText(specification.whenRedelivered)}`);
     if (specification.thenNoEvents) details.push('then no events');
-    if (specification.whenRedelivered != null || specification.thenNoEvents) {
-        details.push('Syntax-only (PLAY0268); redelivery and no-event expectations are not executable assertions.');
-    }
     if (specification.when?.generatedValues?.length) {
         details.push(`generated (not request inputs): ${mappingText(specification.when.generatedValues)}`);
     }

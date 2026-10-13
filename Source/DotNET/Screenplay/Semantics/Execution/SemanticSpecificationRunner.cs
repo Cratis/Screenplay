@@ -116,8 +116,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key) { Filters = value.Filters }).ToImmutableArray();
 
         // Since ESM v6 an action sets reactions off, and a specification can act through the clock, a trigger or a capture.
-        var acts = expected.When is not null || expected.WhenAppended is not null || expected.WhenClock is not null ||
-            expected.WhenTrigger is not null || expected.WhenCapture is not null;
+        var acts = HasAction(expected);
         if (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) && acts)
         {
             var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts);
@@ -249,12 +248,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return failures.ToImmutable();
         }
 
-        // In ESM v6 the appended event is the action itself, like a command's input: 'then' events are what followed it.
-        var following = actionFacts >= 0 && expected.WhenAppended is not null ? accepted.Facts[actionFacts..] : accepted.Facts;
-        if (expected.WhenAppended is null || expected.ThenEvents.Length > 0)
-        {
-            CompareFacts(plan, expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
-        }
+        CompareFollowingFacts(plan, expected, accepted.Facts, actionFacts, failures);
 
         var commandFacts = actionFacts >= 0 ? accepted.Facts[..actionFacts] : accepted.Facts;
         var generatedIdentifier = expected.When is { } when && plan.Commands[when.Command].Properties.Any(property => property.IsIdentifier && property.IsGenerated);
@@ -275,6 +269,28 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         CompareResponse(expected.ThenReturns, accepted.Response, expected.When is { } action ? plan.Commands[action.Command].Response : null, failures);
         return failures.ToImmutable();
     }
+
+    static bool HasAction(SemanticSpecification specification) =>
+        new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }
+            .Any(action => action is not null);
+
+    static void CompareFollowingFacts(
+        SemanticExecutionPlan plan,
+        SemanticSpecification expected,
+        ImmutableArray<SemanticFact> facts,
+        int actionFacts,
+        ImmutableArray<string>.Builder failures)
+    {
+        // In ESM v6 the appended event is the action itself, like a command's input: 'then' events are what followed it.
+        var following = actionFacts >= 0 && expected.WhenAppended is not null ? facts[actionFacts..] : facts;
+        if (ShouldCompareFacts(expected))
+        {
+            CompareFacts(plan, expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
+        }
+    }
+
+    static bool ShouldCompareFacts(SemanticSpecification specification) =>
+        specification.ThenNoEvents || specification.WhenAppended is null || specification.ThenEvents.Length > 0;
 
     static void CompareResponse(
         SemanticSpecificationResponse? expected,

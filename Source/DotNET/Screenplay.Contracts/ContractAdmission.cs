@@ -92,7 +92,9 @@ static class ContractAdmission
             Slice + Event + Command + "      specification Records\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n",
             [
                 PersonaCallerContext + "      specification RecordsAsPersona\n        given caller as Accountant\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n",
-                Slice + Event + Command + "      specification RecordsCases\n        parameter value String\n        case One value = \"one\"\n        case Two value = \"two\"\n        when Record value = case.value\n        then Recorded value = case.value\n"
+                Slice + Event + Command + "      specification RecordsCases\n        parameter value String\n        case One value = \"one\"\n        case Two value = \"two\"\n        when Record value = case.value\n        then Recorded value = case.value\n",
+                Slice + Event + "      specification NothingFollows\n        when append Recorded\n          value = \"test\"\n        then no events\n",
+                Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction Observer\n        when Recorded\n      specification Recovery\n        given Recorded\n          value = \"test\"\n        when redelivered Recorded to Observer\n        then no events\n"
             ],
             VariantBaselines: [PersonaCallerContext, null]),
         new("dialog", "module M\n  dialog template Dialog\n    body\n    actions\n"),

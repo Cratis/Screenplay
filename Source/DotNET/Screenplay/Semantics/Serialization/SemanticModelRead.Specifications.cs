@@ -17,6 +17,26 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
+    internal static SemanticSpecificationRedelivery SpecificationRedelivery(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "specification redelivery");
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        SemanticId reaction = default;
+        int? given = null;
+        while (NextProperty(ref reader, seen, "specification redelivery") is { } property)
+        {
+            switch (property)
+            {
+                case "reaction": reaction = Identifier(ref reader, property); break;
+                case "given": given = Int32(ref reader, property); break;
+                default: throw Unknown(property, "specification redelivery");
+            }
+        }
+
+        Required(reaction.IsSet && given is >= 0, "specification redelivery");
+        return new(reaction, given!.Value);
+    }
+
     internal static SemanticSpecificationAppend SpecificationAppend(ref Utf8JsonReader reader, uint schemaVersion)
     {
         var value = SpecificationEvent(ref reader, schemaVersion, false);
@@ -86,6 +106,8 @@ internal static partial class SemanticModelRead
             .Add("givenCaller", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenCaller = Nested(ref reader, Caller, property))
             .Add("when", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.When = Nested(ref reader, (ref Utf8JsonReader item) => SpecificationCommand(ref item, state.SchemaVersion), property))
             .Add("whenAppended", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.WhenAppended = Nested(ref reader, (ref Utf8JsonReader item) => SpecificationAppend(ref item, state.SchemaVersion), property))
+            .Add("whenRedelivered", 17, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.WhenRedelivered = Nested(ref reader, SpecificationRedelivery, property))
+            .Add("thenNoEvents", 17, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenNoEvents = OnlyTrue(ref reader, property, "specification"))
             .Add("thenEventsInAnyOrder", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenEventsInAnyOrder = OnlyTrue(ref reader, property, "specification"))
             .Add("thenEvents", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenEvents = Array(ref reader, (ref Utf8JsonReader item) => SpecificationEvent(ref item, state.SchemaVersion, true), property))
             .Add("thenReadModels", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenReadModels = Array(ref reader, SpecificationReadModel, property))
@@ -103,6 +125,10 @@ internal static partial class SemanticModelRead
         public SemanticSpecificationCommand? When { get; set; }
 
         public SemanticSpecificationAppend? WhenAppended { get; set; }
+
+        public SemanticSpecificationRedelivery? WhenRedelivered { get; set; }
+
+        public bool ThenNoEvents { get; set; }
 
         public bool ThenEventsInAnyOrder { get; set; }
 
@@ -139,6 +165,8 @@ internal static partial class SemanticModelRead
                 ThenDenied = ThenDenied,
                 ThenReturns = Returns,
                 WhenAppended = WhenAppended,
+                WhenRedelivered = WhenRedelivered,
+                ThenNoEvents = ThenNoEvents,
                 ThenEventsInAnyOrder = ThenEventsInAnyOrder,
                 ThenAbsentReadModels = SchemaVersion >= 5 ? ThenAbsentReadModels : [],
                 GivenClock = Automation.GivenClock,

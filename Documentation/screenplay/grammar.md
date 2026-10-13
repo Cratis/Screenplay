@@ -1158,7 +1158,7 @@ SpecificationNoStream = "no", "stream", NL ;
    Routing lines under when Command are refused. Fixture routes and no stream
    assertions are admitted by ESM v8. Routed fixtures use
    their source's identifier type, with an unambiguous producer-type fallback.
-   Redelivery remains refused with PLAY0268. *)
+   Redelivery is executable from ESM v17. *)
 
 SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -1299,15 +1299,15 @@ RefusalBranch  = "on", "refused",
                  INDENT, ( "acknowledge", NL | ProducesDecl, { ProducesDecl } ), DEDENT ;
 RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
 
-(* Refusal branches and values, "when redelivered" and "then no events" are syntax-only:
-   binding refuses them with PLAY0268. No executable admission is claimed.
+(* Refusal branches and values remain syntax-only: binding refuses them with PLAY0268.
+   "when redelivered" and "then no events" are executable from ESM v17.
    Branches are ordered; bare refusal excludes authorization. RefusalValue is
    a String source only in branch event mappings; constraint requires a
    "by constraint" selector. Branches cannot produce operations or inline events.
    Redelivery names one compatible event-trigger reaction and locates exactly
    one given event by optional "for" and all stated values, without appending it.
-   "then no events" is a leaf for non-append actions awaiting admission; it cannot
-   accompany events, event-order, error or denial expectations. *)
+   "then no events" asserts the action appended nothing, also after "when append",
+   and is executable from ESM v17; it cannot accompany events, event-order, error or denial expectations. *)
 
 (* What the reaction sets off. Plain "produces" has the same form as on a command;
    InlineEventProduction is not allowed inside reactions.

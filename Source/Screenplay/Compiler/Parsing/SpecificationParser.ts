@@ -139,9 +139,9 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
             context.skipBlock(child.indent);
         }
     }
-    if (body.noEventsLine !== undefined && (body.whenAppended !== null || body.thenEvents.length > 0 || body.thenEventsInAnyOrder || body.thenErrors.length > 0 || body.thenDenied !== null)) {
+    if (body.noEventsLine !== undefined && (body.thenEvents.length > 0 || body.thenEventsInAnyOrder || body.thenErrors.length > 0 || body.thenDenied !== null)) {
         context.error(DiagnosticCodes.InvalidNoEventsExpectation,
-            "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
+            "'then no events' cannot accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
     }
     const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
     const specification: SpecificationSyntax = { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, description, ...members,

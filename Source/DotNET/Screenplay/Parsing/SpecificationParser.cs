@@ -330,11 +330,11 @@ internal static partial class SpecificationParser
             }
         }
 
-        if (thenNoEvents && (whenAppended is not null || thenEvents.Count > 0 || eventsInAnyOrder || thenErrors.Count > 0 || denied is not null))
+        if (thenNoEvents && (thenEvents.Count > 0 || eventsInAnyOrder || thenErrors.Count > 0 || denied is not null))
         {
             context.Error(
                 DiagnosticCodes.InvalidNoEventsExpectation,
-                "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                "'then no events' cannot accompany event, event-order, error or denial expectations.",
                 directiveLocations["then no events"]);
         }
 

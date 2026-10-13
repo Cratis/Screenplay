@@ -35,7 +35,7 @@ describe('when authoring example and redelivery routes', () => {
         const start = last.indexOf('A.S') + 1;
         const hover = eventSourceHover(lines, lines.length - 1, start, start + 3);
         expect(hover).toContain('Specification event routes, including example routes, are admitted in executable semantic model (ESM) v8');
-        expect(hover).toContain('Redelivery remains unadmitted (PLAY0268) (#433)');
+        expect(hover).toContain('Redelivery is executable from ESM v17');
         expect(hover).not.toContain('syntax-only');
         expect(hover).not.toContain('#457');
     });

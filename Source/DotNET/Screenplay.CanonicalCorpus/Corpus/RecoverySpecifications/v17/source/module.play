@@ -1,0 +1,49 @@
+module Billing
+  feature Payments
+    slice Automation Recovery
+      event Approved
+        id PaymentId
+      event Claimed
+        id PaymentId
+      event Finished
+        id PaymentId
+      event OtherObserved
+        id PaymentId
+      command Claim
+        id PaymentId identifier
+        produces Claimed
+          for id
+          id = id
+      reaction Claimer
+        when Approved
+          id
+          invokes Claim
+            id = id
+        where id == "payment-a"
+      reaction Other
+        when Approved
+          id
+          produces OtherObserved
+            id = id
+      reaction Finisher
+        when Claimed
+          id
+          produces Finished
+            id = id
+      specification RedeliveryCascade
+        given Approved
+          id = "payment-a"
+        when redelivered Approved to Claimer
+        then Claimed
+          id = "payment-a"
+        then Finished
+          id = "payment-a"
+      specification FilteredRedelivery
+        given Approved
+          id = "ignored"
+        when redelivered Approved to Claimer
+        then no events
+      specification NothingFollowsAppend
+        when append OtherObserved
+          id = "payment-a"
+        then no events

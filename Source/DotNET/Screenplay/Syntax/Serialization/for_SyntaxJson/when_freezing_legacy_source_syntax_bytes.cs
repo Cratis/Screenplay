@@ -211,7 +211,7 @@ public class when_freezing_legacy_source_syntax_bytes
     static FeatureSyntax WithoutSampleRoutesAndKeys(FeatureSyntax feature) => feature with
     {
         Features = feature.Features.Select(WithoutSampleRoutesAndKeys),
-        Slices = feature.Slices.Select(slice => slice.Name switch
+        Slices = feature.Slices.Select(WithoutSampleRecoverySpecifications).Select(slice => slice.Name switch
         {
             "InvoiceList" => slice with
             {
@@ -250,6 +250,20 @@ public class when_freezing_legacy_source_syntax_bytes
             },
             _ => slice
         })
+    };
+
+    // Current shared vectors cover these v17 assertions; keep the pre-feature source bytes frozen.
+    static SliceSyntax WithoutSampleRecoverySpecifications(SliceSyntax slice) => slice.Name switch
+    {
+        "ReconcilePayments" => slice with
+        {
+            Specifications = slice.Specifications.Where(specification => specification.Name != "IgnoringAZeroValuePayment")
+        },
+        "ChaseOverdueInvoices" => slice with
+        {
+            Specifications = slice.Specifications.Where(specification => specification.Name != "RecoveringAnUndeliveredOverdueReminder")
+        },
+        _ => slice
     };
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with

@@ -56,20 +56,12 @@ public sealed partial class SemanticModelBinder
                 UsesPublicEvents = true;
             }
 
-            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax)
+            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Reaction refusal handling and redelivery are not admitted by any supported executable model (ESM) version yet (#433).",
+                    "Reaction refusal branches and $refusal values are not admitted by any supported executable model (ESM) version yet (#433).",
                     node.Location));
-            }
-
-            if (node is SpecificationSyntax { ThenNoEvents: true } specification)
-            {
-                Diagnostics.Add(Diagnostic.Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Explicit no-event assertions are not admitted by any supported executable model (ESM) version yet (#433).",
-                    specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location)));
             }
 
             if (!SpecificationRoutesJoin && (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax))

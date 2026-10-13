@@ -102,7 +102,7 @@ specification <Name>
   when append <EventType>
     [for <event-source-value>]
     <property> = <value>
-  when redelivered <EventType> to <Reaction> // syntax-only
+  when redelivered <EventType> to <Reaction>
     [for <event-source-value>]
     [<property> = <value> ...]
   when clock "<ISO 8601 instant>"
@@ -112,7 +112,7 @@ specification <Name>
     <field> = <value>
   when query <Query>
     <argument> = <value>
-  then no events // syntax-only
+  then no events
   then events in any order
   then <EventType>
     [for <event-source-value>]
@@ -136,9 +136,9 @@ specification <Name>
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` or `given caller as <Persona>` — zero or one, never both. The explicit block states authentication, roles, and repeatable claim values. The persona form has no body and expands into an authenticated deterministic witness satisfying every persona policy; see [persona synthesis](personas.md#persona-callers-in-specifications). Either form satisfies the caller requirement for an authorized scenario (`PLAY0389`). It supplies no actor to reaction invocations.
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
-- `when redelivered <EventType> to <Reaction>` — syntax-only action selecting exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and is not yet executable (`PLAY0268`). See [Redelivery specifications](#redelivery-specifications-syntax-only).
-- `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.
-- `then no events` — once per specification, with no children. Explicitly expects no new events after a non-append action. It can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). It is rejected after `when append`. It is syntax-only: binding refuses it with `PLAY0268` until the same admission checkpoint as refusal handling and redelivery. Existing executable contracts still require at least one success outcome for a successful action; an outcome-less specification does not bind.
+- `when redelivered <EventType> to <Reaction>` — selects exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and selects ESM v17. See [Redelivery specifications](#redelivery-specifications).
+- `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. From ESM v6, `when append` excludes the action's appended fact: asserted events compare the facts its reactions appended. Omit them to check only projected state or queries, or use `then no events` to assert explicitly that nothing followed.
+- `then no events` — once per specification, with no children. Selects ESM v17 and asserts that the action and its reaction cascade appended no new facts. After `when append`, it excludes the action's appended fact and asserts that nothing followed it. It counts as a success outcome and can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). An outcome-less specification still does not bind; omission is not an explicit no-event assertion.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
@@ -469,11 +469,9 @@ In v6, projection arithmetic outside the reference numeric range returns `Semant
 
 Default `Startup` and `Shutdown` signals carry no values. If a host registration overrides either with values or an unknown shape, semantic binding rejects its use until a typed trigger declaration supplies an admitted shape; a matching name alone does not make it an empty built-in.
 
-## Redelivery specifications (syntax-only)
+## Redelivery specifications
 
-> Event redelivery is not yet executable. Both compilers parse and preserve `when redelivered`; the .NET compiler validates the reaction and occurrence locator. Binding refuses it with `PLAY0268`, and MCP reports it as unadmitted. It does not run as `when append` or silently omit the action.
-
-Recovery can deliver an existing fact to one reaction without appending another fact. This syntax-only example declares the event and its observer before selecting a given occurrence:
+Recovery can deliver an existing fact to one reaction without appending another fact. `when redelivered` selects ESM v17. The reference establishes givens without firing reactions, delivers only to the named reaction, then settles the ordinary cascade. This example declares the event and its observer before selecting a given occurrence:
 
 ```screenplay
 module Billing
@@ -485,19 +483,17 @@ module Billing
         when Approved
       specification Recovery
         given Approved
-          for "invoice-1"
           invoice = "invoice-1"
         when redelivered Approved to Claimer
-          for "invoice-1"
           invoice = "invoice-1"
         then no events
 ```
 
-`to <Reaction>` is required. The reaction must resolve unambiguously and observe the stated event (`PLAY0544` otherwise). The optional `for`, every stated property value and an optional route narrow the effective, example-expanded given occurrences of that event. Duplicate occurrences remain separate candidates. **Exactly one** must match (`PLAY0543` otherwise); an empty body is sufficient when there is exactly one given fact of that event. This is the specification's sole action, not an additional step after a command or append. `then no events` is also syntax-only and does not make a redelivery scenario executable. A locator without a route treats routes as a wildcard. `stream Source.Stream` requires the same resolved source and stream with canonically equal ids; composite parts compare in declaration order, so mapping order and UUID case do not matter. `no stream` selects only unrouted givens. A locator's `for` stays optional; when stated beside a route it must match the source identifier type (`PLAY0550`). Malformed route lines use `PLAY0547`, and resolution or key-shape errors use `PLAY0549`, never the command-only `PLAY0548`.
+`to <Reaction>` is required. The reaction must resolve unambiguously and observe the stated event (`PLAY0544` otherwise). The optional `for`, every stated property value and an optional route narrow the effective, example-expanded given occurrences of that event. Duplicate occurrences remain separate candidates. **Exactly one** must match (`PLAY0543` otherwise); an empty body is sufficient when there is exactly one given fact of that event. This is the specification's sole action, not an additional step after a command or append. `then no events` asserts that the delivery produced nothing. A locator without a route treats routes as a wildcard. `stream Source.Stream` requires the same resolved source and stream with canonically equal ids; composite parts compare in declaration order, so mapping order and UUID case do not matter. `no stream` selects only unrouted givens. A locator's `for` stays optional; when stated beside a route it must match the source identifier type (`PLAY0550`). Malformed route lines use `PLAY0547`, and resolution or key-shape errors use `PLAY0549`, never the command-only `PLAY0548`.
 
-Each `for`, payload and route comparison is true, false or unknown. A definite false rules out the candidate even if another comparison is unknown. The locator succeeds only with exactly one definitely true candidate and no unknown candidates. Otherwise `PLAY0543` asks you to use `for`, values, `stream` or `no stream`. A routed locator receives separate `PLAY0268` refusals for redelivery and specification routes; admitting routes alone does not admit redelivery. A given without `for` retains a null source; its producer supplies a source type, not a concrete locator identity.
+Each `for`, payload and route comparison is true, false or unknown. A definite false rules out the candidate even if another comparison is unknown. The locator succeeds only with exactly one definitely true candidate and no unknown candidates. Otherwise `PLAY0543` asks you to use `for`, values, `stream` or `no stream`. Equivalent locators bind to the same reaction identity and zero-based given-event position. A given without `for` retains a null source; its producer supplies a source type, not a concrete locator identity.
 
-[Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines the intended execution at admission: establish givens without firing reactions, deliver the selected existing fact only to the named reaction, then settle the ordinary cascade. Do not append the fact again. New effects take the `given clock` instant, and event expectations compare all newly accepted facts. Delivery identity is the reaction paired with the selected given-fact position, not equality of event values as a runtime deduplication guarantee.
+[Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines the execution, admitted under [0074](https://github.com/Cratis/Screenplay/blob/main/decisions/0074-admit-no-event-assertions-and-redelivery-before-refusal-branches.md): establish givens without firing reactions, deliver the selected existing fact only to the named reaction, then settle the ordinary cascade. Do not append the fact again. New effects take the `given clock` instant, and event expectations compare all newly accepted facts. Delivery identity is the reaction paired with the selected given-fact position, not equality of event values as a runtime deduplication guarantee.
 
 A `given caller` supplies no actor to a reaction invocation. Unhandled validation and constraint refusals remain assertable as `then error`; authorization denial uses `then denied`. Recovery redelivery is ordinary observation, not replay, and does not prove once-only external effects. Clock, application-trigger and capture repetition keep their existing action forms. Refusal branches have their own [syntax and admission boundary](reactions.md#refusal-branches-syntax-only).
 
@@ -539,7 +535,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
-| `when redelivered <EventType> to <Reaction>` | Syntax-only: select exactly one given occurrence for one event-trigger reaction; not yet executable. |
+| `when redelivered <EventType> to <Reaction>` | Deliver exactly one given occurrence to one event-trigger reaction, without appending it again (ESM v17). |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
@@ -548,7 +544,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `when query <Query>` | Perform a query with its arguments. |
 | `then result [exactly]` | One expected row of the performed query; repeat for several. |
 | `then no result` | The performed query returns nothing. |
-| `then no events` | Syntax-only assertion of no new facts after a non-append action; binding refuses it until admission. |
+| `then no events` | Assert no new facts from the action and its cascade; after an append, exclude the action's fact (ESM v17). |
 | `then events in any order` | Ignore order, but still require the exact set of new facts. |
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |
