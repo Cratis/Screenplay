@@ -76,7 +76,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV15Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV16Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -100,6 +100,7 @@ internal static partial class SemanticModelValidator
 
         var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application);
         context.RegisterApplication(application);
+        ValidateStoredEventNames(application, semanticVersion);
         ValidateGenerationVersion(application, semanticVersion);
         ValidateComplianceVersion(application, semanticVersion);
         ValidateQueryFilterVersion(application, semanticVersion);

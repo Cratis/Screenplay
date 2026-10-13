@@ -41,10 +41,9 @@ public class when_lowering_inline_events : given.a_semantic_binder
     {
         var withMetadata = Bind(Inline + "          id \"OldName\"\n          description \"A new name\"\n          documentation\n            ```markdown\n            More **details**.\n            ```\n");
         withMetadata.Success.ShouldBeTrue();
-        withMetadata.Diagnostics.Count().ShouldEqual(2);
+        withMetadata.Diagnostics.Count().ShouldEqual(1);
         withMetadata.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax).Severity.ShouldEqual(DiagnosticSeverity.Information);
-        withMetadata.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.EventIdPinNotCarriedToRenderers).Severity.ShouldEqual(DiagnosticSeverity.Warning);
-        SemanticModelSerializer.Serialize(withMetadata.Value!.Model).SequenceEqual(SemanticModelSerializer.Serialize(Bind(Inline).Value!.Model)).ShouldBeTrue();
+        SemanticModelSerializer.Serialize(withMetadata.Value!.Model).SequenceEqual(SemanticModelSerializer.Serialize(Bind(Inline + "          id \"OldName\"\n").Value!.Model)).ShouldBeTrue();
     }
 
     [Fact]

@@ -82,8 +82,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_describe_event_pin_warnings_in_the_public_tool_list()
     {
         var description = _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
-        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
-        description.ShouldContain("eventPinWarnings");
+        description.ShouldContain("Event pins are carried as storedName by ESM v16; consumers must explicitly admit that version.");
     }
 
     [Fact]

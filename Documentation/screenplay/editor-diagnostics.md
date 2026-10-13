@@ -40,7 +40,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 | PLAY0661, PLAY0662 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
 | PLAY0530–PLAY0537 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. TypeScript has no completeness-check API. They are not ordinary parser warnings. |
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |
-| PLAY0686 | The semantic binder warns that event `id` pins do not yet reach renderers; generated code uses the current name. Both editors preserve supplied C# warnings, but ordinary TypeScript validation does not bind the ESM. |
+| PLAY0686 | Retired by ESM v16, which carries event `id` pins as stored names. Both editors still preserve warnings supplied by earlier native compilers; ordinary TypeScript validation does not bind the ESM. |
 
 The opt-in C# repair bridge is not a general C# validation service. Run the CLI or MCP checks for C#-only verdicts. Public-event repair capabilities and ESM, Stage and Chronicle support remain required before the full feature ships.
 

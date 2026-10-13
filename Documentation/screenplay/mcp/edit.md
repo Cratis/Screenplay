@@ -71,7 +71,8 @@ revision is admitted, the rename preserves its stored name and refuses
 `eventNeverPersisted`. Review `eventRename.mutability` and `eventRename.pinAdded`
 in the proposal and retained review.
 
-**Caution:** the event pin is not yet carried to renderers; generated code uses the new name. Review `eventPinWarnings` before applying; the pin alone does not preserve generated stored identity ([#704](https://github.com/Cratis/Screenplay/issues/704)).
+
+Event pins that differ from the display name select ESM v16, which carries the stored name to consumers; equal-name pins keep the earlier version and bytes. A consumer must explicitly admit that version or refuse the model. The compatibility `eventPinWarnings` array is empty; inspect the candidate's binding diagnostics before applying.
 
 ## Change a property everywhere it flows
 
