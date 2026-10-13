@@ -218,6 +218,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceInteractionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.LowGenerationEntropy || diagnostic.Code == DiagnosticCodes.LowGeneratedIdentifierEntropy)
+        {
+            return WorkspaceGenerationRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey)
         {
             return WorkspaceReadModelKeyRepairs.Find(index, revision, diagnostic, verifyRepair);
@@ -261,6 +266,16 @@ public static class WorkspaceDiagnosticRepairs
         if (code == DiagnosticCodes.LegacyOptionalSuffix && entry.Node is ApplicationSyntax)
         {
             return WorkspaceOptionalityRepairs.ForDocument(index, subject, false);
+        }
+
+        // Length repairs target the concept, which can be in another document than the diagnostic.
+        // Distinct subjects also select the length and unique-constraint actions without a new tool argument.
+        if (code == DiagnosticCodes.LowGenerationEntropy || code == DiagnosticCodes.LowGeneratedIdentifierEntropy)
+        {
+            return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code)
+                .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
+                .Where(repair => repair.Subject == subject)
+                .DistinctBy(repair => repair.Title);
         }
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on

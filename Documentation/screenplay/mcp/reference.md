@@ -102,6 +102,31 @@ Use `kind: "Purpose"` to read a declared [processing purpose](../purposes.md). `
 
 ## Generated values and responses
 
+For `kind: "Concept"`, the `declaration-details` summary includes `generation` only when you authored `generate`. It reports:
+
+| Field | Contract |
+| --- | --- |
+| `strategy` | Authored strategy name. |
+| `modifiers` | Only the authored `prefix`, `case`, `size`, `alphabet`, `count` and `encoding` values; implicit defaults are not added. |
+| `entropyBits` | Exact random bits for UUID, UUIDv7, ULID, TypeID, NanoID and bytes; null for preview strategies. Prefixes and encodings add no entropy. |
+| `entropyUnknownReason` | Present only when entropy is unknown. |
+| `valuesAtOnePercentCollision` | JSON number estimating the count at 1% birthday collision probability, or null for unknown entropy. Large counts use scientific notation and can exceed a client's floating-point range. |
+| `executable` | `available` and `diagnosticCodes`, using the compiler's error diagnostics at the concept or generation declaration. Whole-model readiness remains separate. |
+| `previewArguments` | Authored `pattern`, `checksum`, `range` and `rule`, each as `{ "value": "…", "executable": false }`; omitted when none are set. |
+
+`propose-ast` can replace `ConceptSyntax` with a `generation` member of kind `GenerationSyntax`, or omit/null that member to remove it. `propose-source` accepts the equivalent complete source document. Both print canonical `generate` source and report compiler executable diagnostics independently of authoring acceptance. `generate sequence` reports `PLAY0682`; preview strategies and generated-concept validation rules report `PLAY0268`.
+
+`read-workspace` with `view: "repairs"` offers these revision-bound actions:
+
+| Diagnostic | Title | Eligibility and subject |
+| --- | --- | --- |
+| `PLAY0683`, `PLAY0684` | Raise generation to at least 64 random bits | NanoID: smallest size reaching 64 bits for its alphabet. Bytes: count 8. Subject is the concept, even when it lives in another document than the diagnosed property. |
+| `PLAY0683` | Add a unique constraint for the generated property | Exactly one production maps the command property to exactly one event property. Subject is the command property; the constraint is added to its slice. Not offered for identifiers. |
+
+Pass the selected action's `diagnosticCode` and `subject` to `propose-repair` with `formatting: "CanonicalizeTouchedDocuments"`. The subjects distinguish the two `PLAY0683` actions without another tool or argument. Both require individual review through `read-proposal`, then explicit `apply`; neither supports pinned attachment evidence. Discovery and proposal never write files. The saved-file VS Code repair picker does not expose these entropy actions.
+
+Derived regexes, derived `matches`/checksum repairs and rule-proof status are not part of this generation view; they await rule-consistency support.
+
 Reaction `declaration-details` summaries add `runsAs`: the declared `kind`, exact `roles`, source `location`, `readiness` note and `crossBoundaryRoles` (roles referenced only by effective command gates outside the reaction's own module). It covers returned and invoked commands, not imperative pipeline calls inside implementation bodies. Cross-boundary roles are allowed without a diagnostic. Clock and application triggers may declare the identity, but have no Arc realization in Stage yet; the note reports this without a source warning. `syntax-schema` includes the init member `ReactionSyntax.runsAs` and `ReactionIdentitySyntax` (`syntaxKind: "system"`, roles); `propose-ast` may set or remove it under the ordinary review/apply contract. Reaction, slice and model readiness no longer refuse reaction command identity. The executable-model export includes `runsAs: {"kind":"system","roles":[...]}` only when declared, with ordinally sorted roles (possibly empty), selecting released ESM v10. Claim conditions evaluate to unknown for the system identity. `diagnostics` accepts `checks: "privilege"` for the event-producer comparison (`PLAY0652`).
 
 Event `declaration-details` summaries expose `subject: { "source": "eventSource" }` by default, or `{ "source": "property", "property": "<name>" }` for a trailing event-property `subject` mark. Property pages expose `isSubject`; `syntax-schema` describes optional `PropertySyntax.isSubject`, omitted when false. This is report-only lineage metadata (`PLAY0270`), not executable subject propagation or provider output. Rename and inline extraction preserve the mark.
@@ -756,7 +781,7 @@ no open workspace. Its `structuredContent` identifies
 The [narrow response schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/mcp/repair-capabilities-v1.schema.json) covers capabilities,
 evidence metadata and the failure discriminator, not every MCP feature.
 
-The contract advertises `PLAY0166`, `PLAY0478`, `PLAY0563`, `PLAY0564`, `PLAY0614` and `PLAY0653` through `propose-repair`. `PLAY0653` removes duplicate compliance markers from one concept header with `PreserveTrivia` and does not support pinned evidence. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
+The contract advertises `PLAY0166`, `PLAY0478`, `PLAY0563`, `PLAY0564`, `PLAY0614`, `PLAY0653`, `PLAY0661`, `PLAY0683` and `PLAY0684` through `propose-repair`. `PLAY0661` completes missing command-read key parts only with unique same-named compatible sources; queries and trigger reads are not repaired. `PLAY0683`/`PLAY0684` raise NanoID size or bytes count to at least 64 random bits using the concept subject, including across documents. `PLAY0683` also offers a unique constraint using the command-property subject when exactly one production maps it to exactly one event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. `PLAY0653` removes duplicate compliance markers from one concept header with `PreserveTrivia` and does not support pinned evidence. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
 `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
 repairs outside this contract remain available to legacy clients. Feature support
 comes from negotiation, not a CLI version or an ESM version. Initialize with MCP

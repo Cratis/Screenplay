@@ -57,4 +57,14 @@ module Billing
 
 From v15, each generated fixture must match the strategy's exact encoding, size, letter case, UUID version and variant. Invalid fixtures are contract rejections, not client validation errors. Older models keep canonical UUID type validation, without a version check. Seeds are not portable: a provider or algorithm upgrade could change their output.
 
+## Work with strategies through MCP
+
+You can inspect and change the concept's strategy without editing generated values on each command. `declaration-details` with `kind: "Concept"` and `view: "summary"` shows the authored strategy and modifiers, exact random bits, the count at 1% collision probability, and compiler refusal codes. An implicit UUID default has no authored `generation` block.
+
+The existing `propose-ast` tool replaces a `ConceptSyntax` with its typed `GenerationSyntax`; `propose-source` accepts the equivalent whole source document. Set, change or remove `generation`, review the proposal, then explicitly apply it. Canonical printing retains `generate`. Authoring acceptance does not imply executable readiness: preview strategies and generated-concept rules still carry the compiler's refusals.
+
+For `PLAY0683` or `PLAY0684`, the repair inventory can offer a larger NanoID or byte count reaching 64 random bits. A non-identifier mapped into one event property can instead gain an explicit unique constraint (`PLAY0683`). These are alternative model changes, not silent fixes: use the selected subject with `propose-repair`, review the changed documents, then apply. A length change affects every property using the concept; a unique constraint changes append-time behavior.
+
+Derived regexes, derived `matches` and checksum repairs, and rule-proof status await the rule-consistency phase. See the [MCP generation reference](mcp/reference.md#generated-values-and-responses) for the fields and repair contract.
+
 High-entropy built-ins are executable: `uuid`, `uuidv7`, `ulid`, `typeid`, `nanoid`, and `bytes`. `pattern`, `random`, and `rule` are parsed and printed but not yet executable. `sequence` is reserved. Rules and compliance markers on generated concepts remain refused. See [strategy reference](generated-values/strategies.md) and [choosing a strategy](generated-values/choosing.md).

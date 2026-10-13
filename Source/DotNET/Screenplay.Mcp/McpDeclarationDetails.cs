@@ -150,6 +150,11 @@ static class McpDeclarationDetails
             "syntax" => declaration.Syntax,
             _ => throw new McpFailure($"View '{view}' is not available for {declaration.Kind}.", -32602)
         };
+        if (view == "summary" && declaration.Syntax is ConceptSyntax { Generation: not null } generated)
+        {
+            details = McpGenerationDetails.Summary(details, snapshot, generated);
+        }
+
         return new
         {
             snapshot.Compilation.Success,

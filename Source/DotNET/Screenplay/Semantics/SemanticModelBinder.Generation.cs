@@ -66,17 +66,9 @@ public sealed partial class SemanticModelBinder
         void ValidateGenerationEntropy(CommandSyntax command, PropertySyntax property, ConceptSyntax concept)
         {
             var generation = concept.Generation;
-            var bits = generation?.Strategy switch
-            {
-                null or "uuid" => 122,
-                "uuidv7" or "typeid" => 74,
-                "ulid" => 80,
-                "nanoid" => (generation.Size ?? 21) * Math.Log2((generation.Alphabet ?? SemanticGenerationContract.DefaultAlphabet).Length),
-                "bytes" when generation.Count is { } count => 8 * count,
-                _ => 0
-            };
-            if (bits >= 64 || generation?.Strategy == "pattern" || generation?.Strategy == "random" || generation?.Strategy == "rule" || generation?.Strategy == "sequence") return;
-            var countAtOnePercent = Math.Sqrt(2 * Math.Pow(2, bits) * Math.Log(1 / 0.99));
+            var bits = GenerationEntropy.Bits(generation);
+            if (bits is null || bits >= 64) return;
+            var countAtOnePercent = GenerationEntropy.ValuesAtOnePercentCollision(bits.Value);
             var message = string.Create(CultureInfo.InvariantCulture, $"Generated property '{property.Name}' of '{command.Name}' has {bits:0.##} random bits; 1% collision probability after about {countAtOnePercent:G4} values.");
             if (property.IsIdentifier) Error(DiagnosticCodes.LowGeneratedIdentifierEntropy, message + " Generated identifiers require at least 64 random bits.", property.Location);
             else if (!HasUniqueGenerationTarget(command, property)) Warning(DiagnosticCodes.LowGenerationEntropy, message, property.Location);
