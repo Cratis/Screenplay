@@ -103,7 +103,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     internal static bool IsEmpty(SemanticValue value) => value switch
     {
         SemanticNullValue => true,
-        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
+        SemanticTextValue text => string.IsNullOrWhiteSpace(text.Value),
         SemanticArrayValue array => array.Values.IsEmpty,
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()
