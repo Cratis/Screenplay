@@ -11,6 +11,7 @@ import { validateDependencyDeclarations } from './Dependencies/DeclaredDependenc
 import { DeclaredDependencies } from './Dependencies/DeclaredDependencies';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
+import { ContinuationValueUse } from './Parsing/ContinuationValueUse';
 import { InputUse } from './Parsing/InputUses';
 import { GuardedInteractionBinding, interactionAncestry } from './Parsing/InteractionAlternatives';
 import { validateResponses } from './Parsing/ResponseValidator';
@@ -67,7 +68,7 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[]; readonly guardedInteractions: readonly GuardedInteractionBinding[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[]; readonly continuationValues: readonly ContinuationValueUse[]; readonly guardedInteractions: readonly GuardedInteractionBinding[] } {
     const lines = splitLines(source, false, path);
     const context = sourceContext(lines, path, languages);
     context.scope = placement;
@@ -105,6 +106,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         diagnostics: context.diagnostics,
         triggerData: context.triggerData,
         inputUses: context.inputUses,
+        continuationValues: context.continuationValues,
         guardedInteractions: context.guardedInteractions,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };

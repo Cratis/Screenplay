@@ -159,6 +159,16 @@ Attaching `on success` to a `navigate`, a `notify`, a `set` or a `close dialog` 
 
 Writing actions *after* an unconditional `navigate` is reported too: the screen they were written for is already gone.
 
+## Returned values in continuations
+
+After a command succeeds, you can pass its response to the next action by name. A scalar `returns invoiceId` exposes `invoiceId`; a `returns` block exposes its field names. Those names are available in the form's one-line or block `on submit`, and in `on success` beneath `execute <Command>`.
+
+A bare value in `with … from …`, `set … to …`, or an unquoted `notify` / `confirm` message resolves to the nearest successful command response that supplies that name. A form field or behavior parameter with the same name keeps its existing meaning. Dotted paths, `$`-rooted bindings, quoted literals and other opaque text are unchanged. Action declaration names and state-write targets are not response operands.
+
+A nested command's `on success` shadows matching outer response names only inside that subtree; siblings restore the outer scope. Its `on failure` cannot use its returned names (`PLAY0685`), but can still use an outer command's successful response. Continuations of `refresh`, `confirm`, `open dialog` and `raise` inherit their surrounding value scope rather than creating a response. A parameterized `execute command` inside a named behavior has no known response shape at declaration time.
+
+Monaco and VS Code complete returned names after `from` and the form sugar's `by`, and hover shows the field type. This is an authoring contract outside the ESM: renderers must bind response values. Screen `action <Command>` navigation sugar does not gain a response scope.
+
 ## Where a behavior attaches
 
 A behavior attaches at every level of the containment tree, and means the same thing at each:

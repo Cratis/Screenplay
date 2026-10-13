@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -10,7 +11,7 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Validates generated fixtures, request boundaries and response assertions using known syntax shapes.
 /// </summary>
-internal static class SpecificationResponseValidator
+internal static partial class SpecificationResponseValidator
 {
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
@@ -84,6 +85,9 @@ internal static class SpecificationResponseValidator
         }
     }
 
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex BareNameRegex();
+
     sealed class CommandIndex
     {
         readonly ILookup<string, (CommandSyntax Node, Declaration Declaration)> _commands;
@@ -128,8 +132,12 @@ internal static class SpecificationResponseValidator
 
     sealed class InputWalker(CommandIndex index, ParserContext context) : ScreenplaySyntaxWalker
     {
+        readonly List<CommandSyntax> _success = [];
+        readonly List<CommandSyntax> _failure = [];
         DeclarationScope _scope = new([]);
         HashSet<string> _parameters = [];
+        HashSet<string> _fields = [];
+        CommandSyntax? _formCommand;
 
         public override void VisitModule(ModuleSyntax syntax)
         {
@@ -165,8 +173,51 @@ internal static class SpecificationResponseValidator
 
         public override void VisitForm(FormSyntax syntax)
         {
-            if (index.Resolve(syntax.For, _scope) is { } command) RejectInputs(syntax.Fields.Select(field => (field.Property, field.Location)), index.Generated(command), context);
+            var previousCommand = _formCommand;
+            var previousFields = _fields;
+            _formCommand = index.Resolve(syntax.For, _scope);
+            _fields = syntax.Fields.Select(field => field.Property).ToHashSet(StringComparer.Ordinal);
+            if (_formCommand is { } command)
+            {
+                RejectInputs(syntax.Fields.Select(field => (field.Property, field.Location)), index.Generated(command), context);
+                if (syntax.OnSubmit?.By is { } by) InContinuation(command, true, () => ValidateValue(by, syntax.OnSubmit.Location));
+            }
+
             base.VisitForm(syntax);
+            _formCommand = previousCommand;
+            _fields = previousFields;
+        }
+
+        public override void VisitInteractionBinding(InteractionBindingSyntax syntax)
+        {
+            if (_formCommand is { } command && syntax.Trigger is BuiltInInteractionTriggerSyntax { Kind: InteractionTriggerKind.Submit })
+            {
+                InContinuation(command, true, () => base.VisitInteractionBinding(syntax));
+            }
+            else
+            {
+                base.VisitInteractionBinding(syntax);
+            }
+        }
+
+        public override void VisitInteractionAction(InteractionActionSyntax syntax)
+        {
+            // Target validation is independent of where an argument's value resolves.
+            if (syntax is ExecuteCommandActionSyntax execute) VisitExecuteCommandAction(execute);
+            foreach (var argument in syntax.Arguments) ValidateValue(argument.Binding, argument.Location);
+            var value = syntax switch
+            {
+                SetStateActionSyntax set => set.Value,
+                NotifyActionSyntax { MessageIsLiteral: false } notify => notify.Message,
+                ConfirmActionSyntax { MessageIsLiteral: false } confirm => confirm.Message,
+                _ => null
+            };
+            if (value is not null) ValidateValue(value, syntax.Location);
+
+            var command = syntax is ExecuteCommandActionSyntax executed && !_parameters.Contains(executed.Command) ? index.Resolve(executed.Command, _scope) : null;
+            InContinuation(command, true, () => VisitActions(syntax.OnSuccess));
+            InContinuation(command, false, () => VisitActions(syntax.OnFailure));
+            VisitActions(syntax.OnResult);
         }
 
         public override void VisitInvokes(InvokesSyntax syntax)
@@ -180,5 +231,30 @@ internal static class SpecificationResponseValidator
             if (!_parameters.Contains(syntax.Command) && index.Resolve(syntax.Command, _scope) is { } command) RejectInputs(syntax.Arguments.Select(argument => (argument.Name, argument.Location)), index.Generated(command), context);
             base.VisitExecuteCommandAction(syntax);
         }
+
+        void VisitActions(IEnumerable<InteractionActionSyntax> actions)
+        {
+            foreach (var action in actions) VisitInteractionAction(action);
+        }
+
+        void InContinuation(CommandSyntax? command, bool success, Action visit)
+        {
+            var scopes = success ? _success : _failure;
+            if (command is not null) scopes.Add(command);
+            visit();
+            if (command is not null) scopes.RemoveAt(scopes.Count - 1);
+        }
+
+        void ValidateValue(string value, SourceLocation location)
+        {
+            // Opaque paths, expressions, literals and existing local bindings keep their meaning.
+            if (!BareNameRegex().IsMatch(value) || _parameters.Contains(value) || _fields.Contains(value) || _success.Exists(command => Returns(command, value))) return;
+            if (_failure.LastOrDefault(command => Returns(command, value)) is { } failed)
+            {
+                context.Error(DiagnosticCodes.ResponseNameUsedOnFailure, $"'{value}' is returned by '{failed.Name}' only on success", location);
+            }
+        }
+
+        bool Returns(CommandSyntax command, string name) => command.Response is ScalarCommandResponseSyntax scalar ? scalar.Source.Property == name : index.ResponseFields(command).ContainsKey(name);
     }
 }

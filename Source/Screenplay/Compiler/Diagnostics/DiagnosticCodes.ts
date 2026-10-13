@@ -426,4 +426,5 @@ export const DiagnosticCodes = {
     ReservedSequenceGeneration: 'PLAY0682',
     LowGenerationEntropy: 'PLAY0683',
     LowGeneratedIdentifierEntropy: 'PLAY0684',
+    ResponseNameUsedOnFailure: 'PLAY0685',
 } as const;

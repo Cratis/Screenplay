@@ -685,6 +685,9 @@ module Invoicing
         dueDate        Date
         isProForma     Bool
 
+        // The form's successful submit can navigate using this returned identity.
+        returns invoiceId
+
         authorize CanManageInvoice
 
         validate

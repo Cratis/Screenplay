@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { collectContinuationValues } from './ContinuationValues';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { pattern } from '../Text/patterns';
 import { firstWord, unescapeIdentifier } from './LineText';
@@ -64,6 +65,7 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
         }
     }
     validateInteractionBodies(context, lines);
+    context.continuationValues.push(...collectContinuationValues(lines, context.scope));
     // Parameters may be declared after their bindings; commit facts once their scope is complete.
     for (const input of inputs) context.inputUses.push(parameters.has(input.command) ? { ...input, isParameter: true } : input);
 }

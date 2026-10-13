@@ -3166,4 +3166,9 @@ public static class DiagnosticCodes
     /// A generated identifier has fewer than 64 random bits.
     /// </summary>
     public const string LowGeneratedIdentifierEntropy = "PLAY0684";
+
+    /// <summary>
+    /// A command response name is used in that command's failure continuation.
+    /// </summary>
+    public const string ResponseNameUsedOnFailure = "PLAY0685";
 }

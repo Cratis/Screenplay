@@ -134,7 +134,11 @@ form RegisterInvoiceForm for RegisterInvoice
 
 ## Submitting
 
-`on submit navigate to <Screen> [by <param>]` reuses the same navigation shape a screen's `action` and `on row-click` use. Omit it and a successful submit simply leaves the user where they were.
+`on submit navigate to <Screen> [by <param>]` runs after the form's command succeeds. A bare `by` name can use a scalar response's source name or a field name from a `returns` block. For example, `RegisterInvoice` in [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) declares `returns invoiceId`, and its form uses `on submit navigate to InvoiceDetails by invoiceId` without supplying an invoice identity field.
+
+A block `on submit` has the same response scope: use `with id from invoiceId` on a navigation action, or a returned name in `set … to`, `notify` or `confirm`. Form fields keep their existing meaning if their names collide with response names. Nested `execute` success and failure branches follow the [continuation value rules](interactions.md#returned-values-in-continuations). Omit `on submit` and a successful submit simply leaves the user where they were.
+
+This form scope is not added to a screen's `action … navigate … by …` sugar. Compilers resolve the names; renderers must bind the actual values.
 
 ## How references resolve
 

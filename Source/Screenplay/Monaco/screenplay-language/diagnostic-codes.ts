@@ -240,6 +240,7 @@ export const diagnosticCodes = {
     reservedSequenceGeneration: 'PLAY0682',
     lowGenerationEntropy: 'PLAY0683',
     lowGeneratedIdentifierEntropy: 'PLAY0684',
+    responseNameUsedOnFailure: 'PLAY0685',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

@@ -671,6 +671,7 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 | `PLAY0682` | Error | Binding refuses reserved sequence generation until #619. |
 | `PLAY0683` | Warning | Generated property has fewer than 64 random bits; names the approximate 1% collision draw count. Suppressed when a unique constraint covers its mapped event property. |
 | `PLAY0684` | Error | Generated identifier has fewer than 64 random bits. |
+| `PLAY0685` | Error | A returned name is used under the returning command's `on failure`. Use it in `on success` instead; form fields and behavior parameters keep their existing meaning, and an outer successful response remains available. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 
