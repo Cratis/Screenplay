@@ -67,6 +67,21 @@ static class McpVisualization
         };
     }
 
+    /// <summary>
+    /// The declarations a board draws that a change adds and removes.
+    /// </summary>
+    /// <param name="before">The workspace before the change.</param>
+    /// <param name="after">The workspace after the change.</param>
+    /// <returns>The added and removed declarations, each as kind and address, in ordinal order.</returns>
+    internal static (string[] Added, string[] Removed) DrawnChanges(ScreenplayWorkspace before, ScreenplayWorkspace after)
+    {
+        var drawnBefore = Drawn(before);
+        var drawnAfter = Drawn(after);
+        return (
+            [.. drawnAfter.Except(drawnBefore).Order(StringComparer.Ordinal)],
+            [.. drawnBefore.Except(drawnAfter).Order(StringComparer.Ordinal)]);
+    }
+
     static object[] Changes(ImmutableArray<WorkspaceDocument> current, ImmutableArray<WorkspaceDocument> proposed)
     {
         var before = current.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
@@ -85,12 +100,18 @@ static class McpVisualization
         return [.. changes];
     }
 
+    static HashSet<string> Drawn(ScreenplayWorkspace workspace) =>
+        workspace.Documents.IsEmpty ? [] : Drawn(McpWorkspaceAnalysis.For(workspace).Source);
+
+    static HashSet<string> Drawn(McpSnapshot snapshot) =>
+        snapshot.Index.Declarations.Where(declaration => _drawnKinds.Contains(declaration.Kind))
+            .Select(declaration => $"{declaration.Kind} {declaration.Address}")
+            .ToHashSet(StringComparer.Ordinal);
+
     static Description Describe(ImmutableArray<WorkspaceDocument> documents)
     {
         var snapshot = new McpSnapshot(documents);
-        var declarations = snapshot.Index.Declarations.Where(declaration => _drawnKinds.Contains(declaration.Kind))
-            .Select(declaration => $"{declaration.Kind} {declaration.Address}")
-            .ToHashSet(StringComparer.Ordinal);
+        var declarations = Drawn(snapshot);
         var diagnostics = snapshot.Compilation.Diagnostics.ToArray();
         var summary = new Summary(
             declarations.Count(declaration => declaration.StartsWith("Slice ", StringComparison.Ordinal)),

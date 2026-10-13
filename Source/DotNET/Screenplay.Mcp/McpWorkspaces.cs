@@ -422,6 +422,9 @@ internal sealed partial class McpWorkspaces
         var statePlan = new McpStatePlan(_stateBytes, McpState.Serialize(candidate));
         var introducedErrors = McpIntroducedErrors.Between(proposal.Before, candidate);
         var notesImpact = NotesImpact(proposal);
+        var authoringDiagnostics = McpProposalSummary.AuthoringDiagnostics(proposal);
+        var droppedCommentCount = WorkspaceDroppedComments.In(proposal.WritePlan).Length;
+        var summary = McpProposalSummary.Text(id, proposal, droppedCommentCount, introducedErrors.Count);
         var result = new
         {
             success = true,
@@ -440,16 +443,19 @@ internal sealed partial class McpWorkspaces
             notes = notesImpact.Notes,
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
-            authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,
-            droppedCommentCount = WorkspaceDroppedComments.In(proposal.WritePlan).Length,
-            canonicalizedSource = proposal is McpAuthoringProposal formatted && formatted.Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization),
+            authoringDiagnosticCount = authoringDiagnostics.Length,
+            authoringDiagnosticSeverities = McpProposalSummary.Severities(authoringDiagnostics),
+            authoringDiagnosticNote = "authoringDiagnosticCount counts checks run while proposing (printing, parsing, placement and references), including notices such as PLAY0288 canonical printing. after.readiness counts diagnostics of the resulting source alone. Page them with read-proposal view=diagnostics.",
+            droppedCommentCount,
+            canonicalizedSource = authoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization),
             changes = includeContent ? proposal.WritePlan.Entries.Select(DescribeChange) : null,
             introducedExecutableErrors = introducedErrors,
             executableGuidance = introducedErrors.Count == 0 ? null : McpIntroducedErrors.Guidance,
             review = (layout && WorkspaceTimelineRepairs.Timeline(proposal.Before).Root is null ? "No ordering root was found; path order was used. " : string.Empty) +
-                "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
+                "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply.",
+            summary
         };
-        var response = McpJson.ToolResult(result);
+        var response = McpJson.ToolResult(result, summary: summary);
         _proposals.Add(id, proposal);
         _statePlans.Add(proposal, statePlan);
         _baselinePlans.Add(proposal, baselinePlan);
