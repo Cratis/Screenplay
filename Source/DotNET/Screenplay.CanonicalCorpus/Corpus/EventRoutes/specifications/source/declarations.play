@@ -1,5 +1,5 @@
 eventsource Account
   identifier String
-  stream All
+  stream Archive
   stream Notes
     streamId String

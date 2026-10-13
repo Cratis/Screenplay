@@ -63,6 +63,21 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
         "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
         "open-workspace", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
+    [Theory]
+    [InlineData("repair-capabilities")]
+    [InlineData("propose-repair")]
+    void should_describe_generation_repairs_in_the_public_tool_list(string name)
+    {
+        var description = _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == name).GetProperty("description").GetString()!;
+        description.ShouldContain("PLAY0683/PLAY0684");
+        description.ShouldContain("64");
+        description.ShouldContain("unique constraint");
+        description.ShouldContain("one mapped event property");
+    }
+
+    [Fact]
+    void should_describe_generation_summary_in_the_public_tool_list() => _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "declaration-details").GetProperty("description").GetString()!.ShouldContain("concept generation strategy, authored modifiers, exact entropy bits, one-percent collision count and compiler refusal codes");
+
     [Fact]
     void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
         .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);

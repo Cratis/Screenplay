@@ -12,11 +12,15 @@ module M
           for id
       command Fold
         id String identifier
-        stream Account.All
+        stream Account.Archive
         produces Folded
           for id
       readmodel Snapshot
         id String key
+      readmodel Followups
+        id String key
+      projection FollowupsProjection => Followups
+        from Followed
       reaction Follow
         from Account.Notes
         when Recorded
@@ -36,10 +40,12 @@ module M
             streamId = "period"
         then Followed
           no stream
+        then readmodel Followups
+          id = "other"
       specification UnroutedReaction
         when append Recorded
           for "other"
-        then no readmodel Snapshot for "other"
+        then no readmodel Followups for "other"
       specification UnroutedReducer
         when append Folded
           for "other"
@@ -47,10 +53,10 @@ module M
       specification WrongStreamReaction
         when append Recorded
           for "other"
-          stream Account.All
-        then no readmodel Snapshot for "other"
+          stream Account.Archive
+        then no readmodel Followups for "other"
       specification MatchingReducer
         when append Folded
           for "other"
-          stream Account.All
+          stream Account.Archive
         then no readmodel Snapshot for "other"

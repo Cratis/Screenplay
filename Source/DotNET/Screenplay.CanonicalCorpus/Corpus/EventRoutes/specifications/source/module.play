@@ -20,7 +20,7 @@ module M
           value = "other"
       command Pair
         id String identifier
-        stream Account.All
+        stream Account.Archive
         produces Imported
           for id
           value = "same"
@@ -38,12 +38,12 @@ module M
           value = "same"
         then Started
         then Imported
-          stream Account.All
+          stream Account.Archive
           value = "same"
       specification HistoryWithoutProducer
         given Historical
           for "before"
-          stream Account.All
+          stream Account.Archive
           value = "before"
         when append Imported
           for "after"

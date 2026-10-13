@@ -157,7 +157,7 @@ static class McpDeclarationDetails
             declaration = McpReadResults.Summary(declaration),
             diagnostics = McpModelQueries.DiagnosticSummary(snapshot),
             view,
-            details
+            details = McpGenerationDetails.WithGeneration(details, view, declaration.Syntax, snapshot)
         };
     }
 

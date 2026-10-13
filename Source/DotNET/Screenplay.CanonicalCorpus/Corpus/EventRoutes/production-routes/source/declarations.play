@@ -8,4 +8,4 @@ eventsource Account
     streamId
       project Uuid
       month String
-  stream All
+  stream Archive
