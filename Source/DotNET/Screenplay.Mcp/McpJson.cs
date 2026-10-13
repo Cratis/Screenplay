@@ -109,7 +109,7 @@ static class McpJson
             : throw new McpFailure($"'{name}' must be one of {string.Join(", ", Enum.GetNames<T>())}.", -32602);
     }
 
-    internal static object ToolResult(object value, bool isError = false, bool enforceBudget = true)
+    internal static object ToolResult(object value, bool isError = false, bool enforceBudget = true, string? summary = null)
     {
         // Materialize once: deferred indexes and AST projections must not execute again for the text copy.
         var structured = JsonSerializer.SerializeToElement(value, Options);
@@ -119,9 +119,10 @@ static class McpJson
             throw new McpFailure("ResponseTooLarge: use narrower scope, smaller pages, or chunked document/workspace retrieval. No result was truncated.") { FailureKind = "LimitExceeded" };
         }
 
+        // The JSON stays the first text block for clients that parse it; a human summary follows it.
         return new
         {
-            content = new[] { new { type = "text", text } },
+            content = summary is null ? new[] { new { type = "text", text } } : [new { type = "text", text }, new { type = "text", text = summary }],
             structuredContent = structured,
             isError
         };

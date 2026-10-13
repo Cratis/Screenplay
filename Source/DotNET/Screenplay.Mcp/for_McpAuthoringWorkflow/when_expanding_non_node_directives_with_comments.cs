@@ -62,5 +62,5 @@ public class when_expanding_non_node_directives_with_comments : given.an_authori
     [Fact] void should_keep_query_comments_on_their_lines() => _moduleSource.ShouldContain("by id String // by note\n        scoped to identity // scope note");
     [Fact] void should_report_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
     [Fact] void should_list_no_dropped_comments() => _dropped.GetArrayLength().ShouldEqual(0);
-    [Fact] void should_not_report_play0288() => _proposal.GetRawText().ShouldNotContain("PLAY0288");
+    [Fact] void should_not_report_dropped_comments_in_the_summary() => _proposal.GetProperty("summary").GetString().ShouldNotContain("comment(s)");
 }

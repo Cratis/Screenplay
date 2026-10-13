@@ -123,7 +123,7 @@ public class when_expanding_many_module_forms_with_comments : given.an_authoring
 
     [Fact] void should_report_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
     [Fact] void should_list_no_dropped_comments() => _dropped.GetArrayLength().ShouldEqual(0);
-    [Fact] void should_not_report_play0288() => _proposal.GetRawText().ShouldNotContain("PLAY0288");
+    [Fact] void should_not_report_dropped_comments_in_the_summary() => _proposal.GetProperty("summary").GetString().ShouldNotContain("comment(s)");
 
     void Write(string path, string source)
     {

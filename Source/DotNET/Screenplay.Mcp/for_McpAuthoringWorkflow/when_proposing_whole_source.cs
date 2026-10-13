@@ -210,6 +210,41 @@ public class when_proposing_whole_source : given.an_authoring_connection
         }
     }
 
+    [Fact]
+    void should_summarize_what_a_proposal_adds_and_break_down_its_authoring_diagnostics()
+    {
+        Initialize();
+        var opened = Open();
+        var arguments = Arguments(opened, Replace(opened, Source.TrimEnd('\n') + "\nmodule Billing\n  feature Invoices\n    slice StateView Ledger\n"));
+        var result = Call("propose-source", arguments).GetProperty("result");
+        var proposal = result.GetProperty("structuredContent");
+        var summary = proposal.GetProperty("summary").GetString()!;
+        var severities = proposal.GetProperty("authoringDiagnosticSeverities");
+
+        result.GetProperty("content")[1].GetProperty("text").GetString().ShouldEqual(summary);
+        JsonDocument.Parse(result.GetProperty("content")[0].GetProperty("text").GetString()!).RootElement.GetProperty("proposalId").GetString().ShouldEqual(proposal.GetProperty("proposalId").GetString());
+        summary.ShouldContain($"Proposal {proposal.GetProperty("proposalId").GetString()} changes 1 document(s): 1 replaced.");
+        summary.ShouldContain("Module Billing");
+        summary.ShouldContain("Slice ");
+        summary.ShouldContain("Ledger");
+        summary.ShouldContain("The result is executable.");
+        (severities.GetProperty("errors").GetInt32() + severities.GetProperty("warnings").GetInt32() + severities.GetProperty("information").GetInt32())
+            .ShouldEqual(proposal.GetProperty("authoringDiagnosticCount").GetInt32());
+        severities.GetProperty("codes").EnumerateArray().Select(code => code.GetString()).ShouldContain("PLAY0288");
+        summary.ShouldContain("PLAY0288 means a touched document is printed canonically.");
+    }
+
+    [Fact]
+    void should_summarize_a_proposal_that_adds_no_drawn_declarations()
+    {
+        Initialize();
+        var opened = Open();
+        var proposal = Result("propose-source", Arguments(opened, new { operation = "create-document", path = "streams.play", stableKey = "streams", source = Streams }));
+        var summary = proposal.GetProperty("summary").GetString()!;
+        summary.ShouldContain("changes 1 document(s): 1 added.");
+        summary.ShouldContain("It adds or removes no module, feature, slice, command, event, read model, screen or reaction.");
+    }
+
     object Replace(JsonElement opened, string source) => new { operation = "replace-document", documentId = Page("documents", opened.GetProperty("revision").GetString())[0].GetProperty("documentId").GetString(), source };
 
     JsonElement Failure(object arguments)

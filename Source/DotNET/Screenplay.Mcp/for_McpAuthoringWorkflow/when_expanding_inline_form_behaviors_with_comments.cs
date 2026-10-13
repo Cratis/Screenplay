@@ -50,5 +50,5 @@ public class when_expanding_inline_form_behaviors_with_comments : given.an_autho
     [Fact] void should_keep_both_behavior_comments_inside_the_form() => _source.ShouldContain("  form OrderForm for PlaceOrder\n    field orderId label \"Order\"\n    // submit action belongs inside the form\n    on submit\n      execute PlaceOrder\n    // click action belongs inside the form\n    on click\n      navigate to Summary");
     [Fact] void should_not_duplicate_behavior_comments() => _source.Split("// submit action belongs inside the form", StringSplitOptions.None).Length.ShouldEqual(2);
     [Fact] void should_not_report_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
-    [Fact] void should_not_report_play0288() => _proposal.GetRawText().ShouldNotContain("PLAY0288");
+    [Fact] void should_not_report_dropped_comments_in_the_summary() => _proposal.GetProperty("summary").GetString().ShouldNotContain("comment(s)");
 }
