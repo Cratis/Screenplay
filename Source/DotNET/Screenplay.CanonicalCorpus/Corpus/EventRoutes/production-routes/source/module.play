@@ -19,12 +19,12 @@ module M
       command WithoutDefault
         id String identifier
         produces event Noted
-          stream Account.All
+          stream Account.Archive
       command Skip
         id String identifier
         bad String
         enabled Bool
-        stream Account.All
+        stream Account.Archive
         produces event Started
         produces when enabled == true
           Noted
@@ -51,7 +51,7 @@ module M
         when WithoutDefault
           id = "other"
         then Noted
-          stream Account.All
+          stream Account.Archive
       specification SkippedRouteFailure
         when Skip
           id = "other"

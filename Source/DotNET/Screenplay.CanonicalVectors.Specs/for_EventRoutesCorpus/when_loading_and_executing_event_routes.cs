@@ -61,7 +61,7 @@ public class when_loading_and_executing_event_routes : Specification
                 var facts = (run.Execution as SemanticAccepted)?.Facts ?? [];
                 facts.Select(fact => Route(fact.Route)).SequenceEqual(expected.Routes).ShouldBeTrue();
                 if (expected.Passed) run.Failures.ShouldBeEmpty();
-                if (expected.Name == "HistoryWithoutProducer") run.Execution.World.Facts[0].Route!.StreamKind.ShouldEqual("All");
+                if (expected.Name == "HistoryWithoutProducer") run.Execution.World.Facts[0].Route!.StreamKind.ShouldEqual("Archive");
                 if (expected.Name == "AnyOrderAssignment") AssertAssignmentTrap(specification, facts);
             }
         }
@@ -85,7 +85,7 @@ public class when_loading_and_executing_event_routes : Specification
         exact.EventContract.ShouldEqual(wildcard.EventContract);
         exact.Values.SequenceEqual(wildcard.Values).ShouldBeTrue();
         facts[0].Route!.SourceKind.ShouldEqual("Account");
-        facts[0].Route!.StreamKind.ShouldEqual("All");
+        facts[0].Route!.StreamKind.ShouldEqual("Archive");
         Assert.Null(facts[2].Route);
 
         // Greedy takes fact 0 for the wildcard, leaving the unrouted fact unable to match the exact route.
