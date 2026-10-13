@@ -26,7 +26,8 @@ public static class ReleaseBaselineCommands
     /// <param name="release">The nonempty, trimmed release label.</param>
     /// <param name="fromEsmPath">Optional canonical shipped ESM file, strictly read with bounded size.</param>
     /// <returns>The written entry count and revision, violations, or an unreadable/refused outcome.</returns>
-    public static ReleaseBaselineOutcome Admit(string root, string release, string? fromEsmPath = null) => Run(root, release, fromEsmPath);
+    public static ReleaseBaselineOutcome Admit(string root, string release, string? fromEsmPath = null) =>
+        release is null ? new(2, [], "InvalidAdmission", "Admission requires a release label.") : Run(root, release, fromEsmPath);
 
     static ReleaseBaselineOutcome Run(string path, string? release, string? fromEsmPath)
     {
