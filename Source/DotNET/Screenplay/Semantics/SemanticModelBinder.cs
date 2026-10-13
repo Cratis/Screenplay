@@ -180,7 +180,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
     {
-        if (application.Concepts.Any(concept => concept.Generation is not null))
+        if (SemanticModelValidator.UsesConceptGeneration(application))
         {
             return (LanguageVersion.V15, SemanticVersion.V15);
         }
