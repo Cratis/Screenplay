@@ -39,6 +39,7 @@ export const DiagnosticCodes = {
     EventTargetOutsideOutboundTranslation: 'PLAY0618',
     EventsSourceOutsideInboundTranslation: 'PLAY0619',
     InvalidCaptureEventsSource: 'PLAY0620',
+    CaptureEventsFromSeveralOrigins: 'PLAY0687',
     // Syntax shared with C#; the reference checks (owners, instances, cycles, outlets, scopes, packages) are C#-only.
     InvalidExposureDeclaration: 'PLAY0621',
     UnknownExposureOwner: 'PLAY0622',

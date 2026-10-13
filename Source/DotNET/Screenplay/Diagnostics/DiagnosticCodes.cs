@@ -3177,4 +3177,9 @@ public static class DiagnosticCodes
     /// </summary>
     [DiagnosticReservation(DiagnosticSeverity.Warning, retired: true)]
     public const string EventIdPinNotCarriedToRenderers = "PLAY0686";
+
+    /// <summary>
+    /// A capture's source events originate from several event stores.
+    /// </summary>
+    public const string CaptureEventsFromSeveralOrigins = "PLAY0687";
 }
