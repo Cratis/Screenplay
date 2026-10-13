@@ -10,6 +10,19 @@ namespace Cratis.Screenplay.CanonicalVectors.Specs.for_EventRoutesCorpus;
 public class when_loading_v10_vectors : Specification
 {
     [Theory]
+    [InlineData("UnroutedReaction")]
+    [InlineData("WrongStreamReaction")]
+    void should_not_project_followups_for_facts_outside_the_reaction_filter(string name)
+    {
+        var form = EventRoutesCorpus.ObserverFiltersV10.SourceForms.Single(form => form.Name == "folder");
+        var model = when_loading_and_executing_event_routes.Compile(form).Model;
+        var plan = SemanticExecutionPlan.Compile(model).Plan!;
+        var specification = model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single(specification => specification.Name == name);
+        var run = new SemanticSpecificationRunner().Run(plan, specification.Id);
+        Assert.True(run.Passed, $"{name}: {string.Join(';', run.Failures)}");
+    }
+
+    [Theory]
     [InlineData("production-routes")]
     [InlineData("observer-filters")]
     void should_pin_v10_bytes_catalogs_and_outcomes_across_four_source_forms(string key)

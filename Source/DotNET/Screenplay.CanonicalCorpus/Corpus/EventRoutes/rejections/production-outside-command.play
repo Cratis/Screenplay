@@ -1,6 +1,6 @@
 eventsource Account
   identifier String
-  stream All
+  stream Archive
 module M
   feature F
     slice Automation S
@@ -9,4 +9,4 @@ module M
       reaction Follow
         when Recorded
           produces Followed
-            stream Account.All
+            stream Account.Archive
