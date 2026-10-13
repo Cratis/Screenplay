@@ -89,7 +89,7 @@ application's identity make the file unreadable. Opening the model still works;
 note tools refuse with `UnreadableNotes` and never repair or rewrite the file.
 Resolve the conflict or restore known-good content, then read the notes again.
 
-The published [notes v1 JSON Schema](notes-v1.schema.json) describes the wire file.
+The published [notes v1 JSON Schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/notes-v1.schema.json) describes the wire file.
 Its header is `schema: "cratis.screenplay.notes"`, `schemaVersion: 1`, and
 `applicationIdentity` in the identity catalog's representation. The independent
 `notesRevision` is `nrev1:` plus lowercase SHA-256 of canonical bytes;

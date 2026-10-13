@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { EnumerationMembers } from './EnumerationMembers';
+import { GenerationSyntax } from '../Syntax/GenerationSyntax';
+import { parseGeneration } from './GenerationParser';
 import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
@@ -273,6 +275,8 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
     }
     const values: string[] = [];
     const members = new EnumerationMembers();
+    let generation: GenerationSyntax | null = null;
+    let declaredGeneration = false;
     let description: string | null = null;
     const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -292,6 +296,11 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             }
             const parsed = parseValidate(context, child, 'concept');
             if (parsed !== undefined) validations.push(parsed);
+        } else if (firstWord(child.content) === 'generate' && !(type === 'Enum' && child.content === 'generate')) {
+            if (declaredGeneration) context.error(DiagnosticCodes.DuplicateGeneration, `Concept '${name}' declares generation more than once.`, locationOf(child));
+            const parsed = parseGeneration(context, child, type);
+            if (!declaredGeneration) generation = parsed;
+            declaredGeneration = true;
         } else if (parseComplianceDirective(context, child, name, attributes)) {
             // Compliance directives are modeled by their original concept marker.
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
@@ -299,12 +308,12 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         } else if (type === 'Enum') {
             context.error(DiagnosticCodes.InvalidEnumerationValue, `Invalid enum value '${child.content}' - expected an identifier`, locationOf(child));
         } else {
-            context.error(DiagnosticCodes.UnknownConceptDirective, `Unexpected '${child.content}' in concept body - expected validate, 'file <path>' or '<attribute> reason "<text>"'`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownConceptDirective, `Unexpected '${child.content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason "<text>"'`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
     const valueNumbers = members.finish(context, line, values.length);
-    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, ...(valueNumbers === undefined ? {} : { valueNumbers }), location: locationOf(line) };
+    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, ...(generation === null ? {} : { generation }), ...(valueNumbers === undefined ? {} : { valueNumbers }), location: locationOf(line) };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

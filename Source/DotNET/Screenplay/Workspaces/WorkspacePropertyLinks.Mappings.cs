@@ -18,7 +18,7 @@ internal sealed partial class WorkspacePropertyLinks
         _ => ProductionStep(node) || FixtureStep(node)
     };
 
-    static bool FixtureStep(SyntaxNode node) => node is SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax or SpecificationQuerySyntax or SpecificationWhenQuerySyntax;
+    static bool FixtureStep(SyntaxNode node) => node is SeedEventSyntax or SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax or SpecificationQuerySyntax or SpecificationWhenQuerySyntax;
 
     static bool IncompleteMapping(PropertyMappingSyntax mapping, AuthoredDeclaration[] targets, PropertySource[] sources) =>
         targets.Length != 1 || mapping.Property.Contains('.') || sources.Any(item => item.Candidates.Length != 1 || item.Incomplete);

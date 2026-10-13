@@ -14,7 +14,13 @@
 #   SCREENPLAY_CORPUS_PACKAGE_VERSION  read the corpus from this published Cratis.Screenplay.CanonicalCorpus version
 #   SCREENPLAY_PLAYWRIGHT_NODE_PATH  NODE_PATH that resolves `playwright` (defaults to NODE_PATH)
 #   SCREENPLAY_AI_VERIFICATION       Cratis/AI Source/Verification folder for the MCP stdio transcript
-#   SCREENPLAY_STUDIO_URL            deployed Studio URL for the production save/export/import/Play harness
+#   SCREENPLAY_STUDIO_URL            deployed Studio URL for the production save/export/import/Play vector. Defaults to
+#                                    http://127.0.0.1:5156 when that answers (the production principal-header proxy of the
+#                                    debugging rule: `kubectl port-forward -n studio deploy/core 5155:8080` and
+#                                    `tools/studio-prod-proxy.mjs <sub> <name> <tenant> 5156 5155`).
+#   SCREENPLAY_STUDIO_CHECKOUT       a Cratis/Studio checkout (installed with `yarn install`) whose
+#                                    scripts/screen-editor/check-studio-production-scratch.mjs runs the vector against a scratch
+#                                    project it deletes again. Without it the harness records blocked-missing-studio-checkout.
 #
 # Harnesses: browser (native controls), render-audit (determinism, portable artifacts, profile rejection,
 # render-then-recover), mcp (stdio transcript) and studio (production Play).
@@ -110,10 +116,47 @@ else
     failures=$((failures + 1))
 fi
 
-run_step studio env \
-    NODE_PATH="$node_path" \
-    SCREENPLAY_STUDIO_RESULT="${results}/studio.json" \
-    node "${harness}/screen-composition-studio-production-play.cjs"
+# Studio production vector: the scratch proof of the Studio repository (import the published corpus, edit and save a screen,
+# export, Play) against a deployed Studio. The generic-selector harness (screen-composition-studio-production-play.cjs) only
+# records the blocked state when no URL is reachable.
+studio_url="${SCREENPLAY_STUDIO_URL:-}"
+if [[ -z "$studio_url" ]] && curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:5156/" 2>/dev/null; then
+    studio_url="http://127.0.0.1:5156"
+fi
+studio_checkout="${SCREENPLAY_STUDIO_CHECKOUT:-}"
+if [[ -n "$studio_url" && -n "$studio_checkout" ]]; then
+    studio_script="${studio_checkout}/scripts/screen-editor/check-studio-production-scratch.mjs"
+    studio_corpus="${SCREENPLAY_CORPUS_SOURCE:-${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder}"
+    studio_evidence="${root}/${results}/studio-evidence"
+    studio_zip="${root}/${results}/studio-corpus.zip"
+    if [[ ! -f "$studio_script" ]]; then
+        echo "run-public-acceptance: ${studio_script} not found" >&2
+        exit 2
+    fi
+    (cd "$studio_corpus" && rm -f "$studio_zip" && zip -qr "$studio_zip" .)
+    run_step studio bash -c 'cd "$1" && STUDIO_URL="$2" STUDIO_IMPORT_ZIP="$3" STUDIO_EVIDENCE="$4" node scripts/screen-editor/check-studio-production-scratch.mjs' _ \
+        "$studio_checkout" "$studio_url" "$studio_zip" "$studio_evidence"
+    node -e '
+        const fs = require("fs");
+        const [evidence, out, url] = process.argv.slice(1);
+        let scratch;
+        try { scratch = JSON.parse(fs.readFileSync(`${evidence}/result.json`, "utf8")); } catch { scratch = undefined; }
+        const steps = scratch?.steps ?? [];
+        const failed = steps.filter(step => !step.passed).map(step => step.name);
+        const play = scratch?.play;
+        const status = scratch?.status === "running" || !scratch?.status ? "failed-no-result" : scratch.status;
+        fs.writeFileSync(out, JSON.stringify({ name: "studio-production-scratch", studioUrl: url, status, failedSteps: failed, play, steps, evidence }, null, 2) + "\n");
+    ' "$studio_evidence" "${root}/${results}/studio.json" "$studio_url"
+else
+    reason="blocked-missing-studio-url"
+    if [[ -n "$studio_url" ]]; then reason="blocked-missing-studio-checkout"; fi
+    echo "  studio: not run (${reason}); set SCREENPLAY_STUDIO_URL (or start the production proxy on 127.0.0.1:5156) and SCREENPLAY_STUDIO_CHECKOUT"
+    run_step studio env \
+        NODE_PATH="$node_path" \
+        SCREENPLAY_STUDIO_URL="" \
+        SCREENPLAY_STUDIO_RESULT="${results}/studio.json" \
+        node "${harness}/screen-composition-studio-production-play.cjs"
+fi
 
 if [[ -f "${results}/browser.json" ]]; then
     node -e '

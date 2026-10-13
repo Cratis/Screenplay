@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { continuationResponseHover } from './continuation-responses';
 import { reactionReferenceAt } from './reaction-authoring';
 import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
@@ -40,6 +41,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const returned = continuationResponseHover(lines, lineIndex, word, startColumn, endColumn, application);
+    if (returned) return returned;
     const reaction = reactionReferenceAt(lines, lineIndex, startColumn, endColumn, application);
     if (reaction) return reaction.content;
     const fixtureHover = exampleHover(lines, lineIndex, startColumn, endColumn, application);
@@ -54,6 +57,23 @@ export function hoverContent(
     };
     const before = line.charAt(startColumn - 2);
     if (word === 'authorization' && enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'purpose') return 'A quoted authorization in law for criminal-offence data (Art. 10).';
+
+    if (enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*generate\b/.test(line)) {
+        const generationDocs: Record<string, string> = {
+            generate: 'The concept declares how; a command property declares generated. ESM v15 checks fixture shape and guards generated event sources against existing facts.',
+            uuid: 'Random UUID v4, 122 random bits; about 3.27 × 10^17 values at 1% collision probability.',
+            uuidv7: 'Time-ordered UUID v7, 74 random bits; about 1.95 × 10^10 values at 1% collision probability. Exposes time; not monotonic within a millisecond.',
+            ulid: '26 Crockford base32 characters (uppercase by default), 80 random bits; about 1.56 × 10^11 values at 1% collision probability.',
+            typeid: 'TypeID 0.3: lowercase UUIDv7 base32 with a 0..63-character prefix. 74 random bits; empty prefix has no separator.',
+            nanoid: 'Default 21 characters over 64 symbols: 126 random bits. Custom entropy = size × log2(alphabet size).',
+            bytes: '8 × count random bits; base64url, hex or base32 without padding. RFC 4648 unused trailing bits must be zero.',
+            prefix: 'Printable ASCII prefix, at most 32 characters. UUID prefixes require a String concept; TypeID uses its own argument.',
+            alphabet: 'NanoID only: 2..256 distinct printable ASCII characters.',
+            case: 'lower or upper for String UUIDs, ULID, hex/base32 bytes. Never base64url, NanoID or TypeID.',
+            pattern: 'Parsed, not yet executable (#616 phase 3).', random: 'Parsed, not yet executable (#616 phase 3).', rule: 'Parsed, not yet executable (#616 phase 3).', sequence: 'Reserved; binding refuses it until #619 is admitted.',
+        };
+        if (generationDocs[word]) return generationDocs[word];
+    }
 
     const complianceHeader = /^\s*concept\s+[^\s:]+\s*:\s*\w+\s+/.exec(line);
     const complianceBody = enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*(?:@?pii|personal|@?sensitive|secret)\s+(?:reason|scope|special|criminal)\b/.test(line);

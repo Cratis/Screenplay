@@ -7,6 +7,7 @@ import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { legacySourceOptions, SourceOptions } from '../Syntax/SourceOptions';
 import { InputUse } from './InputUses';
+import { ContinuationValueUse } from './ContinuationValueUse';
 import { GuardedInteractionBinding, InteractionAncestor } from './InteractionAlternatives';
 import { LineReader } from './LineReader';
 import { SourceLine } from './SourceLine';
@@ -18,6 +19,7 @@ export class ParserContext {
     // Authoring verification needs these committed values even though SyntaxJson omits them.
     readonly triggerData: PropertySyntax[] = [];
     readonly inputUses: InputUse[] = [];
+    readonly continuationValues: ContinuationValueUse[] = [];
     readonly guardedInteractions: GuardedInteractionBinding[] = [];
     interactionAncestors: ReadonlyMap<number, readonly InteractionAncestor[]> = new Map();
     scope: readonly string[] = [];

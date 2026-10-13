@@ -21,6 +21,8 @@ seed
 
 An empty `seed` block — one without any `for` group — is a compile error.
 
+[`propose-property`](mcp/reference.md#property-change-planner) treats seed assignments as fixtures of the event's current generation: rename and remove update them, required additions need `fixtureValue` for every seed entry, and optional additions leave seeds unchanged.
+
 ## Example
 
 ```screenplay

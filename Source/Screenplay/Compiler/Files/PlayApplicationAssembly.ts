@@ -71,6 +71,7 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
 export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>, deferImportedExampleTypes = false): CompilationResult<ApplicationSyntax> & {
     readonly physicalEventSources: readonly { source: EventSourceSyntax; placementResolved: boolean }[];
     readonly sourceInventoryComplete: boolean;
+    readonly continuationValues: ReturnType<typeof parseForAuthoring>['continuationValues'];
 } {
     return parsePlacedDocumentsWithSyntax(documents, languages, deferImportedExampleTypes).result;
 }
@@ -85,6 +86,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const context = new ParserContext(new LineReader([]), undefined, languages);
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
+    context.continuationValues.push(...parsed.flatMap(document => document.continuationValues));
     validateSpecificationCases(merged.value, context);
     validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);
     const effective = expandSpecificationExamples(merged.value);
@@ -110,7 +112,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
     return {
-        result: { ...merged, value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete },
+        result: { ...merged, value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete, continuationValues: context.continuationValues },
         syntax: new Map(parsed.map((result, index) => [documents[index].path, result.value])),
     };
 }

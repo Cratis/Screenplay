@@ -20,6 +20,10 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 PersonName and EmailAddress declare personal data; BankAccount declares both personal data and an operational secret, with personal protection taking precedence. These markers, qualifiers and scopes are admitted as ESM v13, with the event source as the data subject. Reasons remain report-only, and reference specifications have unchanged outcomes. Identity and enum compliance are refused, as are events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark until lineage is admitted. The sample still demonstrates other constructs outside executable admission.
 
+## Generated identities and receipts
+
+InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID. StartInvoiceDraft pins both shapes and returns them without accepting either as input. Generation selects ESM v15 and Guarded creation freshness across the whole event source. Generated concepts with rules or compliance markers remain unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
+
 ## Stored enum numbers
 
 Invoice status, payment terms and payment method pin their current zero-based positions, preserving executable bytes. AgingBucket demonstrates the external aging contract's sparse `0, 30, 90` numbers. Its non-positional enum member numbers select ESM v12; consumers must explicitly admit the contract before rendering them. Member names, not numbers, remain the values in specifications and conditions. Never renumber or reuse a published member number.
@@ -89,7 +93,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
 | module `description` (fenced), `authorize`, `on event`, `contribute to` | `module Invoicing` |
 | `screen template` with `fits slot`, `flow` with `grid`/`span`, `freeform` with `variant`/`place … hidden`, a `contributes` slot; `dialog template` with `on leave` | `module Invoicing` |
-| `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate`, `on change` | `module Invoicing`; `TagInvoiceForm` reuses the selected row |
+| `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate` by a returned identity, `on change` | `module Invoicing`; `RegisterInvoiceForm` binds the returned `invoiceId`; `TagInvoiceForm` reuses the selected row |
 | feature `authorize`, `depends on`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
 | `generated identifier`, `generated`, record `returns` with inferred/explicit types, `when … for`, generation fixtures and `then returns`; scalar `returns` and `then returns` | StartInvoiceDraft; CancelInvoice |
@@ -140,7 +144,7 @@ This excerpt belongs inside the command's `validate` block. Its hint records gui
 
 `Payments` declares `depends on InvoiceManagement`: it reads invoice state and reacts to invoice events from that feature. The declaration documents that boundary for authoring checks; it does not change execution or slice order.
 
-`StartInvoiceDraft` creates a draft with a generated invoice identity and receipt and returns both only on acceptance. Its specification supplies deterministic UUID fixtures separately from `customerId`, then asserts the fact and response. `CancelInvoice` returns the cancelled invoice identity as a scalar. These constructs select ESM v7; generated values are not request/form inputs and give no retry or idempotency guarantee. Response-name binding in UI continuations remains downstream work.
+`StartInvoiceDraft` creates a draft with a generated invoice identity and receipt and returns both only on acceptance. Its specification supplies deterministic UUID fixtures separately from `customerId`, then asserts the fact and response. `CancelInvoice` returns the cancelled invoice identity as a scalar. These constructs select ESM v7; generated values are not request/form inputs and give no retry or idempotency guarantee. `RegisterInvoice` also returns its invoice identity: `RegisterInvoiceForm` resolves it in `on submit navigate to InvoiceDetails by invoiceId`. Compilers and editors recognize returned names in successful UI continuations; renderers still own runtime value binding.
 
 The cancellation row-click in `InvoiceDetails` opens `CancelInvoiceScreen` with `invoiceId` before input. That screen's guarded cancellation button reads the invoice's status and binds its identity explicitly, without navigating to its own input screen after execution. The guard offers an action; it does not authorize it or satisfy `CancelInvoice`'s validation. Remaining inputs come from the renderer. Guarded actions are syntax and renderer contracts, not executable-model assertions; downstream renderer support is required.
 

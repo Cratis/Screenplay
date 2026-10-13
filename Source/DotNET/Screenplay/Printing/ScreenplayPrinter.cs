@@ -110,7 +110,7 @@ public sealed partial class ScreenplayPrinter :
         List<ConceptAttributeSyntax> attributes,
         List<ValidateSyntax> validations,
         List<ConceptAttributeSyntax> reasoned) =>
-        !concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null &&
+        !concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null && concept.Generation is null &&
         !attributes.Exists(HasAttributeDirective);
 
     static bool HasAttributeDirective(ConceptAttributeSyntax attribute) =>
@@ -369,6 +369,7 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, concept.Description, concept);
             WriteFile(writer, concept.File);
+            if (concept.Generation is { } generation) writer.Line(GenerationText.Format(generation), generation);
 
             foreach (var attribute in reasoned)
             {

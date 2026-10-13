@@ -12,6 +12,13 @@
   href: domain.md
 - name: Concepts
   href: concepts.md
+- name: Generated values
+  href: generated-values.md
+  items:
+    - name: Choose a strategy
+      href: generated-values/choosing.md
+    - name: Strategy reference
+      href: generated-values/strategies.md
 - name: Processing purposes
   href: purposes.md
 - name: Types

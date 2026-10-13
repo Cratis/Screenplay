@@ -6,9 +6,7 @@
 
 > Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, explicit query scopes and performers remain unadmitted (`PLAY0268`). Collection specification rows compare without regard to order. See [Queries](queries.md).
 
-:::note
-Accepted [decision 0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md) extends the generation rules described here beyond `Uuid` concepts. Until it is implemented, `generated` keeps its current meaning.
-:::
+Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern, random and rule parse but remain unadmitted; sequence is reserved. Rules and compliance markers on generated concepts remain refused. See [Generated values](generated-values.md).
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
@@ -147,7 +145,7 @@ PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "not
 ErasureException = "expression" | "legalObligation" | "publicTask" | "publicHealth" | "archiving" | "legalClaims" ;
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
+                   [ INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | GenerationDecl | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
                    INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | EnumMember | ConceptValidate }, DEDENT ;
 
@@ -169,6 +167,23 @@ ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL
 SpecialCategory = "racialOrEthnicOrigin" | "politicalOpinions"
                 | "religiousOrPhilosophicalBeliefs" | "tradeUnionMembership"
                 | "genetic" | "biometric" | "health" | "sexLifeOrSexualOrientation" ;
+
+GenerationDecl = "generate", GenerationStrategy, { GenerationModifier }, NL ;
+GenerationStrategy = "uuid" | "uuidv7" | "ulid"
+                   | "typeid", String
+                   | "nanoid", [ Integer ]
+                   | "bytes", Integer, ( "base64url" | "hex" | "base32" )
+                   | "pattern", String
+                   | "random", Integer, "..", Integer
+                   | "rule", Ident
+                   | "sequence" ;
+GenerationModifier = "alphabet", String | "prefix", String
+                   | "case", ( "lower" | "upper" )
+                   | "checksum", ( "luhn" | "mod11" | "mod97" ) ;
+(* At most one generate line. Strategy arguments and modifiers are validated by
+   primitive and strategy: Uuid allows only unmodified uuid/uuidv7; Int only random;
+   String all other strategies. NanoID size 1..256, bytes count 1..512. Prefix
+   modifiers use <=32 printable ASCII characters; TypeID has its own 0..63 prefix. *)
 
 ConceptValidate = "validate", NL,
                    INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ;
@@ -380,6 +395,10 @@ InteractionMessage = LocalizableString | Path ;
 InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
                           INDENT, { InteractionAction }, DEDENT ;
 BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
+(* Bare value operands in form on submit and execute on success resolve returned names
+   after existing form fields and behavior parameters. On failure cannot use the failed
+   command's returned names unless an outer successful response supplies them (PLAY0685).
+   Dotted paths, $-rooted bindings, literals and other opaque text remain unchanged. *)
 
 (* A plain binding needs at least one action and at most one where guard. Choices
    are only valid on click/double click/select, use strict item Condition operands,
@@ -645,7 +664,7 @@ PropertyLine   = [ "@" ], Ident, TypeRef,
    per event generation, not pii/secret. It is report-only (PLAY0270), adding no ESM bytes.
    Read models are not yet supported; commands, types and responses refuse it. *)
 
-(* "generated" is command-only and requires a required scalar Uuid-backed concept.
+(* "generated" is command-only and requires a required scalar generatable concept.
    Generated values and responses select ESM v7. Pre-generation references report
    PLAY0273; generated concepts with validation rules report PLAY0268. *)
 

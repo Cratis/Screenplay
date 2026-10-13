@@ -32,6 +32,7 @@ export interface ConceptSymbol {
     attributeReasons: Record<string, string>;
     enumValues: string[];
     enumNumbers?: number[];
+    generationStrategy?: string;
     line: number;
 }
 
@@ -235,7 +236,11 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const conceptMatch = trimmed.match(conceptPattern);
         if (conceptMatch) {
-            const body = collectBody(lines, fences, index, indent).map((i) => lines[i].trim());
+            const bodyLines = collectBody(lines, fences, index, indent);
+            const body = bodyLines.map((i) => lines[i].trim());
+            const directIndent = Math.min(...bodyLines.filter(i => !fences[i] && lines[i].trim() !== '').map(i => indentOf(lines[i])));
+            const generationLine = bodyLines.find(i => !fences[i] && indentOf(lines[i]) === directIndent && /^\s*generate\s+\w+/.test(lines[i]));
+            const generationStrategy = generationLine === undefined ? undefined : lines[generationLine].match(/^\s*generate\s+(\w+)/)?.[1];
             const attributeReasons: Record<string, string> = {};
             for (const line of body) {
                 const reason = line.match(attributeReasonPattern);
@@ -255,6 +260,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 attributeReasons,
                 enumValues,
                 ...(enumNumbers === undefined ? {} : { enumNumbers }),
+                ...(generationStrategy === undefined ? {} : { generationStrategy }),
                 line: index,
             });
             continue;

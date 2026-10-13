@@ -85,6 +85,15 @@ export const operationPhaseItems: CompletionEntry[] = [
 ];
 
 export const conceptItems: CompletionEntry[] = [
+    { label: 'generate uuid', insertText: 'generate uuid', documentation: 'Random UUID v4; 122 random bits. Implicit on Uuid concepts; String UUIDs are lowercase by default.' },
+    { label: 'generate uuidv7', insertText: 'generate uuidv7', documentation: 'Time-ordered UUID v7; 74 random bits. Exposes time, not monotonic within a millisecond.' },
+    { label: 'generate ulid', insertText: 'generate ulid', documentation: '26 uppercase Crockford base32 characters; 80 random bits. String concepts only.' },
+    { label: 'generate typeid', insertText: 'generate typeid "${1:user}"', documentation: 'TypeID 0.3, lowercase UUIDv7 base32; 74 random bits. Empty prefix has no separator.' },
+    { label: 'generate nanoid', insertText: 'generate nanoid ${1:21}', documentation: 'String from a distinct printable ASCII alphabet; size × log2(alphabet size) random bits. Default: 21 × 6 = 126 bits.' },
+    { label: 'generate bytes', insertText: 'generate bytes ${1:32} ${2|base64url,hex,base32|}', documentation: 'Cryptographic random bytes, RFC 4648 without padding; 8 × count bits. Case applies only to hex/base32.' },
+    { label: 'generate pattern', insertText: 'generate pattern "${1:ORD-#{7}}"', documentation: 'Parsed and printed, not yet executable (#616 phase 3).' },
+    { label: 'generate random', insertText: 'generate random ${1:1}..${2:9}', documentation: 'Int range; parsed and printed, not yet executable (#616 phase 3).' },
+    { label: 'generate rule', insertText: 'generate rule ${1:Name}', documentation: 'Implementation attachment; parsed and printed, not yet executable (#616 phase 3).' },
     { label: 'description', insertText: 'description "${1:what this value represents}"', documentation: 'Report-only authoring description; not a validation or compliance note.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'pii reason', insertText: 'pii reason "${1:why this value is personal data}"', documentation: 'A free-text concept note, not a lawful basis.' },
