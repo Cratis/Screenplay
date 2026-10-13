@@ -19,6 +19,8 @@ applies-to:
   - Samples/**
 ---
 
+> **2026-10-13 — amended by [0073](0073-reserve-the-stored-event-stream-name-all.md).** A stream whose stored name is `All` is refused with `PLAY0273`, and the sentence "a stream named `All` is allowed" no longer holds. The rest of this record is unchanged.
+
 ## Context
 
 **Authoring works; binding refuses.** Since v4.62.0, these parse, validate and print, and appear in the editors and MCP:
