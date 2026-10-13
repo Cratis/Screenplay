@@ -1,10 +1,10 @@
 ---
 id: 0072
 title: Query arguments are validated against their concept rules, and a violation is a rejection
-status: proposed
+status: accepted
 stage: none
-decided: —
-decider: —
+decided: 2026-10-13
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -63,6 +63,12 @@ Out of scope: validating read-model state, rules declared on query parameters th
 ## Consequences
 
 The reference evaluator and Arc agree on malformed query arguments, and renderers no longer need to hide concept types on query arguments. Specifications that asserted "no result" for an out-of-rule key now fail and must assert `then error`. Consumers admit the next ESM version for the new specification form.
+
+Consumer follow-ups: Stage renders concept-typed query arguments again, reversing the primitive workaround of [Stage#350](https://github.com/Cratis/Stage/issues/350), and its conformance harness maps the Validation rejection ([Stage#370](https://github.com/Cratis/Stage/issues/370)); Studio supports `then error` after `when query` and admits the version ([StudioIssues#628](https://github.com/Cratis/StudioIssues/issues/628)); Arc.TypeScript surfaces query validation results ([Arc#3225](https://github.com/Cratis/Arc/issues/3225)).
+
+## Status notes
+
+**2026-10-13 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review), with the consumer follow-ups named under Consequences.
 
 ## Related
 

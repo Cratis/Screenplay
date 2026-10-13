@@ -1,10 +1,10 @@
 ---
 id: 0071
 title: Whitespace-only text does not satisfy `not empty`
-status: proposed
+status: accepted
 stage: none
-decided: —
-decider: —
+decided: 2026-10-13
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -69,6 +69,12 @@ Out of scope: identity text (event-source and stream-id parts), `min length`, `m
 ## Consequences
 
 Required text means non-blank text everywhere. The reference evaluator and Stage's semantic renderer change. Arc.TypeScript's rule, and Arc's frontend rule, need a fixed whitespace set instead of `trim()` to match on U+0085 and U+FEFF. Models whose specifications relied on whitespace being a value get a different outcome.
+
+Consumer follow-ups: Stage's semantic validation rendering ([Stage#344](https://github.com/Cratis/Stage/issues/344)); Arc's frontend and Arc.TypeScript `NotEmptyRule` ([Arc#3224](https://github.com/Cratis/Arc/issues/3224)).
+
+## Status notes
+
+**2026-10-13 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review), as drafted.
 
 ## Related
 
