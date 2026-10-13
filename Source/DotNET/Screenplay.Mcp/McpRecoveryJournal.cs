@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Mcp;
 
 internal sealed partial class McpRecoveryJournal
 {
-    internal const string FileName = "pending.json";
+    internal const string FileName = ModelRootMetadata.PendingOperationFileName;
     readonly McpRoot _root;
     readonly McpManagedFiles _files;
     readonly byte[] _bytes;
@@ -74,13 +74,7 @@ internal sealed partial class McpRecoveryJournal
     internal string StateStage => OperationPath(_root, Record.OperationId, "stage");
     internal string StateBackup => OperationPath(_root, Record.OperationId, "backup");
 
-    internal static void RefusePending(McpRoot root)
-    {
-        if (new McpManagedFiles(root).Read(FileName, McpManagedFiles.MaximumJournalBytes) is not null)
-        {
-            throw new McpFailure("PendingOperation: .screenplay/pending.json records an interrupted or uncertain apply. Use workspace-state, then explicitly recover-workspace with its operationId before opening or editing.") { FailureKind = "PendingOperation" };
-        }
-    }
+    internal static void RefusePending(McpRoot root) => McpRootFailures.Run(() => ModelRootMetadata.RefusePending(root.Directory));
 
     internal static McpRecoveryJournal? Load(McpRoot root)
     {
