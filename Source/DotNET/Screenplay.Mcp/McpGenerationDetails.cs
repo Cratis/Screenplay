@@ -18,7 +18,7 @@ static class McpGenerationDetails
         return details;
     }
 
-    static object Read(McpSnapshot snapshot, ConceptSyntax concept)
+    static Dictionary<string, object?> Read(McpSnapshot snapshot, ConceptSyntax concept)
     {
         var generation = concept.Generation!;
         var modifiers = new Dictionary<string, object>();
@@ -42,8 +42,8 @@ static class McpGenerationDetails
         Preview("range", generation.Range);
         Preview("rule", generation.Rule);
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("GenerationDetails"));
-        var documents = SemanticDocumentSet.Create([.. snapshot.Sources.Select(source =>
-            SemanticSourceDocument.Create(catalog.ResolveDocument(source.Key), source.Key, source.Key, source.Value))], catalog);
+        var sources = snapshot.Sources.Select(source => SemanticSourceDocument.Create(catalog.ResolveDocument(source.Key), source.Key, source.Key, source.Value));
+        var documents = SemanticDocumentSet.Create([.. sources], catalog);
         var diagnostics = new SemanticModelCompiler().Compile("GenerationDetails", documents).Diagnostics
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
                 (diagnostic.Location == generation.Location || diagnostic.Location == concept.Location))
