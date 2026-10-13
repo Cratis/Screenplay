@@ -264,7 +264,7 @@
         "@cratis/arc": "22.50.1",
         "@cratis/arc.react": "22.50.1",
         "@cratis/components": "4.26.4",
-        "@cratis/event-models": "0.152.3",
+        "@cratis/event-models": "0.171.0",
         "@cratis/fundamentals": "7.22.0",
         "@cratis/scene": "0.152.3",
         "@types/chai": "^5.2.3",
