@@ -48,9 +48,11 @@ To baseline an earlier release, supply its canonical executable semantic model:
 screenplay baseline admit path/to/model --release v1.3.0 --from-esm shipped-esm.json
 ```
 
-The strict ESM reader requires the same application identity. Shipped ESM does not
-carry rename pins, so `--from-esm` requires the current stored name to match the
-shipped name; a mismatch refuses with `ShippedStoredNameMismatch`.
+The strict ESM reader requires the same application identity. From ESM v16 the
+shipped model carries each renamed event's stored name (`storedName`), and admission
+records that name. Earlier ESM versions do not carry rename pins, so the shipped
+event name must match the current stored name. Either way, a shipped stored name
+that differs from the current one refuses with `ShippedStoredNameMismatch`.
 
 `baseline check` exits `0` when every admitted revision matches, `1` for
 `BaselinedRevisionChanged` (with the first differing path) or

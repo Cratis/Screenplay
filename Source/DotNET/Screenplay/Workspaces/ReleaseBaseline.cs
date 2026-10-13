@@ -95,7 +95,7 @@ public static class ReleaseBaseline
         var names = StoredNames(workspace);
         return [.. Events(model.Application).SelectMany(contract =>
         {
-            var eventType = shipped ? contract.Name : names[contract.ContractId.ToString()];
+            var eventType = shipped ? contract.StoredName ?? contract.Name : names[contract.ContractId.ToString()];
             var address = workspace.IdentityCatalog.EventContracts.FirstOrDefault(assignment => assignment.Id == contract.ContractId)?.Address;
             var hint = address is null ? new ModelNotesAddress("Event", [new("EventContract", contract.Name)]) : ModelNotesAddress.From(address) with { Kind = "Event" };
             return contract.PriorRevisions.Append(new(contract.Revision, contract.Predecessor, contract.Properties)).Select(revision =>

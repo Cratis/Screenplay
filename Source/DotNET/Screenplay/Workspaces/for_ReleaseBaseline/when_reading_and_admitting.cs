@@ -138,4 +138,15 @@ public class when_reading_and_admitting : given.a_baseline_workspace
         result.Reason!.ShouldContain("OldRecorded");
         result.Reason.ShouldContain("Recorded");
     }
+
+    [Fact]
+    void should_admit_the_stored_name_carried_by_shipped_v16()
+    {
+        var source = Source.Replace("event Recorded generation 1", "event Recorded generation 1\n        id \"OldRecorded\"", StringComparison.Ordinal).Replace("event Recorded generation 2", "event Recorded generation 2\n        id \"OldRecorded\"", StringComparison.Ordinal);
+        var pinned = Changed(source);
+        var shipped = SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(pinned.Compilation.Value!.Model));
+        var result = ReleaseBaseline.Admit(pinned, Absent, "v2", At, shipped);
+        result.Failure.ShouldBeNull();
+        result.Document!.Entries.Select(entry => entry.EventType).Distinct().Single().ShouldEqual("OldRecorded");
+    }
 }
