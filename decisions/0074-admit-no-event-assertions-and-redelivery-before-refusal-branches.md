@@ -64,6 +64,8 @@ Holds until both #433 versions are admitted. In scope: splitting the admission, 
 
 **2026-10-13 — accepted with changes.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review) with three changes: #490's closure is recorded, the redelivery consumer work is named (Stage#371), and the `PLAY0268` message split is stated. Redelivery stays bundled with `then no events`.
 
+**2026-10-13 — refusal-branch prerequisites amended.** Arc#3058 is released (Arc 22.88.0) and Stage#214 is no longer an admission prerequisite but the consumer issue of the refusal-branch version (see the dated note in [0030](0030-reaction-refusals-and-redelivery.md)). Refusal branches follow this record's version as the next admission. Accepted by Sindre Alstad Wilting (delegated through the coordinator) on 2026-10-13.
+
 ## Consequences
 
 Authors can state "nothing followed" and recovery redelivery as executable specifications without waiting for Arc. Consumers (Stage, Studio, Arc's generator) admit #433 in two versions. Refusal branches keep 0030's guarantees and prerequisites.
