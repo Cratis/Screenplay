@@ -11,18 +11,7 @@ internal static partial class SemanticModelValidator
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var contract in events)
         {
-            if (contract.StoredName is { } storedName)
-            {
-                if (!semanticVersion.IsAtLeast(SemanticVersion.V16))
-                {
-                    throw new InvalidSemanticContract("Stored event type names require ESM v16.");
-                }
-
-                if (!StoredEventName.IsValid(storedName))
-                {
-                    throw new InvalidSemanticContract($"Event '{contract.Name}' has an invalid stored name.");
-                }
-            }
+            ValidateStoredName(contract, semanticVersion);
 
             if (semanticVersion.IsAtLeast(SemanticVersion.V16) && !names.Add(contract.StoredName ?? contract.Name))
             {
@@ -36,5 +25,23 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V16,
             "An ESM v16 model must declare a stored event type name that differs from its display name.",
             "Stored event type names require ESM v16.");
+    }
+
+    static void ValidateStoredName(SemanticEventContract contract, SemanticVersion semanticVersion)
+    {
+        if (contract.StoredName is not { } storedName)
+        {
+            return;
+        }
+
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V16))
+        {
+            throw new InvalidSemanticContract("Stored event type names require ESM v16.");
+        }
+
+        if (!StoredEventName.IsValid(storedName))
+        {
+            throw new InvalidSemanticContract($"Event '{contract.Name}' has an invalid stored name.");
+        }
     }
 }

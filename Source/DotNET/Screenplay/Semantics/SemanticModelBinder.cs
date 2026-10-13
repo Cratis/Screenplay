@@ -121,18 +121,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
-            if (SelectNumberVersions(application, semanticVersion) is { } numberVersions)
+            if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } numberVersions)
             {
                 languageVersion = numberVersions.Language;
                 semanticVersion = numberVersions.Semantic;
-                application = BindingContext.PromoteV2Destinations(application);
-                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
-            }
-
-            if (context.UsesStoredEventNames)
-            {
-                languageVersion = LanguageVersion.V16;
-                semanticVersion = SemanticVersion.V16;
                 application = BindingContext.PromoteV2Destinations(application);
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
@@ -177,6 +169,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
         }
     }
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames) =>
+        usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
     {

@@ -13,6 +13,9 @@ public sealed partial class SemanticModelBinder
     {
         readonly HashSet<SemanticAddress> _persistedEventAddresses = [.. documents.IdentityCatalog.EventContracts.Select(value => value.Address)];
 
+        static string? StoredNameOf(EventSyntax declaration) =>
+            declaration.Id is { } pin && pin != declaration.Name ? pin : null;
+
         SemanticModule BindModule(ModuleSyntax module)
         {
             if (module.Documentation is not null)
@@ -209,7 +212,7 @@ public sealed partial class SemanticModelBinder
                 current,
                 new(semanticAssignment.Id, contractAssignment.Id, revision, current.Name, latest.Properties)
                 {
-                    StoredName = current.Id is { } pin && pin != current.Name ? pin : null,
+                    StoredName = StoredNameOf(current),
                     Tags = latest.Tags,
                     Visibility = current.Visibility == EventVisibility.Public || current.Origin is not null ? SemanticEventVisibility.Public : SemanticEventVisibility.Private,
                     Origin = current.Origin,
