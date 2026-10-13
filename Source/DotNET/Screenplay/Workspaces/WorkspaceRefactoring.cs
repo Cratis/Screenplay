@@ -144,14 +144,50 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
 
     static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
 
-    static string? PlannedEventId(EventSyntax declaration, WorkspaceRenameRequest request)
+    static EventSyntax[] ConsistentGenerations(IEnumerable<EventSyntax> declarations)
+    {
+        var generations = declarations.ToArray();
+        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        {
+            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
+        }
+
+        return generations;
+    }
+
+    static WorkspaceEventRenameReport? EventRenameReport(WorkspaceEventMutability? mutability, bool pinAdded) => mutability is null ? null : new(mutability, pinAdded);
+
+    static (WorkspaceEventMutability? Mutability, WorkspaceAuthoringResult? Refusal) EventRenameMutability(WorkspaceRenameRequest request, WorkspaceSyntaxEntry target, EventSyntax[] generations)
+    {
+        if (target.Node is not EventSyntax || request.NewName == request.ExpectedName)
+        {
+            return (null, null);
+        }
+
+        if (request.ReleaseBaseline?.Status == "unreadable")
+        {
+            return (null, Failure(WorkspaceConflictKind.UnreadableReleaseBaseline, "UnreadableReleaseBaseline: event rename mutability cannot be determined."));
+        }
+
+        // A logical rename affects every generation's stored name; any admitted revision requires a pin.
+        var evidence = generations.Select(declaration => WorkspaceEventMutability.For(request.ReleaseBaseline, target.EventContractId, declaration.Generation)).ToArray();
+        var mutability = evidence.FirstOrDefault(value => value.Basis == "baselined") ?? evidence[0];
+        if (mutability.Basis == "baselined" && request.EventNeverPersisted)
+        {
+            return (mutability, Failure(WorkspaceConflictKind.BaselinedRevisionImmutable, "BaselinedRevisionImmutable: newGeneration is the only option for changing a stored event contract; rename must preserve its pin."));
+        }
+
+        return (mutability, null);
+    }
+
+    static string? PlannedEventId(EventSyntax declaration, WorkspaceRenameRequest request, bool unbaselined)
     {
         if (request.NewName == request.ExpectedName)
         {
             return declaration.Id;
         }
 
-        var pin = declaration.Id ?? (request.EventNeverPersisted ? null : declaration.Name);
+        var pin = declaration.Id ?? (request.EventNeverPersisted || unbaselined ? null : declaration.Name);
         if (request.EventNeverPersisted && pin == declaration.Name)
         {
             pin = null;
@@ -258,13 +294,15 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
-        var generations = index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
-        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        var generations = ConsistentGenerations(index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>());
+
+        var (mutability, refusal) = EventRenameMutability(request, target, generations);
+        if (refusal is not null)
         {
-            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
+            return refusal;
         }
 
-        var plannedEventIds = generations.ToDictionary(declaration => declaration, declaration => PlannedEventId(declaration, request));
+        var plannedEventIds = generations.ToDictionary(declaration => declaration, declaration => PlannedEventId(declaration, request, mutability?.Basis == "notInBaseline"));
         if (plannedEventIds.Values.Select(id => id ?? request.NewName).Distinct(StringComparer.Ordinal).Skip(1).Any())
         {
             throw new InvalidWorkspaceAuthoring("Rename would give event generations contradictory effective identity pins. Resolve them before renaming.");
@@ -350,6 +388,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         {
             ExpectedRevision = request.ExpectedRevision,
             ExpectedCatalogRevision = request.ExpectedCatalogRevision,
+            ReleaseBaseline = request.ReleaseBaseline,
             Formatting = request.Formatting,
             Validation = request.Validation,
             Documents = documents.ToImmutable(),
@@ -376,6 +415,6 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
         RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);
 
-        return result;
+        return result with { EventRenameReport = EventRenameReport(mutability, insertsEventPin) };
     }
 }

@@ -119,6 +119,7 @@ internal sealed partial class McpWorkspaces
             success = false,
             failureKind = AuthoringFailureKind(result),
             result.Conflicts,
+            violations = result.ReleaseBaselineResult?.Violations,
             property = DescribeProperty(result.PropertyReport),
             identityMigrationIssues = result.Conflicts.SelectMany(conflict => conflict.IdentityMigrationIssues).Select(issue => issue.Describe()),
             result.AuthoringDiagnostics,
@@ -133,6 +134,7 @@ internal sealed partial class McpWorkspaces
         WorkspaceConflictKind.StaleWorkspaceRevision or WorkspaceConflictKind.StaleCatalogRevision => "StaleRevision",
         WorkspaceConflictKind.FormattingConsentRequired => "FormattingConsentRequired",
         WorkspaceConflictKind.UnknownRepair => "UnknownRepair",
+        WorkspaceConflictKind.BaselinedRevisionImmutable or WorkspaceConflictKind.BaselinedRevisionChanged or WorkspaceConflictKind.BaselinedRevisionMissing or WorkspaceConflictKind.UnreadableReleaseBaseline => result.Conflicts[0].Kind.ToString(),
         { } kind when result.PropertyReport is not null => kind.ToString(),
         _ => "ProposalRejected"
     };

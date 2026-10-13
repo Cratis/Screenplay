@@ -59,6 +59,7 @@ internal sealed partial class McpRecoveryJournal
 
         record.StateAccess?.Validate();
         ValidateNotes();
+        ValidateReleaseBaseline();
         Changes = [.. Differences(Before, After).Select(entry => new McpDiskChange(entry)
         {
             Stage = entry.After is null ? null : Artifact(entry.After, "stage"),
@@ -118,7 +119,8 @@ internal sealed partial class McpRecoveryJournal
             state.After,
             [.. proposal.Before.Documents.Select(document => McpRecoveryAccess.Capture(document.Path.Value, root.PathFor(document.Path)))],
             state.Before is null ? null : McpRecoveryAccess.Capture(".screenplay/identities.json", files.PathFor(McpState.FileName)),
-            NotesRecord(proposal, files));
+            NotesRecord(proposal, files),
+            ReleaseBaselineRecord(proposal, files));
         var bytes = JsonSerializer.SerializeToUtf8Bytes(record);
         if (bytes.Length > McpManagedFiles.MaximumJournalBytes)
         {
@@ -128,6 +130,7 @@ internal sealed partial class McpRecoveryJournal
         var journal = new McpRecoveryJournal(root, record, bytes);
         files.Verify(McpState.FileName, state.Before);
         journal.VerifyNotes(applied: false);
+        journal.VerifyReleaseBaseline(applied: false);
         root.Verify(proposal.Before);
         var temporary = OperationPath(root, record.OperationId, "journal", create: true);
         McpManagedFiles.WritePrivate(temporary, bytes);
@@ -172,12 +175,14 @@ internal sealed partial class McpRecoveryJournal
 
         Record.StateAccess?.Verify(_files.PathFor(McpState.FileName));
         VerifyNotesAccess();
+        VerifyReleaseBaselineAccess();
     }
 
     internal void Complete(bool applied)
     {
         VerifyMarker();
         VerifyNotes(applied);
+        VerifyReleaseBaseline(applied);
         _root.Verify(applied ? After : Before);
         _files.Verify(McpState.FileName, applied ? Record.AfterState : Record.BeforeState);
         if (!applied)
@@ -194,7 +199,9 @@ internal sealed partial class McpRecoveryJournal
         DeleteKnown(StateStage, Record.AfterState);
         DeleteKnown(StateBackup, Record.BeforeState);
         CleanupNotes();
+        CleanupReleaseBaseline();
         VerifyNotes(applied);
+        VerifyReleaseBaseline(applied);
         _root.Verify(applied ? After : Before);
         _files.Verify(McpState.FileName, applied ? Record.AfterState : Record.BeforeState);
         if (!applied)

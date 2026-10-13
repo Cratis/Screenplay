@@ -429,7 +429,12 @@
       },
       "from": 2,
       "to": 2,
-      "mode": "eventNeverPersisted"
+      "mode": "eventNeverPersisted",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
     },
     {
       "event": {
@@ -459,7 +464,12 @@
       },
       "from": 1,
       "to": 1,
-      "mode": "eventNeverPersisted"
+      "mode": "eventNeverPersisted",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
     }
   ],
   "deployableWithoutTransformation": false,

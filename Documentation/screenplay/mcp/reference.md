@@ -478,6 +478,60 @@ The response contains `sourceRevision`, `outcome`, `discovered` (all specificati
 
 An unbound model returns `outcome: "unbound"`, executable diagnostics and `page: null`, never an empty passing list. Failed, unsupported and unbound responses set `isError: true`; failed takes precedence over unsupported in the overall outcome. Failures include expected and actual facts, read models, scalar or record command responses and query results, with effective fixture provenance for example-based scenarios. A bound model with zero specifications has zero discovered: a pass is not a coverage verdict. See [`screenplay test`](../tool.md#run-the-models-specifications) for the same evaluator from the command line.
 
+## Release baseline
+
+The committed `.screenplay/release-baseline.json` records which event revisions a
+release admitted. It is independent of source, workspace, semantic and catalog
+revisions. Admit with the [CLI](../tool.md); MCP never writes or repairs it.
+
+`open-workspace` and `workspace-state` report `releaseBaseline`:
+
+| Member | Contract |
+| --- | --- |
+| `status` | `absent`, `valid` or `unreadable`; unreadability never blocks opening or reading |
+| `revision` | `brev1:` canonical hash; `brev1:absent` without a file, null when unreadable |
+| `reason` | Unreadable reason, otherwise null |
+| `entries` | Admitted revision count, null when unreadable |
+| `violations` | Changed or missing revision count; null when the current model cannot bind |
+| `checkFailure` | Check refusal when a valid baseline cannot be compared, otherwise null |
+
+`list-release-baseline` requires an open workspace. It takes `offset`, `limit`
+(default 50, maximum 200) and `expectedReleaseBaselineRevision` (required on
+continuation). The response has `releaseBaseline` and `page`. Each entry has
+`event` (contract ID), `revision`, `eventType`, `lastAddress`, `admittedIn`,
+`admittedAt`, `status` and `path`. Status is `unchanged`, `changed` (with its first
+differing stored path), or `missing`; `unknown` means the current model cannot
+bind. An unreadable baseline returns its status with `page: null`, not an empty
+verified set.
+
+Property `generations[]` and event `eventRename` results carry
+`mutability: {basis, releaseBaselineRevision, admittedIn}`:
+
+| Basis | Property edits | Event rename |
+| --- | --- | --- |
+| `noBaseline` | Exactly one of `newGeneration` or `eventNeverPersisted` | Pins by default |
+| `notInBaseline` | No flag defaults to `inPlace`; either explicit flag is honored | Does not add a pin |
+| `baselined` | Only explicit `newGeneration`; otherwise `BaselinedRevisionImmutable` | Preserves stored name; `eventNeverPersisted` refuses |
+
+`releaseBaselineRevision` is null only for `noBaseline`; `admittedIn` is set only
+for `baselined`. `eventRename.pinAdded` reports whether the rename inserted a pin.
+If any historical revision is admitted, a logical event rename preserves its pin.
+
+Every proposal checks the complete candidate's resolved contracts before retention.
+`BaselinedRevisionChanged` and `BaselinedRevisionMissing` refusals list all affected
+revisions as `violations` (`kind`, `event`, `revision`, first differing `path`).
+Shared concept, type or enum changes also count; descriptions and type names do
+not. An unreadable baseline refuses event-contract changes with
+`UnreadableReleaseBaseline`, but permits non-contract edits.
+
+Proposals record `releaseBaselineRevision`. `read-proposal view=release-baseline`
+reports retained baseline status, violations and a page of original event revisions
+with their mutability; pin `expectedReleaseBaselineRevision` on continuation.
+All proposal tools, `read-proposal` and `apply` accept that optional pin. Apply also
+checks the retained baseline and resolved contracts again, returning
+`StaleReleaseBaseline` if the baseline changed. Semantic-diff bytes are unchanged;
+its retained disk baseline is not the release baseline.
+
 ## Model notes
 
 Notes live outside source and executable revisions in the committed
@@ -573,13 +627,14 @@ arguments or failed requests, never successful partial batches.
 | `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
+| `list-release-baseline` | None | offset, limit, expectedReleaseBaselineRevision |
 | `list-model-notes` | None | anchor, scope, kind, state, ref, view, offset, limit, expectedNotesRevision |
 | `propose-model-notes` | expectedRevision, expectedCatalogRevision, expectedNotesRevision, operations | None |
 | `discard-proposal` | proposalId | None |
-| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision` |
+| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision`, `expectedReleaseBaselineRevision` |
 | `recover-workspace` | operationId | None |
 
 `expand-layout` guards relative module, feature and slice sibling order in each
@@ -687,8 +742,9 @@ remain `chainCandidates`, not implicit removals. Type changes and nested composi
 paths, read-model keys, opaque/unclassified text and unsupported spans are not
 inferred or rewritten. Inline events require extraction first.
 
-Selected event fields require exactly one of `newGeneration` or
-`eventNeverPersisted`. The flags choose one mode for all selected events and select
+Without a release baseline, selected event fields require exactly one of
+`newGeneration` or `eventNeverPersisted`. With a baseline, unadmitted current
+revisions default to `inPlace`; admitted revisions require explicit `newGeneration`. The flags choose one mode for all selected events and select
 no extra fields. Both true returns JSON-RPC `-32602`. The current generation alone
 can be edited in place; older generations are immutable. Advancing creates one
 new generation per selected event owner, retaining old property identities and
@@ -704,7 +760,7 @@ The normal retained proposal response adds `property`, also returned by
 | `notChanged` | Off-chain property address, kind and `reason: "offChain"` |
 | `needsDecision` | Refusal reason, subject and candidate addresses/kinds/roles/locations |
 | `chainCandidates` | Unselected chain address, kind, role and reason |
-| `generations` | Required array of `{event, from, to, mode}`; canonical EventContract addresses, stable address order, one entry per selected event owner |
+| `generations` | Required array of `{event, from, to, mode, mutability}`; canonical EventContract addresses, stable address order, one entry per selected event owner |
 | `deployableWithoutTransformation` | False when any candidate event has several generations; no transformation is inferred |
 | `esmVersionChange` | Selected ESM version pair, or null if unchanged or unknown |
 | `esmVersionKnown` | Whether the candidate bound, independently of authoring acceptance |
@@ -712,7 +768,7 @@ The normal retained proposal response adds `property`, also returned by
 `change` is one of `renamed`, `removed`, `mappingRewritten`,
 `explicitMappingInserted`, `fixtureRewritten`, `fixtureRemoved`, `added`,
 `fixtureAdded`. Generation mode
-is `newGeneration` or `eventNeverPersisted`. Each event retains its own original
+is `newGeneration`, `eventNeverPersisted` or `inPlace`. Each event retains its own original
 revision; in-place edits report equal `from` and `to`. `generations: []` means no
 accepted planned event-contract edits, not a successful proposal. There is no
 singular `property.generation` alias. This tool had no published singular result;

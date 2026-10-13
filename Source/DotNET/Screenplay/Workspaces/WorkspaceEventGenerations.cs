@@ -21,10 +21,20 @@ static class WorkspaceEventGenerations
         collection.Add(next);
     }
 
-    internal static ImmutableArray<WorkspacePropertyGeneration> Plan(IEnumerable<WorkspaceSyntaxEntry> owners, bool advance) =>
+    internal static ImmutableArray<WorkspacePropertyGeneration> Plan(IEnumerable<WorkspaceSyntaxEntry> owners, bool advance, bool neverPersisted = true, ReleaseBaselineRead? baseline = null) =>
         [.. owners.Select(owner => new WorkspacePropertyGeneration(
             owner.Address!,
             ((EventSyntax)owner.Node).Generation,
             advance ? checked(((EventSyntax)owner.Node).Generation + 1) : ((EventSyntax)owner.Node).Generation,
-            advance ? "newGeneration" : "eventNeverPersisted"))];
+            Mode(advance, neverPersisted))
+        {
+            Mutability = WorkspaceEventMutability.For(baseline, owner.EventContractId, ((EventSyntax)owner.Node).Generation)
+        })];
+
+    static string Mode(bool advance, bool neverPersisted) => (advance, neverPersisted) switch
+    {
+        (true, _) => "newGeneration",
+        (_, true) => "eventNeverPersisted",
+        _ => "inPlace"
+    };
 }

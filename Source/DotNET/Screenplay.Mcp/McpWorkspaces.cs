@@ -104,7 +104,7 @@ internal sealed partial class McpWorkspaces
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
         RefusePendingWorkspace();
         _ = McpWorkspaceTransport.ExportBytes(candidate);
-        var result = McpJson.ToolResult(WithRootBindingConflict(WithNotes(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), candidate)));
+        var result = McpJson.ToolResult(WithRootBindingConflict(WithReleaseBaselineStatus(WithNotes(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), candidate), candidate)));
         _workspace = candidate;
         _stateBytes = persisted;
         _proposals.Clear();
@@ -154,6 +154,7 @@ internal sealed partial class McpWorkspaces
         }
 
         VerifyNotesPlan(proposal);
+        VerifyBaselinePlan(proposal, arguments);
         var statePlan = StatePlan(proposal);
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
@@ -168,6 +169,7 @@ internal sealed partial class McpWorkspaces
                 BeforeInstall?.Invoke();
                 RefuseCompetingPending();
                 VerifyNotesPlan(proposal);
+                VerifyBaselinePlan(proposal, arguments);
                 evidence?.Verify(Root, proposal);
             },
             evidence?.OperationId);
@@ -257,6 +259,19 @@ internal sealed partial class McpWorkspaces
     {
         RefuseCompetingPending();
         McpRecoveryJournal.RefusePending(Root);
+    }
+
+    static void RequireCompilable(IMcpProposal proposal, ScreenplayWorkspace candidate)
+    {
+        // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
+        var analysis = McpWorkspaceAnalysis.For(candidate);
+        if (!proposal.Accepted || !analysis.Source.Compilation.Success)
+        {
+            var issues = string.Join(" | ", analysis.Source.Compilation.Diagnostics.Concat(candidate.Compilation.Diagnostics)
+                .Select(diagnostic => $"{diagnostic.Code} {diagnostic.Location.Line}:{diagnostic.Location.Column} {diagnostic.Message}")
+                .Take(8));
+            throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
+        }
     }
 
     static object? DescribeMove(WorkspaceMoveReport? report) => report is null ? null : new
@@ -389,14 +404,11 @@ internal sealed partial class McpWorkspaces
             _ = Root.PathFor(document.Path);
         }
 
-        // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
-        var analysis = McpWorkspaceAnalysis.For(candidate);
-        if (!proposal.Accepted || !analysis.Source.Compilation.Success)
+        RequireCompilable(proposal, candidate);
+        var baselinePlan = PlanBaseline(proposal, arguments);
+        if (BaselineRefusal(proposal, candidate, baselinePlan) is { } refusal)
         {
-            var issues = string.Join(" | ", analysis.Source.Compilation.Diagnostics.Concat(candidate.Compilation.Diagnostics)
-                .Select(diagnostic => $"{diagnostic.Code} {diagnostic.Location.Line}:{diagnostic.Location.Column} {diagnostic.Message}")
-                .Take(8));
-            throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
+            return refusal;
         }
 
         if (_proposals.Count >= 16)
@@ -415,6 +427,8 @@ internal sealed partial class McpWorkspaces
             success = true,
             proposalId = id,
             repairEvidence = evidence,
+            releaseBaselineRevision = baselinePlan.Read.Revision,
+            eventRename = EventRenameReport(proposal),
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal policy ? policy.ReferencePolicy.ToString() : null,
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
@@ -438,6 +452,7 @@ internal sealed partial class McpWorkspaces
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);
         _statePlans.Add(proposal, statePlan);
+        _baselinePlans.Add(proposal, baselinePlan);
         if (evidence is not null) _repairEvidence.Add(proposal, evidence);
         return response;
     }
@@ -528,6 +543,7 @@ internal sealed partial class McpWorkspaces
                 _statePlans.Add(refreshed, plan);
             }
 
+            if (_baselinePlans.TryGetValue(proposal, out var baselinePlan)) _baselinePlans.Add(refreshed, baselinePlan);
             _proposals[id] = refreshed;
         }
 

@@ -15,7 +15,7 @@ Events are immutable, past-tense facts — the record of something that happened
   ...
 ```
 
-Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. References to an event name resolve to its current (highest) generation in that slice; property checks use that shape, not the historical ones. The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4. Bare references use the current revision only; a `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`, and `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed. A target without explicit migration support must reject an evolved contract; Chronicle registration needs migrations, which Screenplay does not yet express. Complete historical declarations alone do not prove schema immutability across edits to referenced concepts or types (see #71).
+Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. References to an event name resolve to its current (highest) generation in that slice; property checks use that shape, not the historical ones. The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4. Bare references use the current revision only; a `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`, and `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed. A target without explicit migration support must reject an evolved contract; Chronicle registration needs migrations, which Screenplay does not yet express. Complete historical declarations alone do not prove schema immutability across edits to referenced concepts or types; use the release baseline check below. Transformations between generations remain tracked in #71.
 
 ```screenplay
 event ProjectRegistered generation 1
@@ -30,21 +30,47 @@ The optional `file` line names the repository relative file this declaration is 
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
 
+## Released event contracts
+
+At release time, explicitly [admit the shipped revisions](tool.md#admit-and-check-released-event-revisions)
+with `screenplay baseline admit <root> --release <label>` and commit
+`.screenplay/release-baseline.json`. Run `screenplay baseline check <root>` in CI
+before accepting later edits. The file keys on persisted event contract identities
+and revision numbers, never on names or display addresses.
+
+Each entry freezes the resolved stored shape: property names, optional and
+collection flags, expanded primitives and composite members, concept compliance
+markers, enum member names and numbers, and the effective stored event name
+(`id` pin when present, otherwise the declaration name). Equality is exact in v1,
+even for changes Chronicle might tolerate. A changed referenced concept, composite
+or enum affects every admitted revision that uses it, including historical ones.
+Declare a new type or concept and use it in a new generation instead of changing
+the old shared type underneath stored events.
+
+Concept/type/enum names, descriptions, documentation, tags, semantic property IDs,
+concept validation rules and generation strategies do not change a stored shape.
+The baseline itself is not part of the language or executable model and changes
+none of their revisions. Ordinary compilation and reading remain available when
+it is malformed; the baseline check and admission fail closed. No tool removes
+entries: unfreezing requires a deliberate reviewed edit to the sidecar.
+
 ### Chronicle projection registration
 
 For projections that opt in to Chronicle's generation support, bare PDL event names pin the latest registered generation when the projection is registered: one generation per event type per projection. This is provider registration behavior, not a change to Screenplay's resolution to the highest declared generation described above and in [decision 0015](https://github.com/Cratis/Screenplay/blob/main/decisions/0015-event-generations-in-the-executable-model.md). There is no `X+N` syntax. Explicit generation-qualified projection references remain tracked in [Screenplay#642](https://github.com/Cratis/Screenplay/issues/642).
 
 ## Change an event property through MCP
 
-Use `propose-property` to add, rename or remove a current event property, with an
-explicit choice between `eventNeverPersisted` and `newGeneration`. The first
+Use `propose-property` to add, rename or remove a current event property. Without
+a release baseline, choose explicitly between `eventNeverPersisted` and `newGeneration`.
+With a baseline, an unadmitted current revision defaults to `inPlace`; an admitted
+revision requires explicit `newGeneration` and refuses `eventNeverPersisted`. The first
 asserts that the current generation has never been stored: it edits that generation
 in place and preserves renamed property IDs. The second keeps every historical
 shape and identity, appends the changed shape as generation N+1, and assigns new
 property identities there while retaining the event contract ID. Historical
 properties refuse either choice. Extract an inline event before changing its contract.
 
-Adding even an optional property requires this choice: an in-place schema addition
+Without a baseline, adding even an optional property requires this choice: an in-place schema addition
 is not safe for a stored generation. Add selects an owner and explicit declaration
 or mapping `hops`; the planner never infers producer values. Required properties
 need literal fixture values. See [adding a property along its chain](mcp/edit.md#add-a-property-along-a-mapping-chain).
@@ -53,7 +79,10 @@ Only the target and explicitly selected `alsoRename`, `alsoRemove` or add hops c
 Evolution flags do not select connected events. One proposal can select several
 events with different starting generations, but uses one mode for them all. Its
 required `property.generations` array reports each selected event once, in canonical
-address order, with that event's own `from`, `to` and `mode`. In-place edits report
+address order, with that event's own `from`, `to`, `mode` and `mutability`.
+Mutability reports `basis`, `releaseBaselineRevision` and original `admittedIn`.
+A missing baseline reports `noBaseline` with both other fields null; unadmitted
+revisions report `notInBaseline`; admitted revisions report `baselined`. In-place edits report
 `from == to`; an empty array means no accepted planned event edits, not success.
 There is no singular generation-report alias.
 
@@ -117,7 +146,7 @@ Each directive can appear at most once. Description and documentation are author
 
 Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471` with a typed removal repair.
 
-Workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
+Without a release baseline, workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. With a baseline, an unadmitted event rename does not add a pin; any admitted revision requires preserving the pin and refuses `eventNeverPersisted`. Rename results report `eventRename.mutability` and `eventRename.pinAdded`. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
 
 The effective stored name is the `id` pin, otherwise the event name. A pin must be nonempty, have no surrounding whitespace, and follow the event-name identifier rule: an ASCII letter or underscore first, then word characters. Binding refuses invalid pins, different effective names across generations, and two events in one application with the same stored name (`PLAY0472`). `storedName` appears once on the current contract entry; prior revisions share it. A pin equal to the display name is a no-op: it omits `storedName`, does not select v16 or report `PLAY0686`, and its `PLAY0471` removal repair preserves byte-identical ESM. Models without differing event pins keep their earlier version, bytes and revision.
 

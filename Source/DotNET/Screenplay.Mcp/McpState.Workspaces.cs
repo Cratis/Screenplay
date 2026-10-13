@@ -43,7 +43,7 @@ internal sealed partial class McpWorkspaces
             recovery = RecoveryStatus(),
             stateChange = proposal is null ? null : StatePlan(proposal).Describe()
         };
-        return McpJson.ToolResult(WithRootBindingConflict(WithNotes(status, NotesApplication(persisted))));
+        return McpJson.ToolResult(WithRootBindingConflict(WithReleaseBaselineStatus(WithNotes(status, NotesApplication(persisted)), persisted)));
     }
 
     internal object Recover(JsonElement arguments)

@@ -376,7 +376,12 @@
       },
       "from": 1,
       "to": 2,
-      "mode": "newGeneration"
+      "mode": "newGeneration",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
     }
   ],
   "deployableWithoutTransformation": false,
