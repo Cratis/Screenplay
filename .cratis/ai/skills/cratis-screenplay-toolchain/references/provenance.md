@@ -15,11 +15,10 @@ the file that holds it.
 | --- | --- | --- |
 | TrogonStack/agentskills `7b249d3ee42d8b7e11fa564141ebd5fbc37aadf1` (MIT, Copyright (c) 2025 Straw Hat, LLC) | none: no passage of this skill is adapted from it | no third-party notice needed in `LICENSE` |
 
-## Adapted closely (Martin Dilger and Nebulit GmbH, with agreement)
+## Adapted closely (Martin Dilger and Nebulit GmbH)
 
 Source: https://github.com/Nebulit-GmbH/agentic-engineer at commit `07b0f30648d663cb588d7e2c7aa031af9dfc21f2`,
-by Martin Dilger and Nebulit GmbH (https://nebulit.de). The repository carries no licence file; this material
-is adapted with the agreement of Martin Dilger and Nebulit GmbH.
+by Martin Dilger and Nebulit GmbH (https://nebulit.de), used with the explicit consent of Martin Dilger and Nebulit GmbH.
 
 | Source file | Used in | How |
 |---|---|---|
@@ -29,6 +28,26 @@ is adapted with the agreement of Martin Dilger and Nebulit GmbH.
 
 ## Sources read for facts
 
+- Historical public/keys/routes/version source check: Screenplay `v4.135.0` (`b4e46130`),
+  unchanged release contract, `Semantics/Versions.cs`, `Documentation/screenplay/{events,slices,captures,readmodels,queries,event-sources,diagnostics,interoperability}.md`,
+  decisions 0049–0051 and 0060–0066. Composite view keys remain PLAY0268 (#599);
+  v11 literal lowering is admitted despite interoperability's unreleased label.
+  CLI `v3.50.0` (`546dea12`) pins Stage 4.67.0 and Screenplay 4.131.0;
+  `RenderedSemanticVersions.cs` and Stage's version-feature admission were read,
+  not executed as a new render/browser vector.
+- Previous pin update: Screenplay `v4.131.0` (`71f3ef37`), published
+  `screenplay-contract.json`, `Source/DotNET/Screenplay.Mcp/{McpRevisionDiff,McpWorkspaces.Comparison,McpToolSchemas}.cs`
+  and `Documentation/screenplay/mcp/reference.md`; CLI `v3.46.1` (`73578fbf`)
+  `Directory.Packages.props`, `RenderedSemanticVersions.cs`, `RenderSettings.cs`,
+  `CratisRenderTarget.cs`, `RunSettings.cs` and `StageContainer.cs`. The CLI
+  source checks are not a new render/browser probe.
+- Identity/compliance/route-literal guidance: Screenplay `v4.127.0` (`e70435a4`)
+  `identity.md`, `context.md`, `concepts.md`, `purposes.md`, `events.md`,
+  `event-sources.md`, `reactions.md`, `completeness.md`, `diagnostics.md`,
+  `editor-diagnostics.md`, MCP reference/authoring tools and `Semantics/Versions.cs`.
+  Installed 4.127.0 version and changed examples were checked separately. Historical
+  execution and renderer probes retain their labels, including CLI 3.41.0.
+- Earlier baseline: Screenplay `v4.125.0` `Documentation/screenplay/{tool,diagnostics,editor-diagnostics,grammar,event-sources,specifications,policies}.md`, MCP reference/authoring guides and `Semantics/Versions.cs`; CLI `v3.41.0` dependency pins, `RenderedSemanticVersions.cs` and its v7 planning specification. Installed versions/CLI help and changed examples were checked separately. Pins are in `versions.md`; the older probes below retain their original labels.
 - Screenplay `v4.66.0` (`c89198b`): `Documentation/screenplay/` (grammar, commands, queries,
   specifications, reactions, diagnostics, mcp), `decisions/0017`, `0020`, `0022` to `0024`,
   `Source/DotNET/Screenplay/Semantics/` (binder, versions, execution),
@@ -40,8 +59,9 @@ is adapted with the agreement of Martin Dilger and Nebulit GmbH.
 - cratis `v3.28.2` (`141c499`; `Render/`, `Run/`, `Prologue/` and `Screenplay/Generate*` are unchanged since `v3.27.1`, `a327e89`): `Source/Cli/Commands/Render/`, `ScreenplayMcpRoot.cs`,
   `Documentation/reference/screenplay.md`.
 - Arc `v22.50.5` and Chronicle `v19.32.0` for the code-level facts cited in `versions.md`.
-- Open issues cited as limits: cli#242, #243, #244, #245; Screenplay#377, #379, #383, #384,
-  #388; Stage#79, #165, #178, #197; Chronicle#3744, #4123, #4131.
+- Historical issue inventory at the old probes: cli#242, #243, #244, #245;
+  Stage#79, #165, #178; Chronicle#3744, #4123, #4131. Current invocation actor and
+  reference-execution availability are verified against v4.125.0, not old open-issue status.
 
 ## Changes from the earlier toolkit
 
@@ -55,7 +75,7 @@ is adapted with the agreement of Martin Dilger and Nebulit GmbH.
   ESM v7 and v11 allocations; added numbers-exact, concurrency, approval-policy, visualization,
   bodied-reducer, file-mode and cascade rows.
 - Corrected the code-attachment rule (a handler never binds, with or without `hint`), the
-  automation rendering rule (Stage renders no Automation or Translate slices) and the
+  historical automation rendering rule (Stage 4.24 rendered no Automation or Translate slices; current admission is in `renderable-subset.md`) and the
   Stage output description (a React/Vite scaffold is emitted too).
 - Verdict names follow the frozen V1 to V5 (V2 is executable diagnostics, V3 binding-ready);
   the earlier "authoring accepted" meaning of V2 was dropped because it proves only that the

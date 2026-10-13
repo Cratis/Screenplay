@@ -401,7 +401,10 @@ command RegisterInvoice
 
 The meaning is fixed so every target agrees:
 
-- An absent value of an optional property satisfies every rule except `not empty` — presence is what `not empty` states. An empty collection satisfies `all >` and `all >=`.
+- An absent value of an optional property satisfies every rule except `not empty`.
+- `not empty` on text requires at least one non-whitespace character: null, `""` and whitespace-only text fail. Whitespace is the Unicode `White_Space` set: U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 — exactly .NET `char.IsWhiteSpace`. A lone U+FEFF passes; JavaScript targets must use this set, not `trim()`, which differs on U+0085 and U+FEFF. Values are not trimmed or normalized by the rule. This meaning applies to concept and command property rules in every ESM version.
+- `not empty` on a collection requires at least one element, regardless of that element's value. An empty collection satisfies `all >` and `all >=`.
+- Identity text is separate: [event-source and stream-id parts](event-sources.md) still treat whitespace as a value; only the exact empty string is empty.
 - Text length counts UTF-16 code units, the length .NET and JavaScript both report.
 - An operand is a literal. A property reference is not admitted, and an operand that does not fit the property's type — `quantity min 1.5` on an `Int`, `status == "pending"` on an enum without that member — is a binding error (`PLAY0273`) on the rule.
 - A failed rule rejects the command at every severity, with its `message` (or a generated description) and its severity.

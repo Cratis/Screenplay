@@ -12,6 +12,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="projection">The scoped projection.</param>
 /// <param name="validator">The value validator.</param>
 /// <param name="observed">The facts observed before the current one, used to back-fill joins.</param>
+/// <param name="pending">The world's pending child occurrences.</param>
 /// <remarks>
 /// Instance removal deletes the instance; a child is upserted by identity (Chronicle <c>ProjectionEventContextExtensions.cs:180-202</c>);
 /// a nested object is created on first touch, merged and cleared to null; a root join matches its joined property while a child join
@@ -23,7 +24,8 @@ internal sealed partial class SemanticScopedProjection(
     SemanticExecutionPlan plan,
     SemanticProjection projection,
     SemanticValueValidator validator,
-    IReadOnlyList<SemanticFact> observed)
+    IReadOnlyList<SemanticFact> observed,
+    List<SemanticScopedProjection.DeferredChild> pending)
 {
     readonly SemanticReadModel _readModel = plan.ReadModels[projection.ReadModel];
     readonly Dictionary<SemanticId, SemanticCompositeType> _types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
@@ -49,14 +51,14 @@ internal sealed partial class SemanticScopedProjection(
         var scope = projection.Scope!;
         var root = new Level([], [], Properties(_readModel.Properties));
         var handled = Process(scope, root);
-        if (!handled && scope.Every is { SubscribesToAllEvents: true } every && _failure is null)
+        if (!handled && _failure is null)
         {
-            // 'all' covers event types no block names, keyed by the event source identity (ProjectionFactory.cs:616-631).
-            if (EventSource() is { } key)
-            {
-                var document = RootDocument(key, true)!;
-                Apply(document.State, every.Mappings, root.Targets, _fact);
-            }
+            ApplyAllEvents(scope, root);
+        }
+
+        if (_failure is null && handled)
+        {
+            ResolvePending();
         }
 
         if (_failure is null)
@@ -77,6 +79,16 @@ internal sealed partial class SemanticScopedProjection(
         return null;
     }
 
+    void ApplyAllEvents(SemanticProjectionScope scope, Level root)
+    {
+        // 'all' covers event types no block names, keyed by the event source identity (ProjectionFactory.cs:616-631).
+        if (scope.Every is { SubscribesToAllEvents: true } every && EventSource() is { } key)
+        {
+            var document = RootDocument(key, true)!;
+            Apply(document.State, every.Mappings, root.Targets, _fact);
+        }
+    }
+
     bool Process(SemanticProjectionScope scope, Level level)
     {
         var handled = false;
@@ -95,7 +107,7 @@ internal sealed partial class SemanticScopedProjection(
         foreach (var removal in scope.Removals.Where(_ => _.EventContract == _fact.EventContract))
         {
             handled = true;
-            ApplyRemoval(removal, level);
+            ApplyRemoval(removal, scope, level);
         }
 
         foreach (var removal in scope.JoinRemovals.Where(_ => _.EventContract == _fact.EventContract))
@@ -106,12 +118,7 @@ internal sealed partial class SemanticScopedProjection(
 
         foreach (var children in scope.Children)
         {
-            var element = _types[level.Targets[children.Property].Type.Target];
-            var elementProperties = Properties(element.Properties);
-            var identity = children.IdentifiedBy.IsSet
-                ? children.IdentifiedBy
-                : element.Properties.Single(_ => _.Name == _readModel.Properties.Single(property => property.IsIdentifier).Name).Id;
-            handled |= Process(children.Scope, new([.. level.Address, new(children.Property, identity)], [], elementProperties));
+            handled |= Process(children.Scope, ChildLevel(children, scope, level));
         }
 
         foreach (var nested in scope.Nested)
@@ -125,11 +132,12 @@ internal sealed partial class SemanticScopedProjection(
 
     void ApplyFrom(SemanticProjectionFrom from, SemanticProjectionScope scope, Level level)
     {
-        if (Locate(level, from.Key, from.ParentKey, true) is not { } location)
+        if (LocateFrom(from, scope, level) is not { } location)
         {
             return;
         }
 
+        ApplyAncestors(location, level);
         Modify(location, true, target =>
         {
             Apply(target, from.Mappings, level.Targets, _fact);
@@ -200,12 +208,13 @@ internal sealed partial class SemanticScopedProjection(
 
     // In a nested object a removal clears it back to null; at a projection's own level it deletes the instance; inside children
     // it removes one child (Chronicle ProjectionFactory.cs:277-295, 459-465).
-    void ApplyRemoval(SemanticProjectionRemoval removal, Level level)
+    void ApplyRemoval(SemanticProjectionRemoval removal, SemanticProjectionScope scope, Level level)
     {
         if (!level.Nested.IsEmpty)
         {
-            if (Locate(level with { Nested = [] }, removal.Key, removal.ParentKey, false) is { } enclosing)
+            if (LocateRemoval(removal, scope, level) is { } enclosing)
             {
+                ApplyAncestors(enclosing, level);
                 Modify(enclosing with { Nested = level.Nested[..^1] }, false, target => target[level.Nested[^1]] = SemanticValue.Null);
             }
 
@@ -222,8 +231,9 @@ internal sealed partial class SemanticScopedProjection(
             return;
         }
 
-        if (Locate(level, removal.Key, removal.ParentKey, false) is { } location)
+        if (LocateRemoval(removal, scope, level) is { } location)
         {
+            ApplyAncestors(location, level);
             RemoveElement(location);
         }
     }
@@ -259,16 +269,22 @@ internal sealed partial class SemanticScopedProjection(
             return null;
         }
 
+        return LocateChild(level, identity, parentIdentity);
+    }
+
+    Location? LocateChild(Level level, SemanticValue identity, SemanticValue parentIdentity)
+    {
         var parentAddress = level.Address[..^1];
         var parents = parentAddress.IsEmpty
             ? _documents.Where(_ => !_.Removed && SemanticValueRules.AreEqual(_.Key, parentIdentity)).Select(_ => new Location(_, [], [])).ToArray()
             : [.. Elements(parentAddress).Where(_ => SemanticValueRules.AreEqual(_.Steps[^1].Identity, parentIdentity))];
         if (parents.Length != 1)
         {
-            // Chronicle stores parentless children as futures (KeyResolvers.cs:768-784; ResolveFutures.cs); the reference evaluator has no deferral.
-            Fail(parents.Length == 0
-                ? $"Projection '{projection.Name}' has no parent for a child event; Chronicle defers it until the parent exists, which the reference evaluator does not model."
-                : $"Projection '{projection.Name}' parent identity is ambiguous for a child event.");
+            if (parents.Length > 1)
+            {
+                Fail($"Projection '{projection.Name}' parent identity is ambiguous for a child event.");
+            }
+
             return null;
         }
 
@@ -310,11 +326,7 @@ internal sealed partial class SemanticScopedProjection(
         public bool Touched { get; set; }
     }
 
-    sealed record ChildStep(SemanticId Property, SemanticId IdentifiedBy);
-
     sealed record ElementStep(SemanticId Property, SemanticId IdentifiedBy, SemanticValue Identity);
-
-    sealed record Level(ImmutableArray<ChildStep> Address, ImmutableArray<SemanticId> Nested, Dictionary<SemanticId, SemanticProperty> Targets);
 
     sealed record Location(Document Document, ImmutableArray<ElementStep> Steps, ImmutableArray<SemanticId> Nested);
 }

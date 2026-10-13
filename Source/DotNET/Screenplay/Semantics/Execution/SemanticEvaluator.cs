@@ -70,7 +70,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!TryProject(plan, world.Facts, world.ReadModels, facts, out var readModels, out var failure))
+        if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
         }
@@ -86,7 +86,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
         }
 
-        return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
+        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller);
     }
 
     // Projects from supplied snapshots without validating facts. The public establishment operation intentionally
@@ -103,7 +103,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     internal static bool IsEmpty(SemanticValue value) => value switch
     {
         SemanticNullValue => true,
-        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
+        SemanticTextValue text => string.IsNullOrWhiteSpace(text.Value),
         SemanticArrayValue array => array.Values.IsEmpty,
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()

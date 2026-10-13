@@ -2,7 +2,7 @@
 id: 0071
 title: Whitespace-only text does not satisfy `not empty`
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-13
 decider: Sindre Alstad Wilting
 class: contract
@@ -75,6 +75,8 @@ Consumer follow-ups: Stage's semantic validation rendering ([Stage#344](https://
 ## Status notes
 
 **2026-10-13 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review), as drafted.
+
+**2026-10-13 — implemented (#680).** The reference evaluator uses .NET's Unicode whitespace check for text `not empty` in every ESM version, with concept and command property specifications and the `NotEmptyWhitespace` corpus vector. Collection rules and identity-text code paths are unchanged. Command/concept documentation and the shared Monaco/VS Code hover and completion descriptions state the contract. Canonical serialization is unchanged.
 
 ## Related
 

@@ -337,7 +337,7 @@ export const policyItems: CompletionEntry[] = [
 ];
 
 export const validateItems: CompletionEntry[] = [
-    { label: 'not empty', insertText: '${1:property} not empty message "${2:message}"', documentation: 'The property must have a value.' },
+    { label: 'not empty', insertText: '${1:property} not empty message "${2:message}"', documentation: 'Text needs a non-whitespace character; null, empty and whitespace-only text fail. Uses Unicode White_Space (.NET char.IsWhiteSpace), including U+0085 but not U+FEFF, not JavaScript trim(). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged.' },
     { label: 'max', insertText: '${1:property} max ${2:500} message "${3:message}"', documentation: 'Maximum length or value.' },
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },
     { label: 'matches', insertText: '${1:property} matches "${2:pattern}" message "${3:message}"', documentation: 'The property must match a regular expression.' },

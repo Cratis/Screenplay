@@ -187,6 +187,8 @@ Never renumber a published member or reuse its number for another meaning. To pi
 
 A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.
 
+`not empty` has the same meaning on a text concept as on a command property: null, empty text and text made only of Unicode `White_Space` characters fail. The [command rule reference](commands.md#what-the-executable-model-admits) lists the exact set. U+0085, U+00A0 and U+3000 are whitespace; U+FEFF is not. `" a "` passes without trimming the value. This applies to every ESM version; it does not change the separate emptiness rule for event-source and stream-id identity text.
+
 `matches` searches for a matching substring unless you add anchors. The `$` anchor means the very end of the input, not the position before a trailing newline: `matches "^[A-Z]{3}$"` accepts `ABC` but rejects `ABC\n`. Escaped `\$` and `$` inside a character class stay literal. The built-in `matches email` rule also rejects a trailing newline.
 
 ````screenplay
