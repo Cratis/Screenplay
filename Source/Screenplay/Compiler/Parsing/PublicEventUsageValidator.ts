@@ -59,7 +59,7 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
         if (contract === undefined) continue;
         contracts.push({ node: contract, output: use.output });
         validateUse(slice, use.name, use.node, use.output, use.command, contract, context);
-        if (use.node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null && contract.origin.trim().length > 0) captureOrigins.set(use.node, contract.origin);
+        recordCaptureOrigin(use.node, contract, captureOrigins);
     }
     validateCaptureOrigins(slice, captureOrigins, context);
     // 'all' subscribes to every event type; 'every' maps only the projection's existing inputs.
@@ -78,6 +78,10 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
     const outputs = new Set(contracts.filter(contract => contract.output && contract.node.visibility === EventVisibility.Public && contract.node.origin == null).map(contract => contract.node)).size;
     if (outputs !== 1) context.error(DiagnosticCodes.OutboundPublicEventCount, `Outbound Translate slice '${slice.name}' must produce exactly one local public event type; found ${outputs}.`, slice.location);
     for (const capture of slice.captures) context.error(DiagnosticCodes.TranslationConstructDirection, 'An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.', capture.location);
+}
+
+function recordCaptureOrigin(node: SyntaxNode, contract: EventSyntax | ImportSyntax, captureOrigins: Map<SyntaxNode, string>): void {
+    if (node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null && contract.origin.trim().length > 0) captureOrigins.set(node, contract.origin);
 }
 
 function validateCaptureOrigins(slice: SliceSyntax, captureOrigins: Map<SyntaxNode, string>, context: ParserContext): void {

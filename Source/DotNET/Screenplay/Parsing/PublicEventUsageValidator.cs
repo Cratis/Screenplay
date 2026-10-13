@@ -96,10 +96,7 @@ internal static class PublicEventUsageValidator
             if (target is not { } contract) continue;
             contracts.Add((contract.Node, contract.Visibility, contract.Origin, use.Output));
             ValidateUse(slice, use.Name, use.Node, use.Output, use.Command, contract.Visibility, contract.Origin, context);
-            if (use.Node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin } && !string.IsNullOrWhiteSpace(origin))
-            {
-                captureOrigins[use.Node] = origin;
-            }
+            RecordCaptureOrigin(use.Node, contract, captureOrigins);
         }
         ValidateCaptureOrigins(slice, captureOrigins, context);
 
@@ -134,6 +131,14 @@ internal static class PublicEventUsageValidator
         foreach (var capture in slice.Captures)
         {
             context.Error(DiagnosticCodes.TranslationConstructDirection, "An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.", capture.Location);
+        }
+    }
+
+    static void RecordCaptureOrigin(SyntaxNode node, (SyntaxNode Node, EventVisibility Visibility, string? Origin) contract, Dictionary<SyntaxNode, string> captureOrigins)
+    {
+        if (node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin } && !string.IsNullOrWhiteSpace(origin))
+        {
+            captureOrigins[node] = origin;
         }
     }
 

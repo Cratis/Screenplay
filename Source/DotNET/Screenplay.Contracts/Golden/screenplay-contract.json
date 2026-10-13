@@ -21279,6 +21279,17 @@
       "title": "Retired: event identity pins are carried to renderers by ESM v16 (decision 0075).",
       "reserved": true,
       "retired": true
+    },
+    {
+      "code": "PLAY0687",
+      "name": "CaptureEventsFromSeveralOrigins",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A capture\u0027s source events originate from several event stores.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
