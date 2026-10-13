@@ -136,10 +136,17 @@ internal static class PublicEventUsageValidator
 
     static void RecordCaptureOrigin(SyntaxNode node, (SyntaxNode Node, EventVisibility Visibility, string? Origin) contract, Dictionary<SyntaxNode, string> captureOrigins)
     {
-        if (node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin } && !string.IsNullOrWhiteSpace(origin))
+        if (node is not CaptureSourceSettingSyntax) return;
+        if (PublicOrigin(contract) is { } origin)
         {
             captureOrigins[node] = origin;
         }
+    }
+
+    static string? PublicOrigin((SyntaxNode Node, EventVisibility Visibility, string? Origin) contract)
+    {
+        if (contract.Visibility != EventVisibility.Public) return null;
+        return string.IsNullOrWhiteSpace(contract.Origin) ? null : contract.Origin;
     }
 
     static void ValidateCaptureOrigins(SliceSyntax slice, Dictionary<SyntaxNode, string> captureOrigins, ParserContext context)

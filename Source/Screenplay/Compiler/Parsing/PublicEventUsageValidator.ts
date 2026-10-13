@@ -81,7 +81,15 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
 }
 
 function recordCaptureOrigin(node: SyntaxNode, contract: EventSyntax | ImportSyntax, captureOrigins: Map<SyntaxNode, string>): void {
-    if (node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null && contract.origin.trim().length > 0) captureOrigins.set(node, contract.origin);
+    if (node.kind !== 'CaptureSourceSettingSyntax') return;
+    const origin = publicOrigin(contract);
+    if (origin !== undefined) captureOrigins.set(node, origin);
+}
+
+function publicOrigin(contract: EventSyntax | ImportSyntax): string | undefined {
+    if (contract.visibility !== EventVisibility.Public) return undefined;
+    const origin = contract.origin ?? '';
+    return origin.trim().length > 0 ? origin : undefined;
 }
 
 function validateCaptureOrigins(slice: SliceSyntax, captureOrigins: Map<SyntaxNode, string>, context: ParserContext): void {
