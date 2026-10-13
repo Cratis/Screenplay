@@ -208,24 +208,9 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceProductionRouteRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
-        if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
+        if (FindEventOrInteraction(index, revision, diagnostic, verifyRepair) is { } found)
         {
-            return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
-        }
-
-        if (diagnostic.Code == DiagnosticCodes.LegacyInteractionWhere || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative)
-        {
-            return WorkspaceInteractionRepairs.Find(index, revision, diagnostic, verifyRepair);
-        }
-
-        if (diagnostic.Code == DiagnosticCodes.LowGenerationEntropy || diagnostic.Code == DiagnosticCodes.LowGeneratedIdentifierEntropy)
-        {
-            return WorkspaceGenerationRepairs.Find(index, revision, diagnostic, verifyRepair);
-        }
-
-        if (diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey)
-        {
-            return WorkspaceReadModelKeyRepairs.Find(index, revision, diagnostic, verifyRepair);
+            return found;
         }
 
         if (diagnostic.Code == DiagnosticCodes.PublicTranslationRequiresDirection)
@@ -251,6 +236,46 @@ public static class WorkspaceDiagnosticRepairs
             [new ReplaceWorkspaceNode(subject.Handle, subject.Node, subject.Node)])];
     }
 
+    static ImmutableArray<WorkspaceDiagnosticRepair>? FindEventOrInteraction(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
+    {
+        if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
+        {
+            return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.LegacyInteractionWhere || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative)
+        {
+            return WorkspaceInteractionRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (WorkspaceGenerationRepairs.Handles(diagnostic.Code))
+        {
+            return WorkspaceGenerationRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey)
+        {
+            return WorkspaceReadModelKeyRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        return null;
+    }
+
+    static IEnumerable<WorkspaceDiagnosticRepair>? ForApplicationDocument(WorkspaceSyntaxIndex index, string code, WorkspaceSyntaxEntry entry, WorkspaceNodeHandle subject)
+    {
+        if (entry.Node is not ApplicationSyntax)
+        {
+            return null;
+        }
+
+        return code switch
+        {
+            DiagnosticCodes.LegacyComplianceMarker => WorkspaceComplianceRepairs.ForDocument(index, subject, false),
+            DiagnosticCodes.LegacyOptionalSuffix => WorkspaceOptionalityRepairs.ForDocument(index, subject, false),
+            _ => null
+        };
+    }
+
     static IEnumerable<WorkspaceDiagnosticRepair> ForSubject(WorkspaceSyntaxIndex index, WorkspaceRevision revision, string code, WorkspaceNodeHandle subject)
     {
         if (index.Find(subject) is not { } entry)
@@ -258,24 +283,14 @@ public static class WorkspaceDiagnosticRepairs
             return [];
         }
 
-        if (code == DiagnosticCodes.LegacyComplianceMarker && entry.Node is ApplicationSyntax)
+        if (ForApplicationDocument(index, code, entry, subject) is { } documentRepairs)
         {
-            return WorkspaceComplianceRepairs.ForDocument(index, subject, false);
+            return documentRepairs;
         }
 
-        if (code == DiagnosticCodes.LegacyOptionalSuffix && entry.Node is ApplicationSyntax)
+        if (WorkspaceGenerationRepairs.ForSubject(index, code, subject, diagnostic => Find(index, revision, diagnostic, false)) is { } generationRepairs)
         {
-            return WorkspaceOptionalityRepairs.ForDocument(index, subject, false);
-        }
-
-        // Length repairs target the concept, which can be in another document than the diagnostic.
-        // Distinct subjects also select the length and unique-constraint actions without a new tool argument.
-        if (code == DiagnosticCodes.LowGenerationEntropy || code == DiagnosticCodes.LowGeneratedIdentifierEntropy)
-        {
-            return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code)
-                .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
-                .Where(repair => repair.Subject == subject)
-                .DistinctBy(repair => repair.Title);
+            return generationRepairs;
         }
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on

@@ -10,34 +10,59 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static class WorkspaceGenerationRepairs
 {
+    /// <summary>
+    /// Determines whether a diagnostic code is repaired by generation repairs.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <returns>True when the code is a low generation or generated identifier entropy diagnostic.</returns>
+    internal static bool Handles(string code) => code == DiagnosticCodes.LowGenerationEntropy || code == DiagnosticCodes.LowGeneratedIdentifierEntropy;
+
+    /// <summary>
+    /// Finds the generation repairs for one subject.
+    /// </summary>
+    /// <param name="index">The syntax index.</param>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="subject">The repair subject.</param>
+    /// <param name="find">Finds the repairs of one diagnostic.</param>
+    /// <returns>The repairs for the subject, or null when the code is not a generation diagnostic.</returns>
+    internal static IEnumerable<WorkspaceDiagnosticRepair>? ForSubject(WorkspaceSyntaxIndex index, string code, WorkspaceNodeHandle subject, Func<Diagnostic, IEnumerable<WorkspaceDiagnosticRepair>> find)
+    {
+        if (!Handles(code))
+        {
+            return null;
+        }
+
+        // Length repairs target the concept, which can be in another document than the diagnostic.
+        // Distinct subjects also select the length and unique-constraint actions without a new tool argument.
+        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code)
+            .SelectMany(find)
+            .Where(repair => repair.Subject == subject)
+            .DistinctBy(repair => repair.Title);
+    }
+
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
     {
-        var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Location == diagnostic.Location && entry.Node is PropertySyntax { IsGenerated: true }).ToArray();
-        if (subjects.Length != 1 || index.Find(subjects[0].Parent!) is not { Node: CommandSyntax command } owner ||
-            index.Find(owner.Parent!) is not { Node: SliceSyntax slice } sliceEntry)
+        if (GeneratedProperty(index, revision, diagnostic) is not { } subject ||
+            index.Find(subject.Parent!) is not { Node: CommandSyntax command } owner ||
+            index.Find(owner.Parent!) is not { Node: SliceSyntax slice } sliceEntry ||
+            LowEntropyConcept(index, (PropertySyntax)subject.Node) is not { } conceptEntry)
         {
             return [];
         }
-        var subject = subjects[0];
+
         var property = (PropertySyntax)subject.Node;
-        var concepts = index.Entries.Where(entry => entry.Node is ConceptSyntax concept && concept.Name == property.Type.Name).ToArray();
-        if (concepts.Length != 1 || concepts[0].Node is not ConceptSyntax { Generation: { } generation } concept ||
-            GenerationEntropy.Bits(generation) is not { } bits || bits >= 64)
-        {
-            return [];
-        }
+        var concept = (ConceptSyntax)conceptEntry.Node;
         var repairs = ImmutableArray.CreateBuilder<WorkspaceDiagnosticRepair>();
-        var replacement = Raise(generation);
-        if (replacement is not null)
+        if (Raise(concept.Generation!) is { } replacement)
         {
-            var entry = concepts[0];
-            var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, entry.Handle, [new ReplaceWorkspaceNode(entry.Handle, concept, concept with { Generation = replacement })])
+            var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, conceptEntry.Handle, [new ReplaceWorkspaceNode(conceptEntry.Handle, concept, concept with { Generation = replacement })])
             {
                 Title = "Raise generation to at least 64 random bits",
                 CanFixAll = false
             };
             repairs.AddRange(WorkspaceRepairVerification.Discover(index, repair, verify));
         }
+
         if (diagnostic.Code == DiagnosticCodes.LowGenerationEntropy && Unique(index, command, property, slice) is { } constraint)
         {
             var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(sliceEntry.Handle, slice, "constraints", constraint)])
@@ -49,6 +74,24 @@ internal static class WorkspaceGenerationRepairs
         }
 
         return repairs.ToImmutable();
+    }
+
+    static WorkspaceSyntaxEntry? GeneratedProperty(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
+    {
+        var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Location == diagnostic.Location && entry.Node is PropertySyntax { IsGenerated: true }).ToArray();
+
+        return subjects.Length == 1 ? subjects[0] : null;
+    }
+
+    static WorkspaceSyntaxEntry? LowEntropyConcept(WorkspaceSyntaxIndex index, PropertySyntax property)
+    {
+        var concepts = index.Entries.Where(entry => entry.Node is ConceptSyntax concept && concept.Name == property.Type.Name).ToArray();
+        if (concepts.Length != 1 || concepts[0].Node is not ConceptSyntax { Generation: { } generation })
+        {
+            return null;
+        }
+
+        return GenerationEntropy.Bits(generation) is { } bits && bits < 64 ? concepts[0] : null;
     }
 
     static GenerationSyntax? Raise(GenerationSyntax generation)

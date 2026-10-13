@@ -10,7 +10,10 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpGenerationDetails
 {
-    internal static object Summary(object summary, McpSnapshot snapshot, ConceptSyntax concept)
+    internal static object WithGeneration(object details, string view, object syntax, McpSnapshot snapshot) =>
+        view == "summary" && syntax is ConceptSyntax { Generation: not null } concept ? Summary(details, snapshot, concept) : details;
+
+    static System.Text.Json.Nodes.JsonObject Summary(object summary, McpSnapshot snapshot, ConceptSyntax concept)
     {
         var details = JsonSerializer.SerializeToNode(summary, McpJson.Options)!.AsObject();
         details.Add("generation", JsonSerializer.SerializeToNode(Read(snapshot, concept), McpJson.Options));
