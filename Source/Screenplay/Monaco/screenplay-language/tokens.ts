@@ -200,10 +200,17 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             { include: '@root' },
         ],
 
+        generationLine: [
+            [/^/, { token: '@rematch', next: '@pop' }],
+            [/\b(prefix|case|alphabet|checksum|base64url|hex|base32|lower|upper|luhn|mod11|mod97)\b/, 'keyword'],
+            { include: '@common' },
+        ],
+
         conceptBody: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
             [new RegExp(`^(\\s*)(@?[a-z_][${bmpWordCharacters}]*)(\\s*)(=)(\\s*)(-?(?:0|[1-9][0-9]*))(?=\\s*(?://.*)?$)`), ['white', 'identifier', 'white', 'operator', 'white', 'number']],
             [/^(\s*)(@?pii|personal|@?sensitive|secret)(\s+)(reason|scope|special|criminal)\b/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(generate)(\s+)(uuidv7|uuid|ulid|typeid|nanoid|bytes|pattern|random|rule|sequence)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@generationLine' }]],
             { include: '@root' },
         ],
 

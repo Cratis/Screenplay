@@ -125,7 +125,12 @@ public enum SemanticRejectionCategory
     Constraint = 2,
 
     /// <summary>The explicit caller does not satisfy authorization.</summary>
-    Unauthorized = 3
+    Unauthorized = 3,
+
+    /// <summary>
+    /// A guarded generated event-source identity already has facts.
+    /// </summary>
+    Concurrency = 4
 }
 
 /// <summary>

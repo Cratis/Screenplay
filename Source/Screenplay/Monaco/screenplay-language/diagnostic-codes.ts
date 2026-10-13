@@ -227,6 +227,19 @@ export const diagnosticCodes = {
     invalidResponseShape: 'PLAY0489',
     invalidGeneratedFixture: 'PLAY0490',
     invalidReturnExpectation: 'PLAY0491',
+    unknownGenerationStrategy: 'PLAY0672',
+    invalidGenerationArgument: 'PLAY0673',
+    invalidGenerationModifier: 'PLAY0674',
+    duplicateGenerationModifier: 'PLAY0675',
+    duplicateGeneration: 'PLAY0676',
+    invalidGenerationPrimitive: 'PLAY0677',
+    invalidGenerationPrefix: 'PLAY0678',
+    invalidGenerationAlphabet: 'PLAY0679',
+    invalidTypeIdPrefix: 'PLAY0680',
+    generationSizeOutsideRange: 'PLAY0681',
+    reservedSequenceGeneration: 'PLAY0682',
+    lowGenerationEntropy: 'PLAY0683',
+    lowGeneratedIdentifierEntropy: 'PLAY0684',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

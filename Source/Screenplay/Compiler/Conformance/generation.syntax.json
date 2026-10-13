@@ -1,0 +1,214 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "strategy": "uuid"
+      },
+      "name": "Id",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "strategy": "uuidv7"
+      },
+      "name": "TimeId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "case": "upper",
+        "prefix": "id_",
+        "strategy": "uuid"
+      },
+      "name": "StringId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "case": "lower",
+        "prefix": "event_",
+        "strategy": "uuidv7"
+      },
+      "name": "StringTimeId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "case": "lower",
+        "prefix": "cus_",
+        "strategy": "ulid"
+      },
+      "name": "SortableId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "prefix": "user",
+        "strategy": "typeid"
+      },
+      "name": "UserId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "prefix": "",
+        "strategy": "typeid"
+      },
+      "name": "EmptyTypeId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "strategy": "nanoid"
+      },
+      "name": "PublicCode",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "alphabet": "abcdef0123456789",
+        "prefix": "ref_",
+        "size": 16,
+        "strategy": "nanoid"
+      },
+      "name": "ShortCode",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "count": 32,
+        "encoding": "base64url",
+        "prefix": "b_",
+        "strategy": "bytes"
+      },
+      "name": "RandomBytes",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "case": "upper",
+        "count": 16,
+        "encoding": "hex",
+        "prefix": "h_",
+        "strategy": "bytes"
+      },
+      "name": "HexCode",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "case": "lower",
+        "count": 16,
+        "encoding": "base32",
+        "strategy": "bytes"
+      },
+      "name": "Base32Code",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "checksum": "luhn",
+        "pattern": "ORD-#{7}",
+        "strategy": "pattern"
+      },
+      "name": "OrderNumber",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "range": "100000..999999",
+        "strategy": "random"
+      },
+      "name": "TicketNumber",
+      "type": "Int",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "rule": "MakeReference",
+        "strategy": "rule"
+      },
+      "name": "LegacyReference",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "strategy": "sequence"
+      },
+      "name": "SequentialNumber",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

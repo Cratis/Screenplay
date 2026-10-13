@@ -2198,7 +2198,7 @@ public static class DiagnosticCodes
     public const string GeneratedPropertyOutsideCommand = "PLAY0482";
 
     /// <summary>
-    /// A generated property is not a required scalar Uuid-backed concept.
+    /// A generated property is not a required scalar generatable concept.
     /// </summary>
     public const string InvalidGeneratedType = "PLAY0483";
 
@@ -3101,4 +3101,69 @@ public static class DiagnosticCodes
     /// A positional enum used by an event property can be pinned to its current numbers.
     /// </summary>
     public const string UnpinnedStoredEnumeration = "PLAY0671";
+
+    /// <summary>
+    /// A generation strategy is unknown.
+    /// </summary>
+    public const string UnknownGenerationStrategy = "PLAY0672";
+
+    /// <summary>
+    /// A generation strategy argument is missing or malformed.
+    /// </summary>
+    public const string InvalidGenerationArgument = "PLAY0673";
+
+    /// <summary>
+    /// A generation modifier is not allowed for this strategy or primitive.
+    /// </summary>
+    public const string InvalidGenerationModifier = "PLAY0674";
+
+    /// <summary>
+    /// A generation modifier is repeated.
+    /// </summary>
+    public const string DuplicateGenerationModifier = "PLAY0675";
+
+    /// <summary>
+    /// A concept declares generation more than once.
+    /// </summary>
+    public const string DuplicateGeneration = "PLAY0676";
+
+    /// <summary>
+    /// A strategy cannot generate this concept primitive.
+    /// </summary>
+    public const string InvalidGenerationPrimitive = "PLAY0677";
+
+    /// <summary>
+    /// A generation prefix is not printable ASCII or exceeds 32 characters.
+    /// </summary>
+    public const string InvalidGenerationPrefix = "PLAY0678";
+
+    /// <summary>
+    /// A NanoID alphabet is not distinct printable ASCII of the required size.
+    /// </summary>
+    public const string InvalidGenerationAlphabet = "PLAY0679";
+
+    /// <summary>
+    /// A TypeID prefix does not satisfy TypeID 0.3.
+    /// </summary>
+    public const string InvalidTypeIdPrefix = "PLAY0680";
+
+    /// <summary>
+    /// A NanoID size or byte count is outside its supported range.
+    /// </summary>
+    public const string GenerationSizeOutsideRange = "PLAY0681";
+
+    /// <summary>
+    /// Sequence generation remains reserved until its design is admitted.
+    /// </summary>
+    public const string ReservedSequenceGeneration = "PLAY0682";
+
+    /// <summary>
+    /// A generated value has fewer than 64 random bits without uniqueness enforcement.
+    /// </summary>
+    public const string LowGenerationEntropy = "PLAY0683";
+
+    /// <summary>
+    /// A generated identifier has fewer than 64 random bits.
+    /// </summary>
+    public const string LowGeneratedIdentifierEntropy = "PLAY0684";
 }

@@ -103,7 +103,8 @@ internal static partial class SemanticModelRead
             .Add("values", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Values = StringArray(ref reader, property))
             .Add("validations", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Validations = Array(ref reader, Validation, property))
             .Add("numbers", LanguageVersion.V12.Major, (ref Utf8JsonReader reader, ConceptState state, string property) => state.Numbers = Array(ref reader, EnumMemberNumber, property))
-            .Add("compliance", LanguageVersion.V13.Major, (ref Utf8JsonReader reader, ConceptState state, string property) => state.Compliance = Nested(ref reader, SemanticModelRead.Compliance, property));
+            .Add("compliance", LanguageVersion.V13.Major, (ref Utf8JsonReader reader, ConceptState state, string property) => state.Compliance = Nested(ref reader, SemanticModelRead.Compliance, property))
+            .Add("generation", LanguageVersion.V15.Major, (ref Utf8JsonReader reader, ConceptState state, string property) => state.Generation = Nested(ref reader, SemanticModelRead.Generation, property));
 
         public SemanticPrimitiveType? Primitive { get; set; }
 
@@ -115,10 +116,12 @@ internal static partial class SemanticModelRead
 
         public SemanticConceptCompliance? Compliance { get; set; }
 
+        public SemanticGeneration? Generation { get; set; }
+
         public SemanticConcept Build()
         {
             Required(HasIdentity && Primitive is not null && !Values.IsDefault && !Validations.IsDefault, "concept");
-            return new(Id, Name!, Primitive!.Value, Values, Validations) { Numbers = Numbers, Compliance = Compliance };
+            return new(Id, Name!, Primitive!.Value, Values, Validations) { Numbers = Numbers, Compliance = Compliance, Generation = Generation };
         }
     }
 

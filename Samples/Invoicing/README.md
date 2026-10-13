@@ -20,6 +20,10 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 PersonName and EmailAddress declare personal data; BankAccount declares both personal data and an operational secret, with personal protection taking precedence. These markers, qualifiers and scopes are admitted as ESM v13, with the event source as the data subject. Reasons remain report-only, and reference specifications have unchanged outcomes. Identity and enum compliance are refused, as are events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark until lineage is admitted. The sample still demonstrates other constructs outside executable admission.
 
+## Generated identities and receipts
+
+InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID. StartInvoiceDraft pins both shapes and returns them without accepting either as input. Generation selects ESM v15 and Guarded creation freshness across the whole event source. Generated concepts with rules or compliance markers remain unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
+
 ## Stored enum numbers
 
 Invoice status, payment terms and payment method pin their current zero-based positions, preserving executable bytes. AgingBucket demonstrates the external aging contract's sparse `0, 30, 90` numbers. Its non-positional enum member numbers select ESM v12; consumers must explicitly admit the contract before rendering them. Member names, not numbers, remain the values in specifications and conditions. Never renumber or reuse a published member number.

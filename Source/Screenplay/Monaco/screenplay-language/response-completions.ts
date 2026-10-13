@@ -18,6 +18,7 @@ export function responseCompletions(lines: string[], line: number, before: strin
         const matches = symbols.commands.filter(command => command.name === name);
         return matches.length === 1 ? matches[0] : undefined;
     };
+    const fixtureName = (property: PropertySymbol): string => symbols.concepts.find(concept => concept.name === propertyTypeReference(property).name)?.primitive === 'String' ? 'generated-value' : 'uuid';
     const entry = (property: PropertySymbol, insertText = property.name): CompletionEntry => ({
         label: property.name, insertText,
         documentation: `${typeReferenceText(propertyTypeReference(property))}${property.isGenerated ? ' — generated, not request/form input' : ''}. ${responseAvailability}`,
@@ -35,9 +36,9 @@ export function responseCompletions(lines: string[], line: number, before: strin
             const modifier = before.match(/^\s*@?[a-z_]\w*\s+([\w.]+)\s+(\w*)$/);
             if (modifier && ['generated', 'identifier'].some(word => word.startsWith(modifier[2]))) {
                 const concept = symbols.concepts.find(concept => concept.name === modifier[1]);
-                if (concept?.primitive === 'Uuid') return [
+                if (concept?.primitive === 'Uuid' || (concept?.primitive === 'String' && concept.generationStrategy !== undefined)) return [
                     ...('optional'.startsWith(modifier[2]) ? optionalTypeItems : []),
-                    { label: 'generated', insertText: 'generated', documentation: `Required scalar Uuid concept with no validation rules; not a request/form input. ${responseAvailability}` },
+                    { label: 'generated', insertText: 'generated', documentation: `Required scalar generatable concept without validation rules; not a request/form input. ${responseAvailability}` },
                     { label: 'generated identifier', insertText: 'generated identifier', documentation: `Specification fixture uses an indented for value. ${responseAvailability}` },
                     { label: 'identifier', insertText: 'identifier', documentation: 'Names the event source identifier.' },
                 ];
@@ -59,11 +60,11 @@ export function responseCompletions(lines: string[], line: number, before: strin
             const name = enclosing.match(/^when\s+([\w.]+)$/)?.[1];
             const command = namedCommand(name);
             if (!command) return null;
-            if (/^\s*generated\s+\w*$/.test(before)) return command.properties.filter(property => property.isGenerated && !property.isIdentifier).map(property => entry(property, `${property.name} = "\${1:uuid}"`));
+            if (/^\s*generated\s+\w*$/.test(before)) return command.properties.filter(property => property.isGenerated && !property.isIdentifier).map(property => entry(property, `${property.name} = "\${1:${fixtureName(property)}}"`));
             if (before.trim() === '') return [
                 ...command.properties.filter(property => !property.isGenerated).map(property => entry(property, `${property.name} = \${1:value}`)),
-                ...command.properties.filter(property => property.isGenerated && !property.isIdentifier).map(property => ({ ...entry(property, `generated ${property.name} = "\${1:uuid}"`), label: `generated ${property.name}` })),
-                ...(command.properties.some(property => property.isGenerated && property.isIdentifier) ? [{ label: 'for', insertText: 'for "${1:uuid}"', documentation: `Generated identifier fixture, not request input. ${responseAvailability}` }] : []),
+                ...command.properties.filter(property => property.isGenerated && !property.isIdentifier).map(property => ({ ...entry(property, `generated ${property.name} = "\${1:${fixtureName(property)}}"`), label: `generated ${property.name}` })),
+                ...(command.properties.some(property => property.isGenerated && property.isIdentifier) ? [{ label: 'for', insertText: `for "\${1:${fixtureName(command.properties.find(property => property.isGenerated && property.isIdentifier)!)}}"`, documentation: `Generated identifier fixture, not request input. ${responseAvailability}` }] : []),
             ];
         }
         if (chain[0] === 'then' && /^then\s+returns$/.test(enclosing ?? '')) {

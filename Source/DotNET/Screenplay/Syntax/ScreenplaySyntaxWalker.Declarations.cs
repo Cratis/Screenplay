@@ -26,6 +26,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitConceptAttribute(attribute);
         }
 
+        if (syntax.Generation is not null) VisitGeneration(syntax.Generation);
+
         foreach (var validation in syntax.Validations ?? [])
         {
             VisitValidate(validation);
@@ -37,6 +39,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="ConceptAttributeSyntax"/> to visit.</param>
     public virtual void VisitConceptAttribute(ConceptAttributeSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a concept generation strategy.
+    /// </summary>
+    /// <param name="syntax">The strategy to visit.</param>
+    public virtual void VisitGeneration(GenerationSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="TypeSyntax"/> node and its children.

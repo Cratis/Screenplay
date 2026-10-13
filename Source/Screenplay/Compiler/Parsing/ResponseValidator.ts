@@ -108,7 +108,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
         for (const property of command.properties) {
             if (!property.isGenerated) continue;
             const concept = concepts.get(property.type.name);
-            if (property.type.isOptional || property.type.isCollection || (concept === undefined ? primitiveTypes.has(property.type.name) || composites.has(property.type.name) || conceptNames.has(property.type.name) || readModels.has(property.type.name) : concept.type !== 'Uuid')) context.error(DiagnosticCodes.InvalidGeneratedType, 'A generated property must be a required, noncollection concept backed by Uuid.', property.location);
+            if (property.type.isOptional || property.type.isCollection || (concept === undefined ? primitiveTypes.has(property.type.name) || composites.has(property.type.name) || conceptNames.has(property.type.name) || readModels.has(property.type.name) : concept.type !== 'Uuid' && concept.generation == null)) context.error(DiagnosticCodes.InvalidGeneratedType, 'A generated property must be a required, noncollection generatable concept.', property.location);
         }
         const response = command.response;
         if (response?.kind === 'ScalarCommandResponseSyntax') validateSource(response.source, null, command);
@@ -134,7 +134,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
             if (action.for !== null && identifiers.length === 1 && identifiers[0].isGenerated) {
                 const type = identifiers[0].type;
                 const known = primitiveTypes.has(type.name) || concepts.has(type.name) || composites.has(type.name);
-                if (known && (type.isOptional || type.isCollection || concepts.get(type.name)?.type !== 'Uuid' || action.for.kind !== 'LiteralExpressionSyntax' || typeof action.for.value !== 'string' || !uuidValue(action.for.value))) {
+                if (known && (type.isOptional || type.isCollection || !['Uuid', 'String'].includes(concepts.get(type.name)?.type ?? '') || !compatibleValue(action.for, type, concepts, composites))) {
                     context.error(DiagnosticCodes.InvalidGeneratedFixture, "A generated identifier fixture must supply one compatible concrete UUID value through 'for'.", action.for.location);
                 }
             }
