@@ -1,8 +1,10 @@
 ---
 id: 0075
 title: Carry the stored event type name in the executable model
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-13
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -35,10 +37,13 @@ Chronicle and Arc: `[EventType]` takes an explicit identifier string for an exis
 Carry each event contract's effective stored type name in the ESM as an admitted member, `storedName`.
 
 - Value: the `id` pin when the event declares one, otherwise the name.
-- Omitted when equal to `name`. A model without event pins keeps its bytes, revisions and version. Only a model that pins an event writes the member and claims the new version.
+- Omitted when equal to `name`, also when the pin itself equals the name. A model without event pins keeps its bytes, revisions and version. Only a model that pins an event writes the member and claims the new version.
 - Placement: on the contract entry (the current revision), once. Prior revisions share it, because generations are revisions of one stored contract (0015). If generations of one contract declare different pins, binding fails; a stored type name cannot change between generations.
-- Version: the next free ESM version at admission, numbered then under [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) and frozen on publication under [0066](0066-published-esm-versions-are-frozen.md). In the current queue (v16 = 0074, v17 = 0072, v18 = #616 2b-2) that is v19. The order is an open question below.
-- Readers below that version reject the member (strict reader). A model with an event pin cannot be represented faithfully earlier, so it claims the new version, and a consumer that has not admitted it refuses the model instead of rendering a wrong stored type.
+- Version: no number is reserved. Under [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) the next free number goes to whichever admission is release-ready first, and the number is frozen on publication under [0066](0066-published-esm-versions-are-frozen.md). Priority: 0075 goes ahead of any other admission that has not yet claimed a number when it is release-ready, because it fixes a data-compatibility fault. It does not stall an admission that is ready first (for example 0074), and that admission keeps its claim.
+- Fail closed on older versions. A reader below the new version rejects the member (strict reader), and a consumer that has not admitted the new version refuses a model that carries event pins instead of rendering a wrong stored type. A source whose language version is pinned below the new version and that declares an event pin gets a binding error, not a silent drop.
+- Valid pin: non-empty, no surrounding whitespace, and acceptable to Chronicle as an event type id. Until Chronicle evidence says otherwise, the character rule is the same identifier rule as event names. Renderers escape the value as a string literal.
+- Collisions: binding rejects two events in one application with the same effective stored name, for example `event A id "B"` next to `event B`.
+- Interim mitigation, shipped as a patch before the admission and without any ESM version: the event `id` pin diagnostic becomes a warning, "the pin is not yet carried to renderers; generated code uses the new name". MCP `propose-rename` output for event renames carries the same caveat.
 - The `PLAY` report-only information diagnostic for event `id` stays for description and documentation only. Event `id` becomes executable.
 
 Consumers:
@@ -46,8 +51,8 @@ Consumers:
 - **Reference evaluator:** no behavior change. Facts are identified by contract and display name; the stored name does not affect evaluation.
 - **C# and TypeScript compilers:** emit and strictly read `storedName` identically, and select the new version only when an event pin exists. Both are covered by the same canonical vectors.
 - **MCP:** declaration details and `propose-rename` already show the pin; the exported ESM and any mutability report show `storedName`.
-- **0070:** `--from-esm` reads the shipped `storedName` (absent means the name), replacing the fail-closed path from #686.
-- **Stage:** emit `[EventType("<storedName>")]` when `storedName` is present, argument-free otherwise, and refuse a model whose ESM version it has not admitted. Stage lists `storedName` in its ledger as rendered, not ignored.
+- **0070:** removing a pin changes the revision's `eventType`, which is refused on a baselined revision. The baseline records what the shipped release stored. When a release was rendered before this decision under the new name, the baseline entry's `eventType` is corrected by a person in a reviewed pull request (0070 allows hand edits of the file for this kind of correction), or the team re-admits from the shipped ESM with `--from-esm` once the ESM carries stored names. This is the explicit exception to the refusal. `--from-esm` reads the shipped `storedName` (absent means the name), replacing the fail-closed path from #686.
+- **Stage:** a follow-up refuses re-rendering when an existing class's `[EventType]` id would change and points to the remedies above. Emit `[EventType("<storedName>")]` when `storedName` is present, argument-free otherwise, and refuse a model whose ESM version it has not admitted. Stage lists `storedName` in its ledger as rendered, not ignored.
 - **Corpus:** a new canonical vector with a pinned rename and a mixed pinned/unpinned model; existing vectors stay byte-identical.
 
 Follow-up issues: Stage (emit and admit), Studio and cli (version admission), `Cratis/AI` (skills that say event `id` is metadata).
@@ -58,7 +63,7 @@ Follow-up issues: Stage (emit and admit), Studio and cli (version admission), `C
 2. **A renderer-side rule.** Not possible: a renderer sees one model, not its history, and cannot tell a pinned rename from a new event.
 3. **Drop pins and make a rename always a new contract.** Not taken: it removes the only way to rename an event without orphaning stored events, and it changes 0044 and 0070.
 4. **Use `ContractId` as the Chronicle event type id.** Not taken: it changes the stored type of every existing rendered application, not only pinned ones.
-5. **Always write `storedName`.** Not taken: it changes the bytes of every existing model and forces a new version on all of them. See the open questions.
+5. **Always write `storedName`.** Not taken: it changes the bytes of every existing model and forces a new version on all of them.
 
 ## Default if unanswered
 
@@ -66,22 +71,25 @@ Pins keep being dropped silently. Every pinned rename in a rendered application 
 
 ## Scope
 
-In: the ESM member and version, both compilers, strict reading, corpus vectors, MCP export, the 0070 admission read, Stage's emission rule. Out: revision-qualified event consumption (0015), changing how pins are authored or when `propose-rename` pins (0044), and migrating stored events.
+In: the ESM member and version, the pin validity and collision rules, the interim warning, both compilers, strict reading, corpus vectors, MCP export, the 0070 admission read, Stage's emission rule. Out: revision-qualified event consumption (0015), changing how pins are authored or when `propose-rename` pins (0044), and migrating stored events.
 
 ## Consequences
 
-- Breaking for applications that already rendered a pinned rename. Their events are stored under the new name. Re-rendering with this change switches the type to the pinned old name, and those events are no longer read. Such an application must remove the pin (accepting that events stored under the old name are not read) or migrate the stored events first. Screenplay cannot tell which applies. See the open questions.
+- Applications that already stored events under the new name are accepted in Screenplay, which flags nothing: it cannot tell them from applications storing under the old name. Re-rendering with this change would switch the type to the pinned old name, so Stage refuses it (see Consumers) and points to the remedies: remove the pin with the 0070 correction, or migrate the stored events.
+- The mixed case, with some events stored under each name, needs a data migration and is out of scope.
 - Omit-when-equal keeps old models' bytes and versions, and only pinned models move to the new version. 0066 is respected: no admitted version changes.
 
-## Open questions for the decider
+## Resolved questions
 
-1. **Ordering.** The change fixes a data-compatibility fault, so it may belong before v18 (#616 2b-2), or before v16 and v17, rather than at v19. Reordering is cheap only while those versions are unpublished.
-2. **Omit-when-equal or always present.** Recommended: omit-when-equal. Always-present is simpler to read but moves every model to the new version.
-3. **Applications that already stored under the new name.** Accept the break with the guidance above, or add an explicit opt-out such as a deprecation period in which Stage warns before it switches.
-4. **Older-version readers.** The proposal is refusal, because a pinned model claims the new version. Confirm that a model with event pins, which used to bind at older versions with the pin dropped, should now stop being renderable by consumers that have not admitted the new version.
+Decided by Sindre Alstad Wilting, 2026-10-13.
+
+1. **Ordering.** No version number is reserved. 0075 takes priority over unclaimed admissions when release-ready and does not stall one that is ready first. See Decision.
+2. **Omit-when-equal or always present.** Omit when equal to the name, also when the pin equals the name.
+3. **Applications that already stored under the new name.** Accepted in Screenplay with no flag. A Stage follow-up refuses re-rendering when an existing class's `[EventType]` id would change and points to remedies. The mixed old/new case needs a data migration and is out of scope.
+4. **Older-version readers.** Fail closed: a consumer that has not admitted the new version refuses models with event pins, and a source pinned below the new language version gets an event pin as a binding error.
 
 ## Verification
 
 **Done when:** a model with a pinned rename emits `storedName` and claims the new version in both compilers, a model without event pins keeps its bytes and version, a strict reader below the version rejects the member, Stage renders `[EventType("<old name>")]` for the pinned event, and `--from-esm` admits the shipped stored name.
 
-**Verify by:** canonical vectors (pinned, unpinned and mixed) read by both compilers, a version-selection spec, a strict-reader refusal spec, a Stage conformance run on the pinned vector, a `baseline admit --from-esm` spec. Check the `Decision: 0075` trailer.
+**Verify by:** canonical vectors (pinned, unpinned and mixed) read by both compilers, a version-selection spec, a collision and invalid-pin binding spec, a strict-reader refusal spec, a Stage conformance run on the pinned vector, a `baseline admit --from-esm` spec. Check the `Decision: 0075` trailer.
