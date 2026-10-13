@@ -67,7 +67,7 @@
 | [0068](0068-admit-concept-compliance-markers-as-esm-v13.md) | Admit concept compliance markers into the executable model as ESM v13 | accepted | implemented | 2026-10-12 | Sindre Alstad Wilting |
 | [0069](0069-admit-equality-query-filters-as-esm-v14.md) | Admit caller-supplied equality query filters into the executable model as ESM v14 | accepted | implemented | 2026-10-12 | Sindre Alstad Wilting |
 | [0070](0070-derive-event-mutability-from-an-admitted-release-baseline.md) | Derive event mutability from an admitted release baseline committed beside the identity catalog | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
-| [0071](0071-whitespace-only-text-does-not-satisfy-not-empty.md) | Whitespace-only text does not satisfy `not empty` | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
+| [0071](0071-whitespace-only-text-does-not-satisfy-not-empty.md) | Whitespace-only text does not satisfy `not empty` | accepted | implemented | 2026-10-13 | Sindre Alstad Wilting |
 | [0072](0072-query-arguments-are-validated-against-concept-rules.md) | Query arguments are validated against their concept rules, and a violation is a rejection | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
 | [0073](0073-reserve-the-stored-event-stream-name-all.md) | Reserve the stored event stream name All | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
 | [0074](0074-admit-no-event-assertions-and-redelivery-before-refusal-branches.md) | Admit explicit no-event assertions and redelivery before reaction refusal branches | accepted | none | 2026-10-13 | Sindre Alstad Wilting |

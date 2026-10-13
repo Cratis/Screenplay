@@ -1,0 +1,66 @@
+concept Name : String
+  validate
+    not empty message "Name is required"
+module Names
+  feature Registration
+    slice StateChange RegisterConcept
+      command RegisterConcept
+        id String identifier
+        name Name
+        produces NameRegistered
+          for id
+          name = name
+      event NameRegistered
+        name Name
+      specification RejectingWhitespaceOnAConcept
+        when RegisterConcept
+          id = "name-1"
+          name = "   "
+        then error "Name is required"
+      specification RejectingNextLineOnAConcept
+        when RegisterConcept
+          id = "name-1"
+          name = ""
+        then error "Name is required"
+      specification AcceptingNonWhitespaceOnAConcept
+        when RegisterConcept
+          id = "name-1"
+          name = " a "
+        then NameRegistered
+          for "name-1"
+          name = " a "
+      specification AcceptingByteOrderMarkOnAConcept
+        when RegisterConcept
+          id = "name-1"
+          name = "﻿"
+        then NameRegistered
+          for "name-1"
+          name = "﻿"
+    slice StateChange RegisterProperty
+      command RegisterProperty
+        id String identifier
+        name String
+        validate
+          name not empty message "Name is required"
+        produces TextRegistered
+          for id
+          name = name
+      event TextRegistered
+        name String
+      specification RejectingWhitespaceOnAProperty
+        when RegisterProperty
+          id = "name-1"
+          name = "   "
+        then error "Name is required"
+      specification RejectingNextLineOnAProperty
+        when RegisterProperty
+          id = "name-1"
+          name = ""
+        then error "Name is required"
+      specification AcceptingByteOrderMarkOnAProperty
+        when RegisterProperty
+          id = "name-1"
+          name = "﻿"
+        then TextRegistered
+          for "name-1"
+          name = "﻿"

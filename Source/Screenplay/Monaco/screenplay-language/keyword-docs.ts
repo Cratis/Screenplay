@@ -137,7 +137,7 @@ export const keywordDocs: Record<string, string> = {
     min: 'Minimum length or value.',
     length: 'Constrains the exact length of a value.',
     today: 'The current date.',
-    empty: 'Used with `not empty` — the value must be present.',
+    empty: 'Used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
     not: 'Negates a validation condition, as in `not empty`.',
     and: 'Both conditions must hold.',
     or: 'Either condition may hold.',
