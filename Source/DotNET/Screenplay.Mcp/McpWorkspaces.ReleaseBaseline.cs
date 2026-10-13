@@ -83,7 +83,7 @@ internal sealed partial class McpWorkspaces
         CheckBaselinePin(arguments, current.Read);
         if (!SameBaseline(plan, current)) throw new McpFailure("StaleReleaseBaseline: the baseline changed since this proposal; propose again.") { FailureKind = "StaleReleaseBaseline" };
         var check = WorkspaceReleaseBaseline.Check(proposal.Before, proposal.Workspace, current.Read);
-        if (!check.Success) throw new McpFailure($"{check.Kind}: release baseline check failed.") { FailureKind = check.Kind };
+        if (!check.Success) throw new McpFailure($"{check.Kind}: release baseline check failed.") { FailureKind = check.Kind! };
     }
 
     BaselinePlan ProposalBaseline(IMcpProposal proposal) => _baselinePlans.TryGetValue(proposal, out var plan) ? plan : throw new McpFailure("No retained release baseline evidence.");
