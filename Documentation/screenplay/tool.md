@@ -143,6 +143,44 @@ keeps all open questions visible unscoped, and marks them orphaned with reason
 An unreadable notes file exits `2` only when the flag is given; without
 it notes are ignored. This is separate from compiler warnings and `--warnaserror`.
 
+## Call these from your own tooling
+
+Reference `Cratis.Screenplay.Mcp` to run the same root-aware checks without
+installing or launching the standalone tool. In a console application, pass the
+model root as the first argument:
+
+```csharp
+using Cratis.Screenplay.Mcp;
+
+var root = args[0];
+var baseline = ReleaseBaselineCommands.Check(root);
+var questions = ModelNoteQuestions.Read(root);
+
+foreach (var violation in baseline.Violations)
+    Console.WriteLine($"{violation.Kind}: {violation.Event} revision {violation.Revision} at {violation.Path}");
+foreach (var question in questions.Findings)
+    Console.WriteLine($"{question.NoteId}: {question.Message}");
+if (baseline.Reason is not null) Console.Error.WriteLine(baseline.Reason);
+if (questions.Reason is not null) Console.Error.WriteLine(questions.Reason);
+
+return Math.Max(baseline.ExitCode, questions.GetExitCode(failOnOpenQuestions: true));
+```
+
+`ReleaseBaselineCommands.Check(string root)` is read-only.
+`ReleaseBaselineCommands.Admit(string root, string release, string? fromEsmPath = null)`
+performs the deliberate, journaled admission step described above. Both return
+`ReleaseBaselineOutcome`, carrying `ExitCode`, `Violations`, `FailureKind` and the
+complete failure message in `Reason`. Successful admission also returns
+`AdmittedEntryCount` (the total entries written) and `BaselineRevision`.
+
+`ModelNoteQuestions.Read(string root, string? scope = null)` returns
+`ModelNoteQuestionsOutcome` with `Findings`, `IdentityStatus`, `NotesStatus`,
+`EffectiveScope`, `OrphanReason`, `FailureKind` and `Reason`.
+`GetExitCode()` computes report mode; `GetExitCode(failOnOpenQuestions: true)`
+computes fail mode. Missing identities clear `EffectiveScope` and preserve every
+open question as an orphan. Unreadable notes or a read failure produce exit `2`
+in either mode without repairing sidecars or changing the model.
+
 ## Report processing purposes
 
 `screenplay report processing [<file.play|folder>] --format json|markdown|csv` derives a controller's [record of processing](purposes.md#record-of-processing) from error-free source. The default format is Markdown and the default path is the current directory. Supply `--controller-name` and `--controller-contact` explicitly; the model does not infer them. The report records declarations and limited structural derivations, not legal advice or verified runtime protection. Source errors exit `1`; bad arguments, unavailable paths and empty model directories exit `2`. A model with no purposes yields zero rows.
