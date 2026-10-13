@@ -178,6 +178,23 @@ export interface SpecificationStepDocument {
     values: Record<string, unknown>;
 }
 
+// The one event a specification appends as its action; the board shows only this event in the When row.
+export interface SpecificationWhenEventDocument {
+    id: string;
+    name: string;
+    eventId: string;
+    eventSourceId?: string;
+    values: Record<string, unknown>;
+}
+
+// A read model a specification starts from or expects, pointing at the read model item it is about.
+export interface SpecificationReadModelDocument {
+    id: string;
+    readModelItemId: string;
+    name: string;
+    values: Record<string, unknown>;
+}
+
 export interface SpecificationCallerDocument {
     authenticated: boolean;
     roles: string[];
@@ -189,10 +206,13 @@ export interface SliceSpecificationDocument {
     name: string;
     given: SpecificationStepDocument[];
     when?: { id: string; commandId?: string; name: string; values: Record<string, unknown>; generatedValues?: Record<string, unknown> };
+    whenEvent?: SpecificationWhenEventDocument;
     caller?: SpecificationCallerDocument;
+    givenReadModel?: SpecificationReadModelDocument;
     thenEvents: SpecificationStepDocument[];
+    thenReadModel?: SpecificationReadModelDocument;
     thenErrors: { id: string; name: string; message?: string }[];
-    // The pinned board reader ignores these additions; the header also displays their effective values.
+    // The board reader ignores these additions: every read model a specification states, with 'exactly'.
     givenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
     thenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
     whenRedelivered?: { eventType: string; reaction: string; values: Record<string, unknown>; for?: unknown };
