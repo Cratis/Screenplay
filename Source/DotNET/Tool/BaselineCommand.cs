@@ -3,9 +3,6 @@
 
 using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Mcp;
-using Cratis.Screenplay.Semantics;
-using Cratis.Screenplay.Semantics.Serialization;
-using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Tool;
 
@@ -15,68 +12,20 @@ static class BaselineCommand
     {
         var options = Parse(args, error);
         if (options is null) return 2;
-        try
-        {
-            return Execute(options, output, error);
-        }
-        catch (Exception exception) when (exception is McpFailure or InvalidSemanticContract or InvalidReleaseBaseline or IOException or UnauthorizedAccessException)
-        {
-            return Fail(error, exception.Message);
-        }
+        var outcome = options.Action == "check"
+            ? ReleaseBaselineCommands.Check(options.Root)
+            : ReleaseBaselineCommands.Admit(options.Root, options.Release!, options.FromEsm);
+
+        return Report(outcome, output, error);
     }
 
-    static int Execute(BaselineOptions options, TextWriter output, TextWriter error)
-    {
-        var root = new McpRoot(options.Root);
-        McpRecoveryJournal.RefusePending(root);
-        var files = new McpManagedFiles(root);
-        var stateBytes = files.Read(McpState.FileName);
-        if (stateBytes is null) return Fail(error, "PersistedIdentitiesRequired: release baselines require .screenplay/identities.json.");
-        var state = McpState.Deserialize(stateBytes);
-        var workspace = options.Action == "check" ? state.OpenForReleaseBaselineCheck(root) : state.Open(root);
-        var before = files.Read(ReleaseBaselineStore.FileName, ReleaseBaselineStore.MaximumBytes);
-        var baseline = ReleaseBaselineStore.ReadBytes(before, workspace.IdentityCatalog.Application);
-        if (options.Action == "check") return Report(ReleaseBaseline.Check(workspace, baseline), output, error);
-        var admission = Admit(options, workspace, baseline, output, error, out var verdict);
-        if (admission is null) return verdict;
-        var after = ReleaseBaselineStore.Serialize(admission.Document!);
-        var result = new McpDisk(root).Apply(new McpReleaseBaselineProposal(workspace, before, after), new(stateBytes, stateBytes));
-        if (!result.Success) return Fail(error, $"{result.FailureKind}: {result.Status}; {string.Join("; ", result.Recovery)}");
-        output.WriteLine($"Admitted {admission.Document!.Entries.Length} event revision(s) in release baseline {ReleaseBaselineStore.Revision(after)}.");
-        return 0;
-    }
-
-    static ReleaseBaselineResult? Admit(BaselineOptions options, ScreenplayWorkspace workspace, ReleaseBaselineRead baseline, TextWriter output, TextWriter error, out int verdict)
-    {
-        var shipped = options.FromEsm is null ? null : ReadShipped(options.FromEsm);
-        var admission = ReleaseBaseline.Admit(workspace, baseline, options.Release!, DateTimeOffset.UtcNow, shipped);
-        verdict = Report(admission, output, error);
-        return verdict == 0 ? admission : null;
-    }
-
-    static ExecutableSemanticModel ReadShipped(string path)
-    {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length > McpManagedFiles.MaximumStateBytes) throw new McpFailure("Shipped ESM exceeds the bounded file size.");
-        var bytes = new byte[checked((int)stream.Length)];
-        stream.ReadExactly(bytes);
-        if (stream.ReadByte() != -1) throw new McpFailure("Shipped ESM changed during read.");
-        return SemanticModelSerializer.Deserialize(bytes);
-    }
-
-    static int Report(ReleaseBaselineResult result, TextWriter output, TextWriter error)
+    static int Report(ReleaseBaselineOutcome result, TextWriter output, TextWriter error)
     {
         foreach (var violation in result.Violations) output.WriteLine($"{violation.Kind}: {violation.Event} revision {violation.Revision}{(violation.Path is null ? string.Empty : " at " + violation.Path)}");
-        if (result.Failure is not null && result.Violations.IsEmpty) return Fail(error, $"{result.Failure}: {result.Reason}");
-        if (result.Failure is not null) error.WriteLine($"{result.Failure}: {result.Reason}");
+        if (result.Reason is not null) error.WriteLine(result.Reason);
+        if (result.AdmittedEntryCount is { } count) output.WriteLine($"Admitted {count} event revision(s) in release baseline {result.BaselineRevision}.");
 
-        return result.Violations.IsEmpty ? 0 : 1;
-    }
-
-    static int Fail(TextWriter error, string reason)
-    {
-        error.WriteLine(reason);
-        return 2;
+        return result.ExitCode;
     }
 
     static BaselineOptions? Parse(string[] args, TextWriter error)
