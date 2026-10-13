@@ -42,38 +42,55 @@ internal static class WorkspaceGenerationRepairs
 
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
     {
-        if (GeneratedProperty(index, revision, diagnostic) is not { } subject ||
-            index.Find(subject.Parent!) is not { Node: CommandSyntax command } owner ||
-            index.Find(owner.Parent!) is not { Node: SliceSyntax slice } sliceEntry ||
-            LowEntropyConcept(index, (PropertySyntax)subject.Node) is not { } conceptEntry)
+        if (Target(index, revision, diagnostic) is not { } target)
         {
             return [];
         }
 
-        var property = (PropertySyntax)subject.Node;
-        var concept = (ConceptSyntax)conceptEntry.Node;
-        var repairs = ImmutableArray.CreateBuilder<WorkspaceDiagnosticRepair>();
-        if (Raise(concept.Generation!) is { } replacement)
+        return [.. RaiseRepairs(index, diagnostic, target, verify), .. UniqueRepairs(index, diagnostic, target, verify)];
+    }
+
+    static GenerationTarget? Target(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
+    {
+        if (GeneratedProperty(index, revision, diagnostic) is not { } subject) return null;
+        if (index.Find(subject.Parent!) is not { Node: CommandSyntax command } owner) return null;
+        if (index.Find(owner.Parent!) is not { Node: SliceSyntax } sliceEntry) return null;
+
+        return LowEntropyConcept(index, (PropertySyntax)subject.Node) is { } conceptEntry ? new(subject, command, sliceEntry, conceptEntry) : null;
+    }
+
+    static ImmutableArray<WorkspaceDiagnosticRepair> RaiseRepairs(WorkspaceSyntaxIndex index, Diagnostic diagnostic, GenerationTarget target, bool verify)
+    {
+        var concept = (ConceptSyntax)target.Concept.Node;
+        if (Raise(concept.Generation!) is not { } replacement)
         {
-            var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, conceptEntry.Handle, [new ReplaceWorkspaceNode(conceptEntry.Handle, concept, concept with { Generation = replacement })])
-            {
-                Title = "Raise generation to at least 64 random bits",
-                CanFixAll = false
-            };
-            repairs.AddRange(WorkspaceRepairVerification.Discover(index, repair, verify));
+            return [];
         }
 
-        if (diagnostic.Code == DiagnosticCodes.LowGenerationEntropy && Unique(index, command, property, slice) is { } constraint)
+        var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, target.Concept.Handle, [new ReplaceWorkspaceNode(target.Concept.Handle, concept, concept with { Generation = replacement })])
         {
-            var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(sliceEntry.Handle, slice, "constraints", constraint)])
-            {
-                Title = "Add a unique constraint for the generated property",
-                CanFixAll = false
-            };
-            repairs.AddRange(WorkspaceRepairVerification.Discover(index, repair, verify));
+            Title = "Raise generation to at least 64 random bits",
+            CanFixAll = false
+        };
+
+        return WorkspaceRepairVerification.Discover(index, repair, verify);
+    }
+
+    static ImmutableArray<WorkspaceDiagnosticRepair> UniqueRepairs(WorkspaceSyntaxIndex index, Diagnostic diagnostic, GenerationTarget target, bool verify)
+    {
+        var slice = (SliceSyntax)target.Slice.Node;
+        if (diagnostic.Code != DiagnosticCodes.LowGenerationEntropy || Unique(index, target.Command, (PropertySyntax)target.Property.Node, slice) is not { } constraint)
+        {
+            return [];
         }
 
-        return repairs.ToImmutable();
+        var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, target.Property.Handle, [new AddWorkspaceNode(target.Slice.Handle, slice, "constraints", constraint)])
+        {
+            Title = "Add a unique constraint for the generated property",
+            CanFixAll = false
+        };
+
+        return WorkspaceRepairVerification.Discover(index, repair, verify);
     }
 
     static WorkspaceSyntaxEntry? GeneratedProperty(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
@@ -114,4 +131,6 @@ internal static class WorkspaceGenerationRepairs
 
         return new(name, mappings[0].Property, mappings[0].Event, property.Location);
     }
+
+    sealed record GenerationTarget(WorkspaceSyntaxEntry Property, CommandSyntax Command, WorkspaceSyntaxEntry Slice, WorkspaceSyntaxEntry Concept);
 }
