@@ -21,6 +21,8 @@ public class when_refusing_unadmitted_event_routes : Specification
     [InlineData("collision", "PLAY0273")]
     [InlineData("stream-collision", "PLAY0273")]
     [InlineData("default", "PLAY0273")]
+    [InlineData("all", "PLAY0273")]
+    [InlineData("all-pin", "PLAY0273")]
     [InlineData("type", "PLAY0504")]
     [InlineData("nfc", "PLAY0504")]
     void should_pin_the_refusal_and_publish_no_model(string key, string code)

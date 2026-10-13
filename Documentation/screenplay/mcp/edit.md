@@ -66,6 +66,8 @@ set `eventNeverPersisted: true` on `propose-rename` when you know no events have
 been stored. That option omits a new pin and removes a redundant pin equal to the current
 name; a pin naming an earlier identity is kept.
 
+**Caution:** the event pin is not yet carried to renderers; generated code uses the new name. Review `eventPinWarnings` before applying; the pin alone does not preserve generated stored identity ([#704](https://github.com/Cratis/Screenplay/issues/704)).
+
 ## Change a property everywhere it flows
 
 ```text

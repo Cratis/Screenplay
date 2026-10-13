@@ -1,0 +1,3 @@
+eventsource Account
+  stream Archive
+    id "All"

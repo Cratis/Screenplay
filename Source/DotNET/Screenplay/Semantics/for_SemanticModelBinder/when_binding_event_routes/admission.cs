@@ -69,8 +69,8 @@ public class admission : given.a_semantic_binder
     [Theory]
     [InlineData("eventsource Other\n  id \"Account\"\n  stream Other\n")]
     [InlineData("eventsource Other\n  id \"stored\"\n  stream Other\neventsource Third\n  id \"stored\"\n  stream Other\n")]
-    [InlineData("eventsource Default\n  stream All\n")]
-    [InlineData("eventsource Other\n  id \"Default\"\n  stream All\n")]
+    [InlineData("eventsource Default\n  stream Archive\n")]
+    [InlineData("eventsource Other\n  id \"Default\"\n  stream Archive\n")]
     [InlineData("eventsource Other\n  stream First\n    id \"Second\"\n  stream Second\n")]
     void should_refuse_colliding_or_reserved_stored_names(string declaration)
     {
@@ -91,7 +91,7 @@ public class admission : given.a_semantic_binder
     void should_select_the_event_routes_version_only_when_used()
     {
         Bind(Prefix + Command.Replace("9007199254740991", "9007199254740990")).Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
-        Bind("eventsource Account\n  stream All\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
+        Bind("eventsource Account\n  stream Archive\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         Bind("module M\n  feature F\n    slice StateChange S\n      command C\n        value String\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     }
 
@@ -100,9 +100,9 @@ public class admission : given.a_semantic_binder
     [InlineData(true)]
     void should_bind_routed_history_independently_of_producer_types(bool producer)
     {
-        var source = "eventsource Account\n  identifier String\n  stream All\nmodule M\n  feature F\n    slice StateView S\n      event E\n        value String\n";
+        var source = "eventsource Account\n  identifier String\n  stream Archive\nmodule M\n  feature F\n    slice StateView S\n      event E\n        value String\n";
         if (producer) source += "      command C\n        id Uuid identifier\n        value String\n        produces E\n          for id\n          value = value\n";
-        source += "      specification History\n        given E\n          for \"other\"\n          stream Account.All\n          value = \"before\"\n        when append E\n          for \"other\"\n          stream Account.All\n          value = \"after\"\n        then E\n          stream Account.All\n          value = \"after\"\n";
+        source += "      specification History\n        given E\n          for \"other\"\n          stream Account.Archive\n          value = \"before\"\n        when append E\n          for \"other\"\n          stream Account.Archive\n          value = \"after\"\n        then E\n          stream Account.Archive\n          value = \"after\"\n";
         var result = Bind(source);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         var spec = result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single();
