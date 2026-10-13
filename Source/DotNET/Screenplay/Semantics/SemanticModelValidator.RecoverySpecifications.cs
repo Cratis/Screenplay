@@ -35,7 +35,7 @@ internal static partial class SemanticModelValidator
 
             var reaction = _reactions.SingleOrDefault(reaction => reaction.Id == action.Reaction);
             var fact = specification.GivenEvents[action.Given];
-            if (reaction is null || !reaction.Triggers.Any(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == fact.EventContract))
+            if (reaction?.Triggers.Any(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == fact.EventContract) != true)
             {
                 throw new InvalidSemanticContract("A redelivery reaction must exist and observe the located given event.");
             }
