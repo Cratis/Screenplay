@@ -1,5 +1,5 @@
 ---
-id: 0073
+id: 0074
 title: Admit explicit no-event assertions and redelivery before reaction refusal branches
 status: proposed
 stage: none
