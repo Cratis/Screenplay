@@ -60,7 +60,20 @@ internal sealed partial class WorkspaceRefactoring
         var evidence = candidates?.Distinct().ToImmutableArray() ?? [];
         return new()
         {
-            Conflicts = [new() { Kind = kind, Message = kind == WorkspaceConflictKind.EventContractChangeRequiresDecision ? "EventContractChangeRequiresDecision: select newGeneration or eventNeverPersisted for the selected current event properties." : $"{kind}: property changes require a complete, safe selected-set plan.", Candidates = evidence }],
+            Conflicts =
+            [
+                new()
+                {
+                    Kind = kind,
+                    Message = kind switch
+                    {
+                        WorkspaceConflictKind.EventContractChangeRequiresDecision => "EventContractChangeRequiresDecision: select newGeneration or eventNeverPersisted for the selected current event properties.",
+                        WorkspaceConflictKind.BaselinedRevisionImmutable => "BaselinedRevisionImmutable: select newGeneration; it is the only option for the selected baselined revisions.",
+                        _ => $"{kind}: property changes require a complete, safe selected-set plan."
+                    },
+                    Candidates = evidence
+                }
+            ],
             PropertyReport = report with { Generations = [], NeedsDecision = [new(kind.ToString(), report.Target, evidence)] }
         };
     }
@@ -79,7 +92,15 @@ internal sealed partial class WorkspaceRefactoring
         return null;
     }
 
-    static bool EventDecisionRequired(WorkspaceSyntaxEntry[] events, WorkspacePropertyRequest request) => events.Length > 0 && !request.NewGeneration && !request.EventNeverPersisted;
+    static WorkspaceConflictKind? EventDecision(WorkspaceSyntaxEntry[] events, WorkspacePropertyRequest request)
+    {
+        if (events.Length == 0) return null;
+        if (request.ReleaseBaseline?.Status == "unreadable") return WorkspaceConflictKind.UnreadableReleaseBaseline;
+        var bases = events.Select(owner => WorkspaceEventMutability.For(request.ReleaseBaseline, owner.EventContractId, ((EventSyntax)owner.Node).Generation)).ToArray();
+        if (!request.NewGeneration && bases.Any(value => value.Basis == "baselined")) return WorkspaceConflictKind.BaselinedRevisionImmutable;
+        if (!request.NewGeneration && !request.EventNeverPersisted && bases.Any(value => value.Basis == "noBaseline")) return WorkspaceConflictKind.EventContractChangeRequiresDecision;
+        return null;
+    }
 
     WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspacePropertyAssertionProvenance? assertions)
     {
@@ -90,8 +111,8 @@ internal sealed partial class WorkspaceRefactoring
         report = selections.Report;
         if (InspectPropertySelections(plan, request, selections.Selected) is { } safetyRefusal) return PropertyFailure(safetyRefusal.Kind, report, safetyRefusal.Candidates);
         var events = PropertyEventOwners(selections.Selected);
-        if (EventDecisionRequired(events, request)) return PropertyFailure(WorkspaceConflictKind.EventContractChangeRequiresDecision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
-        var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration);
+        if (EventDecision(events, request) is { } decision) return PropertyFailure(decision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
+        var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration, request.EventNeverPersisted, request.ReleaseBaseline);
         return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request, assertions), generations, report);
     }
 
@@ -103,6 +124,7 @@ internal sealed partial class WorkspaceRefactoring
         {
             ExpectedRevision = request.ExpectedRevision,
             ExpectedCatalogRevision = request.ExpectedCatalogRevision,
+            ReleaseBaseline = request.ReleaseBaseline,
             Formatting = request.Formatting,
             Validation = request.Validation,
             Documents = edits.Documents(generations),

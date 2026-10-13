@@ -60,15 +60,17 @@ For projections that opt in to Chronicle's generation support, bare PDL event na
 
 ## Change an event property through MCP
 
-Use `propose-property` to add, rename or remove a current event property, with an
-explicit choice between `eventNeverPersisted` and `newGeneration`. The first
+Use `propose-property` to add, rename or remove a current event property. Without
+a release baseline, choose explicitly between `eventNeverPersisted` and `newGeneration`.
+With a baseline, an unadmitted current revision defaults to `inPlace`; an admitted
+revision requires explicit `newGeneration` and refuses `eventNeverPersisted`. The first
 asserts that the current generation has never been stored: it edits that generation
 in place and preserves renamed property IDs. The second keeps every historical
 shape and identity, appends the changed shape as generation N+1, and assigns new
 property identities there while retaining the event contract ID. Historical
 properties refuse either choice. Extract an inline event before changing its contract.
 
-Adding even an optional property requires this choice: an in-place schema addition
+Without a baseline, adding even an optional property requires this choice: an in-place schema addition
 is not safe for a stored generation. Add selects an owner and explicit declaration
 or mapping `hops`; the planner never infers producer values. Required properties
 need literal fixture values. See [adding a property along its chain](mcp/edit.md#add-a-property-along-a-mapping-chain).
@@ -77,7 +79,10 @@ Only the target and explicitly selected `alsoRename`, `alsoRemove` or add hops c
 Evolution flags do not select connected events. One proposal can select several
 events with different starting generations, but uses one mode for them all. Its
 required `property.generations` array reports each selected event once, in canonical
-address order, with that event's own `from`, `to` and `mode`. In-place edits report
+address order, with that event's own `from`, `to`, `mode` and `mutability`.
+Mutability reports `basis`, `releaseBaselineRevision` and original `admittedIn`.
+A missing baseline reports `noBaseline` with both other fields null; unadmitted
+revisions report `notInBaseline`; admitted revisions report `baselined`. In-place edits report
 `from == to`; an empty array means no accepted planned event edits, not success.
 There is no singular generation-report alias.
 
@@ -141,7 +146,7 @@ Each directive can appear at most once. These are authoring metadata: binding re
 
 Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471` with a typed removal repair.
 
-Workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
+Without a release baseline, workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. With a baseline, an unadmitted event rename does not add a pin; any admitted revision requires preserving the pin and refuses `eventNeverPersisted`. Rename results report `eventRename.mutability` and `eventRename.pinAdded`. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
 
 Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
 

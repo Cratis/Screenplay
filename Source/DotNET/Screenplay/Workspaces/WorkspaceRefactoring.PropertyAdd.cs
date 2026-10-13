@@ -27,15 +27,16 @@ internal sealed partial class WorkspaceRefactoring
         report = plan.Report;
         var events = plan.Additions.Where(addition => addition.Owner.Node is EventSyntax).Select(addition => addition.Owner).DistinctBy(owner => owner.Address)
             .OrderBy(owner => owner.Address!, WorkspaceSemanticAddressComparer.Instance).ToArray();
-        if (EventDecisionRequired(events, request)) return PropertyFailure(WorkspaceConflictKind.EventContractChangeRequiresDecision, report, plan.Additions.Where(addition => addition.Owner.Node is EventSyntax).Select(WorkspacePropertyAddPlan.Candidate));
+        if (EventDecision(events, request) is { } decision) return PropertyFailure(decision, report, plan.Additions.Where(addition => addition.Owner.Node is EventSyntax).Select(WorkspacePropertyAddPlan.Candidate));
         if (plan.InspectSources() is { } sourceRefusal) return PropertyFailure(sourceRefusal.Kind, report, sourceRefusal.Candidates);
-        var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration);
+        var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration, request.EventNeverPersisted, request.ReleaseBaseline);
         var edits = new WorkspacePropertyAddEdits(index, properties, plan, request);
         if (edits.Apply() is { } editRefusal) return PropertyFailure(editRefusal.Kind, report, editRefusal.Candidates);
         var result = new WorkspaceAuthoringTransaction(workspace, edits.Renames).Propose(new()
         {
             ExpectedRevision = request.ExpectedRevision,
             ExpectedCatalogRevision = request.ExpectedCatalogRevision,
+            ReleaseBaseline = request.ReleaseBaseline,
             Formatting = request.Formatting,
             Validation = request.Validation,
             Documents = edits.Documents(generations),

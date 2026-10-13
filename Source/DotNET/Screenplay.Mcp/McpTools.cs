@@ -19,6 +19,7 @@ sealed class McpTools
         _notesTools = new(StringComparer.Ordinal)
         {
             ["list-model-notes"] = _workspaces.ListNotes,
+            ["list-release-baseline"] = _workspaces.ListReleaseBaseline,
             ["propose-model-notes"] = _workspaces.ProposeNotes
         };
     }
@@ -60,7 +61,7 @@ sealed class McpTools
         McpToolCatalog.Validate(name, arguments, visual);
         try
         {
-            return name switch
+            object Execute() => name switch
             {
                 "repair-capabilities" => McpRepairCapabilities.Read(),
                 "semantic-diff" => McpRevisionDiff.Read(arguments, _workspaces),
@@ -86,6 +87,8 @@ sealed class McpTools
                 McpVisualization.ToolName => _workspaces.Visualize(arguments),
                 _ => DispatchRead(name, arguments)
             };
+            return name.StartsWith("propose", StringComparison.Ordinal) || name == "expand-layout"
+                ? _workspaces.WithReleaseBaseline(arguments, Execute) : Execute();
         }
         catch (McpFailure failure) when (failure.Code != 0)
         {

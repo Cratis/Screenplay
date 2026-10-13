@@ -104,7 +104,7 @@ internal sealed partial class McpWorkspaces
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
         RefusePendingWorkspace();
         _ = McpWorkspaceTransport.ExportBytes(candidate);
-        var result = McpJson.ToolResult(WithRootBindingConflict(WithNotes(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), candidate)));
+        var result = McpJson.ToolResult(WithRootBindingConflict(WithReleaseBaselineStatus(WithNotes(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), candidate), candidate)));
         _workspace = candidate;
         _stateBytes = persisted;
         _proposals.Clear();
@@ -154,6 +154,7 @@ internal sealed partial class McpWorkspaces
         }
 
         VerifyNotesPlan(proposal);
+        VerifyBaselinePlan(proposal, arguments);
         var statePlan = StatePlan(proposal);
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
@@ -168,6 +169,7 @@ internal sealed partial class McpWorkspaces
                 BeforeInstall?.Invoke();
                 RefuseCompetingPending();
                 VerifyNotesPlan(proposal);
+                VerifyBaselinePlan(proposal, arguments);
                 evidence?.Verify(Root, proposal);
             },
             evidence?.OperationId);
@@ -399,6 +401,16 @@ internal sealed partial class McpWorkspaces
             throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
         }
 
+        var baselinePlan = _planningBaseline ?? ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
+        var currentBaseline = ReadBaselinePlan(proposal.Before.IdentityCatalog.Application);
+        CheckBaselinePin(arguments, currentBaseline.Read);
+        if (!SameBaseline(baselinePlan, currentBaseline)) throw new McpFailure("StaleReleaseBaseline: the baseline changed during planning.") { FailureKind = "StaleReleaseBaseline" };
+        var baselineCheck = WorkspaceReleaseBaseline.Check(proposal.Before, candidate, baselinePlan.Read);
+        if (!baselineCheck.Success)
+        {
+            return McpJson.ToolResult(new { success = false, failureKind = baselineCheck.Failure ?? baselineCheck.Violations[0].Kind, baselineCheck.Reason, violations = baselineCheck.Violations }, true);
+        }
+
         if (_proposals.Count >= 16)
         {
             throw new McpFailure("The session already holds 16 proposals. Discard a proposal or reopen the workspace.") { FailureKind = "LimitExceeded" };
@@ -415,6 +427,8 @@ internal sealed partial class McpWorkspaces
             success = true,
             proposalId = id,
             repairEvidence = evidence,
+            releaseBaselineRevision = baselinePlan.Read.Revision,
+            eventRename = proposal is McpAuthoringProposal renamed ? renamed.Result.EventRenameReport : null,
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal policy ? policy.ReferencePolicy.ToString() : null,
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
@@ -437,6 +451,7 @@ internal sealed partial class McpWorkspaces
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);
         _statePlans.Add(proposal, statePlan);
+        _baselinePlans.Add(proposal, baselinePlan);
         if (evidence is not null) _repairEvidence.Add(proposal, evidence);
         return response;
     }
@@ -527,6 +542,7 @@ internal sealed partial class McpWorkspaces
                 _statePlans.Add(refreshed, plan);
             }
 
+            if (_baselinePlans.TryGetValue(proposal, out var baselinePlan)) _baselinePlans.Add(refreshed, baselinePlan);
             _proposals[id] = refreshed;
         }
 

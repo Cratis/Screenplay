@@ -316,6 +316,20 @@ sealed class WorkspaceAuthoringTransaction(
             WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
         }
         ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
+        if (request.ReleaseBaseline is { } baseline)
+        {
+            var check = WorkspaceReleaseBaseline.Check(workspace, candidate, baseline);
+            if (!check.Success)
+            {
+                var kind = check.Failure switch
+                {
+                    null => Enum.Parse<WorkspaceConflictKind>(check.Violations[0].Kind),
+                    "UnreadableReleaseBaseline" => WorkspaceConflictKind.UnreadableReleaseBaseline,
+                    _ => WorkspaceConflictKind.CompilationFailed
+                };
+                return Failure(kind, check.Reason ?? $"{kind}: the candidate does not preserve every admitted revision.") with { ReleaseBaselineResult = check };
+            }
+        }
         return new()
         {
             Workspace = candidate,

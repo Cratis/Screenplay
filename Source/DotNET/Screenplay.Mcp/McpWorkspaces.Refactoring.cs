@@ -69,6 +69,7 @@ internal sealed partial class McpWorkspaces
             ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
             NewName = McpJson.RequiredString(arguments, "newName"),
             EventNeverPersisted = McpJson.Boolean(arguments, "eventNeverPersisted"),
+            ReleaseBaseline = _planningBaseline?.Read,
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
         };
