@@ -48,9 +48,11 @@ To baseline an earlier release, supply its canonical executable semantic model:
 screenplay baseline admit path/to/model --release v1.3.0 --from-esm shipped-esm.json
 ```
 
-The strict ESM reader requires the same application identity. Shipped ESM does not
-carry rename pins, so `--from-esm` requires the current stored name to match the
-shipped name; a mismatch refuses with `ShippedStoredNameMismatch`.
+The strict ESM reader requires the same application identity. From ESM v16 the
+shipped model carries each renamed event's stored name (`storedName`), and admission
+records that name. Earlier ESM versions do not carry rename pins, so the shipped
+event name must match the current stored name. Either way, a shipped stored name
+that differs from the current one refuses with `ShippedStoredNameMismatch`.
 
 `baseline check` exits `0` when every admitted revision matches, `1` for
 `BaselinedRevisionChanged` (with the first differing path) or
@@ -61,7 +63,7 @@ and a schema/hash mismatch never count as absence and are never repaired automat
 Admission uses the same exit codes: changed overlapping revisions exit `1`,
 invalid inputs or failed writes exit `2`.
 
-The [published JSON Schema](release-baseline-v1.schema.json) describes the sidecar.
+The [published JSON Schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/release-baseline-v1.schema.json) describes the sidecar.
 Composite types expand recursively. A cycle becomes `{ "kind": "ref", "ref": 1 }`
 for the nearest enclosing composite, `ref: 2` for its parent, and so on. These
 path-relative references exclude type names and identities, so renaming a recursive
@@ -140,6 +142,44 @@ keeps all open questions visible unscoped, and marks them orphaned with reason
 `identity-state-absent`; `fail` still gates on that reported set.
 An unreadable notes file exits `2` only when the flag is given; without
 it notes are ignored. This is separate from compiler warnings and `--warnaserror`.
+
+## Call these from your own tooling
+
+Reference `Cratis.Screenplay.Mcp` to run the same root-aware checks without
+installing or launching the standalone tool. In a console application, pass the
+model root as the first argument:
+
+```csharp
+using Cratis.Screenplay.Mcp;
+
+var root = args[0];
+var baseline = ReleaseBaselineCommands.Check(root);
+var questions = ModelNoteQuestions.Read(root);
+
+foreach (var violation in baseline.Violations)
+    Console.WriteLine($"{violation.Kind}: {violation.Event} revision {violation.Revision} at {violation.Path}");
+foreach (var question in questions.Findings)
+    Console.WriteLine($"{question.NoteId}: {question.Message}");
+if (baseline.Reason is not null) Console.Error.WriteLine(baseline.Reason);
+if (questions.Reason is not null) Console.Error.WriteLine(questions.Reason);
+
+return Math.Max(baseline.ExitCode, questions.GetExitCode(failOnOpenQuestions: true));
+```
+
+`ReleaseBaselineCommands.Check(string root)` is read-only.
+`ReleaseBaselineCommands.Admit(string root, string release, string? fromEsmPath = null)`
+performs the deliberate, journaled admission step described above. Both return
+`ReleaseBaselineOutcome`, carrying `ExitCode`, `Violations`, `FailureKind` and the
+complete failure message in `Reason`. Successful admission also returns
+`AdmittedEntryCount` (the total entries written) and `BaselineRevision`.
+
+`ModelNoteQuestions.Read(string root, string? scope = null)` returns
+`ModelNoteQuestionsOutcome` with `Findings`, `IdentityStatus`, `NotesStatus`,
+`EffectiveScope`, `OrphanReason`, `FailureKind` and `Reason`.
+`GetExitCode()` computes report mode; `GetExitCode(failOnOpenQuestions: true)`
+computes fail mode. Missing identities clear `EffectiveScope` and preserve every
+open question as an orphan. Unreadable notes or a read failure produce exit `2`
+in either mode without repairing sidecars or changing the model.
 
 ## Report processing purposes
 
