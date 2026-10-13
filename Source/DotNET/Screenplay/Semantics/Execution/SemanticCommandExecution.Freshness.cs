@@ -12,6 +12,8 @@ internal sealed partial class SemanticCommandExecution
             ? firstUuid == secondUuid
             : SemanticValueRules.AreEqual(left, right);
 
+    // An unrouted prior fact (null destination) belongs to no event source this invocation can prove it shares,
+    // so it never makes a generated source stale; only routed facts on the same canonical source do.
     SemanticRejected? RejectReusedGeneratedSource()
     {
         if (!plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V15)) return null;
@@ -20,7 +22,7 @@ internal sealed partial class SemanticCommandExecution
             var generated = _commandValues[property.Id];
             var uuid = plan.Model.Application.Concepts.Single(concept => concept.Id == property.Type.Target).Primitive == SemanticPrimitiveType.Uuid;
             if (_facts.Any(fact => SameSource(fact.Destination, generated, uuid)) &&
-                world.Facts.Any(fact => fact.Destination is SemanticNullValue || SameSource(fact.Destination, generated, uuid)))
+                world.Facts.Any(fact => fact.Destination is not SemanticNullValue && SameSource(fact.Destination, generated, uuid)))
             {
                 return new(world, SemanticRejectionCategory.Concurrency, null, FreshnessMessage);
             }

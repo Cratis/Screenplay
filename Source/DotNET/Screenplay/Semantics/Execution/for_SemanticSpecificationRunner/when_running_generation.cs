@@ -47,6 +47,14 @@ public class when_running_generation : given.a_v6_scenario
     }
 
     [Fact]
+    void should_ignore_unrouted_prior_facts()
+    {
+        Compile(Source("given Unrelated", $"then Started\n          for \"{Identity}\"\n        then Initialized\n          for \"{Identity}\""));
+        _plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V15).ShouldBeTrue();
+        Run("Check").Passed.ShouldBeTrue();
+    }
+
+    [Fact]
     void should_not_claim_freshness_for_skipped_productions()
     {
         var source = Source($"given Unrelated\n          for \"{Identity}\"", "then returns \"" + Identity + "\"")
