@@ -71,3 +71,4 @@
 | [0072](0072-query-arguments-are-validated-against-concept-rules.md) | Query arguments are validated against their concept rules, and a violation is a rejection | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
 | [0073](0073-reserve-the-stored-event-stream-name-all.md) | Reserve the stored event stream name All | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
 | [0074](0074-admit-no-event-assertions-and-redelivery-before-refusal-branches.md) | Admit explicit no-event assertions and redelivery before reaction refusal branches | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
+| [0075](0075-carry-the-stored-event-type-name-in-the-executable-model.md) | Carry the stored event type name in the executable model | proposed | none |  |  |
