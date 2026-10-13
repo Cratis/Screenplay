@@ -144,6 +144,17 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
 
     static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
 
+    static EventSyntax[] ConsistentGenerations(IEnumerable<EventSyntax> declarations)
+    {
+        var generations = declarations.ToArray();
+        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        {
+            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
+        }
+
+        return generations;
+    }
+
     static WorkspaceEventRenameReport? EventRenameReport(WorkspaceEventMutability? mutability, bool pinAdded) => mutability is null ? null : new(mutability, pinAdded);
 
     static (WorkspaceEventMutability? Mutability, WorkspaceAuthoringResult? Refusal) EventRenameMutability(WorkspaceRenameRequest request, WorkspaceSyntaxEntry target, EventSyntax[] generations)
@@ -283,11 +294,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
-        var generations = index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
-        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
-        {
-            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
-        }
+        var generations = ConsistentGenerations(index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>());
 
         var (mutability, refusal) = EventRenameMutability(request, target, generations);
         if (refusal is not null)

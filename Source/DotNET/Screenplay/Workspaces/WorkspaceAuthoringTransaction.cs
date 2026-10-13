@@ -343,11 +343,7 @@ sealed class WorkspaceAuthoringTransaction(
             WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
         }
         ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
-        if (ReleaseBaselineFailure(request, candidate) is { } baselineFailure)
-        {
-            return baselineFailure;
-        }
-        return new()
+        return ReleaseBaselineFailure(request, candidate) ?? new()
         {
             Workspace = candidate,
             WritePlan = new()
