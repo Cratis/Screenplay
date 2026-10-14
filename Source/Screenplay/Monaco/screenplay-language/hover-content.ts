@@ -70,7 +70,11 @@ export function hoverContent(
             prefix: 'Printable ASCII prefix, at most 32 characters. UUID prefixes require a String concept; TypeID uses its own argument.',
             alphabet: 'NanoID only: 2..256 distinct printable ASCII characters.',
             case: 'lower or upper for String UUIDs, ULID, hex/base32 bytes. Never base64url, NanoID or TypeID.',
-            pattern: 'Parsed, not yet executable (#616 phase 3).', random: 'Parsed, not yet executable (#616 phase 3).', rule: 'Parsed, not yet executable (#616 phase 3).', sequence: 'Reserved; binding refuses it until #619 is admitted.',
+            pattern: 'ESM v21 finite ASCII pattern: # digits, ? uppercase letters, * uppercase letters and digits, classes, repeats 1..64 and UTC yyyy/yy/MM/dd segments. Final value including checksum is at most 256 characters. Counts distinct strings, not repeat decompositions; dates and check digits add no entropy.',
+            random: 'ESM v21 inclusive signed Int64 range for an Int value. Fixtures must be integral numbers within the exact bounds. Int cannot be a generated identifier.',
+            rule: 'ESM v21 ValueGeneration requirement with exactly one direct file or tagged fence. Returns String; closed GenerationContext supplies Now (DateTimeOffset) and Tenant (TenantId). Entropy is unknown. The reference runner uses a fixture and never executes the body.',
+            checksum: 'Appends luhn/mod11/mod97 check digits, adding no entropy. mod11 excludes check digit 10. Generated fixtures check only suffix digit shape unless validate checksum is authored.',
+            sequence: 'Reserved; binding refuses it until #619 is admitted.',
         };
         if (generationDocs[word]) return generationDocs[word];
     }

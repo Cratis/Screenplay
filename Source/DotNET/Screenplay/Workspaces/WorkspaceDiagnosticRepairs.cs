@@ -113,7 +113,10 @@ public static class WorkspaceDiagnosticRepairs
         var matches = ForSubject(index, workspace.Revision, diagnosticCode, subject).ToArray();
         if (matches.Length != 1)
         {
-            return Refuse(WorkspaceConflictKind.UnknownRepair, "The diagnostic repair does not match the original workspace subject.");
+            var reason = diagnosticCode == DiagnosticCodes.RefutedGeneratedConceptRule
+                ? WorkspaceGenerationRuleRepairs.UnavailableReason(index, subject) : null;
+
+            return Refuse(WorkspaceConflictKind.UnknownRepair, reason ?? "The diagnostic repair does not match the original workspace subject.");
         }
 
         return ProposeSelected(workspace, index, matches[0], request);

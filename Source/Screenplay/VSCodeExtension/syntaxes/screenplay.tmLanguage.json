@@ -85,6 +85,10 @@
                 { "include": "#comment" },
                 { "include": "#fenced-csharp" },
                 {
+                    "match": "^\\s*(?:(validate)\\s+)?(checksum)\\s+(luhn|mod11|mod97)\\b",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
                     "begin": "^\\s*(generate)\\s+(uuidv7|uuid|ulid|typeid|nanoid|bytes|pattern|random|rule|sequence)\\b",
                     "beginCaptures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "support.function.screenplay" } },
                     "end": "$",
