@@ -325,7 +325,7 @@ public class when_freezing_legacy_source_syntax_bytes
                     },
                     _ => slice
                 })
-            } : feature).Select(WithoutPublicationSlice).Select(feature => feature with
+            } : feature).Select(WithoutPublicationSlice).Select(WithoutTranslationDirectionAndSplit).Select(feature => feature with
             {
                 Contributions = feature.Contributions?.Select(WithoutNavigationItem),
                 Slices = feature.Slices.Select(slice => slice with
@@ -362,6 +362,44 @@ public class when_freezing_legacy_source_syntax_bytes
         Slices = feature.Slices.Where(slice => slice.Name != "InvoiceSentPublication"),
         Features = feature.Features.Select(WithoutPublicationSlice)
     };
+
+    // Explicit translation direction and the capture/reaction split of LegacyInvoiceSync have their own
+    // conformance vectors. Drop the direction and fold MarkInvoicePaidFromLegacyPayment back into the
+    // single Translate slice the frozen bytes describe, wherever the slices nest.
+    static FeatureSyntax WithoutTranslationDirectionAndSplit(FeatureSyntax feature)
+    {
+        const string legacySync = "LegacyInvoiceSync";
+        const string paymentTranslation = "MarkInvoicePaidFromLegacyPayment";
+        var translation = feature.Slices.FirstOrDefault(slice => slice.Name == paymentTranslation);
+        var slices = feature.Slices.Where(slice => slice.Name != paymentTranslation).Select(slice => slice with { Direction = null });
+        if (translation is not null)
+        {
+            slices = slices.Select(slice => slice.Name == legacySync ? RestoreLegacyPaymentTranslation(slice, translation) : slice);
+        }
+
+        return feature with
+        {
+            Slices = slices,
+            Features = feature.Features.Select(WithoutTranslationDirectionAndSplit)
+        };
+    }
+
+    // The payment translation's expectation was once the last step of the capture specification, and the
+    // translation spec once sat after it; the reaction sat after the capture.
+    static SliceSyntax RestoreLegacyPaymentTranslation(SliceSyntax capture, SliceSyntax translation)
+    {
+        var translated = translation.Specifications.First(specification => specification.Name == "TranslatingALegacyPayment");
+        return capture with
+        {
+            Reactions = capture.Reactions.Concat(translation.Reactions),
+            Specifications = capture.Specifications.Select(specification => specification.Name == "SeeingAnInvoicePaidInTheLegacySystem"
+                ? specification with
+                {
+                    ThenEvents = specification.ThenEvents.Concat(translated.ThenEvents.Select(then => then with { For = specification.ThenEvents.First().For }))
+                }
+                : specification).Append(translated)
+        };
+    }
 
     // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
     // action-navigation directives and omit the new draft entry point for the frozen legacy sample.

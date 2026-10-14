@@ -57,7 +57,8 @@ Commerce/
       MyOrders.play            StateView: a customer follows their orders out the door
     Payments/
       Payments.play            feature: settlements from the payment provider
-      ImportPaymentSettlements.play  Translate: a settled payment becomes OrderPaid
+      ImportPaymentSettlements.play  Translate (inbound): a settled payment is captured as PaymentSettled
+      MarkOrderPaid.play             Automation: PaymentSettled becomes OrderPaid
     Support/
       Support.play             feature gated to support agents
       OrderDetails.play        StateView: everything support needs about an order
@@ -71,7 +72,8 @@ Commerce/
       DispatchShipment.play    StateChange: a parcel is handed to a carrier
     Tracking/
       Tracking.play            feature: parcels on their way to the door
-      TrackCarrierDeliveries.play   Translate: a carrier scan becomes ShipmentDelivered
+      TrackCarrierDeliveries.play   Translate (inbound): a carrier scan is captured as ParcelDeliveryScanned
+      MarkShipmentDelivered.play    Automation: ParcelDeliveryScanned becomes ShipmentDelivered
       ReceiveCarrierDispatches.play Translate (inbound): a carrier's public dispatch event becomes CarrierDispatchRecorded
       NotifyCustomerOfDispatch.play Automation: the customer hears their parcel shipped
       HandleReturnedParcels.play    Automation on a trigger: a returned parcel is recorded

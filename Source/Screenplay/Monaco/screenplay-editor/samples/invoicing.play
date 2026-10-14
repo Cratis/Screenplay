@@ -3166,6 +3166,7 @@ module Invoicing
 
     slice Translate LegacyInvoiceSync
       description "Brings changes made in the legacy invoicing system into this one"
+      direction inbound
 
       capture LegacyInvoiceCapture
         source api
@@ -3218,14 +3219,6 @@ module Invoicing
             when email
               email = $.email
 
-      // A legacy fact is translated into the domain's own vocabulary.
-      reaction LegacyPaymentTranslator
-        description "A payment the legacy system saw is a payment here too"
-        when InvoicePaidFromSent
-          paidAt
-          produces InvoicePaid
-            paidAt = paidAt
-
       event InvoicePaidFromSent
         paidAt DateTime
 
@@ -3248,8 +3241,9 @@ module Invoicing
 
       // A capture is driven by records of its source: 'given capture' is the
       // record as it was, 'when capture' the record as it is now. Paid in the
-      // legacy system means a status change, a payment from sent, a nudge to look
-      // at the invoice - and, through the translator, a payment here.
+      // legacy system means a status change, a payment from sent and a nudge to
+      // look at the invoice. MarkInvoicePaidFromLegacyPayment reacts to the
+      // payment from sent.
       specification SeeingAnInvoicePaidInTheLegacySystem
         given clock "2026-10-02T12:00:00Z"
         given capture LegacyInvoiceCapture
@@ -3271,9 +3265,18 @@ module Invoicing
         then InvoiceNeedsAttention
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           source = "legacy"
-        then InvoicePaid
-          for "9c858901-8a57-4791-81fe-4c455b099bc9"
-          paidAt = "2026-10-02T12:00:00Z"
+
+    // The capture above records the legacy system's fact; this reaction turns it
+    // into the domain's own vocabulary.
+    slice Automation MarkInvoicePaidFromLegacyPayment
+      description "A payment the legacy system saw is a payment here too"
+
+      reaction LegacyPaymentTranslator
+        description "A payment the legacy system saw is a payment here too"
+        when InvoicePaidFromSent
+          paidAt
+          produces InvoicePaid
+            paidAt = paidAt
 
       specification TranslatingALegacyPayment
         given InvoiceSent

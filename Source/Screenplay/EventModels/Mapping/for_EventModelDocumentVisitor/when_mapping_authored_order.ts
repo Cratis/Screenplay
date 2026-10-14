@@ -32,6 +32,7 @@ function sample(name: string) {
             'PLAY0517@Ordering/Orders/MyOrders.play:38',
             'PLAY0516@Fulfillment/Shipping/ShipmentQueue.play:30',
             'PLAY0517@Fulfillment/Shipping/ShipmentQueue.play:38',
+            'PLAY0516@Fulfillment/Tracking/MarkShipmentDelivered.play:10',
         ],
         TimeTracking: [
             'PLAY0517@Payroll/Runs/ReviewingRuns.play:43',
