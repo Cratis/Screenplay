@@ -134,7 +134,7 @@ Inbound translations that use captures over events become specifiable and execut
 1. Whether Chronicle's serializer writes a null optional property, so that it overlays as null, or omits it. Unverified; the reference overlays only what the fact carries.
 2. Order between a capture and reactions to the same event. Chronicle guarantees none; mixed assertions may need `then events in any order`.
 3. The reference has one log, so foreign facts are visible to `all`/`every` projections, whereas Chronicle keeps them in the inbox. This predates this record.
-4. Aligning record captures with Chronicle's first-record rule needs its own decision.
+4. Aligning record captures with Chronicle's first-record rule needs its own decision ([#767](https://github.com/Cratis/Screenplay/issues/767)).
 5. Whether Chronicle should accept an `append` without `when`, `map` and expressions for captures over events, or Stage must refuse them. Chronicle's "engine subset" caution still says `$context` is rejected, but the code accepts it for events sources.
 6. Whether to admit `given capture` as remembered state. Chronicle stores exactly that.
 7. Stage tracking issue: number to be opened.
