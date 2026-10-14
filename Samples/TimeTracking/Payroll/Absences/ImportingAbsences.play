@@ -2,6 +2,7 @@
 
 slice Translate ImportAbsences
   description "Reads absences from the HR system as facts of this application"
+  direction inbound
 
   // Change data capture: the HR system is polled. A new absence becomes an
   // AbsenceReported; a change to its length becomes an AbsenceAdjusted.
