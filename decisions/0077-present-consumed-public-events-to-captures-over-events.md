@@ -49,9 +49,9 @@ Chronicle defines the runtime meaning ([0001](0001-chronicle-runtime-semantic-au
    - `given <Event>` and `when append <Event>`, where `<Event>` is a `from` event of a capture over events, are that capture's input.
    - The fixture is typed by the locally declared event. `for` states the incoming event's event source.
    - After `when append`, the appended fact is the action itself, as in 0022's status notes. `then` compares what the capture and the reactions it set off appended.
-   - `given capture` or `when capture` naming a capture over events is a compile error, **PLAY0691**. If the capture has exactly one `from` event, the repair rewrites it to `given <Event>` / `when append <Event>` with the same lines. With several `from` events there is no repair, because the event is ambiguous.
+   - `given capture` or `when capture` naming a capture over events is a compile error, **PLAY0701**. If the capture has exactly one `from` event, the repair rewrites it to `given <Event>` / `when append <Event>` with the same lines. With several `from` events there is no repair, because the event is ambiguous.
    - No grammar changes.
-2. **The key comes from the incoming event.** The capture's `key` names a property that every `from` event declares as a required (not `optional`) property; otherwise it is error **PLAY0690**, which mirrors Chronicle's partition failure at compile time. Key values keep 0022's rules: text or number, and numeric and text keys stay distinct. A key value that is not text or a number at run time is `Unsupported`.
+2. **The key comes from the incoming event.** The capture's `key` names a property that every `from` event declares as a required (not `optional`) property; otherwise it is error **PLAY0700**, which mirrors Chronicle's partition failure at compile time. Key values keep 0022's rules: text or number, and numeric and text keys stay distinct. A key value that is not text or a number at run time is `Unsupported`.
 3. **State is the overlay of the key's events.**
    - The capture remembers one state per key. It starts from the specification's `given` facts of its `from` events, folded in authored order. Folding a given never appends, because givens are history, as for reactions.
    - The presented event's own properties (including any it carries as null) are laid over that state. Properties it lacks keep their earlier value. Composite and list values replace the earlier value whole.
@@ -108,7 +108,7 @@ Captures over events stay `Unsupported` when presented with a record, and the fa
 
 ## Timeline and scope
 
-Holds until superseded. In scope: the reference evaluator, PLAY0690 and PLAY0691 in both compilers and editors, docs, the Commerce sample and vectors. Out of scope: the remaining `$context` members, `key $eventSourceId`, `children`/`nested` over events, redelivery to captures, Stage realization, and record captures (`source api` and others), whose first-record rule stays as 0022 decided.
+Holds until superseded. In scope: the reference evaluator, PLAY0700 and PLAY0701 in both compilers and editors, docs, the Commerce sample and vectors. Out of scope: the remaining `$context` members, `key $eventSourceId`, `children`/`nested` over events, redelivery to captures, Stage realization, and record captures (`source api` and others), whose first-record rule stays as 0022 decided.
 
 ## Verification
 
@@ -119,7 +119,7 @@ Holds until superseded. In scope: the reference evaluator, PLAY0690 and PLAY0691
 - A repeated identical event passes `then no events`.
 - On a first event, `when added` holds and `when <field>` does not.
 - Two `from` events overlay.
-- PLAY0690 and PLAY0691 have shared diagnostic vectors.
+- PLAY0700 and PLAY0701 have shared diagnostic vectors.
 - The Commerce sample specification passes.
 - Every golden and corpus byte is unchanged, and a new source-backed v9 vector pins the outcomes.
 
