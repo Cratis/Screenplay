@@ -36,7 +36,7 @@ public class when_loading_captures_from_events_v9_source : Specification
     [Fact] void should_round_trip_the_canonical_bytes() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(PublicEventsCorpus.CapturesFromEventsV9.EsmBytes.AsSpan())).SequenceEqual(PublicEventsCorpus.CapturesFromEventsV9.EsmBytes).ShouldBeTrue();
 
     [Fact]
-    void should_execute_added_transition_overlay_and_unchanged_outcomes()
+    void should_execute_added_transition_and_overlay_outcomes()
     {
         var plan = SemanticExecutionPlan.Compile(_compilation.Model).Plan!;
         foreach (var expectation in PublicEventsCorpus.CapturesFromEventsV9.SpecificationExpectations)
