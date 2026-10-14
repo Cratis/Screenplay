@@ -882,7 +882,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 |---|---|---|
 | `PLAY0350` | Error | A command or event specification value is `null`; in Chronicle an optional fact is a separate event. Optional read-model values may be null. |
 | `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state every declared key part, or its inferred identifier when no key is declared. A scalar `then query … result` block may derive its identifier from the argument. |
-| `PLAY0352` | Error | A specification without `when` asserts an event or error, or has no `then query` or `then readmodel` outcome. |
+| `PLAY0352` | Error | A specification without an action asserts an event or error, or has no read-state/query outcome. One actionless query with one error and no other outcome is admitted as a Validation rejection from ESM v18; an error without a query remains invalid. |
 | `PLAY0353` | Error | A specification value is null for a required property, or a nested command/event property is null; only optional read-model properties admit null. |
 | `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |
 | `PLAY0355` | Error | The composite type declared for a structured specification value cannot be resolved. |
@@ -1085,7 +1085,7 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 | `PLAY0462` | Error | A `when trigger` line is not `when trigger <Trigger>`. |
 | `PLAY0463` | Error | A `given capture` or `when capture` line is not `<given\|when> capture <Capture>`. |
 | `PLAY0464` | Error | A `when query` line is not `when query <Query>`, a `then result` line is not `then result [exactly]`, or `then no result` is malformed or repeated. |
-| `PLAY0465` | Error | A query result is asserted without `when query`, `when query` asserts neither a result, `then no result` nor `then denied`, or both results and no result are asserted. |
+| `PLAY0465` | Error | A query result is asserted without `when query`, a performed query asserts no outcome, results conflict with no result, or a query error is combined with an action, multiple calls/errors, a result, `then no result`, denial or another outcome. Both compilers share the query-error shape checks; executable v18 admission and Validation comparison remain C# checks. |
 | `PLAY0466` | Warning | A `when trigger` names a trigger nothing declares or registers, or a value its declaration does not carry. |
 | `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
 | `PLAY0468` | Error | A `when query` or `then query … arguments` argument is unknown or repeated, or a required `by` or filter argument is missing. |

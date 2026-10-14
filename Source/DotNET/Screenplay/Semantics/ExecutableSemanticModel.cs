@@ -100,6 +100,7 @@ internal static partial class SemanticModelValidator
 
         var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application);
         context.RegisterApplication(application);
+        ValidateQueryRejectionVersion(application, semanticVersion);
         ValidateRefusalVersion(application, semanticVersion);
         ValidateRecoverySpecificationVersion(application, semanticVersion);
         ValidateStoredEventNames(application, semanticVersion);

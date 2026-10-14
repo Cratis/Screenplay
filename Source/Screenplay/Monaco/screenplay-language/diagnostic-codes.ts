@@ -199,6 +199,7 @@ export const diagnosticCodes = {
     invalidEventDocumentation: 'PLAY0477',
     tabIndentation: 'PLAY0006',
     unknownPrimitiveType: 'PLAY0008',
+    mismatchedSpecificationQueryResult: 'PLAY0465',
     unknownSliceType: 'PLAY0028',
     duplicateCommandIdentifier: 'PLAY0036',
     unknownContextPath: 'PLAY0153',

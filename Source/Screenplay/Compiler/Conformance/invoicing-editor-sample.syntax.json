@@ -12236,6 +12236,57 @@
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RejectingAnIncompleteCurrencyCode",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "A currency code has three characters"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "currency",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "EU"
+                        }
+                      }
+                    ],
+                    "query": "GetExchangeRate"
+                  },
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",

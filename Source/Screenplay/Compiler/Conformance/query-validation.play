@@ -1,0 +1,23 @@
+concept InvoiceNumber : String
+  validate
+    min 2 message "Invoice number is too short"
+module Billing
+  feature Invoices
+    slice StateView Lookup
+      readmodel Invoice
+        number InvoiceNumber
+      query GetInvoice => Invoice optional
+        by number InvoiceNumber
+      specification InvalidKey
+        when query GetInvoice
+          number = "A"
+        then error "Invoice number is too short"
+      specification InvalidKeyWithoutMessage
+        then query GetInvoice
+          arguments
+            number = "A"
+        then error
+      specification MissingValidNumber
+        when query GetInvoice
+          number = "INV-MISSING"
+        then no result

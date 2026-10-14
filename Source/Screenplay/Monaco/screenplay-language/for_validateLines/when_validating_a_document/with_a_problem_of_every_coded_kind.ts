@@ -154,6 +154,7 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['Translate', 'direction inbound\n      capture Feed\n        source events\n        key id'],
         ];
         issues.push(...publicUses.flatMap(([kind, body]) => validateLines([...publicContracts, `    slice ${kind} Transfer`, ...(`      ${body}`).split('\n')])));
+        issues.push(...validateLines(['module Billing', '  feature Invoices', '    slice StateView Lookup', '      readmodel Invoice', '        number String', '      query GetInvoice => Invoice optional', '        by number String', '      specification Rejection', '        when query GetInvoice', '          number = "A"', '        then error', '        then no result']));
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
     });
 

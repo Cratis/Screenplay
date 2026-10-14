@@ -36,6 +36,10 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 `PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line selects released ESM v10; the reference authenticates the system identity with that role, while claim conditions remain unknown and a final unknown denies. It does not supply audit identity. Source compilation remains warning-free.
 
+## Query validation rejections
+
+`RejectingAnIncompleteCurrencyCode` asks for the rate for `"EU"` and asserts `then error`: CurrencyCode requires three characters. Query arguments obey concept rules after authorization in every ESM version; this new rejection specification selects ESM v18. `NotFindingAnUnpublishedCurrency` still uses `then no result` for the valid but absent `"XAU"`. Performer-backed queries remain outside reference executable admission in this showcase.
+
 ## Recovery and no-event assertions
 
 `IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. `PaymentReconciler` records a validation refusal as `PaymentReconciliationRefused`, mapping `$refusal.reason` and `$refusal.message` with the invoice identity. These branches select ESM v19; handling stops the trigger's remaining invocations, not other reactions. Redelivery does not promise once-only external effects.

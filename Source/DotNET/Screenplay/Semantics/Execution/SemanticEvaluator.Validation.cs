@@ -94,7 +94,7 @@ public sealed partial class SemanticEvaluator
     }
 
     // A concept's rules constrain every value of the concept - directly, as each element of a collection and
-    // inside composite values - so they are applied wherever the command carries one.
+    // inside composite values - so they are applied wherever a command or query carries one.
     internal static void ValidateConceptValues(
         Dictionary<SemanticId, SemanticConcept> concepts,
         Dictionary<SemanticId, SemanticCompositeType> types,
@@ -169,6 +169,43 @@ public sealed partial class SemanticEvaluator
         catch (InvalidSemanticContract exception)
         {
             return exception.Message;
+        }
+    }
+
+    internal static string? UnsupportedQueryValidation(SemanticExecutionPlan plan, SemanticKeyedQuery query, ImmutableArray<SemanticQueryFilterValue> filters)
+    {
+        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
+        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        var arguments = QueryConceptArguments(query, SemanticValue.Null, filters);
+        return arguments.Select(argument => PredicateInType(argument.Type, concepts, types, [])).FirstOrDefault(name => name is not null);
+    }
+
+    internal static ImmutableArray<SemanticValidationFailure> ValidateQueryConcepts(
+        SemanticExecutionPlan plan,
+        SemanticKeyedQuery query,
+        SemanticValue key,
+        ImmutableArray<SemanticQueryFilterValue> filters)
+    {
+        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
+        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
+        foreach (var argument in QueryConceptArguments(query, key, filters))
+        {
+            ValidateConceptValues(concepts, types, argument.Type, argument.Value, failures);
+        }
+
+        return failures.ToImmutable();
+    }
+
+    static IEnumerable<(SemanticTypeReference Type, SemanticValue Value)> QueryConceptArguments(
+        SemanticKeyedQuery query,
+        SemanticValue key,
+        ImmutableArray<SemanticQueryFilterValue> filters)
+    {
+        if (query.Argument is { } argument) yield return (argument.Type, key);
+        foreach (var filter in query.Filters.Where(filter => filters.Any(value => value.Filter == filter.Id)))
+        {
+            yield return (filter.Type, filters.Single(value => value.Filter == filter.Id).Value);
         }
     }
 

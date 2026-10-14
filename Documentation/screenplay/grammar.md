@@ -1103,7 +1103,8 @@ SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
    a reaction scheduled with "every" or "at" is due. "when trigger" fires an
    application trigger with the values it carries. "when capture" hands a capture
    one record of its source. "when query" performs a query with its arguments;
-   its outcome is "then result", "then no result" or "then denied".           *)
+   its outcome is "then result", "then no result", "then denied", or one
+   "then error" asserting a Validation rejection (ESM v18).                *)
 
 GeneratedFixture = "generated", LowerIdent, "=", ConcreteValue, NL ;
 ReturnExpectation = "then", "returns", ConcreteValue, NL
@@ -1177,11 +1178,16 @@ SpecificationQueryDirective = "arguments", NL,
    contradicts "then readmodel" for the same view and key. *)
 
 (* Repeat "result" to assert several results in authored comparison order. A
-   "then query" with no result blocks asserts an empty result. The query
-   declaration supplies the result read-model type, so it is not repeated. *)
+   "then query" with no result blocks asserts an empty result unless followed
+   by "then denied" or a query validation "then error". A query error needs
+   no action, exactly one queried call, one error, and no other outcomes,
+   including no "then no result". It selects ESM v18. The query declaration
+   supplies the result read-model type, so it is not repeated. *)
 
 (* A bare "then error" states a rejection whose reason the specification does
-   not name; the quoted form names it. Both match regardless of validation severity. *)
+   not name; the quoted form names it. Both match regardless of validation severity.
+   For an actionless query they assert exactly Validation, not Contract,
+   Unauthorized or Unsupported. A bare actionless error without a query is invalid. *)
 
 (* -------------------------------------------------------------- *)
 (* Event seeding                                                   *)

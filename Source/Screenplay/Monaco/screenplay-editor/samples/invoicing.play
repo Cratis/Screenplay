@@ -77,6 +77,8 @@ concept BatchId       : Uuid
 concept TenantId      : Uuid
 concept InvoiceNumber : String
 concept CurrencyCode  : String
+  validate
+    length == 3 message "A currency code has three characters"
 concept ProductName   : String
 concept InvoiceTag    : String
 concept Money         : Decimal
@@ -2565,6 +2567,14 @@ module Invoicing
           currency = "EUR"
           rate     = 11.52
           asOf     = "2026-10-02"
+
+      specification RejectingAnIncompleteCurrencyCode
+        given caller
+          authenticated
+          role "Accountant"
+        when query GetExchangeRate
+          currency = "EU"
+        then error "A currency code has three characters"
 
       specification NotFindingAnUnpublishedCurrency
         given caller
