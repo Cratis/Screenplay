@@ -47,11 +47,15 @@ Chronicle defines the runtime meaning ([0001](0001-chronicle-runtime-semantic-au
 
 1. **A specification presents the consumed event itself.**
    - `given <Event>` and `when append <Event>`, where `<Event>` is a `from` event of a capture over events, are that capture's input.
-   - The fixture is typed by the locally declared event. `for` states the incoming event's event source.
+   - The fixture is typed by the locally declared event.
+   - `for` is optional on such a fixture. A foreign public event has no local producer, so its event source has no local type: when `for` is written it binds as opaque, non-empty text (no producer-derived type, no route) and only identifies the incoming event's event source. No construct in this increment reads it (see item 5). Without `for`, the fixture has no event source; the capture still keys by content (item 2).
    - After `when append`, the appended fact is the action itself, as in 0022's status notes. `then` compares what the capture and the reactions it set off appended.
    - `given capture` or `when capture` naming a capture over events is a compile error, **PLAY0701**. If the capture has exactly one `from` event, the repair rewrites it to `given <Event>` / `when append <Event>` with the same lines. With several `from` events there is no repair, because the event is ambiguous.
    - No grammar changes.
-2. **The key comes from the incoming event.** The capture's `key` names a property that every `from` event declares as a required (not `optional`) property; otherwise it is error **PLAY0700**, which mirrors Chronicle's partition failure at compile time. Key values keep 0022's rules: text or number, and numeric and text keys stay distinct. A key value that is not text or a number at run time is `Unsupported`.
+2. **The key comes from the incoming event.**
+   - The capture's `key` names a property that every `from` event declares as a required (not `optional`) property; otherwise it is error **PLAY0700**. This includes a context key such as `key $eventSourceId`, which binds today (the parser keeps it verbatim and binding only checks for non-blank text) and is now refused under PLAY0700 for captures over events, because this increment reads no `$context` member other than `occurred` (item 5).
+   - PLAY0700 removes the missing-key case at compile time. It does not cover an empty value: a required text key may still hold `""` (or whitespace only), for which Chronicle's `ResolveKey` yields no key and fails the partition. The reference mirrors that as a typed execution failure naming the capture, the event and the empty key: on a `when append` the run fails and the capture appends nothing; on a `given` fact the specification fails before the action, because the history could never have been folded.
+   - Key values otherwise keep 0022's rules: text or number, and numeric and text keys stay distinct. A key value that is not text or a number at run time is `Unsupported`.
 3. **State is the overlay of the key's events.**
    - The capture remembers one state per key. It starts from the specification's `given` facts of its `from` events, folded in authored order. Folding a given never appends, because givens are history, as for reactions.
    - The presented event's own properties (including any it carries as null) are laid over that state. Properties it lacks keep their earlier value. Composite and list values replace the earlier value whole.
@@ -70,7 +74,7 @@ Chronicle defines the runtime meaning ([0001](0001-chronicle-runtime-semantic-au
    - `$.<field>` reads the mapped merged state.
    - `$context.occurred` is the incoming event's occurrence. In the reference every occurrence is the scenario's `given clock`, so it is the clock, and it needs one as today.
    - Appended facts occur at the same instant, go to the event source the key names, and are typed as in 0022.
-   - No other `$context` member and no `key $eventSourceId` is admitted. Both keep failing binding as they do today.
+   - No other `$context` member is admitted in a capture over events (they keep failing binding as today), and a context key is refused under PLAY0700 (item 2).
 6. **Delivery and order.**
    - Each presented event is delivered once to every capture over events whose `from` lists it. Delivery happens after the reactions the fact set off have settled, in capture semantic-identity order.
    - Within a capture, appends run in authored order, and each one settles its own cascade before the next (0022).
@@ -138,7 +142,6 @@ Inbound translations that use captures over events become specifiable and execut
 5. Whether Chronicle should accept an `append` without `when`, `map` and expressions for captures over events, or Stage must refuse them. Chronicle's "engine subset" caution still says `$context` is rejected, but the code accepts it for events sources.
 6. Whether to admit `given capture` as remembered state. Chronicle stores exactly that.
 7. Stage tracking issue: number to be opened.
-8. Whether `for` is required when a foreign event has no local producer. To check during implementation.
 
 ## Related
 
