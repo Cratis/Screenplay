@@ -6,7 +6,7 @@
 
 > Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, explicit query scopes and performers remain unadmitted (`PLAY0268`). Collection specification rows compare without regard to order. See [Queries](queries.md).
 
-Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern, random and rule parse but remain unadmitted; sequence is reserved. Rules and compliance markers on generated concepts remain refused. See [Generated values](generated-values.md).
+Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern, random and rule parse but remain unadmitted; sequence is reserved. Rules on generated concepts select ESM V20 and report Proven, Refuted (`PLAY0688`) or Unproven (`PLAY0689`) consistency. Explicit generation with compliance markers remains refused. See [Generated values](generated-values.md).
 
 Event `id` pins that differ from the display name select ESM v16 and carry the effective stored type name as `storedName`; equal-name pins keep the earlier version and bytes. Invalid identifier pins, generation disagreements and duplicate stored names are binding errors. See [Events](events.md).
 

@@ -22,7 +22,7 @@ PersonName and EmailAddress declare personal data; BankAccount declares both per
 
 ## Generated identities and receipts
 
-InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID. StartInvoiceDraft pins both shapes and returns them without accepting either as input. Generation selects ESM v15 and Guarded creation freshness across the whole event source. Generated concepts with rules or compliance markers remain unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
+InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID. StartInvoiceDraft pins both shapes and returns them without accepting either as input. InvoiceReceiptId's `matches` rule is Proven and selects ESM V20; both generated fixtures satisfy their shapes and rules, and creation guards the whole event source. Explicit generation with compliance markers remains unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
 
 ## Stored enum numbers
 
