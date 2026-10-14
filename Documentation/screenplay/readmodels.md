@@ -111,6 +111,8 @@ Prefer a projection where one will do. A reducer is code, and code is the part o
 
 A reducer may declare one leaf `from Source` or `from Source.Stream`. It observes only facts with matching stored routing names. Unrouted facts never match, and stream ids are not filtered. This selects ESM v10. An opaque transition reached through matching given history or a matching when step remains Unsupported in reference execution. See [Observer filters](event-sources.md#observer-filters).
 
+A read-model `key`, a query's `by` or a month-valued stream id does not change reducer keying. Native compilation warns with [`PLAY0690`](diagnostics.md#reducer-instance-identity) when known producer destinations disagree with a single-instance lookup, or when a reducer consumes several nominal identity domains. This compares types, not runtime ID values, and unknown producers suppress the comparison. To aggregate by an event property instead, use [projection keys](projections/keys.md); to affect related existing instances, use [joins](projections/joins.md). Joins do not create those instances.
+
 ## What a reduction is given
 
 A rule's body compiles against `ReducerContext`, in scope as `context`, and answers with the read model as it stands after the event:

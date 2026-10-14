@@ -239,6 +239,8 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
         return source.Name == target.Name && source.IsCollection == target.IsCollection && (!source.IsOptional || target.IsOptional);
     }
 
+    internal ReferenceResolver.Resolution ResolveAuthoringDeclaration(string name, DeclarationScope scope, IReadOnlyList<Declaration> declarations) => ResolveDeclaration(name, scope, declarations);
+
     static string[] QueryKeyNames(QuerySyntax query) => query.By is { } by ? [by.Name] : [.. query.ByParts.Select(part => part.Name)];
 
     static IEnumerable<string> ViewNames(SliceSyntax slice) =>
