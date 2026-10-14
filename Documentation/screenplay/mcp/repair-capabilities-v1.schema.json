@@ -9,7 +9,7 @@
     "serverVersion": { "type": "string", "minLength": 1 },
     "repairContractVersion": { "const": 1 },
     "actions": {
-      "description": "PLAY0661 completes command-read keys only with unique same-named compatible sources. Queries and trigger reads are not repaired. PLAY0660 and PLAY0662 are not repairable. PLAY0683/PLAY0684 raise nanoid size or bytes count to at least 64 random bits using the concept subject, including across documents. PLAY0683 also offers a unique constraint using the command-property subject only for exactly one mapped event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence.",
+      "description": "PLAY0661 completes command-read keys only with unique same-named compatible sources. Queries and trigger reads are not repaired. PLAY0660 and PLAY0662 are not repairable. PLAY0683/PLAY0684 raise nanoid size or bytes count to at least 64 random bits using the concept subject, including across documents. PLAY0683 also offers a unique constraint using the command-property subject only for exactly one mapped event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. PLAY0688 replaces a refuted generated-concept rule with the strategy-derived matches pattern, preserving its message and severity; it requires individual review and canonical formatting and does not support pinned evidence or fix-all.",
       "type": "array",
       "items": {
         "type": "object",
