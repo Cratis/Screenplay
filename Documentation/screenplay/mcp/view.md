@@ -38,6 +38,11 @@ keeps the current list of hosts. In a client that does not draw the board, use t
 [VS Code extension](../vscode.md) to see a model, and keep using
 [Explore a model](explore.md) in the terminal.
 
+The board is always drawn in its dark theme, even when the host asks for a light
+one. Its labels are colored for a dark surface, the same as in Studio's viewer and
+the VS Code extension, and would be unreadable on a light background. In a
+light-themed chat it shows as a dark panel.
+
 ## Show the model on disk
 
 ```text
