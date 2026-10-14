@@ -70,6 +70,8 @@ Consumer follow-ups: Stage renders concept-typed query arguments again, reversin
 
 **2026-10-13 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review), with the consumer follow-ups named under Consequences.
 
+**2026-10-13 — Implementation.** Query validation rejection specifications are allocated ESM v18 (language and semantic `18.0`, `schemaVersion: 18`). The canonical shape reuses one actionless `thenQueries` request with `results: []` and one `thenErrors` entry, without other outcomes. Only this shape selects v18; it is refused below v18, and v18 without the shape is refused. The evaluator's key and supplied-filter concept checks apply in every ESM version without changing earlier golden bytes. `full-esm-v18.json` and `QueryValidationCorpus.V18` pin the new specification contract.
+
 ## Related
 
 Screenplay [#682](https://github.com/Cratis/Screenplay/issues/682). Stage [#350](https://github.com/Cratis/Stage/issues/350). Builds on 0001, 0025, 0066, 0069 and 0071.

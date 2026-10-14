@@ -18,11 +18,16 @@ public sealed partial class SemanticModelBinder
 
         static bool RequiresSpecificationAction(SpecificationSyntax specification, bool deniedQuery)
         {
+            // A query rejection (decision 0072) asserts its error against the query, not against an action.
+            if (IsRejectedQuery(specification)) return false;
             if (AssertsActionOutcome(specification)) return true;
             if (specification.ThenDenied is not null && !deniedQuery) return true;
 
             return !AssertsReadState(specification);
         }
+
+        static bool IsRejectedQuery(SpecificationSyntax specification) =>
+            specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any() && specification.ThenErrors.Count() == 1;
 
         static bool AssertsActionOutcome(SpecificationSyntax specification) =>
             specification.ThenNoEvents || specification.ThenEvents.Any() || specification.ThenErrors.Any();

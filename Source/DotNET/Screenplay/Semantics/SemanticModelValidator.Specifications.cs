@@ -20,24 +20,24 @@ internal static partial class SemanticModelValidator
         static void ValidateSpecificationOutcomes(SemanticSpecification specification)
         {
             var acted = HasAction(specification);
-            var deniedQuery = IsDeniedQuery(specification, acted);
+            var readOnlyRejection = IsDeniedQuery(specification, acted) || IsQueryRejection(specification);
             var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
-            var hasSuccessOutcome = HasPositiveOutcome(specification) || (specification.ThenQueries.Length > 0 && !deniedQuery);
+            var hasSuccessOutcome = HasPositiveOutcome(specification) || (specification.ThenQueries.Length > 0 && !readOnlyRejection);
             if (hasRejection)
             {
                 RequireSingleRejection(specification, hasSuccessOutcome);
             }
 
-            RequireActionForOutcomes(specification, acted, deniedQuery);
+            RequireActionForOutcomes(specification, acted, readOnlyRejection);
             if (!hasRejection && !hasSuccessOutcome)
             {
                 throw new InvalidSemanticContract("A success specification must contain at least one success outcome.");
             }
         }
 
-        static void RequireActionForOutcomes(SemanticSpecification specification, bool acted, bool deniedQuery)
+        static void RequireActionForOutcomes(SemanticSpecification specification, bool acted, bool readOnlyRejection)
         {
-            if (!acted && AssertsMoreThanReadState(specification, deniedQuery))
+            if (!acted && AssertsMoreThanReadState(specification, readOnlyRejection))
             {
                 throw new InvalidSemanticContract("A specification without a command requires a read model or query outcome and cannot assert events or errors.");
             }
@@ -73,7 +73,7 @@ internal static partial class SemanticModelValidator
             ValidateSpecificationReadModels(specification);
             foreach (var result in specification.ThenQueries)
             {
-                ValidateSpecificationQuery(result);
+                ValidateSpecificationQuery(result, IsQueryRejection(specification));
             }
 
             RejectDuplicateQueryExpectations(specification.ThenQueries);

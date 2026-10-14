@@ -109,12 +109,12 @@ public enum SemanticRejectionCategory
     Unknown = -1,
 
     /// <summary>
-    /// The request does not match its command contract.
+    /// The request does not match its command or query contract.
     /// </summary>
     Contract = 0,
 
     /// <summary>
-    /// Declarative validation rejected the command.
+    /// Declarative validation rejected the command or query.
     /// </summary>
     Validation = 1,
 

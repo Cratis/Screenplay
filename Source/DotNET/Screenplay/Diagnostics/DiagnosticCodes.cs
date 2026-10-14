@@ -2115,7 +2115,10 @@ public static class DiagnosticCodes
     /// <summary>A <c>when query</c> line is not <c>when query &lt;Query&gt;</c>, or a <c>then result</c> line is not <c>then result [exactly]</c>.</summary>
     public const string InvalidSpecificationQueryAction = "PLAY0464";
 
-    /// <summary>A query result is asserted without <c>when query</c>, or <c>when query</c> asserts no result, no empty result and no denial.</summary>
+    /// <summary>
+    /// A query result lacks a performed query, a query asserts no outcome, or query rejection expectations conflict
+    /// with an action, multiple calls or errors, results, no result, denial or another outcome.
+    /// </summary>
     public const string MismatchedSpecificationQueryResult = "PLAY0465";
 
     /// <summary>A <c>when trigger</c> names a trigger nothing declares or registers, or a value its declaration does not carry.</summary>

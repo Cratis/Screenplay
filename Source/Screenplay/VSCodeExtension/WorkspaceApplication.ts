@@ -43,6 +43,7 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.UnknownRedeliveryReaction,
     DiagnosticCodes.UnmatchedRedeliveredOccurrence,
     DiagnosticCodes.InvalidNoEventsExpectation,
+    DiagnosticCodes.MismatchedSpecificationQueryResult,
     DiagnosticCodes.UnknownActionSubjectField,
     DiagnosticCodes.UnresolvedActionSubject,
     DiagnosticCodes.UnreachableActionAlternative,

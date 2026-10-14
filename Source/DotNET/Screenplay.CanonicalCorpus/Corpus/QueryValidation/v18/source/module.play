@@ -1,0 +1,35 @@
+module Billing
+  feature Invoices
+    slice StateView Lookup
+      readmodel Invoice
+        number InvoiceNumber
+        customer CustomerCode
+      query GetInvoice => Invoice optional
+        by number InvoiceNumber
+      query ForCustomer => Invoice[]
+        filter customer CustomerCode optional
+      specification InvalidKey
+        when query GetInvoice
+          number = "A"
+        then error "Invoice number is too short"
+      specification InvalidThenQuery
+        then query GetInvoice
+          arguments
+            number = "A"
+        then error
+      specification InvalidFilter
+        when query ForCustomer
+          customer = "AB"
+        then error "Customer code is too short"
+      specification InvalidFilterBare
+        then query ForCustomer
+          arguments
+            customer = "AB"
+        then error
+      specification ValidMissing
+        when query GetInvoice
+          number = "INV-MISSING"
+        then no result
+      specification OptionalOmitted
+        when query ForCustomer
+        then no result
