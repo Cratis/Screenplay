@@ -136,19 +136,22 @@ public sealed class ScreenplayWorkspace
     /// revision, invalidating proposals bound to the old revisions.
     /// Attachments are not carried; re-apply them with <see cref="WithAttachmentContents"/>.
     /// Serialize the result with <see cref="PersistedIdentityStateSerializer.From"/> and write exactly its documents
-    /// to a model root for strict <see cref="ScreenplayModelRoot.Open"/> acceptance, within that root's file limits.
+    /// to a model root for strict <see cref="ScreenplayModelRoot.Open"/> acceptance.
     /// Before overwriting an existing MCP-authored identities.json, compare its event assignments: different
     /// assignments turn previously baselined entries into BaselinedRevisionMissing. This method never writes files.
     /// </remarks>
     /// <exception cref="InvalidScreenplayWorkspace">
     /// Source does not compile, semantic or event addresses differ (listed as retiredAddresses or addedAddresses),
-    /// or document keys, IDs, or portable paths collide.
+    /// document keys, IDs, or portable paths collide, or a document lies outside what a model root discovers
+    /// (excluded directories such as <c>bin</c>, <c>obj</c>, <c>node_modules</c>, <c>.git</c> or <c>.screenplay</c>,
+    /// more than 16 directory levels, or more files or source bytes than a model root admits).
     /// </exception>
     public ScreenplayWorkspace Rehome(ImmutableArray<WorkspaceDocument> documents)
     {
         try
         {
             var admitted = AdmitDocuments(documents);
+            RequireModelRootScope(admitted);
             var keys = admitted.Select(document => document.StableKey).ToHashSet(StringComparer.Ordinal);
             var catalog = SemanticIdentityCatalog.Create(
                 IdentityCatalog.Application,
@@ -162,7 +165,7 @@ public sealed class ScreenplayWorkspace
             RequireRehomeCompilation(workspace.Compilation);
             return workspace;
         }
-        catch (Exception exception) when (exception is InvalidSemanticContract or InvalidWorkspaceDocument)
+        catch (Exception exception) when (exception is InvalidSemanticContract or InvalidWorkspaceDocument or ModelRootRefused)
         {
             throw new InvalidScreenplayWorkspace(exception.Message, exception);
         }
@@ -295,6 +298,16 @@ public sealed class ScreenplayWorkspace
         ],
         identityCatalog,
         attachmentContents);
+
+    // A re-homed set must be exactly what a strict ScreenplayModelRoot.Open can discover again.
+    static void RequireModelRootScope(ImmutableArray<WorkspaceDocument> documents)
+    {
+        ModelRootDirectory.CheckDocuments(documents);
+        foreach (var document in documents)
+        {
+            ModelRootDirectory.CheckScope(document.Path);
+        }
+    }
 
     static void RequireRehomeCompilation(CompilationResult<SemanticCompilation> compilation)
     {
