@@ -9,6 +9,7 @@ using Cratis.Screenplay.Contexts;
 [assembly: TypeForwardedTo(typeof(Claim))]
 [assembly: TypeForwardedTo(typeof(CommandContext))]
 [assembly: TypeForwardedTo(typeof(ContextPayloadTypeMismatch))]
+[assembly: TypeForwardedTo(typeof(GenerationContext))]
 [assembly: TypeForwardedTo(typeof(Identity))]
 [assembly: TypeForwardedTo(typeof(PolicyContext))]
 [assembly: TypeForwardedTo(typeof(QueryContext))]
