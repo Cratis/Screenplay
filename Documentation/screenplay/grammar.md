@@ -170,7 +170,10 @@ SpecialCategory = "racialOrEthnicOrigin" | "politicalOpinions"
                 | "religiousOrPhilosophicalBeliefs" | "tradeUnionMembership"
                 | "genetic" | "biometric" | "health" | "sexLifeOrSexualOrientation" ;
 
-GenerationDecl = "generate", GenerationStrategy, { GenerationModifier }, NL ;
+GenerationDecl = "generate", GenerationStrategy, { GenerationModifier }, NL,
+                 [ INDENT, ( FileDirective | InlineBlock ), DEDENT ] ;
+(* A direct body is required only for generate rule Name: exactly one file OR
+   tagged fence. No implementation wrapper; other strategies have no body. *)
 GenerationStrategy = "uuid" | "uuidv7" | "ulid"
                    | "typeid", String
                    | "nanoid", [ Integer ]
@@ -185,12 +188,19 @@ GenerationModifier = "alphabet", String | "prefix", String
 (* At most one generate line. Strategy arguments and modifiers are validated by
    primitive and strategy: Uuid allows only unmodified uuid/uuidv7; Int only random;
    String all other strategies. NanoID size 1..256, bytes count 1..512. Prefix
-   modifiers use <=32 printable ASCII characters; TypeID has its own 0..63 prefix. *)
+   modifiers use <=32 printable ASCII characters; TypeID has its own 0..63 prefix.
+   pattern/random/rule and checksum validation select ESM v21. Pattern grammar:
+   # digits, ? A-Z, * A-Z0-9, positive classes/ranges, escaped reserved characters,
+   repeats 1<=m<=n<=64, UTC {yyyy}/{yy}/{MM}/{dd}. Final length including check
+   digits <=256. See generated-values/patterns.md for support budgets and clocks. *)
 
-ConceptValidate = "validate", NL,
-                   INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ;
+ConceptValidate = "validate", ( ConceptRule | NL,
+                   INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ) ;
+ConceptChecksum = "checksum", ( "luhn" | "mod11" | "mod97" ) ;
+(* Checksum is String-concept-only, not a command property rule. Both inline
+   validate checksum and nested checksum forms select ESM v21. *)
 
-ConceptRule    = RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
+ConceptRule    = ( RuleOp | ConceptChecksum ), [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"

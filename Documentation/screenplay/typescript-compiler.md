@@ -125,6 +125,8 @@ The compiler reads what an event model is made of:
 - specifications with the values they state, structured values included
 - screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
 
+Finite pattern support, exact bigint range/checksum math and rule consistency have a mirrored pure TypeScript implementation and shared vectors. This includes ESM v21 source syntax for direct generation-rule bodies and String-concept checksum validation. It is not a TypeScript ESM binder, generator or executor: semantic admission and clock-pinned fixture execution remain native. Monaco and VS Code share strategy/checksum help, completions and host diagnostic codes PLAY0691/PLAY0692.
+
 Systems and operations remain syntax-only and unadmitted. Event sources, streams, command and specification routes, and composite stream ids are admitted by ESM v8 in the C# binder and reference runner. Generated values and responses are admitted as ESM v7. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and V20 generated-concept consistency (Refuted `PLAY0688`, Unproven `PLAY0689`, Proven silent) are C# semantic checks, not additional TypeScript syntax rules. TypeScript has no independent proof engine; host-supplied proof diagnostics are forwarded rather than claimed as local proofs.
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:

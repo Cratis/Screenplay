@@ -4,7 +4,7 @@ Inline and file-referenced code is a **sandbox**. You do not write a namespace, 
 
 That only works if `context` means something exact. A command handler, a query performer, a validation rule and a policy are four different jobs, so they are given four different contexts, each shaped for what its decision actually needs. A rule cannot read the caller's roles because deciding on roles is authorization, not validation; a policy cannot read the whole event context because it decides who may act, not what happened. The shape *is* the contract.
 
-## The four contexts
+## Decision contexts
 
 A command handler is given a `CommandContext`:
 
@@ -53,6 +53,14 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
+A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21):
+
+```csharp
+public record GenerationContext(DateTimeOffset Now, TenantId Tenant);
+```
+
+It returns the String primitive in context/result contract version 1. There are no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly rather than reading ambient time/tenant APIs or comparing raw `"Default"` strings. The reference runner consumes a fixture and never invokes the body; opaque validation still remains Unsupported. Input-derived generation belongs to #308.
+
 These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
 A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. Pending/file/inline describes model selection only. Handler executable admission remains unsupported; a context descriptor is not permission to execute, render or confirm an implementation.
@@ -64,6 +72,7 @@ A handler's [`implementation` hints](commands.md#implementation-intent-handlers-
 | Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
 | Command handler | Hints with zero or one source | Authoring only; handler binding remains unsupported. |
 | Operation execute/compensate phase | Hints with zero or one source | Authoring only; not admitted by any supported executable model (ESM) version yet. |
+| Concept generation rule | No wrapper: exactly one direct file/tagged fence | ESM v21 ValueGeneration, context/result v1, String result; no body is refused with PLAY0268. |
 | Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |
 
 Command named-rule hints add no `RuleContext` members. Direct-to-wrapped source and hint edits preserve requirement IDs, typed-context descriptors and canonical ESM bytes. A file selection is not proof of resolution or execution. See [named-rule intent](commands.md#named-rule-implementation-intent-commands-only) and [revision-checked edits](ast-authoring.md#command-named-rule-intent-edits).
@@ -78,7 +87,7 @@ In ESM v7, the typed contexts used before generation (`CommandValidation`, `Conc
 
 The public `SemanticContextTypeKinds` vocabulary is `runtime`, `shape`, `model`; `SemanticContextRuntimeTokens` are `Text`, `WholeNumber`, `Boolean`, `DateTime`, `TenantId`, `Identity`, `CausedBy`, `Causation`. The first four match portable model primitives (with `DateTime` representing the runtime occurrence time); the latter four are named host contracts. `SemanticContextSourceKinds` are `context-contract`, `derived`, `command`, `read-model`, `current-event`, `event-source-id`, `model-property`, `concept-value`, `validated-property`, `validated-artifact`, `authorized-operation`, `command-identifier`, `query-key`, `unavailable`. The public `SemanticTypedContextSerializer` produces the checked-in JSON vectors `typed-contexts-v1.json` and `unbound-handler-context-v1.json`, independently of `ModelRevision`.
 
-These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them. An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations.
+These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them. An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations. ValueGeneration descriptors have only non-null Now (`DateTime`) and Tenant (`TenantId`) runtime members. Compilation checks owner/rule identity, role, context/result versions, capability and sole body-source linkage; an ESM-only loader can check the requirement id format but cannot fabricate this sidecar.
 
 ## The values they carry
 

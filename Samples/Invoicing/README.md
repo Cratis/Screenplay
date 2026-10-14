@@ -22,7 +22,7 @@ PersonName and EmailAddress declare personal data; BankAccount declares both per
 
 ## Generated identities and receipts
 
-InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID. StartInvoiceDraft pins both shapes and returns them without accepting either as input. InvoiceReceiptId's `matches` rule is Proven and selects ESM V20; both generated fixtures satisfy their shapes and rules, and creation guards the whole event source. Explicit generation with compliance markers remains unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
+InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID with a Proven `matches` rule. StartInvoiceDraft also generates InvoiceRef (UTC year/month plus random digits and Luhn checksum), TicketNumber (inclusive Int range), and TenantOrderId (a direct tagged ValueGeneration body with Now/Tenant context). References and tickets are values, not stream identifiers; each maps to a single-property unique constraint. Specifications pin all fixtures, including numeric tickets, and `given clock` fixes every date segment. `validate checksum luhn` explicitly checks arithmetic on generated, supplied and stored references. The runner never executes the generation body. These forms select ESM v21 and creation guards the whole event source. Explicit generation with compliance markers remains unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
 
 ## Stored enum numbers
 
@@ -104,6 +104,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate` by a returned identity, `on change` | `module Invoicing`; `RegisterInvoiceForm` binds the returned `invoiceId`; `TagInvoiceForm` reuses the selected row |
 | feature `authorize`, `depends on`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
+| `generate pattern` with UTC segments and checksum, inline `validate checksum`, `generate random`, direct `generate rule` tagged body; generated identity/value fixtures, numeric fixtures, clock, unique constraints and record returns | InvoiceRef, TicketNumber, TenantOrderId; StartInvoiceDraft |
 | `generated identifier`, `generated`, record `returns` with inferred/explicit types, `when … for`, generation fixtures and `then returns`; scalar `returns` and `then returns` | StartInvoiceDraft; CancelInvoice |
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |

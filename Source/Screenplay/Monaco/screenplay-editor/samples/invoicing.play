@@ -71,6 +71,19 @@ concept InvoiceReceiptId : String
   generate nanoid
   validate
     matches "^[A-Za-z0-9_-]{21}$"
+// References and queue tickets are values, not stream identifiers. Single-property
+// uniqueness below protects their deliberately short random support.
+concept InvoiceRef : String
+  generate pattern "INV-{yyyy}{MM}-#{7}" checksum luhn
+  validate checksum luhn
+concept TicketNumber : Int
+  generate random 100000..999999
+concept TenantOrderId : String
+  generate rule TenantOrder
+    ```csharp
+    return $"{context.Tenant}:order_{context.Now:yyyyMMdd}-{Guid.NewGuid():N}";
+    ```
+
 concept CustomerId    : Uuid
 concept PaymentId     : Uuid
 concept BatchId       : Uuid
@@ -616,7 +629,8 @@ module Invoicing
       refresh ListInvoices
 
     // Start a draft with fresh identities; generated values are never form inputs.
-    // ESM v20 proves the receipt rule; fixtures pin both shapes and creation guards the whole source.
+    // ESM v21 admits references, tickets and a tenant-aware generator attachment.
+    // Fixtures pin values; given clock fixes every reference date segment in UTC.
     slice StateChange StartInvoiceDraft
       documentation
         ```markdown
@@ -625,53 +639,85 @@ module Invoicing
       command StartInvoiceDraft
         documentation
           ```markdown
-          The server creates both identities; callers supply only the customer.
+          The server creates identities and references; callers supply only the customer.
           ```
         invoiceId InvoiceId generated identifier
         receiptId InvoiceReceiptId generated
+        reference InvoiceRef generated
+        ticket TicketNumber generated
+        tenantOrderId TenantOrderId generated
         customerId CustomerId
         authorize CanManageInvoice
 
         produces event InvoiceDraftStarted
           customerId CustomerId subject = customerId
           receiptId InvoiceReceiptId = receiptId
+          reference InvoiceRef = reference
+          ticket TicketNumber = ticket
+          tenantOrderId TenantOrderId = tenantOrderId
 
         returns
           invoiceId = invoiceId
           receiptId InvoiceReceiptId = receiptId
+          reference InvoiceRef = reference
+          ticket TicketNumber = ticket
+          tenantOrderId TenantOrderId = tenantOrderId
+
+      constraint UniqueDraftReference
+        unique reference on InvoiceDraftStarted
+
+      constraint UniqueDraftTicket
+        unique ticket on InvoiceDraftStarted
 
       screen StartInvoiceDraftScreen
         action StartInvoiceDraft
           label "Start invoice draft"
 
       specification StartingAnInvoiceDraft
-        description "Witnesses that creating a draft returns the generated invoice and receipt identities"
+        description "Witnesses generated identities, a UTC reference with a valid checksum and a numeric queue ticket"
         given caller as InvoiceDraftCreator
+        given clock "2026-10-02T09:00:00Z"
         when StartInvoiceDraft
           for "00112233-4455-7677-8899-aabbccddeeff"
           generated receiptId = "ABCDEFGHIJKLMNOPQRSTU"
+          generated reference = "INV-202610-00000004"
+          generated ticket = 100001
+          generated tenantOrderId = "tenant_order_fixture"
           customerId = "33333333-3333-3333-3333-333333333333"
         then InvoiceDraftStarted
           for "00112233-4455-7677-8899-aabbccddeeff"
           customerId = "33333333-3333-3333-3333-333333333333"
           receiptId = "ABCDEFGHIJKLMNOPQRSTU"
+          reference = "INV-202610-00000004"
+          ticket = 100001
+          tenantOrderId = "tenant_order_fixture"
         then returns
           invoiceId = "00112233-4455-7677-8899-aabbccddeeff"
           receiptId = "ABCDEFGHIJKLMNOPQRSTU"
+          reference = "INV-202610-00000004"
+          ticket = 100001
+          tenantOrderId = "tenant_order_fixture"
 
       specification StartingDraftsForCustomers
         parameter customer CustomerId
         case Acme customer = "33333333-3333-3333-3333-333333333333"
         case Contoso customer = "44444444-4444-4444-4444-444444444444"
         given caller as InvoiceDraftCreator
+        given clock "2026-10-02T09:00:00Z"
         when StartInvoiceDraft
           for "00112233-4455-7677-8899-aabbccddeeff"
           generated receiptId = "ABCDEFGHIJKLMNOPQRSTU"
+          generated reference = "INV-202610-00000004"
+          generated ticket = 100001
+          generated tenantOrderId = "tenant_order_fixture"
           customerId = case.customer
         then InvoiceDraftStarted
           for "00112233-4455-7677-8899-aabbccddeeff"
           customerId = case.customer
           receiptId = "ABCDEFGHIJKLMNOPQRSTU"
+          reference = "INV-202610-00000004"
+          ticket = 100001
+          tenantOrderId = "tenant_order_fixture"
 
     slice StateChange RegisterInvoice
       description "Registers a new invoice"

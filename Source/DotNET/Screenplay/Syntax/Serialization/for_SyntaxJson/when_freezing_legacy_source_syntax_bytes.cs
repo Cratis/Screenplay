@@ -284,7 +284,7 @@ public class when_freezing_legacy_source_syntax_bytes
         InstanceContributions = [],
 
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
-        Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId")
+        Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))
             .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
         Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
         Personas = application.Personas.Where(persona => persona.Name != "InvoiceDraftCreator").Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),

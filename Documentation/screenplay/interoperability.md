@@ -144,7 +144,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
-| 21.0 | Finite pattern/random generation, checksum validation and ValueGeneration implementations | 21 | [0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md) | `full-esm-v21.json` | `GenerationSupportCorpus.V21` |
+| 21.0 | Finite pattern/random generation, checksum validation and ValueGeneration implementations | 21 | [0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md) | `full-esm-v21.json` | `GenerationSupportCorpus.V21`, `GenerationFixturesCorpus.V21` |
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.
 

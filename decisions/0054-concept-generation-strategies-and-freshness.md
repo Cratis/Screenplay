@@ -38,6 +38,8 @@ applies-to:
 >
 > A derived-`matches` repair for a pattern is offered only when the derived regex is deterministic and bounded under the phase-2b-2 soundness rules. Otherwise there is no applicable repair and tooling explains why. Generated secrets and compliance markers on generated concepts remain refused until phase 4.
 
+> **2026-10-14 — phase 3 implementation scope (#616).** ESM v21 carries finite patterns, inclusive Int64 ranges, String-concept checksum validation and ValueGeneration requirements. Generated fixtures use one pinned UTC clock for date segments, with digit widths only when no clock is supplied; generation bodies are not executed by the reference runner. Deterministic bounded derived-rule repairs explicitly include checksum validation where declared, and apply to input/stored values too. Earlier golden/corpus bytes remain frozen. This decision stays `accepted`, `stage: none`: generated-secret admission and the remaining full-decision consumer criteria belong to phase 4, so phase-3 implementation is not full-decision verification.
+
 ## Context
 
 `generated` admits only a required scalar property whose concept is over `Uuid` ([0026](0026-generated-values-and-command-responses-in-esm-v7.md), carrying [0023](0023-command-production-model.md)). Binding refuses a generated concept that declares validation rules (`PLAY0268`) and a pre-generation reference to a generated property (`PLAY0273`). The Uuid is always a random v4. Nothing says how a generated value is made, and nothing says what happens when a second creation reuses a generated identifier.

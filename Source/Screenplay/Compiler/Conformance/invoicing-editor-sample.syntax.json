@@ -27,6 +27,48 @@
     {
       "kind": "ConceptSyntax",
       "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "checksum": "luhn",
+        "pattern": "INV-{yyyy}{MM}-#{7}",
+        "strategy": "pattern"
+      },
+      "name": "InvoiceRef",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "range": "100000..999999",
+        "strategy": "random"
+      },
+      "name": "TicketNumber",
+      "type": "Int",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "code": {
+          "kind": "CodeBlockSyntax",
+          "code": "return $\"{context.Tenant}:order_{context.Now:yyyyMMdd}-{Guid.NewGuid():N}\";",
+          "language": "csharp"
+        },
+        "rule": "TenantOrder",
+        "strategy": "rule"
+      },
+      "name": "TenantOrderId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
       "name": "CustomerId",
       "type": "Uuid",
       "values": []
@@ -1781,7 +1823,7 @@
                     }
                   },
                   "description": null,
-                  "documentation": "The server creates both identities; callers supply only the customer.",
+                  "documentation": "The server creates identities and references; callers supply only the customer.",
                   "handler": null,
                   "name": "StartInvoiceDraft",
                   "produces": [
@@ -1822,6 +1864,42 @@
                               "isOptional": false,
                               "name": "InvoiceReceiptId"
                             }
+                          },
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "reference",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "InvoiceRef"
+                            }
+                          },
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "ticket",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "TicketNumber"
+                            }
+                          },
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "tenantOrderId",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "TenantOrderId"
+                            }
                           }
                         ],
                         "tags": []
@@ -1842,6 +1920,30 @@
                           "source": {
                             "kind": "PathExpressionSyntax",
                             "path": "receiptId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reference"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "ticket",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "ticket"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "tenantOrderId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "tenantOrderId"
                           }
                         }
                       ],
@@ -1871,6 +1973,42 @@
                         "isCollection": false,
                         "isOptional": false,
                         "name": "InvoiceReceiptId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceRef"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": false,
+                      "name": "ticket",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TicketNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": false,
+                      "name": "tenantOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TenantOrderId"
                       }
                     },
                     {
@@ -1911,6 +2049,48 @@
                           "isOptional": false,
                           "name": "InvoiceReceiptId"
                         }
+                      },
+                      {
+                        "kind": "ResponseFieldSyntax",
+                        "name": "reference",
+                        "source": {
+                          "kind": "PropertyResponseSourceSyntax",
+                          "property": "reference"
+                        },
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "InvoiceRef"
+                        }
+                      },
+                      {
+                        "kind": "ResponseFieldSyntax",
+                        "name": "ticket",
+                        "source": {
+                          "kind": "PropertyResponseSourceSyntax",
+                          "property": "ticket"
+                        },
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TicketNumber"
+                        }
+                      },
+                      {
+                        "kind": "ResponseFieldSyntax",
+                        "name": "tenantOrderId",
+                        "source": {
+                          "kind": "PropertyResponseSourceSyntax",
+                          "property": "tenantOrderId"
+                        },
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TenantOrderId"
+                        }
                       }
                     ]
                   },
@@ -1919,7 +2099,30 @@
                   "validations": []
                 }
               ],
-              "constraints": [],
+              "constraints": [
+                {
+                  "kind": "UniquePropertyConstraintSyntax",
+                  "additionalProperties": [],
+                  "additionalRules": [],
+                  "event": "InvoiceDraftStarted",
+                  "ignoreCasing": false,
+                  "message": null,
+                  "name": "UniqueDraftReference",
+                  "property": "reference",
+                  "releasedBy": []
+                },
+                {
+                  "kind": "UniquePropertyConstraintSyntax",
+                  "additionalProperties": [],
+                  "additionalRules": [],
+                  "event": "InvoiceDraftStarted",
+                  "ignoreCasing": false,
+                  "message": null,
+                  "name": "UniqueDraftTicket",
+                  "property": "ticket",
+                  "releasedBy": []
+                }
+              ],
               "description": null,
               "documentation": "A draft reserves identities without claiming that an invoice has been issued.",
               "events": [],
@@ -1946,14 +2149,17 @@
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
-                  "description": "Witnesses that creating a draft returns the generated invoice and receipt identities",
+                  "description": "Witnesses generated identities, a UTC reference with a valid checksum and a numeric queue ticket",
                   "given": [],
                   "givenCallerPersona": {
                     "kind": "SpecificationCallerPersonaSyntax",
                     "name": "InvoiceDraftCreator"
                   },
                   "givenCaptures": [],
-                  "givenClock": null,
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-02T09:00:00Z"
+                  },
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "StartingAnInvoiceDraft",
@@ -1984,6 +2190,30 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": "ABCDEFGHIJKLMNOPQRSTU"
                           }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-202610-00000004"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "ticket",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 100001
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "tenantOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "tenant_order_fixture"
+                          }
                         }
                       ]
                     }
@@ -2011,6 +2241,30 @@
                           "kind": "LiteralExpressionSyntax",
                           "value": "ABCDEFGHIJKLMNOPQRSTU"
                         }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-202610-00000004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "ticket",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 100001
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "tenantOrderId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "tenant_order_fixture"
+                        }
                       }
                     ]
                   },
@@ -2028,6 +2282,30 @@
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "ABCDEFGHIJKLMNOPQRSTU"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-202610-00000004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "ticket",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 100001
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "tenantOrderId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "tenant_order_fixture"
                         }
                       }
                     ],
@@ -2086,7 +2364,10 @@
                     "name": "InvoiceDraftCreator"
                   },
                   "givenCaptures": [],
-                  "givenClock": null,
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-02T09:00:00Z"
+                  },
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "StartingDraftsForCustomers",
@@ -2129,6 +2410,30 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": "ABCDEFGHIJKLMNOPQRSTU"
                           }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-202610-00000004"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "ticket",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 100001
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "tenantOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "tenant_order_fixture"
+                          }
                         }
                       ]
                     }
@@ -2153,6 +2458,30 @@
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "ABCDEFGHIJKLMNOPQRSTU"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-202610-00000004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "ticket",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 100001
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "tenantOrderId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "tenant_order_fixture"
                         }
                       }
                     ],
