@@ -1,8 +1,10 @@
 ---
 id: 0076
 title: Declare the validation gate in an authored screenplay.json at the model root
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-14
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -75,6 +77,10 @@ Out of scope: other settings (formatting, rendering), Studio or Stage display (t
 ## Consequences
 
 Repositories declare their gate once; scripts run `screenplay <root>` or `cratis screenplay validate <root>` with no flags and get the same result. The docs gain a short table of which files beside a model are authored (`.play`, `screenplay.json`) and which are tool-owned (`.screenplay/`).
+
+## Status notes
+
+**2026-10-14 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review), with the CLI adoption in Cratis/cli#347.
 
 ## Related
 
