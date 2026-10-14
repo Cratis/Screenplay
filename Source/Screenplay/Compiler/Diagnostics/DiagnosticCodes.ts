@@ -411,6 +411,7 @@ export const DiagnosticCodes = {
     RedundantProductionRoute: 'PLAY0664',
     InvalidObserverFilter: 'PLAY0665',
     ObserverFilterExcludesEveryProducer: 'PLAY0666', // C# only: statically known producer routes.
+    ReducerIdentityMismatch: 'PLAY0690', // C# only: conservative nominal producer identity comparison.
     MixedEnumerationNumbering: 'PLAY0667',
     DuplicateEnumerationNumber: 'PLAY0668',
     EnumerationNumberOutsideInt32: 'PLAY0669',

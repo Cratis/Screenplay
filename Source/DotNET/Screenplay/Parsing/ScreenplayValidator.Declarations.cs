@@ -101,6 +101,7 @@ internal static partial class ScreenplayValidator
         IdentifierComplianceValidator.Validate(application, declarations, context);
         EventSubjectValidator.Validate(application, declarations, context);
         ReadModelKeyValidator.Validate(application, declarations, context);
+        ReducerIdentityValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);

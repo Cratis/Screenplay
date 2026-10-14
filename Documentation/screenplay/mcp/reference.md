@@ -340,6 +340,10 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 
 `related` declaration evidence is capped at 20, with `relatedCount` and `relatedTruncated`. Pages use the same bounded item/byte budgets and revision contract as the obligations report. Scope must name one module, feature or slice; document filters finding owners. The report is read-only and has **no per-declaration suppression yet**. Choosing a source annotation or an external address/rule-ID suppression contract remains a separate language/tooling decision; no new `.play` syntax is accepted by this report.
 
+### Reducer identity diagnostics
+
+Ordinary `diagnostics` includes [`PLAY0690`](../diagnostics.md#reducer-instance-identity) as a Warning, with the query or reducer's source location. It compares statically known nominal producer destinations after observer filtering. It does not bind the executable model, read reducer attachment contents or execute opaque code. Unknown provenance suppresses the conclusion that depends on it. Severity summaries, scope/document selection and paging use the same rules as other source diagnostics; no `checks` option is needed.
+
 ### Completeness diagnostics
 
 `diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"`, `"enum-pinning"` (or `"PLAY0671"`) or `"all"`. Unknown names are invalid parameters. Selected findings are warnings and information merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
