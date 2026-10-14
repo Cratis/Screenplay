@@ -26,7 +26,7 @@ public static class RuleConsistency
         var length = shape.Positions.Length;
         return (rule.Kind, rule.Operand) switch
         {
-            (SemanticValidationRuleKind.NotEmpty, _) => Length(shape, length >= 1),
+            (SemanticValidationRuleKind.NotEmpty, _) => NotEmpty(shape),
             (SemanticValidationRuleKind.Minimum, SemanticNumberValue number) => Length(shape, length >= number.Value),
             (SemanticValidationRuleKind.Maximum, SemanticNumberValue number) => Length(shape, length <= number.Value),
             (SemanticValidationRuleKind.Length, SemanticNumberValue number) => Length(shape, length == number.Value),
@@ -39,6 +39,15 @@ public static class RuleConsistency
 
     internal static RuleConsistencyResult CrossCheck(GenerationShape shape, RuleConsistencyResult proof, Func<string, bool> matches, bool complement = false) =>
         proof.Status == RuleConsistencyStatus.Proven ? Samples(shape, matches, complement, null) : proof;
+
+    static RuleConsistencyResult NotEmpty(GenerationShape shape)
+    {
+        var positions = shape.Positions;
+
+        return positions.All(characters => characters.Contains(' ', StringComparison.Ordinal))
+            ? RuleConsistencyResult.Refuted(new string(' ', positions.Length))
+            : RuleConsistencyResult.Proven;
+    }
 
     static RuleConsistencyResult Length(GenerationShape shape, bool satisfied) => satisfied ? RuleConsistencyResult.Proven : RuleConsistencyResult.Refuted(shape.Samples().First());
 

@@ -16,7 +16,7 @@ public class when_deciding_length_rules
         RuleConsistency.Check(new("nanoid") { Size = 2, Alphabet = "ba", Prefix = "X" }, SemanticPrimitiveType.Text, new(default, kind, new SemanticNumberValue(operand), null)).Status.ShouldEqual(status);
 
     [Fact] void should_report_the_ordinal_minimum_on_refuted_length() => RuleConsistency.Check(new("nanoid") { Size = 2, Alphabet = "ba", Prefix = "X" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Length, new SemanticNumberValue(4), null)).Witness.ShouldEqual("Xaa");
-    [Fact] void should_admit_whitespace_as_nonempty_under_current_semantics() => RuleConsistency.Check(new("nanoid") { Size = 1, Alphabet = " a" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.NotEmpty, null, null)).Status.ShouldEqual(RuleConsistencyStatus.Proven);
+    [Fact] void should_refute_whitespace_only_values_under_decision_0071() => RuleConsistency.Check(new("nanoid") { Size = 1, Alphabet = " a" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.NotEmpty, null, null)).Witness.ShouldEqual(" ");
     [Fact] void should_not_apply_the_pattern_position_limit_to_builtin_shapes() => RuleConsistency.Check(new("bytes") { Count = 512, Encoding = "hex", Prefix = "key_" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Length, new SemanticNumberValue(1028), null)).Status.ShouldEqual(RuleConsistencyStatus.Proven);
     [Fact] void should_not_depend_on_severity() => RuleConsistency.Check(new("nanoid") { Size = 1, Alphabet = "ba" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Length, new SemanticNumberValue(2), null) { Severity = SemanticValidationSeverity.Information }).Status.ShouldEqual(RuleConsistencyStatus.Refuted);
 }
