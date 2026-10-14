@@ -28,7 +28,14 @@ public class when_reading_shared_rule_consistency_vectors
     {
         var vectors = Vectors().GetProperty("derivedPatterns").EnumerateArray().ToArray();
         vectors.ShouldNotBeEmpty();
-        foreach (var vector in vectors) DerivedPattern.Create(Generation(vector)).ShouldEqual(vector.GetProperty("derivedRegex").GetString());
+        foreach (var vector in vectors)
+        {
+            var generation = Generation(vector);
+            var pattern = DerivedPattern.Create(generation);
+            pattern.ShouldEqual(vector.GetProperty("derivedRegex").GetString());
+            new GlushkovAutomaton(new RegexFragmentR(pattern!, GenerationShape.Create(generation)!.Positions.Length, boundToShape: false).Parse()).IsDeterministic.ShouldBeTrue();
+            RuleConsistency.Check(generation, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text(pattern!), null)).Status.ToString().ShouldEqual(vector.GetProperty("status").GetString());
+        }
     }
 
     static SemanticGeneration? Generation(JsonElement vector)

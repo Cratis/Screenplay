@@ -89,7 +89,20 @@ public static class RuleConsistency
         }
 
         if (expression is null) return Samples(shape, runtime.IsMatch, complement, reason);
-        var proof = RegexContainment.Check(shape, expression, complement);
+        var proof = RegexContainment.Check(shape, expression, complement, requireDeterministic: true);
+        if (proof.Status == RuleConsistencyStatus.Proven)
+        {
+            try
+            {
+                // Length clipping is valid for containment, not for runtime ambiguity: retain every authored branch.
+                var authored = new RegexFragmentR(pattern, shape.Positions.Length, boundToShape: false).Parse();
+                if (!new GlushkovAutomaton(authored).IsDeterministic) return RuleConsistencyResult.Unproven(RegexContainment.AmbiguousPatternReason);
+            }
+            catch (RegexStateBudgetExceeded error)
+            {
+                return RuleConsistencyResult.Unproven(error.Message);
+            }
+        }
 
         return CrossCheck(shape, proof, runtime.IsMatch, complement);
     }

@@ -5,16 +5,23 @@ namespace Cratis.Screenplay.Semantics.Generation;
 
 internal static class RegexContainment
 {
-    internal static RuleConsistencyResult Check(GenerationShape shape, RegexExpression expression, bool complement = false)
+    internal const string AmbiguousPatternReason = "ambiguous pattern; the runtime regex may backtrack";
+
+    internal static RuleConsistencyResult Check(GenerationShape shape, RegexExpression expression, bool complement = false, bool requireDeterministic = false)
     {
         try
         {
             var positions = shape.Positions;
-            var automaton = new RegexDeterminization(new(expression));
+            var positionsAutomaton = new GlushkovAutomaton(expression);
+            var automaton = new RegexDeterminization(positionsAutomaton);
             var layers = Walk(positions, automaton);
             var bad = Backward(positions, automaton, layers, complement);
 
-            return bad[0].Contains(automaton.Start) ? RuleConsistencyResult.Refuted(Witness(positions, automaton, bad)) : RuleConsistencyResult.Proven;
+            if (bad[0].Contains(automaton.Start)) return RuleConsistencyResult.Refuted(Witness(positions, automaton, bad));
+
+            return requireDeterministic && !positionsAutomaton.IsDeterministic
+                ? RuleConsistencyResult.Unproven(AmbiguousPatternReason)
+                : RuleConsistencyResult.Proven;
         }
         catch (RegexStateBudgetExceeded error)
         {

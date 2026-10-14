@@ -36,6 +36,7 @@ internal sealed partial class RegexFragmentR
 
         Take('?'); // Lazy and greedy forms recognize the same language.
         if (minimum == 0 && maximum == 0) return RegexExpression.Empty;
+        if (!boundToShape) return RegexExpression.Repeat(expression, minimum, maximum);
         if (expression.MinimumLength > 0 && (long)expression.MinimumLength * minimum > length) return RegexExpression.None;
 
         // No match in a length-L word consumes more than L nonempty repetitions. Nullable
@@ -53,7 +54,7 @@ internal sealed partial class RegexFragmentR
         var value = 0;
         while (_index < pattern.Length && pattern[_index] is >= '0' and <= '9')
         {
-            value = (int)Math.Min((long)length + 1, ((long)value * 10) + pattern[_index++] - '0');
+            value = (int)Math.Min(boundToShape ? (long)length + 1 : GlushkovAutomaton.PositionBudget + 1, ((long)value * 10) + pattern[_index++] - '0');
         }
 
         return value;

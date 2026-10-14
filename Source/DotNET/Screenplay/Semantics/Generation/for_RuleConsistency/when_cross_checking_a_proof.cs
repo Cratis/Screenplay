@@ -26,10 +26,10 @@ public class when_cross_checking_a_proof : Specification
     }
 
     [Fact]
-    void should_cross_check_an_in_fragment_backtracking_pattern()
+    void should_refuse_to_prove_an_ambiguous_in_fragment_pattern()
     {
         var result = RuleConsistency.Check(new("nanoid") { Size = 256, Alphabet = "ab" }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text("^(a+)+b$|^[ab]+$"), null));
         result.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
-        result.Reason.ShouldEqual("runtime regex timed out");
+        result.Reason.ShouldEqual(RegexContainment.AmbiguousPatternReason);
     }
 }

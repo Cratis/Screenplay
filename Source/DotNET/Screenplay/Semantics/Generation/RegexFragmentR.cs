@@ -3,7 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.Generation;
 
-internal sealed partial class RegexFragmentR(string pattern, int length)
+internal sealed partial class RegexFragmentR(string pattern, int length, bool boundToShape = true)
 {
     int _index;
 

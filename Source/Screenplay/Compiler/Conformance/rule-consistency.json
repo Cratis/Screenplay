@@ -4,6 +4,7 @@
     "states": { "maximum": 10000, "counts": "Distinct DFA states reached in the product walk" },
     "groupNesting": { "maximum": 64, "counts": "Simultaneously open groups outside escaped characters and character classes" }
   },
+  "deterministicProof": "Proven matches require pairwise disjoint printable-ASCII character classes in the Glushkov first-position set and every follow set, including the authored pattern without length clipping; otherwise Unproven: ambiguous pattern; the runtime regex may backtrack. Refuted is unchanged and runtime samples remain defence-in-depth.",
   "operandTemplates": "Repeat the string operand operandRepeat times, wrap it in groupDepth ordinary groups, then prepend operandPrefix and append operandSuffix; omitted counts/wrappers mean one repetition, zero groups and empty wrappers.",
   "consistency": [
     { "name": "implicit UUID shape", "generation": null, "primitive": "Uuid", "rule": { "kind": "Matches", "operand": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" }, "status": "Proven" },
@@ -35,7 +36,11 @@
     { "name": "unanchored search", "generation": { "kind": "nanoid", "size": 4, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "a" }, "status": "Refuted", "witness": "bbbb" },
     { "name": "anchors apply per alternative", "generation": { "kind": "nanoid", "size": 4, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^a|b$" }, "status": "Refuted", "witness": "baaa" },
     { "name": "unbounded and lazy repeat", "generation": { "kind": "nanoid", "size": 4, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^(?:a|b){2,}?$" }, "status": "Proven" },
-    { "name": "nullable counted repeat", "generation": { "kind": "nanoid", "size": 4, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^(a?b?){1000000}$" }, "status": "Proven" },
+    { "name": "nullable counted repeat is ambiguous", "generation": { "kind": "nanoid", "size": 4, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^(a?b?){1000000}$" }, "status": "Unproven", "reason": "ambiguous pattern; the runtime regex may backtrack" },
+    { "name": "non-sample catastrophic backtracking is not proven", "generation": { "kind": "nanoid", "size": 256, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^ab(a+)+c$|^[ab]{256}$" }, "status": "Unproven", "reason": "ambiguous pattern; the runtime regex may backtrack" },
+    { "name": "authored branch omitted by length clipping is still checked", "generation": { "kind": "nanoid", "size": 256, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^(ab(a+)+c){1000000}$|^[ab]{256}$" }, "status": "Unproven", "reason": "position budget exceeded" },
+    { "name": "deterministic common lowercase and digit pattern", "generation": { "kind": "nanoid", "size": 21, "alphabet": "abc012" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^[a-z0-9]{21}$" }, "status": "Proven" },
+    { "name": "ambiguity never hides a sound refutation", "generation": { "kind": "nanoid", "size": 1, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^a|a$" }, "status": "Refuted", "witness": "b" },
     { "name": "whitespace projection", "generation": { "kind": "nanoid", "size": 2, "alphabet": " a" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^\\s+$" }, "status": "Refuted", "witness": " a" },
     { "name": "lookaround passing samples is not proof", "generation": { "kind": "nanoid", "size": 2, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "(?=a|b)[ab]+" }, "status": "Unproven", "reason": "outside fragment R: lookaround" },
     { "name": "lookaround minimum refutation", "generation": { "kind": "nanoid", "size": 2, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^(?=b)[ab]+$" }, "status": "Refuted", "witness": "aa" },
@@ -56,19 +61,19 @@
     { "name": "clearly beyond DFA budget", "generation": { "kind": "nanoid", "size": 60, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^[ab]*a[ab]{24}$" }, "status": "Unproven", "reason": "budget exceeded" }
   ],
   "derivedPatterns": [
-    { "generation": null, "derivedRegex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
-    { "generation": { "kind": "uuidv7" }, "derivedRegex": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
-    { "generation": { "kind": "ulid", "prefix": "cus_", "case": "lower" }, "derivedRegex": "^cus_[0-7][0-9a-hjkmnp-tv-z]{25}$" },
-    { "generation": { "kind": "ulid" }, "derivedRegex": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
-    { "generation": { "kind": "typeid", "prefix": "user" }, "derivedRegex": "^user_[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$" },
-    { "generation": { "kind": "typeid", "prefix": "" }, "derivedRegex": "^[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$" },
-    { "generation": { "kind": "nanoid", "size": 21 }, "derivedRegex": "^[A-Za-z0-9_-]{21}$" },
-    { "generation": { "kind": "nanoid", "size": 64, "alphabet": "ab", "prefix": "code_" }, "derivedRegex": "^code_[ab]{64}$" },
-    { "generation": { "kind": "bytes", "count": 32, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$" },
-    { "generation": { "kind": "bytes", "count": 16, "encoding": "hex", "prefix": "ref_", "case": "upper" }, "derivedRegex": "^ref_[0-9A-F]{32}$" },
-    { "generation": { "kind": "bytes", "count": 16, "encoding": "base32" }, "derivedRegex": "^[A-Z2-7]{25}[AEIMQUY4]$" },
-    { "generation": { "kind": "bytes", "count": 1, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-][AQgw]$" },
-    { "generation": { "kind": "bytes", "count": 3, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-]{4}$" },
-    { "generation": { "kind": "bytes", "count": 5, "encoding": "base32", "case": "lower" }, "derivedRegex": "^[a-z2-7]{8}$" }
+    { "generation": null, "derivedRegex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "status": "Proven" },
+    { "generation": { "kind": "uuidv7" }, "derivedRegex": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "status": "Proven" },
+    { "generation": { "kind": "ulid", "prefix": "cus_", "case": "lower" }, "derivedRegex": "^cus_[0-7][0-9a-hjkmnp-tv-z]{25}$", "status": "Proven" },
+    { "generation": { "kind": "ulid" }, "derivedRegex": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$", "status": "Proven" },
+    { "generation": { "kind": "typeid", "prefix": "user" }, "derivedRegex": "^user_[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$", "status": "Proven" },
+    { "generation": { "kind": "typeid", "prefix": "" }, "derivedRegex": "^[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$", "status": "Proven" },
+    { "generation": { "kind": "nanoid", "size": 21 }, "derivedRegex": "^[A-Za-z0-9_-]{21}$", "status": "Proven" },
+    { "generation": { "kind": "nanoid", "size": 64, "alphabet": "ab", "prefix": "code_" }, "derivedRegex": "^code_[ab]{64}$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 32, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 16, "encoding": "hex", "prefix": "ref_", "case": "upper" }, "derivedRegex": "^ref_[0-9A-F]{32}$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 16, "encoding": "base32" }, "derivedRegex": "^[A-Z2-7]{25}[AEIMQUY4]$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 1, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-][AQgw]$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 3, "encoding": "base64url" }, "derivedRegex": "^[A-Za-z0-9_-]{4}$", "status": "Proven" },
+    { "generation": { "kind": "bytes", "count": 5, "encoding": "base32", "case": "lower" }, "derivedRegex": "^[a-z2-7]{8}$", "status": "Proven" }
   ]
 }

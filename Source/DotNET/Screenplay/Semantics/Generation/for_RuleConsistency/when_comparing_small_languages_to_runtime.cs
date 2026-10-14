@@ -36,8 +36,11 @@ public class when_comparing_small_languages_to_runtime
             for (var position = 0; position < length; position++) values = [.. values.SelectMany(prefix => " _ab".Select(character => prefix + character))];
             var witness = values.FirstOrDefault(value => !regex.IsMatch(value));
             var result = RuleConsistency.Check(generation, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Matches, new SemanticTextValue(pattern), null));
-            result.Status.ShouldEqual(witness is null ? RuleConsistencyStatus.Proven : RuleConsistencyStatus.Refuted);
+            var expression = new RegexFragmentR(pattern, length, boundToShape: false).Parse();
+            var deterministic = new GlushkovAutomaton(expression).IsDeterministic;
+            result.Status.ShouldEqual(witness is not null ? RuleConsistencyStatus.Refuted : deterministic ? RuleConsistencyStatus.Proven : RuleConsistencyStatus.Unproven);
             result.Witness.ShouldEqual(witness);
+            result.Reason.ShouldEqual(witness is null && !deterministic ? RegexContainment.AmbiguousPatternReason : null);
         }
     }
 }
