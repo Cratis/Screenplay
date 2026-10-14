@@ -14,52 +14,45 @@ static class ValidationGateJson
         var duplicate = ValidationGateLocations.Duplicate(bytes);
         if (duplicate is not null) return new(root, path, null, ValidationGateLocations.Failure(path, bytes, duplicate.Value.Offset, $"Duplicate member '{duplicate.Value.Name}'."));
         var issue = Validate(document.RootElement);
-        if (issue is not null) return new(root, path, null, ValidationGateLocations.Failure(path, bytes, ValidationGateLocations.Offset(bytes, issue.Value.Member), issue.Value.Reason));
+        if (issue is not null) return new(root, path, null, ValidationGateLocations.Failure(path, bytes, ValidationGateLocations.Offset(bytes, issue.Value.Parent, issue.Value.Member), issue.Value.Reason));
         var declaration = new DeclaredValidationGate();
         if (document.RootElement.TryGetProperty("validation", out var validation)) declaration = Declaration(validation);
         return new(root, path, declaration, null);
     }
 
-    static (string Member, string Reason)? Validate(JsonElement root)
+    static GateIssue? Validate(JsonElement root)
     {
-        if (root.ValueKind != JsonValueKind.Object) return (string.Empty, "Expected a JSON object.");
-        foreach (var property in root.EnumerateObject())
-        {
-            var reason = property.Name switch
-            {
-                "$schema" => StringReason(property.Value),
-                "validation" => null,
-                _ => "Unknown top-level member."
-            };
-            if (reason is not null) return (property.Name, reason);
-            if (property.Name == "validation")
-            {
-                var issue = ValidateSettings(property.Value);
-                if (issue is not null) return issue;
-            }
-        }
-
-        return null;
+        if (root.ValueKind != JsonValueKind.Object) return new(null, string.Empty, "Expected a JSON object.");
+        return root.EnumerateObject().Select(TopLevelIssue).FirstOrDefault(issue => issue is not null);
     }
 
-    static (string Member, string Reason)? ValidateSettings(JsonElement settings)
+    static GateIssue? TopLevelIssue(JsonProperty property) => property.Name switch
     {
-        if (settings.ValueKind != JsonValueKind.Object) return ("validation", "Expected a validation object.");
-        foreach (var property in settings.EnumerateObject())
-        {
-            var reason = property.Name switch
-            {
-                "checks" => ChecksReason(property.Value),
-                "warningsAsErrors" => property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False ? null : "Expected a boolean.",
-                "scope" => ScopeReason(property.Value),
-                "openQuestions" => QuestionsReason(property.Value),
-                _ => "Unknown validation member."
-            };
-            if (reason is not null) return (property.Name, reason);
-        }
+        "$schema" => Located(null, property.Name, StringReason(property.Value)),
+        "validation" => ValidateSettings(property.Value),
+        _ => Located(null, property.Name, "Unknown top-level member.")
+    };
 
-        return null;
+    static GateIssue? ValidateSettings(JsonElement settings)
+    {
+        if (settings.ValueKind != JsonValueKind.Object) return new(null, "validation", "Expected a validation object.");
+        return settings.EnumerateObject().Select(SettingIssue).FirstOrDefault(issue => issue is not null);
     }
+
+    static GateIssue? SettingIssue(JsonProperty property) => Located("validation", property.Name, SettingReason(property));
+
+    static string? SettingReason(JsonProperty property) => property.Name switch
+    {
+        "checks" => ChecksReason(property.Value),
+        "warningsAsErrors" => BooleanReason(property.Value),
+        "scope" => ScopeReason(property.Value),
+        "openQuestions" => QuestionsReason(property.Value),
+        _ => "Unknown validation member."
+    };
+
+    static GateIssue? Located(string? parent, string member, string? reason) => reason is null ? null : new(parent, member, reason);
+
+    static string? BooleanReason(JsonElement value) => value.ValueKind is JsonValueKind.True or JsonValueKind.False ? null : "Expected a boolean.";
 
     static string? StringReason(JsonElement value) => value.ValueKind == JsonValueKind.String ? null : "Expected a string.";
 
@@ -80,21 +73,24 @@ static class ValidationGateJson
     static string? ChecksReason(JsonElement value)
     {
         if (value.ValueKind != JsonValueKind.Array) return "Expected an array of check selections.";
-        foreach (var item in value.EnumerateArray())
-        {
-            if (StringReason(item) is { } reason) return reason;
-            var name = item.GetString()!;
-            if (name.Contains(',')) return "Each checks item must contain one selection, not comma-separated names.";
-            if (!CompletenessChecks.AcceptedNames.Contains(name, StringComparer.Ordinal)) return $"Unknown check selection '{name}'.";
-            if (!CompletenessChecks.TryParse(name, out _)) return $"Unknown check selection '{name}'.";
-        }
-
-        return null;
+        return value.EnumerateArray().Select(CheckReason).FirstOrDefault(reason => reason is not null);
     }
+
+    static string? CheckReason(JsonElement item)
+    {
+        if (StringReason(item) is { } reason) return reason;
+        var name = item.GetString()!;
+        if (name.Contains(',')) return "Each checks item must contain one selection, not comma-separated names.";
+        return IsKnownCheck(name) ? null : $"Unknown check selection '{name}'.";
+    }
+
+    static bool IsKnownCheck(string name) => CompletenessChecks.AcceptedNames.Contains(name, StringComparer.Ordinal) && CompletenessChecks.TryParse(name, out _);
 
     static DeclaredValidationGate Declaration(JsonElement value) => new(
         value.TryGetProperty("checks", out var checks) ? [.. checks.EnumerateArray().Select(item => item.GetString()!)] : null,
         value.TryGetProperty("warningsAsErrors", out var warnings) ? warnings.GetBoolean() : null,
         value.TryGetProperty("scope", out var scope) ? scope.GetString() : null,
         value.TryGetProperty("openQuestions", out var questions) ? questions.GetString() : null);
+
+    readonly record struct GateIssue(string? Parent, string Member, string Reason);
 }

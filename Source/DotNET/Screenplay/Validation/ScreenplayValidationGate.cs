@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using System.Text.Json;
 
 namespace Cratis.Screenplay.Validation;
@@ -47,8 +48,10 @@ public static class ScreenplayValidationGate
         }
 
         if ((attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != default) return Unreadable(root, path, "Expected a regular file, not a directory, symlink or reparse point.");
-        return ValidationGateJson.Read(root, path, File.ReadAllBytes(path));
+        return ValidationGateJson.Read(root, path, WithoutByteOrderMark(File.ReadAllBytes(path)));
     }
+
+    static byte[] WithoutByteOrderMark(byte[] bytes) => bytes.AsSpan().StartsWith(Encoding.UTF8.Preamble) ? bytes[Encoding.UTF8.Preamble.Length..] : bytes;
 
     static ValidationGateReadResult Unreadable(string root, string path, string reason) => new(root, path, null, new(ValidationGateFailureKind.Unreadable, path, 1, 1, reason));
 }

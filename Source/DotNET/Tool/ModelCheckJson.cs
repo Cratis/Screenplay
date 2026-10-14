@@ -23,7 +23,7 @@ static class ModelCheckJson
     {
         using var errors = new StringWriter();
         var options = ModelCheckOptions.Parse(args, errors);
-        if (options is null) return Write(new(null, [], null, new CheckRefusal("InvalidInput", errors.ToString().TrimEnd()), 2), output);
+        if (options is null) return Write(new(null, [], null, Refusal("InvalidInput", errors.ToString().TrimEnd()), 2), output);
         try
         {
             options.IsFile = File.Exists(options.Target);
@@ -58,7 +58,7 @@ static class ModelCheckJson
 
         var questions = options.OpenQuestions is null ? null : ModelNoteQuestions.Read(options.Gate!.ModelRoot, options.Scope);
         var exitCode = Math.Max(DiagnosticExit(diagnostics, options.WarnAsError), questions?.GetExitCode(options.OpenQuestions == "fail") ?? 0);
-        object? refusal = questions?.FailureKind is { } kind ? new CheckRefusal(kind, questions.Reason!) : null;
+        object? refusal = questions?.FailureKind is { } kind ? Refusal(kind, questions.Reason!) : null;
         var report = new JsonCheckReport(options.Gate, diagnostics, questions, refusal, exitCode, snapshot.Sources.Count, scoped);
         return Write(report, output);
     }
@@ -69,7 +69,9 @@ static class ModelCheckJson
         return warnAsError && diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning) ? 1 : 0;
     }
 
-    static int Refuse(ModelCheckOptions options, string reason, TextWriter output) => Write(new(options.Gate, [], null, new CheckRefusal("CouldNotRun", reason), 2), output);
+    static int Refuse(ModelCheckOptions options, string reason, TextWriter output) => Write(new(options.Gate, [], null, Refusal("CouldNotRun", reason), 2), output);
+
+    static CheckRefusal Refusal(string kind, string reason) => new(JsonNamingPolicy.CamelCase.ConvertName(kind), reason);
 
     static int Write(JsonCheckReport report, TextWriter output)
     {

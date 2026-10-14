@@ -43,20 +43,24 @@ public class when_validating_the_documented_example : given.a_gate_file
     [Fact] void should_forbid_unknown_top_level_members() => _schema.RootElement.GetProperty("additionalProperties").GetBoolean().ShouldBeFalse();
     [Fact] void should_forbid_unknown_validation_members() => _schema.RootElement.GetProperty("properties").GetProperty("validation").GetProperty("additionalProperties").GetBoolean().ShouldBeFalse();
 
-    static bool Matches(JsonElement schema, JsonElement value)
+    static bool Matches(JsonElement schema, JsonElement value) => UsesOnlySupportedKeywords(schema) && IsAnAllowedChoice(schema, value) && MatchesType(schema, value);
+
+    static bool UsesOnlySupportedKeywords(JsonElement schema)
     {
         string[] supported = ["$schema", "$id", "title", "type", "additionalProperties", "properties", "items", "enum", "pattern"];
-        if (!schema.EnumerateObject().All(property => supported.Contains(property.Name, StringComparer.Ordinal))) return false;
-        if (schema.TryGetProperty("enum", out var choices) && !choices.EnumerateArray().Any(choice => choice.GetRawText() == value.GetRawText())) return false;
-        return schema.GetProperty("type").GetString() switch
-        {
-            "object" => MatchObject(schema, value),
-            "array" => MatchArray(schema, value),
-            "boolean" => value.ValueKind is JsonValueKind.True or JsonValueKind.False,
-            "string" => MatchString(schema, value),
-            _ => false
-        };
+        return schema.EnumerateObject().All(property => supported.Contains(property.Name, StringComparer.Ordinal));
     }
+
+    static bool IsAnAllowedChoice(JsonElement schema, JsonElement value) => !schema.TryGetProperty("enum", out var choices) || choices.EnumerateArray().Any(choice => choice.GetRawText() == value.GetRawText());
+
+    static bool MatchesType(JsonElement schema, JsonElement value) => schema.GetProperty("type").GetString() switch
+    {
+        "object" => MatchObject(schema, value),
+        "array" => MatchArray(schema, value),
+        "boolean" => value.ValueKind is JsonValueKind.True or JsonValueKind.False,
+        "string" => MatchString(schema, value),
+        _ => false
+    };
 
     static bool MatchObject(JsonElement schema, JsonElement value)
     {

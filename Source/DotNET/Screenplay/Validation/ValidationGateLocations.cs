@@ -31,12 +31,16 @@ static class ValidationGateLocations
         return null;
     }
 
-    internal static long Offset(byte[] bytes, string member)
+    internal static long Offset(byte[] bytes, string? parent, string member)
     {
         var reader = new Utf8JsonReader(bytes);
+        string? topLevel = null;
         while (reader.Read())
         {
-            if (reader.TokenType == JsonTokenType.PropertyName && reader.GetString() == member) return reader.TokenStartIndex;
+            if (reader.TokenType != JsonTokenType.PropertyName) continue;
+            var name = reader.GetString();
+            if (reader.CurrentDepth == 1) topLevel = name;
+            if (name == member && IsInParent(reader.CurrentDepth, topLevel, parent)) return reader.TokenStartIndex;
         }
 
         return 0;
@@ -49,4 +53,6 @@ static class ValidationGateLocations
         var column = prefix.Length - prefix.LastIndexOf('\n');
         return new(ValidationGateFailureKind.Invalid, path, line, column, reason);
     }
+
+    static bool IsInParent(int depth, string? topLevel, string? parent) => parent is null ? depth == 1 : depth == 2 && topLevel == parent;
 }

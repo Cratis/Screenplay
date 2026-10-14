@@ -19,5 +19,6 @@ public class when_reporting_invalid_json_arguments : for_ModelCheck.given.a_mode
     void Destroy() => _report.Dispose();
     [Fact] void should_exit_could_not_run() => _exitCode.ShouldEqual(2);
     [Fact] void should_report_argument_refusal_as_json_only() => _report.RootElement.GetProperty("refusal").GetProperty("reason").GetString().ShouldEqual("Unexpected argument '--unknown'.");
+    [Fact] void should_name_the_refusal_kind_in_camel_case() => _report.RootElement.GetProperty("refusal").GetProperty("kind").GetString().ShouldEqual("invalidInput");
     [Fact] void should_keep_stderr_empty() => Error.ToString().ShouldEqual(string.Empty);
 }
