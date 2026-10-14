@@ -614,6 +614,11 @@ public static partial class SemanticModelCanonicalJson
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, context.Type);
                 break;
+            case SemanticRefusalExpression refusal:
+                writer.WriteString("member", refusal.Member);
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, refusal.Type);
+                break;
             case SemanticResolvedExpression resolved:
                 writer.WriteString("root", ExpressionRoot(resolved.Root));
                 writer.WriteString("source", ExpressionSource(resolved.Source));
@@ -823,6 +828,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticExpressionKind.Value => "value",
         SemanticExpressionKind.Resolved => "resolved",
         SemanticExpressionKind.EventContext => "eventContext",
+        SemanticExpressionKind.Refusal => "refusal",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

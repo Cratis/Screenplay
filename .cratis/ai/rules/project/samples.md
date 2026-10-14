@@ -47,7 +47,6 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | --- | --- | --- |
 | `numbers exact` | #285 | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
 | `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
-| refusal branches and `$refusal` values | #433 | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play` |
 
 `for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every
 kind missing from Invoicing to be classified exactly once as Preview, CoveredElsewhere (composition in a

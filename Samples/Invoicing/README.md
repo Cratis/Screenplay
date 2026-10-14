@@ -38,7 +38,7 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 ## Recovery and no-event assertions
 
-`IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. Refusal branches and `$refusal` values remain preview syntax in their dedicated fixture; redelivery does not promise once-only external effects.
+`IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. `PaymentReconciler` records a validation refusal as `PaymentReconciliationRefused`, mapping `$refusal.reason` and `$refusal.message` with the invoice identity. These branches select ESM v19; handling stops the trigger's remaining invocations, not other reactions. Redelivery does not promise once-only external effects.
 
 ## Who uses it
 
@@ -116,6 +116,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | guarded interaction: block-form `when item.status …` and `otherwise` selecting an action list | InvoiceList — double click opens editing only for a draft; InvoiceDetails — click opens cancellation only for a draft |
 | guarded screen action: label header, `when item.status … execute`, explicit `with … from` and `otherwise hidden` | CancelInvoiceScreen — cancellation is offered only for a draft |
 | interactions: `on load`, `enter`, `click`, `double click`, `select`, `submit`, `change`, `leave`, `interval`, `event … where`; `execute`, `navigate to`/`back`, `open dialog … with … from`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`; `on success`/`failure`/`result` | InvoiceList, InvoiceLineDetail, ChangeInvoiceStatus, CollectionsBoard, behaviors |
+| `on refused by validation` with branch `produces` and `$refusal.reason`/`$refusal.message` | PaymentReconciler |
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
 | `direction outbound`, a `public event`, and an event-target `projection` that folds private events into it | InvoiceSentPublication; the inbound half (`direction inbound`, an event `from "origin"`, `source events`) is in the Commerce sample's ReceiveCarrierDispatches, because Invoicing's `all` projection would consume any foreign event |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |

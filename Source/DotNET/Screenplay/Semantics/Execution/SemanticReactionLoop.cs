@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// identities, and a reaction's triggers in authored order; each produces its events, then invokes its commands. An
 /// invoked command runs through the full command pipeline with its reaction's declared system identity, or no caller
 /// when none is declared. The given caller is never forwarded. System claims are unknown; audit identity is unaffected.
-/// A rejection or an unsupported capability anywhere ends the scenario.
+/// An unhandled rejection or an unsupported capability anywhere ends the scenario.
 /// </remarks>
 /// <param name="evaluator">The evaluator invoked commands run through.</param>
 /// <param name="plan">The capability-admitted plan.</param>
@@ -190,10 +190,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
 
             foreach (var invocation in trigger.Invokes)
             {
-                if (Invoke(reaction, invocation, lookup, root, occurrence) is { } failure)
+                if (Invoke(reaction, invocation, lookup, root, cause, occurrence, out var handled) is { } failure)
                 {
                     return failure;
                 }
+                if (handled) break;
             }
         }
         catch (InvalidSemanticContract exception)
@@ -210,7 +211,8 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         Dictionary<SemanticId, SemanticValue> values,
         SemanticExpressionRootKind root,
         SemanticFact? cause,
-        SemanticCommandOccurrence? occurrence)
+        SemanticCommandOccurrence? occurrence,
+        SemanticInvocationRefusalEvaluation? refusal = null)
     {
         if (RequiresAuditIdentity(reaction, produced.Mappings) is { } unsupported)
         {
@@ -224,7 +226,8 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
 
         var eventContract = plan.Events[produced.EventContract];
         var mapped = produced.Mappings
-            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence)))
+            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, mapping.Source is SemanticRefusalExpression expression && refusal is not null
+                ? refusal.ValueOf(expression.Member) : SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence)))
             .ToImmutableArray();
         var properties = eventContract.Properties.ToDictionary(property => property.Id);
         foreach (var value in mapped)
@@ -261,8 +264,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         SemanticInvocation invocation,
         Dictionary<SemanticId, SemanticValue> values,
         SemanticExpressionRootKind root,
-        SemanticCommandOccurrence? occurrence)
+        SemanticFact? cause,
+        SemanticCommandOccurrence? occurrence,
+        out bool handled)
     {
+        handled = false;
         if (RequiresAuditIdentity(reaction, invocation.Mappings) is { } unsupported)
         {
             return unsupported;
@@ -280,12 +286,24 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         {
             Occurrence = occurrence,
             ReactionOrigin = reaction.Id,
-            RunsAs = reaction.RunsAs
+            RunsAs = reaction.RunsAs,
+            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
         };
 
         var result = evaluator.Execute(plan, World, request);
         if (result is not SemanticAccepted accepted)
         {
+            if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&
+                invocation.OnRefused.FirstOrDefault(refusal.Matches) is { } branch)
+            {
+                foreach (var produced in branch.Produces)
+                {
+                    if (Produce(reaction, produced, values, root, cause, occurrence, refusal) is { } failure) return failure;
+                }
+                handled = true;
+                return null;
+            }
+
             return result;
         }
 

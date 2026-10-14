@@ -44,7 +44,8 @@ internal static partial class SemanticModelRead
             .Add("source", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Source = ParseExpressionSource(String(ref reader, property)))
             .Add("target", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadTarget(ref reader, property))
             .Add("contextValue", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ContextValue = ParseContextValue(String(ref reader, property)))
-            .Add("type", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Type = Nested(ref reader, TypeReference, property));
+            .Add("type", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Type = Nested(ref reader, TypeReference, property))
+            .Add("member", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Member = String(ref reader, property));
 
         public SemanticExpressionKind? Kind { get; set; }
 
@@ -64,11 +65,13 @@ internal static partial class SemanticModelRead
 
         public SemanticTypeReference? Type { get; set; }
 
-        bool IsValueShape => ContentRead && Content is not null && Root is null && Source is null && !TargetRead;
+        public string? Member { get; set; }
 
-        bool IsResolvedShape => !ContentRead && Root is not null && Source is not null && TargetRead && Target.IsSet && Type is null && ContextValue is null;
+        bool IsValueShape => ContentRead && Content is not null && Root is null && Source is null && !TargetRead && Member is null;
 
-        bool IsEventContextShape => !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is not null && Type is not null;
+        bool IsResolvedShape => !ContentRead && Root is not null && Source is not null && TargetRead && Target.IsSet && Type is null && ContextValue is null && Member is null;
+
+        bool IsEventContextShape => !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is not null && Type is not null && Member is null;
 
         public void ReadValue(ref Utf8JsonReader reader, string property)
         {
@@ -87,6 +90,7 @@ internal static partial class SemanticModelRead
             SemanticExpressionKind.Value when IsValueShape => new SemanticValueExpression(Content!),
             SemanticExpressionKind.Resolved when IsResolvedShape => new SemanticResolvedExpression(Root!.Value, Source!.Value, Target),
             SemanticExpressionKind.EventContext when IsEventContextShape => new SemanticEventContextExpression(ContextValue!.Value, Type!),
+            SemanticExpressionKind.Refusal when !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is not null && Member is not null => new SemanticRefusalExpression(Member, Type),
             _ => throw Malformed("expression", "one exact expression variant")
         };
     }
