@@ -181,6 +181,62 @@ computes fail mode. Missing identities clear `EffectiveScope` and preserve every
 open question as an orphan. Unreadable notes or a read failure produce exit `2`
 in either mode without repairing sidecars or changing the model.
 
+### Open a model root with its persisted identities
+
+A renderer or analyzer that needs the model itself, not just a verdict, opens the
+root through `ScreenplayModelRoot` in `Cratis.Screenplay` (namespace
+`Cratis.Screenplay.Workspaces`). It reads the root exactly as the MCP server and
+`screenplay baseline check` do, so the workspace carries the identities in
+`.screenplay/identities.json` instead of fresh ones:
+
+```csharp
+using Cratis.Screenplay.Workspaces;
+
+var opened = ScreenplayModelRoot.OpenForReleaseBaselineCheck(args[0]);
+if (!opened.Success)
+{
+    Console.Error.WriteLine($"{opened.FailureKind}: {opened.Reason}");
+    return 2;
+}
+
+var check = ReleaseBaseline.Check(opened.Workspace, opened.ReleaseBaseline);
+foreach (var violation in check.Violations)
+    Console.WriteLine($"{violation.Kind}: {violation.Event} revision {violation.Revision}");
+if (check.Reason is not null) Console.Error.WriteLine(check.Reason);
+
+return check.Failure is not null ? 2 : check.Violations.IsEmpty ? 0 : 1;
+```
+
+Both `ScreenplayModelRoot.Open(string root)` and
+`ScreenplayModelRoot.OpenForReleaseBaselineCheck(string root)` return
+`ScreenplayModelRootOutcome` with `Success`, `Workspace`, `Identities`,
+`ReleaseBaseline`, `FailureKind` and `Reason`. Opening never writes anything.
+A pending recovery journal (`PendingOperation`), missing identities
+(`PersistedIdentitiesRequired`), a corrupt identity file
+(`IdentityStateConflict`), mapped files that are missing or unmapped
+(`IdentityMappingConflict`) and an unreadable root (`UnreadableModelRoot`) come
+back as a failure, not an exception. An unreadable baseline still opens; the
+check reports it as `UnreadableReleaseBaseline`.
+
+The two forms differ in what source they accept:
+
+| Form | Removed declarations or mapped documents | Use it for |
+|---|---|---|
+| `Open` | Refused (`IdentityReconciliationRequired`, `IdentityMappingConflict`) | Authoring through the persisted identities |
+| `OpenForReleaseBaselineCheck` | Kept in the catalog, so a check reports them as `BaselinedRevisionMissing` | Release-baseline checks, and rendering with baseline warnings |
+
+When `Open` succeeds, both forms produce the same model revision. To render with
+release-baseline warnings, render `opened.Workspace.Compilation` from
+`OpenForReleaseBaselineCheck` and assess that same workspace. The assessment
+then matches the rendered revision. Never author with, or save, the workspace from
+that form: its catalog keeps identities for declarations that no longer exist.
+
+To read only the identity file, for example one passed as a catalog path, use
+`PersistedIdentityStateSerializer.Deserialize(bytes)`. It returns the application
+name, the `IdentityCatalog` and the document mappings, and throws
+`InvalidPersistedIdentityState` for corrupt, noncanonical or unsupported content.
+Do not parse the file's JSON yourself.
+
 ## Report processing purposes
 
 `screenplay report processing [<file.play|folder>] --format json|markdown|csv` derives a controller's [record of processing](purposes.md#record-of-processing) from error-free source. The default format is Markdown and the default path is the current directory. Supply `--controller-name` and `--controller-contact` explicitly; the model does not infer them. The report records declarations and limited structural derivations, not legal advice or verified runtime protection. Source errors exit `1`; bad arguments, unavailable paths and empty model directories exit `2`. A model with no purposes yields zero rows.

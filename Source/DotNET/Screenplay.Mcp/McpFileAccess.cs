@@ -37,20 +37,6 @@ static class McpFileAccess
         }
     }
 
-    internal static void VerifyPrivateDirectory(string path)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            VerifyWindowsDirectory(path);
-        }
-        else if ((File.GetUnixFileMode(path) &
-            (UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
-             UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute)) != UnixFileMode.None)
-        {
-            throw new McpFailure("MetadataPermissions: make .screenplay accessible only to its owner before continuing.");
-        }
-    }
-
     internal static void Preserve(string original, string staged)
     {
         if (OperatingSystem.IsWindows())
@@ -61,18 +47,6 @@ static class McpFileAccess
         else
         {
             File.SetUnixFileMode(staged, File.GetUnixFileMode(original));
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    static void VerifyWindowsDirectory(string path)
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        var access = new DirectoryInfo(path).GetAccessControl(AccessControlSections.Access);
-        if (!access.AreAccessRulesProtected || access.GetAccessRules(true, true, typeof(SecurityIdentifier)).OfType<FileSystemAccessRule>()
-            .Any(rule => rule.AccessControlType == AccessControlType.Allow && !rule.IdentityReference.Equals(identity.User)))
-        {
-            throw new McpFailure("MetadataPermissions: .screenplay must have protected access rules granting access only to the current Windows user.");
         }
     }
 

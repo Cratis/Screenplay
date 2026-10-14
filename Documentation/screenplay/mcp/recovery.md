@@ -7,6 +7,7 @@ description: Durable identity assignments, interrupted apply detection, and expl
 
 The model's `.play` files remain canonical source. The MCP server owns a reserved
 `.screenplay/` directory inside the configured model root.
+Read-only opens and baseline checks accept a `.screenplay` directory others can read, such as the `0755` directory a git checkout creates, but refuse one other users can write. On Windows, write access inherited by SYSTEM and Administrators is accepted for reads. Writes and recovery still require owner-only access and create private metadata.
 
 | File | Purpose | Retention |
 | --- | --- | --- |
