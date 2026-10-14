@@ -12,8 +12,8 @@ import '@cratis/event-models/theme';
 import '@cratis/event-models/styles';
 import '@cratis/scene/styles';
 import './board.css';
-import { applyDarkTheme } from './applyDarkTheme';
+import { applyHostTheme } from './applyHostTheme';
 import { BoardApp } from './BoardApp';
 
-applyDarkTheme();
+applyHostTheme(undefined);
 createRoot(document.getElementById('root')!).render(<BoardApp />);

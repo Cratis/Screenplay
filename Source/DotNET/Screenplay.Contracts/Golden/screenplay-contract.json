@@ -31246,11 +31246,14 @@
   "cliCommands": [
     {
       "name": "",
-      "usage": "screenplay [\u003Cfile.play|folder\u003E] [--scope \u003CModule\u003E[.\u003CFeature\u003E[.\u003CSlice\u003E]]] [--check \u003Cname\u003E[,\u003Cname\u003E]|all] [--open-questions report|fail] [--warnaserror] [--no-color]",
+      "usage": "screenplay [\u003Cfile.play|folder\u003E] [--scope \u003CModule\u003E[.\u003CFeature\u003E[.\u003CSlice\u003E]]] [--check \u003Cname\u003E[,\u003Cname\u003E]|all] [--open-questions report|fail] [--warnaserror] [--no-color] [--format text|json] [--print-gate] [--no-gate-file]",
       "options": [
         "--check",
+        "--format",
         "--no-color",
+        "--no-gate-file",
         "--open-questions",
+        "--print-gate",
         "--scope",
         "--warnaserror"
       ],

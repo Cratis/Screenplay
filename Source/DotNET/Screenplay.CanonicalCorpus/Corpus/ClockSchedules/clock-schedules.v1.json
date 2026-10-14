@@ -1,0 +1,306 @@
+{
+  "version": 1,
+  "rules": {
+    "interval": "Positive whole-second intervals are counted from the Unix epoch, using floor division for instants before the epoch.",
+    "schedule": "Schedules use a UTC second-of-day (0..86399), optionally restricted to either a day of week (0=Sunday..6=Saturday) or a day of month (1..31), never both; days a month lacks are skipped.",
+    "window": "from is exclusive and to is inclusive; authored offsets are normalized to UTC.",
+    "limit": "At most 10000 occurrences across all reactions and triggers are admitted per advance; exceeding the shared limit refuses the advance and returns no occurrences.",
+    "ordering": "Occurrences are ordered by instant, then reaction running order (semantic identity order), then trigger declaration order."
+  },
+  "vectors": [
+    {
+      "name": "fractional-start",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 5
+      },
+      "from": "1969-12-31T23:59:59.500Z",
+      "to": "1970-01-01T00:00:05Z",
+      "due": [
+        "1970-01-01T00:00:00Z",
+        "1970-01-01T00:00:05Z"
+      ]
+    },
+    {
+      "name": "floor-before-epoch",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 5
+      },
+      "from": "1969-12-31T23:59:49Z",
+      "to": "1969-12-31T23:59:59Z",
+      "due": [
+        "1969-12-31T23:59:50Z",
+        "1969-12-31T23:59:55Z"
+      ]
+    },
+    {
+      "name": "offset-normalization",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 0
+      },
+      "from": "2026-10-02T01:59:59+02:00",
+      "to": "2026-10-02T02:00:00+02:00",
+      "due": [
+        "2026-10-02T00:00:00Z"
+      ]
+    },
+    {
+      "name": "interval-offset-normalization",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 5
+      },
+      "from": "1970-01-01T01:59:59+02:00",
+      "to": "1970-01-01T02:00:05+02:00",
+      "due": [
+        "1970-01-01T00:00:00Z",
+        "1970-01-01T00:00:05Z"
+      ]
+    },
+    {
+      "name": "month-31-across-february-2026",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 0,
+        "dayOfMonth": 31
+      },
+      "from": "2026-01-30T00:00:00Z",
+      "to": "2026-03-31T00:00:00Z",
+      "due": [
+        "2026-01-31T00:00:00Z",
+        "2026-03-31T00:00:00Z"
+      ]
+    },
+    {
+      "name": "february-29-leap-year-2028",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 43200,
+        "dayOfMonth": 29
+      },
+      "from": "2028-02-28T12:00:00Z",
+      "to": "2028-03-01T12:00:00Z",
+      "due": [
+        "2028-02-29T12:00:00Z"
+      ]
+    },
+    {
+      "name": "february-29-century-2100",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 43200,
+        "dayOfMonth": 29
+      },
+      "from": "2100-02-28T12:00:00Z",
+      "to": "2100-03-01T12:00:00Z",
+      "due": []
+    },
+    {
+      "name": "last-calendar-day",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 86399
+      },
+      "from": "9999-12-30T23:59:59Z",
+      "to": "9999-12-31T23:59:59Z",
+      "due": [
+        "9999-12-31T23:59:59Z"
+      ]
+    },
+    {
+      "name": "interval-larger-than-calendar",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 9223372036854775807
+      },
+      "from": "1969-12-31T23:59:59Z",
+      "to": "9999-12-31T23:59:59Z",
+      "due": [
+        "1970-01-01T00:00:00Z"
+      ]
+    },
+    {
+      "name": "daily-utc",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 32400
+      },
+      "from": "2026-10-01T09:00:00Z",
+      "to": "2026-10-03T09:00:00Z",
+      "due": [
+        "2026-10-02T09:00:00Z",
+        "2026-10-03T09:00:00Z"
+      ]
+    },
+    {
+      "name": "weekly-sunday-utc",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 3600,
+        "dayOfWeek": 0
+      },
+      "from": "2026-10-03T01:00:00Z",
+      "to": "2026-10-11T01:00:00Z",
+      "due": [
+        "2026-10-04T01:00:00Z",
+        "2026-10-11T01:00:00Z"
+      ]
+    },
+    {
+      "name": "weekly-wednesday-utc",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 64800,
+        "dayOfWeek": 3
+      },
+      "from": "2026-10-06T18:00:00Z",
+      "to": "2026-10-14T18:00:00Z",
+      "due": [
+        "2026-10-07T18:00:00Z",
+        "2026-10-14T18:00:00Z"
+      ]
+    },
+    {
+      "name": "monthly-utc",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 45296,
+        "dayOfMonth": 15
+      },
+      "from": "2026-10-15T12:34:56Z",
+      "to": "2026-12-15T12:34:56Z",
+      "due": [
+        "2026-11-15T12:34:56Z",
+        "2026-12-15T12:34:56Z"
+      ]
+    },
+    {
+      "name": "every-second-across-epoch",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 1
+      },
+      "from": "1969-12-31T23:59:58Z",
+      "to": "1970-01-01T00:00:02Z",
+      "due": [
+        "1969-12-31T23:59:59Z",
+        "1970-01-01T00:00:00Z",
+        "1970-01-01T00:00:01Z",
+        "1970-01-01T00:00:02Z"
+      ]
+    },
+    {
+      "name": "epoch-day-interval",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 86400
+      },
+      "from": "1969-12-30T00:00:00Z",
+      "to": "1970-01-02T00:00:00Z",
+      "due": [
+        "1969-12-31T00:00:00Z",
+        "1970-01-01T00:00:00Z",
+        "1970-01-02T00:00:00Z"
+      ]
+    },
+    {
+      "name": "epoch-seven-day-interval",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 604800
+      },
+      "from": "1969-12-24T00:00:00Z",
+      "to": "1970-01-15T00:00:00Z",
+      "due": [
+        "1969-12-25T00:00:00Z",
+        "1970-01-01T00:00:00Z",
+        "1970-01-08T00:00:00Z",
+        "1970-01-15T00:00:00Z"
+      ]
+    },
+    {
+      "name": "fractional-end-excludes-next-second",
+      "trigger": {
+        "kind": "interval",
+        "everySeconds": 1
+      },
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T00:00:01.999Z",
+      "due": [
+        "1970-01-01T00:00:01Z"
+      ]
+    },
+    {
+      "name": "empty-window",
+      "trigger": {
+        "kind": "schedule",
+        "secondOfDay": 0
+      },
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T00:00:00Z",
+      "due": []
+    },
+    {
+      "name": "exact-occurrence-limit",
+      "triggers": [
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        }
+      ],
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T02:46:40Z",
+      "refused": false,
+      "count": 10000
+    },
+    {
+      "name": "one-over-occurrence-limit",
+      "triggers": [
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        }
+      ],
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T02:46:41Z",
+      "refused": true,
+      "count": 0
+    },
+    {
+      "name": "simultaneous-triggers-exact-shared-limit",
+      "triggers": [
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        },
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        }
+      ],
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T01:23:20Z",
+      "refused": false,
+      "count": 10000
+    },
+    {
+      "name": "simultaneous-triggers-exceed-shared-limit",
+      "triggers": [
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        },
+        {
+          "kind": "interval",
+          "everySeconds": 1
+        }
+      ],
+      "from": "1970-01-01T00:00:00Z",
+      "to": "1970-01-01T01:23:21Z",
+      "refused": true,
+      "count": 0
+    }
+  ]
+}
