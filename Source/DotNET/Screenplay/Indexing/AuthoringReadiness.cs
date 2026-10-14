@@ -287,5 +287,4 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             if (details.Contains(syntax.Path.Split('.')[0])) Unadmitted = true;
         }
     }
-
 }

@@ -12,7 +12,7 @@ internal static partial class SemanticModelValidator
             .SelectMany(trigger => trigger.Invokes).ToArray();
         foreach (var invocation in invocations)
         {
-            if (invocation is null || invocation.OnRefused.IsDefault || invocation.OnRefused.Any(branch => branch is null || branch.Produces.IsDefault || branch.Produces.Any(produced => produced is null)))
+            if (invocation?.OnRefused.IsDefault != false || invocation.OnRefused.Any(branch => branch?.Produces.IsDefault != false || branch.Produces.Any(produced => produced is null)))
             {
                 throw new InvalidSemanticContract("Refusal branch and production collections must be initialized and contain no null elements.");
             }
