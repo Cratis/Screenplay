@@ -1,7 +1,7 @@
 /* Copyright (c) Cratis. All rights reserved. */
 /* Licensed under the MIT license. See LICENSE file in the project root for full license information. */
 
-/* The page is dark (see applyDarkTheme), painted from the board's surface. Its height is set by the view. */
+/* The page follows the host's theme (see applyHostTheme), painted from the board's surface. Its height is set by the view. */
 html, body, #root {
     margin: 0;
     padding: 0;

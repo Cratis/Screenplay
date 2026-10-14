@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps/app-with-deps';
+import { applyHostTheme } from './applyHostTheme';
 import { documentsSignature } from './documentsSignature';
 import type { HostContainer } from './HostContainer';
 import { toVisualizedModel } from './toVisualizedModel';
@@ -43,10 +44,14 @@ export function useHost(): Host {
     useEffect(() => {
         app.ontoolinput = params => setToolArguments(params.arguments ?? {});
         app.ontoolresult = result => setModel(remember(toVisualizedModel(result)));
-        app.onhostcontextchanged = () => setContainer(app.getHostContext());
+        app.onhostcontextchanged = () => {
+            applyHostTheme(app.getHostContext()?.theme);
+            setContainer(app.getHostContext());
+        };
         app.onteardown = async () => ({});
         app.connect()
             .then(() => {
+                applyHostTheme(app.getHostContext()?.theme);
                 setContainer(app.getHostContext());
                 setConnected(true);
             })
