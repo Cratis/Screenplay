@@ -203,7 +203,7 @@ internal static partial class SemanticCaptureEvaluation
             ? SemanticValue.Text(match.To)
             : value;
 
-    sealed class Context(SemanticExecutionPlan plan, SemanticValue key, SemanticCommandOccurrence? occurrence, Func<SemanticFact, SemanticExecutionResult?> accept)
+    sealed class Context(SemanticExecutionPlan plan, SemanticValue key, SemanticCommandOccurrence? occurrence, Func<SemanticFact, SemanticExecutionResult?> accept, bool eventsSource = false)
     {
         readonly SemanticValueValidator _validator = new(
             plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
@@ -245,7 +245,7 @@ internal static partial class SemanticCaptureEvaluation
             }
 
             var present = record?.GetValueOrDefault(field) ?? enclosing?.GetValueOrDefault(field);
-            if (present is null or { Kind: SemanticCaptureFieldKind.Value }) return new(present?.Value, null);
+            if (present is null || present is { Kind: SemanticCaptureFieldKind.Value, Value: not (SemanticCompositeValue or SemanticArrayValue) }) return new(present?.Value, null);
             Unsupported ??= $"Capture field '{field}' is a {present.Kind} value the reference evaluator cannot use as a scalar.";
             return new(null, Unsupported);
         }
@@ -298,12 +298,22 @@ internal static partial class SemanticCaptureEvaluation
             SemanticCaptureConditionKind.Added => before is null && after is not null,
             SemanticCaptureConditionKind.Removed => before is not null && after is null,
             _ when after is null => false,
+            _ when eventsSource && before is null && when is { Kind: not SemanticCaptureConditionKind.Expression } first => FirstEventDoesNotModify(first, after),
             SemanticCaptureConditionKind.AnyChanged => when.Fields.Any(field => Unsupported is null && Changed(before, after, field)),
             SemanticCaptureConditionKind.AllChanged => when.Fields.All(field => Unsupported is null && Changed(before, after, field)),
             SemanticCaptureConditionKind.Transition => before is not null && Transition(before, after, when),
             SemanticCaptureConditionKind.Expression => ExpressionHolds(when.Expression, after),
             _ => throw new InvalidSemanticContract($"Capture condition '{when.Kind}' is unknown.")
         };
+
+        bool FirstEventDoesNotModify(SemanticCaptureCondition when, Dictionary<string, SemanticCaptureField> after)
+        {
+            foreach (var field in when.Fields)
+            {
+                if (Read(after, field).Unsupported is not null) return false;
+            }
+            return false;
+        }
 
         bool ExpressionHolds(string? text, Dictionary<string, SemanticCaptureField> after)
         {

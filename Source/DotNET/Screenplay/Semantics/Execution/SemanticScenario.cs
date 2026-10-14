@@ -44,6 +44,12 @@ internal static class SemanticScenario
         SemanticExecutionResponse? response = null;
         try
         {
+            var recordCapture = expected.GivenCaptures.Select(given => plan.Captures[given.Capture]).FirstOrDefault(capture => capture.EventsSource is not null);
+            if (recordCapture is not null)
+            {
+                return new SemanticUnsupported(loop.World, SemanticExecutionCapability.Specification, $"Capture '{recordCapture.Name}' consumes public events; present given events rather than capture records.");
+            }
+            if (loop.FoldCaptures() is { } historyFailure) return historyFailure;
             switch (expected)
             {
                 case { When: { } when }:
@@ -73,13 +79,13 @@ internal static class SemanticScenario
                     failure = PerformAutomaticAction(plan, loop, expected, clock);
                     break;
             }
+            failure ??= loop.Settle();
         }
         catch (InvalidSemanticContract exception)
         {
             return new SemanticRejected(loop.World, SemanticRejectionCategory.Contract, null, exception.Message);
         }
 
-        failure ??= loop.Settle();
         if (failure is not null)
         {
             return failure;
