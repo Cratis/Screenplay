@@ -44,9 +44,6 @@ sealed class ModelRootDirectory
         }
     }
 
-    // Bootstrap once; subsequent moves retain this opaque key through workspace serialization.
-    internal static string DocumentKey(string path) => ModelRootDocumentKeys.For(PortablePlayPath.Parse(path));
-
     internal static void CheckDocuments(ImmutableArray<WorkspaceDocument> documents, bool allowEmpty = false)
     {
         if (documents.IsDefault || (!allowEmpty && documents.IsEmpty) || documents.Length > MaximumFiles || documents.Sum(document => document.Bytes.Length) > MaximumBytes)
