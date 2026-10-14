@@ -59,7 +59,13 @@ public sealed record SemanticApplicationTrigger(SemanticId Id, string Name, Immu
 /// </summary>
 /// <param name="Command">The invoked command semantic identity.</param>
 /// <param name="Mappings">The command values, from the occurrence that set the reaction off.</param>
-public sealed record SemanticInvocation(SemanticId Command, ImmutableArray<SemanticPropertyMapping> Mappings);
+public sealed record SemanticInvocation(SemanticId Command, ImmutableArray<SemanticPropertyMapping> Mappings)
+{
+    /// <summary>
+    /// Gets ordered refusal branches; the first matching branch handles the refusal.
+    /// </summary>
+    public ImmutableArray<SemanticInvocationRefusal> OnRefused { get; init; } = [];
+}
 
 /// <summary>
 /// Represents one trigger of a reaction and what that occurrence sets off.

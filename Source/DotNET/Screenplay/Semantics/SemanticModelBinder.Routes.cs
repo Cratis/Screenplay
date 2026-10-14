@@ -144,7 +144,7 @@ public sealed partial class SemanticModelBinder
             var slices = application.Modules.SelectMany(module => module.Features).SelectMany(Slices).ToArray();
             var commands = slices.SelectMany(slice => slice.Commands).ToArray();
             var otherProductions = slices.SelectMany(slice => slice.Reactions).SelectMany(reaction => reaction.Triggers)
-                .SelectMany(trigger => trigger.Produces).Select(produced => produced.EventContract)
+                .SelectMany(trigger => trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces))).Select(produced => produced.EventContract)
                 .Concat(slices.SelectMany(slice => slice.Captures).SelectMany(capture => capture.Appends
                     .Concat(capture.Children.SelectMany(child => child.Appends)).Concat(capture.Nested.SelectMany(nested => nested.Appends)))
                     .Select(append => append.EventContract)).ToHashSet();

@@ -287,7 +287,18 @@ internal sealed partial class SemanticCommandExecution(
     {
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (RejectReusedGeneratedSource() is { } reused) return reused;
-        if (SemanticConstraintEnforcement.FindViolation(plan, world, _facts.ToImmutable()) is { } violated)
+        if (request.CollectRefusalDetails)
+        {
+            var violations = SemanticConstraintEnforcement.FindViolations(plan, world, _facts.ToImmutable()).ToArray();
+            if (violations.Length > 0)
+            {
+                return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Constraint, violations[0].Name, SemanticConstraintEnforcement.MessageFor(violations[0])) with
+                {
+                    ConstraintFailures = [.. violations.Select(constraint => new SemanticConstraintFailure(constraint.Name, SemanticConstraintEnforcement.MessageFor(constraint)))]
+                };
+            }
+        }
+        else if (SemanticConstraintEnforcement.FindViolation(plan, world, _facts.ToImmutable()) is { } violated)
         {
             return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
         }

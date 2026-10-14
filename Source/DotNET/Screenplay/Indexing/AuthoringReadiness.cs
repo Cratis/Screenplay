@@ -82,25 +82,6 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
 
     static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
 
-    static bool ReactionRefusals(SyntaxNode node)
-    {
-        var walker = new RefusalReadinessWalker();
-        switch (node)
-        {
-            case ApplicationSyntax application: walker.VisitApplication(application); break;
-            case SliceSyntax slice: walker.VisitSlice(slice); break;
-            case ReactionSyntax reaction: walker.VisitReaction(reaction); break;
-            case ReactionTriggerSyntax trigger: walker.VisitReactionTrigger(trigger); break;
-            case InvokesSyntax invocation: walker.VisitInvokes(invocation); break;
-            case CommandSyntax command: walker.VisitCommand(command); break;
-            case SpecificationSyntax specification: walker.VisitSpecification(specification); break;
-            case SpecificationExampleSyntax example: walker.VisitSpecificationExample(example); break;
-            default: walker.VisitNode(node); break;
-        }
-
-        return walker.Unadmitted;
-    }
-
     bool GeneratedConceptRules(CommandSyntax command) => command.Properties
         .Where(property => property.IsGenerated)
         .SelectMany(property => application.Concepts.Where(concept => concept.Name == property.Type.Name))
@@ -152,7 +133,6 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         };
 
         return [.. LocalFeatures().Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
-            .Concat(Feature(ReactionRefusals(node), "reaction refusal branches and $refusal values (#433)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
@@ -308,13 +288,4 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         }
     }
 
-    sealed class RefusalReadinessWalker : ScreenplaySyntaxWalker
-    {
-        internal bool Unadmitted { get; private set; }
-
-        public override void VisitNode(SyntaxNode node)
-        {
-            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax) Unadmitted = true;
-        }
-    }
 }

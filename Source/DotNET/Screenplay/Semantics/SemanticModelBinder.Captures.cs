@@ -229,7 +229,7 @@ public sealed partial class SemanticModelBinder
             {
                 foreach (var trigger in reaction.Triggers)
                 {
-                    foreach (var produced in (trigger.Produces ?? []).Where(produced => ShortName(produced.Event) == eventName))
+                    foreach (var produced in (trigger.Produces ?? []).Concat((trigger.Invokes ?? []).SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces)).Where(produced => ShortName(produced.Event) == eventName))
                     {
                         var named = (trigger.Source as NamedTriggerSourceSyntax)?.Name;
                         switch (produced.For)

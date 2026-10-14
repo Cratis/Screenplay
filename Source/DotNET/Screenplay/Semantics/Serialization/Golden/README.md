@@ -40,6 +40,8 @@ The full vectors are built from these source models:
 
 `full-esm-v17.json` pins explicit no-event assertions and recovery redelivery under 0074. `canonical_serialization_golden_vectors.CreateSemanticModelV17()` adds both specification members to the full v16 model, retaining stored event names and every earlier contract. `RecoverySpecificationsCorpus.V17` pins source-backed bytes, revisions and reference outcomes across equivalent forms. Existing v1–v16 golden bytes are unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=17`, then rebuild and rerun without the variable.
 
+`full-esm-v19.json` pins invocation refusal branches and String refusal expressions under 0030. `canonical_serialization_golden_vectors.CreateSemanticModelV19()` adds ordered selectors, a named constraint, acknowledgement and all three refusal members to the full v17 model. `InvocationRefusalsCorpus.V19` pins source-backed bytes, revision, branch cascades and acknowledgement with redelivery/no-event assertions across equivalent source forms. Prior golden and corpus bytes stay unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=19`, then rebuild and rerun without the variable.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |

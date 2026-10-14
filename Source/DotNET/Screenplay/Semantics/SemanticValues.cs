@@ -141,7 +141,12 @@ public enum SemanticExpressionKind
     /// <summary>
     /// A typed value supplied by the current event occurrence context, reserved for semantic/schema v2.
     /// </summary>
-    EventContext = 2
+    EventContext = 2,
+
+    /// <summary>
+    /// A String value supplied by a refused invocation inside a refusal branch mapping.
+    /// </summary>
+    Refusal = 3
 }
 
 /// <summary>
