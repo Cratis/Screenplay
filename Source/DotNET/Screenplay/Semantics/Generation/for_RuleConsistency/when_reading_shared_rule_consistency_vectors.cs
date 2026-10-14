@@ -50,12 +50,20 @@ public class when_reading_shared_rule_consistency_vectors
     static SemanticValidationRule Rule(JsonElement rule)
     {
         SemanticValue? operand = null;
-        if (rule.TryGetProperty("operand", out var value)) operand = value.ValueKind == JsonValueKind.Number ? new SemanticNumberValue(value.GetDecimal()) : new SemanticTextValue(value.GetString()!);
+        if (rule.TryGetProperty("operand", out var value)) operand = value.ValueKind == JsonValueKind.Number ? new SemanticNumberValue(value.GetDecimal()) : new SemanticTextValue(Operand(rule, value.GetString()!));
 
         return new(default, Enum.Parse<SemanticValidationRuleKind>(rule.GetProperty("kind").GetString()!), operand, null)
         {
             Severity = Enum.Parse<SemanticValidationSeverity>(Text(rule, "severity") ?? "Error")
         };
+    }
+
+    static string Operand(JsonElement rule, string text)
+    {
+        var repeated = string.Concat(Enumerable.Repeat(text, Number(rule, "operandRepeat") ?? 1));
+        var depth = Number(rule, "groupDepth") ?? 0;
+
+        return (Text(rule, "operandPrefix") ?? string.Empty) + new string('(', depth) + repeated + new string(')', depth) + (Text(rule, "operandSuffix") ?? string.Empty);
     }
 
     static string? Text(JsonElement value, string property) => value.TryGetProperty(property, out var text) ? text.GetString() : null;

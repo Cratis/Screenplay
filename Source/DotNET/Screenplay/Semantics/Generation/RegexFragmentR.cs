@@ -9,6 +9,7 @@ internal sealed partial class RegexFragmentR(string pattern, int length)
 
     internal RegexExpression Parse()
     {
+        ValidateNesting();
         if (pattern.Any(character => character > 0x7f)) throw new OutsideRegexFragment("non-ASCII");
         var expression = Alternatives(true);
         if (_index != pattern.Length) throw new OutsideRegexFragment("unmatched group");

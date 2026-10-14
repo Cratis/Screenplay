@@ -8,7 +8,9 @@ internal sealed record RegexExpression(string Kind, string Characters = "", Rege
     internal static RegexExpression Empty => new("empty");
     internal static RegexExpression None => new("none");
     internal static RegexExpression Any => new("characters", RegexCharacters.Printable);
-    internal int MinimumLength => Kind switch
+
+    // Child nodes are immutable and already constructed, so this is constant-time even for a flat literal.
+    internal int MinimumLength { get; } = Kind switch
     {
         "empty" => 0,
         "none" => int.MaxValue,

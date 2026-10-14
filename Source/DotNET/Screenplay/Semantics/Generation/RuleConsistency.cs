@@ -73,6 +73,10 @@ public static class RuleConsistency
         {
             reason = error.Message;
         }
+        catch (RegexStateBudgetExceeded error)
+        {
+            return RuleConsistencyResult.Unproven(error.Message);
+        }
 
         Regex runtime;
         try

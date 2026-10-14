@@ -107,7 +107,7 @@ Fragment R accepts ASCII literals and syntax escapes; `\\t`, `\\n`, `\\r`, `\\f`
 
 ### Proof budgets
 
-Rule consistency bounds construction before checking containment: at most 2,048 Glushkov character positions after repeat unrolling (not counting the synthetic start position), then at most 10,000 distinct DFA states reached in the product walk. Exceeding either limit makes the rule Unproven, not Proven. A containment proof is also checked against the runtime regex on the all-minimum, all-maximum and alternating samples: a non-match refutes it, and a timeout makes it Unproven (`runtime regex timed out`). Passing samples alone prove nothing.
+Rule consistency bounds construction before checking containment: at most 2,048 Glushkov character positions after repeat unrolling (not counting the synthetic start position), then at most 10,000 distinct DFA states reached in the product walk. Flat concatenations and alternatives use stack-safe construction. Group nesting is separately limited to 64 simultaneously open groups outside escapes and character classes, checked before recursive parsing or runtime regex construction; exceeding it reports `group nesting budget exceeded`. Exceeding a construction limit makes the rule Unproven, not Proven. A containment proof is also checked against the runtime regex on the all-minimum, all-maximum and alternating samples: a non-match refutes it, and a timeout makes it Unproven (`runtime regex timed out`). Passing samples alone prove nothing.
 
 ## Modifiers
 
