@@ -56,7 +56,7 @@ public sealed partial class SemanticEvaluator
 
         var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
         var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
-        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
+        foreach (var property in command.Properties)
         {
             if (PredicateInType(property.Type, concepts, types, []) is { } name)
             {
