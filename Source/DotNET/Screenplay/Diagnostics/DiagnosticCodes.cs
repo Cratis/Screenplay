@@ -3195,4 +3195,9 @@ public static class DiagnosticCodes
     /// A generated concept's rule cannot be proven for every generated value.
     /// </summary>
     public const string UnprovenGeneratedConceptRule = "PLAY0689";
+
+    /// <summary>
+    /// A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.
+    /// </summary>
+    public const string ReducerIdentityMismatch = "PLAY0690";
 }

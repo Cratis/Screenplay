@@ -21,7 +21,7 @@ describe('when forwarding shared parser diagnostics', () => {
 });
 
 const nativeOnly = ['PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
-    'PLAY0345', 'PLAY0346', 'PLAY0347', 'PLAY0348', 'PLAY0540', 'PLAY0541', 'PLAY0542', 'PLAY0544', 'PLAY0546'];
+    'PLAY0345', 'PLAY0346', 'PLAY0347', 'PLAY0348', 'PLAY0540', 'PLAY0541', 'PLAY0542', 'PLAY0544', 'PLAY0546', 'PLAY0666', 'PLAY0690'];
 
 describe('when receiving C#-only diagnostics from a Monaco host', () => {
     it.each(nativeOnly)('should preserve supplied %s without synthesizing it', code => {
