@@ -91,6 +91,10 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
     if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
     if (specification.whenCapture !== null) return { name: `capture ${specification.whenCapture.capture}`, values: valuesOf(specification.whenCapture.record) };
     if (specification.whenQuery !== null) return { name: `query ${specification.whenQuery.query}`, values: valuesOf(specification.whenQuery.arguments) };
+    const queries = specification.thenQueries ?? [];
+    if (specification.thenErrors.length === 1 && queries.length === 1 && queries[0].results.length === 0) {
+        return { name: `query ${queries[0].query}`, values: valuesOf(queries[0].arguments) };
+    }
     return undefined;
 }
 

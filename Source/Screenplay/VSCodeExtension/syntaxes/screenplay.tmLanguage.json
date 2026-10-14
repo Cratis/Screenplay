@@ -368,6 +368,14 @@
                     }
                 },
                 {
+                    "comment": "Query assertions and validation rejection outcomes in specifications.",
+                    "match": "^\\s*(then)\\s+(query|error)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "comment": "A specification's clock, capture, trigger and query steps.",
                     "match": "^\\s*(given|when)\\s+(clock|capture|trigger|query)\\b",
                     "captures": {

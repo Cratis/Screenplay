@@ -22,6 +22,7 @@
         { "name": "guarded-interactions", "path": "Source/Screenplay/Compiler/Conformance/guarded-interactions.play" },
         { "name": "guarded-actions", "path": "Source/Screenplay/Compiler/Conformance/guarded-actions.play" },
         { "name": "reaction-refusals-redelivery", "path": "Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play" },
+        { "name": "query-validation", "path": "Source/Screenplay/Compiler/Conformance/query-validation.play" },
         { "name": "no-events", "path": "Source/Screenplay/Compiler/Conformance/no-events.play" },
         { "name": "policy-negation", "path": "Source/Screenplay/Compiler/Conformance/policy-negation.play" },
         { "name": "declared-dependencies", "path": "Source/Screenplay/Compiler/Conformance/declared-dependencies.play" },
