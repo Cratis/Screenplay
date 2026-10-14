@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Semantics.Generation;
 
 namespace Cratis.Screenplay.Semantics.Execution;
 
@@ -11,10 +12,20 @@ internal static partial class SemanticGeneratedFixture
     const string Base64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     const string Base32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-    internal static bool Matches(SemanticConcept concept, SemanticValue value)
+    internal static bool Matches(SemanticConcept concept, SemanticValue value, DateTimeOffset? instant = null)
     {
-        if (value is not SemanticTextValue text) return false;
         var generation = concept.Generation ?? new SemanticGeneration("uuid");
+        if (generation.Kind == "random")
+        {
+            return value is SemanticNumberValue number && decimal.Truncate(number.Value) == number.Value &&
+                number.Value >= generation.Minimum && number.Value <= generation.Maximum;
+        }
+        if (value is not SemanticTextValue text) return false;
+        if (generation.Kind == "implementation") return true;
+        if (generation.Kind == "pattern")
+        {
+            return GenerationPatternSupport.Matches(GenerationPattern.Parse(generation.Pattern!, generation.Checksum), text.Value, instant);
+        }
         var prefix = generation.Prefix ?? string.Empty;
         if (generation.Kind == "typeid" && prefix.Length > 0) prefix += "_";
         if (!text.Value.StartsWith(prefix, StringComparison.Ordinal)) return false;

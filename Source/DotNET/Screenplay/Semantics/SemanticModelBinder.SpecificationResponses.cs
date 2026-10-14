@@ -57,6 +57,10 @@ public sealed partial class SemanticModelBinder
         SemanticValue? BindGeneratedValue(ExpressionSyntax expression, SemanticProperty property)
         {
             var concept = syntax.Concepts.SingleOrDefault(value => _concepts[value.Name].Id == property.Type.Target);
+            if (concept?.Type == "Int")
+            {
+                return BindConcreteValue(expression, property.Type, "generated fixture or return expectation", true);
+            }
             if (concept?.Type == "String")
             {
                 if (expression is LiteralExpressionSyntax { Value: string generated }) return SemanticValue.Text(generated);
