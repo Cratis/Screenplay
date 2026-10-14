@@ -111,6 +111,30 @@ the modules, features, slices, commands, events, read models, screens and reacti
 the proposal adds and removes. Nothing is written: review and `apply` the proposal
 as described in [Edit a model](edit.md#review-and-apply).
 
+### Read the markers
+
+The board marks what the proposal changes, so you do not have to compare the two
+views by eye. Each marked module, feature, slice, command, event, read model and
+query carries a badge with an icon and a word: **Added**, **Changed** or **Removed**.
+Screen readers announce the same text, such as "Added command: ReturnBook", so
+the markers do not rely on color.
+
+- **Proposed** marks what the proposal adds and changes.
+- **Current** marks what the proposal removes. A removed element is not part of the
+  proposed application, so it is only drawn, with a **Removed** badge, on *Current*.
+- An element is **Changed** when its own content differs, such as the fields of a
+  command or event. Its parent slice, feature and module are not marked for it.
+  Reordering, collapsing and status changes are not changes.
+
+The toolbar says how much each view marks, for example **Proposed · 3 added,
+1 changed** and **Current · 2 removed**. A view with nothing to mark keeps its plain
+name.
+
+The board opens scrolled to the first marked element in board order, and scrolls
+there again each time you switch between *Current* and *Proposed*, so a change in a
+later module is not off-screen. Without a proposal or sketch nothing is marked and
+the board opens as before.
+
 ## Sketch a what-if
 
 To see how a piece of functionality could look before shaping it into a proposal,
@@ -137,7 +161,8 @@ that document for the view only:
 
 Each document replaces the one at its path, or is added when there is none. The
 sketch is drawn over the documents on disk exactly as a proposal is, with the same
-*Current* and *Proposed* switch and the same summary. It is never validated as a
+*Current* and *Proposed* switch, the same summary and the same
+[markers](#read-the-markers). It is never validated as a
 proposal, never kept, and never written. A sketch that does not compile is drawn
 as far as it can be read, with the number of errors shown on the board. Pass
 either `proposalId` or `sketch`, not both.

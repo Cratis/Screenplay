@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView } from '@cratis/screenplay-views';
 import '@cratis/screenplay-views/dependency-map.css';
+import { boardChangeLabel } from './boardChangeLabel';
+import { boardChanges } from './boardChanges';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { boardHeight } from './boardHeight';
@@ -23,6 +25,7 @@ export const BoardApp = () => {
     const [attempt, setAttempt] = useState(0);
     const [mapAttempt, setMapAttempt] = useState(0);
     const boardHost = useRef<HTMLDivElement>(null);
+    const boardHandle = useRef<EventModelBoardHandle>(null);
     const focusAfterSwitch = useRef(false);
     const changeView = (next: DependencyView) => {
         if (next === view) return;
@@ -53,6 +56,20 @@ export const BoardApp = () => {
     }, [host.model]);
     const compiled = boards === undefined || boards instanceof Error ? undefined : boards;
     const board = compiled && (shown === ShownModel.Proposed && compiled.proposed ? compiled.proposed : compiled.current);
+    // What the proposal adds, changes and removes, marked on the board that shows it. Without a proposal nothing is marked.
+    const changeSets = useMemo(() => compiled?.proposed ? boardChanges(compiled.current.document, compiled.proposed.document) : undefined, [compiled]);
+    const shownChanges = changeSets && (shown === ShownModel.Proposed ? changeSets.proposed : changeSets.current);
+    const first = shownChanges?.first;
+    const shownBefore = useRef(shown);
+    useEffect(() => {
+        // The board opens at the first change itself; a switch between Current and Proposed swaps the document
+        // under it, so go to the first change of the one now shown once it has been drawn.
+        if (shownBefore.current === shown) return;
+        shownBefore.current = shown;
+        if (first === undefined) return;
+        const frame = requestAnimationFrame(() => void boardHandle.current?.scrollTo(first, { animate: true }));
+        return () => cancelAnimationFrame(frame);
+    }, [shown, first]);
     const model = useMemo(() => {
         if (board === undefined) {
             return undefined;
@@ -76,6 +93,8 @@ export const BoardApp = () => {
     const tools = (
         <BoardTools
             shown={compiled?.proposed ? shown : undefined}
+            currentLabel={changeSets && boardChangeLabel('Current', changeSets.current)}
+            proposedLabel={changeSets && boardChangeLabel('Proposed', changeSets.proposed)}
             onShow={setShown}
             view={view}
             onView={changeView}
@@ -92,7 +111,7 @@ export const BoardApp = () => {
                         <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
                     </> : (
                         <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
-                            <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                            <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                         </BoardErrorBoundary>
                     )}
                 </div>
