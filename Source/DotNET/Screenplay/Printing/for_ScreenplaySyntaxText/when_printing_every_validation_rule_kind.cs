@@ -14,7 +14,7 @@ public class when_printing_every_validation_rule_kind : Specification
     string[] _printed = [];
 
     void Establish() => _rules = [.. Enum.GetValues<ValidationRuleKind>()
-        .Select(kind => new ValidationRuleSyntax("amount", kind, new LiteralExpressionSyntax(42d, SourceLocation.Start), null, SourceLocation.Start))];
+        .Select(kind => new ValidationRuleSyntax("amount", kind, new LiteralExpressionSyntax(kind == ValidationRuleKind.Checksum ? "luhn" : 42d, SourceLocation.Start), null, SourceLocation.Start))];
 
     void Because() => _error = Catch.Exception(() => _printed = [.. _rules.Select(ScreenplaySyntaxText.ValidationRule)]);
 

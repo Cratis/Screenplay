@@ -251,6 +251,11 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
         }
         return { kind: 'DeclarativeValidateSyntax', rules, requirements, location: locationOf(line) };
     }
+    if (owner === 'concept' && firstWord(line.content.substring('validate'.length).trimStart()) === 'checksum') {
+        const ruleLine = { ...line, content: `value ${line.content.substring('validate'.length).trimStart()}` };
+        const rule = parseValidationRule(context, ruleLine, owner);
+        return rule === undefined ? undefined : { kind: 'DeclarativeValidateSyntax', rules: [rule], requirements: [], location: locationOf(line) };
+    }
     if (line.content === 'validate csharp') {
         const code = parseCode(context.valueContext, { ...line, content: 'csharp' });
         if (code === null) context.skipOpaqueBlock(line.indent);
@@ -262,7 +267,9 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
 }
 
 function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'command' | 'concept'): ValidationRuleSyntax | undefined {
-    const valueContext = owner === 'concept' ? context.valueContext : context;
+    // Checksum is a new declaration, not enrichment of a formerly opaque Legacy rule.
+    const checksum = firstWord(rulePattern.exec(line.content)?.[2] ?? '') === 'checksum';
+    const valueContext = owner === 'concept' && !checksum ? context.valueContext : context;
     const { content: withSeverity, message } = splitMessage(line.content);
     const severity = splitSeverity(valueContext, line, withSeverity);
     if (severity === undefined) {
@@ -339,6 +346,14 @@ function splitSeverity(context: ParserContext, line: SourceLine, text: string): 
 function parseRule(context: ParserContext, rule: string, line: SourceLine): { kind: ValidationRuleKind; value: ExpressionSyntax | null } | undefined {
     if (rule === 'not empty') {
         return { kind: 'NotEmpty', value: null };
+    }
+    if (firstWord(rule) === 'checksum') {
+        const algorithm = rule.substring('checksum'.length).trim();
+        if (algorithm !== 'luhn' && algorithm !== 'mod11' && algorithm !== 'mod97') {
+            context.error(DiagnosticCodes.InvalidGenerationArgument, 'Checksum validation requires luhn, mod11 or mod97.', locationOf(line));
+            return undefined;
+        }
+        return { kind: 'Checksum', value: { kind: 'LiteralExpressionSyntax', value: algorithm, location: locationOf(line) } };
     }
     const operand = operandPattern.exec(rule);
     if (operand === null) {

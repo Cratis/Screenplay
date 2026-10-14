@@ -133,6 +133,10 @@ internal static partial class SemanticModelValidator
         {
             RejectNull(validation, "validation rule");
             ValidateEnum(validation.Kind, SemanticValidationRuleKind.Unknown, "validation rule kind");
+            if (validation.Kind == SemanticValidationRuleKind.Checksum)
+            {
+                throw new InvalidSemanticContract("Checksum validation awaits phase-3 ESM admission (#616).");
+            }
             ValidateEnum(validation.Severity, (SemanticValidationSeverity)(-1), "validation severity");
             if (isConcept && validation.Property.IsSet)
             {

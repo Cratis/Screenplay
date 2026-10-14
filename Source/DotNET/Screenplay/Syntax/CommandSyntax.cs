@@ -79,7 +79,12 @@ public enum ValidationRuleKind
     /// <summary>
     /// The value must not equal the operand.
     /// </summary>
-    NotEqual = 13
+    NotEqual = 13,
+
+    /// <summary>
+    /// The text value must end in the exact check digits for the declared checksum algorithm.
+    /// </summary>
+    Checksum = 14
 }
 
 /// <summary>

@@ -20,6 +20,10 @@
         { "name": "Non-execute continuation inherits response scope", "validate": true, "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        value String", "        returns value", "      screen Entry", "        on submit", "          execute C", "            on failure", "              confirm \"Continue?\"", "                on success", "                  notify error value"], "diagnostics": ["PLAY0685@13"] },
         { "name": "Returned input still cannot target generated property", "validate": true, "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id generated", "        returns @id", "      command D", "        id Id generated", "      screen Entry", "        on submit", "          execute C", "            on success", "              execute D", "                with id from id"], "diagnostics": ["PLAY0485@15"] },
 
+        { "name": "Checksum validation needs an algorithm", "source": ["concept InvoiceRef : String", "  validate checksum"], "diagnostics": ["PLAY0673@2"] },
+        { "name": "Checksum validation algorithm is closed", "source": ["concept InvoiceRef : String", "  validate", "    checksum crc32"], "diagnostics": ["PLAY0673@3"] },
+        { "name": "Checksum validation algorithm is unquoted", "source": ["concept InvoiceRef : String", "  validate checksum \"luhn\""], "diagnostics": ["PLAY0673@2"] },
+        { "name": "Checksum validation does not accept extra operands", "source": ["concept InvoiceRef : String", "  validate", "    checksum mod97 extra"], "diagnostics": ["PLAY0673@3"] },
         { "name": "Generation strategy is closed", "source": ["concept C : String", "  generate unknown"], "diagnostics": ["PLAY0672@2"] },
         { "name": "Generation needs a strategy", "source": ["concept C : String", "  generate"], "diagnostics": ["PLAY0673@2"] },
         { "name": "TypeID needs a prefix argument", "source": ["concept C : String", "  generate typeid"], "diagnostics": ["PLAY0673@2"] },

@@ -32,6 +32,7 @@ internal static class FiniteGenerationRules
             (SemanticValidationRuleKind.Equal, SemanticTextValue text) when !approximate => FinitePatternContainment.Check(pattern, Literal(text.Value)),
             (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) when !approximate => FinitePatternContainment.Check(pattern, Literal(text.Value), complement: true),
             (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(pattern, text.Value, assessmentDate),
+            (SemanticValidationRuleKind.Checksum, SemanticTextValue algorithm) => CheckChecksum(pattern, algorithm.Value),
             _ => RuleConsistencyResult.Unproven(approximate ? ApproximateReason : "unsupported rule")
         };
     }

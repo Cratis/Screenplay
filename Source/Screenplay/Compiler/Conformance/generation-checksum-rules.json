@@ -1,0 +1,30 @@
+{
+  "syntax": [
+    { "directive": "validate checksum luhn", "algorithm": "luhn", "message": null, "severity": "Error" },
+    { "directive": "validate checksum mod11", "algorithm": "mod11", "message": null, "severity": "Error" },
+    { "directive": "validate checksum mod97", "algorithm": "mod97", "message": null, "severity": "Error" },
+    { "directive": "validate\n    checksum luhn", "algorithm": "luhn", "message": null, "severity": "Error" },
+    { "directive": "validate\n    checksum mod11", "algorithm": "mod11", "message": null, "severity": "Error" },
+    { "directive": "validate\n    checksum mod97", "algorithm": "mod97", "message": null, "severity": "Error" },
+    { "directive": "validate checksum luhn severity warning message \"Check the invoice reference\"", "algorithm": "luhn", "message": "Check the invoice reference", "severity": "Warning" },
+    { "directive": "validate\n    checksum mod97 severity information message \"Check the invoice reference\"", "algorithm": "mod97", "message": "Check the invoice reference", "severity": "Information" }
+  ],
+  "invalid": [
+    "validate checksum",
+    "validate checksum Luhn",
+    "validate checksum crc32",
+    "validate checksum luhn mod11",
+    "validate checksum \"luhn\"",
+    "validate\n    checksum",
+    "validate\n    checksum mod98",
+    "validate\n    checksum mod97 extra"
+  ],
+  "proof": [
+    { "pattern": "#", "checksum": "luhn", "algorithm": "luhn", "status": "Proven" },
+    { "pattern": "#", "checksum": "mod11", "algorithm": "mod11", "status": "Proven" },
+    { "pattern": "#", "checksum": "mod97", "algorithm": "mod97", "status": "Proven" },
+    { "pattern": "#", "checksum": "luhn", "algorithm": "mod11", "status": "Unproven" },
+    { "pattern": "#", "checksum": null, "algorithm": "luhn", "status": "Unproven" },
+    { "pattern": "{yyyy}-#{2}", "checksum": "mod97", "algorithm": "mod97", "status": "Proven" }
+  ]
+}

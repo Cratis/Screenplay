@@ -1,0 +1,151 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "checksum": "luhn",
+        "pattern": "INV-{yyyy}-#{7}",
+        "strategy": "pattern"
+      },
+      "name": "InvoiceRef",
+      "type": "String",
+      "validations": [
+        {
+          "kind": "DeclarativeValidateSyntax",
+          "requirements": [],
+          "rules": [
+            {
+              "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
+              "message": null,
+              "property": "value",
+              "rule": "Checksum",
+              "severity": "Error",
+              "value": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "luhn"
+              }
+            }
+          ]
+        }
+      ],
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ShipmentRef",
+      "type": "String",
+      "validations": [
+        {
+          "kind": "DeclarativeValidateSyntax",
+          "requirements": [],
+          "rules": [
+            {
+              "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
+              "message": "Check the shipment reference",
+              "property": "value",
+              "rule": "Checksum",
+              "severity": "Error",
+              "value": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "mod11"
+              }
+            },
+            {
+              "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
+              "message": null,
+              "property": "value",
+              "rule": "NotEmpty",
+              "severity": "Error",
+              "value": null
+            }
+          ]
+        }
+      ],
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ReturnRef",
+      "type": "String",
+      "validations": [
+        {
+          "kind": "DeclarativeValidateSyntax",
+          "requirements": [],
+          "rules": [
+            {
+              "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
+              "message": "Check the return reference",
+              "property": "value",
+              "rule": "Checksum",
+              "severity": "Warning",
+              "value": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "mod97"
+              }
+            }
+          ]
+        }
+      ],
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "StockRef",
+      "type": "String",
+      "validations": [
+        {
+          "kind": "DeclarativeValidateSyntax",
+          "requirements": [],
+          "rules": [
+            {
+              "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
+              "message": "Check the stock reference",
+              "property": "value",
+              "rule": "Checksum",
+              "severity": "Information",
+              "value": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "luhn"
+              }
+            }
+          ]
+        }
+      ],
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

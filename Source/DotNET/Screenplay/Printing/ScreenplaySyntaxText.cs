@@ -456,6 +456,7 @@ internal static partial class ScreenplaySyntaxText
             ValidationRuleKind.AllGreaterThan => $"all > {value}",
             ValidationRuleKind.AllGreaterThanOrEqual => $"all >= {value}",
             ValidationRuleKind.Rule => $"rule {value}",
+            ValidationRuleKind.Checksum when rule.Value is LiteralExpressionSyntax { Value: string algorithm } => $"checksum {algorithm}",
             _ => throw new UnsupportedSyntaxForPrinting("validation rule kind", rule.Rule.ToString())
         };
     }
