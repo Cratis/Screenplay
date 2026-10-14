@@ -371,7 +371,7 @@ public class when_freezing_legacy_source_syntax_bytes
         const string legacySync = "LegacyInvoiceSync";
         const string paymentTranslation = "MarkInvoicePaidFromLegacyPayment";
         var translation = feature.Slices.FirstOrDefault(slice => slice.Name == paymentTranslation);
-        var slices = feature.Slices.Where(slice => slice.Name != paymentTranslation).Select(slice => slice with { Direction = null });
+        var slices = feature.Slices.Where(slice => slice.Name != paymentTranslation).Select(slice => string.Equals(slice.Name, "PaymentProviderSync", StringComparison.Ordinal) || string.Equals(slice.Name, legacySync, StringComparison.Ordinal) ? slice with { Direction = null } : slice);
         if (translation is not null)
         {
             slices = slices.Select(slice => slice.Name == legacySync ? RestoreLegacyPaymentTranslation(slice, translation) : slice);

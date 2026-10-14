@@ -7,7 +7,7 @@ jump to the slice that uses it.
 
 ```text
 Invoicing/
-  invoicing.play         the whole application - 31 slices in one module
+  invoicing.play         the whole application - 33 slices in one module
   invoicing.en.strings   English text for every $strings key the document references
   invoicing.nb.strings   the same keys in Norwegian
 ```
