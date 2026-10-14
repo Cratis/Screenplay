@@ -61,3 +61,16 @@ describe('when the host theme changes from light back to dark', () => {
         root().classList.contains('cratis-light').should.be.false;
     });
 });
+
+describe('when the host gives a theme the board does not know', () => {
+    beforeEach(() => {
+        applyHostTheme('light');
+        applyHostTheme('high-contrast');
+    });
+
+    it('should set the dark color scheme', () => root().style.colorScheme.should.equal('dark'));
+    it('should leave only the dark mark', () => {
+        root().classList.contains('cratis-dark').should.be.true;
+        root().classList.contains('cratis-light').should.be.false;
+    });
+});
