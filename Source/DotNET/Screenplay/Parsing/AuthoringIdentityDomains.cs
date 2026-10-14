@@ -10,15 +10,15 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal sealed class AuthoringIdentityDomains(ApplicationSyntax application, ConsistencyDeclarations declarations)
 {
-    readonly (Declaration Declaration, string Kind)[] _types = [.. application.Concepts.Select(concept => (Named(concept.Name), "concept"))
-        .Concat((application.Types ?? []).Select(type => (Named(type.Name), "composite")))];
+    readonly (Declaration Declaration, AuthoringIdentityDomainKind Kind)[] _types = [.. application.Concepts.Select(concept => (Named(concept.Name), AuthoringIdentityDomainKind.Concept))
+        .Concat((application.Types ?? []).Select(type => (Named(type.Name), AuthoringIdentityDomainKind.Composite)))];
 
     internal AuthoringIdentityDomain? Resolve(TypeRefSyntax? type, DeclarationScope scope)
     {
         if (type?.IsCollection != false || type.IsOptional) return null;
         if (ConceptSyntax.PrimitiveTypes.Contains(type.Name))
         {
-            return _types.Any(entry => entry.Declaration.Scope.Depth == 0 && entry.Declaration.Name == type.Name) ? null : new("primitive", type.Name, string.Empty);
+            return _types.Any(entry => entry.Declaration.Scope.Depth == 0 && entry.Declaration.Name == type.Name) ? null : new(AuthoringIdentityDomainKind.Primitive, type.Name, string.Empty);
         }
         var resolution = declarations.ResolveAuthoringDeclaration(type.Name, scope, [.. _types.Select(entry => entry.Declaration)]);
         if (resolution.Resolved is not { } resolved) return null;

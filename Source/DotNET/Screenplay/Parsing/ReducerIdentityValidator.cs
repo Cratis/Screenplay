@@ -73,7 +73,7 @@ internal static class ReducerIdentityValidator
         var properties = model.Properties.Where(property => property.Name == by.Name).ToArray();
         var domain = domains.Resolve(by.Type, queryScope);
 
-        return domain is not null && domain.Kind != "composite" && key.Length == 1 && key[0].Name == by.Name && properties is [var property] &&
+        return domain is not null && domain.Kind != AuthoringIdentityDomainKind.Composite && key.Length == 1 && key[0].Name == by.Name && properties is [var property] &&
             domains.Resolve(property.Type, modelScope) == domain;
     }
 

@@ -25,7 +25,7 @@ public class when_resolving_nominal_domains : Specification
     [Fact] void should_keep_the_complete_declared_identity() => Domain("One.ResourceId")!.Target.ShouldEqual("One.ResourceId");
     [Fact] void should_not_use_a_short_ambiguous_name() => Domain("ResourceId").ShouldBeNull();
     [Fact] void should_not_equate_a_primitive_with_a_concept() => Domain("String").ShouldNotEqual(Domain("One.ResourceId"));
-    [Fact] void should_identify_a_composite_by_its_resolved_declaration() => Domain("Three.ResourceId")!.Kind.ShouldEqual("composite");
+    [Fact] void should_identify_a_composite_by_its_resolved_declaration() => Domain("Three.ResourceId")!.Kind.ShouldEqual(AuthoringIdentityDomainKind.Composite);
     [Fact] void should_not_guess_an_unresolved_name() => Domain("Missing.ResourceId").ShouldBeNull();
 
     AuthoringIdentityDomain? Domain(string name) => _domains.Resolve(new(name, false, false, SourceLocation.Start), _scope);
