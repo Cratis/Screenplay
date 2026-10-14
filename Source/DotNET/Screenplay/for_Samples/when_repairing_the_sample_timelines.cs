@@ -13,7 +13,7 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
     [Theory]
     [InlineData("Library", 2, 2)]
     [InlineData("Invoicing", 4, 2)]
-    [InlineData("Commerce", 7, 4)]
+    [InlineData("Commerce", 8, 5)]
     [InlineData("TimeTracking", 8, 7)]
     void should_repair_only_the_findings_in_the_plan_table(string name, int findings, int repairable)
     {
@@ -97,7 +97,7 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
         {
             "Library" => "Loans",
             "Invoicing" => Event("InvoiceReminderSent", "ChaseOverdueInvoices"),
-            "Commerce" => Event("ProductRegistered", "RegisterProduct.play") ?? Event("OrderPlaced", "PlaceOrder.play") ?? Event("OrderPaid", "Payments/Payments.play") ?? Event("ShipmentRequested", "StartFulfillment.play"),
+            "Commerce" => Event("ProductRegistered", "RegisterProduct.play") ?? Event("OrderPlaced", "PlaceOrder.play") ?? Event("OrderPaid", "Payments/Payments.play") ?? Event("ShipmentRequested", "StartFulfillment.play") ?? Event("ParcelDeliveryScanned", "TrackCarrierDeliveries.play"),
             "TimeTracking" => (diagnostic.Message.Contains("reads read model 'DraftTimesheet'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
                 (diagnostic.Message.Contains("Slice 'QueueApprovedTimesheets'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
                 Event("TimesheetApproved", "Approval") ?? Event("TimesheetRejected", "Approval") ?? Event("TimesheetStarted", "Recording/StartingAWeek.play") ?? Event("TimesheetSubmitted", "Recording/SubmittingTheWeek.play") ?? Event("AbsenceReported", "Absences/ImportingAbsences.play"),

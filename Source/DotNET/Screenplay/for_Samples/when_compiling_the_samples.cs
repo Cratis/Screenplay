@@ -64,6 +64,7 @@ public partial class when_compiling_the_samples : given.the_samples
         "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPlaced'",
         "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPaid'",
         "Commerce: PLAY0516 Slice 'ShipmentQueue' uses event 'ShipmentRequested'",
+        "Commerce: PLAY0516 Slice 'MarkShipmentDelivered' uses event 'ParcelDeliveryScanned'",
         "Commerce: PLAY0517 feature 'Shipping', feature 'Tracking'",
         "Commerce: PLAY0517 module 'Ordering', module 'Fulfillment'",
         "TimeTracking: PLAY0517 feature 'Runs', feature 'Handover'",
