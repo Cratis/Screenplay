@@ -25,12 +25,15 @@ public static partial class PublicEventsCorpus
                 {
                     Name = "single",
                     IdentityCatalogBytes = [.. SemanticIdentityCatalogSerializer.Serialize(catalog)],
-                    Documents = [new()
-                    {
-                        StableKey = "captures-from-events",
-                        DisplayPath = "CapturesFromEvents.play",
-                        Bytes = CaptureResource("source.CapturesFromEvents.play")
-                    }]
+                    Documents =
+                    [
+                        new()
+                        {
+                            StableKey = "captures-from-events",
+                            DisplayPath = "CapturesFromEvents.play",
+                            Bytes = CaptureResource("source.CapturesFromEvents.play")
+                        }
+                    ]
                 }
             ];
         }
