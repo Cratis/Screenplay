@@ -13,7 +13,8 @@ public class with_an_appended_source_event : given.an_event_capture
         when append Arrived
           id = "parcel"
           status = "sent"
-        then Translated for "parcel"
+        then Translated
+          for "parcel"
           id = "parcel"
           status = "sent"
         """);

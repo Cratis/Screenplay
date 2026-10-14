@@ -131,11 +131,18 @@ public sealed partial class SemanticEvaluator
     }
 
     // Routed occurrences are typed by their source, independently of event producers. Legacy v1
-    // specification events keep their authored source type; unrouted history keeps the producer rule.
-    static SemanticTypeReference UnroutedSourceType(SemanticExecutionPlan plan, SemanticFact fact, SemanticEventContext context, bool publicReplay) =>
-        plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay
-            ? context.EventSource.Type
+    // specification events keep their authored source type; foreign events have opaque text identities.
+    static SemanticTypeReference UnroutedSourceType(SemanticExecutionPlan plan, SemanticFact fact, SemanticEventContext context, bool publicReplay)
+    {
+        if (plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay)
+        {
+            return context.EventSource.Type;
+        }
+
+        return plan.Events[fact.EventContract].Origin is not null
+            ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
             : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, fact.EventContract);
+    }
 
     static void ValidateEventSource(SemanticValueValidator validator, SemanticEventContext context, SemanticTypeReference requiredType)
     {

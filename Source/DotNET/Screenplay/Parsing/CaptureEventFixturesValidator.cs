@@ -11,8 +11,7 @@ internal static class CaptureEventFixturesValidator
 {
     internal static void Validate(ApplicationSyntax application, SliceSyntax slice, DeclarationScope scope, AuthoringProductionResolver events, ParserContext context)
     {
-        var captures = slice.Captures.Where(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source)).ToArray();
-        foreach (var capture in captures)
+        foreach (var capture in slice.Captures.Where(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source)))
         {
             if (capture.Key?.StartsWith('$') == true)
             {
@@ -30,10 +29,9 @@ internal static class CaptureEventFixturesValidator
         var declarations = ScreenplayValidator.ScopedSlices(application).SelectMany(item => item.Slice.Captures).ToArray();
         foreach (var specification in slice.Specifications)
         {
-            var records = specification.GivenCaptures.Concat(specification.WhenCapture is { } when ? [when] : []);
-            foreach (var record in records)
+            foreach (var record in specification.GivenCaptures.Concat(specification.WhenCapture is { } when ? [when] : []))
             {
-                var matches = declarations.Where(capture => string.Equals(capture.Name, record.Capture.Split('.').Last(), StringComparison.Ordinal)).ToArray();
+                var matches = declarations.Where(capture => string.Equals(capture.Name, record.Capture.Split('.')[^1], StringComparison.Ordinal)).ToArray();
                 if (matches is not [var matched] || matched.Source is not { } source || !CaptureEventsSource.IsEvents(source)) continue;
                 context.Error(DiagnosticCodes.CaptureEventsRecordFixture, $"Capture '{record.Capture}' consumes events; use 'given <Event>' or 'when append <Event>' rather than a capture record.", record.Location);
             }

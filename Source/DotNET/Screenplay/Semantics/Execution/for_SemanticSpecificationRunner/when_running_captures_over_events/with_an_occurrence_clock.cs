@@ -13,7 +13,8 @@ public class with_an_occurrence_clock : given.an_event_capture
         when append Arrived
           id = "parcel"
           status = "sent"
-        then Stamped for "parcel"
+        then Stamped
+          for "parcel"
           occurred = "2026-10-02T12:00:00Z"
         """);
 

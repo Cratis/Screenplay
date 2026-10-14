@@ -11,7 +11,8 @@ public class with_history_before_a_transition : given.an_event_capture
           id = $.id
           status = $.status
         """, """
-        given Arrived for "foreign-stream"
+        given Arrived
+          for "foreign-stream"
           id = "parcel"
           status = "new"
         given Arrived

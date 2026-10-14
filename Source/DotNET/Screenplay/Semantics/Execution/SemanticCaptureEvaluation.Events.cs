@@ -11,7 +11,7 @@ internal static partial class SemanticCaptureEvaluation
     internal static SemanticValue EventKey(SemanticCapture capture, SemanticEventContract contract, SemanticCaptureRecord record)
     {
         var key = record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value;
-        if (key is null or SemanticNullValue || key is SemanticTextValue text && string.IsNullOrWhiteSpace(text.Value))
+        if (key is null or SemanticNullValue || (key is SemanticTextValue text && string.IsNullOrWhiteSpace(text.Value)))
         {
             throw new InvalidSemanticContract($"Capture '{capture.Name}' received event '{contract.Name}' with an empty key '{capture.Key}'.");
         }

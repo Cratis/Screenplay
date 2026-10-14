@@ -28,8 +28,11 @@ public class an_event_capture : for_SemanticSpecificationRunner.given.a_v6_scena
                     label String
                   event Translated
                     id String
-                    status String optional
-                    label String optional
+                    status String
+                  event LabelRecorded
+                    id String
+                    status String
+                    label String
                   event Added
                   event Modified
                   event Removed

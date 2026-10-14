@@ -20,7 +20,7 @@ internal static class WorkspaceCaptureEventRepairs
         var subject = subjects[0];
         var original = (SpecificationSyntax)subject.Node;
         var record = Records(original).Single(value => value.Location == diagnostic.Location);
-        var captures = index.Entries.Select(entry => entry.Node).OfType<CaptureSyntax>().Where(capture => string.Equals(capture.Name, record.Capture.Split('.').Last(), StringComparison.Ordinal)).ToArray();
+        var captures = index.Entries.Select(entry => entry.Node).OfType<CaptureSyntax>().Where(capture => string.Equals(capture.Name, record.Capture.Split('.')[^1], StringComparison.Ordinal)).ToArray();
         if (captures is not [var capture] || capture.Source is not { } source || !CaptureEventsSource.IsEvents(source)) return [];
         var events = CaptureEventsSource.Events(source).ToArray();
         if (events is not [var setting]) return [];
@@ -29,8 +29,8 @@ internal static class WorkspaceCaptureEventRepairs
             ? original with { WhenCapture = null, WhenAppended = replacement }
             : original with
             {
-                GivenCaptures = original.GivenCaptures.Where(value => value != record).ToArray(),
-                Given = original.Given.Concat([replacement]).OrderBy(value => value.Location.Line).ToArray()
+                GivenCaptures = [.. original.GivenCaptures.Where(value => value != record)],
+                Given = [.. original.Given.Concat([replacement]).OrderBy(value => value.Location.Line)]
             };
         var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(subject.Handle, original, candidate)])
         {

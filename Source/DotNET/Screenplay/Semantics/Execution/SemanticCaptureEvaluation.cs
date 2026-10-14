@@ -245,7 +245,7 @@ internal static partial class SemanticCaptureEvaluation
             }
 
             var present = record?.GetValueOrDefault(field) ?? enclosing?.GetValueOrDefault(field);
-            if (present is null || present is { Kind: SemanticCaptureFieldKind.Value, Value: not (SemanticCompositeValue or SemanticArrayValue) }) return new(present?.Value, null);
+            if (present is null or { Kind: SemanticCaptureFieldKind.Value, Value: not (SemanticCompositeValue or SemanticArrayValue) }) return new(present?.Value, null);
             Unsupported ??= $"Capture field '{field}' is a {present.Kind} value the reference evaluator cannot use as a scalar.";
             return new(null, Unsupported);
         }

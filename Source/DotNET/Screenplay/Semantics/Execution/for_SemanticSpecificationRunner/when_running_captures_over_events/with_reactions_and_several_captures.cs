@@ -23,7 +23,8 @@ public class with_reactions_and_several_captures : for_SemanticSpecificationRunn
                     name String
                   reaction Inbound
                     when Arrived
-                      produces SourceReacted for id
+                      produces SourceReacted
+                        for id
                   capture Alpha
                     source events
                       from Arrived
@@ -44,20 +45,20 @@ public class with_reactions_and_several_captures : for_SemanticSpecificationRunn
                     when append Arrived
                       id = "parcel"
                     then events in any order
-                      SourceReacted
-                      SourceSettled
-                      First
-                        name = "Alpha"
-                      Cascade
-                        name = "Alpha"
-                      Second
-                        name = "Alpha"
-                      First
-                        name = "Beta"
-                      Cascade
-                        name = "Beta"
-                      Second
-                        name = "Beta"
+                    then SourceReacted
+                    then SourceSettled
+                    then First
+                      name = "Alpha"
+                    then Cascade
+                      name = "Alpha"
+                    then Second
+                      name = "Alpha"
+                    then First
+                      name = "Beta"
+                    then Cascade
+                      name = "Beta"
+                    then Second
+                      name = "Beta"
                 slice Automation FollowUp
                   event SourceSettled
                   event Cascade

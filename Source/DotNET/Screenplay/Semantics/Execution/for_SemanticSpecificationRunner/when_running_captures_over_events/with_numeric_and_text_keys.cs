@@ -31,7 +31,8 @@ public class with_numeric_and_text_keys : for_SemanticSpecificationRunner.given.
                       id = 1
                     when append Named
                       id = "1"
-                    then Added for "1"
+                    then Added
+                      for "1"
             """);
         _run = Run("S");
     }

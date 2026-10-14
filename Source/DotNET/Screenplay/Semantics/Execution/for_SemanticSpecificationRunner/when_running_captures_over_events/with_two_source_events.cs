@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.
 public class with_two_source_events : given.an_event_capture
 {
     void Because() => RunCapture("""
-        append Translated
+        append LabelRecorded
           when label
           id = $.id
           status = $.status
@@ -21,7 +21,8 @@ public class with_two_source_events : given.an_event_capture
         when append Labelled
           id = "parcel"
           label = "priority"
-        then Translated for "parcel"
+        then LabelRecorded
+          for "parcel"
           id = "parcel"
           status = "sent"
           label = "priority"
