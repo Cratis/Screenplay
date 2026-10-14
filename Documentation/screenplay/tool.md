@@ -194,6 +194,16 @@ Attachments are not carried; re-apply them with `WithAttachmentContents`.
 Discovery keys hash the portable path's NFC-normalized value. Existing persisted
 keys remain authoritative, including keys created from non-NFC file names.
 
+A repository that holds only part of the model, such as the features a host has
+generated so far, uses `Rehome(documents, RehomeScope.Subset)`. Every declaration
+the documents contain keeps its semantic ID and its event ContractId, revision and
+origin; assignments for declarations the documents leave out are dropped, so a
+strict open accepts the state. Re-home from the full workspace each time, not from
+an earlier result: the left-out declarations then keep their IDs when they are
+written later. The documents must compile on their own, declarations the workspace
+does not know are still refused, and an event admitted to a release baseline that
+the subset no longer contains is reported as `BaselinedRevisionMissing`.
+
 Before overwriting an existing MCP-authored `identities.json`, compare its event
 assignments with the host catalog. Different ContractIds make previously
 baselined entries appear as `BaselinedRevisionMissing`; re-homing does not
