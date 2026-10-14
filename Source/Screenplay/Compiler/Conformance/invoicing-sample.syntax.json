@@ -12362,6 +12362,7 @@
               "commands": [],
               "constraints": [],
               "description": "Turns what the payment provider settles into payments on our invoices",
+              "direction": "Inbound",
               "events": [],
               "name": "PaymentProviderSync",
               "operations": [],

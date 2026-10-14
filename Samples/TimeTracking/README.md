@@ -90,8 +90,8 @@ Samples/TimeTracking/
     Handover/QueueingApprovedWeeks.play      approved weeks are queued automatically
     Handover/RemindingConsultants.play       Monday morning reminders for weeks still in draft
     Handover/RecordingProviderAcknowledgement.play   the provider's acknowledgement lands on the run
-    Absences/ImportingAbsences.play          the HR system's absences are captured as facts
-    Absences/BookingTimeOff.play             a reported absence is booked as time off
+    Absences/ImportingAbsences.play          the HR system's absences are captured as facts (Translate, inbound)
+    Absences/BookingTimeOff.play             a reported absence is booked as time off (an Automation on the application's own event)
 ```
 
 ## What it demonstrates

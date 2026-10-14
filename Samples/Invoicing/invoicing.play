@@ -2590,6 +2590,7 @@ module Invoicing
 
     slice Translate PaymentProviderSync
       description "Turns what the payment provider settles into payments on our invoices"
+      direction inbound
 
       reaction PaymentProviderTranslator
         description "Every settlement from the provider becomes a recorded payment"
