@@ -135,14 +135,14 @@ specification <Name>
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` or `given caller as <Persona>` — zero or one, never both. The explicit block states authentication, roles, and repeatable claim values. The persona form has no body and expands into an authenticated deterministic witness satisfying every persona policy; see [persona synthesis](personas.md#persona-callers-in-specifications). Either form satisfies the caller requirement for an authorized scenario (`PLAY0389`). It supplies no actor to reaction invocations.
-- `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
+- `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events require an action (`PLAY0352`). Errors also require an action except for one queried call asserting a Validation rejection from ESM v18.
 - `when redelivered <EventType> to <Reaction>` — selects exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and selects ESM v17. See [Redelivery specifications](#redelivery-specifications).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. From ESM v6, `when append` excludes the action's appended fact: asserted events compare the facts its reactions appended. Omit them to check only projected state or queries, or use `then no events` to assert explicitly that nothing followed.
 - `then no events` — once per specification, with no children. Selects ESM v17 and asserts that the action and its reaction cascade appended no new facts. After `when append`, it excludes the action's appended fact and asserts that nothing followed it. It counts as a success outcome and can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). An outcome-less specification still does not bind; omission is not an explicit no-event assertion.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
-- `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its `result` blocks without regard to order, matching each row by read model and instance key. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count is always exact. No `result` blocks means the query is expected to return nothing.
+- `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its `result` blocks without regard to order, matching each row by read model and instance key. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count is always exact. No `result` blocks means the query is expected to return nothing, unless the specification asserts `then denied` or a query Validation rejection with `then error`.
 - `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or one. An expected rejection, with no success outcomes in the same specification. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
@@ -404,7 +404,7 @@ specification LookingUpAnExistingInvoice
       status = "draft"
 ```
 
-The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Before ESM v6, `then` events after `when append` equal the appended fact and nothing reacts to it; since ESM v6, the reactions it sets off run - see [Clocks, triggers and captures](#clocks-triggers-and-captures).
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events. From ESM v18, exactly one queried call with one `then error` and no other outcomes asserts a Validation rejection. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Before ESM v6, `then` events after `when append` equal the appended fact and nothing reacts to it; since ESM v6, the reactions it sets off run - see [Clocks, triggers and captures](#clocks-triggers-and-captures).
 
 Query arguments name the `by` parameter and caller-supplied equality filters. Both `then query … arguments` and `when query` report unknown, repeated or missing required arguments with `PLAY0468`. An optional filter may be omitted and then does not narrow; supplied `null` is refused. `by` and supplied filters combine with AND. The query, key and supplied filter values identify a call, so two unkeyed calls with different values may be asserted in one specification. Filters select ESM v14; see [Executable equality filters](queries.md#executable-equality-filters).
 
@@ -423,9 +423,34 @@ specification LookingUpTheEuroRate
     rate = 11.52
 ```
 
-The lines under `when query` are its arguments, each a `by` or `filter` parameter of the query (`PLAY0468` otherwise). Repeat `then result` for a query that returns several rows: their order does not matter, but each read-model/key pair and the exact row count must match. Add `exactly` to compare every property. `then no result` asserts the query returns nothing, and `then denied` that the caller may not perform it. A `when query` must assert one of the three (`PLAY0465`).
+The lines under `when query` are its arguments, each a `by` or `filter` parameter of the query (`PLAY0468` otherwise). Repeat `then result` for a query that returns several rows: their order does not matter, but each read-model/key pair and the exact row count must match. Add `exactly` to compare every property. `then no result` asserts a valid query returns nothing, `then denied` that the caller may not perform it, and `then error` that its concept argument rules reject it with Validation (ESM v18). A `when query` must assert an outcome (`PLAY0465`); a query rejection cannot accompany results, `then no result`, denial or other outcomes.
 
 This says the same thing as `then query` with `arguments` and `result` blocks, and binds to the same executable model - choose whichever reads better. `when query` is the Given/When/Then reading: given this state, when someone asks, then this is what they get.
+
+## Query validation rejections
+
+A valid invoice number may find no invoice; an out-of-rule number is rejected before selecting any instance. From ESM v18, assert the latter with `then error`, optionally naming its message:
+
+```screenplay
+concept InvoiceNumber : String
+  validate
+    min 2 message "Invoice number is too short"
+module Billing
+  feature Invoices
+    slice StateView Lookup
+      readmodel Invoice
+        number InvoiceNumber
+      query GetInvoice => Invoice optional
+        by number InvoiceNumber
+      specification RejectingAMalformedNumber
+        when query GetInvoice
+          number = "A"
+        then error "Invoice number is too short"
+```
+
+The equivalent spelling uses `then query GetInvoice` with an `arguments` block, no `result` block, and `then error`. There must be no action, exactly one queried call, exactly one error, and no result, no-result, denial or other outcome. Bare actionless `then error` without a query remains invalid. These fixtures are shape-checked while binding, not run against concept rules: the invalid argument is precisely what the scenario exercises.
+
+This shape selects language and semantic `18.0` and `schemaVersion: 18`. It reuses one `thenQueries` entry with `results: []` and the existing `thenErrors` member. A model at v18 must use the shape, and a model below v18 refuses it. The runner requires exactly `Validation`; `Contract`, `Unauthorized`, `SemanticUnsupported` and a successful empty lookup do not pass. The optional message follows the same message and `$strings` comparison as a command error; command error behavior is unchanged. Query concept validation itself applies in every ESM version.
 
 ## Clocks, triggers and captures
 
