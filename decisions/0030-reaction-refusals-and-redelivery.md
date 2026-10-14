@@ -2,7 +2,7 @@
 id: 0030
 title: Reaction refusal handling and redelivery specifications
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-07
 decider: Sindre Alstad Wilting
 class: contract
@@ -118,6 +118,8 @@ This design governs #433 from acceptance through its eventual admission. In scop
 Refused claims can be acknowledged or recorded without hiding transient failures. Recovery delivery can be specified without inventing another event. The cost is explicit authoring and a separate admission checkpoint; syntax support alone never promises executable behavior.
 
 ## Status notes
+
+**2026-10-14 — refusal implementation targets ESM v19.** Reaction invocation refusal branches and `$refusal` values select language/semantic `19.0` and `schemaVersion: 19` only when used. V18 belongs to query argument validation under 0072 and ships first; this development checkpoint builds V19 support on V17 until V18 lands. Canonical invocation member `onRefused` is omitted when absent; its ordered branches carry `selector`, optional `constraint`, then `produces` (empty means acknowledgement). Constraints in the existing ESM have no semantic id: their name is their executable event-store identity, so `constraint` carries that name rather than inventing a second identity. Refusal expressions use `kind: "refusal"`, `member: "reason" | "constraint" | "message"` and primitive String `type`. `full-esm-v19.json` and `InvocationRefusalsCorpus.V19` carry the canonical and source-backed vectors. Runtime classification is authorization, then constraint, then error-severity validation; first match handles and stops the trigger's remaining invocations. Prior contracts retain bytes and outcomes. Consumer realization remains explicit, including Stage#214. This note records implementation, not publication or completed verification.
 
 **2026-10-07 — technical correction: no-event admission remains closed.** The no-event assertion waits for the same admission checkpoint as refusal handling and redelivery. The existing contract of every supported ESM version, including its strict reader, rejects an action specification without at least one success outcome (unless it asserts a rejection). Omitting event expectations therefore was not an executable no-event assertion by itself. Relaxing that rule across existing versions would change their accepted contract. Syntax, printing, validation and editor support remain available, but binding `then no events` now fails with PLAY0268 naming explicit no-event assertions, without a version number. The original success-outcome rule is retained for every action kind and version; no new semantic members or executable acceptance are introduced here.
 
