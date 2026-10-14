@@ -23,9 +23,9 @@ public class when_accessing_metadata_permissions : given.a_durable_workspace
         }
         else
         {
-            ((McpFailure)error!).FailureKind.ShouldEqual("MetadataPermissions");
+            ((McpFailure)error!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
             error!.Message.ShouldContain(".screenplay must not be writable by other users");
-            ((McpFailure)Catch.Exception(() => Files.Read(McpState.FileName))!).FailureKind.ShouldEqual("MetadataPermissions");
+            ((McpFailure)Catch.Exception(() => Files.Read(McpState.FileName))!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
         }
 
         File.ReadAllBytes(Path.Combine(directory, McpState.FileName)).ShouldEqual(OriginalState);
@@ -40,7 +40,7 @@ public class when_accessing_metadata_permissions : given.a_durable_workspace
         var directory = Path.Combine(RootPath, ".screenplay");
         File.SetUnixFileMode(directory, (UnixFileMode)493);
         var error = Catch.Exception(() => new McpDisk(Root).Apply(Proposal));
-        ((McpFailure)error!).FailureKind.ShouldEqual("MetadataPermissions");
+        ((McpFailure)error!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(Source);
         File.Exists(Path.Combine(RootPath, "renamed.play")).ShouldBeFalse();
         File.ReadAllBytes(Path.Combine(directory, McpState.FileName)).ShouldEqual(OriginalState);
@@ -53,8 +53,8 @@ public class when_accessing_metadata_permissions : given.a_durable_workspace
         if (OperatingSystem.IsWindows()) return;
         var directory = Path.Combine(RootPath, ".screenplay");
         File.SetUnixFileMode(directory, (UnixFileMode)493);
-        ((McpFailure)Catch.Exception(() => Files.PathFor("new.json", create: true))!).FailureKind.ShouldEqual("MetadataPermissions");
-        ((McpFailure)Catch.Exception(() => McpManagedFiles.WritePrivate(Path.Combine(directory, "new.stage"), OriginalState))!).FailureKind.ShouldEqual("MetadataPermissions");
+        ((McpFailure)Catch.Exception(() => Files.PathFor("new.json", create: true))!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
+        ((McpFailure)Catch.Exception(() => McpManagedFiles.WritePrivate(Path.Combine(directory, "new.stage"), OriginalState))!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
         Directory.EnumerateFiles(directory).Select(Path.GetFileName).ShouldContainOnly(McpState.FileName);
     }
 
@@ -66,7 +66,7 @@ public class when_accessing_metadata_permissions : given.a_durable_workspace
         var directory = Path.Combine(RootPath, ".screenplay");
         var marker = File.ReadAllBytes(Path.Combine(directory, McpRecoveryJournal.FileName));
         File.SetUnixFileMode(directory, (UnixFileMode)493);
-        ((McpFailure)Catch.Exception(() => new McpRecovery(Root, journal).Rollback())!).FailureKind.ShouldEqual("MetadataPermissions");
+        ((McpFailure)Catch.Exception(() => new McpRecovery(Root, journal).Rollback())!).Message.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
         File.ReadAllBytes(Path.Combine(directory, McpRecoveryJournal.FileName)).ShouldEqual(marker);
         File.ReadAllBytes(Path.Combine(directory, McpState.FileName)).ShouldEqual(OriginalState);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(Source);

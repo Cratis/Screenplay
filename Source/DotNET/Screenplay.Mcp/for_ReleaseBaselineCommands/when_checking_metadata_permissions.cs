@@ -20,7 +20,7 @@ public class when_checking_metadata_permissions : given.a_release_workspace
         outcome.ExitCode.ShouldEqual(accepted ? 0 : 2);
         if (!accepted)
         {
-            outcome.FailureKind.ShouldEqual("MetadataPermissions");
+            outcome.Reason!.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
             outcome.Reason!.ShouldContain(".screenplay must not be writable by other users");
         }
 
@@ -38,7 +38,7 @@ public class when_checking_metadata_permissions : given.a_release_workspace
         File.SetUnixFileMode(directory, (UnixFileMode)493);
         var outcome = ReleaseBaselineCommands.Admit(RootPath, "v1");
         outcome.ExitCode.ShouldEqual(2);
-        outcome.FailureKind.ShouldEqual("MetadataPermissions");
+        outcome.Reason!.StartsWith("MetadataPermissions:", StringComparison.Ordinal).ShouldBeTrue();
         File.Exists(BaselinePath).ShouldBeFalse();
         File.Exists(Path.Combine(directory, McpRecoveryJournal.FileName)).ShouldBeFalse();
         File.ReadAllBytes(Path.Combine(directory, McpState.FileName)).ShouldEqual(OriginalState);
