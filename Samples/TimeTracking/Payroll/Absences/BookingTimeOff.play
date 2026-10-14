@@ -1,7 +1,7 @@
-// A reported absence is translated into time off on the consultant's calendar.
+// A reported absence is booked as time off on the consultant's calendar.
 
-slice Translate BookTimeOff
-  description "Books reported absence as time off, in the timesheet's vocabulary"
+slice Automation BookTimeOff
+  description "Books reported absence as time off on the consultant's calendar"
 
   reaction BookTimeOff
     description "Books reported absence as time off on the consultant's calendar"
@@ -18,7 +18,7 @@ slice Translate BookTimeOff
         kind         = kind
         firstDay     = firstDay
         days         = days
-    // Parental leave is booked by HR directly; only the rest is translated here.
+    // Parental leave is booked by HR directly; only the rest is booked here.
     where kind != "parentalLeave"
 
   event TimeOffBooked
@@ -29,7 +29,7 @@ slice Translate BookTimeOff
     days         Int
 
   // Driven from the HR system's record: the capture appends AbsenceReported,
-  // and the translation books the time off.
+  // and the automation books the time off.
   specification BookingReportedSickLeave
     // Another consultant's vacation is already known - an unchanged record appends nothing.
     given capture HrAbsenceCapture

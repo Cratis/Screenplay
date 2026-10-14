@@ -1,0 +1,34 @@
+slice Automation MarkOrderPaid
+  description "Marks the order paid once its payment has settled"
+
+  // The shop's vocabulary. It carries the order id as payload as well as
+  // landing on the order's event source, because the Fulfillment module's
+  // automation selects it as a trigger value.
+  event OrderPaid
+    orderId          OrderId
+    amount           Money
+    paymentReference PaymentReference
+
+  // The translation: one event in, the shop's own event out.
+  reaction SettlementTranslator
+    description "Marks the order paid once its payment has settled"
+    when PaymentSettled
+      orderId
+      amount
+      paymentReference
+      produces OrderPaid
+        for orderId
+        orderId          = orderId
+        amount           = amount
+        paymentReference = paymentReference
+
+  specification ASettledPaymentPaysTheOrder
+    when append PaymentSettled
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"
+    then OrderPaid
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"

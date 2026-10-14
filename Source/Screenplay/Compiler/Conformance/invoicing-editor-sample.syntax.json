@@ -12362,6 +12362,7 @@
               "commands": [],
               "constraints": [],
               "description": "Turns what the payment provider settles into payments on our invoices",
+              "direction": "Inbound",
               "events": [],
               "name": "PaymentProviderSync",
               "operations": [],
@@ -15960,6 +15961,7 @@
               "commands": [],
               "constraints": [],
               "description": "Brings changes made in the legacy invoicing system into this one",
+              "direction": "Inbound",
               "events": [
                 {
                   "kind": "EventSyntax",
@@ -16134,45 +16136,7 @@
               "operations": [],
               "projections": [],
               "queries": [],
-              "reactions": [
-                {
-                  "kind": "ReactionSyntax",
-                  "description": "A payment the legacy system saw is a payment here too",
-                  "name": "LegacyPaymentTranslator",
-                  "runsAs": null,
-                  "triggers": [
-                    {
-                      "kind": "ReactionTriggerSyntax",
-                      "description": null,
-                      "invokes": [],
-                      "produces": [
-                        {
-                          "kind": "ProducesSyntax",
-                          "event": "InvoicePaid",
-                          "for": null,
-                          "inlineEvent": null,
-                          "inlineOperation": null,
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "paidAt",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "paidAt"
-                              }
-                            }
-                          ],
-                          "tags": []
-                        }
-                      ],
-                      "source": {
-                        "kind": "NamedTriggerSourceSyntax",
-                        "name": "InvoicePaidFromSent"
-                      }
-                    }
-                  ]
-                }
-              ],
+              "reactions": [],
               "readModels": [],
               "screens": [],
               "specifications": [
@@ -16283,24 +16247,6 @@
                           }
                         }
                       ]
-                    },
-                    {
-                      "kind": "SpecificationEventSyntax",
-                      "eventType": "InvoicePaid",
-                      "for": {
-                        "kind": "LiteralExpressionSyntax",
-                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                      },
-                      "values": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "paidAt",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "2026-10-02T12:00:00Z"
-                          }
-                        }
-                      ]
                     }
                   ],
                   "thenEventsInAnyOrder": true,
@@ -16344,7 +16290,63 @@
                   "whenClock": null,
                   "whenQuery": null,
                   "whenTrigger": null
-                },
+                }
+              ],
+              "type": "Translate"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "A payment the legacy system saw is a payment here too",
+              "events": [],
+              "name": "MarkInvoicePaidFromLegacyPayment",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": "A payment the legacy system saw is a payment here too",
+                  "name": "LegacyPaymentTranslator",
+                  "runsAs": null,
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "InvoicePaid",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "paidAt",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "paidAt"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "InvoicePaidFromSent"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
                 {
                   "kind": "SpecificationSyntax",
                   "given": [
@@ -16423,7 +16425,7 @@
                   "whenTrigger": null
                 }
               ],
-              "type": "Translate"
+              "type": "Automation"
             },
             {
               "kind": "SliceSyntax",

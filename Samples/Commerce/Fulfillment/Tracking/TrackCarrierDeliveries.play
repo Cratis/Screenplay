@@ -1,5 +1,6 @@
 slice Translate TrackCarrierDeliveries
-  description "Translates the carriers' delivery scans into the shop's own fact: the shipment is delivered"
+  description "Translates the carriers' delivery scans into a fact in the carrier's vocabulary"
+  direction inbound
 
   // The carriers' tracking API is polled; a parcel moving from in transit to
   // delivered becomes a fact in the carrier's vocabulary.
@@ -18,24 +19,10 @@ slice Translate TrackCarrierDeliveries
     orderId        OrderId
     trackingNumber TrackingNumber
 
-  event ShipmentDelivered
-    orderId        OrderId
-    trackingNumber TrackingNumber
-
-  reaction DeliveryTranslator
-    description "Marks the order's shipment delivered once the carrier scans it at the door"
-    when ParcelDeliveryScanned
-      orderId
-      trackingNumber
-      produces ShipmentDelivered
-        for orderId
-        orderId        = orderId
-        trackingNumber = trackingNumber
-
   // The capture sees the parcel twice. The earlier record gives the status
-  // something to move from, so the in_transit -> delivered transition fires;
-  // the carrier's fact is captured and translated into the shop's own.
-  specification ADeliveryScanDeliversTheShipment
+  // something to move from, so the in_transit -> delivered transition fires and
+  // the carrier's fact is captured. MarkShipmentDelivered reacts to it.
+  specification ADeliveryScanIsCaptured
     given capture CarrierTrackingFeed
       trackingNumber = "PN00012345NO"
       orderReference = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -47,7 +34,3 @@ slice Translate TrackCarrierDeliveries
     then ParcelDeliveryScanned
       orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
       trackingNumber = "PN00012345NO"
-    then ShipmentDelivered
-      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      trackingNumber = "PN00012345NO"
-

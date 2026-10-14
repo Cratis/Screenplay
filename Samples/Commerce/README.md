@@ -18,7 +18,7 @@ Placement composes. `Catalog.play` places `Products.play` in the module, and `Pr
 
 A placed file may also declare things that belong to the whole application. A concept or trigger that only one slice uses lives in that slice's file. For example, `Weight` is declared in `RegisterProduct.play` and `CarrierReturnedParcel` in `HandleReturnedParcels.play`.
 
-Every file is reached from `application.play`, and none is imported in two places. Compiling the root and compiling the folder therefore cover the same 37 files.
+Every file is reached from `application.play`, and none is imported in two places. Compiling the root and compiling the folder therefore cover the same 39 files.
 
 ## Files
 
@@ -57,7 +57,8 @@ Commerce/
       MyOrders.play            StateView: a customer follows their orders out the door
     Payments/
       Payments.play            feature: settlements from the payment provider
-      ImportPaymentSettlements.play  Translate: a settled payment becomes OrderPaid
+      ImportPaymentSettlements.play  Translate (inbound): a settled payment is captured as PaymentSettled
+      MarkOrderPaid.play             Automation: PaymentSettled becomes OrderPaid
     Support/
       Support.play             feature gated to support agents
       OrderDetails.play        StateView: everything support needs about an order
@@ -71,7 +72,8 @@ Commerce/
       DispatchShipment.play    StateChange: a parcel is handed to a carrier
     Tracking/
       Tracking.play            feature: parcels on their way to the door
-      TrackCarrierDeliveries.play   Translate: a carrier scan becomes ShipmentDelivered
+      TrackCarrierDeliveries.play   Translate (inbound): a carrier scan is captured as ParcelDeliveryScanned
+      MarkShipmentDelivered.play    Automation: ParcelDeliveryScanned becomes ShipmentDelivered
       ReceiveCarrierDispatches.play Translate (inbound): a carrier's public dispatch event becomes CarrierDispatchRecorded
       NotifyCustomerOfDispatch.play Automation: the customer hears their parcel shipped
       HandleReturnedParcels.play    Automation on a trigger: a returned parcel is recorded
@@ -114,7 +116,7 @@ Or compile the folder, which treats every file as a root while imports still pla
 screenplay Samples/Commerce --warnaserror
 ```
 
-Both print `37 file(s) compiled - 0 error(s), 0 warning(s)`. Without the installed tool, run it from source:
+Both print `39 file(s) compiled - 0 error(s), 0 warning(s)`. Without the installed tool, run it from source:
 
 ```bash
 dotnet run --project Source/DotNET/Tool -- Samples/Commerce/application.play --warnaserror
