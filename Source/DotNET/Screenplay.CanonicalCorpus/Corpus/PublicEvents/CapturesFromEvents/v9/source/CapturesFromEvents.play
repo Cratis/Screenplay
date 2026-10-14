@@ -1,0 +1,71 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module Shipping
+  feature Tracking
+    slice Translate Receive
+      direction inbound
+      event Arrived from "carrier"
+        id String
+        status String
+      event Labelled from "carrier"
+        id String
+        label String
+      event Added
+      event StatusRecorded
+        id String
+        status String
+      event LabelRecorded
+        id String
+        status String
+        label String
+      capture Feed
+        source events
+          from Arrived
+          from Labelled
+        key id
+        append Added
+          when added
+        append StatusRecorded
+          when status from "sent" to "delivered"
+            id = $.id
+            status = $.status
+        append LabelRecorded
+          when label
+            id = $.id
+            status = $.status
+            label = $.label
+      specification FirstArrival
+        when append Arrived
+          id = "parcel"
+          status = "sent"
+        then Added for "parcel"
+      specification GivenTransition
+        given Arrived for "foreign-stream"
+          id = "parcel"
+          status = "sent"
+        when append Arrived
+          id = "parcel"
+          status = "delivered"
+        then StatusRecorded for "parcel"
+          id = "parcel"
+          status = "delivered"
+      // ESM v9 has no explicit then-no-events member; the vector pins the unchanged world fact count.
+      specification IdenticalArrival
+        given Arrived
+          id = "parcel"
+          status = "sent"
+        when append Arrived
+          id = "parcel"
+          status = "sent"
+      specification Overlay
+        given Arrived
+          id = "parcel"
+          status = "sent"
+        when append Labelled
+          id = "parcel"
+          label = "priority"
+        then LabelRecorded for "parcel"
+          id = "parcel"
+          status = "sent"
+          label = "priority"

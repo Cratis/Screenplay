@@ -2,7 +2,7 @@
 id: 0077
 title: Present a consumed public event to a capture over events as the event itself, and fold it into per-key state as Chronicle does
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-14
 decider: Sindre Alstad Wilting
 class: contract

@@ -12,12 +12,16 @@ import { ParserContext } from './ParserContext';
 export function validateCaptureEventFixtures(slice: SliceSyntax, scope: readonly string[], events: AuthoringProductionResolver, context: ParserContext): void {
     const captures = slice.captures.filter(capture => capture.source != null && isEventsSource(capture.source));
     for (const capture of captures) {
+        if (capture.key?.startsWith('$')) {
+            context.error(DiagnosticCodes.CaptureEventsKeyNotRequired, `Capture '${capture.name}' key '${capture.key}' must be a required property of every source event; context keys are not supported for captures over events.`, capture.location);
+            continue;
+        }
         for (const setting of consumedEvents(capture.source!)) {
             const resolved = events.resolveFromScope(setting.value, scope).declaration?.node;
             if (resolved?.kind !== 'EventSyntax') continue;
             const contract = resolved as EventSyntax;
             if (contract.visibility !== EventVisibility.Public || contract.origin == null) continue;
-            if (contract.properties.some(property => property.name === capture.key && !property.type.isOptional) && !capture.key?.startsWith('$')) continue;
+            if (contract.properties.some(property => property.name === capture.key && !property.type.isOptional)) continue;
             context.error(DiagnosticCodes.CaptureEventsKeyNotRequired, `Capture '${capture.name}' key '${capture.key}' must be a required property of every source event; '${contract.name}' does not declare it as required.`, capture.location);
             break;
         }

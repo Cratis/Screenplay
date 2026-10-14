@@ -14,10 +14,15 @@ internal static class CaptureEventFixturesValidator
         var captures = slice.Captures.Where(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source)).ToArray();
         foreach (var capture in captures)
         {
+            if (capture.Key?.StartsWith('$') == true)
+            {
+                context.Error(DiagnosticCodes.CaptureEventsKeyNotRequired, $"Capture '{capture.Name}' key '{capture.Key}' must be a required property of every source event; context keys are not supported for captures over events.", capture.Location);
+                continue;
+            }
             foreach (var setting in CaptureEventsSource.Events(capture.Source!))
             {
                 if (events.Resolve(setting.Value, scope.Segments).Declaration?.Node is not EventSyntax { Visibility: EventVisibility.Public, Origin: not null } contract) continue;
-                if (contract.Properties.Any(property => string.Equals(property.Name, capture.Key, StringComparison.Ordinal) && !property.Type.IsOptional) && !capture.Key!.StartsWith('$')) continue;
+                if (contract.Properties.Any(property => string.Equals(property.Name, capture.Key, StringComparison.Ordinal) && !property.Type.IsOptional)) continue;
                 context.Error(DiagnosticCodes.CaptureEventsKeyNotRequired, $"Capture '{capture.Name}' key '{capture.Key}' must be a required property of every source event; '{contract.Name}' does not declare it as required.", capture.Location);
                 break;
             }
