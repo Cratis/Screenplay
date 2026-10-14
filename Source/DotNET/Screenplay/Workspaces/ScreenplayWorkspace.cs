@@ -147,7 +147,27 @@ public sealed class ScreenplayWorkspace
     /// (excluded directories such as <c>bin</c>, <c>obj</c>, <c>node_modules</c>, <c>.git</c> or <c>.screenplay</c>,
     /// more than 16 directory levels, or more files or source bytes than a model root admits).
     /// </exception>
-    public ScreenplayWorkspace Rehome(ImmutableArray<WorkspaceDocument> documents)
+    public ScreenplayWorkspace Rehome(ImmutableArray<WorkspaceDocument> documents) => Rehome(documents, RehomeScope.Whole);
+
+    /// <summary>
+    /// Re-homes this workspace's identities onto a document set that holds the whole model or a self-contained part of it.
+    /// </summary>
+    /// <param name="documents">The complete new exact-source document set.</param>
+    /// <param name="scope">Whether the documents hold the whole model or a subset of it.</param>
+    /// <returns>A new workspace whose identities can be serialized with <see cref="PersistedIdentityStateSerializer"/>.</returns>
+    /// <remarks>
+    /// <see cref="RehomeScope.Whole"/> behaves as <see cref="Rehome(ImmutableArray{WorkspaceDocument})"/>.
+    /// With <see cref="RehomeScope.Subset"/>, every declaration present in the documents keeps its semantic ID and its
+    /// event ContractId, revision and origin, while assignments for declarations the documents do not contain are dropped,
+    /// so the state matches what a strict <see cref="ScreenplayModelRoot.Open"/> discovers. Re-home again from this
+    /// workspace, not from the result, when the document set grows: the dropped assignments come back unchanged. An event
+    /// admitted to a release baseline that the subset no longer contains is reported as BaselinedRevisionMissing.
+    /// The documents must compile on their own, and declarations this workspace does not know are still refused.
+    /// </remarks>
+    /// <exception cref="InvalidScreenplayWorkspace">
+    /// As for <see cref="Rehome(ImmutableArray{WorkspaceDocument})"/>, except that a subset does not refuse retired addresses.
+    /// </exception>
+    public ScreenplayWorkspace Rehome(ImmutableArray<WorkspaceDocument> documents, RehomeScope scope)
     {
         try
         {
@@ -161,7 +181,7 @@ public sealed class ScreenplayWorkspace
                 IdentityCatalog.EventContracts);
             var rebound = admitted.Select(document => WorkspaceDocument.Create(
                 catalog.ResolveDocument(document.StableKey), document.StableKey, document.Path, document.Bytes.AsSpan())).ToImmutableArray();
-            catalog = VerifyRehome(ApplicationName, rebound, catalog);
+            catalog = VerifyRehome(ApplicationName, rebound, catalog, scope);
             var workspace = CreateCore(ApplicationName, catalog.Application, rebound, catalog);
             RequireRehomeCompilation(workspace.Compilation);
             return workspace;
@@ -350,7 +370,7 @@ public sealed class ScreenplayWorkspace
         }
     }
 
-    static SemanticIdentityCatalog VerifyRehome(string applicationName, ImmutableArray<WorkspaceDocument> documents, SemanticIdentityCatalog catalog)
+    static SemanticIdentityCatalog VerifyRehome(string applicationName, ImmutableArray<WorkspaceDocument> documents, SemanticIdentityCatalog catalog, RehomeScope scope)
     {
         var discovery = Compile(applicationName, documents, catalog);
         if (!discovery.Success)
@@ -363,6 +383,11 @@ public sealed class ScreenplayWorkspace
         var index = SemanticCompilationIndex.Create(discovery.Value!.Model.Application, catalog.Application);
         var addresses = index.Declarations.Keys.ToHashSet();
         var events = index.Events.Keys.ToHashSet();
+        if (scope == RehomeScope.Subset)
+        {
+            catalog = WithoutAbsentDeclarations(catalog, addresses, events);
+        }
+
         var retiredAddresses = catalog.Semantics.Select(assignment => assignment.Address).Except(addresses)
             .Concat(catalog.EventContracts.Select(assignment => assignment.Address).Except(events));
         var addedAddresses = addresses.Except(catalog.Semantics.Select(assignment => assignment.Address))
@@ -386,6 +411,14 @@ public sealed class ScreenplayWorkspace
             advanced.Semantics,
             [.. advanced.EventContracts.Select(assignment => assignment with { Origin = catalog.ResolveEventContract(assignment.Address).Origin })]);
     }
+
+    // A subset keeps only the assignments of declarations its documents contain; the rest stay with the full model.
+    static SemanticIdentityCatalog WithoutAbsentDeclarations(SemanticIdentityCatalog catalog, HashSet<SemanticAddress> addresses, HashSet<SemanticAddress> events) =>
+        SemanticIdentityCatalog.Create(
+            catalog.Application,
+            catalog.Documents,
+            [.. catalog.Semantics.Where(assignment => addresses.Contains(assignment.Address))],
+            [.. catalog.EventContracts.Where(assignment => events.Contains(assignment.Address))]);
 
     static ScreenplayWorkspace CreateCore(
         string applicationName,
