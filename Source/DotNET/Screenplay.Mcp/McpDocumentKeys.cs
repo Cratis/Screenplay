@@ -8,5 +8,5 @@ namespace Cratis.Screenplay.Mcp;
 static class McpDocumentKeys
 {
     // Bootstrap once; subsequent moves retain this opaque key through workspace serialization.
-    internal static string For(string path) => ModelRootDirectory.DocumentKey(path);
+    internal static string For(string path) => ModelRootDocumentKeys.For(PortablePlayPath.Parse(path));
 }

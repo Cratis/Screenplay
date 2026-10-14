@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -47,7 +45,7 @@ sealed class ModelRootDirectory
     }
 
     // Bootstrap once; subsequent moves retain this opaque key through workspace serialization.
-    internal static string DocumentKey(string path) => $"mcp:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path)))}";
+    internal static string DocumentKey(string path) => ModelRootDocumentKeys.For(PortablePlayPath.Parse(path));
 
     internal static void CheckDocuments(ImmutableArray<WorkspaceDocument> documents, bool allowEmpty = false)
     {
@@ -149,7 +147,7 @@ sealed class ModelRootDirectory
                     throw new ModelRootRefused($"Root exceeds {MaximumBytes} bytes of .play source.");
                 }
 
-                var document = WorkspaceDocument.Create(DocumentKey(relative), portable, content);
+                var document = WorkspaceDocument.Create(ModelRootDocumentKeys.For(portable), portable, content);
                 CheckSource(document);
                 documents.Add(document);
             }

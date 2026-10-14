@@ -123,6 +123,52 @@ public sealed class ScreenplayWorkspace
         CreateEmpty(applicationIdentity, applicationName, SemanticIdentityCatalog.Empty(applicationIdentity));
 
     /// <summary>
+    /// Re-homes this workspace's identities onto a different document split of the same model.
+    /// </summary>
+    /// <param name="documents">The complete new exact-source document set.</param>
+    /// <returns>A new workspace whose identities can be serialized with <see cref="PersistedIdentityStateSerializer"/>.</returns>
+    /// <remarks>
+    /// Semantic and event-contract IDs and origins are kept by address, as are event revisions unless explicitly
+    /// declared source advances them forward. Document assignments for re-supplied keys are kept; other old document
+    /// assignments are dropped, and new keys receive deterministic bootstrap IDs. Supplied document IDs are rebound
+    /// to these assignments. No semantic or event address may be retired or newly bootstrapped.
+    /// Changed document assignments change the catalog revision; changed documents or assignments change the workspace
+    /// revision, invalidating proposals bound to the old revisions.
+    /// Attachments are not carried; re-apply them with <see cref="WithAttachmentContents"/>.
+    /// Serialize the result with <see cref="PersistedIdentityStateSerializer.From"/> and write exactly its documents
+    /// to a model root for strict <see cref="ScreenplayModelRoot.Open"/> acceptance, within that root's file limits.
+    /// Before overwriting an existing MCP-authored identities.json, compare its event assignments: different
+    /// assignments turn previously baselined entries into BaselinedRevisionMissing. This method never writes files.
+    /// </remarks>
+    /// <exception cref="InvalidScreenplayWorkspace">
+    /// Source does not compile, semantic or event addresses differ (listed as retiredAddresses or addedAddresses),
+    /// or document keys, IDs, or portable paths collide.
+    /// </exception>
+    public ScreenplayWorkspace Rehome(ImmutableArray<WorkspaceDocument> documents)
+    {
+        try
+        {
+            var admitted = AdmitDocuments(documents);
+            var keys = admitted.Select(document => document.StableKey).ToHashSet(StringComparer.Ordinal);
+            var catalog = SemanticIdentityCatalog.Create(
+                IdentityCatalog.Application,
+                [.. IdentityCatalog.Documents.Where(assignment => keys.Contains(assignment.Key))],
+                IdentityCatalog.Semantics,
+                IdentityCatalog.EventContracts);
+            var rebound = admitted.Select(document => WorkspaceDocument.Create(
+                catalog.ResolveDocument(document.StableKey), document.StableKey, document.Path, document.Bytes.AsSpan())).ToImmutableArray();
+            catalog = VerifyRehome(ApplicationName, rebound, catalog);
+            var workspace = CreateCore(ApplicationName, catalog.Application, rebound, catalog);
+            RequireRehomeCompilation(workspace.Compilation);
+            return workspace;
+        }
+        catch (Exception exception) when (exception is InvalidSemanticContract or InvalidWorkspaceDocument)
+        {
+            throw new InvalidScreenplayWorkspace(exception.Message, exception);
+        }
+    }
+
+    /// <summary>
     /// Recompiles with immutable host-supplied contents and warnings, without changing source, identities, or revision.
     /// Neither the serializer nor transactions read the file system; callers must refresh these inputs themselves.
     /// </summary>
@@ -249,6 +295,51 @@ public sealed class ScreenplayWorkspace
         ],
         identityCatalog,
         attachmentContents);
+
+    static void RequireRehomeCompilation(CompilationResult<SemanticCompilation> compilation)
+    {
+        if (!compilation.Success)
+        {
+            throw new InvalidScreenplayWorkspace($"Re-home source does not compile: {string.Join("; ", compilation.Diagnostics.Select(diagnostic => diagnostic.Message))}");
+        }
+    }
+
+    static SemanticIdentityCatalog VerifyRehome(string applicationName, ImmutableArray<WorkspaceDocument> documents, SemanticIdentityCatalog catalog)
+    {
+        var discovery = Compile(applicationName, documents, catalog);
+        if (!discovery.Success)
+        {
+            // A stale assignment refuses before returning an index. Discover independently to report removed addresses.
+            discovery = Compile(applicationName, documents, SemanticIdentityCatalog.Create(catalog.Application, catalog.Documents, [], []));
+        }
+
+        RequireRehomeCompilation(discovery);
+        var index = SemanticCompilationIndex.Create(discovery.Value!.Model.Application, catalog.Application);
+        var addresses = index.Declarations.Keys.ToHashSet();
+        var events = index.Events.Keys.ToHashSet();
+        var retiredAddresses = catalog.Semantics.Select(assignment => assignment.Address).Except(addresses)
+            .Concat(catalog.EventContracts.Select(assignment => assignment.Address).Except(events));
+        var addedAddresses = addresses.Except(catalog.Semantics.Select(assignment => assignment.Address))
+            .Concat(events.Except(catalog.EventContracts.Select(assignment => assignment.Address)));
+        IdentityMigrationIssue.Reject(
+            "A re-home must preserve every semantic and event address.",
+            retiredAddresses.Select(address => new IdentityMigrationIssue([nameof(retiredAddresses)], address))
+                .Concat(addedAddresses.Select(address => new IdentityMigrationIssue([nameof(addedAddresses)], address))));
+        var advancements = index.Events.Where(entry => entry.Value.Revision.Value > catalog.ResolveEventContract(entry.Key).Revision.Value)
+            .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision)).ToImmutableArray();
+        if (advancements.IsEmpty)
+        {
+            return catalog;
+        }
+
+        var advanced = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+            catalog, catalog.Revision, [.. documents.Select(document => document.StableKey)], [.. addresses], [.. events], advancements).Catalog;
+        return SemanticIdentityCatalog.Create(
+            advanced.Application,
+            advanced.Documents,
+            advanced.Semantics,
+            [.. advanced.EventContracts.Select(assignment => assignment with { Origin = catalog.ResolveEventContract(assignment.Address).Origin })]);
+    }
 
     static ScreenplayWorkspace CreateCore(
         string applicationName,
