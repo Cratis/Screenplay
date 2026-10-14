@@ -95,9 +95,11 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
 }
 
 function queryRejectionAction(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
-    const queries = specification.thenQueries ?? [];
-    if (specification.thenErrors.length !== 1 || queries.length !== 1 || queries[0].results.length !== 0) return undefined;
-    return { name: `query ${queries[0].query}`, values: valuesOf(queries[0].arguments) };
+    if (specification.thenErrors.length !== 1) return undefined;
+    const [query, ...others] = specification.thenQueries ?? [];
+    if (query === undefined || others.length > 0) return undefined;
+    if (query.results.length > 0) return undefined;
+    return { name: `query ${query.query}`, values: valuesOf(query.arguments) };
 }
 
 // @cratis/event-models 0.118.2 reads and renders the specification name in its header. Linked
