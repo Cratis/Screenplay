@@ -47,5 +47,8 @@ public class when_binding_the_invoicing_sample : Specification
         DiagnosticCodes.ProductionRouteOutsideCommand or DiagnosticCodes.RedundantProductionRoute or DiagnosticCodes.InvalidObserverFilter or DiagnosticCodes.ObserverFilterExcludesEveryProducer).ShouldBeEmpty();
 
     [Fact]
+    void should_not_refuse_refusal_branches_or_values() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#433", StringComparison.Ordinal)).ShouldBeFalse();
+
+    [Fact]
     void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(3);
 }

@@ -246,9 +246,9 @@ Both are declarations of *what happens*, not of how — a trigger can state its 
 
 Use `when redelivered <Event> to <Reaction>` to deliver one existing given fact to one event-trigger reaction again. ESM v17 establishes givens without running reactions, fires only the named observer (respecting its `from` and `where` filters), and settles any cascade from newly appended facts. It never appends the given fact again. `then no events` asserts no effects, while event expectations compare all newly accepted facts. An unhandled validation or constraint refusal remains assertable with `then error`. See [Redelivery specifications](specifications.md#redelivery-specifications) for locator rules and examples. This is ordinary observation, not replay or a once-only external-effect guarantee.
 
-## Refusal branches (syntax-only)
+## Refusal branches
 
-> Refusal branches and `$refusal` values are authoring syntax, not yet executable. Both compilers preserve the syntax; the .NET compiler checks selectors and value scope. Binding refuses these constructs with `PLAY0268`, and MCP reports them as unadmitted. [Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines their intended behavior for admission.
+Refusal branches and `$refusal` values select ESM v19 and execute in the reference runner under [decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md). Both compilers preserve the syntax; the .NET compiler binds it and checks executable scope and destinations. Consumers must explicitly admit v19.
 
 Inside `invokes`, state how the reaction should handle a command's refusal. This excerpt assumes the command, constraint and output event are declared:
 
@@ -268,29 +268,29 @@ invokes Claim
 
 Branches are ordered: the first matching selector wins. A branch contains `acknowledge` alone or one or more ordinary `produces <Event>` blocks, with mappings and optional `for`. Empty branches, repeated acknowledgement, acknowledgement combined with productions, operations, inline event declarations and implementation attachments are invalid.
 
-| Selector | Intended refusal category |
+| Selector | Refusal category |
 | --- | --- |
 | `on refused` | Validation or constraint refusal, **not authorization** |
-| `on refused by validation` | Property rules, concept rules or `require` |
+| `on refused by validation` | Error-severity property rules, concept rules or `require` |
 | `on refused by constraint` | Any append-time constraint refusal |
-| `on refused by constraint <Name>` | The named, unambiguously resolved constraint |
+| `on refused by constraint <Name>` | Any violated constraint with the named, unambiguously resolved identity |
 | `on refused by authorization` | Explicit unauthorized result, never an opaque policy's Unsupported outcome |
 
 Duplicate selectors and narrower branches after a covering branch produce `PLAY0540`. Bare refusal never shadows authorization. An unresolved named constraint produces `PLAY0542`; a known constraint that cannot target any of the invoked command's produced events also produces `PLAY0540`.
 
-Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the reaction has no declared `runs as`. The reference runner has no caller and always denies a gated command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor also has no principal. Declare `runs as system role "<Role>"` to state the intended identity; this suppresses the warning and selects ESM v10 for system authorization. Refusal branches themselves remain syntax-only. `given caller` does not supply that identity. Validation and constraint branches do not receive `PLAY0557`; a gated invocation without an authorization branch receives `PLAY0648` instead.
+Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the reaction has no declared `runs as`. The reference runner has no caller and always denies a gated command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor also has no principal. Declare `runs as system role "<Role>"` to state the intended identity; this suppresses the warning and selects ESM v10 for system authorization. Refusal branches themselves select ESM v19. `given caller` does not supply that identity. Validation and constraint branches do not receive `PLAY0557`; a gated invocation without an authorization branch receives `PLAY0648` instead.
 
 The branch's event mappings may use these String values:
 
 | Value | Meaning | Scope |
 | --- | --- | --- |
 | `$refusal.reason` | `validation`, `constraint` or `authorization` | Any branch |
-| `$refusal.constraint` | Violated constraint name | Only a `by constraint` branch |
-| `$refusal.message` | Rejection details verbatim, including an unresolved `$strings.` key | Any branch |
+| `$refusal.constraint` | First violated constraint name in result order | Only a `by constraint` branch |
+| `$refusal.message` | Messages of the classified kind joined with `\n` in result order, verbatim; authorization uses its denial reason | Any branch |
 
-Unknown members, use outside a branch's event mapping and incompatible target types produce `PLAY0541`. Messages are display details, not stable identities. Other mapping inputs follow the trigger's rules; read aliases are not branch inputs. For an event trigger, an omitted production `for` is intended to use the triggering event source. At executable admission, clock and application triggers will require `for`; this destination requirement is not enforced by syntax-only authoring yet.
+Unknown members, use outside a branch's event mapping and incompatible target types produce `PLAY0541`. Messages are display details, not stable identities. Other mapping inputs follow the trigger's rules; read aliases are not branch inputs. For an event trigger, an omitted production `for` uses the triggering event source. Binding requires `for` on clock and application triggers. Messages retain whitespace and unresolved `$strings.` keys.
 
-At admission, a refused command contributes no facts. Handling its refusal will stop the remaining invocations of that trigger; other reactions and cascades from accepted facts will continue. Branch productions remain subject to ordinary append constraints. A rejected branch append cannot be caught by another branch. Unhandled refusals end the scenario, retaining previously accepted facts. These are the accepted design, not current runner behavior.
+The first matching branch wins. Classification gives authorization precedence over constraint, then validation. A refused command contributes no facts. Handling its refusal stops the remaining invocations of that trigger; other reactions and cascades from accepted facts continue. Branch productions remain subject to ordinary append constraints. A rejected branch append ends the scenario and cannot be caught by another branch. Unhandled refusals end the scenario, retaining previously accepted facts.
 
 Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications).
 

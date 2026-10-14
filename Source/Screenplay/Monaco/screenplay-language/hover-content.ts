@@ -92,8 +92,8 @@ export function hoverContent(
             if (variable.startsWith('$refusal')) {
                 const branch = refusalContext(lines, lineIndex, indentOf(line));
                 const member = variable.substring('$refusal.'.length);
-                const descriptions: Record<string, string> = { reason: 'Refusal kind as a String: validation, constraint or authorization.', message: 'Rejection details verbatim, including unresolved $strings keys.', constraint: 'Violated constraint name as a String, only in a by constraint branch.' };
-                return branch !== undefined && descriptions[member] !== undefined ? `**${variable}** — ${descriptions[member]} Syntax-only, not yet executable (PLAY0268).` : null;
+                const descriptions: Record<string, string> = { reason: 'Refusal kind as a String: validation, constraint or authorization.', message: 'Messages of the classified kind joined with a newline in result order, verbatim including unresolved $strings keys; authorization uses its denial reason.', constraint: 'First violated constraint name in result order as a String, only in a by constraint branch.' };
+                return branch !== undefined && descriptions[member] !== undefined ? `**${variable}** — ${descriptions[member]} Executable from ESM v19 in branch event mappings.` : null;
             }
             if (variable.startsWith('$identity.')) {
                 const name = variable.substring('$identity.'.length).split('.')[0];

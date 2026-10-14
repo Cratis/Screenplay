@@ -260,6 +260,8 @@ public sealed record SemanticExecutionRequest(
 
     internal SemanticReactionIdentity? RunsAs { get; init; }
 
+    internal bool CollectRefusalDetails { get; init; }
+
     /// <summary>
     /// Creates a request that only queries established world state.
     /// </summary>
@@ -344,6 +346,11 @@ public sealed record SemanticRejected(
 
     /// <summary>Gets all failed validation rules and requirements in evaluation order.</summary>
     public ImmutableArray<SemanticValidationFailure> ValidationFailures { get; init; } = [];
+
+    /// <summary>
+    /// Gets constraint failures in result order for an invocation with refusal handling.
+    /// </summary>
+    public ImmutableArray<SemanticConstraintFailure> ConstraintFailures { get; init; } = [];
 }
 
 /// <summary>

@@ -48,6 +48,10 @@ internal static partial class SemanticModelValidator
             }
 
             var sourceType = ResolveExpression(mapping.Source, root, sources);
+            if (mapping.Source is SemanticRefusalExpression && !target.Type.IsCollection && UnderlyingPrimitive(target.Type) == SemanticPrimitiveType.Text)
+            {
+                return;
+            }
             RequireCompatible(sourceType, target.Type, "property mapping");
         }
 
@@ -62,6 +66,7 @@ internal static partial class SemanticModelValidator
             {
                 SemanticValueExpression value when expression.Kind == SemanticExpressionKind.Value => ResolveValueExpression(value),
                 SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext => ResolveEventContext(context, expectedRoot),
+                SemanticRefusalExpression refusal when expression.Kind == SemanticExpressionKind.Refusal => ResolveRefusalExpression(refusal),
                 SemanticResolvedExpression resolved when expression.Kind == SemanticExpressionKind.Resolved => ResolveResolvedExpression(resolved, expectedRoot, properties),
                 _ => throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.")
             };

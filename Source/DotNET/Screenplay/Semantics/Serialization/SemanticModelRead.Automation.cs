@@ -91,7 +91,7 @@ internal static partial class SemanticModelRead
                 case "onDayOfMonth": onDayOfMonth = Int32(ref reader, property); break;
                 case "where": RequiredToken(ref reader, JsonTokenType.StartObject, property); where = Condition(ref reader); break;
                 case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, true), property); break;
-                case "invokes": invokes = Array(ref reader, Invocation, property); break;
+                case "invokes": invokes = Array(ref reader, (ref Utf8JsonReader item) => Invocation(ref item, schemaVersion), property); break;
                 case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "reaction trigger");
             }
@@ -112,24 +112,48 @@ internal static partial class SemanticModelRead
         };
     }
 
-    internal static SemanticInvocation Invocation(ref Utf8JsonReader reader)
+    internal static SemanticInvocation Invocation(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "invocation");
         var seen = NewSeen();
         SemanticId command = default;
         ImmutableArray<SemanticPropertyMapping> mappings = default;
+        ImmutableArray<SemanticInvocationRefusal> branches = [];
         while (NextProperty(ref reader, seen, "invocation") is { } property)
         {
             switch (property)
             {
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
+                case "onRefused" when schemaVersion >= 19: branches = Array(ref reader, (ref Utf8JsonReader item) => InvocationRefusal(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "invocation");
             }
         }
 
         Required(command.IsSet && !mappings.IsDefault, "invocation");
-        return new(command, mappings);
+        return new(command, mappings) { OnRefused = branches };
+    }
+
+    internal static SemanticInvocationRefusal InvocationRefusal(ref Utf8JsonReader reader, uint schemaVersion)
+    {
+        Object(ref reader, "refusal branch");
+        var seen = NewSeen();
+        string? selector = null;
+        string? constraint = null;
+        ImmutableArray<SemanticProducedEvent> produces = default;
+        while (NextProperty(ref reader, seen, "refusal branch") is { } property)
+        {
+            switch (property)
+            {
+                case "selector": selector = String(ref reader, property); break;
+                case "constraint": constraint = String(ref reader, property); break;
+                case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, true), property); break;
+                default: throw Unknown(property, "refusal branch");
+            }
+        }
+
+        Required(selector is not null && !produces.IsDefault, "refusal branch");
+        return new(selector!, constraint, produces);
     }
 
     internal static SemanticCapture Capture(ref Utf8JsonReader reader, uint schemaVersion)
