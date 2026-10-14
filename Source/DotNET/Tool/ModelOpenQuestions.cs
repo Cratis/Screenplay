@@ -36,7 +36,8 @@ static class ModelOpenQuestions
         {
             var options = request.Options;
             var directory = options.IsFile ? Path.GetDirectoryName(Path.GetFullPath(options.Target))! : Path.GetFullPath(options.Target);
-            _ = McpTestDocuments.From(request.Snapshot, directory, out var rootDirectory);
+            var rootDirectory = options.Gate?.ModelRoot ?? directory;
+            if (!options.UseResolvedNotesRoot) _ = McpTestDocuments.From(request.Snapshot, directory, out rootDirectory);
 
             return Report(ModelNoteQuestions.Read(rootDirectory, options.Scope), options.OpenQuestions, output, error);
         }

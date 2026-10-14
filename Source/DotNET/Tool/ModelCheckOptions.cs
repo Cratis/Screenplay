@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Contracts;
+using Cratis.Screenplay.Validation;
 
 namespace Cratis.Screenplay.Tool;
 
@@ -15,8 +16,36 @@ sealed class ModelCheckOptions
     internal bool WarnAsError { get; set; }
     internal bool NoColor { get; set; }
     internal bool IsFile { get; set; }
+    internal bool HasChecks { get; set; }
+    internal bool PrintGate { get; set; }
+    internal bool NoGateFile { get; set; }
+    internal string Format { get; set; } = "text";
+    internal bool HasFormat { get; set; }
+    internal bool UseResolvedNotesRoot { get; set; }
+    internal EffectiveValidationGate? Gate { get; set; }
+
+    internal DeclaredValidationGate CommandLineGate => new(
+        HasChecks ? [.. Checks.Selected.Order().Select(CompletenessChecks.NameOf)] : null,
+        WarnAsError ? true : null,
+        Scope,
+        OpenQuestions);
 
     internal static ModelCheckOptions? Parse(string[] arguments, TextWriter error) => new ModelCheckArguments(arguments, error).Parse();
+
+    internal void UseGate(EffectiveValidationGate gate)
+    {
+        Gate = gate;
+        Checks = gate.Checks.Value.Length == 0 ? CompletenessChecks.None : ParseChecks(gate.Checks.Value);
+        WarnAsError = gate.WarningsAsErrors.Value;
+        Scope = gate.Scope.Value;
+        OpenQuestions = gate.OpenQuestions.Value;
+    }
+
+    // The gate's names were validated when the file or the command line was read, so a refusal here is a defect.
+    static CompletenessChecks ParseChecks(IEnumerable<string> names) =>
+        CompletenessChecks.TryParse(string.Join(',', names), out var checks)
+            ? checks
+            : throw new UnrecognizedValidationGateChecks(names);
 }
 
 sealed class ModelCheckArguments(string[] arguments, TextWriter error)
@@ -28,7 +57,10 @@ sealed class ModelCheckArguments(string[] arguments, TextWriter error)
         [CliCommandCatalog.Checks.Name] = reader => reader.Checks(),
         [CliCommandCatalog.OpenQuestions.Name] = reader => reader.OpenQuestions(),
         [CliCommandCatalog.WarnAsError.Name] = reader => reader.WarnAsError(),
-        [CliCommandCatalog.NoColor.Name] = reader => reader.NoColor()
+        [CliCommandCatalog.NoColor.Name] = reader => reader.NoColor(),
+        [CliCommandCatalog.Format.Name] = reader => reader.Format(),
+        [CliCommandCatalog.PrintGate.Name] = reader => reader.PrintGate(),
+        [CliCommandCatalog.NoGateFile.Name] = reader => reader.NoGateFile()
     };
     int _index;
     bool _hasTarget;
@@ -78,6 +110,7 @@ sealed class ModelCheckArguments(string[] arguments, TextWriter error)
         if (!TakeValue(out var value)) return Fail(message);
         if (!CompletenessChecks.TryParse(value, out var selected)) return Fail(message);
         _options.Checks = new(_options.Checks.Selected.Union(selected.Selected));
+        _options.HasChecks = true;
         return true;
     }
 
@@ -105,6 +138,29 @@ sealed class ModelCheckArguments(string[] arguments, TextWriter error)
     bool NoColor()
     {
         _options.NoColor = true;
+        return true;
+    }
+
+    bool Format()
+    {
+        const string message = "--format requires text or json and cannot be repeated.";
+        if (_options.HasFormat) return Fail(message);
+        if (!TakeValue(out var value)) return Fail(message);
+        if (value is not ("text" or "json")) return Fail(message);
+        _options.Format = value;
+        _options.HasFormat = true;
+        return true;
+    }
+
+    bool PrintGate()
+    {
+        _options.PrintGate = true;
+        return true;
+    }
+
+    bool NoGateFile()
+    {
+        _options.NoGateFile = true;
         return true;
     }
 
