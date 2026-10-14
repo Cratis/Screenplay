@@ -21,6 +21,15 @@ internal sealed record RegexExpression(string Kind, string Characters = "", Rege
         _ => throw new InvalidSemanticContract("Unknown regular expression node.")
     };
 
+    // A repeat that may run more than once over an operand that can match nothing lets a backtracking
+    // runtime regex try exponentially many empty iterations even when the automaton is deterministic.
+    internal bool HasNullableRepeat { get; } = Kind switch
+    {
+        "alternate" or "concat" => Left!.HasNullableRepeat || Right!.HasNullableRepeat,
+        "repeat" => Left!.HasNullableRepeat || (Left.MinimumLength == 0 && (Maximum is null || Maximum > 1)),
+        _ => false
+    };
+
     internal static RegexExpression Character(string characters) => new("characters", characters);
     internal static RegexExpression Alternate(RegexExpression left, RegexExpression right) => new("alternate", Left: left, Right: right);
     internal static RegexExpression Concat(RegexExpression left, RegexExpression right) => new("concat", Left: left, Right: right);

@@ -96,7 +96,7 @@ public static class RuleConsistency
             {
                 // Length clipping is valid for containment, not for runtime ambiguity: retain every authored branch.
                 var authored = new RegexFragmentR(pattern, shape.Positions.Length, boundToShape: false).Parse();
-                if (!new GlushkovAutomaton(authored).IsDeterministic) return RuleConsistencyResult.Unproven(RegexContainment.AmbiguousPatternReason);
+                if (authored.HasNullableRepeat || !new GlushkovAutomaton(authored).IsDeterministic) return RuleConsistencyResult.Unproven(RegexContainment.AmbiguousPatternReason);
             }
             catch (RegexStateBudgetExceeded error)
             {
