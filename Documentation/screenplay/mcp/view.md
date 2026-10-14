@@ -114,8 +114,8 @@ as described in [Edit a model](edit.md#review-and-apply).
 ### Read the markers
 
 The board marks what the proposal changes, so you do not have to compare the two
-views by eye. Each marked module, feature, slice, command, event, read model and
-query carries a badge with an icon and a word: **Added**, **Changed** or **Removed**.
+views by eye. Each marked module, feature, slice, command, event, external event and
+read model carries a badge with an icon and a word: **Added**, **Changed** or **Removed**.
 Screen readers announce the same text, such as "Added command: ReturnBook", so
 the markers do not rely on color.
 
@@ -125,6 +125,11 @@ the markers do not rely on color.
 - An element is **Changed** when its own content differs, such as the fields of a
   command or event. Its parent slice, feature and module are not marked for it.
   Reordering, collapsing and status changes are not changes.
+- Some things the board draws have no marker of their own: queries, screens and their
+  prototypes, specifications, the automation trigger, and the persona lanes. A change in
+  one of them marks the element that holds it as **Changed**: the slice for a query,
+  screen, specification or trigger, and the first module of the lanes for a persona.
+  A slice that adds a screen is therefore **Changed**, not **Added** on the screen.
 
 The toolbar says how much each view marks, for example **Proposed · 3 added,
 1 changed** and **Current · 2 removed**. A view with nothing to mark keeps its plain

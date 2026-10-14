@@ -6,11 +6,28 @@ import type { EventModelDocument, FeatureDocument, SliceDocument } from '@cratis
 import type { BoardChangeSet } from './BoardChangeSet';
 import type { BoardChangeSets } from './BoardChangeSets';
 
-// One element the board can mark, with what is its own: everything but its child elements and where or how
-// it is laid out, so an ancestor is not marked for a change in something it holds.
+// One element the board can mark, with what is its own: everything but the elements it holds that are marked on
+// their own and where or how it is laid out, so an ancestor is not marked for a change in a marked child.
+//
+// The board (@cratis/event-models 0.172.0, `useBoardChange` in dist/index.js) marks modules, features, slices
+// and the command, read model, event and external event cards. Queries, screens (the prototypes in a slice's
+// `actors`), specifications, the automation trigger and the persona lanes of a module collection are not
+// drawn with a marker, so a change in one of them is part of what its nearest marked owner is: the slice, or
+// for a persona lane the first module of its collection.
 interface Element {
     readonly id: string;
     readonly fingerprint: string;
+}
+
+// The lanes of one module collection and the module that owns them when a lane changes.
+interface Lanes {
+    readonly fingerprint: string;
+    readonly owner?: string;
+}
+
+interface Elements {
+    readonly elements: readonly Element[];
+    readonly lanes: ReadonlyMap<string, Lanes>;
 }
 
 // Layout and view state - reordering, collapsing, counting comments, a status - is not a change to the model.
@@ -24,14 +41,23 @@ export function boardChanges(current: EventModelDocument, proposed?: EventModelD
     if (proposed === undefined) {
         return { current: empty, proposed: empty };
     }
-    const before = new Map(elementsOf(current).map(element => [element.id, element]));
-    const after = new Map(elementsOf(proposed).map(element => [element.id, element]));
-    const added = [...after.keys()].filter(id => !before.has(id));
-    const changed = [...after.keys()].filter(id => before.has(id) && before.get(id)!.fingerprint !== after.get(id)!.fingerprint);
-    const removed = [...before.keys()].filter(id => !after.has(id));
+    const before = elementsOf(current);
+    const after = elementsOf(proposed);
+    const previous = new Map(before.elements.map(element => [element.id, element]));
+    const next = new Map(after.elements.map(element => [element.id, element]));
+    const added = [...next.keys()].filter(id => !previous.has(id));
+    const changed = new Set([...next.keys()].filter(id => previous.has(id) && previous.get(id)!.fingerprint !== next.get(id)!.fingerprint));
+    // A persona lane has no marker: when one is added, removed or changed the module that owns the lanes is changed.
+    for (const [id, lanes] of after.lanes) {
+        const was = before.lanes.get(id);
+        if (was !== undefined && was.fingerprint !== lanes.fingerprint && lanes.owner !== undefined && previous.has(lanes.owner)) {
+            changed.add(lanes.owner);
+        }
+    }
+    const removed = [...previous.keys()].filter(id => !next.has(id));
     return {
-        current: setOf(removed.map(id => [id, 'removed'] as const), [...before.keys()]),
-        proposed: setOf([...added.map(id => [id, 'added'] as const), ...changed.map(id => [id, 'changed'] as const)], [...after.keys()]),
+        current: setOf(removed.map(id => [id, 'removed'] as const), [...previous.keys()]),
+        proposed: setOf([...added.map(id => [id, 'added'] as const), ...[...changed].map(id => [id, 'changed'] as const)], [...next.keys()]),
     };
 }
 
@@ -48,30 +74,32 @@ function setOf(marked: readonly (readonly [string, BoardChange])[], boardOrder: 
 }
 
 // Every element the board marks, parents before what they hold, in the order the board draws them.
-function elementsOf(document: EventModelDocument): Element[] {
+function elementsOf(document: EventModelDocument): Elements {
     const elements: Element[] = [];
-    const add = (value: { readonly id: string }, children: readonly string[]) => elements.push({ id: value.id, fingerprint: own(value, children) });
+    const lanes = new Map<string, Lanes>();
+    const add = (value: { readonly id: string }, markedChildren: readonly string[]) => elements.push({ id: value.id, fingerprint: own(value, markedChildren) });
     const addFeature = (feature: FeatureDocument) => {
         add(feature, ['subFeatures', 'slices']);
         feature.slices.forEach(addSlice);
         feature.subFeatures.forEach(addFeature);
     };
     const addSlice = (slice: SliceDocument) => {
-        add(slice, ['command', 'readModel', 'externalEvents', 'events', 'queries']);
+        add(slice, ['command', 'readModel', 'externalEvents', 'events']);
         [slice.command, slice.readModel].forEach(item => item && add(item, []));
-        [...slice.externalEvents, ...slice.events, ...slice.queries].forEach(item => add(item, []));
+        [...slice.externalEvents, ...slice.events].forEach(item => add(item, []));
     };
     for (const collection of document.collections) {
+        lanes.set(collection.id, { fingerprint: stable(collection.actors), owner: collection.modules[0]?.id });
         for (const module of collection.modules) {
             add(module, ['features']);
             module.features.forEach(addFeature);
         }
     }
-    return elements;
+    return { elements, lanes };
 }
 
-function own(value: object, children: readonly string[]): string {
-    const fields = Object.entries(value).filter(([key]) => !children.includes(key) && !layoutFields.has(key));
+function own(value: object, markedChildren: readonly string[]): string {
+    const fields = Object.entries(value).filter(([key]) => !markedChildren.includes(key) && !layoutFields.has(key));
     return stable(Object.fromEntries(fields));
 }
 

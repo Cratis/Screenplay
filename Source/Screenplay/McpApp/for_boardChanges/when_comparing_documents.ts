@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { describe, it } from 'vitest';
+import { beforeEach, describe, it } from 'vitest';
+import type { EventModelDocument } from '@cratis/screenplay-event-models';
 import { boardChanges } from '../boardChanges';
 import { compileBoards } from '../compileBoards';
+import type { BoardChangeSets } from '../BoardChangeSets';
 
 const slice = (name: string, field = 'name') => `    slice StateChange ${name}
       command ${name}
@@ -18,15 +20,23 @@ const module = (name: string, ...slices: string[]) => `module ${name}
   feature Registration
 ${slices.join('')}`;
 
-const compare = (current: string, proposed: string) => {
-    const boards = compileBoards({ application: 'Projects', documents: [{ path: 'projects.play', source: current }], changes: [{ path: 'projects.play', source: proposed }] });
-    return { boards, sets: boardChanges(boards.current.document, boards.proposed!.document) };
-};
-const idOf = (document: { collections: { modules: { id: string; features: { id: string; slices: { id: string; command?: { id: string } }[] }[] }[] }[] }) => document.collections[0].modules[0];
+const compile = (current: string, proposed?: string) => compileBoards({
+    application: 'Projects',
+    documents: [{ path: 'projects.play', source: current }],
+    changes: proposed === undefined ? undefined : [{ path: 'projects.play', source: proposed }],
+});
+const firstModule = (document: EventModelDocument) => document.collections[0].modules[0];
+const firstSlice = (document: EventModelDocument) => firstModule(document).features[0].slices[0];
 
 describe('when the proposal adds a slice', () => {
-    const { boards, sets } = compare(module('Projects', slice('Register')), module('Projects', slice('Register'), slice('Rename')));
-    const added = idOf(boards.proposed!.document).features[0].slices[1];
+    let sets: BoardChangeSets;
+    let added: ReturnType<typeof firstSlice>;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice('Register')), module('Projects', slice('Register'), slice('Rename')));
+        sets = boardChanges(boards.current.document, boards.proposed!.document);
+        added = firstModule(boards.proposed!.document).features[0].slices[1];
+    });
 
     it('should mark the slice added', () => sets.proposed.changes.get(added.id)!.should.equal('added'));
     it('should mark its command added', () => sets.proposed.changes.get(added.command!.id)!.should.equal('added'));
@@ -37,8 +47,14 @@ describe('when the proposal adds a slice', () => {
 });
 
 describe('when the proposal removes a slice', () => {
-    const { boards, sets } = compare(module('Projects', slice('Register'), slice('Rename')), module('Projects', slice('Register')));
-    const removed = idOf(boards.current.document).features[0].slices[1];
+    let sets: BoardChangeSets;
+    let removed: ReturnType<typeof firstSlice>;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice('Register'), slice('Rename')), module('Projects', slice('Register')));
+        sets = boardChanges(boards.current.document, boards.proposed!.document);
+        removed = firstModule(boards.current.document).features[0].slices[1];
+    });
 
     it('should mark the slice removed on the current model', () => sets.current.changes.get(removed.id)!.should.equal('removed'));
     it('should count the slice, command and event', () => sets.current.removed.should.equal(3));
@@ -47,48 +63,74 @@ describe('when the proposal removes a slice', () => {
 });
 
 describe('when the proposal changes a field of a command', () => {
-    const { boards, sets } = compare(module('Projects', slice('Register', 'name')), module('Projects', slice('Register', 'title')));
-    const changed = idOf(boards.proposed!.document).features[0].slices[0];
+    let sets: BoardChangeSets;
+    let proposed: EventModelDocument;
 
-    it('should mark the command changed', () => sets.proposed.changes.get(changed.command!.id)!.should.equal('changed'));
-    it('should not mark the slice, which holds the command', () => sets.proposed.changes.has(changed.id).should.be.false);
-    it('should not mark the feature', () => sets.proposed.changes.has(idOf(boards.proposed!.document).features[0].id).should.be.false);
-    it('should not mark the module', () => sets.proposed.changes.has(idOf(boards.proposed!.document).id).should.be.false);
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice('Register', 'name')), module('Projects', slice('Register', 'title')));
+        proposed = boards.proposed!.document;
+        sets = boardChanges(boards.current.document, proposed);
+    });
+
+    it('should mark the command changed', () => sets.proposed.changes.get(firstSlice(proposed).command!.id)!.should.equal('changed'));
+    it('should not mark the slice, which holds the command', () => sets.proposed.changes.has(firstSlice(proposed).id).should.be.false);
+    it('should not mark the feature', () => sets.proposed.changes.has(firstModule(proposed).features[0].id).should.be.false);
+    it('should not mark the module', () => sets.proposed.changes.has(firstModule(proposed).id).should.be.false);
     it('should mark nothing added or removed', () => `${sets.proposed.added}${sets.current.removed}`.should.equal('00'));
 });
 
 describe('when the proposal changes only what layout is made of', () => {
-    const { boards } = compare(module('Projects', slice('Register')), module('Projects', slice('Register')));
-    const collapsed = structuredClone(boards.proposed!.document);
-    collapsed.collections[0].modules[0].collapsed = true;
-    collapsed.collections[0].modules[0].sortOrder = 7;
-    collapsed.collections[0].modules[0].features[0].slices[0].collapsed = true;
-    const sets = boardChanges(boards.current.document, collapsed);
+    let sets: BoardChangeSets;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice('Register')), module('Projects', slice('Register')));
+        const collapsed = structuredClone(boards.proposed!.document);
+        collapsed.collections[0].modules[0].collapsed = true;
+        collapsed.collections[0].modules[0].sortOrder = 7;
+        collapsed.collections[0].modules[0].features[0].slices[0].collapsed = true;
+        sets = boardChanges(boards.current.document, collapsed);
+    });
 
     it('should mark nothing', () => sets.proposed.changes.size.should.equal(0));
     it('should open nowhere', () => (sets.proposed.first === undefined).should.be.true);
 });
 
 describe('when the proposal changes something in a later module', () => {
-    const { boards, sets } = compare(
-        module('Projects', slice('Register')) + module('Billing', slice('Invoice', 'number')),
-        module('Projects', slice('Register')) + module('Billing', slice('Invoice', 'reference')));
-    const billing = boards.proposed!.document.collections[0].modules[1];
+    let sets: BoardChangeSets;
+    let billing: EventModelDocument['collections'][0]['modules'][0];
+
+    beforeEach(() => {
+        const boards = compile(
+            module('Projects', slice('Register')) + module('Billing', slice('Invoice', 'number')),
+            module('Projects', slice('Register')) + module('Billing', slice('Invoice', 'reference')));
+        sets = boardChanges(boards.current.document, boards.proposed!.document);
+        billing = boards.proposed!.document.collections[0].modules[1];
+    });
 
     it('should open at the first change in board order', () => sets.proposed.first!.should.equal(billing.features[0].slices[0].command!.id));
 });
 
 describe('when the proposal adds in two places', () => {
-    const { boards, sets } = compare(
-        module('Projects', slice('Register')) + module('Billing', slice('Invoice')),
-        module('Projects', slice('Register'), slice('Rename')) + module('Billing', slice('Invoice'), slice('Credit')));
+    let sets: BoardChangeSets;
+    let expected: string;
 
-    it('should open at the first one the board draws', () => sets.proposed.first!.should.equal(boards.proposed!.document.collections[0].modules[0].features[0].slices[1].id));
+    beforeEach(() => {
+        const boards = compile(
+            module('Projects', slice('Register')) + module('Billing', slice('Invoice')),
+            module('Projects', slice('Register'), slice('Rename')) + module('Billing', slice('Invoice'), slice('Credit')));
+        sets = boardChanges(boards.current.document, boards.proposed!.document);
+        expected = firstModule(boards.proposed!.document).features[0].slices[1].id;
+    });
+
+    it('should open at the first one the board draws', () => sets.proposed.first!.should.equal(expected));
 });
 
 describe('when there is no proposal', () => {
-    const boards = compileBoards({ application: 'Projects', documents: [{ path: 'projects.play', source: module('Projects', slice('Register')) }] });
-    const sets = boardChanges(boards.current.document, undefined);
+    let sets: BoardChangeSets;
+
+    beforeEach(() => {
+        sets = boardChanges(compile(module('Projects', slice('Register'))).current.document, undefined);
+    });
 
     it('should mark nothing on the current model', () => sets.current.changes.size.should.equal(0));
     it('should mark nothing on the proposed model', () => sets.proposed.changes.size.should.equal(0));
@@ -96,8 +138,84 @@ describe('when there is no proposal', () => {
 });
 
 describe('when the proposal is the application as it is', () => {
-    const source = module('Projects', slice('Register'));
-    const { sets } = compare(source, source);
+    let sets: BoardChangeSets;
+
+    beforeEach(() => {
+        const source = module('Projects', slice('Register'));
+        const boards = compile(source, source);
+        sets = boardChanges(boards.current.document, boards.proposed!.document);
+    });
 
     it('should mark nothing', () => (sets.proposed.changes.size + sets.current.changes.size).should.equal(0));
 });
+
+// The board draws a marker on modules, features, slices and their command, read model and event cards only.
+// A change in anything else it draws marks the nearest of those that holds it.
+describe('when the proposal adds a screen to a slice', () => {
+    let sets: BoardChangeSets;
+    let target: ReturnType<typeof firstSlice>;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice0()));
+        const proposed = structuredClone(boards.current.document);
+        target = firstSlice(proposed);
+        target.actors.push({ id: 'actor-1', type: 0, layout: 0, windowWidth: 800, windowHeight: 600, elements: [{ id: 'screen-1', name: 'RegisterScreen', type: 'panel', width: 100, height: 50, ZIndex: 0, visibility: 0, isEnabled: true, opacity: 1, anchoring: 0, properties: { canvas: { x: 0, y: 0 } } }] });
+        sets = boardChanges(boards.current.document, proposed);
+    });
+
+    it('should mark the slice changed, since a screen has no marker of its own', () => sets.proposed.changes.get(target.id)!.should.equal('changed'));
+    it('should mark only the slice', () => sets.proposed.changes.size.should.equal(1));
+    it('should open at the slice', () => sets.proposed.first!.should.equal(target.id));
+});
+
+describe('when the proposal adds a query to a slice', () => {
+    let sets: BoardChangeSets;
+    let target: ReturnType<typeof firstSlice>;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice0()));
+        const proposed = structuredClone(boards.current.document);
+        target = firstSlice(proposed);
+        target.queries.push({ id: 'query-1', name: 'AllProjects', parameters: [] });
+        sets = boardChanges(boards.current.document, proposed);
+    });
+
+    it('should mark the slice changed, since a query has no marker of its own', () => sets.proposed.changes.get(target.id)!.should.equal('changed'));
+    it('should mark only the slice', () => sets.proposed.changes.size.should.equal(1));
+});
+
+describe('when the proposal adds a persona lane', () => {
+    let sets: BoardChangeSets;
+    let owner: string;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice0()) + module('Billing', slice('Invoice')));
+        const proposed = structuredClone(boards.current.document);
+        proposed.collections[0].actors.push({ id: 'actor-2', name: 'Manager', actorType: 0, description: '' });
+        owner = firstModule(proposed).id;
+        sets = boardChanges(boards.current.document, proposed);
+    });
+
+    it('should mark the first module of the collection changed, since a lane has no marker of its own', () => sets.proposed.changes.get(owner)!.should.equal('changed'));
+    it('should mark only that module', () => sets.proposed.changes.size.should.equal(1));
+    it('should open at that module', () => sets.proposed.first!.should.equal(owner));
+});
+
+describe('when the proposal removes a persona lane', () => {
+    let sets: BoardChangeSets;
+    let owner: string;
+
+    beforeEach(() => {
+        const boards = compile(module('Projects', slice0()));
+        const current = structuredClone(boards.current.document);
+        current.collections[0].actors.push({ id: 'actor-2', name: 'Manager', actorType: 0, description: '' });
+        owner = firstModule(current).id;
+        sets = boardChanges(current, boards.current.document);
+    });
+
+    it('should mark the owning module changed on the proposed model', () => sets.proposed.changes.get(owner)!.should.equal('changed'));
+});
+
+function slice0() {
+    return slice('Register');
+}

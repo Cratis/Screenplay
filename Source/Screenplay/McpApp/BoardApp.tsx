@@ -7,6 +7,7 @@ import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView,
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChangeLabel } from './boardChangeLabel';
 import { boardChanges } from './boardChanges';
+import { boardFocus, type DrawnBoard } from './boardFocus';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { boardHeight } from './boardHeight';
@@ -60,16 +61,20 @@ export const BoardApp = () => {
     const changeSets = useMemo(() => compiled?.proposed ? boardChanges(compiled.current.document, compiled.proposed.document) : undefined, [compiled]);
     const shownChanges = changeSets && (shown === ShownModel.Proposed ? changeSets.proposed : changeSets.current);
     const first = shownChanges?.first;
-    const shownBefore = useRef(shown);
+    const drawn = useRef<DrawnBoard>(undefined);
+    const shownDocument = board?.document;
     useEffect(() => {
-        // The board opens at the first change itself; a switch between Current and Proposed swaps the document
-        // under it, so go to the first change of the one now shown once it has been drawn.
-        if (shownBefore.current === shown) return;
-        shownBefore.current = shown;
-        if (first === undefined) return;
-        const frame = requestAnimationFrame(() => void boardHandle.current?.scrollTo(first, { animate: true }));
+        // The board opens at the first change itself. A switch between Current and Proposed, or a new tool result
+        // from the watcher, swaps the document under it: go to the first change of the one now shown once it has
+        // been drawn. A replacement before that frame cancels it and schedules again for the newer document.
+        if (shownDocument === undefined) return;
+        const current = { shown, document: shownDocument };
+        const target = boardFocus(drawn.current, current, first);
+        drawn.current = current;
+        if (target === undefined) return;
+        const frame = requestAnimationFrame(() => void boardHandle.current?.scrollTo(target, { animate: true }));
         return () => cancelAnimationFrame(frame);
-    }, [shown, first]);
+    }, [shown, shownDocument, first]);
     const model = useMemo(() => {
         if (board === undefined) {
             return undefined;
