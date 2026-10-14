@@ -12,7 +12,7 @@ public class when_renaming_an_event_consumed_by_a_capture_source
     [Fact]
     void should_patch_the_consuming_from_line()
     {
-        const string source = "module Shipping\n  feature Orders\n    slice Translate Track\n      direction inbound\n      public event Dispatched from \"shipping\"\n      event Received\n      capture Feed\n        source events\n          from Dispatched\n        key id\n        append Received\n";
+        const string source = "module Shipping\n  feature Orders\n    slice Translate Track\n      direction inbound\n      public event Dispatched from \"shipping\"\n        id String\n      event Received\n      capture Feed\n        source events\n          from Dispatched\n        key id\n        append Received\n";
         var document = WorkspaceDocument.Create("shipping", PortablePlayPath.Parse("shipping.play"), Encoding.UTF8.GetBytes(source));
         var identity = ApplicationIdentity.Create("Shipping");
         var address = SemanticAddress.ForEventContract(SemanticAddress.ForSlice(identity, "Shipping", "Orders", "Track"), "Dispatched");

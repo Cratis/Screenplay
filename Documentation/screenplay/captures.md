@@ -85,7 +85,8 @@ slice Translate TrackShipments
     when append ShipmentDispatched
       orderId = "order-42"
       status = "dispatched"
-    then OrderShipped for "order-42"
+    then OrderShipped
+      for "order-42"
       orderId = "order-42"
 ```
 

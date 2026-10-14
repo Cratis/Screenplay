@@ -28,9 +28,11 @@ public class a_specification_appending_a_capture_source_event : given.a_public_e
                     append OrderDispatched
                       orderId = $.orderId
                   specification TrackingADispatch
-                    when append ShipmentDispatched for "carrier-stream"
+                    when append ShipmentDispatched
+                      for "carrier-stream"
                       orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                    then OrderDispatched for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    then OrderDispatched
+                      for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                       orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             """);
         Assert.True(result.Success, Messages(result));
