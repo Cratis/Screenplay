@@ -9,8 +9,8 @@ public class when_requiring_deterministic_patterns : Specification
     [InlineData("^ab(a+)+c$|^[ab]{256}$")]
     [InlineData("^[ab]{1,256}$")]
     [InlineData("^(a?b?){1000000}$")]
-    [InlineData("^(a?)*$")]
-    [InlineData("^(?:a*)*$")]
+    [InlineData("^([ab]?)*$")]
+    [InlineData("^(?:[ab]*)*$")]
     [InlineData("^(?:[ab]?){2,256}$")]
     void should_not_prove_an_ambiguous_containment(string pattern)
     {
