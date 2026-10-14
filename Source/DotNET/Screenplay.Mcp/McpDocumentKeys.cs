@@ -1,13 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Security.Cryptography;
-using System.Text;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
 static class McpDocumentKeys
 {
     // Bootstrap once; subsequent moves retain this opaque key through workspace serialization.
-    internal static string For(string path) => $"mcp:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path)))}";
+    internal static string For(string path) => ModelRootDirectory.DocumentKey(path);
 }

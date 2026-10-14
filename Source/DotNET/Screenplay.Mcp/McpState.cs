@@ -1,181 +1,56 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
 using System.Collections.Immutable;
-using System.Text;
-using System.Text.Json;
 using Cratis.Screenplay.Semantics;
-using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
+/// <summary>
+/// The MCP view of <see cref="PersistedIdentityState"/>; format and open rules live in the shared workspace library.
+/// </summary>
+/// <param name="ApplicationName">The friendly application name.</param>
+/// <param name="Catalog">The persisted identity catalog.</param>
+/// <param name="Mappings">The document mappings as source-less workspace documents.</param>
 sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, ImmutableArray<WorkspaceDocument> Mappings)
 {
-    internal const string FileName = "identities.json";
+    internal const string FileName = PersistedIdentityStateSerializer.FileName;
 
-    internal static byte[] Serialize(ScreenplayWorkspace workspace) => new McpState(
-        workspace.ApplicationName,
-        workspace.IdentityCatalog,
-        [.. workspace.Documents.Select(document => WorkspaceDocument.Create(document.Id, document.StableKey, document.Path, []))]).Serialize();
+    PersistedIdentityState Persisted => new(
+        ApplicationName,
+        Catalog,
+        [.. Mappings.Select(document => new PersistedDocumentMapping(document.Id, document.StableKey, document.Path))]);
+
+    internal static byte[] Serialize(ScreenplayWorkspace workspace) => Serialize(PersistedIdentityStateSerializer.From(workspace));
 
     internal static McpState Deserialize(byte[] bytes)
     {
-        try
-        {
-            using var json = JsonDocument.Parse(bytes);
-            var value = json.RootElement;
-            if (value.GetProperty("schema").GetString() != "cratis.screenplay.mcp-identities" || value.GetProperty("schemaVersion").GetInt32() != 1)
-            {
-                throw new McpFailure("Unsupported identity-state schema or version.");
-            }
-
-            var catalog = SemanticIdentityCatalogSerializer.Deserialize(Encoding.UTF8.GetBytes(value.GetProperty("identityCatalog").GetRawText()));
-            var documents = value.GetProperty("documents");
-            if (documents.GetArrayLength() > McpRoot.MaximumFiles)
-            {
-                throw new McpFailure("Identity-state document count exceeds the workspace bound.");
-            }
-
-            var mappings = documents.EnumerateArray().Select(document => WorkspaceDocument.Create(
-                DocumentId.Parse(document.GetProperty("id").GetString()!),
-                document.GetProperty("stableKey").GetString()!,
-                PortablePlayPath.Parse(document.GetProperty("path").GetString()!),
-                [])).ToImmutableArray();
-            var state = new McpState(value.GetProperty("applicationName").GetString()!, catalog, mappings);
-            if (string.IsNullOrWhiteSpace(state.ApplicationName) ||
-                mappings.Select(document => document.Id).Distinct().Count() != mappings.Length ||
-                mappings.Select(document => document.StableKey).Distinct(StringComparer.Ordinal).Count() != mappings.Length ||
-                mappings.Select(document => document.Path).Distinct(PortablePlayPath.CollisionComparer).Count() != mappings.Length ||
-                mappings.Any(document => catalog.Documents.Any(assignment => assignment.Key == document.StableKey && assignment.Id != document.Id)) ||
-                !bytes.AsSpan().SequenceEqual(state.Serialize()))
-            {
-                throw new McpFailure("Identity state is noncanonical or has inconsistent document mappings.");
-            }
-
-            return state;
-        }
-        catch (Exception exception) when (exception is not OutOfMemoryException)
-        {
-            throw new McpFailure($"IdentityStateConflict: .screenplay/identities.json is corrupt or unsupported. Restore a known-good identity file; do not delete it to regenerate IDs. {exception.Message}");
-        }
+        var state = McpRootFailures.Run(() => ScreenplayModelRoot.ReadIdentities(bytes));
+        return new(
+            state.ApplicationName,
+            state.IdentityCatalog,
+            [.. state.Documents.Select(mapping => WorkspaceDocument.Create(mapping.Id, mapping.StableKey, mapping.Path, []))]);
     }
 
-    internal ScreenplayWorkspace Open(McpRoot root) => Open(root, checkReleaseBaseline: false);
+    internal ScreenplayWorkspace Open(McpRoot root) => McpRootFailures.Run(() => PersistedWorkspaceOpener.Open(root.Directory, Persisted));
 
     // Read-only verification must retain catalog identities even when source removed their declarations.
     // This workspace must never be installed as an authoring state or serialized back to identities.json.
-    internal ScreenplayWorkspace OpenForReleaseBaselineCheck(McpRoot root) => Open(root, checkReleaseBaseline: true);
+    internal ScreenplayWorkspace OpenForReleaseBaselineCheck(McpRoot root) =>
+        McpRootFailures.Run(() => PersistedWorkspaceOpener.OpenForReleaseBaselineCheck(root.Directory, Persisted));
 
-    internal byte[] Serialize()
+    internal byte[] Serialize() => Serialize(Persisted);
+
+    static byte[] Serialize(PersistedIdentityState state)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer);
-        writer.WriteStartObject();
-        writer.WriteString("schema", "cratis.screenplay.mcp-identities");
-        writer.WriteNumber("schemaVersion", 1);
-        writer.WriteString("applicationIdentity", Catalog.Application.ToString());
-        writer.WriteString("applicationName", ApplicationName);
-        writer.WritePropertyName("documents");
-        writer.WriteStartArray();
-        foreach (var document in Mappings.OrderBy(document => document.Id.ToString(), StringComparer.Ordinal))
-        {
-            writer.WriteStartObject();
-            writer.WriteString("id", document.Id.ToString());
-            writer.WriteString("stableKey", document.StableKey);
-            writer.WriteString("path", document.Path.Value);
-            writer.WriteEndObject();
-        }
-
-        writer.WriteEndArray();
-        writer.WritePropertyName("identityCatalog");
-        writer.WriteRawValue(SemanticIdentityCatalogSerializer.Serialize(Catalog));
-        writer.WriteEndObject();
-        writer.Flush();
-        if (buffer.WrittenCount > McpManagedFiles.MaximumStateBytes)
-        {
-            throw new McpFailure("Identity state exceeds the bounded metadata size.");
-        }
-
-        return buffer.WrittenSpan.ToArray();
-    }
-
-    ScreenplayWorkspace Open(McpRoot root, bool checkReleaseBaseline)
-    {
-        var documents = ReadMappedDocuments(root, checkReleaseBaseline);
-        return checkReleaseBaseline ? CompileRetainingCatalog(root, documents) : OpenReconciled(root, documents);
-    }
-
-    ImmutableArray<WorkspaceDocument> ReadMappedDocuments(McpRoot root, bool checkReleaseBaseline)
-    {
-        foreach (var mapping in Mappings)
-        {
-            _ = root.PathFor(mapping.Path);
-        }
-
-        var actual = root.Read(allowEmpty: true).ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
-        if (HasMappingConflict(actual, checkReleaseBaseline))
-        {
-            throw new McpFailure("IdentityMappingConflict: mapped .play files are missing, renamed, or accompanied by unmapped files. Restore the mapped paths, then use an MCP proposal to move/add/delete documents explicitly.");
-        }
-
-        return [.. Mappings.Where(mapping => actual.ContainsKey(mapping.Path.Value)).Select(mapping => WorkspaceDocument.Create(
-            mapping.Id,
-            mapping.StableKey,
-            mapping.Path,
-            actual[mapping.Path.Value].Bytes.AsSpan()))];
-    }
-
-    bool HasMappingConflict(Dictionary<string, WorkspaceDocument> actual, bool checkReleaseBaseline) => checkReleaseBaseline
-        ? actual.Keys.Any(path => !Mappings.Any(mapping => mapping.Path.Value == path))
-        : actual.Count != Mappings.Length || Mappings.Any(mapping => !actual.ContainsKey(mapping.Path.Value));
-
-    ScreenplayWorkspace CompileRetainingCatalog(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
-    {
-        var loaded = McpAttachmentContents.Load(root, documents);
-        var compilation = documents.IsEmpty ? ScreenplayWorkspace.EmptyCompilation() : new SemanticModelCompiler().Compile(
-            ApplicationName, ScreenplayWorkspace.CreateDocumentSet(documents, Catalog, loaded.Contents));
-        compilation = compilation with { Diagnostics = [.. compilation.Diagnostics, .. loaded.Diagnostics] };
-        return ScreenplayWorkspace.CreateValidated(ApplicationName, documents, Catalog, compilation, loaded.Contents, loaded.Diagnostics);
-    }
-
-    ScreenplayWorkspace OpenReconciled(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
-    {
-        ScreenplayWorkspace workspace;
         try
         {
-            workspace = documents.IsEmpty
-                ? ScreenplayWorkspace.CreateEmpty(Catalog.Application, ApplicationName)
-                : CreateWithAttachments(root, documents);
+            return PersistedIdentityStateSerializer.Serialize(state);
         }
-        catch (Exception exception) when (exception is InvalidScreenplayWorkspace or InvalidSemanticContract)
+        catch (InvalidPersistedIdentityState exception)
         {
-            throw new McpFailure($"IdentityReconciliationRequired: current source cannot be admitted with the persisted catalog. Restore its declaration names and use explicit identity-change proposals. {exception.Message}");
+            throw new McpFailure(exception.Message);
         }
-        var syntax = McpWorkspaceAnalysis.For(workspace).Syntax;
-        var addresses = syntax.Entries.Where(entry => entry.Address is not null).Select(entry => entry.Address).ToHashSet();
-
-        // Failed binding retains the old catalog, so identical catalog bytes alone cannot prove source continuity.
-        var missingAssignments = !workspace.Compilation.Success &&
-            (Catalog.Semantics.Any(assignment => !addresses.Contains(assignment.Address)) ||
-             Catalog.EventContracts.Any(assignment => !addresses.Contains(assignment.Address)));
-        if (missingAssignments && !syntax.UnresolvedPlacementDocuments.IsEmpty)
-        {
-            throw new McpFailure("UnresolvedPlacement: conflicting or cyclic imports prevent proving continuity with the persisted identity catalog. Repair those imports and reopen; identity state was not replaced.");
-        }
-
-        if (missingAssignments || !SemanticIdentityCatalogSerializer.Serialize(Catalog).AsSpan().SequenceEqual(SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)))
-        {
-            throw new McpFailure("IdentityReconciliationRequired: external source edits would change persisted identities. Restore the previous declaration names and apply an explicit semantic/event rename or retirement proposal. Identity state was not replaced.");
-        }
-
-        return workspace;
-    }
-
-    ScreenplayWorkspace CreateWithAttachments(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
-    {
-        var loaded = McpAttachmentContents.Load(root, documents);
-        return ScreenplayWorkspace.Create(Catalog.Application, ApplicationName, documents, Catalog, loaded.Contents, loaded.Diagnostics);
     }
 }
