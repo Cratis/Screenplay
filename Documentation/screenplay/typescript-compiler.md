@@ -6,6 +6,8 @@ The C# compiler is the authority on Screenplay, but not everything that reads a 
 
 It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. Event `id` pins remain in its syntax tree. ESM v16 stored-name serialization, strict reading, pin validity and application-wide stored-name collision checks belong to the native C# binder, not this syntax-only package. Public/private event boundaries are checked against scoped declarations in the assembled application, including imported contracts and seed appends. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate. [Editor diagnostic support](editor-diagnostics.md) describes the validation boundary and which checks each surface runs.
 
+Query rejection specifications retain both `when query … then error` and actionless `then query … arguments` followed by an error. The shared `PLAY0465` shape checks require exactly one query, one error and no action or other outcome, including no result or `then no result`. TypeScript does not run concept rules or select ESM v18; native binding and the reference runner own that verdict. Validated query arguments reject with Validation in every reference ESM version, and only the new query-error specification shape selects v18.
+
 ## Parse a document
 
 `parse` turns the text of one document into an `ApplicationSyntax`, with the diagnostics found on the way:

@@ -4564,6 +4564,65 @@
             "diagnostics": [
                 "PLAY0386@6"
             ]
+        },
+        {
+            "name": "query rejection conflicts with explicit no result",
+            "validate": true,
+            "source": [
+                "module Billing",
+                "  feature Invoices",
+                "    slice StateView Lookup",
+                "      readmodel Invoice",
+                "        number String",
+                "      query GetInvoice => Invoice optional",
+                "        by number String",
+                "      specification Rejection",
+                "        when query GetInvoice",
+                "          number = \"A\"",
+                "        then error",
+                "        then no result"
+            ],
+            "diagnostics": ["PLAY0465@8"]
+        },
+        {
+            "name": "query rejection conflicts with a success result",
+            "validate": true,
+            "source": [
+                "module Billing",
+                "  feature Invoices",
+                "    slice StateView Lookup",
+                "      readmodel Invoice",
+                "        number String",
+                "      query GetInvoice => Invoice optional",
+                "        by number String",
+                "      specification Rejection",
+                "        when query GetInvoice",
+                "          number = \"A\"",
+                "        then error",
+                "        then result",
+                "          number = \"AB\""
+            ],
+            "diagnostics": ["PLAY0465@8"]
+        },
+        {
+            "name": "query rejection conflicts with denial",
+            "validate": true,
+            "source": [
+                "module Billing",
+                "  feature Invoices",
+                "    slice StateView Lookup",
+                "      readmodel Invoice",
+                "        number String",
+                "      query GetInvoice => Invoice optional",
+                "        by number String",
+                "      specification Rejection",
+                "        then query GetInvoice",
+                "          arguments",
+                "            number = \"A\"",
+                "        then error",
+                "        then denied"
+            ],
+            "diagnostics": ["PLAY0465@8"]
         }
     ]
 }

@@ -93,6 +93,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V17 = new(17, 0);
 
     /// <summary>
+    /// Gets version 18.0, admitting query validation rejection specifications.
+    /// </summary>
+    public static readonly LanguageVersion V18 = new(18, 0);
+
+    /// <summary>
     /// The language version for reaction refusal branches and refusal values.
     /// </summary>
     public static readonly LanguageVersion V19 = new(19, 0);
@@ -211,6 +216,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// The semantic version for explicit no-event assertions and recovery redelivery.
     /// </summary>
     public static readonly SemanticVersion V17 = new(17, 0);
+
+    /// <summary>
+    /// Gets version 18.0, admitting query validation rejection specifications.
+    /// </summary>
+    public static readonly SemanticVersion V18 = new(18, 0);
 
     /// <summary>
     /// The semantic version for reaction refusal branches and refusal values.
@@ -891,19 +901,19 @@ public static class EsmSchemaV17Support
 }
 
 /// <summary>
-/// Defines version pairs admitted by ESM schema v19.
+/// Defines version pairs admitted by ESM schema v18.
 /// </summary>
-public static class EsmSchemaV19Support
+public static class EsmSchemaV18Support
 {
     /// <summary>
     /// Gets the supported language versions.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV17Support.LanguageVersions, LanguageVersion.V19];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV17Support.LanguageVersions, LanguageVersion.V18];
 
     /// <summary>
     /// Gets the supported semantic versions.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV17Support.SemanticVersions, SemanticVersion.V19];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV17Support.SemanticVersions, SemanticVersion.V18];
 
     /// <summary>
     /// Determines whether the exact version pair is supported.
@@ -913,6 +923,46 @@ public static class EsmSchemaV19Support
     /// <returns>Whether the pair has defined meaning.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
         EsmSchemaV17Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == LanguageVersion.V18 && semanticVersion == SemanticVersion.V18);
+
+    /// <summary>
+    /// Rejects unsupported version pairs.
+    /// </summary>
+    /// <param name="languageVersion">The language version.</param>
+    /// <param name="semanticVersion">The semantic version.</param>
+    /// <exception cref="InvalidSemanticContract">The version pair is unsupported.</exception>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM schema-v18 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
+/// <summary>
+/// Defines version pairs admitted by ESM schema v19.
+/// </summary>
+public static class EsmSchemaV19Support
+{
+    /// <summary>
+    /// Gets the supported language versions.
+    /// </summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV18Support.LanguageVersions, LanguageVersion.V19];
+
+    /// <summary>
+    /// Gets the supported semantic versions.
+    /// </summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV18Support.SemanticVersions, SemanticVersion.V19];
+
+    /// <summary>
+    /// Determines whether the exact version pair is supported.
+    /// </summary>
+    /// <param name="languageVersion">The language version.</param>
+    /// <param name="semanticVersion">The semantic version.</param>
+    /// <returns>Whether the pair has defined meaning.</returns>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV18Support.Supports(languageVersion, semanticVersion) ||
         (languageVersion == LanguageVersion.V19 && semanticVersion == SemanticVersion.V19);
 
     /// <summary>
@@ -936,7 +986,7 @@ static class VersionParser
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17 or v19.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18 or v19.");
         }
 
         return version;
@@ -946,7 +996,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17 or v19.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18 or v19.");
         }
 
         return version;

@@ -1,0 +1,6 @@
+concept InvoiceNumber : String
+  validate
+    min 2 message "Invoice number is too short"
+concept CustomerCode : String
+  validate
+    min 3 message "Customer code is too short"

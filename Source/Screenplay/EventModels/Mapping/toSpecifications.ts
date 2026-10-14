@@ -91,7 +91,15 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
     if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
     if (specification.whenCapture !== null) return { name: `capture ${specification.whenCapture.capture}`, values: valuesOf(specification.whenCapture.record) };
     if (specification.whenQuery !== null) return { name: `query ${specification.whenQuery.query}`, values: valuesOf(specification.whenQuery.arguments) };
-    return undefined;
+    return queryRejectionAction(specification);
+}
+
+function queryRejectionAction(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
+    if (specification.thenErrors.length !== 1) return undefined;
+    const [query, ...others] = specification.thenQueries ?? [];
+    if (query === undefined || others.length > 0) return undefined;
+    if (query.results.length > 0) return undefined;
+    return { name: `query ${query.query}`, values: valuesOf(query.arguments) };
 }
 
 // @cratis/event-models 0.118.2 reads and renders the specification name in its header. Linked

@@ -39,6 +39,18 @@ describe('when highlighting specification steps', () => {
         keywordsOn('        when query OpeningHoursFor').should.deep.equal(['when', 'query']);
     });
 
+    it('should scope a bare query rejection', () => {
+        keywordsOn('        then error').should.deep.equal(['then', 'error']);
+    });
+
+    it('should scope a query rejection with a message', () => {
+        keywordsOn('        then error "Invoice number is too short"').should.deep.equal(['then', 'error']);
+    });
+
+    it('should scope the actionless query spelling', () => {
+        keywordsOn('        then query GetInvoice').should.deep.equal(['then', 'query']);
+    });
+
     it('scopes an exact result', () => {
         keywordsOn('        then result exactly').should.deep.equal(['then', 'result', 'exactly']);
     });

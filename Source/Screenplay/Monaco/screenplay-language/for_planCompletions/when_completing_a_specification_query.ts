@@ -21,4 +21,13 @@ describe('when completing a specification query', () => {
     it('should offer a query assertion in a specification', () => {
         completionEntriesFor(['specification']).some(entry => entry.label === 'then query').should.be.true;
     });
+
+    it('should offer a query rejection without a result block', () => {
+        const rejection = completionEntriesFor(['specification']).find(entry => entry.label === 'then query rejected')!;
+        rejection.insertText.should.contain('arguments');
+        rejection.insertText.should.contain('then error');
+        rejection.insertText.should.not.contain('result');
+        rejection.documentation.should.contain('Validation');
+        rejection.documentation.should.contain('v18');
+    });
 });

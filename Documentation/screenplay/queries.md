@@ -103,6 +103,14 @@ That query is already scoped to the current tenant. Nothing states it, because n
 
 `identity` and `global` are the two the language documents, but the grammar accepts any name. What scopes exist follows the identity model of whatever runs the document — Screenplay states that a query is scoped and to what, and leaves enforcing it to the runtime. A query declares at most one scope; results are narrowed one way.
 
+## Invalid arguments are rejected
+
+A malformed lookup is not a missing instance. After authorization and argument shape checks, the reference evaluator validates the `by` key and every supplied filter value against the concept's rules, just as it validates command inputs. A rule violation returns `Validation`, carrying the first failure's message (including `$strings` keys) and every validation failure. Failure order is the key first, supplied filters in declaration order, and each concept's rules in declaration order. This applies in every ESM version without changing model bytes.
+
+An omitted optional filter is not validated. A supplied value with the wrong shape, including a null filter, still rejects as `Contract`. Authorization denial remains `Unauthorized` and happens first. An opaque concept rule returns `SemanticUnsupported` with the `Query` capability rather than inventing a result. A valid argument matching no instance still returns no result.
+
+From ESM v18, use one actionless query and `then error` to [specify a Validation rejection](specifications.md#query-validation-rejections); do not use `then no result` for a malformed concept value.
+
 ## Composite lookups
 
 A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. A single-instance query supplies every part with its required compatible nominal type. A collection query may name a subset. See the complete example in [Read-model keys](readmodels.md#keys).

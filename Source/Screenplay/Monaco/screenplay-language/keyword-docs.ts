@@ -51,7 +51,7 @@ export const keywordDocs: Record<string, string> = {
     documentation: 'Authoring-only reasoning on a module, feature, slice, command, event, read model or reaction in one nonempty fenced ```markdown block. It does not change executable model bytes.',
     id: 'Preserves the previous persisted event name after a rename. Leave absent on new events; repeating the current name is redundant.',
     command: 'An imperative intent. Declares authorization, validation, and what events it produces — declaratively, or via a full handler.',
-    query: 'A read-side entry point mapping to a return type, with an optional description, parameters and performer.',
+    query: 'A read-side entry point mapping to a return type, with an optional description, parameters and performer. The by key and every supplied filter value satisfy their concept rules after authorization; violations reject with Validation, not an empty result.',
     observable: 'Qualifies a query return type as a live read — `query <Name> => observable <ReadModel>` keeps pushing as the read model changes, instead of answering once.',
     performer: 'The code that performs a query — a `file <Path>` reference or an inline `csharp`/`sql` block. The query\'s counterpart to a command handler.',
     from: 'On a reaction or reducer, `from Source[.Stream]` observes only matching routed facts. It does not filter stream ids. Admitted by ESM v10. On a query parameter, fills it from the query context instead of the caller, as in `filter tenantId TenantId from $context.tenant`.',
@@ -170,7 +170,7 @@ export const specificationKeywordDocs: Record<string, string> = {
     redelivered: keywordDocs.redelivered,
     trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',
     capture: '`given capture <Capture>` - a record the capture\'s source held before; `when capture <Capture>` - the record it sees now, as the action. The fields go on the lines beneath.',
-    query: '`when query <Query>` - the query is performed, as the action, with its arguments on the lines beneath; assert what it returns with `then result` or `then no result`. `then query` instead asserts a query after another action.',
+    query: '`when query <Query>` performs the query with arguments beneath it; assert returned rows with `then result` or genuine absence with `then no result`. From ESM v18, one actionless query with `then error` asserts exactly Validation and no other outcome. This also works with `then query` and an arguments block, without a result block.',
     events: '`then no events` - asserts the action appended no events, also after `when append`, where it means no reaction appended anything. Executable from ESM v17. Cannot accompany event, event-order, error or denial expectations.',
     result: '`then result [exactly]` - one result the query performed by `when query` returns, in order; `then no result` - it returns nothing.',
 };

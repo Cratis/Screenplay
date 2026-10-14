@@ -143,11 +143,53 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         context.error(DiagnosticCodes.InvalidNoEventsExpectation,
             "'then no events' cannot accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
     }
+    validateQueryRejection(context, line, body);
     const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
     const specification: SpecificationSyntax = { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, description, ...members,
         ...(parameters.length === 0 ? {} : { parameters }), ...(cases.length === 0 ? {} : { cases }), location: locationOf(line) };
     validateTable(specification, context);
     return specification;
+}
+
+function validateQueryRejection(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
+    if (!isQueryRejectionCandidate(body) || isWellFormedQueryRejection(body)) return;
+    context.error(DiagnosticCodes.MismatchedSpecificationQueryResult,
+        "A query rejection requires exactly one query and one 'then error', no action, and no other outcomes", locationOf(line));
+}
+
+function isQueryRejectionCandidate(body: SpecificationBody): boolean {
+    return body.thenErrors.length > 0 && queriedCallCount(body) > 0 && (body.whenQuery !== null || !hasAction(body));
+}
+
+function isWellFormedQueryRejection(body: SpecificationBody): boolean {
+    return !hasAction(body) && hasOneQueryAndOneError(body) && !hasOtherOutcome(body);
+}
+
+function hasOneQueryAndOneError(body: SpecificationBody): boolean {
+    return queriedCallCount(body) === 1 && body.thenErrors.length === 1;
+}
+
+function hasAction(body: SpecificationBody): boolean {
+    return [body.when, body.whenAppended, body.whenClock, body.whenTrigger, body.whenCapture, body.whenRedelivered].some(action => action !== null);
+}
+
+function queriedCallCount(body: SpecificationBody): number {
+    return body.thenQueries.length + (body.whenQuery === null ? 0 : 1);
+}
+
+function hasOtherOutcome(body: SpecificationBody): boolean {
+    return [
+        body.thenResults.length > 0,
+        body.thenNoResult !== null,
+        body.thenDenied !== null,
+        body.thenEvents.length > 0,
+        body.thenNoEvents,
+        body.thenEventsInAnyOrder,
+        body.thenReadModels.length > 0,
+        body.thenAbsentReadModels.length > 0,
+        body.thenReturns !== null,
+        body.thenQueries.some(query => query.results.length > 0)
+    ].some(outcome => outcome);
 }
 
 function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {

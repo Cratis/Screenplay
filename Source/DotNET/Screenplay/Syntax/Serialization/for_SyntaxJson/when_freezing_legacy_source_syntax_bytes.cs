@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "query-validation") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -260,7 +260,7 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
-    // Current shared vectors cover these v17 assertions; keep the pre-feature source bytes frozen.
+    // Current shared vectors cover these v17/v18 assertions; keep the pre-feature source bytes frozen.
     static SliceSyntax WithoutSampleRecoverySpecifications(SliceSyntax slice) => slice.Name switch
     {
         "ReconcilePayments" => slice with
@@ -271,6 +271,10 @@ public class when_freezing_legacy_source_syntax_bytes
         {
             Specifications = slice.Specifications.Where(specification => specification.Name != "RecoveringAnUndeliveredOverdueReminder")
         },
+        "ExchangeRates" => slice with
+        {
+            Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAnIncompleteCurrencyCode")
+        },
         _ => slice
     };
 
@@ -278,7 +282,10 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         Exposures = [],
         InstanceContributions = [],
-        Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
+
+        // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
+        Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId")
+            .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
         Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
         Personas = application.Personas.Where(persona => persona.Name != "InvoiceDraftCreator").Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
         Modules = application.Modules.Select(module => module with

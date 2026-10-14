@@ -59,7 +59,7 @@ internal static partial class SemanticModelValidator
         bool IsInconsistentIdentifier(SemanticValue key, SemanticValue? identifierValue, bool requireIdentifier) =>
             identifierValue is null ? requireIdentifier : !SemanticValueRules.AreEqual(key, identifierValue);
 
-        void ValidateSpecificationQuery(SemanticSpecificationQueryResult result)
+        void ValidateSpecificationQuery(SemanticSpecificationQueryResult result, bool rejectsQuery)
         {
             if (!_queries.TryGetValue(result.Query, out var query))
             {
@@ -69,7 +69,7 @@ internal static partial class SemanticModelValidator
             if (query.Argument is not null) ValidateValue(result.Key, query.Argument.Type, "specification query key");
             SemanticQueryFilterRules.ValidateValues(query, result.Filters, (value, type, description) => ValidateValue(value, type, description));
             RequireObjects(result.Results, nameof(result.Results), "specification query result state");
-            if (!IsValidResultCount(query.Cardinality, result.Results.Length))
+            if (!rejectsQuery && !IsValidResultCount(query.Cardinality, result.Results.Length))
             {
                 throw new InvalidSemanticContract("A specification query result count does not match its cardinality.");
             }
