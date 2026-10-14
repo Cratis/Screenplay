@@ -2967,6 +2967,12 @@
               "issue": null
             },
             {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
               "esmVersion": 19,
               "status": "refused",
               "diagnostic": null,
@@ -4593,8 +4599,9 @@
           "condition": [
             3,
             4,
-            7,
-            8
+            5,
+            8,
+            9
           ]
         },
         {
@@ -16404,6 +16411,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -16523,6 +16536,12 @@
             },
             {
               "esmVersion": 19,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -32231,6 +32250,10 @@
         {
           "languageVersion": "17.0",
           "semanticVersion": "17.0"
+        },
+        {
+          "languageVersion": "18.0",
+          "semanticVersion": "18.0"
         },
         {
           "languageVersion": "19.0",
