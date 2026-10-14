@@ -2,7 +2,7 @@
 id: 0076
 title: Declare the validation gate in an authored screenplay.json at the model root
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-14
 decider: Sindre Alstad Wilting
 class: contract
