@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics.Generation;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -100,6 +101,18 @@ internal static partial class GenerationParser
     static void Validate(ParserContext context, SourceLine line, string primitive, GenerationSyntax generation)
     {
         var strategy = generation.Strategy;
+        if (strategy == "pattern" && generation.Pattern is { } pattern)
+        {
+            try
+            {
+                _ = GenerationPattern.Parse(pattern, generation.Checksum);
+            }
+            catch (InvalidGenerationPattern error)
+            {
+                var code = error.Message.Contains("expanded length", StringComparison.Ordinal) ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument;
+                context.Error(code, error.Message, line.Location);
+            }
+        }
         var allowed = strategy == "sequence" || primitive switch
         {
             "Uuid" => OneOf(strategy, "uuid", "uuidv7"),

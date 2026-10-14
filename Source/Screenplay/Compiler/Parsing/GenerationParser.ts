@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { ChecksumAlgorithm, InvalidGenerationPattern, parseGenerationPattern } from '../Generation';
 import { GenerationSyntax } from '../Syntax/GenerationSyntax';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { ParserContext } from './ParserContext';
@@ -50,14 +51,14 @@ export function parseGeneration(context: ParserContext, line: SourceLine, primit
         }
         case 'random': {
             const range = tokens[index++];
-            const match = range?.match(/^(-?(?:0|[1-9][0-9]*))\.\.(-?(?:0|[1-9][0-9]*))$/);
+            const match = range?.match(/^(-?(?:0|[1-9][0-9]*))\.\.(-?(?:0|[1-9][0-9]*))$(?![\s\S])/);
             valid = match !== null && match !== undefined && BigInt(match[1]) >= -9223372036854775808n && BigInt(match[2]) <= 9223372036854775807n && BigInt(match[1]) <= BigInt(match[2]);
             result = { ...result, range };
             break;
         }
         case 'rule': {
             const rule = tokens[index++];
-            valid = rule !== undefined && /^[A-Za-z_][A-Za-z0-9_]*$/.test(rule);
+            valid = rule !== undefined && /^[A-Za-z_][A-Za-z0-9_]*$(?![\s\S])/.test(rule);
             result = { ...result, rule };
             break;
         }
@@ -86,6 +87,13 @@ export function parseGeneration(context: ParserContext, line: SourceLine, primit
             case 'alphabet': result = { ...result, alphabet: text }; break;
             case 'case': result = { ...result, case: value }; break;
             default: result = { ...result, checksum: value };
+        }
+    }
+    if (strategy === 'pattern' && result.pattern !== undefined && result.pattern !== null) {
+        try { parseGenerationPattern(result.pattern, result.checksum as ChecksumAlgorithm | undefined); }
+        catch (failure) {
+            if (!(failure instanceof InvalidGenerationPattern)) throw failure;
+            error(failure.message.includes('expanded length') ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument, failure.message);
         }
     }
     const allowed = strategy === 'sequence' || (primitive === 'Uuid' ? ['uuid', 'uuidv7'].includes(strategy) : primitive === 'String' ? strategy !== 'random' : primitive === 'Int' && strategy === 'random');
