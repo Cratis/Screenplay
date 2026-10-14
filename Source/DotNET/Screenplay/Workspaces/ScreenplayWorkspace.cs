@@ -142,7 +142,8 @@ public sealed class ScreenplayWorkspace
     /// </remarks>
     /// <exception cref="InvalidScreenplayWorkspace">
     /// Source does not compile, semantic or event addresses differ (listed as retiredAddresses or addedAddresses),
-    /// document keys, IDs, or portable paths collide, or a document lies outside what a model root discovers
+    /// document keys, IDs, or portable paths collide, a file or folder is spelled two ways (case-insensitively),
+    /// a document path is also another document's folder, or a document lies outside what a model root discovers
     /// (excluded directories such as <c>bin</c>, <c>obj</c>, <c>node_modules</c>, <c>.git</c> or <c>.screenplay</c>,
     /// more than 16 directory levels, or more files or source bytes than a model root admits).
     /// </exception>
@@ -308,9 +309,24 @@ public sealed class ScreenplayWorkspace
             ModelRootDirectory.CheckScope(document.Path);
         }
 
-        // A path cannot be both a document and a directory of another document, on any file system casing.
-        var directories = documents.SelectMany(document => DirectoriesOf(document.Path)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var conflict = documents.FirstOrDefault(document => directories.Contains(document.Path.Value));
+        RequireOneSpellingPerPath(documents);
+    }
+
+    // The documents must be writable to any file system and found again by discovery with exactly these paths.
+    // Every path - each document and each directory above one - therefore has one spelling under case-insensitive
+    // comparison, and no document path is also a directory of another document.
+    static void RequireOneSpellingPerPath(ImmutableArray<WorkspaceDocument> documents)
+    {
+        var directories = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var directory in documents.SelectMany(document => DirectoriesOf(document.Path)))
+        {
+            if (!directories.TryAdd(directory, directory) && !string.Equals(directories[directory], directory, StringComparison.Ordinal))
+            {
+                throw new InvalidScreenplayWorkspace($"Directory '{directory}' is also spelled '{directories[directory]}'; use one spelling for a directory.");
+            }
+        }
+
+        var conflict = documents.FirstOrDefault(document => directories.ContainsKey(document.Path.Value));
         if (conflict is not null)
         {
             throw new InvalidScreenplayWorkspace($"Document path '{conflict.Path}' is also a directory of another document.");

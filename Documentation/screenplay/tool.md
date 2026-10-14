@@ -175,7 +175,12 @@ Write those exact files and the returned bytes as `.screenplay/identities.json`
 under the same root. Within the model root's file limits, strict
 `ScreenplayModelRoot.Open` accepts this state. Re-homing itself is read-only.
 It refuses source that does not compile, duplicate document keys or IDs,
-colliding paths, and semantic or event addresses that were added or removed.
+semantic or event addresses that were added or removed, and any document set a
+model root could not hold and discover again: paths that collide or differ only
+in case (one spelling per file and folder), a document path that is also another
+document's folder, folders discovery skips (`bin`, `obj`, `node_modules`, `.git`,
+`.screenplay`, `.ai-work`), more than 16 folder levels, and more files or source
+bytes than a model root admits.
 Address refusals list `addedAddresses` or `retiredAddresses`; make model edits
 through the ordinary revision-checked authoring workflow before re-homing.
 
