@@ -2,6 +2,8 @@
 
 Joins allow you to enrich a projection with data from related events that share a common key. This is useful when you need to combine information from different event streams. In `join <Name> on <Property>`, `<Name>` is a label for readers only: Chronicle discards it during lowering, so it has no runtime meaning. `<Property>` is the join key used at runtime.
 
+A root join updates matching existing instances; it does not create them. It is an alternative to a reducer fold when the event's source identity describes a related entity rather than the instance you query. [`PLAY0690`](../diagnostics.md#reducer-instance-identity) can warn about that nominal mismatch. Use [property keys](keys.md) on `from` when the event must create or update one instance under a different key.
+
 ## Basic Syntax
 
 ```pdl

@@ -109,6 +109,8 @@ nested/broken.play(3,5): error PLAY0028: Unknown slice type 'Wat' - expected Sta
 
 The code is the part that never changes - match on it rather than on the message, which gets reworded. Every code is listed in [Diagnostics](diagnostics.md).
 
+Ordinary native checks include [`PLAY0690`](diagnostics.md#reducer-instance-identity), the conservative reducer identity warning. It needs neither executable binding nor a completeness `--check` selection. As with other warnings, `--warnaserror` makes it fail the check.
+
 The exit code is `0` when the check is clean, `1` for model defects, and `2` when the check could not run (for example, an invalid path, argument or unknown scope).
 
 Warnings do not fail the run by default. When a pipeline demands a spotless document - a generated one, say - add `--warnaserror` and a single warning is enough to exit `1`:

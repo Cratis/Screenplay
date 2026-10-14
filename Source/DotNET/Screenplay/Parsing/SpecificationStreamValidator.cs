@@ -35,7 +35,11 @@ internal static class SpecificationStreamValidator
     {
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);
-        var producers = Producers(declarations).ToArray();
+
+        // Preserve the existing fixture-route boundary: only commands supply destination types here.
+        var producers = AuthoringProducers.In(application, declarations)
+            .Where(producer => producer.Kind is AuthoringProducerKind.Command or AuthoringProducerKind.Reaction or AuthoringProducerKind.Capture)
+            .Select(producer => new Producer(producer.Event, producer.Command, producer.Kind == AuthoringProducerKind.Command ? producer.Type : null, producer.Route)).ToArray();
         foreach (var occurrence in SpecificationRouteOccurrence.In(declarations, expansion))
         {
             var node = occurrence.Node;
@@ -124,36 +128,6 @@ internal static class SpecificationStreamValidator
         else if (mapping.Source is not LiteralExpressionSyntax { Value: not null } || (target is not null && !values.Compatible(mapping.Source, target)))
         {
             context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", mapping.Source.Location);
-        }
-    }
-
-    static IEnumerable<Producer> Producers(ConsistencyDeclarations declarations)
-    {
-        foreach (var (slice, scope) in declarations.Slices)
-        {
-            foreach (var command in slice.Commands)
-            {
-                var productions = command.Produces.Where(produced => declarations.Productions.IsEventProduction(produced, slice)).ToArray();
-                foreach (var produced in productions)
-                {
-                    if (declarations.Event(produced.Event, scope) is not { } @event) continue;
-                    yield return new(@event, command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations), produced.Stream ?? command.Stream);
-                }
-            }
-
-            // Reaction and capture destinations may depend on upstream producer types. Until binding
-            // admits routes, retain their unknown type rather than guessing an identifier fallback.
-            foreach (var produced in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []))
-            {
-                if (declarations.Event(produced.Event, scope) is { } @event) yield return new(@event, null, null);
-            }
-            foreach (var capture in slice.Captures)
-            {
-                foreach (var appended in capture.Appends.Concat(capture.Children.SelectMany(child => child.Appends)).Concat(capture.Nested.SelectMany(nested => nested.Appends)))
-                {
-                    if (declarations.Event(appended.Event, scope) is { } @event) yield return new(@event, null, null);
-                }
-            }
         }
     }
 

@@ -3185,4 +3185,9 @@ public static class DiagnosticCodes
     /// A capture's source events originate from several event stores.
     /// </summary>
     public const string CaptureEventsFromSeveralOrigins = "PLAY0687";
+
+    /// <summary>
+    /// A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.
+    /// </summary>
+    public const string ReducerIdentityMismatch = "PLAY0690";
 }

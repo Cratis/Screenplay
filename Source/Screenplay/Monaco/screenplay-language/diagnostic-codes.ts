@@ -74,6 +74,7 @@ export const diagnosticCodes = {
     redundantProductionRoute: 'PLAY0664',
     invalidObserverFilter: 'PLAY0665',
     observerFilterExcludesEveryProducer: 'PLAY0666',
+    reducerIdentityMismatch: 'PLAY0690',
     invalidDescription: 'PLAY0145',
     emptyDescription: 'PLAY0146',
     duplicateDescription: 'PLAY0147',
