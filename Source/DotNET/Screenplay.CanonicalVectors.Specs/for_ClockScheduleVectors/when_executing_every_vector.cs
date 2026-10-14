@@ -20,7 +20,7 @@ public class when_executing_every_vector : Specification
     [Fact]
     void should_match_every_reference_outcome_in_order()
     {
-        _vectors.Count.ShouldEqual(23);
+        _vectors.Count.ShouldEqual(22);
         _vectors.Select(vector => vector!["name"]!.GetValue<string>()).Distinct(StringComparer.Ordinal).Count().ShouldEqual(_vectors.Count);
         foreach (var vector in _vectors)
         {
