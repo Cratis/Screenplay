@@ -38,6 +38,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 | Codes | Why the C# tool is required |
 |---|---|
 | PLAY0666 | Warns when a reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins remain unknown. |
+| PLAY0690 | Compares known nominal producer destinations with reducer-backed instance queries, or warns about several identity domains in one reducer. Unknown provenance suppresses the comparison. Both editors preserve supplied native warnings; local TypeScript validation does not compute them. |
 | PLAY0661, PLAY0662 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
 | PLAY0530–PLAY0537 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. TypeScript has no completeness-check API. They are not ordinary parser warnings. |
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |

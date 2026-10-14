@@ -25390,6 +25390,17 @@
       "title": "A generated concept\u0027s rule cannot be proven for every generated value.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0690",
+      "name": "ReducerIdentityMismatch",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

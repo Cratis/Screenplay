@@ -4,6 +4,8 @@ Keys on `from` blocks (or individual events in a `from`) identify individual pro
 
 A declared [read-model key](../readmodels.md#keys) describes instance identity and lookup parts. A projection still declares its own event-to-instance key on each relevant `from` block. Align that mapping with the read model's key parts. A read-model key does not supply a projection route. Multipart read-model keys remain authoring-only and are refused at binding with `PLAY0268` (#599).
 
+Reducers have no property-key option: their instances follow each event's event-source id, not its stream id. If [`PLAY0690`](../diagnostics.md#reducer-instance-identity) reports a reducer/query identity mismatch, use a projection with a property key on every relevant `from`, or [joins](joins.md) for related instances that already exist.
+
 ## Explicit Keys
 
 Specify which property from the event identifies the instance:

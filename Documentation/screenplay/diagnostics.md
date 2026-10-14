@@ -272,6 +272,47 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
 | `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
 
+### Reducer instance identity
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0690` | Warning | A fully known observed event has only nominal event-source identity domains different from a reducer-backed scalar instance query's `by` type, or complete producer provenance across a reducer's events contains several nominal identity domains. The latter emits one reducer warning instead of repeating query warnings. Native C# compilation only; editors preserve supplied native findings. |
+
+For example, this authoring model queries a month while its reducer's instances follow resource identities:
+
+```screenplay
+concept ResourceId : String
+concept Month : String
+module Work
+  feature Reporting
+    slice StateView Totals
+      event Recorded
+        resource ResourceId
+        month Month
+      readmodel Totals
+        month Month key
+      reducer Fold => Totals
+        on Recorded
+      query ByMonth => Totals
+        by month Month
+    slice StateChange Record
+      command Record
+        resource ResourceId identifier
+        month Month
+        produces Recorded
+          for resource
+          resource = resource
+          month = month
+```
+
+`ByMonth` reports `PLAY0690`: `Month` and `ResourceId` are distinct nominal concepts even though both wrap text. The declared read-model key does not reroute a reducer. A stream partition keyed by month would not do so either. Use a [projection property key](projections/keys.md) on each relevant `from` to aggregate by a payload value, or a [join](projections/joins.md) to update related existing instances. A join never creates them; there is no automatic reducer-to-projection repair.
+
+The analysis examines every producer across the assembled application, not just the first command or the reducer's slice. It applies source/stream filters before comparing destinations, including production routes overriding command routes. It compares required scalar nominal declarations, not property spelling, primitive backing, stream ids, source catalog ids or fixture values. Equal types do not prove equal runtime IDs, and distinct concepts can encode equal values: this is a likely modeling mistake, not proof that an instance can never exist.
+
+Known destinations are command `for` paths, implicit inline identifiers, a plain production's generated command identifier, and explicitly typed reaction/refusal `for` destinations. Any other plain production without `for` lands on an identity the request allocates, not on the command's identifier (see [Where an event lands](commands.md#where-an-event-lands)), so it remains unknown; fixture-typing UUID fallbacks are not identity evidence either. Events appended by top-level `seed` blocks also retain unknown provenance. Ambiguous command routes remain unknown when applying an observer filter. **Events produced by reactions without an explicit `for`, captures or code are not compared.** Foreign/public-origin events and unresolved, ambiguous, nullable or collection destination types remain unknown. An unknown producer suppresses a query comparison for that event, but a different fully known event may still warn; a multi-domain reducer warning requires complete provenance across its feasible events. No producer is unknown evidence, not an empty successful comparison. Code with undeclared outputs conservatively leaves potential event provenance unknown. The check does not read or execute reducer attachments.
+
+Collection queries, performer-served or unbuilt views, projection-backed views, public-event reducer targets and invalid/composite lookup shapes do not trigger the query warning. The ordinary native CLI check and MCP `diagnostics` report it without executable binding or opt-in completeness checks; `--warnaserror` on the standalone tool treats it like other warnings. Local TypeScript validation does not perform this analysis; see [Editor diagnostics](editor-diagnostics.md).
+
 ### Captures
 
 | Code | Severity | Reported when |
