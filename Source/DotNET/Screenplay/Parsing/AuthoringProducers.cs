@@ -61,7 +61,9 @@ internal static class AuthoringProducers
     {
         if (produced.For is null && produced.InlineEvent is null)
         {
-            return command.Properties.Where(property => property.IsIdentifier).ToArray() is [var identifier] ? identifier.Type : null;
+            // A plain production lands on an identity the request allocates, not on the command's identifier
+            // (commands.md "Where an event lands"); only a generated identifier is that allocation.
+            return command.Properties.Where(property => property.IsIdentifier).ToArray() is [{ IsGenerated: true } identifier] ? identifier.Type : null;
         }
 
         return CommandDestinationTypes.DestinationType(command, produced, productions, declarations);
