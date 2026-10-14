@@ -1,4 +1,8 @@
 {
+  "budgets": {
+    "positions": { "maximum": 2048, "counts": "Glushkov character positions after repeat unrolling; excludes the synthetic start position" },
+    "states": { "maximum": 10000, "counts": "Distinct DFA states reached in the product walk" }
+  },
   "consistency": [
     { "name": "implicit UUID shape", "generation": null, "primitive": "Uuid", "rule": { "kind": "Matches", "operand": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" }, "status": "Proven" },
     { "name": "UUID version restriction", "generation": { "kind": "uuid" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" }, "status": "Refuted", "witness": "00000000-0000-4000-8000-000000000000" },
@@ -39,7 +43,9 @@
     { "name": "non-ASCII regex", "generation": { "kind": "nanoid", "size": 2, "alphabet": "ba" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "[ab]+|é" }, "status": "Unproven", "reason": "outside fragment R: non-ASCII" },
     { "name": "opaque predicate", "generation": { "kind": "uuid" }, "primitive": "Uuid", "rule": { "kind": "RulePredicate" }, "status": "Unproven", "reason": "opaque" },
     { "name": "opaque code", "generation": { "kind": "uuid" }, "primitive": "Uuid", "rule": { "kind": "CodeValidation" }, "status": "Unproven", "reason": "opaque" },
-    { "name": "clearly beyond DFA budget", "generation": { "kind": "nanoid", "size": 30, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^[ab]*a[ab]{14}$" }, "status": "Unproven", "reason": "budget exceeded" }
+    { "name": "clearly beyond position budget", "generation": null, "primitive": "Uuid", "rule": { "kind": "Matches", "operand": "^(((x?){99}){99}){99}$" }, "status": "Unproven", "reason": "position budget exceeded" },
+    { "name": "large bytes nested repeat exceeds position budget", "generation": { "kind": "bytes", "count": 512, "encoding": "hex" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^((x?){2000}){2000}$" }, "status": "Unproven", "reason": "position budget exceeded" },
+    { "name": "clearly beyond DFA budget", "generation": { "kind": "nanoid", "size": 60, "alphabet": "ab" }, "primitive": "String", "rule": { "kind": "Matches", "operand": "^[ab]*a[ab]{24}$" }, "status": "Unproven", "reason": "budget exceeded" }
   ],
   "derivedPatterns": [
     { "generation": null, "derivedRegex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },

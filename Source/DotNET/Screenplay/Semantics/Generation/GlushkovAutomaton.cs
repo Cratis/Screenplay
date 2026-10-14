@@ -5,12 +5,17 @@ namespace Cratis.Screenplay.Semantics.Generation;
 
 internal sealed class GlushkovAutomaton
 {
+    // Counts character positions after repeat unrolling, excluding the synthetic start position.
+    // Built-in shapes can exceed 1024 characters; this independent NFA bound precedes DFA construction.
+    internal const int PositionBudget = 2048;
+
     readonly List<string> _characters = [string.Empty];
     readonly List<HashSet<int>> _follow = [[]];
     readonly HashSet<int> _final;
 
     internal GlushkovAutomaton(RegexExpression expression)
     {
+        if (PositionCount(expression) > PositionBudget) throw new RegexStateBudgetExceeded("position budget exceeded");
         var positions = Build(expression);
         _follow[0] = positions.First;
         _final = positions.Last;
@@ -33,6 +38,14 @@ internal sealed class GlushkovAutomaton
         return [.. next.Order()];
     }
 
+    static long PositionCount(RegexExpression expression) => expression.Kind switch
+    {
+        "characters" => 1,
+        "alternate" or "concat" => Math.Min(PositionBudget + 1, PositionCount(expression.Left!) + PositionCount(expression.Right!)),
+        "repeat" => Math.Min(PositionBudget + 1, PositionCount(expression.Left!) * (expression.Maximum ?? ((long)expression.Minimum + 1))),
+        _ => 0
+    };
+
     static RegexPositions Alternate(RegexPositions left, RegexPositions right) => new(left.Nullable || right.Nullable, [.. left.First, .. right.First], [.. left.Last, .. right.Last]);
 
     RegexPositions Build(RegexExpression expression) => expression.Kind switch
@@ -48,6 +61,7 @@ internal sealed class GlushkovAutomaton
 
     RegexPositions Leaf(string characters)
     {
+        if (_characters.Count > PositionBudget) throw new RegexStateBudgetExceeded("position budget exceeded");
         var position = _characters.Count;
         _characters.Add(characters);
         _follow.Add([]);
@@ -64,6 +78,12 @@ internal sealed class GlushkovAutomaton
 
     RegexPositions Repeat(RegexExpression expression)
     {
+        if (PositionCount(expression.Left!) == 0)
+        {
+            var empty = Build(expression.Left!);
+            return empty with { Nullable = expression.Minimum == 0 || empty.Nullable };
+        }
+
         var result = new RegexPositions(true, [], []);
         for (var index = 0; index < expression.Minimum; index++) result = Concat(result, Build(expression.Left!));
         if (expression.Maximum is null)

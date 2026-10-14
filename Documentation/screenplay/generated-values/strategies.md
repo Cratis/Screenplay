@@ -88,6 +88,10 @@ Count is 1–512; entropy is exactly `8 × count`. RFC 4648 encodings omit paddi
 
 Derived regex for the first example: `^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$`. For the second: `^ref_[0-9A-F]{32}$`. For the third: `^[A-Z2-7]{25}[AEIMQUY4]$` (128 bits leave two unused bits). Hex defaults to lowercase; base32 defaults to uppercase. Both accept `case lower|upper`; base64url does not. A random value alone is not a credential contract: generated secrets remain unadmitted.
 
+## Proof budgets
+
+Rule consistency bounds construction before checking containment: at most 2,048 Glushkov character positions after repeat unrolling (not counting the synthetic start position), then at most 10,000 distinct DFA states reached in the product walk. Exceeding either limit makes the rule Unproven, not Proven. A containment proof is also checked against the runtime regex on the all-minimum, all-maximum and alternating samples: a non-match refutes it, and a timeout makes it Unproven (`runtime regex timed out`). Passing samples alone prove nothing.
+
 ## Modifiers
 
 | Modifier | Strategies | Contract |

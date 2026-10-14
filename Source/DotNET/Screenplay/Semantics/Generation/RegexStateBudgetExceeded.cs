@@ -4,6 +4,7 @@
 namespace Cratis.Screenplay.Semantics.Generation;
 
 /// <summary>
-/// The exception that is thrown when the product walk reaches too many distinct DFA states.
+/// The exception that is thrown when regex construction or the product walk exceeds its budget.
 /// </summary>
-public sealed class RegexStateBudgetExceeded() : Exception("budget exceeded");
+/// <param name="reason">The exhausted budget.</param>
+public sealed class RegexStateBudgetExceeded(string reason = "budget exceeded") : Exception(reason);

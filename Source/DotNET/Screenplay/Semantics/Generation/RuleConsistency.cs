@@ -37,6 +37,9 @@ public static class RuleConsistency
         };
     }
 
+    internal static RuleConsistencyResult CrossCheck(GenerationShape shape, RuleConsistencyResult proof, Func<string, bool> matches, bool complement = false) =>
+        proof.Status == RuleConsistencyStatus.Proven ? Samples(shape, matches, complement, null) : proof;
+
     static RuleConsistencyResult Length(GenerationShape shape, bool satisfied) => satisfied ? RuleConsistencyResult.Proven : RuleConsistencyResult.Refuted(shape.Samples().First());
 
     // The literal language of ^escaped$ is exact even when the operand contains non-ASCII
@@ -72,23 +75,26 @@ public static class RuleConsistency
             return RuleConsistencyResult.Unproven(reason ?? "invalid regex");
         }
 
-        return expression is null ? Samples(shape, runtime, complement, reason!) : RegexContainment.Check(shape, expression, complement);
+        if (expression is null) return Samples(shape, runtime.IsMatch, complement, reason);
+        var proof = RegexContainment.Check(shape, expression, complement);
+
+        return CrossCheck(shape, proof, runtime.IsMatch, complement);
     }
 
-    static RuleConsistencyResult Samples(GenerationShape shape, Regex regex, bool complement, string reason)
+    static RuleConsistencyResult Samples(GenerationShape shape, Func<string, bool> matches, bool complement, string? reason)
     {
         try
         {
             foreach (var sample in shape.Samples())
             {
-                if (regex.IsMatch(sample) == complement) return RuleConsistencyResult.Refuted(sample);
+                if (matches(sample) == complement) return RuleConsistencyResult.Refuted(sample);
             }
         }
         catch (RegexMatchTimeoutException)
         {
-            return RuleConsistencyResult.Unproven(reason + "; runtime regex timeout");
+            return RuleConsistencyResult.Unproven("runtime regex timed out");
         }
 
-        return RuleConsistencyResult.Unproven(reason);
+        return reason is null ? RuleConsistencyResult.Proven : RuleConsistencyResult.Unproven(reason);
     }
 }
