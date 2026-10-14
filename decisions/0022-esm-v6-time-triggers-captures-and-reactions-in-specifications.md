@@ -179,3 +179,5 @@ his acceptance or advance the record's verification stage.
 All condition constants validate their recursive semantic-value variant before type inference. A CLR
 record carrying another value-kind discriminator is invalid, not normalized into a valid literal. The
 existing condition type rules and valid v1–v5 canonical bytes remain unchanged.
+
+**2026-10-15 — atomic reaction batches are an explicit mode ([0078](0078-opt-into-atomic-reaction-production-batches.md)).** The per-fact append of a reaction's productions and its per-fact budget accounting remain the meaning of every model without the `reaction batches atomic` declaration, including all released versions. A model that declares it appends one trigger occurrence's direct productions as one all-or-none batch, as Chronicle and Arc do. This record's decision text is unchanged.
