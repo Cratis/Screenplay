@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// Refusal branches and $refusal values remain preview syntax refused at binding (#433).
+// Refusal branches and $refusal values are executable from ESM v19.
 // Redelivery and explicit no-event assertions are executable from ESM v17.
 
 eventsource Invoice

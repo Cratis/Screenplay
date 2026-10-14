@@ -8,6 +8,7 @@ import { createTokensProvider } from '../tokens';
 import { planCompletions } from '../completion-planner';
 import { hoverContent } from '../hover-content';
 import { validateLines } from '../validation';
+import { keywordDocs } from '../keyword-docs';
 import { scanDocument } from '../symbols';
 
 const invocation = ['reaction R', '  when Approved', '    invokes Claim'];
@@ -42,14 +43,44 @@ describe('when authoring refusals and redelivery', () => {
         const line = '      on refused';
         const content = hoverContent([...invocation, line], 3, 'refused', 10, 17)!;
         expect(content).toContain('not authorization');
-        expect(content).toContain('not yet executable');
+        expect(content).toContain('executable from ESM v19');
+        expect(content).not.toContain('PLAY0268');
+        expect(content).toContain('stops remaining invocations');
         const redelivery = '  when redelivered Approved to R';
         expect(hoverContent(['specification Recovery', redelivery], 1, 'redelivered', 8, 19)).toContain('Executable from ESM v17');
+    });
+    it('should describe executable selectors and effects in completions', () => {
+        for (const [lines, text] of [[invocation, '      '], [[...invocation, '      on refused'], '        ']] as const) {
+            const plan = planCompletions([...lines, text], lines.length, text);
+            const entries = plan.kind === 'entries' ? plan.entries.filter(entry => entry.label.startsWith('on refused') || ['acknowledge', 'produces'].includes(entry.label)) : [];
+            expect(entries.length).toBeGreaterThan(0);
+            for (const entry of entries) {
+                expect(entry.documentation).toContain('Executable from ESM v19');
+                expect(entry.documentation).not.toContain('PLAY0268');
+                expect(entry.documentation).toContain('stops remaining invocations');
+            }
+        }
+        for (const keyword of ['refused', 'acknowledge', 'validation', 'authorization']) {
+            expect(keywordDocs[keyword]).toContain('ESM v19');
+            expect(keywordDocs[keyword]).not.toContain('Syntax-only');
+        }
     });
     it('should explain refusal values within the branch', () => {
         const lines = [...invocation, '      on refused', '        produces Refused', '          reason = $refusal.reason'];
         const start = lines[5].lastIndexOf('reason') + 1;
-        expect(hoverContent(lines, 5, 'reason', start, start + 6)).toContain('Refusal kind as a String');
+        const content = hoverContent(lines, 5, 'reason', start, start + 6)!;
+        expect(content).toContain('Refusal kind as a String');
+        expect(content).toContain('Executable from ESM v19');
+        expect(content).not.toContain('PLAY0268');
+        const text = '          message = $refusal.';
+        const plan = planCompletions([...lines.slice(0, -1), text], 5, text);
+        expect(plan.kind === 'entries' && plan.entries.length).toBe(2);
+        if (plan.kind === 'entries') {
+            for (const entry of plan.entries) {
+                expect(entry.documentation).toContain('executable from ESM v19');
+                expect(entry.documentation).not.toContain('PLAY0268');
+            }
+        }
     });
     it('should forward native refusal and redelivery diagnostics', () => {
         const lines = [...invocation, '      on refused', '        acknowledge'];
