@@ -15,4 +15,8 @@ internal sealed record AuthoringProducer(
     TypeRefSyntax? Type = null,
     CommandSyntax? Command = null,
     CommandStreamSyntax? Route = null,
-    bool RouteKnown = false);
+    bool RouteKnown = false)
+{
+    // Fixture source typing retains its legacy fallback; reducer identity needs actual destination evidence.
+    internal TypeRefSyntax? IdentityType { get; init; } = Type;
+}

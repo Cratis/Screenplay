@@ -26,7 +26,10 @@ internal static class AuthoringProducers
                 foreach (var produced in productions)
                 {
                     if (declarations.Event(produced.Event, scope) is not { } @event) continue;
-                    yield return new(@event, scope, AuthoringProducerKind.Command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations), command, produced.Stream ?? command.Stream, true);
+                    yield return new(@event, scope, AuthoringProducerKind.Command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations), command, produced.Stream ?? command.Stream, !command.StreamCandidates.Skip(1).Any())
+                    {
+                        IdentityType = ReducerDestination(command, produced, productions, declarations)
+                    };
                 }
             }
             foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
@@ -47,6 +50,21 @@ internal static class AuthoringProducers
                 if (declarations.Event(append.Event, scope) is { } @event) yield return new(@event, scope, AuthoringProducerKind.Capture);
             }
         }
+        var root = new DeclarationScope([]);
+        foreach (var seeded in (application.Seeds ?? []).SelectMany(seed => seed.Groups).SelectMany(group => group.Events))
+        {
+            if (declarations.Event(seeded.Event, root) is { } @event) yield return new(@event, root, AuthoringProducerKind.Opaque);
+        }
+    }
+
+    static TypeRefSyntax? ReducerDestination(CommandSyntax command, ProducesSyntax produced, ProducesSyntax[] productions, ConsistencyDeclarations declarations)
+    {
+        if (produced.For is null && produced.InlineEvent is null)
+        {
+            return command.Properties.Where(property => property.IsIdentifier).ToArray() is [var identifier] ? identifier.Type : null;
+        }
+
+        return CommandDestinationTypes.DestinationType(command, produced, productions, declarations);
     }
 
     static AuthoringProducer Reaction(EventSyntax @event, DeclarationScope scope, ReactionTriggerSyntax trigger, ProducesSyntax produced, AuthoringProducerKind kind, ApplicationSyntax application, ConsistencyDeclarations declarations)

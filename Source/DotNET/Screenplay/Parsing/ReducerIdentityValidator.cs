@@ -84,7 +84,7 @@ internal static class ReducerIdentityValidator
         if (all.Length == 0) return new(rule.Event, [null]);
         var feasible = all.Where(producer => Feasible(producer, filter, catalog));
 
-        return new(rule.Event, [.. feasible.Select(producer => ValidRoute(producer.Route, catalog) ? domains.Resolve(producer.Type, producer.Scope) : null)]);
+        return new(rule.Event, [.. feasible.Select(producer => (filter is null || producer.RouteKnown) && ValidRoute(producer.Route, catalog) ? domains.Resolve(producer.IdentityType, producer.Scope) : null)]);
     }
 
     static bool ValidFilter(ObserverFilterSyntax filter, EventSourceCatalog catalog) =>

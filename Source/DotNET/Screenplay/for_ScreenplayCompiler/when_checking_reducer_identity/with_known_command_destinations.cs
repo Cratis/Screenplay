@@ -10,7 +10,7 @@ public class with_known_command_destinations : given.a_reducer_identity_model
         .Replace("produces Recorded\n          for resource\n          resource = resource", "produces event Recorded\n          resource ResourceId = resource", StringComparison.Ordinal)).Length.ShouldEqual(1);
     [Fact] void should_use_the_generated_identifier() => Warnings(Model.Replace("resource ResourceId identifier", "resource ResourceId generated identifier", StringComparison.Ordinal)
         .Replace("\n          for resource", string.Empty, StringComparison.Ordinal)).Length.ShouldEqual(1);
-    [Fact] void should_use_allocation_not_the_plain_identifier() => Warnings(Model.Replace("\n          for resource", string.Empty, StringComparison.Ordinal)).Single().Message.ShouldContain("identity Uuid");
+    [Fact] void should_use_the_plain_identifier_not_a_fixture_allocation_fallback() => Warnings(Model.Replace("\n          for resource", string.Empty, StringComparison.Ordinal)).Single().Message.ShouldContain("identity ResourceId");
     [Fact] void should_follow_an_explicit_nested_destination() => Warnings("type Owner\n  resource ResourceId\n" + Model.Replace("resource ResourceId identifier", "owner Owner", StringComparison.Ordinal)
         .Replace("for resource", "for owner.resource", StringComparison.Ordinal).Replace("resource = resource", "resource = owner.resource", StringComparison.Ordinal)).Length.ShouldEqual(1);
     [Fact] void should_not_require_reducer_attachment_contents() => Warnings(Model.Replace("on Recorded", "on Recorded\n        file Fold.cs", StringComparison.Ordinal)).Length.ShouldEqual(1);
