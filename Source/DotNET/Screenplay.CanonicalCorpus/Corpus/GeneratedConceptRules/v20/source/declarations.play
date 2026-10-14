@@ -1,0 +1,15 @@
+concept CustomerId : String
+  generate ulid prefix "cus_" case lower
+  validate
+    matches "^cus_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+concept InviteCode : String
+  generate nanoid 64 alphabet "ab"
+  validate
+    matches "^(?!a{63}b$)[ab]{64}$"
+concept ReviewedCode : String
+  generate nanoid
+  validate
+    rule ApprovedInvite
+      ```csharp
+      return true;
+      ```

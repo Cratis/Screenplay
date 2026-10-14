@@ -38,7 +38,7 @@ export function responseCompletions(lines: string[], line: number, before: strin
                 const concept = symbols.concepts.find(concept => concept.name === modifier[1]);
                 if (concept?.primitive === 'Uuid' || (concept?.primitive === 'String' && concept.generationStrategy !== undefined)) return [
                     ...('optional'.startsWith(modifier[2]) ? optionalTypeItems : []),
-                    { label: 'generated', insertText: 'generated', documentation: `Required scalar generatable concept without validation rules; not a request/form input. ${responseAvailability}` },
+                    { label: 'generated', insertText: 'generated', documentation: `Required scalar generatable concept; not a request/form input. Concept rules select ESM V20: Proven binds silently, Refuted reports PLAY0688 and Unproven reports PLAY0689. ${responseAvailability}` },
                     { label: 'generated identifier', insertText: 'generated identifier', documentation: `Specification fixture uses an indented for value. ${responseAvailability}` },
                     { label: 'identifier', insertText: 'identifier', documentation: 'Names the event source identifier.' },
                 ];

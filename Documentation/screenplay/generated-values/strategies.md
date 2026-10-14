@@ -18,7 +18,7 @@ For `b` random bits, the approximate number of draws at 1% collision probability
 | bytes (16) | 128 | 2.62 × 10^18 |
 | bytes (32) | 256 | 4.82 × 10^37 |
 
-Below 64 random bits, binding warns with the approximate draw count. A unique constraint on the mapped event property suppresses the warning for a non-identifier property. Composite uniqueness is not uniqueness of that property alone. A generated identifier below 64 bits is an error; freshness does not lift this limit. Rules on generated concepts remain refused pending rule-consistency admission.
+Below 64 random bits, binding warns with the approximate draw count. A unique constraint on the mapped event property suppresses the warning for a non-identifier property. Composite uniqueness is not uniqueness of that property alone. A generated identifier below 64 bits is an error; freshness does not lift this limit. Generated concepts with rules select ESM V20; consistency is checked per rule.
 
 ## uuid
 
@@ -52,20 +52,20 @@ concept CustomerId : String
 ## typeid
 
 ```screenplay
-concept UserId : String
-  generate typeid "user"
+concept OrderId : String
+  generate typeid "order"
 concept BareId : String
   generate typeid ""
 ```
 
 TypeID 0.3: lowercase Crockford base32 encoding of UUIDv7; 74 random bits. Prefix regex: `^(?:[a-z]|[a-z][a-z_]{0,61}[a-z])?$`. Empty prefix emits no underscore separator. Other prefixes are 1–63 characters; they are not subject to the modifier's 32-character limit.
 
-Derived regex for the first example: `^user_[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$`. Decoding must recover a UUIDv7 with the RFC variant. Case is fixed; `case`, `alphabet`, and the separate `prefix` modifier are not allowed. Like UUIDv7, it reveals time.
+Derived regex for the first example: `^order_[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$`. Decoding must recover a UUIDv7 with the RFC variant. Case is fixed; `case`, `alphabet`, and the separate `prefix` modifier are not allowed. Like UUIDv7, it reveals time.
 
 ## nanoid
 
 ```screenplay
-concept PublicCode : String
+concept InviteCode : String
   generate nanoid
 concept BinaryCode : String
   generate nanoid 64 alphabet "ab" prefix "code_"
@@ -86,7 +86,28 @@ concept Base32Reference : String
 
 Count is 1–512; entropy is exactly `8 × count`. RFC 4648 encodings omit padding. Base64url length is `ceil(8n/6)`; base32 length is `ceil(8n/5)`; hex length is `2n`. Unused trailing bits must be zero: a one-byte base64url value may be `AA` or `_w`, but not `AB` or `_x`.
 
-Derived regex for the first example: `^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$`. For the second: `^ref_[0-9A-F]{32}$`. For the third: `^[A-Z2-7]{25}[AEIMQUY4]$` (128 bits leave two unused bits). Hex defaults to lowercase; base32 defaults to uppercase. Both accept `case lower|upper`; base64url does not. A random value alone is not a credential contract: generated secrets remain unadmitted.
+Derived regex for the first example: `^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$`. For the second: `^ref_[0-9A-F]{32}$`. For the third: `^[A-Z2-7]{25}[AEIMQUY4]$` (128 bits leave two unused bits). Hex defaults to lowercase; base32 defaults to uppercase. Both accept `case lower|upper`; base64url does not. A random value alone is not a credential contract: generated secrets remain unadmitted. The shop's future `ApiKey` uses `bytes 32 base64url` with `secret`; keep it in a value property beside a separate `ApiKeyId` identity. Encryption protects the event value at rest; `[NotAudited]` withholds only command causation values, not event payloads or logs.
+
+## Rule consistency
+
+Give your shop's invitations an explicit shape rule when the same concept also validates supplied or stored codes:
+
+```screenplay
+concept InviteCode : String
+  generate nanoid
+  validate
+    matches "^[A-Za-z0-9_-]{21}$"
+```
+
+This rule is Proven and admitted silently. A rule requiring only digits would be Refuted: NanoID can emit letters, `_` and `-`. `PLAY0688` is an error regardless of the rule's authored severity and includes a quoted witness. `PLAY0689` is a warning with an Unproven reason, not evidence that every generated value is valid. Code and named-rule predicates are opaque. Outside-fragment regexes can still be refuted by a failing sample; passing samples prove nothing. A containment proof is Proven only when the pattern's Glushkov automaton is deterministic (1-unambiguous): the first-position character classes are pairwise disjoint, as are the follow-set classes for every position, after projection onto printable ASCII, and no repeat that can run more than once (such as `*`, `+` or `{2,5}`) applies to a group that can match nothing, like `(a?)*`. Otherwise it is Unproven with reason `ambiguous pattern; the runtime regex may backtrack`. Refuted results are unchanged. Determinism checks retain authored branches before shape-length clipping; construction budgets still apply. This conservative check can warn on bounded optional repeats and unanchored search wrappers even when samples pass. Strategy-derived patterns are deterministic and stay Proven, so the derived-`matches` repair still produces a proven rule. Runtime samples remain defence-in-depth.
+
+Proof covers `not empty` (at least one non-whitespace character under decision 0071), text `min`, `max`, `length ==`, text equality/inequality, and `matches`, including named match patterns such as email. Existing rule/type compatibility still applies. The generator's exact shape includes prefix, case, UUID version/variant and unused encoding bits; stored values are not checked against a new strategy unless their authored rules say so.
+
+Fragment R accepts ASCII literals and syntax escapes; `\\t`, `\\n`, `\\r`, `\\f`, `\\v`; positive/negated classes and ranges; `\\d`, `\\D`, `\\w`, `\\W`, `\\s`, `\\S`; dot; alternation; ordinary and noncapturing groups; `?`, `*`, `+`, `{m}`, `{m,n}`, `{m,}` and lazy equivalents. Anchors are allowed only at the ends of top-level alternatives. Unanchored patterns retain search semantics. `$` means end of input. Lookaround, backreferences, named groups, flags, word boundaries, non-ASCII patterns and other escapes are outside R, as are empty `[]`/`[^]` classes. The alphabet is projected onto the printable ASCII emitted by these strategies.
+
+### Proof budgets
+
+Rule consistency bounds construction before checking containment: at most 2,048 Glushkov character positions after repeat unrolling (not counting the synthetic start position), then at most 10,000 distinct DFA states reached in the product walk. Flat concatenations and alternatives use stack-safe construction. Group nesting is separately limited to 64 simultaneously open groups outside escapes and character classes, checked before recursive parsing or runtime regex construction; exceeding it reports `group nesting budget exceeded`. Exceeding a construction limit makes the rule Unproven, not Proven. A containment proof is also checked against the runtime regex on the all-minimum, all-maximum and alternating samples: a non-match refutes it, and a timeout makes it Unproven (`runtime regex timed out`). Passing samples alone prove nothing.
 
 ## Modifiers
 

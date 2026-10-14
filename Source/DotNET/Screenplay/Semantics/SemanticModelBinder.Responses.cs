@@ -29,11 +29,6 @@ public sealed partial class SemanticModelBinder
                 {
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' requires a required scalar generatable concept; declare a generation strategy or use a UUID concept.", source.Location);
                 }
-                else if ((concept.Validations ?? []).Any(validation => validation is CodeValidateSyntax ||
-                    (validation is DeclarativeValidateSyntax declarative && (declarative.Rules.Any() || (declarative.Requirements ?? []).Any()))))
-                {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' uses concept '{concept.Name}' with validation rules; post-generation validation awaits #616 phase 2b-2. Use a rule-free concept or remove 'generated'.", source.Location);
-                }
                 else
                 {
                     ValidateGenerationEntropy(command, source, concept);

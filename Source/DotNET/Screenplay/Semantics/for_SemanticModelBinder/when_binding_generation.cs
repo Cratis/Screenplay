@@ -62,8 +62,8 @@ public class when_binding_generation : given.a_semantic_binder
         Bind("concept Mode : Enum\n  generate\n  manual").Value!.Model.Application.Concepts.Single().Values.ShouldContainOnly(["generate", "manual"]);
 
     [Fact]
-    void should_keep_generated_concept_rules_refused() =>
-        Bind("concept C : String\n  generate nanoid\n  validate\n    min 1").Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
+    void should_admit_proven_generated_concept_rules() =>
+        Bind("concept C : String\n  generate nanoid\n  validate\n    min 1").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V20);
 
     [Fact]
     void should_suppress_nonidentifier_entropy_warning_for_a_unique_mapped_property()

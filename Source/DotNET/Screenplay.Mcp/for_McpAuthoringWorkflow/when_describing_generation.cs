@@ -61,10 +61,27 @@ public class when_describing_generation : given.an_authoring_connection
     }
 
     [Fact]
-    void should_report_rule_refusal_from_the_compiler()
+    void should_report_a_refuted_rule_from_the_compiler()
+    {
+        Start("concept Code : String\n  generate nanoid\n  validate\n    max 0\n");
+        var executable = Generation().GetProperty("executable");
+        executable.GetProperty("status").GetString().ShouldEqual("refused");
+        executable.GetProperty("diagnosticCodes").EnumerateArray().Select(item => item.GetString()).ShouldContain("PLAY0688");
+    }
+
+    [Fact]
+    void should_report_admission_for_a_proven_rule()
     {
         Start("concept Code : String\n  generate nanoid\n  validate\n    min 1\n");
-        Generation().GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Select(item => item.GetString()).ShouldContain("PLAY0268");
+        Generation().GetProperty("executable").GetProperty("status").GetString().ShouldEqual("admitted");
+    }
+
+    [Fact]
+    void should_keep_an_unproven_rule_warning_in_the_executable_diagnostics()
+    {
+        var opened = Start("concept Code : String\n  generate nanoid\n  validate\n    matches \"^(?=.{21}$).*$\"\n");
+        Generation().GetProperty("executable").GetProperty("status").GetString().ShouldEqual("admitted");
+        Page("executable-diagnostics", opened.GetProperty("revision").GetString()!).EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContain("PLAY0689");
     }
 
     [Fact]

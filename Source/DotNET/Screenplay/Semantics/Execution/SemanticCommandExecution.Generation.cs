@@ -52,10 +52,16 @@ internal sealed partial class SemanticCommandExecution
         try
         {
             validator.Validate(fixture.Value, property.Type, $"generated command property '{property.Name}'");
-            if (SemanticModelValidator.UsesConceptGeneration(plan.Model.Application) &&
-                !SemanticGeneratedFixture.Matches(plan.Model.Application.Concepts.Single(concept => concept.Id == property.Type.Target), fixture.Value))
+            var concept = plan.Model.Application.Concepts.Single(concept => concept.Id == property.Type.Target);
+            if ((SemanticModelValidator.UsesConceptGeneration(plan.Model.Application) || !concept.Validations.IsEmpty) &&
+                !SemanticGeneratedFixture.Matches(concept, fixture.Value))
             {
                 return Contract($"Generated fixture for '{property.Name}' does not match its generation strategy shape.");
+            }
+
+            if (concept.Validations.Any(rule => !SemanticValidationRules.Satisfies(rule, fixture.Value)))
+            {
+                return Contract($"Generated fixture '{property.Name}' fails concept '{concept.Name}' rules");
             }
 
             return null;
