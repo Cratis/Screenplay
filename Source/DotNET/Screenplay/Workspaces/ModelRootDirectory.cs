@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -46,8 +44,16 @@ sealed class ModelRootDirectory
         }
     }
 
-    // Bootstrap once; subsequent moves retain this opaque key through workspace serialization.
-    internal static string DocumentKey(string path) => $"mcp:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path)))}";
+    // Discovery skips excluded directories and stops 16 directory levels below the root, so a document outside
+    // this scope can never be found again by a strict open.
+    internal static void CheckScope(PortablePlayPath path)
+    {
+        var segments = path.Value.Split('/');
+        if (segments.Length > 17 || segments.Any(_excludedDirectories.Contains))
+        {
+            throw new ModelRootRefused($"Path '{path}' is outside the admitted source scope.");
+        }
+    }
 
     internal static void CheckDocuments(ImmutableArray<WorkspaceDocument> documents, bool allowEmpty = false)
     {
@@ -149,7 +155,7 @@ sealed class ModelRootDirectory
                     throw new ModelRootRefused($"Root exceeds {MaximumBytes} bytes of .play source.");
                 }
 
-                var document = WorkspaceDocument.Create(DocumentKey(relative), portable, content);
+                var document = WorkspaceDocument.Create(ModelRootDocumentKeys.For(portable), portable, content);
                 CheckSource(document);
                 documents.Add(document);
             }
@@ -166,11 +172,8 @@ sealed class ModelRootDirectory
     internal string PathFor(PortablePlayPath path, bool createParents = false)
     {
         CheckDirectory();
+        CheckScope(path);
         var segments = path.Value.Split('/');
-        if (segments.Length > 17 || segments.Any(_excludedDirectories.Contains))
-        {
-            throw new ModelRootRefused($"Path '{path}' is outside the admitted source scope.");
-        }
 
         var full = Path.GetFullPath(Path.Combine(_path, path.Value));
         if (!full.StartsWith(_path.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.Ordinal))

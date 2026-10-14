@@ -145,6 +145,62 @@ it notes are ignored. This is separate from compiler warnings and `--warnaserror
 
 ## Call these from your own tooling
 
+### Export a workspace with a different document split
+
+Reference `Cratis.Screenplay` for `ScreenplayWorkspace.Rehome` and
+`ModelRootDocumentKeys.For`, both in `Cratis.Screenplay.Workspaces`. A host can
+split its in-memory model into repository files without changing its semantic
+IDs or event ContractIds. For example, given a workspace and the new files as
+portable relative paths and UTF-8 bytes:
+
+```csharp
+using System.Collections.Immutable;
+using Cratis.Screenplay.Workspaces;
+
+static byte[] IdentityStateFor(
+    ScreenplayWorkspace workspace,
+    ImmutableArray<(string Path, byte[] Bytes)> files)
+{
+    var documents = files.Select(file =>
+    {
+        var path = PortablePlayPath.Parse(file.Path);
+        return WorkspaceDocument.Create(ModelRootDocumentKeys.For(path), path, file.Bytes);
+    }).ToImmutableArray();
+    var rehomed = workspace.Rehome(documents);
+    return PersistedIdentityStateSerializer.Serialize(PersistedIdentityStateSerializer.From(rehomed));
+}
+```
+
+Write those exact files and the returned bytes as `.screenplay/identities.json`
+under the same root. Within the model root's file limits, strict
+`ScreenplayModelRoot.Open` accepts this state. Re-homing itself is read-only.
+It refuses source that does not compile, duplicate document keys or IDs,
+semantic or event addresses that were added or removed, and any document set a
+model root could not hold and discover again: paths that collide or differ only
+in case (one spelling per file and folder), a document path that is also another
+document's folder, folders discovery skips (`bin`, `obj`, `node_modules`, `.git`,
+`.screenplay`, `.ai-work`), more than 16 folder levels, and more files or source
+bytes than a model root admits.
+Address refusals list `addedAddresses` or `retiredAddresses`; make model edits
+through the ordinary revision-checked authoring workflow before re-homing.
+
+Assignments for document keys supplied again survive; new keys get deterministic
+bootstrap DocumentIds, and old document keys are dropped. Semantic and event
+assignments keep their IDs and origins by address, including event revisions
+unless the source advances an existing revision forward. Changed document
+assignments change the catalog revision; changed documents or assignments
+change the workspace revision, so old proposals become stale.
+Attachments are not carried; re-apply them with `WithAttachmentContents`.
+Discovery keys hash the portable path's NFC-normalized value. Existing persisted
+keys remain authoritative, including keys created from non-NFC file names.
+
+Before overwriting an existing MCP-authored `identities.json`, compare its event
+assignments with the host catalog. Different ContractIds make previously
+baselined entries appear as `BaselinedRevisionMissing`; re-homing does not
+reconcile identities assigned by another host.
+
+### Run root-aware checks
+
 Reference `Cratis.Screenplay.Mcp` to run the same root-aware checks without
 installing or launching the standalone tool. In a console application, pass the
 model root as the first argument:
