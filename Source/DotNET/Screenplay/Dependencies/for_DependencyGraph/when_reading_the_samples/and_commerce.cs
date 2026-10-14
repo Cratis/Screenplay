@@ -9,7 +9,7 @@ public class and_commerce : given.a_sample
     void Because() => _graph = DependencyGraph.For(_timeline);
 
     [Fact] void should_compile_valid_source() => _timeline.SourceValid.ShouldBeTrue();
-    [Fact] void should_preserve_timeline_findings() => _timeline.Findings.Count.ShouldEqual(7);
+    [Fact] void should_preserve_timeline_findings() => _timeline.Findings.Count.ShouldEqual(8);
     [Fact] void should_count_ordering_dependencies() => _graph.Implied("module", "module").Single(edge => edge.Source.Address == "Ordering").SliceEdges.ShouldEqual(4);
     [Fact] void should_count_fulfillment_dependencies() => _graph.Implied("module", "module").Single(edge => edge.Source.Address == "Fulfillment").SliceEdges.ShouldEqual(1);
     [Fact] void should_find_the_module_cycle() => _graph.Cycles("module").Single().Members.Select(node => node.Address).ShouldEqual(["Ordering", "Fulfillment"]);
