@@ -12,6 +12,18 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static bool UsesImplicitUuid(ConceptSyntax concept)
+        {
+            if (concept.Type != "Uuid") return false;
+            if (concept.Generation is not { } generation) return true;
+
+            return generation.Strategy == "uuid" && generation is
+            {
+                Prefix: null, Case: null, Size: null, Alphabet: null, Count: null,
+                Encoding: null, Pattern: null, Checksum: null, Range: null, Rule: null
+            };
+        }
+
         SemanticGeneration? BindGeneration(ConceptSyntax concept)
         {
             if (concept.Generation is not { } source) return null;
@@ -33,7 +45,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (concept.Type == "Uuid" && source.Strategy == "uuid" && source is { Prefix: null, Case: null, Size: null, Alphabet: null, Count: null, Encoding: null }) return null;
+            if (UsesImplicitUuid(concept)) return null;
 
             if (concept.Attributes.Any())
             {
@@ -65,8 +77,8 @@ public sealed partial class SemanticModelBinder
 
         void ValidateGenerationRule(ConceptSyntax concept, SemanticGeneration? generation, SemanticValidationRule rule, SourceLocation location)
         {
-            if (concept.Generation is null && !AllSlices().SelectMany(entry => entry.Slice.Commands)
-                .SelectMany(command => command.Properties).Any(property => property.IsGenerated && string.Equals(property.Type.Name, concept.Name, StringComparison.Ordinal)))
+            if (generation is null && (!UsesImplicitUuid(concept) || !AllSlices().SelectMany(entry => entry.Slice.Commands)
+                .SelectMany(command => command.Properties).Any(property => property.IsGenerated && string.Equals(property.Type.Name, concept.Name, StringComparison.Ordinal))))
             {
                 return;
             }

@@ -668,7 +668,8 @@ PropertyLine   = [ "@" ], Ident, TypeRef,
 
 (* "generated" is command-only and requires a required scalar generatable concept.
    Generated values and responses select ESM v7. Pre-generation references report
-   PLAY0273; generated concepts with validation rules report PLAY0268. *)
+   PLAY0273. Generated concept rules select ESM V20: Refuted reports PLAY0688,
+   Unproven reports PLAY0689, and Proven binds silently. *)
 
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)

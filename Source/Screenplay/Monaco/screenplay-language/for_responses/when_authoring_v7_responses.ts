@@ -54,6 +54,13 @@ describe('when authoring ESM v7 responses', () => {
             expect(hoverContent(source, 2, property, commentColumn, commentColumn + property.length)).toBeNull();
         }
     });
+    it('should describe generated concept rule admission without claiming a TypeScript proof', () => {
+        const source = ['concept Id : Uuid', 'command C', '  id Id g'];
+        const generated = responseCompletions(source, 2, source[2], scanDocument(source))?.find(entry => entry.label === 'generated');
+        expect(generated?.documentation).toContain('ESM V20');
+        expect(generated?.documentation).toContain('PLAY0688');
+        expect(generated?.documentation).not.toContain('without validation rules');
+    });
     it('should not offer generated form fields', () => {
         const source = ['concept Id : Uuid', 'command C', '  id Id generated identifier', '  name String', 'form F for C'];
         expect(labels(source, '  field ')).toEqual(['name']);
@@ -80,7 +87,7 @@ describe('when authoring ESM v7 responses', () => {
         expect(labels(source, '  returns ')).toEqual(['id', 'receipt', 'name']);
         expect(labels(source, '  other Id ')).toContain('generated');
         const modifiers = responseCompletions([...source, '  other Id '], source.length, '  other Id ', scanDocument(source));
-        expect(modifiers?.find(entry => entry.label === 'generated')?.documentation).toContain('without validation rules');
+        expect(modifiers?.find(entry => entry.label === 'generated')?.documentation).toContain('Concept rules select ESM V20');
         expect(labels(source, '  other Uuid ')).not.toContain('generated');
         expect(labels([...source, '  returns'], '    ')).toEqual(['id', 'receipt', 'name']);
         expect(labels([...source, '  returns'], '    result = ')).toEqual(['id', 'receipt', 'name']);
