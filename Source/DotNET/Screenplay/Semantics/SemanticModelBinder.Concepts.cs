@@ -20,16 +20,17 @@ public sealed partial class SemanticModelBinder
             }
 
             var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
-            var validations = BindConceptValidations(concept);
+            var generation = BindGeneration(concept);
+            var validations = BindConceptValidations(concept, generation);
             return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations)
             {
                 Numbers = concept.ValueNumbers is { } numbers && SemanticModelValidator.HasNonPositionalEnumNumbers(numbers, concept.Values.Count()) ? [.. numbers] : null,
                 Compliance = BindCompliance(concept),
-                Generation = BindGeneration(concept)
+                Generation = generation
             };
         }
 
-        ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept)
+        ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept, SemanticGeneration? generation)
         {
             var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
             var codeValidationOrdinal = 0;
@@ -45,11 +46,13 @@ public sealed partial class SemanticModelBinder
                         if (requirement is not null)
                         {
                             UsesV3 = true;
-                            validations.Add(new(default, SemanticValidationRuleKind.CodeValidation, null, null)
+                            var bound = new SemanticValidationRule(default, SemanticValidationRuleKind.CodeValidation, null, null)
                             {
                                 Name = name,
                                 RequirementId = requirement.RequirementId
-                            });
+                            };
+                            validations.Add(bound);
+                            ValidateGenerationRule(concept, generation, bound, code.Location);
                         }
                     }
 
@@ -83,6 +86,7 @@ public sealed partial class SemanticModelBinder
                     if (BindValidationRule(rule, default, subject, requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
+                        ValidateGenerationRule(concept, generation, bound, rule.Location);
                     }
                 }
             }

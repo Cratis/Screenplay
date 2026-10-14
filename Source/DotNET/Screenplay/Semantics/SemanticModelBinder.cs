@@ -172,6 +172,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesGeneratedConceptRules(application))
+        {
+            return (LanguageVersion.V20, SemanticVersion.V20);
+        }
+
         if (SemanticModelValidator.UsesRefusalBranches(application))
         {
             return (LanguageVersion.V19, SemanticVersion.V19);
