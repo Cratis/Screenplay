@@ -19,7 +19,7 @@ public static class ClockScheduleVectors
     /// <summary>
     /// The lowercase SHA-256 of the exact UTF-8 fixture bytes, including the trailing newline.
     /// </summary>
-    public const string Sha256 = "e1863c53bcf3e62bc780b31af66f9a189b487db462d156000856d233c0d8e016";
+    public const string Sha256 = "1d2c9f2007f3e1ee728b4ca70df661a98b0a8b121222890ba87f4e8d20155452";
 
     /// <summary>
     /// Gets the exact immutable bytes of <c>clock-schedules.v1.json</c> without reserialization.

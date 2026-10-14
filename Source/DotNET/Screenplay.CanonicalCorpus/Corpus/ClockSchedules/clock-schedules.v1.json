@@ -2,7 +2,7 @@
   "version": 1,
   "rules": {
     "interval": "Positive whole-second intervals are counted from the Unix epoch, using floor division for instants before the epoch.",
-    "schedule": "Schedules use a UTC second-of-day (0..86399), optionally restricted to day of week (0=Sunday..6=Saturday) and day of month (1..31); both restrictions apply when present and missing calendar days are skipped.",
+    "schedule": "Schedules use a UTC second-of-day (0..86399), optionally restricted to either a day of week (0=Sunday..6=Saturday) or a day of month (1..31), never both; days a month lacks are skipped.",
     "window": "from is exclusive and to is inclusive; authored offsets are normalized to UTC.",
     "limit": "At most 10000 occurrences across all reactions and triggers are admitted per advance; exceeding the shared limit refuses the advance and returns no occurrences.",
     "ordering": "Occurrences are ordered by instant, then reaction running order (semantic identity order), then trigger declaration order."
@@ -174,20 +174,6 @@
       "due": [
         "2026-11-15T12:34:56Z",
         "2026-12-15T12:34:56Z"
-      ]
-    },
-    {
-      "name": "combined-weekday-and-monthday",
-      "trigger": {
-        "kind": "schedule",
-        "secondOfDay": 0,
-        "dayOfWeek": 0,
-        "dayOfMonth": 1
-      },
-      "from": "2026-02-01T00:00:00Z",
-      "to": "2026-03-01T00:00:00Z",
-      "due": [
-        "2026-03-01T00:00:00Z"
       ]
     },
     {
