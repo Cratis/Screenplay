@@ -89,11 +89,11 @@ public static class ScreenplayModelRoot
                 ? new(null, null, null, PersistedIdentitiesRequired, PersistedIdentitiesRequiredReason)
                 : new(read.Workspace, read.Identities, read.Baseline);
         }
-        // Every expected refusal reading the root - including a source the workspace cannot admit (an unsupported
-        // path, non-UTF-8 bytes, an invalid document set) - is a failed outcome, never an exception.
         catch (Exception exception) when (exception is ModelRootRefused or InvalidSemanticContract or InvalidPortablePlayPath or InvalidWorkspaceDocument or
             InvalidScreenplayWorkspace or IOException or UnauthorizedAccessException)
         {
+            // Every expected refusal reading the root - including a source the workspace cannot admit (an unsupported
+            // path, non-UTF-8 bytes, an invalid document set) - is a failed outcome, never an exception.
             var kind = exception switch
             {
                 ModelRootRefused refused => refused.FailureKind,
