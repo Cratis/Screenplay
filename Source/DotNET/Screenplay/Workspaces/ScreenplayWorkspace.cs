@@ -307,6 +307,23 @@ public sealed class ScreenplayWorkspace
         {
             ModelRootDirectory.CheckScope(document.Path);
         }
+
+        // A path cannot be both a document and a directory of another document, on any file system casing.
+        var directories = documents.SelectMany(document => DirectoriesOf(document.Path)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var conflict = documents.FirstOrDefault(document => directories.Contains(document.Path.Value));
+        if (conflict is not null)
+        {
+            throw new InvalidScreenplayWorkspace($"Document path '{conflict.Path}' is also a directory of another document.");
+        }
+    }
+
+    static IEnumerable<string> DirectoriesOf(PortablePlayPath path)
+    {
+        var value = path.Value;
+        for (var separator = value.IndexOf('/'); separator >= 0; separator = value.IndexOf('/', separator + 1))
+        {
+            yield return value[..separator];
+        }
     }
 
     static void RequireRehomeCompilation(CompilationResult<SemanticCompilation> compilation)
