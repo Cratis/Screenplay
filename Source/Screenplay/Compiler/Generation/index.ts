@@ -14,6 +14,12 @@ export { GenerationSupportBudgetExceeded } from './GenerationSupportBudgetExceed
 export { GenerationWorkBudget } from './GenerationWorkBudget';
 export { InvalidGenerationPattern } from './InvalidGenerationPattern';
 export { checkRandomRule } from './GenerationNumericRules';
+export { checkGenerationRule } from './RuleConsistency';
+export { checkPatternRule, checkFiniteGenerationRule } from './FiniteGenerationRules';
+export { generationShape } from './GenerationShape';
+export type { BuiltinGeneration } from './BuiltinGeneration';
+export type { GenerationValidationRule } from './GenerationValidationRule';
+export type { RegexSampleEvaluator } from './RegexSampleEvaluator';
 export { GenerationValidationRuleKind } from './GenerationValidationRuleKind';
 export { checkGeneratedChecksum } from './GenerationChecksumRules';
 export { RuleConsistencyStatus } from './RuleConsistencyStatus';
