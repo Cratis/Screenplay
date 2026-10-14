@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/screenplay-v1.schema.json",
+  "title": "Screenplay authored configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "PLAY0530",
+              "PLAY0531",
+              "PLAY0532",
+              "PLAY0533",
+              "PLAY0534",
+              "PLAY0535",
+              "PLAY0536",
+              "PLAY0537",
+              "PLAY0574",
+              "PLAY0575",
+              "PLAY0576",
+              "PLAY0602",
+              "PLAY0603",
+              "PLAY0604",
+              "PLAY0605",
+              "PLAY0606",
+              "PLAY0652",
+              "PLAY0671",
+              "all",
+              "data-bindings",
+              "enum-pinning",
+              "event-consumers",
+              "field-origins",
+              "input-surfaces",
+              "navigation",
+              "personas",
+              "privilege",
+              "purposes",
+              "query-keys"
+            ]
+          }
+        },
+        "warningsAsErrors": { "type": "boolean" },
+        "scope": { "type": "string", "pattern": "^(?!-)[\\s\\S]*\\S[\\s\\S]*$" },
+        "openQuestions": { "type": "string", "enum": ["report", "fail"] }
+      }
+    }
+  }
+}

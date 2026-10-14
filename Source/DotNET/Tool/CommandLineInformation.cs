@@ -25,7 +25,11 @@ static class CommandLineInformation
         Completeness checks run only when the whole model has no errors.
         --open-questions report prints host-only model-note.open-question findings from .screenplay/notes.json.
         --open-questions fail exits 1 for open questions in the reported scope; unreadable notes exit 2.
-        Model notes are ignored unless --open-questions is supplied; --warnaserror is unchanged.
+        screenplay.json at the nearest model root declares validation settings; explicit flags override each setting.
+        Model notes are ignored unless open questions are selected by the file or --open-questions.
+        --format json writes one JSON report with diagnostics, open questions, refusal and the effective gate.
+        --print-gate prints the effective gate and sources without compiling; --no-gate-file bypasses the file.
+        Invalid or unreadable gate files exit 2 with their path, line and column.
         Scoped exit codes follow the reported set; a separate line shows whole-application defects.
         Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
         test runs the deterministic in-memory reference evaluator, without external services.
