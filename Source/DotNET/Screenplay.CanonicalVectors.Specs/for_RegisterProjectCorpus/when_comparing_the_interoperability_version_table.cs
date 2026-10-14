@@ -17,7 +17,7 @@ public class when_comparing_the_interoperability_version_table : Specification
         var released = Rows(text, "#### Released versions");
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
         released.Length.ShouldEqual(17);
-        claimed.Length.ShouldEqual(0);
+        claimed.Length.ShouldEqual(1);
         var rows = released.Concat(claimed).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
         var semanticVersions = rows.Select(row => SemanticVersion.Parse(row[0])).ToArray();
@@ -25,8 +25,8 @@ public class when_comparing_the_interoperability_version_table : Specification
         semanticVersions.Distinct().Count().ShouldEqual(rows.Length);
         languageVersions.ShouldEqual(Declared<LanguageVersion>());
         semanticVersions.ShouldEqual(Declared<SemanticVersion>());
-        languageVersions.ShouldEqual(EsmSchemaV17Support.LanguageVersions);
-        semanticVersions.ShouldEqual(EsmSchemaV17Support.SemanticVersions);
+        languageVersions.ShouldEqual(EsmSchemaV19Support.LanguageVersions);
+        semanticVersions.ShouldEqual(EsmSchemaV19Support.SemanticVersions);
         foreach (var row in rows)
         {
             row.Length.ShouldEqual(6);

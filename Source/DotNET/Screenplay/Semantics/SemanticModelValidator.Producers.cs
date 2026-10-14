@@ -39,7 +39,7 @@ internal static partial class SemanticModelValidator
         visited.Add(eventContract);
         foreach (var trigger in sources.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produced in trigger.Produces.Where(produced => produced.EventContract == eventContract))
+            foreach (var produced in trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces)).Where(produced => produced.EventContract == eventContract))
             {
                 types.AddRange(ReactionProducerTypes(sources, trigger, produced, visited));
             }

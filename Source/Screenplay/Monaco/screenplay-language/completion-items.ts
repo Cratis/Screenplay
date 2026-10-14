@@ -228,11 +228,11 @@ export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
 
-const refusalAvailability = 'Syntax-only; reaction refusal handling is not yet executable (PLAY0268).';
+const refusalAvailability = 'Executable from ESM v19. The first matching branch handles the refusal and stops remaining invocations of this trigger; other reactions and cascades continue.';
 
 export const invocationItems: CompletionEntry[] = [
     { label: 'on refused', insertText: 'on refused\n    acknowledge', documentation: `Handles validation and constraint refusals, not authorization. ${refusalAvailability}` },
-    { label: 'on refused by validation', insertText: 'on refused by validation\n    acknowledge', documentation: `Handles validation refusals. ${refusalAvailability}` },
+    { label: 'on refused by validation', insertText: 'on refused by validation\n    acknowledge', documentation: `Handles error-severity property, concept and require refusals. ${refusalAvailability}` },
     { label: 'on refused by constraint', insertText: 'on refused by constraint ${1:Name}\n    acknowledge', documentation: `Handles a named constraint refusal; omit the name for any constraint. ${refusalAvailability}` },
     { label: 'on refused by authorization', insertText: 'on refused by authorization\n    acknowledge', documentation: `Explicitly handles unauthorized results, never Unsupported. ${refusalAvailability}` },
 ];

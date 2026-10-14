@@ -215,7 +215,7 @@ export function planCompletions(
 
     const refusal = refusalContext(lines, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
     if (/\$refusal\.\w*$/.test(textBefore)) {
-        return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value; syntax-only, not yet executable (PLAY0268).' })) };
+        return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value in branch event mappings; executable from ESM v19. Constraint is available only in a by constraint branch.' })) };
     }
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {

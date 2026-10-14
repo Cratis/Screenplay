@@ -1,0 +1,79 @@
+module Billing
+  feature Payments
+    slice Automation Recovery
+      event Approved
+        id PaymentId
+      event Claimed
+        id PaymentId
+      event Refused
+        reason String
+        constraint String
+        message String
+      event Finished
+      command Approve
+        id PaymentId identifier
+        produces Approved
+          for id
+          id = id
+      command Claim
+        id PaymentId identifier
+        produces Claimed
+          for id
+          id = id
+      command FollowUp
+        id PaymentId identifier
+        produces Finished
+          for id
+      constraint OneClaim
+        unique event Claimed
+        message "Already claimed"
+      reaction Claimer
+        when Approved
+          id
+          invokes Claim
+            id = id
+            on refused by constraint OneClaim
+              produces Refused
+                reason = $refusal.reason
+                constraint = $refusal.constraint
+                message = $refusal.message
+            on refused
+              acknowledge
+          invokes FollowUp
+            id = id
+      reaction Acknowledger
+        when Approved
+          id
+          invokes Claim
+            id = id
+            on refused
+              acknowledge
+          invokes FollowUp
+            id = id
+      reaction Finisher
+        when Refused
+          produces Finished
+      specification RecordedRefusalCascades
+        given Claimed
+          for "payment-a"
+          id = "payment-a"
+        given Approved
+          for "payment-a"
+          id = "payment-a"
+        when redelivered Approved to Claimer
+        then Refused
+          for "payment-a"
+          reason = "constraint"
+          constraint = "OneClaim"
+          message = "Already claimed"
+        then Finished
+          for "payment-a"
+      specification AcknowledgedRefusalHasNoFacts
+        given Claimed
+          for "payment-a"
+          id = "payment-a"
+        given Approved
+          for "payment-a"
+          id = "payment-a"
+        when redelivered Approved to Acknowledger
+        then no events

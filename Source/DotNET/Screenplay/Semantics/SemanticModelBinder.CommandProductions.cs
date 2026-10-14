@@ -56,14 +56,6 @@ public sealed partial class SemanticModelBinder
                 UsesPublicEvents = true;
             }
 
-            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax)
-            {
-                Diagnostics.Add(Diagnostic.Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Reaction refusal branches and $refusal values are not admitted by any supported executable model (ESM) version yet (#433).",
-                    node.Location));
-            }
-
             if (!SpecificationRoutesJoin && (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax))
             {
                 Diagnostics.Add(Diagnostic.Error(

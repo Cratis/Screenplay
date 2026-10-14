@@ -36,6 +36,11 @@ static class SemanticConstraintEnforcement
         SemanticWorld world,
         ImmutableArray<SemanticFact> facts)
     {
+        return FindViolations(plan, world, facts).FirstOrDefault();
+    }
+
+    internal static IEnumerable<SemanticConstraint> FindViolations(SemanticExecutionPlan plan, SemanticWorld world, ImmutableArray<SemanticFact> facts)
+    {
         var constraints = plan.Constraints.Values.OrderBy(_ => _.Name, StringComparer.Ordinal).ToArray();
         for (var index = 0; index < facts.Length; index++)
         {
@@ -52,12 +57,10 @@ static class SemanticConstraintEnforcement
 
                 if (violated)
                 {
-                    return constraint;
+                    yield return constraint;
                 }
             }
         }
-
-        return null;
     }
 
     /// <summary>
