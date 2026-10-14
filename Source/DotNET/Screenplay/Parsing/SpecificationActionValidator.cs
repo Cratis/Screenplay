@@ -44,6 +44,7 @@ internal static class SpecificationActionValidator
 
     static void ValidateQueryAction(SpecificationSyntax specification, DeclarationScope scope, ConsistencyDeclarations declarations, ParserContext context)
     {
+        ValidateQueryRejection(specification, context);
         if (specification.WhenQuery is null)
         {
             foreach (var orphan in specification.ThenResults.Cast<SyntaxNode>().Append(specification.ThenNoResult).OfType<SyntaxNode>())
@@ -55,7 +56,7 @@ internal static class SpecificationActionValidator
         }
 
         var performed = specification.WhenQuery;
-        if (!specification.ThenResults.Any() && specification.ThenNoResult is null && specification.ThenDenied is null)
+        if (!specification.ThenResults.Any() && specification.ThenNoResult is null && specification.ThenDenied is null && !specification.ThenErrors.Any())
         {
             context.Error(DiagnosticCodes.MismatchedSpecificationQueryResult, $"'when query {performed.Query}' asserts nothing - add 'then result', 'then no result' or 'then denied'", performed.Location);
         }
@@ -83,6 +84,21 @@ internal static class SpecificationActionValidator
         foreach (var result in specification.ThenResults)
         {
             SpecificationValueConsistencyValidator.ValidateValues(result.Properties, declarations.ViewProperties(resolved.Node.ReturnType.Name, resolved.Scope), declarations, context);
+        }
+    }
+
+    static void ValidateQueryRejection(SpecificationSyntax specification, ParserContext context)
+    {
+        var acted = new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }.Any(action => action is not null);
+        var calls = specification.ThenQueries.Count() + (specification.WhenQuery is null ? 0 : 1);
+        if (!specification.ThenErrors.Any() || calls == 0 || (acted && specification.WhenQuery is null)) return;
+        var conflicting = specification.ThenResults.Any() || specification.ThenNoResult is not null || specification.ThenDenied is not null ||
+            specification.ThenEvents.Any() || specification.ThenNoEvents || specification.ThenEventsInAnyOrder ||
+            (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenReturns is not null ||
+            specification.ThenQueries.Any(query => query.Results.Any());
+        if (acted || calls != 1 || specification.ThenErrors.Count() != 1 || conflicting)
+        {
+            context.Error(DiagnosticCodes.MismatchedSpecificationQueryResult, "A query rejection requires exactly one query and one 'then error', no action, and no other outcomes", specification.Location);
         }
     }
 

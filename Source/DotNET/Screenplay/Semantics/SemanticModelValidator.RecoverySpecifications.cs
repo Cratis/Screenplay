@@ -31,7 +31,7 @@ internal static partial class SemanticModelValidator
 
         static bool AssertsMoreThanReadState(SemanticSpecification specification, bool deniedQuery)
         {
-            if (AssertsActionOutcome(specification)) return true;
+            if (AssertsActionOutcome(specification) && !IsQueryRejection(specification)) return true;
             if (specification.ThenDenied && !deniedQuery) return true;
 
             return !HasReadModelOutcome(specification) && specification.ThenQueries.Length == 0;

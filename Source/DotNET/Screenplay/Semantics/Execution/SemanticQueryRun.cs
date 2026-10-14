@@ -53,6 +53,17 @@ sealed class SemanticQueryRun(
             return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
         }
 
+        if (SemanticEvaluator.UnsupportedQueryValidation(plan, query, queryRequest.Filters) is { } rule)
+        {
+            return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"{rule} has an opaque validation predicate and requires a target provider.");
+        }
+
+        var failures = SemanticEvaluator.ValidateQueryConcepts(plan, query, queryRequest.Key, queryRequest.Filters);
+        if (!failures.IsEmpty)
+        {
+            return SemanticEvaluator.RejectWithMessage(original, SemanticRejectionCategory.Validation, null, failures[0].Message) with { ValidationFailures = failures };
+        }
+
         var results = tentative.ReadModels
             .Where(instance => instance.ReadModel == query.ReadModel &&
                 (query.KeyProperty is null || instance.Values.Any(value =>

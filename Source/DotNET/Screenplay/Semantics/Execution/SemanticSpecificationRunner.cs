@@ -344,6 +344,12 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return;
         }
 
+        if (SemanticModelValidator.IsQueryRejection(expected) && rejected.Category != SemanticRejectionCategory.Validation)
+        {
+            failures.Add($"Expected Validation rejection, got {rejected.Category}.");
+            return;
+        }
+
         var error = expected.ThenErrors.Single();
         if (error.Code is not null && error.Code != rejected.Code)
         {
