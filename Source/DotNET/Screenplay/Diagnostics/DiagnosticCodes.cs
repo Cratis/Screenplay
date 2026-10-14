@@ -3200,4 +3200,14 @@ public static class DiagnosticCodes
     /// A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.
     /// </summary>
     public const string ReducerIdentityMismatch = "PLAY0690";
+
+    /// <summary>
+    /// A capture over events requires its key as a required property on every source event.
+    /// </summary>
+    public const string CaptureEventsKeyNotRequired = "PLAY0700";
+
+    /// <summary>
+    /// A capture over events must be presented with event fixtures, not capture records.
+    /// </summary>
+    public const string CaptureEventsRecordFixture = "PLAY0701";
 }

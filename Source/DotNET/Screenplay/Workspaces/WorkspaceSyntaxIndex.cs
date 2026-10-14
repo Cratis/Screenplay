@@ -161,7 +161,7 @@ public sealed class WorkspaceSyntaxIndex
             if (!placement.IsPlacementResolved) continue;
             var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
             diagnostics.AddRange(parsed.Diagnostics);
-            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative)))
+            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative || diagnostic.Code == DiagnosticCodes.CaptureEventsRecordFixture)))
             {
                 Visit(parsed.Value, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, semantics, events, entries);
             }

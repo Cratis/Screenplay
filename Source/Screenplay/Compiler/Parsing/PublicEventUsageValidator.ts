@@ -14,6 +14,7 @@ import { TranslationDirection } from '../Syntax/TranslationDirection';
 import { ParserContext } from './ParserContext';
 import { PublicEventUsageCollector } from './PublicEventUsageCollector';
 import { validatePublicEventMetadata } from './PublicEventMetadataValidator';
+import { validateCaptureEventFixtures } from './CaptureEventFixturesValidator';
 
 /** Validates public contract boundaries against the complete assembled declaration inventory. */
 export function validatePublicEventUsage(application: ApplicationSyntax, context: ParserContext): void {
@@ -62,6 +63,7 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
         recordCaptureOrigin(use.node, contract, captureOrigins);
     }
     validateCaptureOrigins(slice, captureOrigins, context);
+    validateCaptureEventFixtures(slice, scope, events, context);
     // 'all' subscribes to every event type; 'every' maps only the projection's existing inputs.
     for (const all of collector.allEvents) {
         const declarations = resolver.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Event).map(declaration => declaration.node as EventSyntax);

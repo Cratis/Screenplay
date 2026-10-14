@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Semantics.Execution;
+using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_public_events;
 
@@ -32,18 +32,8 @@ public class a_specification_driving_a_capture_over_public_events : given.a_publ
         """;
 
     CompilationResult<SemanticCompilation> _result;
-    SemanticSpecificationRun _run;
+    void Because() => _result = Bind(Source);
 
-    void Because()
-    {
-        _result = Bind(Source);
-        Assert.True(_result.Success, Messages(_result));
-        var plan = SemanticExecutionPlan.Compile(_result.Value!.Model).Plan!;
-        _run = new SemanticSpecificationRunner().Run(plan, plan.Specifications.Values.Single().Id);
-    }
-
-    [Fact] void should_report_an_unsupported_outcome() => _run.Execution.ShouldBeOfExactType<SemanticUnsupported>();
-    [Fact] void should_name_the_specification_capability() => ((SemanticUnsupported)_run.Execution).Capability.ShouldEqual(SemanticExecutionCapability.Specification);
-    [Fact] void should_name_the_capture() => ((SemanticUnsupported)_run.Execution).Details.ShouldContain("ShipmentTracking");
-    [Fact] void should_not_count_it_as_passed() => _run.Passed.ShouldBeFalse();
+    [Fact] void should_refuse_capture_records() => _result.Success.ShouldBeFalse();
+    [Fact] void should_require_an_event_fixture() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContain(DiagnosticCodes.CaptureEventsRecordFixture);
 }
