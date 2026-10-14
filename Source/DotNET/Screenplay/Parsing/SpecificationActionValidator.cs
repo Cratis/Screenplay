@@ -56,7 +56,7 @@ internal static class SpecificationActionValidator
         }
 
         var performed = specification.WhenQuery;
-        if (!specification.ThenResults.Any() && specification.ThenNoResult is null && specification.ThenDenied is null && !specification.ThenErrors.Any())
+        if (!AssertsQueryOutcome(specification))
         {
             context.Error(DiagnosticCodes.MismatchedSpecificationQueryResult, $"'when query {performed.Query}' asserts nothing - add 'then result', 'then no result' or 'then denied'", performed.Location);
         }
@@ -89,18 +89,48 @@ internal static class SpecificationActionValidator
 
     static void ValidateQueryRejection(SpecificationSyntax specification, ParserContext context)
     {
-        var acted = new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }.Any(action => action is not null);
-        var calls = specification.ThenQueries.Count() + (specification.WhenQuery is null ? 0 : 1);
-        if (!specification.ThenErrors.Any() || calls == 0 || (acted && specification.WhenQuery is null)) return;
-        var conflicting = specification.ThenResults.Any() || specification.ThenNoResult is not null || specification.ThenDenied is not null ||
-            specification.ThenEvents.Any() || specification.ThenNoEvents || specification.ThenEventsInAnyOrder ||
-            (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenReturns is not null ||
-            specification.ThenQueries.Any(query => query.Results.Any());
-        if (acted || calls != 1 || specification.ThenErrors.Count() != 1 || conflicting)
+        if (!IsQueryRejectionCandidate(specification) || IsWellFormedQueryRejection(specification))
         {
-            context.Error(DiagnosticCodes.MismatchedSpecificationQueryResult, "A query rejection requires exactly one query and one 'then error', no action, and no other outcomes", specification.Location);
+            return;
         }
+
+        context.Error(DiagnosticCodes.MismatchedSpecificationQueryResult, "A query rejection requires exactly one query and one 'then error', no action, and no other outcomes", specification.Location);
     }
+
+    static bool IsQueryRejectionCandidate(SpecificationSyntax specification) =>
+        specification.ThenErrors.Any() && QueriedCallCount(specification) > 0 && (specification.WhenQuery is not null || !HasAction(specification));
+
+    static bool IsWellFormedQueryRejection(SpecificationSyntax specification) =>
+        !HasAction(specification) && HasOneQueryAndOneError(specification) && !HasOtherOutcome(specification);
+
+    static bool HasOneQueryAndOneError(SpecificationSyntax specification) =>
+        QueriedCallCount(specification) == 1 && specification.ThenErrors.Count() == 1;
+
+    static bool HasAction(SpecificationSyntax specification) =>
+        new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }
+            .Any(action => action is not null);
+
+    static int QueriedCallCount(SpecificationSyntax specification) =>
+        specification.ThenQueries.Count() + (specification.WhenQuery is null ? 0 : 1);
+
+    static bool AssertsQueryOutcome(SpecificationSyntax specification) =>
+        new[] { specification.ThenResults.Any(), specification.ThenNoResult is not null, specification.ThenDenied is not null, specification.ThenErrors.Any() }
+            .Any(outcome => outcome);
+
+    static bool HasOtherOutcome(SpecificationSyntax specification) =>
+        new[]
+        {
+            specification.ThenResults.Any(),
+            specification.ThenNoResult is not null,
+            specification.ThenDenied is not null,
+            specification.ThenEvents.Any(),
+            specification.ThenNoEvents,
+            specification.ThenEventsInAnyOrder,
+            specification.ThenReadModels?.Any() == true,
+            specification.ThenAbsentReadModels.Any(),
+            specification.ThenReturns is not null,
+            specification.ThenQueries.Any(query => query.Results.Any())
+        }.Any(outcome => outcome);
 
     static void ValidateTrigger(SpecificationTriggerSyntax trigger, Dictionary<string, TriggerSyntax> triggers, ParserContext context)
     {

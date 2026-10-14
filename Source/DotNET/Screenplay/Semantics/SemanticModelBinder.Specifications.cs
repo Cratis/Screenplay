@@ -28,6 +28,9 @@ public sealed partial class SemanticModelBinder
             return qualifiers.Length <= scope.Length && qualifiers.SequenceEqual(scope.TakeLast(qualifiers.Length));
         }
 
+        static bool IsRejectedQuery(SpecificationSyntax specification) =>
+            specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any() && specification.ThenErrors.Count() == 1;
+
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
             SpecificationSyntax specification,
@@ -80,9 +83,7 @@ public sealed partial class SemanticModelBinder
             var acted = HasSpecificationAction(specification);
             var deniedQuery = specification.ThenDenied is not null && !acted &&
                 specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
-            var rejectedQuery = !acted && specification.ThenQueries.Count() == 1 &&
-                !specification.ThenQueries.Single().Results.Any() && specification.ThenErrors.Count() == 1;
-            if (!acted && !rejectedQuery && RequiresSpecificationAction(specification, deniedQuery))
+            if (!acted && !IsRejectedQuery(specification) && RequiresSpecificationAction(specification, deniedQuery))
             {
                 Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires 'then readmodel', 'then no readmodel', or 'then query'; denial requires one query with arguments and no results.", specification.Location);
             }

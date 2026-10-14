@@ -47,21 +47,9 @@ sealed class SemanticQueryRun(
             return authorizationRefusal;
         }
 
-        if ((SemanticEvaluator.ValidateQueryKey(plan, query, queryRequest.Key) ??
-             SemanticEvaluator.ValidateQueryFilters(plan, query, queryRequest.Filters)) is { } queryRejection)
+        if (ValidateArguments(query, queryRequest) is { } argumentRefusal)
         {
-            return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
-        }
-
-        if (SemanticEvaluator.UnsupportedQueryValidation(plan, query, queryRequest.Filters) is { } rule)
-        {
-            return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"{rule} has an opaque validation predicate and requires a target provider.");
-        }
-
-        var failures = SemanticEvaluator.ValidateQueryConcepts(plan, query, queryRequest.Key, queryRequest.Filters);
-        if (!failures.IsEmpty)
-        {
-            return SemanticEvaluator.RejectWithMessage(original, SemanticRejectionCategory.Validation, null, failures[0].Message) with { ValidationFailures = failures };
+            return argumentRefusal;
         }
 
         var results = tentative.ReadModels
@@ -97,6 +85,28 @@ sealed class SemanticQueryRun(
             {
                 return refusal;
             }
+        }
+
+        return null;
+    }
+
+    SemanticExecutionResult? ValidateArguments(SemanticKeyedQuery query, SemanticQueryRequest queryRequest)
+    {
+        if ((SemanticEvaluator.ValidateQueryKey(plan, query, queryRequest.Key) ??
+             SemanticEvaluator.ValidateQueryFilters(plan, query, queryRequest.Filters)) is { } queryRejection)
+        {
+            return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
+        }
+
+        if (SemanticEvaluator.UnsupportedQueryValidation(plan, query, queryRequest.Filters) is { } rule)
+        {
+            return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"{rule} has an opaque validation predicate and requires a target provider.");
+        }
+
+        var failures = SemanticEvaluator.ValidateQueryConcepts(plan, query, queryRequest.Key, queryRequest.Filters);
+        if (!failures.IsEmpty)
+        {
+            return SemanticEvaluator.RejectWithMessage(original, SemanticRejectionCategory.Validation, null, failures[0].Message) with { ValidationFailures = failures };
         }
 
         return null;

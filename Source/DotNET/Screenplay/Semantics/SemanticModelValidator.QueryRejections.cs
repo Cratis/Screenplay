@@ -6,15 +6,30 @@ namespace Cratis.Screenplay.Semantics;
 internal static partial class SemanticModelValidator
 {
     internal static bool IsQueryRejection(SemanticSpecification specification) =>
-        specification.When is null && specification.WhenAppended is null && specification.WhenClock is null &&
-        specification.WhenTrigger is null && specification.WhenCapture is null && specification.WhenRedelivered is null &&
-        specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty &&
-        specification.ThenErrors.Length == 1 && !specification.ThenDenied && !specification.ThenNoEvents &&
-        !specification.ThenEventsInAnyOrder && specification.ThenEvents.IsEmpty && specification.ThenReadModels.IsEmpty &&
-        specification.ThenAbsentReadModels.IsEmpty && specification.ThenReturns is null;
+        !HasAction(specification) && HasOneQueryWithoutResults(specification) &&
+        specification.ThenErrors.Length == 1 && !HasOtherOutcome(specification);
 
     internal static bool UsesQueryRejections(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Specifications).Any(IsQueryRejection);
+
+    static bool HasAction(SemanticSpecification specification) =>
+        new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }
+            .Any(action => action is not null);
+
+    static bool HasOneQueryWithoutResults(SemanticSpecification specification) =>
+        specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty;
+
+    static bool HasOtherOutcome(SemanticSpecification specification) =>
+        new[]
+        {
+            specification.ThenDenied,
+            specification.ThenNoEvents,
+            specification.ThenEventsInAnyOrder,
+            !specification.ThenEvents.IsEmpty,
+            !specification.ThenReadModels.IsEmpty,
+            !specification.ThenAbsentReadModels.IsEmpty,
+            specification.ThenReturns is not null
+        }.Any(outcome => outcome);
 
     static void ValidateQueryRejectionVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
