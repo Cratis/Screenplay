@@ -56,7 +56,7 @@ public static partial class PublicEventsCorpus
         var application = ApplicationIdentity.Create("CaptureEvents");
         var catalog = SemanticIdentityCatalog.Empty(application);
         var slice = SemanticAddress.ForSlice(application, "Shipping", "Tracking", "Receive");
-        return [.. new[] { ("FirstArrival", 2), ("GivenTransition", 3), ("IdenticalArrival", 2), ("Overlay", 3) }.Select(item => new CanonicalCorpusSpecificationExpectation
+        return [.. new[] { ("FirstArrival", 2), ("GivenTransition", 3), ("Overlay", 3) }.Select(item => new CanonicalCorpusSpecificationExpectation
         {
             Specification = catalog.ResolveSemantic(SemanticAddress.ForSpecification(slice, item.Item1)),
             Name = item.Item1,

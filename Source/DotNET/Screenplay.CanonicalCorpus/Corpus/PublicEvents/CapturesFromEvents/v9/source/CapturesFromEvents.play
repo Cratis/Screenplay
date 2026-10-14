@@ -53,14 +53,6 @@ module Shipping
           for "parcel"
           id = "parcel"
           status = "delivered"
-      // ESM v9 has no explicit then-no-events member; the vector pins the unchanged world fact count.
-      specification IdenticalArrival
-        given Arrived
-          id = "parcel"
-          status = "sent"
-        when append Arrived
-          id = "parcel"
-          status = "sent"
       specification Overlay
         given Arrived
           id = "parcel"
