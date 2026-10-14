@@ -2619,6 +2619,11 @@ module Invoicing
     slice Automation ReconcilePayments
       description "Closes an invoice out once it is paid in full"
 
+      event PaymentReconciliationRefused
+        invoiceId InvoiceId
+        reason String
+        message String
+
       reaction PaymentReconciler
         documentation
           ```markdown
@@ -2635,6 +2640,13 @@ module Invoicing
           invokes ChangeInvoiceStatus
             invoiceId = invoiceId
             status    = "paid"
+            // A business refusal is recorded; transient failures still fail the reaction.
+            on refused by validation
+              produces PaymentReconciliationRefused
+                for invoiceId
+                invoiceId = invoiceId
+                reason = $refusal.reason
+                message = $refusal.message
         where amount > 0
 
       specification ClosingOutAFullyPaidInvoice

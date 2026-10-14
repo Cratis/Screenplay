@@ -12554,7 +12554,56 @@
               "commands": [],
               "constraints": [],
               "description": "Closes an invoice out once it is paid in full",
-              "events": [],
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentReconciliationRefused",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reason",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "message",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
               "name": "ReconcilePayments",
               "operations": [],
               "projections": [],
@@ -12584,7 +12633,54 @@
                       "invokes": [
                         {
                           "kind": "InvokesSyntax",
-                          "command": "ChangeInvoiceStatus"
+                          "command": "ChangeInvoiceStatus",
+                          "onRefused": [
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": false,
+                              "constraint": null,
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PaymentReconciliationRefused",
+                                  "for": {
+                                    "kind": "PathExpressionSyntax",
+                                    "path": "invoiceId"
+                                  },
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "invoiceId",
+                                      "source": {
+                                        "kind": "PathExpressionSyntax",
+                                        "path": "invoiceId"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "reason",
+                                      "source": {
+                                        "kind": "RefusalExpressionSyntax",
+                                        "member": "reason"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "message",
+                                      "source": {
+                                        "kind": "RefusalExpressionSyntax",
+                                        "member": "message"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "validation"
+                            }
+                          ]
                         }
                       ],
                       "produces": [],

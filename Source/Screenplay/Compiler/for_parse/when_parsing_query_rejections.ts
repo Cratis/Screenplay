@@ -20,7 +20,7 @@ describe('when parsing query rejection specifications', () => {
     it('should preserve the actionless then query spelling with a bare error', () => {
         const result = parse('then query GetInvoice', '  arguments', '    number = "A"', 'then error');
         result.diagnostics.should.be.empty;
-        result.value.modules[0].features[0].slices[0].specifications[0].thenQueries[0].results.should.be.empty;
+        result.value.modules[0].features[0].slices[0].specifications[0].thenQueries![0].results.should.be.empty;
     });
 
     for (const conflict of [

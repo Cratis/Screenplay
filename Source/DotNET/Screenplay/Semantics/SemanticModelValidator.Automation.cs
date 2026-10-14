@@ -153,6 +153,7 @@ internal static partial class SemanticModelValidator
                             throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an unresolved command.");
                         }
 
+                        ValidateInvocationRefusals(reaction, trigger, invocation, command, root, values);
                         var inputs = command.Properties.Where(property => !property.IsGenerated).ToArray();
                         ValidateMappings(invocation.Mappings, Properties([.. inputs]), root, values, SemanticEventRouting.RoutedInputs(command));
                         var mapped = invocation.Mappings.Select(_ => _.TargetProperty).ToHashSet();

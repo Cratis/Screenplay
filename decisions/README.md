@@ -31,7 +31,7 @@
 | [0027](0027-policy-negation-joins-esm-v7.md) | Admit policy negation as a byte-preserving ESM v7 extension | accepted | implemented | 2026-10-07 | Sindre Alstad Wilting |
 | [0028](0028-declared-module-and-feature-dependencies.md) | Let modules and features declare what they depend on, checked against the inferred graph | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0029](0029-guarded-screen-action-renderer-contract.md) | Select guarded screen commands in authored order without authorization fall-through | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
-| [0030](0030-reaction-refusals-and-redelivery.md) | Reaction refusal handling and redelivery specifications | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
+| [0030](0030-reaction-refusals-and-redelivery.md) | Reaction refusal handling and redelivery specifications | accepted | implemented | 2026-10-07 | Sindre Alstad Wilting |
 | [0031](0031-event-source-and-stream-in-specifications.md) | State the event source and stream of specification events with the command route's own lines | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0032](0032-expand-typed-specification-examples-in-the-front-end.md) | Expand typed specification examples in the front end | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0033](0033-composite-event-stream-ids.md) | Declare composite event stream ids as named parts and encode them with an escaped separator | accepted | none | 2026-10-08 | Sindre Alstad Wilting |

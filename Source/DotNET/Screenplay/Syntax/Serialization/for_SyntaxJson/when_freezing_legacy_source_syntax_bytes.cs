@@ -246,7 +246,15 @@ public class when_freezing_legacy_source_syntax_bytes
             },
             "ReconcilePayments" => slice with
             {
-                Reactions = slice.Reactions.Select(reaction => reaction.Name == "PaymentReconciler" ? reaction with { From = null } : reaction)
+                Events = slice.Events.Where(@event => @event.Name != "PaymentReconciliationRefused"),
+                Reactions = slice.Reactions.Select(reaction => reaction.Name == "PaymentReconciler" ? reaction with
+                {
+                    From = null,
+                    Triggers = reaction.Triggers.Select(trigger => trigger with
+                    {
+                        Invokes = trigger.Invokes?.Select(invocation => invocation with { OnRefused = [] })
+                    })
+                } : reaction)
             },
             _ => slice
         })

@@ -18,6 +18,7 @@ public sealed partial class SemanticModelBinder
 
         readonly Dictionary<string, (SemanticApplicationTrigger Trigger, Dictionary<string, SemanticProperty> Properties)> _triggerDeclarations = new(StringComparer.Ordinal);
         readonly Dictionary<SemanticId, (SemanticAddress Address, SliceSyntax Slice)> _automationSlices = [];
+        string? _refusalSelector;
 
         internal bool UsesV6 { get; set; }
 
@@ -183,7 +184,7 @@ public sealed partial class SemanticModelBinder
                 .Select(produced => BindReactionProduces(reaction, bound.Kind, produced, root, values))
                 .OfType<SemanticProducedEvent>();
             var invokes = (trigger.Invokes ?? [])
-                .Select(invoked => BindInvocation(reaction, invoked, root, values, commands))
+                .Select(invoked => BindInvocation(reaction, bound.Kind, invoked, root, values, commands))
                 .OfType<SemanticInvocation>();
             return bound with
             {
@@ -301,6 +302,7 @@ public sealed partial class SemanticModelBinder
 
         SemanticInvocation? BindInvocation(
             ReactionSyntax reaction,
+            SemanticReactionTriggerKind kind,
             InvokesSyntax invoked,
             SemanticExpressionRootKind root,
             Dictionary<string, SemanticProperty> values,
@@ -340,7 +342,52 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Reaction '{reaction.Name}' must give '{invoked.Command}' its required value '{missing.Name}'.", invoked.Location);
             }
 
-            return new(command.Id, mappings.ToImmutable());
+            var branches = ImmutableArray.CreateBuilder<SemanticInvocationRefusal>();
+            foreach (var branch in invoked.OnRefused)
+            {
+                if (branch.Selector is not ("any" or "validation" or "constraint" or "authorization") ||
+                    (branch.Constraint is not null && branch.Selector != "constraint") ||
+                    branch.Acknowledge == branch.Produces.Any())
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, "A refusal branch needs a valid selector and either acknowledgement or event productions.", branch.Location);
+                    continue;
+                }
+
+                _refusalSelector = branch.Selector;
+                try
+                {
+                    branches.Add(new(
+                        branch.Selector,
+                        branch.Constraint is null ? null : ShortName(branch.Constraint),
+                        [.. branch.Produces.Select(produced => BindReactionProduces(reaction, kind, produced, root, values)).OfType<SemanticProducedEvent>()]));
+                }
+                finally
+                {
+                    _refusalSelector = null;
+                }
+            }
+
+            return new(command.Id, mappings.ToImmutable()) { OnRefused = branches.ToImmutable() };
+        }
+
+        SemanticRefusalExpression? BindRefusalValue(RefusalExpressionSyntax refusal, SemanticTypeReference target)
+        {
+            if (_refusalSelector is null || refusal.Member is not ("reason" or "constraint" or "message") ||
+                (refusal.Member == "constraint" && _refusalSelector != "constraint"))
+            {
+                Error(DiagnosticCodes.InvalidRefusalValue, $"'$refusal.{refusal.Member}' is unavailable in this mapping scope.", refusal.Location);
+                return null;
+            }
+
+            var text = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text);
+            var primitive = target.Kind == SemanticTypeReferenceKind.Concept ? Primitive(syntax.Concepts.Single(concept => _concepts[concept.Name].Id == target.Target).Type) : target.Primitive;
+            if (target.IsCollection || primitive != SemanticPrimitiveType.Text)
+            {
+                Error(DiagnosticCodes.InvalidRefusalValue, $"'$refusal.{refusal.Member}' requires a String mapping target.", refusal.Location);
+                return null;
+            }
+
+            return new SemanticRefusalExpression(refusal.Member, text);
         }
 
         SemanticExpression? BindOccurrenceSource(
@@ -351,6 +398,7 @@ public sealed partial class SemanticModelBinder
             string description,
             bool routeInput = false) => source switch
             {
+                RefusalExpressionSyntax refusal => BindRefusalValue(refusal, target),
                 ContextExpressionSyntax context => BindOccurrence(context, target),
                 IdentityExpressionSyntax identity => BindOccurrence(identity, target),
                 LiteralExpressionSyntax literal => BindConcreteValue(literal, target, description, false, routeInput) is { } value ? SemanticExpression.FromValue(value) : null,
