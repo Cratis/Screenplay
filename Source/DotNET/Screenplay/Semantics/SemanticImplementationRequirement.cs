@@ -37,7 +37,12 @@ public enum SemanticImplementationRole
     ConstraintPredicate,
 
     /// <summary>A reaction trigger's implementation.</summary>
-    ReactionEffect
+    ReactionEffect,
+
+    /// <summary>
+    /// A concept's value generator; result version 1 is String, with Now/Tenant context only.
+    /// </summary>
+    ValueGeneration
 }
 
 /// <summary>Whether an attachment's content revision is known.</summary>

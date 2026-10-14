@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { SyntaxNode } from './SyntaxNode';
+import { CodeBlockSyntax, FileReferenceSyntax } from './Implementations';
 
 /** A concept's generation declaration, including syntax-only preview strategies. */
 export interface GenerationSyntax extends SyntaxNode {
@@ -17,4 +18,6 @@ export interface GenerationSyntax extends SyntaxNode {
     readonly checksum?: string | null;
     readonly range?: string | null;
     readonly rule?: string | null;
+    readonly file?: FileReferenceSyntax | null;
+    readonly code?: CodeBlockSyntax | null;
 }

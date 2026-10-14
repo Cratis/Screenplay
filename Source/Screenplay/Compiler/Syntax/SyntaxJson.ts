@@ -107,6 +107,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     ProducesSyntax: ['stream'],
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],
+    GenerationSyntax: ['file', 'code'],
     PolicySyntax: ['description'],
     FileConstraintSyntax: ['description'],
     UniqueEventConstraintSyntax: ['description'],

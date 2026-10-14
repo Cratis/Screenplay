@@ -35,6 +35,7 @@ internal static class syntax_examples
         return node switch
         {
             ConceptSyntax concept => concept with { Type = "Enum" },
+            GenerationSyntax generation => generation with { Strategy = "rule", Rule = "ExampleGeneration", Code = null },
             EventSyntax @event => @event with { Visibility = EventVisibility.Public },
             ImportSyntax import => import with { Visibility = EventVisibility.Public },
             SliceSyntax slice => slice with { Type = SliceType.Translate },

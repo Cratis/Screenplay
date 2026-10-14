@@ -44,7 +44,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a concept generation strategy.
     /// </summary>
     /// <param name="syntax">The strategy to visit.</param>
-    public virtual void VisitGeneration(GenerationSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitGeneration(GenerationSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.File is not null) VisitFileReference(syntax.File);
+        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+    }
 
     /// <summary>
     /// Visits a <see cref="TypeSyntax"/> node and its children.

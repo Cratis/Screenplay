@@ -167,7 +167,11 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
     }
 
-    visitGeneration(syntax: GenerationSyntax): void { this.visitNode(syntax); }
+    visitGeneration(syntax: GenerationSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.file) this.visitFileReference(syntax.file);
+        if (syntax.code) this.visitCodeBlock(syntax.code);
+    }
 
     visitConcept(syntax: ConceptSyntax): void {
         this.visitNode(syntax);

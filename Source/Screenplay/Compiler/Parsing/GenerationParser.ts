@@ -6,6 +6,7 @@ import { ChecksumAlgorithm, InvalidGenerationPattern, parseGenerationPattern } f
 import { GenerationSyntax } from '../Syntax/GenerationSyntax';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { ParserContext } from './ParserContext';
+import { parseGenerationBody } from './GenerationBodyParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const tokenPattern = new RegExp(`"${stringBodyPattern}"|\\S+`, 'g');
@@ -109,7 +110,7 @@ export function parseGeneration(context: ParserContext, line: SourceLine, primit
     if ((result.size !== undefined && result.size !== null && (result.size < 1 || result.size > 256)) || (result.count !== undefined && result.count !== null && (result.count < 1 || result.count > 512))) {
         error(DiagnosticCodes.GenerationSizeOutsideRange, 'NanoID size must be 1..256 and bytes count must be 1..512.');
     }
-    return result;
+    return parseGenerationBody(context, line, result);
 }
 
 function allows(strategy: string, primitive: string, encoding: string | null | undefined, modifier: string): boolean {

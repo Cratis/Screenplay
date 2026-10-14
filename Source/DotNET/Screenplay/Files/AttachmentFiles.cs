@@ -341,6 +341,7 @@ public static partial class AttachmentFiles
             var file = node switch
             {
                 HandlerSyntax value => value.File,
+                GenerationSyntax value => value.File,
                 PerformerSyntax value => value.File,
                 ValidationRuleSyntax value => value.File,
                 ReducerRuleSyntax value => value.File,

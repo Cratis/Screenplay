@@ -75,6 +75,17 @@ internal static class SemanticTypedContextCatalog
                             Fixed("Occurred", SemanticContextRuntimeTokens.DateTime)));
                     }
                     break;
+                case SemanticImplementationRole.ValueGeneration:
+                    if (requirement.ContextVersion != 1 || requirement.ResultVersion != 1 || requirement.RequiredCapability != "provider-defined")
+                    {
+                        throw new InvalidSemanticContract("ValueGeneration requires context/result version 1 and provider-defined capability.");
+                    }
+                    foreach (var concept in application.Concepts.Where(value => value.Id == requirement.Source.SemanticId && value.Primitive == SemanticPrimitiveType.Text))
+                    {
+                        if (string.IsNullOrEmpty(requirement.Member) || requirement.RequirementId != ImplementationRequirementIdentity.Create(concept.Id, requirement.Role, requirement.Member)) continue;
+                        matches.Add(Descriptor(requirement, concept.Id, Fixed("Now", SemanticContextRuntimeTokens.DateTime), Fixed("Tenant", SemanticContextRuntimeTokens.TenantId)));
+                    }
+                    break;
                 case SemanticImplementationRole.CommandValidation:
                 case SemanticImplementationRole.ConceptValidation:
                 case SemanticImplementationRole.RulePredicate:
@@ -159,7 +170,7 @@ internal static class SemanticTypedContextCatalog
             }
 
             if (strict && matches.Count == 0 && requirement.Role is SemanticImplementationRole.CommandHandler or SemanticImplementationRole.CommandValidation or
-                SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.RulePredicate or SemanticImplementationRole.ReducerTransition)
+                SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.RulePredicate or SemanticImplementationRole.ReducerTransition or SemanticImplementationRole.ValueGeneration)
             {
                 throw new InvalidSemanticContract($"Typed context source for requirement '{requirement.RequirementId}' is unresolved.");
             }

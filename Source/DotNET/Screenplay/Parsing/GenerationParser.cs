@@ -37,7 +37,7 @@ internal static partial class GenerationParser
 
         var result = Modifiers(context, line, primitive, generation, tokens, next);
         Validate(context, line, primitive, result);
-        return result;
+        return ParseBody(context, line, result);
     }
 
     static (GenerationSyntax Generation, int Next, bool Valid) Arguments(GenerationSyntax source, string[] tokens)

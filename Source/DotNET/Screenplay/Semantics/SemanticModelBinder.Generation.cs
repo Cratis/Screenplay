@@ -20,20 +20,31 @@ public sealed partial class SemanticModelBinder
             return generation.Strategy == "uuid" && generation is
             {
                 Prefix: null, Case: null, Size: null, Alphabet: null, Count: null,
-                Encoding: null, Pattern: null, Checksum: null, Range: null, Rule: null
+                Encoding: null, Pattern: null, Checksum: null, Range: null, Rule: null, File: null, Code: null
             };
         }
 
         SemanticGeneration? BindGeneration(ConceptSyntax concept)
         {
             if (concept.Generation is not { } source) return null;
+            if (ImplementationInvariants.GenerationError(source) is { } bodyError)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, bodyError, source.Location);
+                return null;
+            }
+            if (source.Strategy == "rule")
+            {
+                _ = BindGenerationImplementation(concept, source);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generation rules are parsed but not executable until #616 phase 3 ESM admission.", source.Location);
+                return null;
+            }
             if (source.Strategy == "sequence")
             {
                 Error(DiagnosticCodes.ReservedSequenceGeneration, "Generation strategy 'sequence' is reserved until #619 is admitted.", source.Location);
                 return null;
             }
 
-            if (source.Strategy == "pattern" || source.Strategy == "random" || source.Strategy == "rule")
+            if (source.Strategy == "pattern" || source.Strategy == "random")
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generation strategy '{source.Strategy}' is parsed but not executable until #616 phase 3.", source.Location);
                 return null;
@@ -73,6 +84,22 @@ public sealed partial class SemanticModelBinder
             }
 
             return generation;
+        }
+
+        SemanticImplementationRequirement? BindGenerationImplementation(ConceptSyntax concept, GenerationSyntax source)
+        {
+            if (concept.Type != "String" || concept.Attributes.Any())
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generation rules require an unmarked String concept; generated compliance markers await #616 phase 4.", source.Location);
+                return null;
+            }
+            if (string.IsNullOrEmpty(source.Rule) || (source.File is null && source.Code is null))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "A named generation rule requires exactly one file or tagged inline body.", source.Location);
+                return null;
+            }
+
+            return RequireImplementation(SemanticImplementationRole.ValueGeneration, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), source.File, source.Code, source.Rule);
         }
 
         void ValidateGenerationRule(ConceptSyntax concept, SemanticGeneration? generation, SemanticValidationRule rule, SourceLocation location)

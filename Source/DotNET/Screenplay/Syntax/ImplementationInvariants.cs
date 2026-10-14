@@ -20,6 +20,11 @@ internal static partial class ImplementationInvariants
             }
         }
 
+        if (node is GenerationSyntax generation && GenerationError(generation) is { } generationError)
+        {
+            throw new InvalidSyntaxJson(generationError);
+        }
+
         OperationInvariants.Validate(node);
         EventSourceInvariants.Validate(node);
         if (PublicEventInvariants.Error(node) is { } publicEventError)
@@ -57,6 +62,15 @@ internal static partial class ImplementationInvariants
 
     internal static void ValidateAuthoring(ApplicationSyntax application) => new AuthoringWalker().VisitApplication(application);
 
+    internal static string? GenerationError(GenerationSyntax generation)
+    {
+        if (generation.File is null && generation.Code is null) return null;
+        if (generation.Strategy != "rule" || string.IsNullOrEmpty(generation.Rule) || !GenerationNameRegex().IsMatch(generation.Rule)) return "A generation body requires a named generation rule.";
+        if (generation.File is not null && generation.Code is not null) return "A generation rule has exactly one file or inline payload.";
+
+        return null;
+    }
+
     // Also used by the public binder, which does not run authoring validation.
     internal static string? NamedRuleError(ValidationRuleSyntax rule, bool commandOwner)
     {
@@ -78,6 +92,9 @@ internal static partial class ImplementationInvariants
 
     [GeneratedRegex(@"^[A-Za-z_]\w*\z", RegexOptions.None, 1000)]
     private static partial Regex NameRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.None, 1000)]
+    private static partial Regex GenerationNameRegex();
 
     static void ValidateHandler(HandlerSyntax handler)
     {

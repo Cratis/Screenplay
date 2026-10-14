@@ -61,4 +61,14 @@ public sealed record GenerationSyntax(string Strategy, SourceLocation Location) 
     /// Gets the preview implementation name.
     /// </summary>
     public string? Rule { get; init; }
+
+    /// <summary>
+    /// Gets the generation rule's implementation file, distinct from concept provenance.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the generation rule's tagged inline implementation.
+    /// </summary>
+    public CodeBlockSyntax? Code { get; init; }
 }
