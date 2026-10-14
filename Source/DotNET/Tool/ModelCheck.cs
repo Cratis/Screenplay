@@ -11,12 +11,26 @@ static class ModelCheck
 {
     internal static int Run(string[] args, TextWriter output, TextWriter error, bool useColors = false)
     {
+        if (ModelCheckJson.Requested(args)) return ModelCheckJson.Run(args, output);
         var options = ModelCheckOptions.Parse(args, error);
         if (options is null) return 2;
         options.IsFile = File.Exists(options.Target);
-        if (!ValidateTarget(options, error)) return 2;
+        if (!options.PrintGate && !ValidateTarget(options, error)) return 2;
         try
         {
+            var resolution = ModelCheckGate.Resolve(options);
+            if (resolution.Failure is { } failure)
+            {
+                error.WriteLine($"{failure.Path}({failure.Line},{failure.Column}): {failure.Kind}: {failure.Reason}");
+                return 2;
+            }
+
+            if (options.PrintGate)
+            {
+                ModelCheckGate.Print(resolution.Gate!, output);
+                return 0;
+            }
+
             return Check(options, output, error, useColors && !options.NoColor);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
