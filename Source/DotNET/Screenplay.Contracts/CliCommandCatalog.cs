@@ -44,6 +44,16 @@ public static class CliCommandCatalog
     public static CliOption Format { get; } = new("--format", "text|json");
 
     /// <summary>
+    /// Gets the compile-free effective validation gate report option.
+    /// </summary>
+    public static CliOption PrintGate { get; } = new("--print-gate");
+
+    /// <summary>
+    /// Gets the authored validation gate bypass option.
+    /// </summary>
+    public static CliOption NoGateFile { get; } = new("--no-gate-file");
+
+    /// <summary>
     /// Gets the explicit root-creation option.
     /// </summary>
     public static CliOption CreateRoot { get; } = new("--create-root", "<directory>", ExcludesPositionalArguments: true);
@@ -56,7 +66,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets the default model-check command.
     /// </summary>
-    public static CliCommand Check { get; } = new(string.Empty, "[<file.play|folder>]", [Scope, Checks, OpenQuestions, WarnAsError, NoColor]);
+    public static CliCommand Check { get; } = new(string.Empty, "[<file.play|folder>]", [Scope, Checks, OpenQuestions, WarnAsError, NoColor, Format, PrintGate, NoGateFile]);
 
     /// <summary>
     /// Gets the reference-evaluator command.

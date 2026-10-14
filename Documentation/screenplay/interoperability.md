@@ -199,6 +199,30 @@ The planner owns target admission and realization. It returns a complete determi
 
 A target must fail closed when it cannot realize reachable semantics. It must not emit guessed defaults, thinner behavior, placeholders, or `to-do` blocks.
 
+### Clock schedule boundary vectors
+
+Clock schedule fixture version **1** is published at
+`Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ClockSchedules/clock-schedules.v1.json`.
+In the release that contains it, the NuGet package `Cratis.Screenplay.CanonicalCorpus` exposes
+`Cratis.Screenplay.CanonicalCorpus.ClockScheduleVectors.Bytes`, `Version` and `Sha256`.
+Alternatively, fetch the file at that release's tag, replacing `vX.Y.Z` with the actual tag:
+
+```text
+https://raw.githubusercontent.com/Cratis/Screenplay/vX.Y.Z/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ClockSchedules/clock-schedules.v1.json
+```
+
+Consumers verify the SHA-256 of the exact file bytes against `ClockScheduleVectors.Sha256`, a pinned
+lowercase hexadecimal digest; do not reserialize the JSON before hashing. The vectors pin epoch-based
+intervals, UTC daily/weekly/monthly schedules, exclusive `from` and inclusive `to` boundaries, calendar
+edges and the shared 10,000-occurrence limit. A refused advance returns no occurrences; its `count` is
+therefore zero. Fixture versioning is independent of ESM version admission.
+
+To regenerate expected outcomes from the reference clock, set `SCREENPLAY_REGENERATE_CLOCK_VECTORS=1`
+and run the `for_ClockScheduleVectors.when_executing_every_vector` spec in
+`Screenplay.CanonicalVectors.Specs`. Regeneration intentionally fails: review the diff, deliberately
+update the `Sha256` constant (and the fixture version when semantics change), rebuild and rerun without
+the variable. The specs execute every vector and check that the published bytes match the repository file.
+
 ### Canonical conformance corpus
 
 For ESM-version admission checks, use the released golden bytes from `Cratis.Screenplay.CanonicalCorpus`

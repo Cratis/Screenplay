@@ -124,8 +124,88 @@ screenplay path/to/invoicing.play --warnaserror
 | `--open-questions report\|fail` | Report committed open model questions; `fail` exits `1` when any selected question remains. Unreadable notes exit `2` |
 | `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
 | `--no-color` | Never colorize output |
+| `--format text\|json` | Text by default; JSON writes exactly one report to stdout |
+| `--print-gate` | Print the effective gate and setting sources in text, then exit `0` without compiling |
+| `--no-gate-file` | Ignore the authored gate for this run, including invalid or unreadable files |
 
 Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+
+## Declare the validation gate once
+
+Stop repeating your checks in every script. Commit an authored `screenplay.json`
+at the model root, beside `.screenplay/`, with the settings your model must satisfy:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/screenplay-v1.schema.json",
+  "validation": {
+    "checks": ["field-origins", "query-keys", "navigation"],
+    "warningsAsErrors": true,
+    "scope": "Workspaces.Tracking",
+    "openQuestions": "fail"
+  }
+}
+```
+
+Every member is optional. Each `checks` item is one [check name](completeness.md),
+diagnostic-code alias or `all`; comma-separated items are invalid. An empty list
+selects no checks. `all` expands to every check supported by the running version,
+so upgrading can strengthen your gate. An explicit list pins its membership.
+Reports deduplicate checks and order them by the check catalog's declaration order.
+`openQuestions` accepts `report` or `fail`; omitted means notes are not evaluated.
+The [v1 JSON Schema](screenplay-v1.schema.json) validates the authored shape in editors.
+
+The tool starts its root search at the target folder, or a file target's parent.
+It chooses the nearest folder at or above that start containing `screenplay.json`
+or a `.screenplay/` directory. The search includes but never crosses the first
+folder containing `.git` (a file or directory), and otherwise stops at the filesystem
+root. Without a match, the start folder is the model root. Nested models keep their
+own gates. Imports never influence this search, and finding a gate does not widen
+the source files being compiled.
+
+Each explicit command-line option replaces only its corresponding file setting.
+Omitting `--warnaserror` does not override `warningsAsErrors: true`. If any `--check`
+is given, the union of every command-line selection replaces the file's check list.
+The file replaces the defaults: no checks, warnings do not fail, no scope and no
+notes evaluation. A missing file preserves those defaults. `--no-gate-file` ignores
+the file entirely, so you can relax a declared gate for one run.
+
+Inspect the winning values without compiling, or obtain a machine-readable result:
+
+```bash
+screenplay path/to/model --print-gate
+screenplay path/to/model --format json
+screenplay path/to/model --no-gate-file --check navigation
+```
+
+`--print-gate` always prints text, even with `--format json`. The JSON report is one
+JSON document on stdout, with `diagnostics`, `openQuestions`, `refusal`, `exitCode`
+and `gate`. Each gate setting has `value` and `source` (`commandLine`, `file` or
+`default`); the gate also carries `modelRoot` and `gateFilePath`. Checks are expanded
+canonical names. Notes are null when not evaluated. A refused gate has `gate: null`
+rather than a misleading partial effective gate; its refusal includes kind, path,
+line, column and reason.
+
+Malformed JSON, duplicate members, unknown keys, unknown check names and wrong
+types refuse with `Invalid`. A directory, symlink/reparse point or unreadable file
+at the gate path refuses with `Unreadable`. The tool never treats these as a missing
+file or repairs them. Refusals exit `2` and report the location; clean checks exit
+`0`, and model defects, warnings promoted by the gate or open questions in fail
+mode exit `1`.
+
+| File beside a model | Owner |
+|---|---|
+| `.play` files | Authored model source |
+| `screenplay.json` | Authored configuration, committed by people; no tool writes it |
+| `.screenplay/` | Tool-owned identities, notes, release baseline and recovery journal; use their documented operations |
+
+Library hosts reference `Cratis.Screenplay.Validation`: call
+`ValidationGateRoot.Resolve(target)`, then `ScreenplayValidationGate.Read(root)`
+and `ValidationGateResolver.Resolve(read, commandLine, noGateFile)`. Pass a
+`DeclaredValidationGate` containing only explicit command-line values; nullable
+booleans distinguish omission from an explicit false. The read result distinguishes
+absence from `ValidationGateFailureKind.Invalid` and `Unreadable`. Each host maps
+those typed failures to its own invalid-input exit code.
 
 ## Report open model questions
 
@@ -140,8 +220,8 @@ The notes report uses persisted identity state when present, so anchors follow
 renames. If `identities.json` is absent, the report says notes cannot be scoped,
 keeps all open questions visible unscoped, and marks them orphaned with reason
 `identity-state-absent`; `fail` still gates on that reported set.
-An unreadable notes file exits `2` only when the flag is given; without
-it notes are ignored. This is separate from compiler warnings and `--warnaserror`.
+An unreadable notes file exits `2` only when open questions are selected by the
+flag or the gate file; otherwise notes are ignored. This is separate from compiler warnings and `--warnaserror`.
 
 ## Call these from your own tooling
 

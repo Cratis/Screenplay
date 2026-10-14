@@ -11,19 +11,34 @@ static class ModelCheck
 {
     internal static int Run(string[] args, TextWriter output, TextWriter error, bool useColors = false)
     {
+        if (ModelCheckJson.Requested(args)) return ModelCheckJson.Run(args, output);
         var options = ModelCheckOptions.Parse(args, error);
         if (options is null) return 2;
         options.IsFile = File.Exists(options.Target);
-        if (!ValidateTarget(options, error)) return 2;
+        if (!options.PrintGate && !ValidateTarget(options, error)) return 2;
         try
         {
-            return Check(options, output, error, useColors && !options.NoColor);
+            return RunResolved(options, output, error, useColors);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             error.WriteLine($"Could not check '{options.Target}': {exception.Message}");
             return 2;
         }
+    }
+
+    static int RunResolved(ModelCheckOptions options, TextWriter output, TextWriter error, bool useColors)
+    {
+        var resolution = ModelCheckGate.Resolve(options);
+        if (resolution.Failure is { } failure)
+        {
+            error.WriteLine($"{failure.Path}({failure.Line},{failure.Column}): {failure.Kind}: {failure.Reason}");
+            return 2;
+        }
+
+        if (!options.PrintGate) return Check(options, output, error, useColors && !options.NoColor);
+        ModelCheckGate.Print(resolution.Gate!, output);
+        return 0;
     }
 
     static bool ValidateTarget(ModelCheckOptions options, TextWriter error)

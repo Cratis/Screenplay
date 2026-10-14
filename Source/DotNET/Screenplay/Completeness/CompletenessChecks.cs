@@ -22,6 +22,20 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
     public static CompletenessChecks All { get; } = new([.. Enum.GetValues<CompletenessCheck>()]);
 
     /// <summary>
+    /// Gets every accepted selection name, including aliases and <c>all</c>.
+    /// </summary>
+    public static ImmutableArray<string> AcceptedNames => [.. Names.Keys.Append("all").Order(StringComparer.Ordinal)];
+
+    static ImmutableDictionary<string, CompletenessCheck> Names { get; } = CreateNames();
+
+    /// <summary>
+    /// Gets the canonical kebab-case name of a check.
+    /// </summary>
+    /// <param name="check">The check.</param>
+    /// <returns>The name used in effective gate reports.</returns>
+    public static string NameOf(CompletenessCheck check) => Names.First(pair => pair.Value == check && !pair.Key.StartsWith("PLAY", StringComparison.Ordinal)).Key;
+
+    /// <summary>
     /// Parses comma-separated kebab-case names, diagnostic codes, or <c>all</c>.
     /// </summary>
     /// <param name="value">The selection to parse.</param>
@@ -38,29 +52,33 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
                 continue;
             }
 
-            var check = token switch
-            {
-                "data-bindings" or "PLAY0530" or "PLAY0531" => CompletenessCheck.DataBindings,
-                "input-surfaces" or "PLAY0532" or "PLAY0533" => CompletenessCheck.InputSurfaces,
-                "field-origins" or "PLAY0534" => CompletenessCheck.FieldOrigins,
-                "query-keys" or "PLAY0535" => CompletenessCheck.QueryKeys,
-                "event-consumers" or "PLAY0536" => CompletenessCheck.EventConsumers,
-                "navigation" or "PLAY0537" => CompletenessCheck.Navigation,
-                "personas" or "PLAY0574" or "PLAY0575" or "PLAY0576" => CompletenessCheck.Personas,
-                "purposes" or "PLAY0602" or "PLAY0603" or "PLAY0604" or "PLAY0605" or "PLAY0606" => CompletenessCheck.Purposes,
-                "privilege" or "PLAY0652" => CompletenessCheck.Privilege,
-                "enum-pinning" or "PLAY0671" => CompletenessCheck.EnumPinning,
-                _ => (CompletenessCheck?)null
-            };
-            if (check is null)
+            if (!Names.TryGetValue(token, out var check))
             {
                 checks = None;
                 return false;
             }
 
-            checks = new(checks.Selected.Add(check.Value));
+            checks = new(checks.Selected.Add(check));
         }
 
         return true;
+    }
+
+    static ImmutableDictionary<string, CompletenessCheck> CreateNames()
+    {
+        var groups = new (CompletenessCheck Check, string[] Names)[]
+        {
+            (CompletenessCheck.DataBindings, ["data-bindings", "PLAY0530", "PLAY0531"]),
+            (CompletenessCheck.InputSurfaces, ["input-surfaces", "PLAY0532", "PLAY0533"]),
+            (CompletenessCheck.FieldOrigins, ["field-origins", "PLAY0534"]),
+            (CompletenessCheck.QueryKeys, ["query-keys", "PLAY0535"]),
+            (CompletenessCheck.EventConsumers, ["event-consumers", "PLAY0536"]),
+            (CompletenessCheck.Navigation, ["navigation", "PLAY0537"]),
+            (CompletenessCheck.Personas, ["personas", "PLAY0574", "PLAY0575", "PLAY0576"]),
+            (CompletenessCheck.Purposes, ["purposes", "PLAY0602", "PLAY0603", "PLAY0604", "PLAY0605", "PLAY0606"]),
+            (CompletenessCheck.Privilege, ["privilege", "PLAY0652"]),
+            (CompletenessCheck.EnumPinning, ["enum-pinning", "PLAY0671"])
+        };
+        return groups.SelectMany(group => group.Names.Select(name => KeyValuePair.Create(name, group.Check))).ToImmutableDictionary(StringComparer.Ordinal);
     }
 }
