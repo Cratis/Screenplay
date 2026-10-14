@@ -43,14 +43,10 @@ public static class ReleaseBaselineCommands
 
     static ReleaseBaselineOutcome Execute(McpRoot root, string? release, string? fromEsmPath)
     {
-        McpRecoveryJournal.RefusePending(root);
-        var files = new McpManagedFiles(root);
-        var stateBytes = files.Read(McpState.FileName);
-        if (stateBytes is null) return new(2, [], "PersistedIdentitiesRequired", "PersistedIdentitiesRequired: release baselines require .screenplay/identities.json.");
-        var state = McpState.Deserialize(stateBytes);
-        var workspace = release is null ? state.OpenForReleaseBaselineCheck(root) : state.Open(root);
-        var before = files.Read(ReleaseBaselineStore.FileName, ReleaseBaselineStore.MaximumBytes);
-        var baseline = ReleaseBaselineStore.ReadBytes(before, workspace.IdentityCatalog.Application);
+        // The same read ScreenplayModelRoot.OpenForReleaseBaselineCheck and Open perform, refusing as McpFailure.
+        var read = McpRootFailures.Run(() => ScreenplayModelRoot.Read(root.Directory, forReleaseBaselineCheck: release is null));
+        if (read is null) return new(2, [], ScreenplayModelRoot.PersistedIdentitiesRequired, ScreenplayModelRoot.PersistedIdentitiesRequiredReason);
+        var (workspace, _, stateBytes, before, baseline) = read;
         if (release is null) return Outcome(ReleaseBaseline.Check(workspace, baseline));
         var shipped = fromEsmPath is null ? null : ReadShipped(fromEsmPath);
         var admission = ReleaseBaseline.Admit(workspace, baseline, release, DateTimeOffset.UtcNow, shipped);
