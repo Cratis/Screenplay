@@ -41,7 +41,7 @@ public class when_authoring_generation : given.an_authoring_connection
     [Theory]
     [InlineData("ast")]
     [InlineData("source")]
-    void should_keep_rules_on_generated_concepts_refused(string transport)
+    void should_admit_proven_rules_on_generated_concepts(string transport)
     {
         var opened = Start("concept Code : String\n  validate\n    min 1\n");
         object node = Node("ConceptSyntax", opened.GetProperty("revision").GetString()!).GetProperty("node");
@@ -51,8 +51,9 @@ public class when_authoring_generation : given.an_authoring_connection
             ? Ast(opened, original)
             : SourceProposal(opened, "concept Code : String\n  generate nanoid\n  validate\n    min 1\n");
         var review = Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "executable-diagnostics" });
-        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeFalse();
-        review.GetProperty("result").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContain("PLAY0268");
+        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeTrue();
+        review.GetProperty("result").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldNotContain("PLAY0268");
+        Candidate(proposal).Compilation.Value!.Model.SemanticVersion.ShouldEqual(Cratis.Screenplay.Semantics.SemanticVersion.V20);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual("concept Code : String\n  validate\n    min 1\n");
     }
 

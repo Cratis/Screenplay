@@ -23,9 +23,9 @@ internal static partial class SemanticGenerationContract
             throw new InvalidSemanticContract("Generation requires an admitted strategy and a compatible scalar concept primitive.");
         }
 
-        if (concept.Compliance is not null || !concept.Validations.IsEmpty)
+        if (concept.Compliance is not null)
         {
-            throw new InvalidSemanticContract("ESM v15 generation does not admit compliance markers or concept validation rules (#616).");
+            throw new InvalidSemanticContract("Generation does not admit compliance markers until #616 phase 4.");
         }
 
         ValidateModifiers(concept, generation);

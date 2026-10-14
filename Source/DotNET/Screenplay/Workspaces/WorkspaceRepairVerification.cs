@@ -130,6 +130,13 @@ internal static class WorkspaceRepairVerification
         {
             return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Removing the payload property changes the event contract. Consumer, opaque implementation or routing impact cannot be proven safe.");
         }
+        if (result.Accepted && (repair.DiagnosticCode == DiagnosticCodes.LowGenerationEntropy || repair.DiagnosticCode == DiagnosticCodes.LowGeneratedIdentifierEntropy) &&
+            result.Workspace!.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.RefutedGeneratedConceptRule &&
+                !index.Workspace.Compilation.Diagnostics.Any(original => original.Code == diagnostic.Code && original.Message == diagnostic.Message)))
+        {
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Raising generation entropy would refute a concept validation rule.");
+        }
+
         if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.OmittedProductionDestination &&
             !WorkspaceProductionRepairs.KeepsOtherDestinations(index, index.Find(repair.Subject)!, result))
         {

@@ -3187,6 +3187,16 @@ public static class DiagnosticCodes
     public const string CaptureEventsFromSeveralOrigins = "PLAY0687";
 
     /// <summary>
+    /// A generated concept's strategy can produce a value violating a concept rule.
+    /// </summary>
+    public const string RefutedGeneratedConceptRule = "PLAY0688";
+
+    /// <summary>
+    /// A generated concept's rule cannot be proven for every generated value.
+    /// </summary>
+    public const string UnprovenGeneratedConceptRule = "PLAY0689";
+
+    /// <summary>
     /// A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.
     /// </summary>
     public const string ReducerIdentityMismatch = "PLAY0690";

@@ -43,14 +43,15 @@ public class when_rejecting_generated_values_in_rules : given.a_semantic_binder
     }
 
     [Theory]
-    [InlineData("not empty")]
     [InlineData("rule Check\n      file Rules/Check.cs")]
     [InlineData("```csharp\n    return true;\n    ```")]
-    void should_refuse_generated_concepts_with_any_rules(string rule)
+    void should_admit_generated_concept_rules_with_an_unproven_warning(string rule)
     {
         var result = Bind("concept Id : Uuid\n  validate\n    " + rule + "\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id Id generated identifier");
-        result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("concept 'Id'", StringComparison.Ordinal) && diagnostic.Message.Contains("rules", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V20);
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0689").ShouldBeTrue();
     }
 
     [Theory]

@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics.Generation;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -11,6 +12,18 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static bool UsesImplicitUuid(ConceptSyntax concept)
+        {
+            if (concept.Type != "Uuid") return false;
+            if (concept.Generation is not { } generation) return true;
+
+            return generation.Strategy == "uuid" && generation is
+            {
+                Prefix: null, Case: null, Size: null, Alphabet: null, Count: null,
+                Encoding: null, Pattern: null, Checksum: null, Range: null, Rule: null
+            };
+        }
+
         SemanticGeneration? BindGeneration(ConceptSyntax concept)
         {
             if (concept.Generation is not { } source) return null;
@@ -32,12 +45,11 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (concept.Type == "Uuid" && source.Strategy == "uuid" && source is { Prefix: null, Case: null, Size: null, Alphabet: null, Count: null, Encoding: null }) return null;
+            if (UsesImplicitUuid(concept)) return null;
 
-            if (concept.Attributes.Any() || (concept.Validations ?? []).Any(validation => validation is CodeValidateSyntax ||
-                (validation is DeclarativeValidateSyntax declarative && (declarative.Rules.Any() || (declarative.Requirements ?? []).Any()))))
+            if (concept.Attributes.Any())
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generated concepts with compliance markers or validation rules are not admitted in #616 phase 2b-1.", source.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generated concepts with compliance markers are not admitted until #616 phase 4.", source.Location);
                 return null;
             }
 
@@ -61,6 +73,25 @@ public sealed partial class SemanticModelBinder
             }
 
             return generation;
+        }
+
+        void ValidateGenerationRule(ConceptSyntax concept, SemanticGeneration? generation, SemanticValidationRule rule, SourceLocation location)
+        {
+            if (generation is null && (!UsesImplicitUuid(concept) || !AllSlices().SelectMany(entry => entry.Slice.Commands)
+                .SelectMany(command => command.Properties).Any(property => property.IsGenerated && string.Equals(property.Type.Name, concept.Name, StringComparison.Ordinal))))
+            {
+                return;
+            }
+            var result = RuleConsistency.Check(generation, Primitive(concept.Type), rule);
+            var strategy = generation?.Kind ?? "uuid";
+            if (result.Status == RuleConsistencyStatus.Refuted)
+            {
+                Error(DiagnosticCodes.RefutedGeneratedConceptRule, $"Generation strategy '{strategy}' for concept '{concept.Name}' violates this rule; witness {System.Text.Json.JsonSerializer.Serialize(result.Witness)}.", location);
+            }
+            else if (result.Status == RuleConsistencyStatus.Unproven)
+            {
+                Warning(DiagnosticCodes.UnprovenGeneratedConceptRule, $"Generation strategy '{strategy}' for concept '{concept.Name}' has an unproven rule: {result.Reason}.", location);
+            }
         }
 
         void ValidateGenerationEntropy(CommandSyntax command, PropertySyntax property, ConceptSyntax concept)

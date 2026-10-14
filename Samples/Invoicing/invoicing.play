@@ -69,6 +69,8 @@ concept InvoiceId : Uuid
 
 concept InvoiceReceiptId : String
   generate nanoid
+  validate
+    matches "^[A-Za-z0-9_-]{21}$"
 concept CustomerId    : Uuid
 concept PaymentId     : Uuid
 concept BatchId       : Uuid
@@ -614,7 +616,7 @@ module Invoicing
       refresh ListInvoices
 
     // Start a draft with fresh identities; generated values are never form inputs.
-    // ESM v15 fixtures pin UUIDv7 and NanoID shapes; creation guards the whole source.
+    // ESM v20 proves the receipt rule; fixtures pin both shapes and creation guards the whole source.
     slice StateChange StartInvoiceDraft
       documentation
         ```markdown

@@ -45,9 +45,12 @@ static class McpGenerationDetails
         Preview("range", generation.Range);
         Preview("rule", generation.Rule);
         var compilation = snapshot.ExecutableCompilation;
+        var validationLocations = (concept.Validations ?? []).SelectMany(validation => validation is DeclarativeValidateSyntax declarative
+            ? declarative.Rules.Select(rule => rule.Location).Concat((declarative.Requirements ?? []).Select(requirement => requirement.Location))
+            : [validation.Location]).ToHashSet();
         var diagnostics = compilation.Diagnostics
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
-                (diagnostic.Location == generation.Location || diagnostic.Location == concept.Location))
+                (diagnostic.Location == generation.Location || diagnostic.Location == concept.Location || validationLocations.Contains(diagnostic.Location)))
             .Select(diagnostic => diagnostic.Code).Distinct(StringComparer.Ordinal).ToArray();
         var bits = GenerationEntropy.Bits(generation);
         using var collision = bits is { } known ? JsonDocument.Parse(GenerationEntropy.CollisionCountText(known)) : null;

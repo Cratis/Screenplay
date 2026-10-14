@@ -15,7 +15,7 @@ internal static class WorkspaceGenerationRepairs
     /// </summary>
     /// <param name="code">The diagnostic code.</param>
     /// <returns>True when the code is a low generation or generated identifier entropy diagnostic.</returns>
-    internal static bool Handles(string code) => code == DiagnosticCodes.LowGenerationEntropy || code == DiagnosticCodes.LowGeneratedIdentifierEntropy;
+    internal static bool Handles(string code) => code == DiagnosticCodes.LowGenerationEntropy || code == DiagnosticCodes.LowGeneratedIdentifierEntropy || code == DiagnosticCodes.RefutedGeneratedConceptRule;
 
     /// <summary>
     /// Finds the generation repairs for one subject.
@@ -42,6 +42,11 @@ internal static class WorkspaceGenerationRepairs
 
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
     {
+        if (diagnostic.Code == DiagnosticCodes.RefutedGeneratedConceptRule)
+        {
+            return WorkspaceGenerationRuleRepairs.Find(index, revision, diagnostic, verify);
+        }
+
         if (Target(index, revision, diagnostic) is not { } target)
         {
             return [];
