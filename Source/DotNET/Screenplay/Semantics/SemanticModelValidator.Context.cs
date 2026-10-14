@@ -23,10 +23,13 @@ internal static partial class SemanticModelValidator
 
         readonly SemanticVersion _semanticVersion;
 
-        public ValidationContext(SemanticVersion semanticVersion, SemanticApplication application)
+        readonly int _utcAssessmentYear;
+
+        public ValidationContext(SemanticVersion semanticVersion, SemanticApplication application, int? utcAssessmentYear = null)
         {
             _eventRoutesApplication = application;
             _semanticVersion = semanticVersion;
+            _utcAssessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
             _valueValidator = new(_concepts, _types);
         }
 

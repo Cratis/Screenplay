@@ -18,5 +18,5 @@ public class when_refusing_checksum_before_admission : a_valid_semantic_model
     }
 
     [Fact] void should_fail_closed_for_a_programmatic_checksum_rule() => _refusal.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_name_the_missing_admission() => _refusal.Message.ShouldContain("admission");
+    [Fact] void should_name_the_minimum_version() => _refusal.Message.ShouldContain("v21");
 }

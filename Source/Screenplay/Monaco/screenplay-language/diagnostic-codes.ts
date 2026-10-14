@@ -77,6 +77,8 @@ export const diagnosticCodes = {
     invalidObserverFilter: 'PLAY0665',
     observerFilterExcludesEveryProducer: 'PLAY0666',
     reducerIdentityMismatch: 'PLAY0690',
+    generationSupportBudgetExceeded: 'PLAY0691',
+    emptyGenerationSupport: 'PLAY0692',
     invalidDescription: 'PLAY0145',
     emptyDescription: 'PLAY0146',
     duplicateDescription: 'PLAY0147',

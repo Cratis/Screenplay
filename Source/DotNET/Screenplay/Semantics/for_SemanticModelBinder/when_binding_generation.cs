@@ -29,8 +29,6 @@ public class when_binding_generation : given.a_semantic_binder
     }
 
     [Theory]
-    [InlineData("String", "pattern \"ORD-#{7}\"", DiagnosticCodes.UnsupportedSemanticSyntax)]
-    [InlineData("Int", "random 1..9", DiagnosticCodes.UnsupportedSemanticSyntax)]
     [InlineData("String", "rule Make", DiagnosticCodes.UnsupportedSemanticSyntax)]
     [InlineData("String", "sequence", DiagnosticCodes.ReservedSequenceGeneration)]
     [InlineData("String secret", "bytes 32 base64url", DiagnosticCodes.UnsupportedSemanticSyntax)]

@@ -116,6 +116,17 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' has an invalid operand shape.");
             }
 
+            if (validation.Kind == SemanticValidationRuleKind.Checksum)
+            {
+                if (!_semanticVersion.IsAtLeast(SemanticVersion.V21) || !isConcept || propertyType.IsCollection ||
+                    UnderlyingPrimitive(propertyType) != SemanticPrimitiveType.Text || IsEnumeration(propertyType) ||
+                    validation.Operand is not SemanticTextValue algorithm || !(algorithm.Value == "luhn" || algorithm.Value == "mod11" || algorithm.Value == "mod97"))
+                {
+                    throw new InvalidSemanticContract("Checksum validation requires a String concept, luhn/mod11/mod97 and ESM v21.");
+                }
+                return;
+            }
+
             var primitive = UnderlyingPrimitive(propertyType);
             var shape = new ValidatedShape(
                 primitive,
@@ -133,10 +144,6 @@ internal static partial class SemanticModelValidator
         {
             RejectNull(validation, "validation rule");
             ValidateEnum(validation.Kind, SemanticValidationRuleKind.Unknown, "validation rule kind");
-            if (validation.Kind == SemanticValidationRuleKind.Checksum)
-            {
-                throw new InvalidSemanticContract("Checksum validation awaits phase-3 ESM admission (#616).");
-            }
             ValidateEnum(validation.Severity, (SemanticValidationSeverity)(-1), "validation severity");
             if (isConcept && validation.Property.IsSet)
             {

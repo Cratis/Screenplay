@@ -32,27 +32,15 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, bodyError, source.Location);
                 return null;
             }
-            if (source.Strategy == "rule")
-            {
-                _ = BindGenerationImplementation(concept, source);
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generation rules are parsed but not executable until #616 phase 3 ESM admission.", source.Location);
-                return null;
-            }
             if (source.Strategy == "sequence")
             {
                 Error(DiagnosticCodes.ReservedSequenceGeneration, "Generation strategy 'sequence' is reserved until #619 is admitted.", source.Location);
                 return null;
             }
 
-            if (source.Strategy == "pattern" || source.Strategy == "random")
+            if (source.Strategy != "rule" && source.Rule is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generation strategy '{source.Strategy}' is parsed but not executable until #616 phase 3.", source.Location);
-                return null;
-            }
-
-            if (source.Pattern is not null || source.Checksum is not null || source.Range is not null || source.Rule is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Preview generation arguments cannot be attached to admitted strategies (#616).", source.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "A rule name belongs only to rule generation.", source.Location);
                 return null;
             }
 
@@ -64,8 +52,28 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var generation = new SemanticGeneration(source.Strategy)
+            var requirement = source.Strategy == "rule" ? BindGenerationImplementation(concept, source) : null;
+            if (source.Strategy == "rule" && requirement is null) return null;
+            GenerationIntegerRange? range = null;
+            try
             {
+                if (source.Range is not null) range = GenerationIntegerRange.Parse(source.Range);
+                _ = GenerationEntropy.ExactSupportCount(source, utcAssessmentYear);
+            }
+            catch (Exception error) when (error is GenerationSupportBudgetExceeded or EmptyGenerationSupport or InvalidGenerationPattern or InvalidSemanticContract)
+            {
+                var code = error switch
+                {
+                    GenerationSupportBudgetExceeded => DiagnosticCodes.GenerationSupportBudgetExceeded,
+                    EmptyGenerationSupport => DiagnosticCodes.EmptyGenerationSupport,
+                    _ => DiagnosticCodes.InvalidGenerationArgument
+                };
+                Error(code, error.Message, source.Location);
+                return null;
+            }
+            var generation = new SemanticGeneration(source.Strategy == "rule" ? "implementation" : source.Strategy)
+            {
+                Pattern = source.Pattern, Checksum = source.Checksum, Minimum = range?.Minimum, Maximum = range?.Maximum, RequirementId = requirement?.RequirementId,
                 Prefix = source.Prefix,
                 Case = source.Case,
                 Size = source.Strategy == "nanoid" ? source.Size ?? 21 : source.Size,
@@ -75,7 +83,7 @@ public sealed partial class SemanticModelBinder
             };
             try
             {
-                SemanticGenerationContract.Validate(new(_concepts[concept.Name].Id, concept.Name, Primitive(concept.Type), [.. concept.Values], []) { Generation = generation });
+                SemanticGenerationContract.Validate(new(_concepts[concept.Name].Id, concept.Name, Primitive(concept.Type), [.. concept.Values], []) { Generation = generation }, utcAssessmentYear);
             }
             catch (InvalidSemanticContract exception)
             {
@@ -109,7 +117,7 @@ public sealed partial class SemanticModelBinder
             {
                 return;
             }
-            var result = RuleConsistency.Check(generation, Primitive(concept.Type), rule);
+            var result = RuleConsistency.Check(generation, Primitive(concept.Type), rule, utcAssessmentYear);
             var strategy = generation?.Kind ?? "uuid";
             if (result.Status == RuleConsistencyStatus.Refuted)
             {
@@ -124,9 +132,11 @@ public sealed partial class SemanticModelBinder
         void ValidateGenerationEntropy(CommandSyntax command, PropertySyntax property, ConceptSyntax concept)
         {
             var generation = concept.Generation;
-            var bits = GenerationEntropy.Bits(generation);
-            if (bits is null || bits >= 64) return;
-            var countAtOnePercent = GenerationEntropy.ValuesAtOnePercentCollision(bits.Value);
+            if ((generation?.Strategy == "pattern" || generation?.Strategy == "random") && HasErrors) return;
+            var count = GenerationEntropy.ExactSupportCount(generation, utcAssessmentYear);
+            if (count is null || GenerationEntropy.HasAtLeastBits(count.Value, 64)) return;
+            var bits = GenerationEntropy.SupportBits(count.Value);
+            var countAtOnePercent = GenerationEntropy.ValuesAtOnePercentCollision(bits);
             var message = string.Create(CultureInfo.InvariantCulture, $"Generated property '{property.Name}' of '{command.Name}' has {bits:0.##} random bits; 1% collision probability after about {countAtOnePercent:G4} values.");
             if (property.IsIdentifier) Error(DiagnosticCodes.LowGeneratedIdentifierEntropy, message + " Generated identifiers require at least 64 random bits.", property.Location);
             else if (!HasUniqueGenerationTarget(command, property)) Warning(DiagnosticCodes.LowGenerationEntropy, message, property.Location);

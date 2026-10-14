@@ -14,6 +14,25 @@ namespace Cratis.Screenplay.Semantics;
 /// </summary>
 public sealed partial class SemanticModelBinder : ISemanticModelBinder
 {
+    readonly int? _utcAssessmentYear;
+
+    /// <summary>
+    /// Initializes a binder that captures the current UTC year at each bind.
+    /// </summary>
+    public SemanticModelBinder()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a binder with an explicit generation assessment year.
+    /// </summary>
+    /// <param name="utcAssessmentYear">The UTC year whose complete 100-year horizon is assessed.</param>
+    public SemanticModelBinder(int utcAssessmentYear)
+    {
+        if (utcAssessmentYear is < 1 or > 9899) throw new InvalidSemanticContract("Generation assessment year must allow the complete 100-year UTC horizon.");
+        _utcAssessmentYear = utcAssessmentYear;
+    }
+
     /// <inheritdoc/>
     public CompilationResult<SemanticCompilation> Bind(
         string applicationName,
@@ -63,7 +82,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         syntax = expansion.Application;
         var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
         foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
-        var context = new BindingContext(applicationName, syntax, documents, steps, expansion);
+        var context = new BindingContext(applicationName, syntax, documents, steps, expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
         try
         {
             var application = context.BindApplication();
@@ -129,7 +148,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application);
+            var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application, context.UtcAssessmentYear);
             var compiledDocuments = documents;
             if (context.UsesV4)
             {
@@ -172,6 +191,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
         if (SemanticModelValidator.UsesGeneratedConceptRules(application))
         {
             return (LanguageVersion.V20, SemanticVersion.V20);
@@ -251,7 +271,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
-    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps, EffectiveSpecificationApplication expansion)
+    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps, EffectiveSpecificationApplication expansion, int utcAssessmentYear)
     {
         readonly List<Diagnostic> _diagnostics = [];
         readonly Dictionary<SemanticId, EffectiveSpecification> _specificationOrigins = [];
@@ -269,6 +289,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
+
+        internal int UtcAssessmentYear => utcAssessmentYear;
 
         internal bool HasErrors => _diagnostics.Exists(_ => _.Severity == DiagnosticSeverity.Error);
 

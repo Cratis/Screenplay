@@ -12,6 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class GenerationParser
 {
+    const string ExpandedLengthReason = "expanded length";
     internal static GenerationSyntax? Parse(ParserContext context, SourceLine line, string primitive)
     {
         var tokens = TokenRegex().Matches(line.Content).Select(match => match.Value).Skip(1).ToArray();
@@ -109,7 +110,7 @@ internal static partial class GenerationParser
             }
             catch (InvalidGenerationPattern error)
             {
-                var code = error.Message.Contains("expanded length", StringComparison.Ordinal) ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument;
+                var code = error.Message.Contains(ExpandedLengthReason, StringComparison.Ordinal) ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument;
                 context.Error(code, error.Message, line.Location);
             }
         }

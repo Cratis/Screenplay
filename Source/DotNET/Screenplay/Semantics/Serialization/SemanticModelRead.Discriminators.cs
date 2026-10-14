@@ -46,6 +46,7 @@ internal static partial class SemanticModelRead
         ["allGreaterThan"] = SemanticValidationRuleKind.AllGreaterThan,
         ["allGreaterThanOrEqual"] = SemanticValidationRuleKind.AllGreaterThanOrEqual,
         ["matches"] = SemanticValidationRuleKind.Matches,
+        ["checksum"] = SemanticValidationRuleKind.Checksum,
         ["rulePredicate"] = SemanticValidationRuleKind.RulePredicate,
         ["codeValidation"] = SemanticValidationRuleKind.CodeValidation
     });

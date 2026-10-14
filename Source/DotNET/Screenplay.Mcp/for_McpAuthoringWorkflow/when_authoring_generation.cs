@@ -24,17 +24,17 @@ public class when_authoring_generation : given.an_authoring_connection
     }
 
     [Theory]
-    [InlineData("ast", "sequence", null, "PLAY0682")]
-    [InlineData("source", "sequence", null, "PLAY0682")]
-    [InlineData("ast", "pattern", "ORD-#{7}", "PLAY0268")]
-    [InlineData("source", "pattern", "ORD-#{7}", "PLAY0268")]
-    void should_preview_refused_forms_with_executable_diagnostics(string transport, string strategy, string? pattern, string code)
+    [InlineData("ast", "sequence", null, "PLAY0682", false)]
+    [InlineData("source", "sequence", null, "PLAY0682", false)]
+    [InlineData("ast", "pattern", "ORD-#{7}", "PLAY0268", true)]
+    [InlineData("source", "pattern", "ORD-#{7}", "PLAY0268", true)]
+    void should_preview_current_admission_without_writing_source(string transport, string strategy, string? pattern, string code, bool ready)
     {
         var opened = Start("concept Code : String\n");
         var proposal = Propose(opened, transport, new { kind = "GenerationSyntax", strategy, pattern }, pattern is null ? strategy : $"pattern \"{pattern}\"");
-        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeFalse();
+        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldEqual(ready);
         var review = Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "executable-diagnostics" });
-        review.GetProperty("result").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContain(code);
+        review.GetProperty("result").GetProperty("items").EnumerateArray().Any(item => item.GetProperty("code").GetString() == code).ShouldEqual(!ready);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual("concept Code : String\n");
     }
 

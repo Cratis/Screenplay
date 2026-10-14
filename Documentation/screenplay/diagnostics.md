@@ -716,6 +716,8 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 | `PLAY0685` | Error | A returned name is used under the returning command's `on failure`. Use it in `on success` instead; form fields and behavior parameters keep their existing meaning, and an outer successful response remains available. |
 | `PLAY0688` | Error | A generated concept's strategy can violate a rule. The diagnostic is on the rule and names the strategy and a quoted witness, regardless of the rule's severity. Review the strategy-derived `matches` replacement repair; it also changes validation of input and stored values. |
 | `PLAY0689` | Warning | Consistency is Unproven for a generated concept rule; names the opaque/outside-fragment/budget/timeout reason. Passing samples are not proof. |
+| `PLAY0691` | Error | Generation support exceeds 2,048 automaton positions, 10,000 distinct states, or 100,000,000 inspected edges/counting transitions/assessed UTC dates. Reduce the pattern or conditioned support complexity; exhaustion never admits an unknown generator. |
+| `PLAY0692` | Error | A pattern has no admissible support after checksum conditioning, including on an assessed UTC date in the complete 101-year horizon. Change the digit payload or pattern; the diagnostic identifies the offending date when applicable. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 

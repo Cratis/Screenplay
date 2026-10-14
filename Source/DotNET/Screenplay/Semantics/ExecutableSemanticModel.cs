@@ -74,10 +74,20 @@ public sealed record ExecutableSemanticModel
     public static ExecutableSemanticModel Create(
         LanguageVersion languageVersion,
         SemanticVersion semanticVersion,
-        SemanticApplication application)
+        SemanticApplication application) => Create(languageVersion, semanticVersion, application, DateTimeOffset.UtcNow.Year);
+
+    /// <summary>
+    /// Creates a model using an explicit UTC year for generation support assessment; the year is not serialized.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The semantic version.</param>
+    /// <param name="application">The application graph.</param>
+    /// <param name="utcAssessmentYear">The UTC year whose complete 100-year horizon is assessed.</param>
+    /// <returns>The validated model.</returns>
+    public static ExecutableSemanticModel Create(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application, int utcAssessmentYear)
     {
-        EsmSchemaV20Support.EnsureSupported(languageVersion, semanticVersion);
-        SemanticModelValidator.Validate(application, semanticVersion);
+        EsmSchemaV21Support.EnsureSupported(languageVersion, semanticVersion);
+        SemanticModelValidator.Validate(application, semanticVersion, utcAssessmentYear);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
         return new(languageVersion, semanticVersion, revision, application);
@@ -91,20 +101,21 @@ public sealed record ExecutableSemanticModel
 
 internal static partial class SemanticModelValidator
 {
-    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default)
+    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default, int? utcAssessmentYear = null)
     {
         if (application is null)
         {
             throw new InvalidSemanticContract("The semantic application cannot be null.");
         }
 
-        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application);
+        var assessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
+        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application, assessmentYear);
         context.RegisterApplication(application);
         ValidateQueryRejectionVersion(application, semanticVersion);
         ValidateRefusalVersion(application, semanticVersion);
         ValidateRecoverySpecificationVersion(application, semanticVersion);
         ValidateStoredEventNames(application, semanticVersion);
-        ValidateGenerationVersion(application, semanticVersion);
+        ValidateGenerationVersion(application, semanticVersion, assessmentYear);
         ValidateComplianceVersion(application, semanticVersion);
         ValidateQueryFilterVersion(application, semanticVersion);
         ValidateEnumMemberNumbersVersion(application, semanticVersion);

@@ -16,6 +16,6 @@ public class when_refusing_checksum_before_admission : given.a_semantic_binder
         _primitives = [.. new[] { "Int", "Decimal", "Bool", "Uuid", "Date", "DateTime", "Enum" }.Select(type => Bind($"concept InvoiceRef : {type}\n  validate checksum luhn"))];
     }
 
-    [Fact] void should_keep_string_checksum_unadmitted_until_the_contract_is_ready() => _string.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("admission", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_admit_string_checksum_only_at_v21() => _string.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V21);
     [Fact] void should_refuse_every_non_string_primitive() => _primitives.ShouldEachConformTo(result => result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("String concept", StringComparison.Ordinal)));
 }

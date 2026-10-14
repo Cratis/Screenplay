@@ -1,0 +1,11 @@
+concept OrderId : Uuid
+concept InvoiceRef : String
+  generate pattern "[AB]" checksum luhn
+  validate checksum luhn
+concept TicketNumber : Int
+  generate random -9223372036854775808..9223372036854775807
+concept TenantOrderId : String
+  generate rule TenantOrder
+    ```csharp
+    return context.Tenant.ToString();
+    ```

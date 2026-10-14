@@ -9,15 +9,15 @@ internal static partial class SemanticGenerationContract
 {
     internal const string DefaultAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 
-    internal static double Bits(SemanticGeneration? generation) =>
-        GenerationEntropy.Bits(generation?.Kind, generation?.Size, generation?.Alphabet, generation?.Count) ?? 0;
+    internal static double? Bits(SemanticGeneration? generation) =>
+        GenerationEntropy.Bits(generation?.Kind, generation?.Size, generation?.Alphabet, generation?.Count);
 
-    internal static void Validate(SemanticConcept concept)
+    internal static void Validate(SemanticConcept concept, int? utcAssessmentYear = null)
     {
         if (concept.Generation is not { } generation) return;
         var kind = generation.Kind;
-        if (!OneOf(kind, "uuid", "uuidv7", "ulid", "typeid", "nanoid", "bytes") || !concept.Values.IsEmpty ||
-            concept.Primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid) ||
+        if (!OneOf(kind, "uuid", "uuidv7", "ulid", "typeid", "nanoid", "bytes", "pattern", "random", "implementation") || !concept.Values.IsEmpty ||
+            (kind == "random" ? concept.Primitive != SemanticPrimitiveType.WholeNumber : concept.Primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid)) ||
             (concept.Primitive == SemanticPrimitiveType.Uuid && !OneOf(kind, "uuid", "uuidv7")))
         {
             throw new InvalidSemanticContract("Generation requires an admitted strategy and a compatible scalar concept primitive.");
@@ -28,6 +28,8 @@ internal static partial class SemanticGenerationContract
             throw new InvalidSemanticContract("Generation does not admit compliance markers until #616 phase 4.");
         }
 
+        ValidatePhase3Members(generation, utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
+        if (IsPhase3(generation)) return;
         ValidateModifiers(concept, generation);
         if (kind == "uuid" && concept.Primitive == SemanticPrimitiveType.Uuid)
         {

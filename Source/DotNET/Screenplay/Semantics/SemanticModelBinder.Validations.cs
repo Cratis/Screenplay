@@ -40,7 +40,7 @@ public sealed partial class SemanticModelBinder
             SemanticValidationRuleKind.Unknown => "ESM v1 does not define this rule",
             SemanticValidationRuleKind.Checksum when !subject.IsStringConcept =>
                 "checksum requires a String concept",
-            SemanticValidationRuleKind.Checksum => "checksum validation awaits phase-3 ESM admission (#616)",
+            SemanticValidationRuleKind.Checksum => null,
             SemanticValidationRuleKind.NotEmpty when !subject.IsCollection && subject.Primitive != SemanticPrimitiveType.Text =>
                 "not empty requires text or a collection",
             SemanticValidationRuleKind.NotEmpty => null,
@@ -64,6 +64,10 @@ public sealed partial class SemanticModelBinder
 
         static string? OperandMismatch(SemanticValue operand, SemanticValidationRuleKind kind, ValidationSubject subject)
         {
+            if (kind == SemanticValidationRuleKind.Checksum)
+            {
+                return operand is SemanticTextValue algorithm && (algorithm.Value == "luhn" || algorithm.Value == "mod11" || algorithm.Value == "mod97") ? null : "requires luhn, mod11 or mod97";
+            }
             if (operand is SemanticNullValue)
             {
                 return "cannot be null - use 'not empty' to require a value";

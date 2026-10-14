@@ -3200,4 +3200,14 @@ public static class DiagnosticCodes
     /// A reducer observes incompatible nominal instance identity domains or disagrees with a single-instance query.
     /// </summary>
     public const string ReducerIdentityMismatch = "PLAY0690";
+
+    /// <summary>
+    /// Generation support assessment exceeded a hard construction or counting budget.
+    /// </summary>
+    public const string GenerationSupportBudgetExceeded = "PLAY0691";
+
+    /// <summary>
+    /// A generation pattern has no admissible support on an assessed UTC date.
+    /// </summary>
+    public const string EmptyGenerationSupport = "PLAY0692";
 }

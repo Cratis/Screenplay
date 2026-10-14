@@ -20,6 +20,8 @@ public static class RuleConsistency
     public static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule)
     {
         if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
+        if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule);
+        if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
         var shape = GenerationShape.Create(generation);
         if (shape is null) return RuleConsistencyResult.Unproven("opaque generation strategy");
         if (primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid)) return RuleConsistencyResult.Unproven("unsupported primitive");
@@ -55,6 +57,11 @@ public static class RuleConsistency
     /// <param name="rule">The concept validation rule.</param>
     /// <returns>The proof status, with an exact integer witness on refutation.</returns>
     public static RuleConsistencyResult CheckRandom(string range, SemanticValidationRule rule) => FiniteGenerationRules.Check(GenerationIntegerRange.Parse(range), rule);
+
+    internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear) =>
+        generation?.Kind == "pattern" && generation.Pattern is { } pattern
+            ? CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1))
+            : Check(generation, primitive, rule);
 
     internal static RuleConsistencyResult CrossCheck(GenerationShape shape, RuleConsistencyResult proof, Func<string, bool> matches, bool complement = false) =>
         proof.Status == RuleConsistencyStatus.Proven ? Samples(shape, matches, complement, null) : proof;

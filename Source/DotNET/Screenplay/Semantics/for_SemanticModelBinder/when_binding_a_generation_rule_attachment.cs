@@ -9,10 +9,10 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 public class when_binding_a_generation_rule_attachment
 {
     [Fact]
-    void should_attach_a_provider_defined_string_generator_without_admitting_it_yet()
+    void should_attach_an_admitted_provider_defined_string_generator()
     {
         var result = Bind(Inline());
-        result.Success.ShouldBeFalse();
+        result.Success.ShouldBeTrue();
         var requirement = result.ImplementationRequirements.Single();
         requirement.Role.ShouldEqual(SemanticImplementationRole.ValueGeneration);
         requirement.Member.ShouldEqual("TenantOrder");
@@ -22,7 +22,7 @@ public class when_binding_a_generation_rule_attachment
         requirement.Language.ShouldEqual("csharp");
         requirement.BodySpan.HasValue.ShouldBeTrue();
         requirement.BodyLines.ShouldNotBeEmpty();
-        result.TypedContextDescriptors.ShouldBeEmpty();
+        result.TypedContextDescriptors.Single().IsWrapperReady.ShouldBeTrue();
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class when_binding_a_generation_rule_attachment
     void should_describe_only_now_and_tenant_with_no_model_input()
     {
         var requirement = Bind(Inline()).ImplementationRequirements.Single();
-        var model = Bind("concept TenantOrderId : String").Value!.Model;
+        var model = Bind(Inline()).Value!.Model;
         var descriptor = SemanticTypedContextCatalog.Create(model.Application, [requirement], true).Single();
         descriptor.Members.Select(member => member.Name).ShouldEqual(["Now", "Tenant"]);
         descriptor.Members.Select(member => member.Type.RuntimeToken).ShouldEqual([SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId]);
@@ -85,7 +85,7 @@ public class when_binding_a_generation_rule_attachment
     void should_refuse_an_unknown_context_version()
     {
         var requirement = Bind(Inline()).ImplementationRequirements.Single();
-        var application = Bind("concept TenantOrderId : String").Value!.Model.Application;
+        var application = Bind(Inline()).Value!.Model.Application;
         Catch.Exception(() => SemanticTypedContextCatalog.Create(application, [requirement with { ContextVersion = 2 }], true)).ShouldBeOfExactType<InvalidSemanticContract>();
     }
 
