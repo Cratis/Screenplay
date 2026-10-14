@@ -64,6 +64,7 @@ static class McpGenerationDetails
         };
         if (bits is null) result.Add("entropyUnknownReason", $"Entropy is unknown for generation strategy '{generation.Strategy}' or its authored inputs.");
         if (previewArguments.Count > 0) result.Add("previewArguments", previewArguments);
+        McpGenerationRules.Add(result, snapshot, concept);
 
         return result;
     }

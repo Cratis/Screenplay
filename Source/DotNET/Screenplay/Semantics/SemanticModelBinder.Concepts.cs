@@ -30,7 +30,7 @@ public sealed partial class SemanticModelBinder
             };
         }
 
-        ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept, SemanticGeneration? generation)
+        ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept, SemanticGeneration? generation, Action<SyntaxNode, SemanticValidationRule>? inspect = null)
         {
             var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
             var codeValidationOrdinal = 0;
@@ -52,6 +52,7 @@ public sealed partial class SemanticModelBinder
                                 RequirementId = requirement.RequirementId
                             };
                             validations.Add(bound);
+                            inspect?.Invoke(code, bound);
                             ValidateGenerationRule(concept, generation, bound, code.Location);
                         }
                     }
@@ -86,6 +87,7 @@ public sealed partial class SemanticModelBinder
                     if (BindValidationRule(rule, default, subject, requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
+                        inspect?.Invoke(rule, bound);
                         ValidateGenerationRule(concept, generation, bound, rule.Location);
                     }
                 }
