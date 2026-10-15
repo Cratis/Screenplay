@@ -66,6 +66,6 @@ internal sealed partial class ResponseValueTypes
     // Shared with ResponseValidator.ts: 32 hex digits (N), hyphenated UUIDs (D), or D wrapped in
     // braces (B) / parentheses (P). Hex is case-insensitive; whitespace and X initializer notation
     // are not admitted in response/fixture values. The lookahead requires the true end, even after a newline.
-    [GeneratedRegex(@"^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))(?![\s\S])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex UuidValueRegex();
 }

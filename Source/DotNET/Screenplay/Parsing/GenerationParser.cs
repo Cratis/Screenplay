@@ -166,15 +166,15 @@ internal static partial class GenerationParser
             long.TryParse(parts[1], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var maximum) && minimum <= maximum;
     }
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\S+", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\S+", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 
-    [GeneratedRegex(@"^-?(0|[1-9][0-9]*)\.\.-?(0|[1-9][0-9]*)\z", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^-?(0|[1-9][0-9]*)\.\.-?(0|[1-9][0-9]*)\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex RangeRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
 
-    [GeneratedRegex(@"^([a-z]([a-z_]{0,61}[a-z])?)?\z", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^([a-z]([a-z_]{0,61}[a-z])?)?\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex TypeIdPrefixRegex();
 }

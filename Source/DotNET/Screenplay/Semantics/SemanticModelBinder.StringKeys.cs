@@ -13,7 +13,7 @@ public sealed partial class SemanticModelBinder
     {
         // Matches StringsFile.Parse's key: an ASCII letter or underscore, followed by word characters;
         // subsequent dotted segments consist of one or more word characters.
-        [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.\w+)*$", RegexOptions.None, 1000)]
+        [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.\w+)*$", RegexOptions.NonBacktracking)]
         private static partial Regex StringKey();
 
         bool ValidateStringKey(string? message, SourceLocation location)

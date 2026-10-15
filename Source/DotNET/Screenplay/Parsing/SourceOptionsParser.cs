@@ -90,6 +90,6 @@ internal static partial class SourceOptionsParser
         return context;
     }
 
-    [GeneratedRegex(@"^numbers(\s+(exact|legacy))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^numbers(\s+(exact|legacy))?$", RegexOptions.NonBacktracking)]
     private static partial Regex NestedDirectiveRegex();
 }

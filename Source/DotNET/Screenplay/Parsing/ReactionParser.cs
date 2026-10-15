@@ -372,21 +372,21 @@ internal static partial class ReactionParser
         };
     }
 
-    [GeneratedRegex(@"^on\s+refused\b(?=$|\s+by\b)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+refused\b(?:$|\s+by\b)", RegexOptions.NonBacktracking)]
     private static partial Regex RefusalPrefixRegex();
 
-    [GeneratedRegex(@"^on\s+refused(?:\s+by\s+(validation|constraint|authorization)(?:\s+([A-Za-z_]\w*(?:\.\w+)*))?)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+refused(?:\s+by\s+(validation|constraint|authorization)(?:\s+([A-Za-z_]\w*(?:\.\w+)*))?)?$", RegexOptions.NonBacktracking)]
     private static partial Regex RefusalRegex();
 
-    [GeneratedRegex(@"^reaction\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^reaction\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^where\s+(\S.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^where\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhereRegex();
 
-    [GeneratedRegex(@"^invokes\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^invokes\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex InvokesRegex();
 
-    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 }

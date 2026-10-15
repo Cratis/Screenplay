@@ -140,15 +140,15 @@ internal static partial class ScreenParser
         }
     }
 
-    [GeneratedRegex("^action\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^action\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex GuardedActionRegex();
 
-    [GeneratedRegex(@"^when\s+(.+)\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+(.+)\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ActionAlternativeRegex();
 
-    [GeneratedRegex(@"^otherwise\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^otherwise\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ActionOtherwiseRegex();
 
-    [GeneratedRegex(@"^item\.[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^item\.[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemPathRegex();
 }

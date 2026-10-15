@@ -77,6 +77,6 @@ internal static partial class ReadModelParser
         return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, DirectiveLocations = directiveLocations };
     }
 
-    [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 }

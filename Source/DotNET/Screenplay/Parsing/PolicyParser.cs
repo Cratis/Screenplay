@@ -179,14 +179,14 @@ internal static partial class PolicyParser
     static string Unquote(string token) => StringLiteral.Unescape(token[1..^1]);
 
     static List<string> Tokenize(string text, NumericMode mode) =>
-        [.. (mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex()).Matches(text).Select(_ => _.Value)];
+        [.. ConditionParser.Tokenize(mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex(), text)];
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|(?<number>-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?:$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.NonBacktracking)]
     private static partial Regex ExactTokenRegex();
 
-    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|[\\w.$]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|[\\w.$]+", RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 }

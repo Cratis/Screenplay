@@ -202,18 +202,18 @@ internal static partial class TriggerParser
         _ => IntervalUnit.Days
     };
 
-    [GeneratedRegex(@"^trigger\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^trigger\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UntypedDataRegex();
 
-    [GeneratedRegex(@"^when\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenRegex();
 
-    [GeneratedRegex(@"^every\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^every\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.NonBacktracking)]
     private static partial Regex EveryRegex();
 
-    [GeneratedRegex(@"^at\s+(\d{2}:\d{2})(?:\s+on\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\s+(\d{1,2})))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^at\s+(\d{2}:\d{2})(?:\s+on\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\s+(\d{1,2})))?$", RegexOptions.NonBacktracking)]
     private static partial Regex AtRegex();
 }

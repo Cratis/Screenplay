@@ -71,6 +71,6 @@ internal sealed partial class EventMetadataParser(string name)
         DirectiveLocations = declaration.DirectiveLocations.Concat(_locations).ToDictionary(entry => entry.Key, entry => entry.Value)
     };
 
-    [GeneratedRegex(@"^id\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^id\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex IdRegex();
 }

@@ -9,5 +9,5 @@ namespace Cratis.Screenplay.Contracts;
 // Contract facts are never extracted from embedded compiler or CLI source text.
 static class ContractSources
 {
-    internal static IEnumerable<string> Matches(string source, string pattern) => Regex.Matches(source, pattern, RegexOptions.Singleline, TimeSpan.FromSeconds(2)).Select(match => match.Groups[1].Value);
+    internal static IEnumerable<string> Matches(string source, string pattern) => Regex.Matches(source, pattern, RegexOptions.Singleline | RegexOptions.NonBacktracking).Select(match => match.Groups[1].Value);
 }

@@ -160,12 +160,12 @@ internal static partial class PropertyLineParser
         return property with { IsKey = false };
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?(?:\s+(subject))?(?:\s+(key))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?(?:\s+(subject))?(?:\s+(key))?$", RegexOptions.NonBacktracking)]
     private static partial Regex PropertyRegex();
 
-    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+identifier\s+optional(?:\s*=.*)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+identifier\s+optional(?:\s*=.*)?$", RegexOptions.NonBacktracking)]
     private static partial Regex ReversedModifiersRegex();
 
-    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier|subject|key)(?:\s+(?:optional|generated|identifier|subject|key))*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier|subject|key)(?:\s+(?:optional|generated|identifier|subject|key))*)$", RegexOptions.NonBacktracking)]
     private static partial Regex InvalidGeneratedModifiersRegex();
 }

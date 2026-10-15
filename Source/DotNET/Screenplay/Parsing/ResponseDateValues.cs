@@ -30,9 +30,9 @@ internal static partial class ResponseDateValues
 
     static int Part(Match match, int group) => int.Parse(match.Groups[group].Value, CultureInfo.InvariantCulture);
 
-    [GeneratedRegex(@"\A([0-9]{4})-([0-9]{2})-([0-9]{2})\z", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\A([0-9]{4})-([0-9]{2})-([0-9]{2})\z", RegexOptions.NonBacktracking)]
     private static partial Regex DateRegex();
 
-    [GeneratedRegex(@"\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:\.[0-9]{1,7})?(?:Z|[+-]([0-9]{2}):([0-9]{2}))\z", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:\.[0-9]{1,7})?(?:Z|[+-]([0-9]{2}):([0-9]{2}))\z", RegexOptions.NonBacktracking)]
     private static partial Regex DateTimeRegex();
 }

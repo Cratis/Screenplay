@@ -373,7 +373,7 @@ internal static partial class SpecificationParser
         return specification;
     }
 
-    [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenNoEventsPrefixRegex();
 
     static Dictionary<string, SourceLocation> WithEventOrderLocation(Dictionary<string, SourceLocation> locations, SourceLocation? location)
@@ -437,10 +437,10 @@ internal static partial class SpecificationParser
         return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For, Stream = body.Stream, NoStream = body.NoStream };
     }
 
-    [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.NonBacktracking)]
     private static partial Regex WhenRedeliveredPrefixRegex();
 
-    [GeneratedRegex(@"^when\s+redelivered\s+([A-Za-z_]\w*(?:\.\w+)*)\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+redelivered\s+([A-Za-z_]\w*(?:\.\w+)*)\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenRedeliveredRegex();
 
     static SpecificationTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
@@ -523,7 +523,7 @@ internal static partial class SpecificationParser
         return match.Success ? new(match.Groups[1].Value, line.Location) : null;
     }
 
-    [GeneratedRegex(@"^given caller as ([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given caller as ([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex CallerPersonaRegex();
 
     static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)
@@ -932,10 +932,10 @@ internal static partial class SpecificationParser
         }
     }
 
-    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*)\.([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*)\.([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex SpecificationStreamRegex();
 
-    [GeneratedRegex(@"^streamId\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^streamId\s*=(?:\s+(?<1>.+)|(?<1>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex SpecificationStreamIdRegex();
 
     static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent, Match? inline = null, bool queryArguments = false)
@@ -970,95 +970,95 @@ internal static partial class SpecificationParser
         return values;
     }
 
-    [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex CallerRoleRegex();
 
-    [GeneratedRegex("^claim\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s*=\\s*\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^claim\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s*=\\s*\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex CallerClaimRegex();
 
-    [GeneratedRegex(@"^given\s+clock\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+clock\b", RegexOptions.NonBacktracking)]
     private static partial Regex GivenClockPrefixRegex();
 
-    [GeneratedRegex(@"^given\s+capture\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+capture\b", RegexOptions.NonBacktracking)]
     private static partial Regex GivenCapturePrefixRegex();
 
-    [GeneratedRegex(@"^when\s+clock\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+clock\b", RegexOptions.NonBacktracking)]
     private static partial Regex WhenClockPrefixRegex();
 
-    [GeneratedRegex(@"^when\s+trigger\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+trigger\b", RegexOptions.NonBacktracking)]
     private static partial Regex WhenTriggerPrefixRegex();
 
-    [GeneratedRegex(@"^when\s+capture\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+capture\b", RegexOptions.NonBacktracking)]
     private static partial Regex WhenCapturePrefixRegex();
 
-    [GeneratedRegex(@"^when\s+query\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+query\b", RegexOptions.NonBacktracking)]
     private static partial Regex WhenQueryPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+result\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+result\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenResultPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+no\s+result\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+no\s+result\b", RegexOptions.NonBacktracking)]
     private static partial Regex NoResultRegex();
 
     // An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the
     // same text means the same moment wherever the specification runs.
-    [GeneratedRegex(@"^(given|when)\s+clock\s+""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(given|when)\s+clock\s+""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))""$", RegexOptions.NonBacktracking)]
     private static partial Regex ClockRegex();
 
-    [GeneratedRegex(@"^when\s+trigger\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+trigger\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenTriggerRegex();
 
-    [GeneratedRegex(@"^(?:given|when)\s+capture\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:given|when)\s+capture\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex CaptureRegex();
 
-    [GeneratedRegex(@"^when\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenQueryRegex();
 
-    [GeneratedRegex(@"^then\s+result(\s+exactly)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+result(\s+exactly)?$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenResultRegex();
 
-    [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^given\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex GivenRegex();
 
-    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenAppendRegex();
 
-    [GeneratedRegex(@"^when\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenRegex();
 
-    [GeneratedRegex(@"^then\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenEventRegex();
 
-    [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+query\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenQueryPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)(\s+exactly)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)(\s+exactly)?$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenQueryRegex();
 
-    [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.NonBacktracking)]
     private static partial Regex ReadModelPrefixRegex();
 
-    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex GivenReadModelRegex();
 
-    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?<exactly>\s+exactly)?(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?<exactly>\s+exactly)?(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenReadModelRegex();
 
-    [GeneratedRegex(@"^then\s+no\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+no\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenNoPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenAbsentReadModelRegex();
 
-    [GeneratedRegex("^(?:\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*')$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^(?:\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*')$", RegexOptions.NonBacktracking)]
     private static partial Regex AbsentKeyStringRegex();
 
-    [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenErrorRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 }

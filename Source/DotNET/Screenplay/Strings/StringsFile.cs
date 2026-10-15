@@ -68,6 +68,6 @@ public partial class StringsFile(IEnumerable<StringsEntry> entries)
         return builder.ToString();
     }
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*(?:\.\w+)*)\s*=\s*""([^""]*)""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*(?:\.\w+)*)\s*=\s*""([^""]*)""$", RegexOptions.NonBacktracking)]
     private static partial Regex EntryRegex();
 }

@@ -364,39 +364,38 @@ internal static partial class FormParser
     static string OperandText(Match match, int quotedGroup) =>
         match.Groups[quotedGroup].Success ? StringLiteral.Unescape(match.Groups[quotedGroup].Value) : match.Groups[quotedGroup + 1].Value;
 
-    [GeneratedRegex(@"^form\s+([A-Za-z_]\w*)\s+for\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^form\s+([A-Za-z_]\w*)\s+for\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^generation\s+(auto|manual)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^generation\s+(auto|manual)$", RegexOptions.NonBacktracking)]
     private static partial Regex GenerationRegex();
 
-    [GeneratedRegex(@"^on\s+submit\s+navigate\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+submit\s+navigate\b", RegexOptions.NonBacktracking)]
     private static partial Regex SubmitNavigationRegex();
 
-    [GeneratedRegex(@"^populate\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^populate\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex PopulateViaQueryRegex();
 
-    [GeneratedRegex(@"^populate\s+from\s+item$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^populate\s+from\s+item$", RegexOptions.NonBacktracking)]
     private static partial Regex PopulateFromItemRegex();
 
     [GeneratedRegex(
         "^field\\s+([\\w.]+)(?:\\s+(?:from\\s+([\\w.]+)|compose\\s+using\\s+([A-Za-z_]\\w*)))?(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$",
-        RegexOptions.None,
-        1000)]
+        RegexOptions.NonBacktracking)]
     private static partial Regex FieldRegex();
 
-    [GeneratedRegex(@"^on\s+submit\s+(navigate\s+to\s+.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+submit\s+(navigate\s+to\s+.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SubmitRegex();
 
-    [GeneratedRegex(@"^columns\s+auto$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^columns\s+auto$", RegexOptions.NonBacktracking)]
     private static partial Regex ColumnsAutoRegex();
 
-    [GeneratedRegex(@"^columns\s+manual$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^columns\s+manual$", RegexOptions.NonBacktracking)]
     private static partial Regex ColumnsManualRegex();
 
-    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ColumnRegex();
 
-    [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex NavigateRegex();
 }

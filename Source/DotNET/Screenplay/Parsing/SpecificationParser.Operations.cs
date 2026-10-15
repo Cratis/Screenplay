@@ -52,8 +52,8 @@ internal static partial class SpecificationParser
         return true;
     }
 
-    [GeneratedRegex(@"^(?:given\s+operation|then\s+(?:operation|compensated))(?:\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:given\s+operation|then\s+(?:operation|compensated))(?:\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex OperationStepPrefixRegex();
-    [GeneratedRegex(@"^(given operation|then operation|then compensated)\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)(\s+fails)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(given operation|then operation|then compensated)\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)(\s+fails)?$", RegexOptions.NonBacktracking)]
     private static partial Regex OperationStepRegex();
 }

@@ -83,12 +83,12 @@ internal static partial class SpecificationParser
         return expression;
     }
 
-    [GeneratedRegex(@"^then\s+returns\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+returns\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenReturnsPrefixRegex();
 
-    [GeneratedRegex(@"^generated\s+(?=\S)(?![=])", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^generated\s+[^\s=]", RegexOptions.NonBacktracking)]
     private static partial Regex GeneratedFixturePrefixRegex();
 
-    [GeneratedRegex(@"^generated\s+([a-z_]\w*)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^generated\s+([a-z_]\w*)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex GeneratedFixtureRegex();
 }

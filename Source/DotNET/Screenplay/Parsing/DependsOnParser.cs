@@ -40,6 +40,6 @@ internal static partial class DependsOnParser
         declarations.Add(new(target, line.Location));
     }
 
-    [GeneratedRegex(@"^depends\s+on\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^depends\s+on\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex DeclarationRegex();
 }
