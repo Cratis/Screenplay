@@ -655,6 +655,7 @@ export abstract class ScreenplaySyntaxWalker {
                     });
                     item.presentation.forEach(node => this.visitNode(node));
                 });
+                (syntax.buttons ?? []).forEach(button => this.visitNode(button));
                 break;
             case 'ScreenCodeSyntax':
                 this.visitNode(syntax.code);

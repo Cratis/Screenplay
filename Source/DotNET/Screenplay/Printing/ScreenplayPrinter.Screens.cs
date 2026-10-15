@@ -330,7 +330,21 @@ public partial class ScreenplayPrinter
             {
                 WriteToolbarItem(writer, item);
             }
+
+            foreach (var button in toolbar.Buttons)
+            {
+                WriteToolbarButton(writer, button);
+            }
         }
+    }
+
+    void WriteToolbarButton(ScreenplayWriter writer, ToolbarButtonSyntax button)
+    {
+        var line = $"button {WriteItemId(button.Id)} title {ScreenplaySyntaxText.LocalizableString(button.Title)}";
+        if (button.Slice is not null) line += $" slice {button.Slice}";
+        if (button.Emphasis is { } emphasis) line += $" emphasis {emphasis.ToString().ToLowerInvariant()}";
+        if (button.Icon is not null) line += $" icon {WriteItemValue(button.Icon)}";
+        writer.Line(line, button);
     }
 
     void WriteToolbarItem(ScreenplayWriter writer, ToolbarItemSyntax item)

@@ -32,6 +32,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a theme': ['theme T\n  ', ['compatible with']],
     'a ui profile': ['ui profile P\n  ', ['layout', 'packages', 'target platform', 'target size', 'theme']],
     'a navigation region': ['layout L\n  navigation topbar\n    ', ['item', 'item (with slot)', 'logo']],
+    'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (with emphasis)', 'item action', 'item navigate']],
     'a layout': ['layout L\n  ', ['arrangement', 'navigation topbar', 'slot', 'slot contributes']],
 };
 

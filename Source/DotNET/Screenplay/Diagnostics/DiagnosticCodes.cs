@@ -3307,4 +3307,36 @@ public static class DiagnosticCodes
     /// A module region that <c>overrides</c> the application's declares no items, so the region is empty in that module.
     /// </summary>
     public const string NavOverrideWithoutItems = "PLAY0752";
+
+    // Toolbar buttons that invoke State Change slices.
+
+    /// <summary>
+    /// A toolbar <c>button</c> line is not <c>button &lt;id&gt; title "..." [slice &lt;Slice&gt;] [emphasis primary|secondary|quiet] [icon X]</c>: no or an unquoted title, an unknown or repeated part, or an unknown emphasis.
+    /// </summary>
+    public const string InvalidToolbarButton = "PLAY0760";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> names no slice the document declares (Scene <c>toolbarButtonSliceNotFound</c>).
+    /// </summary>
+    public const string ToolbarButtonSliceNotFound = "PLAY0761";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> is a State View, Automation or Translate slice. A button invokes State Change slices only (Scene <c>toolbarButtonSliceNotStateChange</c>).
+    /// </summary>
+    public const string ToolbarButtonSliceNotStateChange = "PLAY0762";
+
+    /// <summary>
+    /// A toolbar button names no <c>slice</c>. Legal while designing, but it invokes nothing (Scene <c>toolbarButtonSliceEmpty</c>).
+    /// </summary>
+    public const string ToolbarButtonWithoutSlice = "PLAY0763";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> matches slices in more than one feature; qualify it with the feature or module.
+    /// </summary>
+    public const string ToolbarButtonSliceAmbiguous = "PLAY0764";
+
+    /// <summary>
+    /// Two buttons, or a button and an item, of one toolbar share an id.
+    /// </summary>
+    public const string DuplicateToolbarButton = "PLAY0765";
 }

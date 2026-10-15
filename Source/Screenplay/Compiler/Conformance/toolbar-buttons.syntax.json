@@ -1,0 +1,211 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Orders",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "PlaceOrder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "OrderPlaced",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "orderId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "orderId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderPlaced",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "PlaceOrder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "OrderList",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "OrderRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenToolbarSyntax",
+                      "buttons": [
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Primary",
+                          "icon": "plus",
+                          "id": "place",
+                          "slice": "Shop.Orders.PlaceOrder",
+                          "title": "Place \"new\" order"
+                        },
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Quiet",
+                          "id": "nav:later",
+                          "slice": "Orders.PlaceOrder",
+                          "title": "$strings.orders.later"
+                        },
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Secondary",
+                          "id": "secondary",
+                          "slice": "PlaceOrder",
+                          "title": "Secondary"
+                        },
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "id": "idle",
+                          "title": "Idle"
+                        }
+                      ],
+                      "items": [
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": null,
+                          "label": "Legacy",
+                          "name": "legacy",
+                          "parameters": [],
+                          "presentation": [],
+                          "syntaxKind": "Action",
+                          "target": "PlaceOrder"
+                        }
+                      ],
+                      "name": "actions"
+                    }
+                  ],
+                  "name": "List"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

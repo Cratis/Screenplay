@@ -98,6 +98,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
+| `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
 | `navigation topbar` and `navigation sidebar` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
 | module `description` (fenced), `authorize`, `on event`, `contribute to`, `navigation sidebar extends` | `module Invoicing` |

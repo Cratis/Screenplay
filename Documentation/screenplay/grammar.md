@@ -1388,6 +1388,7 @@ ScreenBody     = FileDirective                          (* full external file  *
 ScreenDirective = DataDecl
                | ActionDecl
                | SectionDecl
+               | ToolbarDecl
                | TemplateRef
                | InteractionBinding
                | UsesBehaviorDecl
@@ -1395,6 +1396,23 @@ ScreenDirective = DataDecl
 
 (* A screen, a section and a filled slot attach interactions the same way a
    module or feature does - see interactions.md.                              *)
+
+(* A toolbar holds items - an action, a navigation or a dialog entry - and
+   buttons. A button invokes a State Change slice: the slice names the command
+   and the dialog it opens over the page. "slice" is a dotted path
+   Module.Feature.Slice or any unambiguous suffix of it; without one the button
+   invokes nothing and warns. Item and button ids are unique in the toolbar.   *)
+
+ToolbarDecl    = "toolbar", Ident, NL,
+                 [ INDENT, { ToolbarItem | ToolbarButton }, DEDENT ] ;
+
+ToolbarItem    = "item", Ident, ( "action" | "dialog" ), QualifiedName, NL,
+               | "item", Ident, "navigate", "to", QualifiedName, NL ;
+
+ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
+                 [ "slice", QualifiedName ],
+                 [ "emphasis", ( "primary" | "secondary" | "quiet" ) ],
+                 [ "icon", ( Ident | String ) ], NL ;
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;

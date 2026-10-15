@@ -1387,6 +1387,19 @@ The `navigation topbar` and `navigation sidebar` blocks of a layout and a module
 | `PLAY0751` | Warning | An item targets a module that has no feature to go to. Mirrors Scene `navModuleWithoutFeatures`. |
 | `PLAY0752` | Warning | A module region that `overrides` the application's declares no items, so the region is empty in that module. |
 
+## Toolbar buttons
+
+The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0760` | Error | A toolbar `button` line is malformed: no or an unquoted title, an unknown or repeated part, an unknown `emphasis`, or a block under it. |
+| `PLAY0761` | Error | A toolbar button's `slice` names no slice the document declares. Mirrors Scene `toolbarButtonSliceNotFound`. |
+| `PLAY0762` | Error | A toolbar button's `slice` is a State View, Automation or Translate slice; a button invokes State Change slices only. Mirrors Scene `toolbarButtonSliceNotStateChange`. |
+| `PLAY0763` | Warning | A toolbar button names no `slice`, so it invokes nothing. Mirrors Scene `toolbarButtonSliceEmpty`. |
+| `PLAY0764` | Error | A toolbar button's `slice` matches slices in more than one feature; qualify it with the feature or module. |
+| `PLAY0765` | Error | Two buttons, or a button and an item, of one toolbar share an id. |
+
 ## Specification case tables
 
 | Code | Severity | Meaning |

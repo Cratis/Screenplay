@@ -251,6 +251,13 @@ internal sealed partial class WorkspaceRefactoring
             throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is the target of a navigation item at '{Position(workspace.Documents, navigationTarget)}'. Move it and the navigation 'target' with explicit coordinated typed edits; moving does not rewrite navigation targets.");
         }
 
+        var movedName = request.Target.Parts[^1].Key;
+        var buttonSlice = index.Entries.FirstOrDefault(entry => entry.Node is ToolbarButtonSyntax { Slice: { } slice } && slice.Split('.').Contains(movedName));
+        if (buttonSlice is not null)
+        {
+            throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is named by the slice of a toolbar button at '{Position(workspace.Documents, buttonSlice)}'. Move it and the button's 'slice' with explicit coordinated typed edits; moving does not rewrite toolbar button slices.");
+        }
+
         var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         bindings.RequireNoCollisions();
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
