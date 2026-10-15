@@ -20,10 +20,11 @@ import { validateCaptureEventFixtures } from './CaptureEventFixturesValidator';
 export function validatePublicEventUsage(application: ApplicationSyntax, context: ParserContext): void {
     validatePublicEventMetadata(application, context);
     const resolver = new AuthoringProductionResolver(application);
+    const events = new AuthoringProductionResolver(application, resolver.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Event));
+    for (const { slice, scope } of resolver.slices) validateOwnCaptureReactions(application, slice, scope, events, context);
     if (!resolver.declarations.some(declaration => declaration.node.kind === 'EventSyntax' && ((declaration.node as EventSyntax).visibility === EventVisibility.Public || (declaration.node as EventSyntax).origin != null)) &&
         !application.imports.some(imported => imported.visibility === EventVisibility.Public || imported.origin != null) &&
         !resolver.slices.some(({ slice }) => slice.direction != null || usesEventSource(slice) || targetsEvent(slice, resolver))) return;
-    const events = new AuthoringProductionResolver(application, resolver.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Event));
     for (const { slice, scope } of resolver.slices) validateSlice(application, slice, scope, resolver, events, context);
     for (const seed of application.seeds?.flatMap(seed => seed.groups.flatMap(group => group.events)) ?? []) {
         const contract = resolve(application, events, [], seed.event, seed, true, context);
@@ -80,6 +81,28 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
     const outputs = new Set(contracts.filter(contract => contract.output && contract.node.visibility === EventVisibility.Public && contract.node.origin == null).map(contract => contract.node)).size;
     if (outputs !== 1) context.error(DiagnosticCodes.OutboundPublicEventCount, `Outbound Translate slice '${slice.name}' must produce exactly one local public event type; found ${outputs}.`, slice.location);
     for (const capture of slice.captures) context.error(DiagnosticCodes.TranslationConstructDirection, 'An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.', capture.location);
+}
+
+function validateOwnCaptureReactions(application: ApplicationSyntax, slice: SliceSyntax, scope: readonly string[], events: AuthoringProductionResolver, context: ParserContext): void {
+    if (slice.type !== 'Translate' || slice.direction != null) return;
+    const collector = new PublicEventUsageCollector();
+    collector.visitSlice(slice);
+    // Resolution diagnostics belong to the existing reference validators, not this co-location warning.
+    const resolutionContext = new ParserContext(context.reader, context.path);
+    const appended = new Set(collector.uses.filter(use => use.node.kind === 'CaptureAppendSyntax')
+        .map(use => resolve(application, events, scope, use.name, use.node, true, resolutionContext)).filter(node => node !== undefined));
+    for (const reaction of slice.reactions.filter(reaction => reaction.from == null)) {
+        const matching = new Map<EventSyntax | ImportSyntax, string>();
+        for (const trigger of reaction.triggers) {
+            if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
+            const source = trigger.source;
+            const node = resolve(application, events, scope, source.name, source, false, resolutionContext);
+            if (node !== undefined && appended.has(node) && !matching.has(node)) matching.set(node, source.name);
+        }
+        if (matching.size === 0) continue;
+        context.warning(DiagnosticCodes.DirectionlessTranslationReactsToOwnCapture,
+            `Reaction '${reaction.name}' reacts to events appended by a capture in the same directionless Translate slice (${[...matching.values()].join(', ')}); keep the capture in this Translate slice and move the reaction to an Automation slice.`, reaction.location);
+    }
 }
 
 function recordCaptureOrigin(node: SyntaxNode, contract: EventSyntax | ImportSyntax, captureOrigins: Map<SyntaxNode, string>): void {

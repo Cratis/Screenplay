@@ -27727,6 +27727,17 @@
       "retired": false
     },
     {
+      "code": "PLAY0694",
+      "name": "DirectionlessTranslationReactsToOwnCapture",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A directionless Translate slice reacts to an event its own capture appends.",
+      "reserved": false,
+      "retired": false
+    },
+    {
       "code": "PLAY0700",
       "name": "CaptureEventsKeyNotRequired",
       "severity": "error",

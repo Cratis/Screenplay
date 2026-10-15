@@ -11,6 +11,7 @@
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
     repeatedSingularDeclarationAcrossFiles: 'PLAY0172',
+    directionlessTranslationReactsToOwnCapture: 'PLAY0694',
     invalidExposureDeclaration: 'PLAY0621',
     unknownExposureOwner: 'PLAY0622',
     reExposureCycle: 'PLAY0623',
