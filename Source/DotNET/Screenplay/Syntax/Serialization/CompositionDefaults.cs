@@ -34,6 +34,8 @@ static class CompositionDefaults
         [typeof(TemplateAssignmentSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
         [typeof(ScreenTemplateReferenceSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
         [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["navigation"] = Default.Empty },
+        [typeof(ScreenToolbarSyntax)] = new(StringComparer.Ordinal) { ["buttons"] = Default.Empty },
+        [typeof(ToolbarButtonSyntax)] = new(StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null },
         [typeof(NavigationRegionSyntax)] = new(StringComparer.Ordinal) { ["logo"] = Default.Null },
         [typeof(NavigationItemSyntax)] = new(StringComparer.Ordinal) { ["icon"] = Default.Null, ["target"] = Default.Null, ["slot"] = Default.Null, ["children"] = Default.Empty },
         [typeof(ScreenTemplateSyntax)] = _templateMembers,

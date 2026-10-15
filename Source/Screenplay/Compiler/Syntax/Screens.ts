@@ -209,10 +209,23 @@ export interface ToolbarItemSyntax extends SyntaxNode {
     readonly presentation: readonly PresentationValueSyntax[];
 }
 
+export type ToolbarEmphasis = 'Primary' | 'Secondary' | 'Quiet';
+
+// A toolbar button that invokes a State Change slice. The slice is a dotted path, or an unambiguous suffix of one.
+export interface ToolbarButtonSyntax extends SyntaxNode {
+    readonly kind: 'ToolbarButtonSyntax';
+    readonly id: string;
+    readonly title: string;
+    readonly slice?: string | null;
+    readonly emphasis?: ToolbarEmphasis | null;
+    readonly icon?: string | null;
+}
+
 export interface ScreenToolbarSyntax extends SyntaxNode {
     readonly kind: 'ScreenToolbarSyntax';
     readonly name: string;
     readonly items: readonly ToolbarItemSyntax[];
+    readonly buttons?: readonly ToolbarButtonSyntax[];
 }
 
 // Inline code in a registered language.

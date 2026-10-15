@@ -29,6 +29,7 @@
     "bind",
     "biometric",
     "blueprint",
+    "button",
     "by",
     "bytes",
     "caller",
@@ -86,6 +87,7 @@
     "display",
     "documentation",
     "domain",
+    "emphasis",
     "employmentLaw",
     "empty",
     "enter",
@@ -236,6 +238,7 @@
     "prefix",
     "presentation",
     "preserve",
+    "primary",
     "produces",
     "profile",
     "projection",
@@ -247,6 +250,7 @@
     "publicTask",
     "purpose",
     "query",
+    "quiet",
     "racialOrEthnicOrigin",
     "raise",
     "random",
@@ -286,6 +290,7 @@
     "scopes",
     "screen",
     "second",
+    "secondary",
     "seconds",
     "secret",
     "section",
@@ -27662,6 +27667,72 @@
         "warning"
       ],
       "title": "A module region that overrides the application\u0027s declares no items, so the region is empty in that module.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0760",
+      "name": "InvalidToolbarButton",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A toolbar button line is not button \u003Cid\u003E title \u0022...\u0022 [slice \u003CSlice\u003E] [emphasis primary|secondary|quiet] [icon X]: no or an unquoted title, an unknown or repeated part, or an unknown emphasis.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0761",
+      "name": "ToolbarButtonSliceNotFound",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A toolbar button\u0027s slice names no slice the document declares (Scene toolbarButtonSliceNotFound).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0762",
+      "name": "ToolbarButtonSliceNotStateChange",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A toolbar button\u0027s slice is a State View, Automation or Translate slice. A button invokes State Change slices only (Scene toolbarButtonSliceNotStateChange).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0763",
+      "name": "ToolbarButtonWithoutSlice",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A toolbar button names no slice. Legal while designing, but it invokes nothing (Scene toolbarButtonSliceEmpty).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0764",
+      "name": "ToolbarButtonSliceAmbiguous",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A toolbar button\u0027s slice matches slices in more than one feature; qualify it with the feature or module.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0765",
+      "name": "DuplicateToolbarButton",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Two buttons, or a button and an item, of one toolbar share an id.",
       "reserved": false,
       "retired": false
     }

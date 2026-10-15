@@ -120,6 +120,7 @@ export const keywordDocs: Record<string, string> = {
     dialog: 'A dialog opened over the shell, or with `dialog template` a reusable dialog shape.',
     form: 'A form bound to a command — `form <Name> for <Command>` with a `field` per input.',
     contribute: 'Contributes entries to a slot of the shell — `contribute to Navigation` with `navigate to`, `label` and `order`.',
+    button: 'A toolbar button that invokes a State Change slice — `button <id> title "…" slice <Module>.<Feature>.<Slice> [emphasis primary|secondary|quiet] [icon <name>]`. The slice names the command and the dialog it opens.',
     navigation: 'A navigation region of the shell — `navigation topbar` or `navigation sidebar`. A layout declares the application\'s regions with a `logo` and `item` lines; a module adds `inherits`, `extends` or `overrides` to change what it shows.',
     theme: 'A named theme and the component packages it is compatible with.',
     sample: 'Sample data — `sample data <Name>` declares a pack of demo rows per `shape` that a design surface or preview shows instead of a backend. Design and preview time only; it never reaches backend or production output. The application picks its active pack once, in the `ui profile`.',

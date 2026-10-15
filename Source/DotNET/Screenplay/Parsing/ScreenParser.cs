@@ -512,13 +512,20 @@ internal static partial class ScreenParser
     {
         var name = line.Content["toolbar".Length..].Trim();
         var items = new List<ToolbarItemSyntax>();
+        var buttons = new List<ToolbarButtonSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "button")
+            {
+                if (ToolbarButtonParser.Parse(context, child) is { } button) buttons.Add(button);
+                continue;
+            }
+
             if (ParseToolbarItem(context, child) is { } item) items.Add(item);
         }
 
-        return new(name, items, line.Location);
+        return new(name, items, line.Location) { Buttons = buttons };
     }
 
     static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
@@ -526,7 +533,7 @@ internal static partial class ScreenParser
         var match = ToolbarItemRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid toolbar item '{line.Content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>' or 'item <name> dialog <DialogTemplate>'", line.Location);
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid toolbar item '{line.Content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>', 'item <name> dialog <DialogTemplate>' or 'button <id> title \"<text>\" slice <Slice>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }

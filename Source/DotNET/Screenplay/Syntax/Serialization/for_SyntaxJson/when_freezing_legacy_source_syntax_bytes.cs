@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -141,6 +141,9 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
+    // Toolbar buttons have their own conformance vector; project them out of the pre-button bytes.
+    static ScreenDirectiveSyntax WithoutToolbarButtons(ScreenDirectiveSyntax directive) => directive is ScreenToolbarSyntax toolbar ? toolbar with { Buttons = [] } : directive;
+
     // Restore only the living sample's moved processing prose; current conformance covers its new text.
     static string? LegacyReason(string concept, string marker, string? reason) => (concept, marker, reason) switch
     {
@@ -161,7 +164,7 @@ public class when_freezing_legacy_source_syntax_bytes
             Purposes = [],
             Constraints = slice.Constraints.Select(constraint => constraint with { Description = null }),
             Projections = slice.Projections.Select(projection => projection with { Description = null }),
-            Screens = slice.Screens.Select(screen => screen with { Description = null }),
+            Screens = slice.Screens.Select(screen => screen with { Description = null, Directives = screen.Directives.Select(WithoutToolbarButtons) }),
             Commands = slice.Commands.Select(command => command with { Documentation = null }),
             ReadModels = (slice.ReadModels ?? []).Select(readModel => readModel with { Documentation = null }),
             Reactions = slice.Reactions.Select(reaction => reaction with { Documentation = null, RunsAs = null }),

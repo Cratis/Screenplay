@@ -124,6 +124,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.layoutItems;
         case 'navigation':
             return scope.navigationItems;
+        case 'toolbar':
+            return scope.toolbarItems;
         case 'system':
             return items.operationItems.filter(item => item.label === 'description');
         case 'operation':

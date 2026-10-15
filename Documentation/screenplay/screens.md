@@ -124,8 +124,42 @@ Widgets:
 | `table <name>` | `column <property> [label "<text>"]` rows and `on row-click navigate to <Screen> [by <param>]` |
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
-| `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints |
+| `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints, and `button` lines that invoke a State Change slice - see [Toolbar buttons](#toolbar-buttons) |
 | `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive outlets |
+
+## Toolbar buttons
+
+A `button` invokes a State Change slice. The slice names the command and the dialog that opens over the page, so the button needs no command of its own - this is Scene's `ToolbarButton`.
+
+```screenplay
+module Shop
+  feature Orders
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        produces OrderPlaced
+          orderId = orderId
+      event OrderPlaced
+        orderId Uuid
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+      screen List
+        toolbar actions
+          button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+          button later title $strings.orders.later slice Orders.PlaceOrder emphasis quiet
+          button draft title "Draft"
+```
+
+`button <id> title "<text>" [slice <Slice>] [emphasis primary|secondary|quiet] [icon <name>]`:
+
+- `id` is unique within the toolbar, shared with the `item` names (`PLAY0765`). The title is a quoted string or a `$strings.<key>` token.
+- `slice` is a dotted path `Module.Feature.Slice` or any suffix that is unambiguous (`PLAY0764` otherwise). It must name a slice the document declares (`PLAY0761`) and a State Change slice (`PLAY0762`): a button invokes State Change slices only.
+- A button without a `slice` is legal while designing but invokes nothing, so it warns (`PLAY0763`).
+- `emphasis` is `primary` (the main action, a filled button), `secondary` or `quiet`. Without it the toolbar default applies.
+- A malformed line - no or an unquoted title, an unknown or repeated part - is `PLAY0760`.
+
+Buttons sit beside `item` entries; the printer writes the items first, then the buttons, each in authored order. The C# compiler checks buttons (`PLAY0761`-`PLAY0765`); the TypeScript compiler reads them into the same syntax tree and reports a malformed line with `PLAY0760`. Renaming or moving a slice that a button names is refused with an explicit message - rename or move it together with the button's `slice` in coordinated typed edits. Like every screen construct, buttons are authoring syntax: the executable model does not carry them.
 
 ## Package components and typed bindings
 

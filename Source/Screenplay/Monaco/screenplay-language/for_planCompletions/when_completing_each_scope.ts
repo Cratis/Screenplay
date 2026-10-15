@@ -35,6 +35,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a sample data shape': ['sample data P\n  shape S\n    ', ['row']],
     'a ui profile sample data block': ['ui profile P\n  sample data\n    ', ['active', 'bind', 'shape maps to']],
     'a navigation region': ['layout L\n  navigation topbar\n    ', ['item', 'item (with slot)', 'logo']],
+    'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (with emphasis)', 'item action', 'item navigate']],
     'a layout': ['layout L\n  ', ['arrangement', 'navigation topbar', 'slot', 'slot contributes']],
 };
 

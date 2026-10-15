@@ -47,6 +47,7 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `outlet`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
 | Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0654` unknown destination | None |
 | Application navigation regions (spec NAV1-NAV12) | `navigation topbar\|sidebar [inherits\|extends\|overrides]` with `logo`, `item <id> title target slot`, nested sidebar items, in a `layout` and a `module` | Scene `NavigationModel`: `ApplicationNavigation`, `ModuleNavigation`, `NavigationRegion` and `NavItem`; the module mode is Scene's `NavigationRegionMode` | `PLAY0740`-`PLAY0752` | None. The TypeScript compiler skips the blocks; the checks are C#-only |
+| Toolbar buttons invoking State Change slices (spec TB1-TB6) | `button <id> title "…" [slice <Slice>] [emphasis primary\|secondary\|quiet] [icon <name>]` in a screen `toolbar` | Scene `ToolbarButton` (`Slice`, `Emphasis`, `Icon`) | `PLAY0760`-`PLAY0765` | None. The TypeScript compiler skips the lines; the checks are C#-only |
 | Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0654` | None |
 
 ## Packages and design-time output

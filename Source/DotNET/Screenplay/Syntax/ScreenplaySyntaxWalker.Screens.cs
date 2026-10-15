@@ -293,7 +293,18 @@ public abstract partial class ScreenplaySyntaxWalker
             }
             foreach (var presentation in item.Presentation) VisitNode(presentation);
         }
+
+        foreach (var button in syntax.Buttons)
+        {
+            VisitToolbarButton(button);
+        }
     }
+
+    /// <summary>
+    /// Visits a <see cref="ToolbarButtonSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ToolbarButtonSyntax"/> to visit.</param>
+    public virtual void VisitToolbarButton(ToolbarButtonSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ScreenCodeSyntax"/> node and its children.

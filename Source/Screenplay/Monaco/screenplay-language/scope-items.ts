@@ -153,6 +153,13 @@ export const layoutItems: CompletionEntry[] = [
     { label: 'arrangement', insertText: 'arrangement flow\n    column\n        ${1:slot}', documentation: 'How the slots are placed.' },
 ];
 
+export const toolbarItems: CompletionEntry[] = [
+    { label: 'button', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice}', documentation: 'A button that invokes a State Change slice. The slice names the command and the dialog it opens over the page.' },
+    { label: 'button (with emphasis)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} emphasis ${4|primary,secondary,quiet|} icon ${5:icon}', documentation: 'A toolbar button with an emphasis and an icon.' },
+    { label: 'item action', insertText: 'item ${1:name} action ${2:Command}', documentation: 'A toolbar entry that runs a command.' },
+    { label: 'item navigate', insertText: 'item ${1:name} navigate to ${2:Screen}', documentation: 'A toolbar entry that navigates to a screen.' },
+];
+
 export const navigationItems: CompletionEntry[] = [
     { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout.' },
     { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item with a title, an optional `icon`, a `target` module or feature and an optional rendering `slot`. Sidebar items may nest `item` lines.' },

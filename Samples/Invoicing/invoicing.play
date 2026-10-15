@@ -1543,6 +1543,9 @@ module Invoicing
             icon batch
             parameter invoiceId from component invoiceGrid.selected.invoiceId
             presentation placement "secondary"
+          // Buttons invoke State Change slices; the slice names the command and the dialog it opens over the page.
+          button newInvoice title $strings.invoices.actions.newInvoice slice Invoicing.InvoiceManagement.RegisterInvoice emphasis primary icon add
+          button cancelInvoice title $strings.invoices.actions.cancel slice CancelInvoice emphasis quiet
         component Cratis.Components.DataGrid invoiceGrid
           context from query ListInvoices
           property title = "Invoices"
