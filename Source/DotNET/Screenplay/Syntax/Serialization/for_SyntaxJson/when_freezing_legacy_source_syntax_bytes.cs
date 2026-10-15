@@ -332,7 +332,8 @@ public class when_freezing_legacy_source_syntax_bytes
                 }),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
-                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
+                // Shared vectors cover both new slices; retain every pre-feature sample byte here.
+                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft" && slice.Name != "ApplyLateFee").Select(slice => slice.Name switch
                 {
                     "CancelInvoice" => slice with
                     {
