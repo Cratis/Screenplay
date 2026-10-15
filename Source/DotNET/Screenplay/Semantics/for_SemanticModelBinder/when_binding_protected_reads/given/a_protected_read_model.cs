@@ -56,6 +56,26 @@ public class a_protected_read_model : for_SemanticModelBinder.given.a_semantic_b
         return _binder.Bind("Projects", syntax, SemanticDocumentSet.Create([document], catalog));
     }
 
+    protected CompilationResult<SemanticCompilation> BindReactionSyntax(string source, Func<ReactionSyntax, ReactionSyntax> transform)
+    {
+        var parsed = new ScreenplayCompiler().Parse(source);
+        Assert.True(parsed.Success, string.Join('\n', parsed.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        var syntax = parsed.Value! with
+        {
+            Modules = [.. parsed.Value!.Modules.Select(module => module with
+            {
+                Features = [.. module.Features.Select(feature => feature with
+                {
+                    Slices = [.. feature.Slices.Select(slice => slice with { Reactions = [.. (slice.Reactions ?? []).Select(transform)] })]
+                })]
+            })]
+        };
+        var catalog = SemanticIdentityCatalog.Empty(_applicationIdentity);
+        const string key = "application-document";
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);
+        return _binder.Bind("Projects", syntax, SemanticDocumentSet.Create([document], catalog));
+    }
+
     protected static void Refusal(CompilationResult<SemanticCompilation> result, SemanticDecisionReadRefusal reason)
     {
         result.Success.ShouldBeFalse();

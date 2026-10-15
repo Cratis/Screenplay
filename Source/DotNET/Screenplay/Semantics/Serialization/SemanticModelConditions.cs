@@ -72,7 +72,9 @@ public static partial class SemanticModelCanonicalJson
 
 internal static partial class SemanticModelRead
 {
-    internal static SemanticCondition Condition(ref Utf8JsonReader reader)
+    internal static SemanticCondition Condition(ref Utf8JsonReader reader) => Condition(ref reader, 0);
+
+    internal static SemanticCondition Condition(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "condition");
         var seen = NewSeen();
@@ -90,13 +92,13 @@ internal static partial class SemanticModelRead
                 case "operator": op = String(ref reader, property); break;
                 case "left":
                     RequiredToken(ref reader, JsonTokenType.StartObject, property);
-                    if (kind == "and" || kind == "or") logicalLeft = Condition(ref reader);
-                    else comparisonLeft = ConditionOperand(ref reader);
+                    if (kind == "and" || kind == "or") logicalLeft = Condition(ref reader, schemaVersion);
+                    else comparisonLeft = ConditionOperand(ref reader, schemaVersion);
                     break;
                 case "right":
                     RequiredToken(ref reader, JsonTokenType.StartObject, property);
-                    if (kind == "and" || kind == "or") logicalRight = Condition(ref reader);
-                    else comparisonRight = ConditionOperand(ref reader);
+                    if (kind == "and" || kind == "or") logicalRight = Condition(ref reader, schemaVersion);
+                    else comparisonRight = ConditionOperand(ref reader, schemaVersion);
                     break;
                 default: throw Unknown(property, "condition");
             }
@@ -122,7 +124,7 @@ internal static partial class SemanticModelRead
         throw new InvalidSemanticContract("Condition shape is invalid or out of order.");
     }
 
-    internal static SemanticConditionOperand ConditionOperand(ref Utf8JsonReader reader)
+    internal static SemanticConditionOperand ConditionOperand(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "condition operand");
         var seen = NewSeen();
@@ -134,7 +136,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "read": read = String(ref reader, property); break;
+                case "read" when schemaVersion >= LanguageVersion.V24.Major: read = String(ref reader, property); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");
@@ -145,7 +147,7 @@ internal static partial class SemanticModelRead
         return new(propertyId, value) { Read = read };
     }
 
-    internal static SemanticRequirement Requirement(ref Utf8JsonReader reader)
+    internal static SemanticRequirement Requirement(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "requirement");
         var seen = NewSeen();
@@ -157,7 +159,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = Condition(ref reader); break;
+                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = Condition(ref reader, schemaVersion); break;
                 case "message": messageRead = true; message = NullableString(ref reader, property); break;
                 case "severity": severity = ParseSeverity(String(ref reader, property)); break;
                 default: throw Unknown(property, "requirement");

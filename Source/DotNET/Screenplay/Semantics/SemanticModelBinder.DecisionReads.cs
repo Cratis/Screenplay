@@ -16,11 +16,13 @@ public sealed partial class SemanticModelBinder
         readonly Dictionary<ProjectionSyntax, ImmutableArray<SemanticProjection>> _decisionProjections = [];
         readonly Dictionary<string, (SemanticDecisionRead Read, BoundReadModel View)> _commandReads = new(StringComparer.Ordinal);
         readonly HashSet<string> _ambiguousReadViews = new(StringComparer.Ordinal);
+        Dictionary<SemanticId, SemanticConcept> _decisionReadConcepts = [];
 
         bool ProtectedCommandReads => syntax.CommandReadMode is not null;
 
-        void RegisterDecisionReadProjections()
+        void RegisterDecisionReadProjections(ImmutableArray<SemanticConcept> concepts)
         {
+            _decisionReadConcepts = concepts.ToDictionary(concept => concept.Id);
             foreach (var (module, featurePath, slice) in AllSlices())
             {
                 var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
@@ -89,15 +91,11 @@ public sealed partial class SemanticModelBinder
             if (viewKey.Length > 1) return SemanticDecisionReadRefusal.ByParts;
             if (viewKey.Length == 0) return SemanticDecisionReadRefusal.Singleton;
             if (viewKey[0].Type.IsOptional || viewKey[0].Type.IsCollection) return SemanticDecisionReadRefusal.KeyType;
-            if (SemanticDecisionReadAdmission.Key(key, CommandValidationSubject(key.Name, key.Type).Primitive, !CommandValidationSubject(key.Name, key.Type).Values.IsEmpty) is { } keyRefusal) return keyRefusal;
+            if (SemanticDecisionReadAdmission.Key(key, _decisionReadConcepts) is { } keyRefusal) return keyRefusal;
             var input = command.Properties.Single(property => property.Name == key.Name);
             if (declarations.Compatible(input.Type, viewKey[0].Type) != true) return SemanticDecisionReadRefusal.KeyType;
             var projections = _decisionProjections.Where(entry => entry.Value.Any(value => value.ReadModel == view.Model.Id)).ToArray();
-            var handled = projections.SelectMany(entry => entry.Value).SelectMany(projection =>
-                projection.Scope is { } scope ? scope.From.Select(from => from.EventContract).Concat(scope.Removals.Select(removal => removal.EventContract)) : projection.Transitions.Select(transition => transition.EventContract)).ToHashSet();
-            var routed = command.Stream is not null || projections.Any(entry => entry.Key.Sequence is not null) ||
-                AllSlices().SelectMany(entry => entry.Slice.Commands).Any(producer => producer.Produces.Any(production =>
-                    _events.TryGetValue(production.Event, out var fact) && handled.Contains(fact.Contract.Id) && (producer.Stream is not null || production.Stream is not null)));
+            var routed = SemanticDecisionReadAdmission.Routed(command.Stream is not null, projections.Any(entry => entry.Key.Sequence is not null), projections.SelectMany(entry => entry.Value), DecisionReadProducers());
             return SemanticDecisionReadAdmission.View(projections.SelectMany(entry => entry.Value), false, routed);
         }
 
@@ -131,8 +129,8 @@ public sealed partial class SemanticModelBinder
             try
             {
                 _ = probe.BindApplication();
-                var refusals = new[] { DiagnosticCodes.UnprotectableDecisionRead, DiagnosticCodes.DecisionReadWithoutIdentifier, DiagnosticCodes.DecisionReadsWithConcurrency, DiagnosticCodes.UnknownReadPath, DiagnosticCodes.AmbiguousReadPath, DiagnosticCodes.InvalidSemanticBinding };
-                if (!probe.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && refusals.Contains(diagnostic.Code, StringComparer.Ordinal)))
+                var locations = DecisionReadLocations();
+                if (!probe.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && locations.Contains(diagnostic.Location)))
                     Information(DiagnosticCodes.LegacyCommandReadsRepairAvailable, "All command reads are admissible under an explicit 'command reads protected' preamble; use a reviewed workspace proposal to opt in.", first.Location);
             }
             catch (InvalidSemanticContract)

@@ -340,7 +340,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
-            if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections();
+            if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);

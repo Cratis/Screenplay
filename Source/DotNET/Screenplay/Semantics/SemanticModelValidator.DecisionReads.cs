@@ -25,17 +25,13 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("A decision read requires one known read model and required presence.");
                 var key = command.Properties.SingleOrDefault(property => property.Id == read.Key)
                     ?? throw new InvalidSemanticContract("A decision read key must be a declared command input property.");
-                if (SemanticDecisionReadAdmission.Key(key, UnderlyingPrimitive(key.Type), key.Type.Kind == SemanticTypeReferenceKind.Concept && !_concepts[key.Type.Target].Values.IsEmpty) is { } keyRefusal)
+                if (SemanticDecisionReadAdmission.Key(key, _concepts) is { } keyRefusal)
                     throw new InvalidSemanticContract($"Decision read '{read.Name}' is unprotectable: {keyRefusal}.");
                 var identifiers = view.Properties.Where(property => property.IsIdentifier).ToArray();
                 if (identifiers.Length != 1) throw new InvalidSemanticContract("A decision read view must have one event-source instance key.");
                 RequireCompatible(key.Type, identifiers[0].Type, "decision read key");
                 var projections = slices.SelectMany(slice => slice.Projections).Where(projection => projection.Target == SemanticProjectionTargetKind.ReadModel && projection.ReadModel == view.Id).ToArray();
-                var handled = projections.SelectMany(projection => projection.Scope is { } scope
-                    ? scope.From.Select(from => from.EventContract).Concat(scope.Removals.Select(removal => removal.EventContract))
-                    : projection.Transitions.Select(transition => transition.EventContract)).ToHashSet();
-                var routed = command.Route is not null || command.Produces.Any(produced => produced.Route is not null) ||
-                    slices.SelectMany(slice => slice.Commands).Any(producer => producer.Produces.Any(produced => handled.Contains(produced.EventContract) && (producer.Route is not null || produced.Route is not null)));
+                var routed = SemanticDecisionReadAdmission.Routed(command.Route is not null, false, projections, SemanticDecisionReadAdmission.Producers(slices));
                 var reducer = slices.SelectMany(slice => slice.Reducers).Any(value => value.ReadModel == view.Id);
                 if (SemanticDecisionReadAdmission.View(projections, reducer, routed) is { } refusal)
                     throw new InvalidSemanticContract($"Decision read '{read.Name}' is unprotectable: {refusal}.");

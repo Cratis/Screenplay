@@ -10,10 +10,11 @@ public class without_the_preamble : given.a_protected_read_model
     [Fact]
     void should_preserve_legacy_refusals_and_report_repair_eligibility_once()
     {
-        var source = Source.Replace("command reads protected\n", string.Empty, StringComparison.Ordinal);
+        var source = Source.Replace("command reads protected\n", string.Empty, StringComparison.Ordinal)
+            .Replace("    slice StateView Lookup", "      command Inspect\n        id String identifier\n        reads View by id\n    slice StateView Lookup", StringComparison.Ordinal);
         var result = Bind(source);
         result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.PreservedLegacySemanticSyntax);
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.PreservedLegacySemanticSyntax).ShouldEqual(2);
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("preamble", StringComparison.Ordinal));
         result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable).ShouldEqual(1);
         result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable).Location.Line.ShouldEqual(10);
