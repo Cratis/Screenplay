@@ -130,7 +130,6 @@ export const clauseKeywords = [
     'row',
     'locale',
     'shape',
-    'blueprint',
     'outlet',
     'display',
     'scopes',
