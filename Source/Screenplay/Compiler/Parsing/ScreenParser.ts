@@ -6,7 +6,7 @@ import {
     ComponentExposedValueSyntax, ComponentOutletSyntax, ComponentPropertySyntax, PresentationValueSyntax,
     ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenComponentSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax,
     ScreenNavigateSyntax, ScreenNavigationParameterSyntax, ScreenSectionSyntax, ScreenSlotSyntax, ScreenSummarySyntax, ScreenSyntax, ScreenTableSyntax,
-    ScreenTemplateReferenceSyntax, ScreenTitleSyntax, ScreenToolbarSyntax, ToolbarItemKind, ToolbarItemSyntax,
+    ScreenTemplateReferenceSyntax, ScreenTitleSyntax, ScreenToolbarSyntax, ToolbarButtonSyntax, ToolbarEmphasis, ToolbarItemKind, ToolbarItemSyntax,
 } from '../Syntax/Screens';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
@@ -46,6 +46,9 @@ const componentPropertyLiteral = pattern('^property\\s+([\\w.]+)\\s*=\\s+(.+)$')
 const exposes = pattern('^exposes\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const presentation = pattern(`^presentation\\s+([A-Za-z_]\\w*)\\s+${operand}$`);
 const toolbarItem = pattern('^item\\s+([A-Za-z_]\\w*)\\s+(action|navigate|dialog)(?:\\s+to)?\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
+const toolbarButton = pattern(`^button\\s+(?:"(${stringBodyPattern})"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$`);
+const toolbarButtonPart = new RegExp(pattern(`\\s*(title|slice|emphasis|icon)\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
+const toolbarSlicePath = pattern('^[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$');
 const slot = pattern('^[a-z_]\\w*$');
 const title = pattern(`^title\\s+${operand}$`);
 const column = pattern(`^column\\s+([\\w.]+)(?:\\s+label\\s+${operand})?$`);
@@ -395,18 +398,96 @@ function parsePresentationValue(context: ParserContext, line: SourceLine, values
 function parseToolbar(context: ParserContext, line: SourceLine): ScreenToolbarSyntax {
     const name = line.content.substring('toolbar'.length).trim();
     const items: ToolbarItemSyntax[] = [];
+    const buttons: ToolbarButtonSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        if (firstWord(child.content) === 'button') {
+            const button = parseToolbarButton(context, child);
+            if (button !== undefined) buttons.push(button);
+            continue;
+        }
         const item = parseToolbarItem(context, child);
         if (item !== undefined) items.push(item);
     }
-    return { kind: 'ScreenToolbarSyntax', name, items, location: locationOf(line) };
+    return { kind: 'ScreenToolbarSyntax', name, items, ...(buttons.length > 0 ? { buttons } : {}), location: locationOf(line) };
+}
+
+const toolbarButtonExpected = 'button <id> title "<text>" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>]';
+
+// A button is one line; the C# compiler checks what it names (PLAY0761-PLAY0765), this one reads its grammar.
+function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarButtonSyntax | undefined {
+    const head = toolbarButton.exec(line.content);
+    if (head === null) {
+        context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid toolbar button '${line.content}' - expected ${toolbarButtonExpected}`, locationOf(line));
+        context.skipBlock(line.indent);
+        return undefined;
+    }
+    const id = head[1] !== undefined ? unescapeString(head[1]) : head[2];
+    const rest = head[3] ?? '';
+    let buttonTitle: string | undefined;
+    let slice: string | undefined;
+    let icon: string | undefined;
+    let emphasis: ToolbarEmphasis | undefined;
+    let valid = true;
+    let position = 0;
+    while (position < rest.length) {
+        toolbarButtonPart.lastIndex = position;
+        const part = toolbarButtonPart.exec(rest);
+        if (part === null) {
+            context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid toolbar button '${line.content}' - unexpected '${rest.substring(position).trim()}'; expected ${toolbarButtonExpected}`, locationOf(line));
+            valid = false;
+            break;
+        }
+        position = part.index + part[0].length;
+        const key = part[1];
+        const quoted = part[2] !== undefined;
+        const localized = part[3] !== undefined;
+        const value = quoted ? unescapeString(part[2]) : localized ? part[3] : part[4];
+        const repeated = key === 'title' ? buttonTitle !== undefined : key === 'slice' ? slice !== undefined : key === 'icon' ? icon !== undefined : emphasis !== undefined;
+        if (repeated) {
+            context.error(DiagnosticCodes.InvalidToolbarButton, `Toolbar button '${id}' states '${key}' more than once`, locationOf(line));
+            continue;
+        }
+        if (key === 'title') {
+            if (quoted || localized) buttonTitle = value;
+            else {
+                context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid title '${value}' on toolbar button '${id}' - expected a quoted string or a $strings.<key> token`, locationOf(line));
+                valid = false;
+            }
+        } else if (key === 'slice') {
+            if (!quoted && !localized && toolbarSlicePath.test(value)) slice = value;
+            else {
+                context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid slice '${value}' on toolbar button '${id}' - expected <Module>.<Feature>.<Slice>`, locationOf(line));
+                valid = false;
+            }
+        } else if (key === 'emphasis') {
+            if (!quoted && !localized && ['primary', 'secondary', 'quiet'].includes(value)) emphasis = value === 'primary' ? 'Primary' : value === 'secondary' ? 'Secondary' : 'Quiet';
+            else {
+                context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid emphasis '${value}' on toolbar button '${id}' - expected primary, secondary or quiet`, locationOf(line));
+                valid = false;
+            }
+        } else {
+            icon = value;
+        }
+    }
+    if (buttonTitle === undefined && valid) {
+        context.error(DiagnosticCodes.InvalidToolbarButton, `Toolbar button '${id}' has no title - expected 'button ${id} title "<text>"'`, locationOf(line));
+    }
+    if (context.peekChild(line.indent) !== undefined) {
+        context.error(DiagnosticCodes.InvalidToolbarButton, `Unexpected block under toolbar button '${id}' - a button is one line`, locationOf(line));
+        context.skipBlock(line.indent);
+    }
+    return {
+        kind: 'ToolbarButtonSyntax', id, title: buttonTitle ?? '',
+        ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}),
+        location: locationOf(line),
+    };
 }
 
 function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItemSyntax | undefined {
     const match = toolbarItem.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid toolbar item '${line.content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>' or 'item <name> dialog <DialogTemplate>'`, locationOf(line));
+        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid toolbar item '${line.content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>', 'item <name> dialog <DialogTemplate>' or 'button <id> title "<text>" slice <Slice>'`, locationOf(line));
         context.skipBlock(line.indent);
         return undefined;
     }

@@ -314,7 +314,42 @@ public record ComponentOutletSyntax(string Name, IEnumerable<ScreenDirectiveSynt
 /// <param name="Name">The toolbar name.</param>
 /// <param name="Items">The toolbar items.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ScreenToolbarSyntax(string Name, IEnumerable<ToolbarItemSyntax> Items, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+public record ScreenToolbarSyntax(string Name, IEnumerable<ToolbarItemSyntax> Items, SourceLocation Location) : ScreenDirectiveSyntax(Location)
+{
+    /// <summary>
+    /// Gets the buttons that invoke State Change slices - <c>button &lt;id&gt; title "..." slice &lt;Slice&gt;</c>.
+    /// </summary>
+    public IEnumerable<ToolbarButtonSyntax> Buttons { get; init; } = [];
+}
+
+/// <summary>
+/// Represents <c>button &lt;id&gt; title "..." [slice &lt;Slice&gt;] [emphasis primary|secondary|quiet] [icon X]</c> - a toolbar button
+/// that invokes a State Change slice, rendered as a task dialog over the page.
+/// </summary>
+/// <param name="Id">The id of the button, unique within the toolbar.</param>
+/// <param name="Title">The title shown, as written - a quoted string's text or a <c>$strings.&lt;key&gt;</c> token.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// The slice form of <c>item &lt;name&gt; action &lt;Command&gt;</c>: the slice names the command and the dialog template, so the
+/// button needs no command of its own. A button without a slice is legal while designing and is reported as a warning.
+/// </remarks>
+public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the dotted slice reference - <c>Module.Feature.Slice</c>, or any unambiguous suffix of it - or <c>null</c> when none is chosen yet.
+    /// </summary>
+    public string? Slice { get; init; }
+
+    /// <summary>
+    /// Gets the emphasis, or <c>null</c> for the toolbar default.
+    /// </summary>
+    public ToolbarEmphasis? Emphasis { get; init; }
+
+    /// <summary>
+    /// Gets the icon shown on the button, or <c>null</c>.
+    /// </summary>
+    public string? Icon { get; init; }
+}
 
 /// <summary>
 /// Represents one toolbar item.

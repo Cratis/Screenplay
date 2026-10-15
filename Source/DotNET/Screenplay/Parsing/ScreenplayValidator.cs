@@ -209,6 +209,7 @@ internal static partial class ScreenplayValidator
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
         NavigationValidator.Validate(application, context);
+        ToolbarButtonValidator.Validate(application, context);
         CompositionValidator.Validate(application, context);
     }
 

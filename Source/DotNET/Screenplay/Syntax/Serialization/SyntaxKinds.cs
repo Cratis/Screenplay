@@ -250,6 +250,7 @@ internal static class SyntaxKinds
         typeof(StringsExpressionSyntax),
         typeof(SubtractMappingSyntax),
         typeof(TagSyntax),
+        typeof(ToolbarButtonSyntax),
         typeof(ToolbarItemSyntax),
         typeof(TemplateExpressionSyntax),
         typeof(TemplateInterpolationSyntax),

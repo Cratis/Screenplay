@@ -443,4 +443,5 @@ export const DiagnosticCodes = {
     ResponseNameUsedOnFailure: 'PLAY0685',
     // Retired by ESM v16; preserved for compatibility with earlier native compiler diagnostics.
     EventIdPinNotCarriedToRenderers: 'PLAY0686',
+    InvalidToolbarButton: 'PLAY0760',
 } as const;
