@@ -51,6 +51,12 @@ public record ApplicationSyntax(
     public IdentitySyntax? Identity { get; init; }
 
     /// <summary>
+    /// Gets the explicit reaction production mode, inherited by the composed application.
+    /// Absence preserves legacy per-fact production.
+    /// </summary>
+    public ReactionProductionMode? ReactionProductionMode { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];

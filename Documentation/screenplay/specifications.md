@@ -1,5 +1,7 @@
 # Specifications
 
+With application-root `reaction batches atomic` (ESM v22), a failed direct or refusal-branch production batch contributes no facts or projection changes. `then error` asserts rejection, not rollback; evaluator world/read-model assertions and the `AtomicReactionBatchesCorpus` world counts pin rollback separately. `then no events` still means accepted zero outcomes and cannot accompany an error. Use it for acknowledgement or a filtered trigger. Redelivery validates a new batch against the existing world without reappending the given fact; it adds no deduplication guarantee.
+
 Run scenarios with [`screenplay test`](tool.md#run-the-models-specifications) or the read-only MCP [`run-specifications`](mcp/reference.md#execute-specifications) tool. Both use the in-memory reference evaluator; binding alone does not tell you whether a scenario passes.
 
 ## Operation specifications (syntax-only)

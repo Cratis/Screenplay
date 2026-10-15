@@ -20,6 +20,8 @@ static class McpModelQueries
                 snapshot.Compilation.Success,
                 snapshot.SourceRevision,
                 fileCount,
+                reactionProductionMode = snapshot.Compilation.Value?.ReactionProductionMode?.ToString(),
+                reactionProductionReadiness = "Explicit Atomic mode is admitted by ESM v22; absence retains legacy per-fact semantics. Target realization requires separate v22 admission.",
                 syntaxOnly = snapshot.Index.Readiness.ModelSyntaxOnly,
                 executionReadiness = snapshot.Index.Readiness.ModelExecutionReadiness,
                 declarationCount = declarations.Length,

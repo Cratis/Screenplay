@@ -66,6 +66,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
+            [/^(reaction)(\s+)(batches)(\s+)(atomic)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],

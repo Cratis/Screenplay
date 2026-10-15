@@ -3212,6 +3212,11 @@ public static class DiagnosticCodes
     public const string EmptyGenerationSupport = "PLAY0692";
 
     /// <summary>
+    /// A reaction batches declaration is repeated, conflicting or outside the application root.
+    /// </summary>
+    public const string InvalidReactionBatchesDeclaration = "PLAY0693";
+
+    /// <summary>
     /// A capture over events requires its key as a required property on every source event.
     /// </summary>
     public const string CaptureEventsKeyNotRequired = "PLAY0700";

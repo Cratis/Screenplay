@@ -57,6 +57,8 @@ export const keywordDocs: Record<string, string> = {
     from: 'On a reaction or reducer, `from Source[.Stream]` observes only matching routed facts. It does not filter stream ids. Admitted by ESM v10. On a query parameter, fills it from the query context instead of the caller, as in `filter tenantId TenantId from $context.tenant`.',
     projection: 'Declares how events project into a read model, using the embedded Projection Declaration Language (PDL).',
     capture: 'Converts external data into events, using the embedded Change Data Capture Language (CDL).',
+    batches: 'Application-root `reaction batches atomic` opts into ESM v22 atomic direct and refusal-branch batches. Invoked commands remain separate transactions.',
+    atomic: 'All productions in one reaction trigger occurrence or selected refusal branch are adopted together or not at all. Absence retains legacy per-fact semantics.',
     reaction: 'Behavior that runs when something happens. Lives inside Automation slices. A trigger with no body states intent on its own — `file`/code is optional realization metadata.',
     runs: '`runs as system [role "Role" and role "Role"]` declares the identity for every returned or invoked command of a reaction, not imperative pipeline calls. Admitted by released ESM v10; claims are unknown for this identity. Clock and application triggers have no Stage realization yet.',
     trigger: 'Declares a kind of occurrence a reaction can respond to, and the values it hands the reaction. What makes one occur belongs to whoever provides it, never to the compiler.',

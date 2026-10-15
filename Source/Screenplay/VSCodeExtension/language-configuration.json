@@ -21,12 +21,12 @@
     },
     "onEnterRules": [
         {
-            "beforeText": "^\\s*(?:module|feature|slice\\s+\\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\\s+profile|trigger|authentication|identity|seed|system|eventsource|operation|screen\\s+template|dialog\\s+template|produces\\s+event|generate\\s+rule|validate|handler|on)\\b[^=]*$",
+            "beforeText": "^\\s*(?:module|feature|slice\\s+\\w+|type|command|event|readmodel|reducer|projection|capture|reaction(?!\\s+batches\\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\\s+profile|trigger|authentication|identity|seed|system|eventsource|operation|screen\\s+template|dialog\\s+template|produces\\s+event|generate\\s+rule|validate|handler|on)\\b[^=]*$",
             "action": { "indent": "indent" }
         }
     ],
     "indentationRules": {
-        "increaseIndentPattern": "^\\s*(module|feature|slice|policy|event|command|screen|projection|capture|reaction|trigger|constraint|layout|template|validate|produces|handler|rule|section|when|every|at)\\b.*$",
+        "increaseIndentPattern": "^\\s*(module|feature|slice|policy|event|command|screen|projection|capture|reaction(?!\\s+batches\\b)|trigger|constraint|layout|template|validate|produces|handler|rule|section|when|every|at)\\b.*$",
         "decreaseIndentPattern": "(?!)"
     }
 }
