@@ -190,19 +190,19 @@ internal static class SampleDataValidator
 
     static bool Fits(SampleDataLiteralType expected, SampleDataValueKind kind, string? value, IReadOnlyList<string>? members) => expected switch
     {
-        SampleDataLiteralType.Text => kind == SampleDataValueKind.String && (members is null || members.Contains(value ?? string.Empty, StringComparer.Ordinal)),
-        SampleDataLiteralType.Integer => kind == SampleDataValueKind.Number && value is not null && value.All(character => char.IsAsciiDigit(character) || character == '-'),
+        SampleDataLiteralType.Text => kind == SampleDataValueKind.Text && (members?.Contains(value ?? string.Empty, StringComparer.Ordinal) ?? true),
+        SampleDataLiteralType.WholeNumber => kind == SampleDataValueKind.Number && value?.All(character => char.IsAsciiDigit(character) || character == '-') == true,
         SampleDataLiteralType.Number => kind == SampleDataValueKind.Number,
-        SampleDataLiteralType.Boolean => kind == SampleDataValueKind.Boolean,
+        SampleDataLiteralType.Flag => kind == SampleDataValueKind.Flag,
         _ => false
     };
 
     static string Describe(SampleDataLiteralType expected) => expected switch
     {
         SampleDataLiteralType.Text => "a string",
-        SampleDataLiteralType.Integer => "a whole number",
+        SampleDataLiteralType.WholeNumber => "a whole number",
         SampleDataLiteralType.Number => "a number",
-        SampleDataLiteralType.Boolean => "true or false",
+        SampleDataLiteralType.Flag => "true or false",
         _ => "a literal"
     };
 }

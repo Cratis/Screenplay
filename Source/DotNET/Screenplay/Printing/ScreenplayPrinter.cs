@@ -116,6 +116,15 @@ public sealed partial class ScreenplayPrinter :
     static bool HasAttributeDirective(ConceptAttributeSyntax attribute) =>
         attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal;
 
+    static string PackReference(SampleDataPackReferenceSyntax reference) => reference.IsBlueprint ? $"blueprint {reference.Name}" : reference.Name;
+
+    static string SampleDataValue(SampleDataFieldSyntax field) => field.Kind switch
+    {
+        SampleDataValueKind.Text => StringLiteral.Quote(field.Value ?? string.Empty),
+        SampleDataValueKind.Null => "null",
+        _ => field.Value ?? string.Empty
+    };
+
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
         using var anchor = writer.Anchor(application);
@@ -277,8 +286,6 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-    static string PackReference(SampleDataPackReferenceSyntax reference) => reference.IsBlueprint ? $"blueprint {reference.Name}" : reference.Name;
-
     void WriteSampleDataPack(ScreenplayWriter writer, SampleDataPackSyntax pack)
     {
         using var anchor = writer.Anchor(pack);
@@ -315,13 +322,6 @@ public sealed partial class ScreenplayPrinter :
             }
         }
     }
-
-    static string SampleDataValue(SampleDataFieldSyntax field) => field.Kind switch
-    {
-        SampleDataValueKind.String => StringLiteral.Quote(field.Value ?? string.Empty),
-        SampleDataValueKind.Null => "null",
-        _ => field.Value ?? string.Empty
-    };
 
     void WriteTheme(ScreenplayWriter writer, ThemeSyntax theme)
     {

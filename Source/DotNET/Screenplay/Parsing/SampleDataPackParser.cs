@@ -170,7 +170,7 @@ internal static partial class SampleDataPackParser
 
         if (text == "true" || text == "false")
         {
-            return new(name, SampleDataValueKind.Boolean, text, line.Location);
+            return new(name, SampleDataValueKind.Flag, text, line.Location);
         }
 
         if (NumberRegex().IsMatch(text))
@@ -181,7 +181,7 @@ internal static partial class SampleDataPackParser
         var quoted = QuotedRegex().Match(text);
         if (quoted.Success)
         {
-            return new(name, SampleDataValueKind.String, StringLiteral.Unescape(quoted.Groups[1].Value), line.Location);
+            return new(name, SampleDataValueKind.Text, StringLiteral.Unescape(quoted.Groups[1].Value), line.Location);
         }
 
         context.Error(DiagnosticCodes.InvalidSampleDataValue, $"Invalid value '{text}' for field '{name}' - expected a string, number, true, false or null", line.Location);

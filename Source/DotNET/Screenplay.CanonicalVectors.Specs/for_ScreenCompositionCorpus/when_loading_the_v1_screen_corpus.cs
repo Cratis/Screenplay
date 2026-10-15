@@ -80,6 +80,17 @@ public class when_loading_the_v1_screen_corpus : Specification
     }
 
     [Fact]
+    void should_choose_the_active_sample_data_pack_once_in_the_ui_profile()
+    {
+        var application = Parse(_corpus.TypedSourceCases.Single().Document.Text).Value!;
+        var selection = application.UiProfiles!.Single().SampleData!;
+        selection.Active!.Name.ShouldEqual("WorkspaceDemo");
+        selection.Mappings.Single().ReadModel.ShouldEqual("WorkItemSummary");
+        application.SampleDataPacks.Select(pack => pack.Name).ShouldEqual("WorkspaceDemo");
+        application.SampleDataPacks.Single().Sets.Select(set => set.Shape).ShouldEqual("WorkItem", "WorkItemDetails");
+    }
+
+    [Fact]
     void should_give_every_behavior_expectation_machine_checkable_assertions()
     {
         foreach (var expectation in _corpus.BehaviorExpectations)

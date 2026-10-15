@@ -49,21 +49,3 @@ public record SampleDataRowSyntax(IEnumerable<SampleDataFieldSyntax> Fields, Sou
 /// <param name="Value">The value: the unescaped text of a string, the authored token of a number, <c>true</c> or <c>false</c>, or <c>null</c> for the null literal.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SampleDataFieldSyntax(string Name, SampleDataValueKind Kind, string? Value, SourceLocation Location) : SyntaxNode(Location);
-
-/// <summary>
-/// The kind of literal a sample data field value is.
-/// </summary>
-public enum SampleDataValueKind
-{
-    /// <summary>A quoted string.</summary>
-    String = 0,
-
-    /// <summary>A number, kept as its authored token.</summary>
-    Number = 1,
-
-    /// <summary>The literal <c>true</c> or <c>false</c>.</summary>
-    Boolean = 2,
-
-    /// <summary>The <c>null</c> literal.</summary>
-    Null = 3
-}

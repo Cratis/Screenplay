@@ -60,7 +60,7 @@ public class when_compiling_sample_data : given.a_compiler
     [Fact] void should_unescape_strings() => _set.Rows.First().Fields.Single(field => field.Name == "name").Value.ShouldEqual("Fjordline \"AS\"");
     [Fact] void should_keep_numbers_as_their_authored_token() => _set.Rows.First().Fields.Single(field => field.Name == "revenue").Value.ShouldEqual("125000.5");
     [Fact] void should_parse_numbers() => _set.Rows.First().Fields.Single(field => field.Name == "age").Kind.ShouldEqual(SampleDataValueKind.Number);
-    [Fact] void should_parse_booleans() => _set.Rows.First().Fields.Single(field => field.Name == "active").Kind.ShouldEqual(SampleDataValueKind.Boolean);
+    [Fact] void should_parse_booleans() => _set.Rows.First().Fields.Single(field => field.Name == "active").Kind.ShouldEqual(SampleDataValueKind.Flag);
     [Fact] void should_parse_null() => _set.Rows.First().Fields.Single(field => field.Name == "notes").Kind.ShouldEqual(SampleDataValueKind.Null);
     [Fact] void should_not_make_the_pack_part_of_a_ui_profile() => (_result.Value!.UiProfiles ?? []).ShouldBeEmpty();
 }

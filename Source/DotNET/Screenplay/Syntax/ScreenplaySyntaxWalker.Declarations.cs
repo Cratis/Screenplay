@@ -177,7 +177,40 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="UiProfileSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="UiProfileSyntax"/> to visit.</param>
-    public virtual void VisitUiProfile(UiProfileSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitUiProfile(UiProfileSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.SampleData is { } selection)
+        {
+            VisitSampleDataSelection(selection);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataSelectionSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataSelectionSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataSelection(SampleDataSelectionSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Active is not null)
+        {
+            VisitNode(syntax.Active);
+        }
+
+        foreach (var mapping in syntax.Mappings)
+        {
+            VisitNode(mapping);
+        }
+
+        foreach (var binding in syntax.Bindings)
+        {
+            VisitNode(binding);
+            VisitNode(binding.Pack);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="ThemeSyntax"/> node.

@@ -89,4 +89,10 @@ ui profile Desktop
 
 ## Tools
 
-The printer writes packs and the profile's selection in canonical form and keeps comments. The TypeScript compiler reads `sample data` as an opaque construct and skips it; the C# compiler alone reports its diagnostics, as for `ui profile` and `theme` ([TypeScript compiler](typescript-compiler.md)). The MCP `read-workspace` and the compiler results carry `sample data` blocks as syntax nodes (`SampleDataPackSyntax`, `SampleDataSelectionSyntax`), and the Scene converter turns them into Scene's `SampleDataPack` and the UI profile's `sampleData`.
+- **Printer.** Packs and the profile's selection are printed in canonical form with comments kept.
+- **TypeScript compiler, Monaco, VS Code.** The TypeScript compiler skips `sample data` whole, as it does `ui profile` and `theme`, so the C# compiler alone reports its diagnostics ([TypeScript compiler](typescript-compiler.md)). Monaco and the VS Code grammar highlight, document and complete the blocks.
+- **MCP.** `read-ast` and `propose-ast` read and edit `SampleDataPackSyntax`, `SampleDataSelectionSyntax` and their children as typed nodes: replace a row value, change the profile's active pack, remove a pack or the selection. An active pack nothing declares is refused with `PLAY0714`.
+- **Binding.** Each pack is reported as deferred (`PLAY0269`); it adds nothing to the executable model.
+- **Scene and Stage.** The Scene converter turns the blocks into Scene's `SampleDataPack` and the UI profile's `sampleData`; production builds never include sample data.
+
+The ruling behind the single choice point is [decision 0081](https://github.com/Cratis/Screenplay/blob/main/decisions/0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md).
