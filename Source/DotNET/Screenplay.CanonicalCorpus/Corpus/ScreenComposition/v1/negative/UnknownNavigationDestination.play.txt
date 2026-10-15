@@ -1,4 +1,5 @@
 layout Shell
+  category Shell
   outlet main
   navigation contributes Navigation
   content

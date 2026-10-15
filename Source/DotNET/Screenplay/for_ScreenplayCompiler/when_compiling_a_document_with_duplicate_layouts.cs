@@ -11,9 +11,11 @@ public class when_compiling_a_document_with_duplicate_layouts : given.a_compiler
     const string Source =
         """
         layout AppShell
+          category Test
           content
 
         layout AppShell
+          category Test
           main
         """;
 

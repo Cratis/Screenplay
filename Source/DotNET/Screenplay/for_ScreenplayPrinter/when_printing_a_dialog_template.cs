@@ -11,6 +11,7 @@ public class when_printing_a_dialog_template : given.a_printer
         """
         module Dashboards
           dialog template DashboardCanvas
+            category Test
             arrangement freeform
               variant width regular, height regular
                 place header  at 0,0    size fill,64
@@ -34,7 +35,7 @@ public class when_printing_a_dialog_template : given.a_printer
     [Fact] void should_print_the_regular_variant_header() => _roundtrip.Printed.ShouldContain("variant width regular, height regular");
     [Fact] void should_print_a_placed_slot() => _roundtrip.Printed.ShouldContain("place sidebar at 0,64 size 240,fill");
     [Fact] void should_print_a_hidden_slot() => _roundtrip.Printed.ShouldContain("place sidebar hidden");
-    [Fact] void should_print_the_slots_the_variants_place() => _roundtrip.Printed.ShouldContain("dialog template DashboardCanvas\n    header\n    sidebar\n    main");
+    [Fact] void should_print_the_slots_the_variants_place() => _roundtrip.Printed.ShouldContain("dialog template DashboardCanvas\n    category Test\n    header\n    sidebar\n    main");
     [Fact] void should_preserve_the_declared_slots() => Template.Slots.Select(slot => slot.Name).ShouldContainOnly("header", "sidebar", "main");
 
     DialogTemplateSyntax Template => _roundtrip.Reparsed.Value!.Modules.Single().DialogTemplates!.Single();

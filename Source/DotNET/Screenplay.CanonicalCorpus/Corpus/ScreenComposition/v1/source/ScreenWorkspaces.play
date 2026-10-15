@@ -5,6 +5,7 @@ concept WorkStatus : Enum
   closed
 
 layout AppShell
+  category Shell
   topbar
   navigation contributes Navigation
   content
@@ -37,6 +38,7 @@ behavior ConfirmClose
 module Workspaces
   screen template MasterDetail
     fits slot content
+    category Workspace
     list
     details
 
@@ -50,6 +52,7 @@ module Workspaces
           list
 
   dialog template EditDialog
+    category Dialog
     body
     actions
 

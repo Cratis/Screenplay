@@ -12,6 +12,7 @@ public class and_a_freeform_arrangement_declares_a_tree : given.a_compiler
         """
         module Dashboards
           screen template DashboardCanvas
+            category Test
             arrangement freeform
               row
                 header

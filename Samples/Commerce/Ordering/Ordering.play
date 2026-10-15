@@ -11,6 +11,7 @@ module Ordering
 
   screen template OrderWorkspace
     fits slot content
+    category Workspace
 
     summary
     details
@@ -21,6 +22,7 @@ module Ordering
         details grow
 
   dialog template OrderDialog
+    category Dialog
     body
     actions
 

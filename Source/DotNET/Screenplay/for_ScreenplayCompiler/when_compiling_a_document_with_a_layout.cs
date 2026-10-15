@@ -10,6 +10,7 @@ public class when_compiling_a_document_with_a_layout : given.a_compiler
     const string Source =
         """
         layout AppShell
+          category Test
           topbar
           navigation contributes Navigation
           content

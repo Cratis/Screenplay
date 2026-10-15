@@ -3,6 +3,7 @@
 
 screen template Ledger
   fits slot content
+  category Workspace
 
   overview
   lines
@@ -13,6 +14,7 @@ screen template Ledger
       lines grow
 
 dialog template PayrollDialog
+  category Dialog
   body
   actions
 

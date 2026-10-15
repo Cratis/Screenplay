@@ -3226,6 +3226,21 @@ public static class DiagnosticCodes
     /// </summary>
     public const string CaptureEventsRecordFixture = "PLAY0701";
 
+    /// <summary>
+    /// A layout, screen template or dialog template declares no <c>category</c>. A blueprint package build treats it as an error (warnings as errors); an own template only warns.
+    /// </summary>
+    public const string TemplateCategoryMissing = "PLAY0720";
+
+    /// <summary>
+    /// A template reference's <c>version</c> is not a range Scene understands.
+    /// </summary>
+    public const string InvalidTemplateVersionRange = "PLAY0721";
+
+    /// <summary>
+    /// A <c>template blueprint</c> reference names a blueprint no <c>ui profile</c> lists in its <c>packages</c>.
+    /// </summary>
+    public const string UnknownTemplateBlueprint = "PLAY0722";
+
     // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
 
     /// <summary>

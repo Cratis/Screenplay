@@ -593,7 +593,8 @@ public sealed partial class ScreenplayPrinter :
         WriteMembers(members, module);
     }
 
-    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) => writer.Line($"template {template.Name}", template);
+    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) =>
+        writer.Line($"template {WriteTemplateReference(template.Blueprint, template.Name, template.Version)}", template);
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
     {

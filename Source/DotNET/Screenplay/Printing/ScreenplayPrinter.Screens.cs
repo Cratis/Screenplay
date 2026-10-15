@@ -183,7 +183,7 @@ public partial class ScreenplayPrinter
     void WriteScreenTemplateReference(ScreenplayWriter writer, ScreenTemplateReferenceSyntax template)
     {
         using var anchor = writer.Anchor(template);
-        writer.Line($"template {template.Name}");
+        writer.Line($"template {WriteTemplateReference(template.Blueprint, template.Name, template.Version)}");
         using (writer.Indent())
         {
             foreach (var slot in template.Slots)

@@ -12,6 +12,7 @@ public class when_compiling_a_freeform_arrangement_with_a_duplicate_variant : gi
         """
         module Dashboards
           screen template DashboardCanvas
+            category Test
             arrangement freeform
               variant width regular, height regular
                 place header at 0,0 size fill,64

@@ -1,11 +1,13 @@
 module Workspaces
   screen template Outer
+    category Workspace
     header
 
     content header
       template Inner
 
   screen template Inner
+    category Workspace
     body
 
     content body

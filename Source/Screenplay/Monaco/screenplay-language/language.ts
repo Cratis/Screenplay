@@ -134,6 +134,10 @@ export const clauseKeywords = [
     'outlet',
     'display',
     'scopes',
+    'blueprint', // 'template blueprint <Blueprint> <Name> [version "<range>"]' names a template a blueprint package ships.
+    'version',
+    'statechange', // Slice kinds a template's 'scopes slice ...' narrows to.
+    'stateview',
     'reexposes',
     'operations',
     'items',

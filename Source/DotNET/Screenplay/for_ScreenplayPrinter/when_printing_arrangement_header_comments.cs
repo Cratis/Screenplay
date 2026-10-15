@@ -13,8 +13,8 @@ public class when_printing_arrangement_header_comments : given.a_printer
     {
         var indent = header == "layout Main" ? string.Empty : "  ";
         var source = header == "layout Main"
-            ? $"{header}\n  content\n  {arrangement} // arrangement note\n"
-            : $"module Shop\n  {header}\n    content\n    {arrangement} // arrangement note\n";
+            ? $"{header}\n  category Test\n  content\n  {arrangement} // arrangement note\n"
+            : $"module Shop\n  {header}\n    category Test\n    content\n    {arrangement} // arrangement note\n";
         var roundtrip = RoundTrip(source);
         roundtrip.Original!.Diagnostics.ShouldBeEmpty();
         roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();

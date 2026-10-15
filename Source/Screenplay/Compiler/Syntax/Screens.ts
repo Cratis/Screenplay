@@ -98,10 +98,15 @@ export interface ScreenNavigationParameterSyntax extends SyntaxNode {
     readonly binding: UiBindingSyntax;
 }
 
-// 'template <Name>' and the slots it fills.
+// 'template <Name>' - or 'template blueprint <Blueprint> <Name> [version "<range>"]' for a template a blueprint
+// package ships - and the slots it fills.
 export interface ScreenTemplateReferenceSyntax extends SyntaxNode {
     readonly kind: 'ScreenTemplateReferenceSyntax';
     readonly name: string;
+    // The blueprint package the template comes from; absent for an own template.
+    readonly blueprint?: string;
+    // The semver range of the blueprint the reference accepts; absent when it does not pin a version.
+    readonly version?: string;
     readonly slots: readonly ScreenSlotSyntax[];
 }
 
