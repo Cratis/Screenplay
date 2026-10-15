@@ -23,7 +23,7 @@ export function boundedRuleProof(check: () => RuleConsistencyResult): RuleConsis
 /** All authored branches are inspected before a containment proof can become Proven. */
 export function checkGenerationMatches(
     authored: string, maximumLength: number, contains: (expression: RegexExpression) => RuleConsistencyResult,
-    samples: readonly string[], approximateReason?: string, runtime: RegexSampleEvaluator = boundedRegexSample
+    samples: readonly string[], approximateReason?: string, runtime: RegexSampleEvaluator = boundedRegexSample, sampleUnproven = false
 ): RuleConsistencyResult {
     return boundedRuleProof(() => {
         let expression: RegexExpression | undefined;
@@ -33,8 +33,11 @@ export function checkGenerationMatches(
             if (!(error instanceof OutsideRegexFragment)) throw error;
             reason = error.message;
         }
-        const proof = expression === undefined ? unproven(reason!) : contains(expression);
-        if (approximateReason === undefined && expression !== undefined && proof.status !== RuleConsistencyStatus.Proven) return proof;
+        // Finite-pattern containment can exhaust its product budget while real samples still
+        // refute it. Keep the separate built-in engine's existing early-refusal contract intact.
+        const proof = expression === undefined ? unproven(reason!) : sampleUnproven ? boundedRuleProof(() => contains(expression!)) : contains(expression);
+        if (approximateReason === undefined && expression !== undefined && proof.status !== RuleConsistencyStatus.Proven &&
+            (!sampleUnproven || proof.status === RuleConsistencyStatus.Refuted)) return proof;
         if (proof.status === RuleConsistencyStatus.Proven && approximateReason === undefined) {
             const full = new RegexFragmentR(authored, maximumLength, false).parse();
             if (full.hasNullableRepeat || !new GlushkovAutomaton(full).isDeterministic) return unproven(ambiguousPatternReason);

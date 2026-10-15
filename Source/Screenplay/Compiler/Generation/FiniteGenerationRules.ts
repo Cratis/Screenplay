@@ -32,7 +32,7 @@ export function checkFiniteGenerationRule(pattern: GenerationPattern, rule: Gene
             if (approximate || typeof rule.operand !== 'string') return unproven(approximate ? approximateReason : 'unsupported rule');
             return boundedRuleProof(() => checkFinitePatternContainment(pattern, RegexExpression.literal(rule.operand as string), rule.kind === Kind.NotEqual));
         case Kind.Matches:
-            return typeof rule.operand !== 'string' ? unproven('unsupported rule') : checkGenerationMatches(rule.operand, pattern.maximumLength, expression => checkFinitePatternContainment(pattern, expression), samples, approximate ? approximateReason : undefined, runtime);
+            return typeof rule.operand !== 'string' ? unproven('unsupported rule') : checkGenerationMatches(rule.operand, pattern.maximumLength, expression => checkFinitePatternContainment(pattern, expression), samples, approximate ? approximateReason : undefined, runtime, true);
         case Kind.Checksum:
             if (typeof rule.operand !== 'string') return unproven('unsupported rule');
             checksumWidth(rule.operand as ChecksumAlgorithm);

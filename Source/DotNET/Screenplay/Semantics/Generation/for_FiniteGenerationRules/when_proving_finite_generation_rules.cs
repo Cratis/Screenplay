@@ -79,5 +79,18 @@ public class when_proving_finite_generation_rules
         result.Witness.ShouldEqual(" ");
     }
 
+    [Fact]
+    void should_refute_a_real_sample_even_after_the_containment_product_budget_is_exceeded()
+    {
+        const string Regex = "^[AB]*A[AB]{13}$";
+        var pattern = GenerationPattern.Parse("[AB]{64}");
+        var containment = FinitePatternContainment.Check(pattern, new RegexFragmentR(Regex, pattern.MaximumLength).Parse());
+        containment.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
+        containment.Reason.ShouldEqual(new RegexStateBudgetExceeded().Message);
+        var result = FiniteGenerationRules.Check(pattern, Match(Regex));
+        result.Status.ShouldEqual(RuleConsistencyStatus.Refuted);
+        result.Witness.ShouldEqual(new string('B', 64));
+    }
+
     static SemanticValidationRule Match(string pattern) => new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text(pattern), null);
 }
