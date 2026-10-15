@@ -18,12 +18,13 @@ static class McpGenerationRules
             : default;
         var generation = inspection.Concept?.Generation;
         var hasGeneration = inspection.Generates;
-        var pattern = hasGeneration ? DerivedPattern.Create(generation) : null;
+        string? shapeReason = null;
+        var pattern = hasGeneration ? DerivedGenerationRepairPattern.Create(generation, out shapeReason) : null;
         details.Add("derivedPattern", pattern);
         var unknownReason = inspection.UnknownReason ?? (hasGeneration
             ? $"No regular shape is established for generation strategy '{concept.Generation!.Strategy}' or its authored inputs."
             : "The generation could not be bound; see executable diagnostics.");
-        if (pattern is null) details.Add("derivedPatternUnknownReason", unknownReason);
+        if (pattern is null) details.Add("derivedPatternUnknownReason", generation?.Kind == "pattern" && shapeReason is not null ? shapeReason : unknownReason);
 
         var rules = (concept.Validations ?? []).SelectMany(validation => validation is DeclarativeValidateSyntax declarative
             ? declarative.Rules.Cast<SyntaxNode>() : [validation]).ToArray();
@@ -39,7 +40,7 @@ static class McpGenerationRules
         if (unknownReason is not null) return RuleConsistencyResult.Unproven(unknownReason);
         if (rule is null) return RuleConsistencyResult.Unproven("The validation rule could not be bound; see executable diagnostics.");
 
-        return RuleConsistency.Check(concept!.Generation, concept.Primitive, rule);
+        return RuleConsistency.Check(concept!.Generation, concept.Primitive, rule, DateTimeOffset.UtcNow.Year);
     }
 
     static Dictionary<string, object?> Describe(

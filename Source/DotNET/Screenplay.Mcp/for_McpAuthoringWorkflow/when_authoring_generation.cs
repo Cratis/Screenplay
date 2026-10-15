@@ -17,6 +17,7 @@ public class when_authoring_generation : given.an_authoring_connection
         opened = ReviewAndApply(opened, Propose(opened, transport, new { kind = "GenerationSyntax", strategy = "nanoid", size = 32 }, "nanoid 32"), "generate nanoid 32");
         opened = ReviewAndApply(opened, Propose(opened, transport, new { kind = "GenerationSyntax", strategy = "typeid", prefix = "" }, "typeid \"\""), "generate typeid \"\"");
         opened = ReviewAndApply(opened, Propose(opened, transport, new { kind = "GenerationSyntax", strategy = "typeid", prefix = "user" }, "typeid \"user\""), "generate typeid \"user\"");
+        opened = ReviewAndApply(opened, Propose(opened, transport, new { kind = "GenerationSyntax", strategy = "pattern", pattern = "ORD-#{7}" }, "pattern \"ORD-#{7}\""), "generate pattern \"ORD-#{7}\"");
         var proposal = Propose(opened, transport, null, null);
         Candidate(proposal).Documents.Single().Text.ShouldEqual("concept Code : String\n");
         ReviewAndApply(opened, proposal, "concept Code : String");
@@ -55,6 +56,23 @@ public class when_authoring_generation : given.an_authoring_connection
         review.GetProperty("result").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldNotContain("PLAY0268");
         Candidate(proposal).Compilation.Value!.Model.SemanticVersion.ShouldEqual(Cratis.Screenplay.Semantics.SemanticVersion.V20);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual("concept Code : String\n  validate\n    min 1\n");
+    }
+
+    [Theory]
+    [InlineData("ast", "*{64}*{64}*{64}*{63}", "PLAY0691")]
+    [InlineData("source", "*{64}*{64}*{64}*{63}", "PLAY0691")]
+    [InlineData("ast", "000000006-[AB]", "PLAY0692")]
+    [InlineData("source", "000000006-[AB]", "PLAY0692")]
+    void should_preserve_compiler_support_diagnostics_in_the_candidate(string transport, string pattern, string code)
+    {
+        var opened = Start("concept Code : String\n");
+        var proposal = Propose(opened, transport, new { kind = "GenerationSyntax", strategy = "pattern", pattern, checksum = "mod11" }, $"pattern \"{pattern}\" checksum mod11");
+        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeFalse();
+        var review = Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "executable-diagnostics" });
+        var codes = review.GetProperty("result").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ToArray();
+        codes.ShouldContain(code);
+        codes.ShouldEqual(Candidate(proposal).Compilation.Diagnostics.Select(diagnostic => diagnostic.Code).ToArray());
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual("concept Code : String\n");
     }
 
     JsonElement Start(string source)
