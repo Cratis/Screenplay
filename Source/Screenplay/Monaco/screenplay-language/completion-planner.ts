@@ -200,7 +200,7 @@ export function planCompletions(
     const inConcept = generationChain[0] === 'concept';
     if (generationChain[0] === 'generate' && generationChain[1] === 'concept' && /^generate\s+rule\s+/.test((nearestEnclosingLine(lines, fences, lineIndex, indentOf(textBefore)) ?? '').trim())) {
         return { kind: 'entries', entries: [
-            { label: 'file', insertText: 'file ${1:Generator.cs}', documentation: 'The sole ValueGeneration source. Receives GenerationContext with Now and Tenant; returns String.' },
+            { label: 'file', insertText: 'file ${1:Generator.cs}', documentation: 'The sole ValueGeneration source. Receives the provider-bound GenerationContext (Now, Tenant); returns String.' },
             { label: 'csharp', insertText: '```csharp\n${1:return value;}\n```', documentation: 'The sole ValueGeneration body. Reference execution requires fixtures; it never invokes this code.' },
         ] };
     }
