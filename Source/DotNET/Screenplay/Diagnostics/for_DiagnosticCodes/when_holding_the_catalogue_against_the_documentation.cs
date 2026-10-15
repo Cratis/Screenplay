@@ -18,6 +18,7 @@ public partial class when_holding_the_catalogue_against_the_documentation : Spec
     // Retired constants remain public API and must stay documented alongside the live codes.
     List<string> _declared;
     List<string> _documented;
+    string _catalogue;
 
     void Establish()
     {
@@ -30,6 +31,7 @@ public partial class when_holding_the_catalogue_against_the_documentation : Spec
         ];
 
         var catalogue = File.ReadAllText(Path.Combine(DocumentationExamples.Root(), "screenplay", "diagnostics.md"));
+        _catalogue = catalogue;
         _documented = [.. CodeRegex().Matches(catalogue).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal)];
     }
 
@@ -38,6 +40,15 @@ public partial class when_holding_the_catalogue_against_the_documentation : Spec
 
     [Fact] void should_not_list_a_code_that_is_not_declared() =>
         Report("listed in the catalogue but declared nowhere", _documented.Except(_declared, StringComparer.Ordinal)).ShouldEqual(string.Empty);
+
+    [Fact]
+    void should_document_every_argument_declaration()
+    {
+        var rows = CompilerContractCatalog.Diagnostics.SelectMany(fact => fact.Arguments.Select(argument =>
+            $"| `{fact.Code}` | `{argument.Name}` | {argument.Kind} | {(argument.Optional ? "yes" : "no")} | {argument.Meaning} | {(argument.Values.Count == 0 ? "—" : string.Join(", ", argument.Values))} |"));
+        foreach (var row in rows) _catalogue.ShouldContain(row);
+        _catalogue.Split('\n').Count(line => line.StartsWith("| `PLAY", StringComparison.Ordinal) && line.Split('|').Length == 8).ShouldEqual(rows.Count());
+    }
 
     static string Report(string what, IEnumerable<string> codes)
     {

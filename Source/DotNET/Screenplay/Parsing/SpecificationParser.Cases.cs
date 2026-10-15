@@ -61,7 +61,7 @@ internal static partial class SpecificationParser
             if (value is not null) values.Add(new(assignment.Groups[1].Value, value, child.Location));
             if (context.TryPeekChild(child.Indent, out var nested))
             {
-                context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, "A case value must fit on one line.", nested.Location);
+                context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, "A case value must fit on one line.", nested.Location, DiagnosticArguments.Empty.With("case", DiagnosticArgument.Text(match.Groups[1].Value)).With("parameter", DiagnosticArgument.Text(assignment.Groups[1].Value)).With("text", DiagnosticArgument.Text(nested.Content)));
                 SkipBody(context, child.Indent);
             }
         }
@@ -73,7 +73,7 @@ internal static partial class SpecificationParser
     {
         if (text.StartsWith("case.", StringComparison.Ordinal))
         {
-            context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, "A case assigns concrete values, not case references.", location);
+            context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, "A case assigns concrete values, not case references.", location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(text)));
             return null;
         }
 

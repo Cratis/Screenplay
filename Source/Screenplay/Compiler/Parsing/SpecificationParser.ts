@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { parseRouteParts } from './EventSourceParser';
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
@@ -608,7 +609,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
                 eventSource = parseMappingSource(source, locationOf(child), context);
             }
         } else {
-            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
+            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }
     }
     return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };
@@ -663,13 +664,13 @@ function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifie
         context.reader.takeSignificant();
         const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
         if (mapping === null) {
-            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
+            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
             continue;
         }
         const value = mappingOf(context, child, mapping, nativeIdentifiers);
         if (queryArgumentsContext !== undefined) {
             if (values.some(existing => existing.property === value.property)) {
-                queryArgumentsContext.error(DiagnosticCodes.UnknownSpecificationQueryArgument, `Query argument '${value.property}' is repeated.`, value.location);
+                queryArgumentsContext.error(DiagnosticCodes.UnknownSpecificationQueryArgument, `Query argument '${value.property}' is repeated.`, value.location, diagnosticText('argument', value.property));
             }
             values.push(value);
         } else {

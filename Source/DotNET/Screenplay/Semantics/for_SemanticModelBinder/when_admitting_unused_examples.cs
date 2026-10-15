@@ -63,6 +63,7 @@ public class when_admitting_unused_examples : given.a_semantic_binder
     {
         var result = Bind("example Input : Record\n  count = \"wrong\"\n" + Declarations);
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnadmittedSpecificationExampleValue && diagnostic.Message.Contains("Input", StringComparison.Ordinal));
+        result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnadmittedSpecificationExampleValue).Arguments["example"].ShouldEqual(DiagnosticArgument.Text("Input"));
     }
 
     [Fact]

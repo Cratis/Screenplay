@@ -69,19 +69,22 @@ internal static partial class SpecificationParser
         // reusing it, so '"one" "two"' cannot masquerade as one string value.
         if ((text.StartsWith('"') || text.StartsWith('\'')) && !AbsentKeyStringRegex().IsMatch(text))
         {
-            context.Error(code, "Expected exactly one concrete value.", location);
+            context.Error(code, "Expected exactly one concrete value.", location, ConcreteArguments(code, text));
             return null;
         }
 
         var expression = ExpressionParser.ParseMappingSource(context, text, location);
         if (expression is not LiteralExpressionSyntax and not ObjectExpressionSyntax and not ListExpressionSyntax || (expression is LiteralExpressionSyntax { Value: double number } && !double.IsFinite(number)))
         {
-            context.Error(code, "Expected exactly one concrete literal or structured value, not an expression.", location);
+            context.Error(code, "Expected exactly one concrete literal or structured value, not an expression.", location, ConcreteArguments(code, text));
             return null;
         }
 
         return expression;
     }
+
+    static DiagnosticArguments ConcreteArguments(string code, string text) => code == DiagnosticCodes.InvalidSpecificationValue || code == DiagnosticCodes.InvalidSpecificationCaseValue
+        ? DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(text)) : DiagnosticArguments.Empty;
 
     [GeneratedRegex(@"^then\s+returns\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenReturnsPrefixRegex();

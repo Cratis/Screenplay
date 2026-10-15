@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { CaseValueExpressionSyntax, ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
@@ -58,7 +59,7 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
         const location = locationOf(owner);
         const valueLocation = { ...location, column: location.column + owner.content.indexOf(text, owner.content.indexOf('=') + 1) };
         if (text.startsWith('case.')) {
-            context.error(DiagnosticCodes.InvalidSpecificationCaseValue, 'A case assigns concrete values, not case references.', valueLocation);
+            context.error(DiagnosticCodes.InvalidSpecificationCaseValue, 'A case assigns concrete values, not case references.', valueLocation, diagnosticText('text', text));
             return;
         }
         const source = parseConcrete(context, text, valueLocation, DiagnosticCodes.InvalidSpecificationCaseValue);
@@ -76,7 +77,7 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
         add(value[1], value[2], child);
         const nested = context.peekChild(child.indent);
         if (nested !== undefined) {
-            context.error(DiagnosticCodes.InvalidSpecificationCaseValue, 'A case value must fit on one line.', locationOf(nested));
+            context.error(DiagnosticCodes.InvalidSpecificationCaseValue, 'A case value must fit on one line.', locationOf(nested), { ...diagnosticText('case', match[1]), ...diagnosticText('parameter', value[1]), ...diagnosticText('text', nested.content) });
             context.skipOpaqueBlock(child.indent);
         }
     }

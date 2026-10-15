@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
     AutoMapMode, ChildrenSyntax, ClearWithSyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
@@ -362,7 +363,7 @@ function pushMapping(context: ParserContext, line: SourceLine, mappings: Mapping
         if (keyword[1] !== 'clear' || keyword[2] !== 'with') {
             mappings.push({ kind: keywordMappings[keyword[1]], property: unescapeIdentifier(keyword[2]), location });
         } else if (context.sourceOptions.numericMode === 'exact') {
-            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'`, location);
+            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'`, location, diagnosticText('text', line.content));
         }
         return;
     }
@@ -375,6 +376,6 @@ function pushMapping(context: ParserContext, line: SourceLine, mappings: Mapping
     if (assigned !== null) {
         mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), source: parseProjectionExpression(assigned[2], location, context), location });
     } else if (context.sourceOptions.numericMode === 'exact') {
-        context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}'`, location);
+        context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}'`, location, diagnosticText('text', line.content));
     }
 }

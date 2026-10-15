@@ -29,6 +29,10 @@ public class when_binding_incomplete_specification_steps : given.a_semantic_bind
         diagnostic.Message.ShouldContain(name);
         diagnostic.Message.ShouldContain(property);
         diagnostic.Location.Line.ShouldEqual(21);
+        diagnostic.Arguments["property"].ShouldEqual(DiagnosticArgument.Text(property));
+        diagnostic.Arguments["step"].ShouldEqual(DiagnosticArgument.Keyword(step.Split('\n')[0].Split(' ')[0] == "given" && step.StartsWith("given readmodel", StringComparison.Ordinal) ? "given readmodel" : step.StartsWith("when append", StringComparison.Ordinal) ? "when append" : step.Split(' ')[0]));
+        diagnostic.Arguments["stepIndex"].ShouldEqual(DiagnosticArgument.Index(0));
+        diagnostic.Arguments["specification"].ShouldEqual(DiagnosticArgument.Declaration("specification", ["Billing", "Invoicing", "Recording", "Incomplete"]));
         result.Diagnostics.Any(value => value.Code == DiagnosticCodes.InvalidSemanticBinding).ShouldBeFalse();
     }
 

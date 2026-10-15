@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax, CaptureTranslationSyntax, CaptureWhenSyntax } from '../Syntax/Captures';
 import { eventsSourceKind, fromSetting } from '../Syntax/CaptureEventsSource';
@@ -163,7 +164,7 @@ function pushAppend(context: ParserContext, line: SourceLine, appends: CaptureAp
         }
         const mapped = mappingPattern.exec(child.content);
         if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: unescapeIdentifier(mapped[1]), source: parseMappingSource(mapped[2], location, context.valueContext), location });
-        else context.error(nested ? DiagnosticCodes.InvalidPropertyMapping : DiagnosticCodes.UnknownAppendDirective, `Unexpected '${child.content}' in append body`, location);
+        else context.error(nested ? DiagnosticCodes.InvalidPropertyMapping : DiagnosticCodes.UnknownAppendDirective, `Unexpected '${child.content}' in append body`, location, nested ? diagnosticText('text', child.content) : {});
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();

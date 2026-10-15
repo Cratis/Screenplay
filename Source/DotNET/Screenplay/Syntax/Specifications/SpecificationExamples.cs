@@ -113,6 +113,9 @@ public static partial class SpecificationExamples
             return new(_specifications, _context.Diagnostics);
         }
 
+        static DiagnosticArguments ExamplePropertyArguments(SpecificationExampleSyntax example, string property) => DiagnosticArguments.Empty
+            .With("example", DiagnosticArgument.Text(example.Name)).With("type", DiagnosticArgument.Text(example.Type)).With("property", DiagnosticArgument.Text(property));
+
         static string Qualified(Entry type) => string.Join('.', type.Declaration.Scope.Segments.Append(type.Declaration.Name));
 
         static PropertyMappingSyntax[] Merge(IEnumerable<PropertyMappingSyntax> inherited, IEnumerable<PropertyMappingSyntax> authored) =>
@@ -211,52 +214,52 @@ public static partial class SpecificationExamples
             if (_entries.Exists(other => other.Kind != "example" && other.Declaration.Name == example.Name) ||
                 _application.Imports.Any(import => import.Name == example.Name) || ConceptSyntax.PrimitiveTypes.Contains(example.Name))
             {
-                _context.Error(DiagnosticCodes.SpecificationExampleNameCollision, $"Example '{example.Name}' collides with a type name; choose a distinct example name.", example.Location);
+                _context.Error(DiagnosticCodes.SpecificationExampleNameCollision, $"Example '{example.Name}' collides with a type name; choose a distinct example name.", example.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
             }
 
             if (_entries.Count(other => other.Kind == "example" && other.Declaration == entry.Declaration) > 1)
             {
-                _context.Error(DiagnosticCodes.SpecificationExampleNameCollision, $"Example '{example.Name}' is declared more than once in the same scope.", example.Location);
+                _context.Error(DiagnosticCodes.SpecificationExampleNameCollision, $"Example '{example.Name}' is declared more than once in the same scope.", example.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
             }
 
             var type = Resolve(example.Type, entry.Declaration.Scope);
             if (type is null)
             {
                 if (DeferImportedType(example.Type, entry.Declaration.Scope)) return;
-                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example '{example.Name}' type '{example.Type}' is unknown or ambiguous; qualify a declared event, command, or read model.", example.Location);
+                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example '{example.Name}' type '{example.Type}' is unknown or ambiguous; qualify a declared event, command, or read model.", example.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)).With("type", DiagnosticArgument.Text(example.Type)));
                 return;
             }
 
             if (type.Kind is not ("event" or "command" or "readmodel"))
             {
-                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example '{example.Name}' must name an event, command, or read model, not a {type.Kind}; example inheritance is not supported.", example.Location);
+                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example '{example.Name}' must name an event, command, or read model, not a {type.Kind}; example inheritance is not supported.", example.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)).With("type", DiagnosticArgument.Text(example.Type)).With("kind", DiagnosticArgument.Keyword(type.Kind)));
                 return;
             }
 
             _types[example] = type;
             if (type.Kind != "event" && (example.Stream is not null || example.NoStream is not null))
             {
-                _context.Error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", example.Stream?.Location ?? example.NoStream!.Location);
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", example.Stream?.Location ?? example.NoStream!.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
             }
             ValidateDuplicates(example.Values.Concat(example.GeneratedValues), example.Location);
             foreach (var value in example.Values.Where(value => !type.Properties.Any(property => property.Name == value.Property)))
             {
-                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' property '{value.Property}' is not declared on current {type.Kind} '{example.Type}'; historical-only fields are not supported.", value.Location);
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' property '{value.Property}' is not declared on current {type.Kind} '{example.Type}'; historical-only fields are not supported.", value.Location, ExamplePropertyArguments(example, value.Property));
             }
 
             foreach (var value in example.Values.Where(value => type.Kind == "command" && type.Properties.Any(property => property.Name == value.Property && property.IsGenerated)))
             {
-                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' cannot supply generated property '{value.Property}' as input; use 'for' for its generated identifier or 'generated' for another value.", value.Location);
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' cannot supply generated property '{value.Property}' as input; use 'for' for its generated identifier or 'generated' for another value.", value.Location, ExamplePropertyArguments(example, value.Property));
             }
 
             foreach (var value in example.GeneratedValues.Where(value => type.Kind != "command" || !type.Properties.Any(property => property.Name == value.Property && property.IsGenerated && !property.IsIdentifier)))
             {
-                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' generated fixture '{value.Property}' must name a nonidentifier generated command property.", value.Location);
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Example '{example.Name}' generated fixture '{value.Property}' must name a nonidentifier generated command property.", value.Location, ExamplePropertyArguments(example, value.Property));
             }
 
             if (type.Kind == "readmodel" && example.For is not null)
             {
-                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Read-model example '{example.Name}' cannot contain 'for'; state the identifier as a property.", example.For.Location);
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Read-model example '{example.Name}' cannot contain 'for'; state the identifier as a property.", example.For.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)).With("type", DiagnosticArgument.Text(example.Type)));
             }
 
             SpecificationValueConsistencyValidator.ValidateValues(example.Values.Concat(example.GeneratedValues), type.Properties, _declarations!, _context);
@@ -266,7 +269,7 @@ public static partial class SpecificationExamples
         {
             foreach (var duplicate in values.GroupBy(value => value.Property, StringComparer.Ordinal).Where(group => group.Count() > 1))
             {
-                _context.Error(DiagnosticCodes.DuplicateSpecificationAssignment, $"Specification fixture assigns property '{duplicate.Key}' more than once.", location);
+                _context.Error(DiagnosticCodes.DuplicateSpecificationAssignment, $"Specification fixture assigns property '{duplicate.Key}' more than once.", location, DiagnosticArguments.Empty.With("property", DiagnosticArgument.Text(duplicate.Key)));
             }
         }
 
@@ -331,7 +334,7 @@ public static partial class SpecificationExamples
             var entry = Resolve(name, scope);
             if (entry is null && _entries.Exists(candidate => candidate.Kind == "example" && candidate.Declaration.Name == name.Split('.')[^1]))
             {
-                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example reference '{name}' is unknown or ambiguous; qualify its declaration scope.", location);
+                _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example reference '{name}' is unknown or ambiguous; qualify its declaration scope.", location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(name)));
             }
 
             if (entry?.Node is not SpecificationExampleSyntax example) return (null, null);
@@ -339,7 +342,7 @@ public static partial class SpecificationExamples
             if (type.Kind != kind)
             {
                 var corrected = CorrectedRole(type.Kind, role);
-                _context.Error(DiagnosticCodes.SpecificationExampleKindMismatch, $"Example '{name}' is a {type.Kind} example, not a {kind}; write '{corrected} {name}'.", location);
+                _context.Error(DiagnosticCodes.SpecificationExampleKindMismatch, $"Example '{name}' is a {type.Kind} example, not a {kind}; write '{corrected} {name}'.", location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(name)).With("kind", DiagnosticArgument.Keyword(type.Kind)).With("expectedKind", DiagnosticArgument.Keyword(kind)));
                 return (example, null);
             }
 

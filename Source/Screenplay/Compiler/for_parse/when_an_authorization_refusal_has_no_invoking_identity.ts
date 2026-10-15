@@ -27,7 +27,7 @@ describe('when an authorization refusal has no invoking identity', () => {
         expect(result.success).toBe(true);
         const warnings = result.diagnostics.filter(diagnostic => diagnostic.code === code);
         expect(warnings).toHaveLength(expected ? 1 : 0);
-        if (expected) expect(warnings[0]).toEqual({ code, severity: 'warning', message, location: { path: 'application.play', line: source.split('\n').findIndex(line => line.includes('on refused')) + 1, column: 15 } });
+        if (expected) expect(warnings[0]).toEqual({ code, severity: 'warning', message, arguments: {}, location: { path: 'application.play', line: source.split('\n').findIndex(line => line.includes('on refused')) + 1, column: 15 } });
     });
 
     it.each([
@@ -58,7 +58,7 @@ describe('when an authorization refusal has no invoking identity', () => {
         ]));
         expect(result.success).toBe(true);
         expect(result.diagnostics.filter(diagnostic => diagnostic.code === code)).toEqual([
-            { code, severity: 'warning', message, location: { path: 'reaction.play', line: 8, column: 13 } },
+            { code, severity: 'warning', message, arguments: {}, location: { path: 'reaction.play', line: 8, column: 13 } },
         ]);
     });
 });

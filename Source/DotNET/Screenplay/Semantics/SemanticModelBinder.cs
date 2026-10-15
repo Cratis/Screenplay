@@ -363,11 +363,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return application;
         }
 
-        internal void Error(string code, string message, SourceLocation location)
+        internal void Error(string code, string message, SourceLocation location, DiagnosticArguments? arguments = null)
         {
             var caseValue = expansion.Specifications.Where(specification => specification.Case is not null).SelectMany(specification => specification.Case!.Values.Select(value => (specification.Case.Name, Value: value))).FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
             if (caseValue.Value is not null && !message.StartsWith("Case '", StringComparison.Ordinal)) message = $"Case '{caseValue.Name}' parameter '{caseValue.Value.Property}': {message}";
-            _diagnostics.Add(Diagnostic.Error(code, message, location));
+            if (caseValue.Value is not null && (code == DiagnosticCodes.MissingSpecificationProperty || code == DiagnosticCodes.InvalidSpecificationCaseValue))
+            {
+                arguments = (arguments ?? DiagnosticArguments.Empty).With("case", DiagnosticArgument.Text(caseValue.Name)).With("parameter", DiagnosticArgument.Text(caseValue.Value.Property));
+            }
+            _diagnostics.Add(Diagnostic.Error(code, message, location, arguments ?? DiagnosticArguments.Empty));
         }
 
         static SemanticModule PromoteV2Destinations(SemanticModule module) =>
