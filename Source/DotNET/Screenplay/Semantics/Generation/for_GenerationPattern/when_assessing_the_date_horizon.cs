@@ -11,13 +11,9 @@ public class when_assessing_the_date_horizon
     void should_scan_every_valid_date_including_leap_days_and_the_last_year()
     {
         var pattern = GenerationPattern.Parse("{MM}[AB]");
-        var countingOperations = 0L;
-        for (var month = 1; month <= 12; month++)
-        {
-            var budget = new GenerationWorkBudget();
-            GenerationPatternSupport.Count(pattern, new(2020, month, 1), budget).ShouldEqual(new BigInteger(2));
-            countingOperations += budget.Used;
-        }
+        var counting = new GenerationWorkBudget();
+        GenerationPatternSupport.Count(pattern, new(2020, 1, 1), counting).ShouldEqual(new BigInteger(2));
+        var countingOperations = counting.Used;
         var assessmentBudget = new GenerationWorkBudget();
         GenerationPatternAssessment.MinimumCount(pattern, 2020, assessmentBudget).ShouldEqual(new BigInteger(2));
         (assessmentBudget.Used - countingOperations).ShouldEqual(36_890L);

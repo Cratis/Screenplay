@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { GenerationPattern } from './GenerationPattern';
-import { expandToken } from './GenerationPatternToken';
+import { GenerationDateClasses } from './GenerationDateClasses';
 import { generationPatternCount } from './GenerationPatternSupport';
 import { GenerationWorkBudget } from './GenerationWorkBudget';
 
@@ -20,10 +20,11 @@ export function minimumGenerationPatternCount(pattern: GenerationPattern, utcYea
     const date = new Date(0);
     date.setUTCFullYear(utcYear, 0, 1);
     const counts = new Map<string, bigint>();
+    const classes = new GenerationDateClasses(pattern);
     let minimum: bigint | undefined;
     while (date.getUTCFullYear() <= utcYear + 100) {
         budget.spend();
-        const key = pattern.tokens.filter(token => token.segment !== undefined).map(token => expandToken(token, date).join('')).join('|');
+        const key = classes.key(date, budget);
         let count = counts.get(key);
         if (count === undefined) { count = generationPatternCount(pattern, date, budget); counts.set(key, count); }
         if (count === 0n) throw new EmptyGenerationSupport(date, pattern.checksum);

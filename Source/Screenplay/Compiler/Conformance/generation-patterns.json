@@ -20,6 +20,18 @@
     { "pattern": "{yyyy}[AB]", "checksum": "mod11", "date": "2029-01-01", "count": "0" },
     { "pattern": "{yyyy}{2}[AB]", "date": "2024-02-29", "count": "2" }
   ],
+  "assessments": [
+    { "pattern": "{yyyy}{MM}{dd}#", "year": 2024, "budget": 5000000, "count": "10" },
+    { "pattern": "ORD-{yyyy}{MM}{dd}-#{4}", "year": 2024, "budget": 5000000, "count": "10000" },
+    { "pattern": "ORD-{yyyy}{MM}{dd}-#{4}", "checksum": "luhn", "year": 2024, "budget": 5000000, "count": "10000" },
+    { "pattern": "ORD-{yyyy}{MM}{dd}-#{4}", "checksum": "mod11", "year": 2024, "budget": 5000000, "count": "9090" },
+    { "pattern": "ORD-{yyyy}{MM}{dd}-#{4}", "checksum": "mod97", "year": 2024, "budget": 5000000, "count": "10000" },
+    { "pattern": "{yyyy}{MM}{dd}#{3}", "checksum": "mod11", "year": 2024, "budget": 5000000, "count": "909" },
+    { "pattern": "[12]{1,2}{dd}[12]{1,2}", "year": 2024, "budget": 5000000, "count": "32" },
+    { "pattern": "ORD-{yyyy}{MM}{dd}-#{3,4}", "year": 2024, "budget": 100000, "error": "operation budget" },
+    { "pattern": "{dd}[A0]{2}{MM}[AB]", "checksum": "mod11", "year": 2024, "budget": 5000000, "error": "UTC 2024-05-29" },
+    { "pattern": "{yyyy}[AB]", "checksum": "mod11", "year": 2026, "budget": 5000000, "error": "UTC 2029-01-01" }
+  ],
   "invalid": [
     { "pattern": "", "reason": "empty pattern" },
     { "pattern": "ABC", "reason": "requires a random token" },

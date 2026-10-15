@@ -49,6 +49,8 @@ A generated fixture **without** this authored rule checks suffix digit shape onl
 
 Binding captures one UTC assessment year, or accepts an explicit binder year input. It scans every valid date from that year through year+100 inclusive, including leap days, and reports the minimum conditioned support. Supported assessment years are 1..9899. This year, support tables and proof results never enter ESM bytes; advancing a year cannot change a model revision merely by changing date literals.
 
+Fixed-width patterns reuse support counts across equivalent dates: one count without a checksum, or at most 10/11/97 checksum-contribution classes with fixed ASCII-digit positions. Every valid date is still visited, preserving the first empty-support date. Variable repeats and mixed digit/nondigit checksum positions retain the full scan; no budget limit is raised.
+
 Generation has hard ceilings: 2,048 automaton positions, 10,000 distinct DFA/product states, and 100,000,000 operations across support counting and the date scan (one unit per inspected edge, counting-state character transition or assessed UTC date). Exhaustion fails binding with `PLAY0691`; it is not proof Unproven. Empty support on any scanned UTC date fails with `PLAY0692`. By contrast, regex proof construction exhaustion remains Unproven (`PLAY0689`).
 
 With `given clock`, every date segment in a fixture must match the **same UTC instant**, including repeated segments, offset rollover and leap days. Without a clock, only digit widths are checked—never today's wall clock. Time-ordered built-ins still need a whole pinned fixture; the reference evaluator generates neither identifiers nor random values.

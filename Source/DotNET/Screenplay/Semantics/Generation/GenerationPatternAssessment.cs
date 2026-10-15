@@ -22,10 +22,11 @@ internal static class GenerationPatternAssessment
         var date = new DateOnly(utcYear, 1, 1);
         BigInteger? minimum = null;
         var counts = new Dictionary<string, BigInteger>(StringComparer.Ordinal);
+        var classes = new GenerationDateClasses(pattern);
         while (true)
         {
             budget.Spend();
-            var key = string.Join('|', pattern.Tokens.Where(token => token.Segment is not null).Select(token => string.Concat(token.Expand(date))));
+            var key = classes.Key(date, budget);
             if (!counts.TryGetValue(key, out var count))
             {
                 count = GenerationPatternSupport.Count(pattern, date, budget);

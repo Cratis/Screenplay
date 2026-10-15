@@ -28,12 +28,9 @@ describe('when enforcing generation budgets', () => {
 describe('when assessing the date horizon', () => {
     it('should scan every valid date including leap days and the last year', () => {
         const pattern = parseGenerationPattern('{MM}[AB]');
-        let countingOperations = 0;
-        for (let month = 0; month < 12; month++) {
-            const budget = new GenerationWorkBudget();
-            generationPatternCount(pattern, new Date(Date.UTC(2020, month, 1)), budget).should.equal(2n);
-            countingOperations += budget.used;
-        }
+        const counting = new GenerationWorkBudget();
+        generationPatternCount(pattern, new Date(Date.UTC(2020, 0, 1)), counting).should.equal(2n);
+        const countingOperations = counting.used;
         const budget = new GenerationWorkBudget();
         minimumGenerationPatternCount(pattern, 2020, budget).should.equal(2n);
         (budget.used - countingOperations).should.equal(36890);
