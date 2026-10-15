@@ -85,91 +85,76 @@ public static class PlayGlob
     /// <returns><c>true</c> when the path is a <c>.play</c> file the pattern names.</returns>
     public static bool IsMatch(string resolvedPattern, string path) =>
         path.EndsWith(".play", StringComparison.OrdinalIgnoreCase) &&
-        new SegmentMatcher(resolvedPattern.Split('/'), path.Split('/')).Matches();
+        Matches(resolvedPattern.Split('/'), path.Split('/'));
 
-    // Matches segment by segment, remembering each (pattern, path) position it has decided, so any number of '**'
-    // segments costs at most one decision per position pair and no input can make the match backtrack exponentially.
-    sealed class SegmentMatcher(string[] pattern, string[] path)
+    // Walks the pattern one segment at a time, keeping the set of path positions reachable so far. Each step looks at
+    // every path position once, so any number of '**' segments costs pattern length x path length, without recursion.
+    static bool Matches(string[] pattern, string[] path)
     {
-        readonly string[] _pattern = pattern;
-        readonly string[] _path = path;
-        readonly bool?[][] _decided = [.. Enumerable.Range(0, pattern.Length + 1).Select(_ => new bool?[path.Length + 1])];
-
-        public bool Matches() => Matches(0, 0);
-
-        // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
-        // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
-        // and quadratic at worst.
-        static bool SegmentMatches(string glob, string segment)
+        var reachable = new bool[path.Length + 1];
+        reachable[0] = true;
+        for (var patternIndex = 0; patternIndex < pattern.Length; patternIndex++)
         {
-            var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
-            while (segmentIndex < segment.Length)
+            if (pattern[patternIndex] == "**" && patternIndex == pattern.Length - 1)
             {
-                if (patternIndex < glob.Length && (glob[patternIndex] == '?' || glob[patternIndex] == segment[segmentIndex]) && glob[patternIndex] != '*')
+                // A trailing '**' takes the rest of the path, at least one segment.
+                return reachable.AsSpan(0, path.Length).Contains(true);
+            }
+
+            var next = new bool[path.Length + 1];
+            for (var pathIndex = 0; pathIndex <= path.Length; pathIndex++)
+            {
+                if (pattern[patternIndex] == "**")
                 {
-                    patternIndex++;
-                    segmentIndex++;
+                    // An inner '**' takes any number of whole, non-empty folders.
+                    next[pathIndex] = reachable[pathIndex] || (pathIndex > 0 && next[pathIndex - 1] && path[pathIndex - 1].Length > 0);
                 }
-                else if (patternIndex < glob.Length && glob[patternIndex] == '*')
+                else if (pathIndex > 0 && reachable[pathIndex - 1] && SegmentMatches(pattern[patternIndex], path[pathIndex - 1]))
                 {
-                    star = patternIndex++;
-                    starSegmentIndex = segmentIndex;
-                }
-                else if (star >= 0)
-                {
-                    patternIndex = star + 1;
-                    segmentIndex = ++starSegmentIndex;
-                }
-                else
-                {
-                    return false;
+                    next[pathIndex] = true;
                 }
             }
 
-            while (patternIndex < glob.Length && glob[patternIndex] == '*')
+            reachable = next;
+        }
+
+        return reachable[path.Length];
+    }
+
+    // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
+    // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
+    // and quadratic at worst.
+    static bool SegmentMatches(string glob, string segment)
+    {
+        var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
+        while (segmentIndex < segment.Length)
+        {
+            if (patternIndex < glob.Length && (glob[patternIndex] == '?' || glob[patternIndex] == segment[segmentIndex]) && glob[patternIndex] != '*')
             {
                 patternIndex++;
+                segmentIndex++;
             }
-
-            return patternIndex == glob.Length;
+            else if (patternIndex < glob.Length && glob[patternIndex] == '*')
+            {
+                star = patternIndex++;
+                starSegmentIndex = segmentIndex;
+            }
+            else if (star >= 0)
+            {
+                patternIndex = star + 1;
+                segmentIndex = ++starSegmentIndex;
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        bool Matches(int patternIndex, int pathIndex) =>
-            _decided[patternIndex][pathIndex] ??= Decide(patternIndex, pathIndex);
-
-        bool Decide(int patternIndex, int pathIndex)
+        while (patternIndex < glob.Length && glob[patternIndex] == '*')
         {
-            if (patternIndex == _pattern.Length)
-            {
-                return pathIndex == _path.Length;
-            }
-
-            if (_pattern[patternIndex] == "**")
-            {
-                // A trailing '**' takes the rest of the path, at least one segment; an inner one takes any number of
-                // whole, non-empty folders.
-                if (patternIndex == _pattern.Length - 1)
-                {
-                    return pathIndex < _path.Length;
-                }
-
-                for (var next = pathIndex; ; next++)
-                {
-                    if (Matches(patternIndex + 1, next))
-                    {
-                        return true;
-                    }
-
-                    if (next == _path.Length || _path[next].Length == 0)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return pathIndex < _path.Length &&
-                SegmentMatches(_pattern[patternIndex], _path[pathIndex]) &&
-                Matches(patternIndex + 1, pathIndex + 1);
+            patternIndex++;
         }
+
+        return patternIndex == glob.Length;
     }
 }
