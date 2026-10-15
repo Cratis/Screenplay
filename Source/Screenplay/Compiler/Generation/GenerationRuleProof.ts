@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { boundedRegexSample } from './BoundedRegexSamples';
+import { validateMatchPattern } from '../Parsing/PortableMatchPattern';
 import { RegexSampleEvaluator } from './RegexSampleEvaluator';
 import { RegexSampleOutcome } from './RegexSampleOutcome';
 import { GenerationSupportBudgetExceeded } from './GenerationSupportBudgetExceeded';
@@ -25,6 +26,8 @@ export function checkGenerationMatches(
     authored: string, maximumLength: number, contains: (expression: RegexExpression) => RuleConsistencyResult,
     samples: readonly string[], approximateReason?: string, runtime: RegexSampleEvaluator = boundedRegexSample, sampleUnproven = false
 ): RuleConsistencyResult {
+    const dialect = validateMatchPattern(authored);
+    if (dialect !== undefined) return unproven(`outside the portable match dialect: ${dialect.construct}`);
     return boundedRuleProof(() => {
         let expression: RegexExpression | undefined;
         let reason: string | undefined;
@@ -54,7 +57,7 @@ export function crossCheckGenerationSamples(pattern: string, samples: readonly s
     let unsupported = false;
     for (const sample of samples) {
         const result = runtime(pattern, sample);
-        if (result === RegexSampleOutcome.Timeout) return unproven('runtime regex timed out');
+        if (result === RegexSampleOutcome.BudgetExceeded) return unproven('runtime regex state budget exceeded');
         if (result === false) return refuted(sample);
         if (result === RegexSampleOutcome.Unsupported) unsupported = true;
     }

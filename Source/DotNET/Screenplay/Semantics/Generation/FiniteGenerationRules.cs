@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace Cratis.Screenplay.Semantics.Generation;
 
@@ -65,6 +64,8 @@ internal static class FiniteGenerationRules
 
     static RuleConsistencyResult Match(GenerationPattern pattern, string authored, DateOnly? date)
     {
+        var parsed = SemanticMatchPattern.Parse(authored);
+        if (!parsed.Accepted) return RuleConsistencyResult.Unproven($"outside the portable match dialect: {parsed.Construct}");
         RegexExpression? expression;
         string? reason = null;
         try
@@ -80,15 +81,7 @@ internal static class FiniteGenerationRules
         {
             return RuleConsistencyResult.Unproven(error.Message);
         }
-        Regex runtime;
-        try
-        {
-            runtime = SemanticMatchPattern.Create(authored);
-        }
-        catch (ArgumentException)
-        {
-            return RuleConsistencyResult.Unproven(reason ?? "invalid regex");
-        }
+        var runtime = SemanticMatchPattern.Create(parsed);
         var approximate = pattern.HasDates || pattern.Checksum is not null;
         var proof = expression is null ? RuleConsistencyResult.Unproven(reason!) : FinitePatternContainment.Check(pattern, expression);
         if (proof.Status == RuleConsistencyStatus.Refuted && !approximate) return proof;
@@ -104,16 +97,9 @@ internal static class FiniteGenerationRules
                 return RuleConsistencyResult.Unproven(error.Message);
             }
         }
-        try
+        foreach (var sample in FiniteGenerationSamples.Create(pattern, date))
         {
-            foreach (var sample in FiniteGenerationSamples.Create(pattern, date))
-            {
-                if (!runtime.IsMatch(sample)) return RuleConsistencyResult.Refuted(sample);
-            }
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return RuleConsistencyResult.Unproven("runtime regex timed out");
+            if (!runtime.IsMatch(sample)) return RuleConsistencyResult.Refuted(sample);
         }
 
         return approximate ? RuleConsistencyResult.Unproven(ApproximateReason) : proof;

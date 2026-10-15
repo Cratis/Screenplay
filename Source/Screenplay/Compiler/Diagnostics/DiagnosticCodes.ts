@@ -4,6 +4,9 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    UnknownMatchPattern: 'PLAY0366',
+    InvalidMatchPattern: 'PLAY0367',
+    PatternOutsidePortableMatchDialect: 'PLAY0699',
     InvalidIdentityDeclaration: 'PLAY0633',
     DuplicateIdentity: 'PLAY0634',
     InvalidIdentityDetail: 'PLAY0635',

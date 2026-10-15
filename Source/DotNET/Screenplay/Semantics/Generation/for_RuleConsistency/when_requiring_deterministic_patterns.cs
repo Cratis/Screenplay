@@ -8,7 +8,7 @@ public class when_requiring_deterministic_patterns : Specification
     [Theory]
     [InlineData("^ab(a+)+c$|^[ab]{256}$")]
     [InlineData("^[ab]{1,256}$")]
-    [InlineData("^(a?b?){1000000}$")]
+    [InlineData("^(a?b?){500}$")]
     [InlineData("^([ab]?)*$")]
     [InlineData("^(?:[ab]*)*$")]
     [InlineData("^(?:[ab]?){2,256}$")]
@@ -25,7 +25,7 @@ public class when_requiring_deterministic_patterns : Specification
     {
         var result = Check("^(ab(a+)+c){1000000}$|^[ab]{256}$");
         result.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
-        result.Reason.ShouldEqual("position budget exceeded");
+        result.Reason.ShouldEqual("outside the portable match dialect: expanded pattern size");
     }
 
     [Theory]

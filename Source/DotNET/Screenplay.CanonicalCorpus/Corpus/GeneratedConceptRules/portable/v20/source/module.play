@@ -1,0 +1,29 @@
+module Shop
+  feature Customers
+    slice StateChange Register
+      command Register
+        id CustomerId generated identifier
+        produces event CustomerRegistered
+        returns id
+      specification ProvenCustomerId
+        when Register
+          for "cus_01arz3ndektsv4rrffq69g5fav"
+        then CustomerRegistered
+          for "cus_01arz3ndektsv4rrffq69g5fav"
+        then returns "cus_01arz3ndektsv4rrffq69g5fav"
+    slice StateChange Invite
+      command Invite
+        code InviteCode generated
+        returns code
+      specification InvalidInviteFixture
+        when Invite
+          generated code = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+        then error "Generated fixture 'code' fails concept 'InviteCode' rules"
+    slice StateChange Review
+      command Review
+        code ReviewedCode generated
+        returns code
+      specification OpaqueInviteRule
+        when Review
+          generated code = "ABCDEFGHIJKLMNOPQRSTU"
+        then returns "ABCDEFGHIJKLMNOPQRSTU"

@@ -40,7 +40,7 @@ public class when_repairing_refuted_rules : Specification
     [Fact]
     void should_not_repair_an_unproven_rule()
     {
-        var workspace = Create("matches \"^(?=.{21}$).*$\"");
+        var workspace = Create("matches \"^(?<code>.{21})$\"");
         var diagnostic = workspace.Compilation.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnprovenGeneratedConceptRule);
         WorkspaceDiagnosticRepairs.Find(workspace, workspace.Revision, diagnostic).ShouldBeEmpty();
     }

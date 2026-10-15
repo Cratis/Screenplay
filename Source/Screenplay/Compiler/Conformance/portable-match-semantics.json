@@ -1,0 +1,5594 @@
+{
+  "oracle": "Node v26.8.1 RegExp.test without flags",
+  "vectors": [
+    {
+      "pattern": "^\\s$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\s$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\S$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^\\S$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\w$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\W$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^\\W$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\d$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\D$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^\\D$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^.$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^.$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\n]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^[\\s\\d]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\w]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "^[\\w\\W]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\w\\W]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a@b.co",
+      "expected": true
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^a$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^a$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^[{}]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\/$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^[\\-]$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "ab",
+      "expected": true
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^(?<word_1>ab)$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^(?:(?<x>a)|(?<x>b))$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "b",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "A",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "ab",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "AB",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "aaa",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "0",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "9",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "_",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "İ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "ı",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "\t",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "\n",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "\r",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": " ",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "　",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "﻿",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "᠎",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a@b.co",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a @b.co",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a@b .co",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a@b.co\n",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "a\n",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "{",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "}",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "/",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "-",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "😀",
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "input": "zabz",
+      "expected": true
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "😀",
+      "expected": true
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\uD83D\\uDE00$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "ab",
+      "expected": true
+    },
+    {
+      "pattern": "^..$",
+      "input": "AB",
+      "expected": true
+    },
+    {
+      "pattern": "^..$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "😀",
+      "expected": true
+    },
+    {
+      "pattern": "^..$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^..$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "AB",
+      "expected": true
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\x41\\u0042$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "\u0000",
+      "expected": true
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^\\0$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a",
+      "expected": true
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "ab",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "aaa",
+      "expected": true
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "^a{1,3}?$",
+      "input": "zabz",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "b",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "A",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "ab",
+      "expected": true
+    },
+    {
+      "pattern": "ab",
+      "input": "AB",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "aaa",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "0",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "9",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "_",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "İ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "ı",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "\t",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "\n",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "\r",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": " ",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "　",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "﻿",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "᠎",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a@b.co",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a @b.co",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a@b .co",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a@b.co\n",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "a\n",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "{",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "}",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "/",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "-",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "\u0000",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "😀",
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "inputCodeUnits": [
+        55357
+      ],
+      "expected": false
+    },
+    {
+      "pattern": "ab",
+      "input": "zabz",
+      "expected": true
+    }
+  ]
+}

@@ -28,7 +28,7 @@ public class when_validating_a_match_rule : a_valid_semantic_model
     }
 
     [Fact] void should_accept_a_valid_text_pattern() => _valid.ShouldBeNull();
-    [Fact] void should_reject_a_malformed_pattern() => _invalidPattern.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_defer_a_pattern_the_current_parser_cannot_admit_to_plan_compilation() => _invalidPattern.ShouldBeNull();
     [Fact] void should_reject_a_non_text_operand() => _nonTextOperand.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_non_text_target() => _nonTextTarget.ShouldBeOfExactType<InvalidSemanticContract>();
 }

@@ -1,0 +1,15 @@
+concept CustomerId : String
+  generate ulid prefix "cus_" case lower
+  validate
+    matches "^cus_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+concept InviteCode : String
+  generate nanoid 64 alphabet "ab"
+  validate
+    matches "^(?<portable>a{64}|(a{31}(a{16}(a{8}(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})|(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})[ab]{8})|(a{8}(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})|(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})[ab]{8})[ab]{16})|(a{15}(a{8}(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})|(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})[ab]{8})|(a{7}(a{4}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})[ab]{4})|(a{3}(a{2}(ab|b[ab])|(ab|b[ab])[ab]{2})|(a(ab|b[ab])|b[ab]{2})[ab]{4})[ab]{8})[ab]{16})[ab]{32})[ab])$"
+concept ReviewedCode : String
+  generate nanoid
+  validate
+    rule ApprovedInvite
+      ```csharp
+      return true;
+      ```

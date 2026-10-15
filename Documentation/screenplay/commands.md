@@ -231,7 +231,37 @@ Declarative validation covers the common cases without code:
 
 `max` and `min` take their meaning from the property's type: on text they bound its length (`reason max 500` — at most 500 characters), and on a number they bound its value (`quantity min 1`). There is one rule for each, not a separate length and value form.
 
-`matches "<regex>"` uses ECMAScript regular expression syntax. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at binding, and an execution timeout rejects rather than accepting the value. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
+`matches "<regex>"` uses the [portable match dialect](#portable-match-dialect): a restricted, flagless JavaScript regular expression. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at authoring. The reference evaluator runs Screenplay's own Thompson automaton, not a platform regular-expression engine. Each input code unit visits at most the automaton's states; there is no timeout or host-specific engine limit. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
+
+### Portable match dialect
+
+Patterns operate on UTF-16 code units, without flags. They admit literals, `.`, `^`, `$`, alternation, ordinary groups, `(?:...)`, and `(?<name>...)` with names matching `[A-Za-z_][A-Za-z0-9_]*`. Captures cannot be observed: backreferences are not admitted. Duplicate names are admitted only in disjoint alternatives, as in `(?<x>a)|(?<x>b)`; duplicate names that can participate together report `PLAY0367`. JavaScript-valid names outside the ASCII spelling (such as `$x`, `é` or `\u0078`) report `PLAY0699`; malformed names report `PLAY0367`. Quantifiers are `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}` and their lazy forms. Stacked quantifiers such as `a**`, `a+?+` and `a{2}{3}` report `PLAY0367`.
+
+Character classes contain literals, ranges with single-character endpoints, and `\d \D \w \W \s \S`. Negation and unions use set semantics: `[\w\W]` matches any code unit and `[^\w\W]` matches none. `\d` is `[0-9]`; `\w` is `[A-Za-z0-9_]`. `\s` is the fixed JavaScript set: U+0009–U+000D, U+0020, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F, U+3000 and U+FEFF. Dot excludes LF, CR, U+2028 and U+2029. `$` means the very end of input, not before a final newline.
+
+Both contexts admit `\t \n \r \f \v`, `\0` not followed by a digit, `\xHH`, `\uHHHH`, and escaped syntax characters `\^ \$ \\ \. \* \+ \? \( \) \[ \] \{ \} \| \/`. Inside a class, `\-` is also admitted and unescaped `{` and `}` are literal. Outside a class, an unescaped `{` must start a valid quantifier; escape a literal brace.
+
+`PLAY0699` names a refused construct and suggests a replacement where one exists:
+
+| Refused form | Replacement or limitation |
+| --- | --- |
+| Lookahead and lookbehind | No general equivalent. Replace a length-only assertion such as `^(?=.{21}$).*$` with `^.{21}$`. |
+| Backreferences; `\b` and `\B` word boundaries | No equivalent assertion in this dialect. |
+| `\p` and `\P` Unicode properties | An explicit character class when its required set is known; no general equivalent. |
+| `\u{...}`, `\cX`, class `\b` | UTF-16 `\uHHHH` escapes, hexadecimal control escapes such as `\x01`, and `\x08`, respectively. |
+| `\A`, `\z`, `\Z` | `^`, `$`, `$`, respectively. |
+| Inline options such as `(?i)` | Explicit case classes such as `[aA]`. Other group extensions and .NET-only syntax are not admitted. |
+| `[]`, `[^]`, a leading or lone `]` | Use `[^\s\S]` for no code unit, `[\s\S]` for any code unit, or escaped `\]` for a literal bracket. |
+| Class subtraction; class escapes as range endpoints, such as `[\d-a]` | Write explicit ranges or a union of classes. |
+| Octal and other identity escapes | Use `\xHH`, `\uHHHH`, or write the literal without a backslash. |
+
+A pattern has at most 1,000 UTF-16 code units and 3,000 expanded nodes. Each literal, class and anchor counts one, as does each optional, loop or alternative choice point. A counted repeat multiplies its body by its upper bound; without an upper bound, by the lower bound plus one. It adds one choice point for each optional copy (one loop for an unbounded repeat). `*`, `+` and `?` count their body once plus one choice point. Thus `x{1500}` counts 1,500, `a{0,1500}` counts 3,000 and `(a*){1500}` counts 3,000. Exceeding either limit reports `PLAY0699` before automaton construction. The automaton has at most the expanded size plus one accepting state, including epsilon choice states; an empty expression needs only that accepting state.
+
+These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode spaces, so `matches email` rejects `a<U+00A0>@b.co`; dot rejects CR and U+2028/U+2029; `\w` rejects U+0130. Older ESM documents keep their authored pattern bytes and load even when the current parser classifies the pattern as invalid or outside the dialect. Either case produces plan-time `UnsupportedValidation` and deterministic generation Unproven, naming the construct. Re-authoring reports `PLAY0367` for invalid syntax or `PLAY0699` for a construct outside the dialect. The matcher has the same behavior on every supported target framework; platform regex settings cannot change a verdict.
+
+Browser checks remain advisory: admitted patterns such as `(a+)+$` can still backtrack badly in JavaScript. The server-side linear check is authoritative.
+
+### Rule messages and severity
 
 A rule may have a `message` shown when it fails. Add `severity information`, `severity warning` or `severity error` before the optional end-of-line `message`. The default is `error`; the printer omits it. Message remains last so its quoted text or `$strings` key is unambiguous:
 
@@ -427,7 +457,7 @@ Still rejected, and why:
 | Rule | Why |
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
-| a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
+| a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid pattern syntax reports `PLAY0367`; constructs outside the portable dialect report `PLAY0699` with a suggested replacement where one exists. |
 | `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available ([#129](https://github.com/Cratis/Screenplay/issues/129)). |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |

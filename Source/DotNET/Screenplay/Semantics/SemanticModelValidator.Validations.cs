@@ -78,19 +78,13 @@ internal static partial class SemanticModelValidator
 
         static void ValidateMatchesPattern(SemanticValue operand)
         {
-            if (operand is not SemanticTextValue pattern)
+            if (operand is not SemanticTextValue)
             {
                 throw new InvalidSemanticContract("Matches validation requires a text pattern.");
             }
 
-            try
-            {
-                _ = SemanticMatchPattern.Create(pattern.Value);
-            }
-            catch (ArgumentException exception)
-            {
-                throw new InvalidSemanticContract($"Matches validation has an invalid ECMAScript pattern: {exception.Message}");
-            }
+            // Older ESM may contain any pattern the current parser cannot admit, including legacy syntax
+            // now classified as invalid. Plan compilation and generation classify both cases explicitly.
         }
 
         void ValidateValidation(

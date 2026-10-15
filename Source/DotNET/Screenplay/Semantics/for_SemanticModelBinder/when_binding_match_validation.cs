@@ -12,6 +12,8 @@ public class when_binding_match_validation : given.a_semantic_binder
     CompilationResult<SemanticCompilation> _unknown;
     CompilationResult<SemanticCompilation> _invalid;
     CompilationResult<SemanticCompilation> _number;
+    CompilationResult<SemanticCompilation> _outside;
+    CompilationResult<SemanticCompilation> _outsideEscaped;
 
     void Because()
     {
@@ -24,6 +26,8 @@ public class when_binding_match_validation : given.a_semantic_binder
         _unknown = Bind(Source("String", "matches phone"));
         _invalid = Bind(Source("String", "matches \"[\""));
         _number = Bind(Source("Int", "matches email"));
+        _outside = Bind("concept Code : String\n  validate\n    matches \"(?=a)\"");
+        _outsideEscaped = Bind("concept Code : String\n  validate\n    matches \"\\\\d(?=a)\"");
     }
 
     static string Source(string type, string rule) => $"""
@@ -41,5 +45,8 @@ public class when_binding_match_validation : given.a_semantic_binder
     [Fact] void should_preserve_a_quoted_pattern() => _regex.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single().Operand.ShouldEqual(SemanticValue.Text("INV-"));
     [Fact] void should_reject_an_unknown_named_pattern() => _unknown.Diagnostics.Any(_ => _.Code == DiagnosticCodes.UnknownMatchPattern && _.Message.Contains("phone", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_report_an_invalid_pattern_at_the_rule() => _invalid.Diagnostics.Any(_ => _.Code == DiagnosticCodes.InvalidMatchPattern && _.Location.Line == 7).ShouldBeTrue();
+    [Fact] void should_point_at_the_refused_construct() => _outside.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.PatternOutsidePortableMatchDialect).Location.Column.ShouldEqual(14);
+    [Fact] void should_map_decoded_offsets_back_through_string_escapes() => _outsideEscaped.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.PatternOutsidePortableMatchDialect).Location.Column.ShouldEqual(17);
+    [Fact] void should_suggest_a_length_repeat_for_lookahead() => _outside.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.PatternOutsidePortableMatchDialect).Message.ShouldContain("{n} counted repeat");
     [Fact] void should_reject_a_non_text_subject() => _number.Diagnostics.Any(_ => _.Code == DiagnosticCodes.UnsupportedSemanticSyntax && _.Message.Contains("text value", StringComparison.Ordinal)).ShouldBeTrue();
 }

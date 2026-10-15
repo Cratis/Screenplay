@@ -25,7 +25,7 @@ public class when_matching_fragment_r
     [InlineData("^a|b$", "baaa")]
     [InlineData("^\\d+$", "aaaa")]
     [InlineData("^[ab]{5}$", "aaaa")]
-    [InlineData("^[ab]{999999}$", "aaaa")]
+    [InlineData("^[ab]{1498}$", "aaaa")]
     [InlineData("^a{0}b{4}$", "aaaa")]
     [InlineData("^a{1,3}b?$", "aaaa")]
     void should_return_the_ordinal_least_violation(string pattern, string witness) => Check(pattern).Witness.ShouldEqual(witness);

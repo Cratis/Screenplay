@@ -206,17 +206,17 @@ public sealed class SemanticExecutionPlan
 
         foreach (var concept in model.Application.Concepts)
         {
-            foreach (var validation in concept.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && !SemanticValidationRules.Evaluates(_.Kind)))
+            foreach (var validation in concept.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && (!SemanticValidationRules.Evaluates(_.Kind) || SemanticValidationRules.UnsupportedPattern(_) is not null)))
             {
-                issues.Add(new(concept.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Concept validation '{validation.Kind}' is not admitted by the minimum evaluator."));
+                issues.Add(new(concept.Id, SemanticPlanIssueKind.UnsupportedValidation, SemanticValidationRules.UnsupportedPattern(validation) ?? $"Concept validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
         }
 
         foreach (var command in slices.SelectMany(_ => _.Commands))
         {
-            foreach (var validation in command.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && !SemanticValidationRules.Evaluates(_.Kind)))
+            foreach (var validation in command.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && (!SemanticValidationRules.Evaluates(_.Kind) || SemanticValidationRules.UnsupportedPattern(_) is not null)))
             {
-                issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
+                issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, SemanticValidationRules.UnsupportedPattern(validation) ?? $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
         }
 

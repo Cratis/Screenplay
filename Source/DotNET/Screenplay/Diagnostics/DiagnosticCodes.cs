@@ -1903,6 +1903,11 @@ public static class DiagnosticCodes
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
+    /// A match pattern uses a construct outside the portable linear dialect.
+    /// </summary>
+    public const string PatternOutsidePortableMatchDialect = "PLAY0699";
+
+    /// <summary>
     /// A validation rule names a severity other than information, warning or error.
     /// </summary>
     public const string InvalidValidationSeverity = "PLAY0368";

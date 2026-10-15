@@ -208,7 +208,7 @@ concept EmailAddress : String pii
 
 The optional severity (`information`, `warning` or `error`) comes before a rule's message and defaults to `error`. A failing concept rule rejects a command even if its severity is `warning` or `information`; the level only controls how the failure is presented. The printer omits the default.
 
-The named `email` pattern has the fixed ECMAScript definition documented under [command validation](commands.md#validation-rules); it is not RFC 5322 validation. A quoted ECMAScript pattern is also allowed. Both forms apply only to a text concept, and a match without anchors can match a substring.
+The named `email` pattern has the fixed definition documented under [command validation](commands.md#validation-rules); it is not RFC 5322 validation and rejects JavaScript whitespace, including U+00A0. Quoted patterns use the [portable match dialect](commands.md#portable-match-dialect), with the same UTF-16 meanings and authoring limits in both compilers. Both forms apply only to a text concept, and a match without anchors can match a substring.
 
 Inside the block `context` is the [`RuleContext`](context.md) — for a concept rule there is no surrounding artifact, so `context.Artifact` and `context.Value` are both the concept's own value. The block yields the message of every rule the value breaks, and yields nothing when the value is valid.
 

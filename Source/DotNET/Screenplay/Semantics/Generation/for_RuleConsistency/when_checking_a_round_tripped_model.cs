@@ -24,7 +24,7 @@ public class when_checking_a_round_tripped_model : Specification
               generate nanoid
               validate
                 not empty
-                matches "^(?=.{21}$).*$"
+                matches "^(?<code>.{21})$"
                 length == 21
                 rule ApprovedInvite
                   ```csharp
