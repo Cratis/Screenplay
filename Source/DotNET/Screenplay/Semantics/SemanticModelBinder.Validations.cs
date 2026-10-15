@@ -242,13 +242,13 @@ public sealed partial class SemanticModelBinder
                         return null;
                 }
 
-                try
+                var parsed = SemanticMatchPattern.Parse(pattern);
+                if (!parsed.Accepted)
                 {
-                    _ = SemanticMatchPattern.Create(pattern);
-                }
-                catch (ArgumentException exception)
-                {
-                    Error(DiagnosticCodes.InvalidMatchPattern, $"Invalid ECMAScript regular expression on {subject.Description}: {exception.Message}", rule.Location);
+                    Error(
+                        parsed.Invalid ? DiagnosticCodes.InvalidMatchPattern : DiagnosticCodes.PatternOutsidePortableMatchDialect,
+                        $"Match pattern on {subject.Description}: {parsed.Description}",
+                        MatchPatternLocation(rule, parsed.Offset));
                     return null;
                 }
 
@@ -257,6 +257,23 @@ public sealed partial class SemanticModelBinder
 
             var operand = BindValidationOperand(rule, kind, subject, spelling);
             return operand is null ? null : new(property, kind, operand, rule.Message) { Severity = Severity(rule.Severity) };
+        }
+
+        SourceLocation MatchPatternLocation(ValidationRuleSyntax rule, int patternOffset)
+        {
+            if (DocumentAt(rule.Location) is not { } document) return rule.Location;
+            var start = OffsetAt(document.Text, rule.Location);
+            var end = document.Text.IndexOf('\n', start);
+            if (end < 0) end = document.Text.Length;
+            var quote = document.Text.IndexOf('"', start, end - start);
+            if (quote < 0) return rule.Location;
+            var offset = quote + 1;
+            for (var decoded = 0; decoded < patternOffset && offset < end; decoded++, offset++)
+            {
+                if (document.Text[offset] == '\\' && offset + 1 < end && "\\\"nrt".Contains(document.Text[offset + 1], StringComparison.Ordinal)) offset++;
+            }
+
+            return rule.Location with { Column = rule.Location.Column + (offset - start) };
         }
 
         SemanticValue? BindValidationOperand(

@@ -3,5 +3,5 @@
 
 export enum RegexSampleOutcome {
     Unsupported = 'unsupported',
-    Timeout = 'timeout'
+    BudgetExceeded = 'budgetExceeded'
 }

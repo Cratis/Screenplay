@@ -83,7 +83,8 @@ public enum SemanticValidationRuleKind
     AllGreaterThanOrEqual = 11,
 
     /// <summary>
-    /// A scalar text value must contain a match for the ECMAScript regular expression in the text operand.
+    /// A scalar text value must contain a match for the portable flagless JavaScript pattern in the text operand.
+    /// Refused dialect constructs in older models block execution at plan time.
     /// </summary>
     Matches = 12,
 

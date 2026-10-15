@@ -1,0 +1,648 @@
+{
+  "suggestions": {
+    "lookaround": "There is no general equivalent; a length-only lookahead can be replaced with a {n} counted repeat.",
+    "backreference": "There is no equivalent in the portable match dialect.",
+    "word boundary": "There is no equivalent word-boundary assertion in the portable match dialect.",
+    "Unicode property escape": "Use an explicit character class where the required set is known; there is no general equivalent.",
+    "Unicode code point escape": "Use \\uHHHH escapes for UTF-16 code units.",
+    "control escape": "Use an explicit hexadecimal escape such as \\x01.",
+    "class backspace escape": "Use \\x08.",
+    "start of input escape": "Use ^.",
+    "end of input escape": "Use $.",
+    "inline options": "Use explicit case classes such as [aA] for case-insensitive matching; there is no general equivalent for other options.",
+    "empty character class": "Use [^\\s\\S] to match no UTF-16 code unit.",
+    "negated empty character class": "Use [\\s\\S].",
+    "class subtraction": "Use an explicit character class containing the resulting ranges.",
+    "class escape range endpoint": "Write single-character range endpoints or a union of classes.",
+    "unescaped closing bracket": "Escape a literal closing bracket as \\].",
+    "unescaped brace": "Escape a literal brace as \\{ or \\}.",
+    "identity escape": "Write the literal character without a backslash, or use \\xHH or \\uHHHH.",
+    "octal escape": "Use \\xHH or \\uHHHH.",
+    "group name": "Use a name matching [A-Za-z_][A-Za-z0-9_]*.",
+    "group extension": "Use an ordinary group or a (?:...) non-capturing group.",
+    "pattern length": "Shorten the pattern to at most 1000 UTF-16 code units.",
+    "expanded pattern size": "Reduce counted repeats and alternatives to at most 1500 expanded positions."
+  },
+  "cases": [
+    {
+      "pattern": "",
+      "accepted": true
+    },
+    {
+      "pattern": "abc",
+      "accepted": true
+    },
+    {
+      "pattern": ".",
+      "accepted": true
+    },
+    {
+      "pattern": "^$",
+      "accepted": true
+    },
+    {
+      "pattern": "a|b",
+      "accepted": true
+    },
+    {
+      "pattern": "()",
+      "accepted": true
+    },
+    {
+      "pattern": "(ab)",
+      "accepted": true
+    },
+    {
+      "pattern": "(?:ab)",
+      "accepted": true
+    },
+    {
+      "pattern": "(?<word_1>ab)",
+      "accepted": true
+    },
+    {
+      "pattern": "(?<x>a)|(?<x>b)",
+      "accepted": true
+    },
+    {
+      "pattern": "^(a{2000}){0}$",
+      "accepted": true
+    },
+    {
+      "pattern": "(){999999999999999999999999999}",
+      "accepted": true
+    },
+    {
+      "pattern": "a*",
+      "accepted": true
+    },
+    {
+      "pattern": "a+",
+      "accepted": true
+    },
+    {
+      "pattern": "a?",
+      "accepted": true
+    },
+    {
+      "pattern": "a{0}",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2}",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2,}",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2,4}",
+      "accepted": true
+    },
+    {
+      "pattern": "a*?",
+      "accepted": true
+    },
+    {
+      "pattern": "a+?",
+      "accepted": true
+    },
+    {
+      "pattern": "a??",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2}?",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2,}?",
+      "accepted": true
+    },
+    {
+      "pattern": "a{2,4}?",
+      "accepted": true
+    },
+    {
+      "pattern": "[a-z]",
+      "accepted": true
+    },
+    {
+      "pattern": "[^a-z]",
+      "accepted": true
+    },
+    {
+      "pattern": "[{}]",
+      "accepted": true
+    },
+    {
+      "pattern": "[a-]",
+      "accepted": true
+    },
+    {
+      "pattern": "[-a]",
+      "accepted": true
+    },
+    {
+      "pattern": "[[]",
+      "accepted": true
+    },
+    {
+      "pattern": "[\\-]",
+      "accepted": true
+    },
+    {
+      "pattern": "[\\s\\d]",
+      "accepted": true
+    },
+    {
+      "pattern": "[^\\w]",
+      "accepted": true
+    },
+    {
+      "pattern": "[\\w\\W]",
+      "accepted": true
+    },
+    {
+      "pattern": "[^\\w\\W]",
+      "accepted": true
+    },
+    {
+      "pattern": "\\d\\D\\w\\W\\s\\S",
+      "accepted": true
+    },
+    {
+      "pattern": "\\t\\n\\r\\f\\v\\0",
+      "accepted": true
+    },
+    {
+      "pattern": "\\x41\\u0042",
+      "accepted": true
+    },
+    {
+      "pattern": "\\^\\$\\\\\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\/",
+      "accepted": true
+    },
+    {
+      "pattern": "^a{1498}$",
+      "accepted": true
+    },
+    {
+      "pattern": "^(?:a{2}){749}$",
+      "accepted": true
+    },
+    {
+      "pattern": "^a{1497,}$",
+      "accepted": true
+    },
+    {
+      "pattern": "(?=a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "lookaround",
+      "offset": 0
+    },
+    {
+      "pattern": "(?!a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "lookaround",
+      "offset": 0
+    },
+    {
+      "pattern": "(?<=a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "lookaround",
+      "offset": 0
+    },
+    {
+      "pattern": "(?<!a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "lookaround",
+      "offset": 0
+    },
+    {
+      "pattern": "^(?=.{21}$).*$",
+      "accepted": false,
+      "invalid": false,
+      "construct": "lookaround",
+      "offset": 1
+    },
+    {
+      "pattern": "\\1",
+      "accepted": false,
+      "invalid": false,
+      "construct": "backreference",
+      "offset": 0
+    },
+    {
+      "pattern": "\\9",
+      "accepted": false,
+      "invalid": false,
+      "construct": "backreference",
+      "offset": 0
+    },
+    {
+      "pattern": "\\k<n>",
+      "accepted": false,
+      "invalid": false,
+      "construct": "backreference",
+      "offset": 0
+    },
+    {
+      "pattern": "\\b",
+      "accepted": false,
+      "invalid": false,
+      "construct": "word boundary",
+      "offset": 0
+    },
+    {
+      "pattern": "\\B",
+      "accepted": false,
+      "invalid": false,
+      "construct": "word boundary",
+      "offset": 0
+    },
+    {
+      "pattern": "\\p{L}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "Unicode property escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\P{L}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "Unicode property escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\u{41}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "Unicode code point escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\cA",
+      "accepted": false,
+      "invalid": false,
+      "construct": "control escape",
+      "offset": 0
+    },
+    {
+      "pattern": "[\\b]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "class backspace escape",
+      "offset": 1
+    },
+    {
+      "pattern": "\\A",
+      "accepted": false,
+      "invalid": false,
+      "construct": "start of input escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\z",
+      "accepted": false,
+      "invalid": false,
+      "construct": "end of input escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\Z",
+      "accepted": false,
+      "invalid": false,
+      "construct": "end of input escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\G",
+      "accepted": false,
+      "invalid": false,
+      "construct": "identity escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\a",
+      "accepted": false,
+      "invalid": false,
+      "construct": "identity escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\-",
+      "accepted": false,
+      "invalid": false,
+      "construct": "identity escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\01",
+      "accepted": false,
+      "invalid": false,
+      "construct": "octal escape",
+      "offset": 0
+    },
+    {
+      "pattern": "(?i)a",
+      "accepted": false,
+      "invalid": false,
+      "construct": "inline options",
+      "offset": 0
+    },
+    {
+      "pattern": "(?i:a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "inline options",
+      "offset": 0
+    },
+    {
+      "pattern": "(?>a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group extension",
+      "offset": 0
+    },
+    {
+      "pattern": "(?'n'a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group extension",
+      "offset": 0
+    },
+    {
+      "pattern": "(?(a)b)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group extension",
+      "offset": 0
+    },
+    {
+      "pattern": "(?<a-b>a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group name",
+      "offset": 3
+    },
+    {
+      "pattern": "(?<$a>a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group name",
+      "offset": 3
+    },
+    {
+      "pattern": "[]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "empty character class",
+      "offset": 0
+    },
+    {
+      "pattern": "[^]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "negated empty character class",
+      "offset": 0
+    },
+    {
+      "pattern": "]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped closing bracket",
+      "offset": 0
+    },
+    {
+      "pattern": "a{",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped brace",
+      "offset": 1
+    },
+    {
+      "pattern": "a}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped brace",
+      "offset": 1
+    },
+    {
+      "pattern": "[a-z-[aeiou]]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "class subtraction",
+      "offset": 4
+    },
+    {
+      "pattern": "[\\d-a]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "class escape range endpoint",
+      "offset": 3
+    },
+    {
+      "pattern": "[a-\\s]",
+      "accepted": false,
+      "invalid": false,
+      "construct": "class escape range endpoint",
+      "offset": 2
+    },
+    {
+      "pattern": "a{,2}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped brace",
+      "offset": 1
+    },
+    {
+      "pattern": "a{2,x}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped brace",
+      "offset": 1
+    },
+    {
+      "pattern": "a{2",
+      "accepted": false,
+      "invalid": false,
+      "construct": "unescaped brace",
+      "offset": 1
+    },
+    {
+      "pattern": "(?<>a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group name",
+      "offset": 3
+    },
+    {
+      "pattern": "(?<1>a)",
+      "accepted": false,
+      "invalid": false,
+      "construct": "group name",
+      "offset": 3
+    },
+    {
+      "pattern": "^a{1499}$",
+      "accepted": false,
+      "invalid": false,
+      "construct": "expanded pattern size",
+      "offset": 8
+    },
+    {
+      "pattern": "^(?:a{2}){749}a$",
+      "accepted": false,
+      "invalid": false,
+      "construct": "expanded pattern size",
+      "offset": 15
+    },
+    {
+      "pattern": "^a{1498,}$",
+      "accepted": false,
+      "invalid": false,
+      "construct": "expanded pattern size",
+      "offset": 9
+    },
+    {
+      "pattern": "(a{1000}){1000}",
+      "accepted": false,
+      "invalid": false,
+      "construct": "expanded pattern size",
+      "offset": 9
+    },
+    {
+      "pattern": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "accepted": false,
+      "invalid": false,
+      "construct": "pattern length",
+      "offset": 1000
+    },
+    {
+      "pattern": "[",
+      "accepted": false,
+      "invalid": true,
+      "construct": "unterminated character class",
+      "offset": 0
+    },
+    {
+      "pattern": "(",
+      "accepted": false,
+      "invalid": true,
+      "construct": "unterminated group",
+      "offset": 0
+    },
+    {
+      "pattern": ")",
+      "accepted": false,
+      "invalid": true,
+      "construct": "unmatched closing group",
+      "offset": 0
+    },
+    {
+      "pattern": "*",
+      "accepted": false,
+      "invalid": true,
+      "construct": "quantifier without an atom",
+      "offset": 0
+    },
+    {
+      "pattern": "a**",
+      "accepted": false,
+      "invalid": true,
+      "construct": "quantifier without an atom",
+      "offset": 2
+    },
+    {
+      "pattern": "^*",
+      "accepted": false,
+      "invalid": true,
+      "construct": "quantified assertion",
+      "offset": 1
+    },
+    {
+      "pattern": "[z-a]",
+      "accepted": false,
+      "invalid": true,
+      "construct": "reversed character range",
+      "offset": 2
+    },
+    {
+      "pattern": "a{2,1}",
+      "accepted": false,
+      "invalid": true,
+      "construct": "reversed counted repeat",
+      "offset": 1
+    },
+    {
+      "pattern": "\\",
+      "accepted": false,
+      "invalid": true,
+      "construct": "trailing backslash",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x0",
+      "accepted": false,
+      "invalid": true,
+      "construct": "invalid hexadecimal escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\u123",
+      "accepted": false,
+      "invalid": true,
+      "construct": "invalid hexadecimal escape",
+      "offset": 0
+    },
+    {
+      "pattern": "(?<x>a)(?<x>b)",
+      "accepted": false,
+      "invalid": true,
+      "construct": "duplicate group name",
+      "offset": 10
+    },
+    {
+      "pattern": "(?<x",
+      "accepted": false,
+      "invalid": true,
+      "construct": "unterminated group name",
+      "offset": 3
+    },
+    {
+      "pattern": "[\\",
+      "accepted": false,
+      "invalid": true,
+      "construct": "trailing backslash",
+      "offset": 1
+    },
+    {
+      "pattern": "[abc",
+      "accepted": false,
+      "invalid": true,
+      "construct": "unterminated character class",
+      "offset": 0
+    },
+    {
+      "pattern": "\\xGG",
+      "accepted": false,
+      "invalid": true,
+      "construct": "invalid hexadecimal escape",
+      "offset": 0
+    },
+    {
+      "pattern": "\\uGGGG",
+      "accepted": false,
+      "invalid": true,
+      "construct": "invalid hexadecimal escape",
+      "offset": 0
+    }
+  ]
+}

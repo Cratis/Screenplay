@@ -15,7 +15,7 @@ public class when_bounding_stack_usage : Specification
         if (kind == SemanticValidationRuleKind.Matches) operand = "^" + operand + "$";
         var result = RuleConsistency.Check(new("nanoid") { Size = 21 }, SemanticPrimitiveType.Text, new(default, kind, SemanticValue.Text(operand), null));
         result.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
-        result.Reason.ShouldEqual("position budget exceeded");
+        result.Reason.ShouldEqual(kind == SemanticValidationRuleKind.Matches ? "outside the portable match dialect: pattern length" : "position budget exceeded");
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class when_bounding_stack_usage : Specification
         var pattern = "^" + new string('(', 10000) + inner + new string(')', 10000) + "$";
         var result = RuleConsistency.Check(new("nanoid") { Size = 21 }, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text(pattern), null));
         result.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
-        result.Reason.ShouldEqual("group nesting budget exceeded");
+        result.Reason.ShouldEqual("outside the portable match dialect: pattern length");
     }
 
     [Fact]

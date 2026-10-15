@@ -39,7 +39,7 @@ describe('when enforcing regex fragment boundaries', () => {
         });
     }
     it('should bound nesting before evaluating unsupported groups', () => {
-        boundedRegexSample('('.repeat(65) + '(?=a)' + ')'.repeat(65), 'a').should.equal(RegexSampleOutcome.Timeout);
+        boundedRegexSample('('.repeat(65) + '(?=a)' + ')'.repeat(65), 'a').should.equal(RegexSampleOutcome.Unsupported);
     });
     it('should leave unsupported runtime constructs unknown', () => {
         boundedRegexSample('(a)\\1', 'aa').should.equal(RegexSampleOutcome.Unsupported);
@@ -47,13 +47,10 @@ describe('when enforcing regex fragment boundaries', () => {
     it('should leave an unclosed lookahead unknown', () => {
         boundedRegexSample('(?=a', 'a').should.equal(RegexSampleOutcome.Unsupported);
     });
-    it('should bound lookahead search without invoking a backtracking engine', () => {
-        boundedRegexSample('(?=a)[ab]+$', 'ba').should.equal(true);
-        boundedRegexSample('^(?!b)[ab]+$', 'aa').should.equal(true);
-        boundedRegexSample('^(?!b)[ab]+$', 'ba').should.equal(false);
-        boundedRegexSample('(?=(?:a|b))[ab]+$', 'aa').should.equal(true);
-        boundedRegexSample('(?=[()])[()]+$', '(').should.equal(true);
-        boundedRegexSample('(?=\\()\\($', '(').should.equal(true);
+    it('should refuse lookahead without invoking a backtracking engine', () => {
+        for (const pattern of ['(?=a)[ab]+$', '^(?!b)[ab]+$', '(?=(?:a|b))[ab]+$', '(?=[()])[()]+$']) {
+            boundedRegexSample(pattern, 'aa').should.equal(RegexSampleOutcome.Unsupported);
+        }
     });
     it('should keep unsupported primitives and strategies unproven', () => {
         checkGenerationRule({ kind: 'rule' }, 'String', { kind: Kind.NotEmpty }).reason!.should.equal('opaque generation strategy');

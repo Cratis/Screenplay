@@ -3,7 +3,6 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using Cratis.Screenplay.Semantics.Generation;
 
 namespace Cratis.Screenplay.Semantics.Execution;
@@ -94,6 +93,11 @@ static class SemanticValidationRules
         _ => $"A value does not satisfy the '{rule.Kind}' rule."
     };
 
+    internal static string? UnsupportedPattern(SemanticValidationRule rule) =>
+        rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && SemanticMatchPattern.Parse(pattern.Value) is { Accepted: false } parsed
+            ? $"outside the portable match dialect: {parsed.Construct}"
+            : null;
+
     static bool Checksum(SemanticValue value, SemanticValue? operand) =>
         value is SemanticTextValue text && operand is SemanticTextValue algorithm
             ? GenerationChecksum.Matches(text.Value, algorithm.Value)
@@ -106,14 +110,7 @@ static class SemanticValidationRules
             throw SemanticValueRules.Malformed();
         }
 
-        try
-        {
-            return SemanticMatchPattern.Create(pattern.Value).IsMatch(text.Value);
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return false;
-        }
+        return SemanticMatchPattern.Create(pattern.Value).IsMatch(text.Value);
     }
 
     static decimal Measure(SemanticValue value) => value switch

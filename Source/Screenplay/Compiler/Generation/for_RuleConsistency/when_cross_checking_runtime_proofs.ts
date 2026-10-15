@@ -17,13 +17,13 @@ describe('when cross checking runtime proofs', () => {
         const result = crossCheckGenerationSamples('^[ab]{2}$', ['aa', 'bb', 'ab'], (_, sample) => sample !== 'ab');
         result.should.deep.equal({ status: Status.Refuted, witness: 'ab', reason: null });
     });
-    it('should keep a host runtime timeout unproven', () => {
-        const result = checkGenerationRule({ kind: 'nanoid', size: 2, alphabet: 'ab' }, 'String', { kind: Kind.Matches, operand: '^[ab]{2}$' }, () => RegexSampleOutcome.Timeout);
-        result.should.deep.equal({ status: Status.Unproven, witness: null, reason: 'runtime regex timed out' });
+    it('should keep a deterministic automaton budget exhaustion unproven', () => {
+        const result = checkGenerationRule({ kind: 'nanoid', size: 2, alphabet: 'ab' }, 'String', { kind: Kind.Matches, operand: '^[ab]{2}$' }, () => RegexSampleOutcome.BudgetExceeded);
+        result.should.deep.equal({ status: Status.Unproven, witness: null, reason: 'runtime regex state budget exceeded' });
     });
-    it('should keep finite support runtime timeouts unproven', () => {
-        const result = checkPatternRule('[AB]', undefined, { kind: Kind.Matches, operand: '^[AB]$' }, undefined, () => RegexSampleOutcome.Timeout);
-        result.should.deep.equal({ status: Status.Unproven, witness: null, reason: 'runtime regex timed out' });
+    it('should keep finite support automaton budget exhaustion unproven', () => {
+        const result = checkPatternRule('[AB]', undefined, { kind: Kind.Matches, operand: '^[AB]$' }, undefined, () => RegexSampleOutcome.BudgetExceeded);
+        result.should.deep.equal({ status: Status.Unproven, witness: null, reason: 'runtime regex state budget exceeded' });
     });
     it('should not execute an ambiguous authored regex in a host runtime', () => {
         let calls = 0;

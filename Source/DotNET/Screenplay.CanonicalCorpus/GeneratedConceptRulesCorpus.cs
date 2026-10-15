@@ -15,29 +15,28 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 public static class GeneratedConceptRulesCorpus
 {
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.GeneratedConceptRules.v20";
+    const string PortablePrefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.GeneratedConceptRules.portable.v20";
 
     /// <summary>
     /// Gets equivalent single, folder, reordered and relocated source forms.
     /// </summary>
-    public static ImmutableArray<CanonicalCorpusSourceForm> SourceForms
-    {
-        get
-        {
-            var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("GeneratedConceptRules"));
-            var bytes = SemanticIdentityCatalogSerializer.Serialize(catalog).ToImmutableArray();
-            var declarations = Document("declarations", "declarations.play", Resource("source.declarations.play"));
-            var module = Document("module", "Shop/module.play", Resource("source.module.play"));
-            var folder = new CanonicalCorpusSourceForm { Name = "folder", Documents = [declarations, module], IdentityCatalogBytes = bytes };
+    public static ImmutableArray<CanonicalCorpusSourceForm> SourceForms => Forms(Prefix);
 
-            return
-            [
-                new() { Name = "single", Documents = [Document("application", "application.play", [.. declarations.Bytes, .. module.Bytes])], IdentityCatalogBytes = bytes },
-                folder,
-                folder with { Name = "reordered", Documents = [module, declarations] },
-                folder with { Name = "relocated", Documents = [module with { DisplayPath = "Archive/module.play" }, declarations with { DisplayPath = "Archive/declarations.play" }] }
-            ];
-        }
-    }
+    /// <summary>
+    /// Gets the equivalent portable-dialect source forms, without changing the released v20 sources.
+    /// </summary>
+    public static ImmutableArray<CanonicalCorpusSourceForm> PortableSourceForms => Forms(PortablePrefix);
+
+    /// <summary>
+    /// Gets the new portable-dialect vector with the original fixture outcomes.
+    /// </summary>
+    public static CanonicalCorpusVector PortableV20 => V20 with
+    {
+        Name = "generated-concept-rules/portable/v20",
+        SourceForms = PortableSourceForms,
+        EsmBytes = Resource("expected.esm-v20.json", PortablePrefix),
+        SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource("expected.semantic-revision.txt", PortablePrefix).AsSpan()).Trim())
+    };
 
     /// <summary>
     /// Gets the ESM v20 generated concept rule vector.
@@ -71,9 +70,26 @@ public static class GeneratedConceptRulesCorpus
         return [Expect("Register", "ProvenCustomerId", SemanticExecutionOutcomeKind.Accepted, 1), Expect("Invite", "InvalidInviteFixture", SemanticExecutionOutcomeKind.Rejected, 0), Expect("Review", "OpaqueInviteRule", SemanticExecutionOutcomeKind.Unsupported, 0)];
     }
 
-    static ImmutableArray<byte> Resource(string name)
+    static ImmutableArray<CanonicalCorpusSourceForm> Forms(string prefix)
     {
-        using var stream = typeof(GeneratedConceptRulesCorpus).Assembly.GetManifestResourceStream($"{Prefix}.{name}") ??
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("GeneratedConceptRules"));
+        var bytes = SemanticIdentityCatalogSerializer.Serialize(catalog).ToImmutableArray();
+        var declarations = Document("declarations", "declarations.play", Resource("source.declarations.play", prefix));
+        var module = Document("module", "Shop/module.play", Resource("source.module.play", prefix));
+        var folder = new CanonicalCorpusSourceForm { Name = "folder", Documents = [declarations, module], IdentityCatalogBytes = bytes };
+
+        return
+        [
+            new() { Name = "single", Documents = [Document("application", "application.play", [.. declarations.Bytes, .. module.Bytes])], IdentityCatalogBytes = bytes },
+            folder,
+            folder with { Name = "reordered", Documents = [module, declarations] },
+            folder with { Name = "relocated", Documents = [module with { DisplayPath = "Archive/module.play" }, declarations with { DisplayPath = "Archive/declarations.play" }] }
+        ];
+    }
+
+    static ImmutableArray<byte> Resource(string name, string prefix = Prefix)
+    {
+        using var stream = typeof(GeneratedConceptRulesCorpus).Assembly.GetManifestResourceStream($"{prefix}.{name}") ??
             throw new InvalidSemanticContract($"Generated concept rule corpus resource '{name}' is missing.");
         using var bytes = new MemoryStream();
         stream.CopyTo(bytes);

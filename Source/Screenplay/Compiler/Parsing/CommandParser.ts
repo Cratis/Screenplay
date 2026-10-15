@@ -24,6 +24,7 @@ import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSynt
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { validateMatchOperand } from './MatchOperandValidation';
 import { isReactionIdentityLine, misplacedReactionIdentity } from './ReactionIdentityParser';
 import { commandReadSources } from './CommandReadSources';
 import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
@@ -284,6 +285,7 @@ function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'c
     if (parsed === undefined) {
         return undefined;
     }
+    if (parsed.kind === 'Matches' && parsed.value !== null) validateMatchOperand(context, parsed.value, locationOf(line), line.raw);
     const source = parsed.kind === 'Rule' ? parseRuleImplementation(context, line, owner === 'command') : { file: null, code: null, implementation: null };
     return {
         kind: 'ValidationRuleSyntax',

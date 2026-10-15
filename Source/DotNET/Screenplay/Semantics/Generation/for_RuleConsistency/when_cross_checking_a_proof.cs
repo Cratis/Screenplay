@@ -18,12 +18,8 @@ public class when_cross_checking_a_proof : Specification
     }
 
     [Fact]
-    void should_not_report_proven_after_a_runtime_timeout()
-    {
-        var result = RuleConsistency.CrossCheck(_shape, RuleConsistencyResult.Proven, _ => throw new RegexMatchTimeoutException());
-        result.Status.ShouldEqual(RuleConsistencyStatus.Unproven);
-        result.Reason.ShouldEqual("runtime regex timed out");
-    }
+    void should_not_convert_an_unexpected_engine_failure_into_a_verdict() =>
+        Catch.Exception(() => RuleConsistency.CrossCheck(_shape, RuleConsistencyResult.Proven, _ => throw new RegexMatchTimeoutException())).ShouldBeOfExactType<RegexMatchTimeoutException>();
 
     [Fact]
     void should_refuse_to_prove_an_ambiguous_in_fragment_pattern()

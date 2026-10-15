@@ -40,9 +40,9 @@ public class when_binding_generated_concept_rules : given.a_semantic_binder
     [Fact]
     void should_warn_with_a_reason_for_a_passing_outside_fragment_rule()
     {
-        var result = Bind("concept InviteCode : String\n  generate nanoid\n  validate\n    matches \"^(?=.{21}$).*$\"");
+        var result = Bind("concept InviteCode : String\n  generate nanoid\n  validate\n    matches \"^(?<code>.{21})$\"");
         result.Success.ShouldBeTrue();
-        result.Diagnostics.Single(value => value.Code == DiagnosticCodes.UnprovenGeneratedConceptRule).Message.ShouldContain("lookaround");
+        result.Diagnostics.Single(value => value.Code == DiagnosticCodes.UnprovenGeneratedConceptRule).Message.ShouldContain("named group");
     }
 
     [Fact]

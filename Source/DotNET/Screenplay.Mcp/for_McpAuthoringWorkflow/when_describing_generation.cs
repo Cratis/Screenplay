@@ -78,7 +78,7 @@ public class when_describing_generation : given.an_authoring_connection
     [Fact]
     void should_keep_an_unproven_rule_warning_in_the_executable_diagnostics()
     {
-        var opened = Start("concept Code : String\n  generate nanoid\n  validate\n    matches \"^(?=.{21}$).*$\"\n");
+        var opened = Start("concept Code : String\n  generate nanoid\n  validate\n    matches \"^(?<code>.{21})$\"\n");
         Generation().GetProperty("executable").GetProperty("status").GetString().ShouldEqual("admitted");
         Page("executable-diagnostics", opened.GetProperty("revision").GetString()!).EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContain("PLAY0689");
     }
