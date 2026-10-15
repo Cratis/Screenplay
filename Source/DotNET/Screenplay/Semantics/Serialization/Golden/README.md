@@ -64,6 +64,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v22.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV22()` on the full v21 model, adding only the optional final application member `reactionProductionMode: "atomic"` under decision 0078. `AtomicReactionBatchesCorpus.V22` and its legacy control pin equivalent-source bytes and reference outcomes, including rejected-world counts, refusal branches, redelivery, application and clock triggers. Earlier golden/corpus bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=22`; regenerate the source corpus with `SCREENPLAY_REGENERATE_ATOMIC_REACTION_BATCHES_CORPUS=1`. Both selectors fail deliberately; rebuild embedded resources before strict reruns.
 
+`full-esm-v23.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV23()` on the full v22 model, adding a described command with `handler: { requirementId, resultVersion }` and an unmapped required event property under decision 0082. Existing models without a described handler keep their version and bytes. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=23`; the run fails deliberately, then embedded resources must be rebuilt before a strict rerun.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:

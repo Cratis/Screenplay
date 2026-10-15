@@ -42,6 +42,7 @@ internal static partial class CommandParser
         var produces = new List<ProducesSyntax>();
         var reads = new List<ReadsSyntax>();
         HandlerSyntax? handler = null;
+        var handlers = new List<(HandlerSyntax? Handler, SourceLocation Location)>();
         ConcurrencySyntax? concurrency = null;
         CommandStreamSyntax? stream = null;
         var streamCandidates = new List<CommandStreamSyntax>();
@@ -148,6 +149,7 @@ internal static partial class CommandParser
                     break;
                 case "handler":
                     var parsedHandler = ParseHandler(context, line);
+                    handlers.Add((parsedHandler, line.Location));
                     if (parsedHandler is not null && handler is not null)
                     {
                         // The last handler wins. Keep where the replaced one and its file were written,
@@ -215,7 +217,8 @@ internal static partial class CommandParser
         }
 
         properties = [.. properties.Where(property => !removed.Contains(property))];
-        if (handler is not null && produces.Count > 0)
+        CommandHandlerValidator.Validate(handlers, context);
+        if (handler is not null && !CommandHandlerValidator.IsPending(handler) && produces.Count > 0)
         {
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }

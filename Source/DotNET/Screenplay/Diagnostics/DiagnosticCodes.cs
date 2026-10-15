@@ -3222,6 +3222,20 @@ public static class DiagnosticCodes
     public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";
 
     /// <summary>
+    /// A pending command handler intent coexists with another handler occurrence.
+    /// </summary>
+    public const string PendingIntentWithOtherHandler = "PLAY0698";
+
+    /// <summary>A described command requires a target implementation.</summary>
+    public const string DescribedCommandNotImplemented = "PLAY0695";
+
+    /// <summary>A described command must declare at least one production.</summary>
+    public const string DescribedCommandWithoutProductions = "PLAY0696";
+
+    /// <summary>A described command's result contract requires unconditional productions.</summary>
+    public const string DescribedCommandCardinalityNotAdmitted = "PLAY0697";
+
+    /// <summary>
     /// A capture over events requires its key as a required property on every source event.
     /// </summary>
     public const string CaptureEventsKeyNotRequired = "PLAY0700";

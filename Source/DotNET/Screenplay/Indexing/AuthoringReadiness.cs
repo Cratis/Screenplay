@@ -111,7 +111,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             SpecificationExampleSyntax example => FixtureFeatures(example.Stream, example.NoStream),
             CommandSyntax command =>
                 (command.Stream is { } route ? RouteFeatures(route) : [])
-                .Concat(Feature(command.Handler is not null, "command handlers")),
+                .Concat(Feature(command.Handler is not null && !(DescribedCommandAdmission.IsDescribed(command) && DescribedCommandAdmission.Refusal(command) is null), "command handlers")),
             SpecificationSyntax specification =>
                 specification.Given.Concat(specification.ThenEvents)
                     .Concat(specification.WhenAppended is { } appended ? [appended] : [])

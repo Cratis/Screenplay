@@ -330,6 +330,13 @@ public static partial class SemanticModelCanonicalJson
             WriteResponse(writer, command.Response);
         }
         if (command.Route is not null) WriteCommandRoute(writer, command.Route);
+        if (command.Handler is { } handler)
+        {
+            writer.WriteStartObject("handler");
+            writer.WriteString("requirementId", handler.RequirementId);
+            writer.WriteNumber("resultVersion", handler.ResultVersion);
+            writer.WriteEndObject();
+        }
         writer.WriteEndObject();
     }
 

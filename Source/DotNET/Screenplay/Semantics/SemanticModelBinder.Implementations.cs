@@ -16,11 +16,21 @@ public sealed partial class SemanticModelBinder
     {
         readonly List<SemanticImplementationRequirement> _implementationRequirements = [];
 
-        internal ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements =>
-            [.. _implementationRequirements.OrderBy(value => value.Source.Span.Document.ToString(), StringComparer.Ordinal)
-                .ThenBy(value => value.Source.Span.Start)
-                .ThenBy(value => value.Role)
-                .ThenBy(value => value.Member, StringComparer.Ordinal)];
+        internal ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements
+        {
+            get
+            {
+                var ambiguous = _implementationRequirements.Where(value => value.Role == SemanticImplementationRole.CommandHandler)
+                    .GroupBy(value => value.RequirementId, StringComparer.Ordinal).Where(group => group.Count() > 1)
+                    .Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+
+                return [.. _implementationRequirements.Select(value => value with { IsAmbiguous = value.Role == SemanticImplementationRole.CommandHandler && ambiguous.Contains(value.RequirementId) })
+                    .OrderBy(value => value.Source.Span.Document.ToString(), StringComparer.Ordinal)
+                    .ThenBy(value => value.Source.Span.Start)
+                    .ThenBy(value => value.Role)
+                    .ThenBy(value => value.Member, StringComparer.Ordinal)];
+            }
+        }
 
         static string Hash(string content) =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
@@ -55,6 +65,29 @@ public sealed partial class SemanticModelBinder
             }
 
             return new(0, text.Length, 1, 1, line, column);
+        }
+
+        SemanticImplementationRequirement? RequirePendingImplementation(SemanticAddress owner, HandlerSyntax handler)
+        {
+            var location = handler.Location;
+            var document = DocumentAt(location);
+            if (document is null) return null;
+            var assignment = documents.IdentityCatalog.ResolveSemanticAssignment(owner);
+            var offset = OffsetAt(document.Text, location);
+            var span = SemanticSourceSpan.Create(document.Id, offset, 0, location.Line, location.Column, location.Line, location.Column);
+            var source = new SemanticSourceMapEntry(assignment.Id, span, assignment.Origin);
+            var requirement = new SemanticImplementationRequirement(SemanticImplementationRole.CommandHandler, owner, null, null, null, string.Empty, source)
+            {
+                RequirementId = ImplementationRequirementIdentity.Create(assignment.Id, SemanticImplementationRole.CommandHandler, null),
+                ContextVersion = 1,
+                ResultVersion = 1,
+                RequiredCapability = "provider-defined",
+                AttachmentResolution = SemanticAttachmentResolution.Pending,
+                Hints = [.. handler.Implementation!.Hints.Select(hint => hint.Text)],
+                IsProvisional = assignment.Origin == SemanticIdentityOrigin.LegacyBootstrap
+            };
+            _implementationRequirements.Add(requirement);
+            return requirement;
         }
 
         SemanticImplementationRequirement? RequireImplementation(

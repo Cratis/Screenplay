@@ -22,6 +22,8 @@ static class McpModelQueries
                 fileCount,
                 reactionProductionMode = snapshot.Compilation.Value?.ReactionProductionMode?.ToString(),
                 reactionProductionReadiness = "Explicit Atomic mode is admitted by ESM v22; absence retains legacy per-fact semantics. Target realization requires separate v22 admission.",
+                describedCommandCount = declarations.Count(declaration => declaration.Syntax is Syntax.CommandSyntax { Handler: { Implementation: not null, File: null, Code: null } }),
+                describedCommandReadiness = "Pending command handlers with unconditional produces are admitted by ESM v23 (PLAY0695); body-reaching reference execution is Unsupported (ImplementationBody). Target realization requires separate v23 admission.",
                 syntaxOnly = snapshot.Index.Readiness.ModelSyntaxOnly,
                 executionReadiness = snapshot.Index.Readiness.ModelExecutionReadiness,
                 declarationCount = declarations.Length,

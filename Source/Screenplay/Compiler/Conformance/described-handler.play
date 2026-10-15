@@ -1,0 +1,37 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+// Pending intent and produces share a command; attached and legacy forms retain their syntax.
+module DescribedHandlers
+  feature Commands
+    slice StateChange Described
+      event Recorded
+        value String
+      command PendingAfterProduction
+        value String
+        produces Recorded
+          value = value
+        handler
+          implementation
+            hint "Choose the payload"
+            hint "Keep the declared event order"
+      command PendingBeforeProduction
+        handler
+          implementation
+        produces Recorded
+      command PendingOnly
+        handler
+          implementation
+      command ResponseOnly
+        value String
+        returns value
+        handler
+          implementation
+      command Attached
+        handler
+          file Handler.cs
+      command LegacyReplacement
+        handler
+          file First.cs
+        handler
+          file Last.cs
