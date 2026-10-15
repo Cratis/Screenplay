@@ -160,24 +160,24 @@ internal static partial class CompositionParser
 
     static string[] List(string text) => text.Trim() == "none" ? [] : [.. text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
 
-    [GeneratedRegex(@"^exposure\s+for\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^exposure\s+for\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ExposureHeaderRegex();
 
-    [GeneratedRegex(@"^instance\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^instance\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex InstanceHeaderRegex();
 
-    [GeneratedRegex("^property\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)(?:\\s+label\\s+\"(" + StringLiteral.BodyPattern + ")\")?(?:\\s+operations\\s+([\\w-]+(?:\\s*,\\s*[\\w-]+)*))?(?:\\s+fields\\s+(\\w+(?:\\s*,\\s*\\w+)*))?(?:\\s+reexposes\\s+([A-Za-z_]\\w*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^property\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)(?:\\s+label\\s+\"(" + StringLiteral.BodyPattern + ")\")?(?:\\s+operations\\s+([\\w-]+(?:\\s*,\\s*[\\w-]+)*))?(?:\\s+fields\\s+(\\w+(?:\\s*,\\s*\\w+)*))?(?:\\s+reexposes\\s+([A-Za-z_]\\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ExposedPropertyRegex();
 
-    [GeneratedRegex("^set\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)\\s*=\\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^set\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)\\s*=\\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SetRegex();
 
-    [GeneratedRegex("^items\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^items\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemsRegex();
 
-    [GeneratedRegex("^item\\s+(?:([A-Za-z_][\\w-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^item\\s+(?:([A-Za-z_][\\w-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemValueRegex();
 }

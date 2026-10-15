@@ -40,6 +40,8 @@ internal static partial class ScreenplayParser
         DomainSyntax? domain = null;
         AuthenticationSyntax? authentication = null;
         IdentitySyntax? identity = null;
+        ReactionProductionMode? reactionProductionMode = null;
+        var sawReactionBatches = false;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var types = new List<TypeSyntax>();
@@ -66,6 +68,17 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "reaction":
+                    if (sawReactionBatches || !placement.IsDocument || !ReactionBatchesParser.IsAtomic(line.Content))
+                    {
+                        context.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", line.Location);
+                    }
+                    else
+                    {
+                        reactionProductionMode = ReactionProductionMode.Atomic;
+                    }
+                    sawReactionBatches = true;
+                    break;
                 case "domain":
                     domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
                     break;
@@ -209,6 +222,7 @@ internal static partial class ScreenplayParser
         return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
         {
             Identity = identity,
+            ReactionProductionMode = reactionProductionMode,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             Examples = examples,
@@ -657,30 +671,30 @@ internal static partial class ScreenplayParser
         return body.Build(line.Location);
     }
 
-    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex DomainRegex();
 
-    [GeneratedRegex(@"^import\s+([\w.]+)(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^import\s+([\w.]+)(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.NonBacktracking)]
     private static partial Regex ImportRegex();
 
-    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ConceptRegex();
 
-    [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex EnumValueRegex();
 
-    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaRegex();
 
-    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaPolicyRegex();
 
-    [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ModuleRegex();
 
-    [GeneratedRegex(@"^feature\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^feature\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex FeatureRegex();
 
-    [GeneratedRegex(@"^[ ]*\t", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[ ]*\t", RegexOptions.NonBacktracking)]
     private static partial Regex TabIndentRegex();
 }

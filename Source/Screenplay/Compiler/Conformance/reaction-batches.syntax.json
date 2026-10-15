@@ -1,0 +1,13 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "reactionProductionMode": "Atomic",
+  "systems": [],
+  "types": []
+}

@@ -424,15 +424,15 @@ internal static partial class CommandParser
         return null;
     }
 
-    [GeneratedRegex(@"^stream\s+[A-Za-z_]\w*\.[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^stream\s+[A-Za-z_]\w*\.[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex RouteRegex();
 
-    [GeneratedRegex(@"^command\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^command\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ConcurrencyDimensionRegex();
 
-    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EventNameRegex();
 }

@@ -90,10 +90,10 @@ internal static partial class ImplementationInvariants
         return null;
     }
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*\z", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*\z", RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.NonBacktracking)]
     private static partial Regex GenerationNameRegex();
 
     static void ValidateHandler(HandlerSyntax handler)

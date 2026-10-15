@@ -600,66 +600,66 @@ internal static partial class ScreenParser
     static string OperandText(Match match, int quotedGroup) =>
         match.Groups[quotedGroup].Success ? StringLiteral.Unescape(match.Groups[quotedGroup].Value) : match.Groups[quotedGroup + 1].Value;
 
-    [GeneratedRegex(@"^screen\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^screen\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^data\s+([\w.]+(?:\[\])?)\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^data\s+([\w.]+(?:\[\])?)\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex DataRegex();
 
-    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ActionRegex();
 
-    [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex LabelRegex();
 
-    [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex NavigateRegex();
 
-    [GeneratedRegex("^route\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^route\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.NonBacktracking)]
     private static partial Regex RouteRegex();
 
-    [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ParameterRegex();
 
-    [GeneratedRegex(@"^outlet\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^outlet\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OutletRegex();
 
-    [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)(?:\s+order\s+(-?\d+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)(?:\s+order\s+(-?\d+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ContributionRegex();
 
-    [GeneratedRegex(@"^component\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^component\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ComponentRegex();
 
-    [GeneratedRegex(@"^property\s+([\w.]+)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^property\s+([\w.]+)\s+from\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ComponentPropertyBindingRegex();
 
-    [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ComponentPropertyLiteralRegex();
 
-    [GeneratedRegex("^id\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^id\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.NonBacktracking)]
     private static partial Regex StableIdRegex();
 
-    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ExposesRegex();
 
-    [GeneratedRegex("^presentation\\s+([A-Za-z_]\\w*)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^presentation\\s+([A-Za-z_]\\w*)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.NonBacktracking)]
     private static partial Regex PresentationRegex();
 
-    [GeneratedRegex(@"^item\s+([A-Za-z_]\w*)\s+(action|navigate|dialog)(?:\s+to)?\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^item\s+([A-Za-z_]\w*)\s+(action|navigate|dialog)(?:\s+to)?\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ToolbarItemRegex();
 
-    [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex SlotRegex();
 
-    [GeneratedRegex("^title\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^title\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex TitleRegex();
 
-    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ColumnRegex();
 
-    [GeneratedRegex(@"^on\s+row-click\s+(navigate\s+to\s+.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+row-click\s+(navigate\s+to\s+.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex RowClickRegex();
 
-    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex FieldRegex();
 }

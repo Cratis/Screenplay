@@ -176,19 +176,19 @@ internal static partial class ContributionParser
         return int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("^destination\\s+(?:(outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^destination\\s+(?:(outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex DestinationRegex();
 
-    [GeneratedRegex("^(?:([A-Za-z_][\\w.-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^(?:([A-Za-z_][\\w.-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemValueRegex();
 
-    [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex LabelRegex();
 
-    [GeneratedRegex(@"^order\s+(\d+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^order\s+(\d+)$", RegexOptions.NonBacktracking)]
     private static partial Regex OrderRegex();
 
     /// <summary>

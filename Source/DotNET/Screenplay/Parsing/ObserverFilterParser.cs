@@ -29,6 +29,6 @@ internal static partial class ObserverFilterParser
         return previous;
     }
 
-    [GeneratedRegex(@"^from\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^from\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 }

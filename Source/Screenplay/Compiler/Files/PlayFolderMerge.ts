@@ -49,6 +49,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
     for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
+    const modes = applications.filter(application => application.reactionProductionMode != null);
+    for (const extra of modes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidReactionBatchesDeclaration,
+        "Declare 'reaction batches atomic' once at the application root.", extra.location));
     const domains = applications.map(application => application.domain).filter(domain => domain !== null);
     for (const extra of domains.slice(1)) {
         diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
@@ -60,6 +63,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
         sourceOptions,
+        ...(modes.length === 0 ? {} : { reactionProductionMode: modes[0].reactionProductionMode }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),

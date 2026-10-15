@@ -188,24 +188,24 @@ internal static partial class SampleDataPackParser
         return null;
     }
 
-    [GeneratedRegex(@"^sample\s+data\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^sample\s+data\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("^title\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^title\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex TitleRegex();
 
-    [GeneratedRegex(@"^locale\s+([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^locale\s+([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)$", RegexOptions.NonBacktracking)]
     private static partial Regex LocaleRegex();
 
-    [GeneratedRegex(@"^shape\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^shape\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ShapeRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex FieldRegex();
 
-    [GeneratedRegex(@"^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$", RegexOptions.NonBacktracking)]
     private static partial Regex NumberRegex();
 
-    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex QuotedRegex();
 }

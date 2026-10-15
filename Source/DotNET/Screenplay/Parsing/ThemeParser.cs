@@ -58,9 +58,9 @@ internal static partial class ThemeParser
         return new(name, compatibleWith, header.Location) { DirectiveLocations = directiveLocations };
     }
 
-    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^compatible\s+with\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^compatible\s+with\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex CompatibleWithRegex();
 }

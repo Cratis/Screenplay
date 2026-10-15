@@ -188,13 +188,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
         try
         {
-            foreach (var produced in trigger.Produces)
-            {
-                if (Produce(reaction, produced, lookup, root, cause, occurrence) is { } failure)
-                {
-                    return failure;
-                }
-            }
+            if (ProduceAll(reaction, trigger.Produces, lookup, root, cause, occurrence) is { } productionFailure) return productionFailure;
 
             foreach (var invocation in trigger.Invokes)
             {
@@ -222,6 +216,21 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         SemanticCommandOccurrence? occurrence,
         SemanticInvocationRefusalEvaluation? refusal = null)
     {
+        if (Materialize(reaction, produced, values, root, cause, occurrence, refusal, out var fact) is { } failure) return failure;
+        return Append(fact!, occurrence?.Occurred);
+    }
+
+    SemanticExecutionResult? Materialize(
+        SemanticReaction reaction,
+        SemanticProducedEvent produced,
+        Dictionary<SemanticId, SemanticValue> values,
+        SemanticExpressionRootKind root,
+        SemanticFact? cause,
+        SemanticCommandOccurrence? occurrence,
+        SemanticInvocationRefusalEvaluation? refusal,
+        out SemanticFact? fact)
+    {
+        fact = null;
         if (RequiresAuditIdentity(reaction, produced.Mappings) is { } unsupported)
         {
             return unsupported;
@@ -257,14 +266,14 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             context = new(new(produced.DestinationType!, destination));
         }
 
-        var fact = new SemanticFact(produced.EventContract, destination, mapped)
+        fact = new SemanticFact(produced.EventContract, destination, mapped)
         {
             Context = context,
             Tags = eventContract.Tags.AddRange(produced.Tags),
             Occurred = occurrence?.Occurred,
             ReactionOrigin = reaction.Id
         };
-        return Append(fact, occurrence?.Occurred);
+        return null;
     }
 
     SemanticExecutionResult? Invoke(
@@ -304,10 +313,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&
                 invocation.OnRefused.FirstOrDefault(refusal.Matches) is { } branch)
             {
-                foreach (var produced in branch.Produces)
-                {
-                    if (Produce(reaction, produced, values, root, cause, occurrence, refusal) is { } failure) return failure;
-                }
+                if (ProduceAll(reaction, branch.Produces, values, root, cause, occurrence, refusal) is { } failure) return failure;
                 handled = true;
                 return null;
             }

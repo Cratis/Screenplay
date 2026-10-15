@@ -496,31 +496,31 @@ internal static partial class ArrangementParser
         }
     }
 
-    [GeneratedRegex(@"^arrangement\s+(flow|freeform)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^arrangement\s+(flow|freeform)$", RegexOptions.NonBacktracking)]
     private static partial Regex ArrangementRegex();
 
-    [GeneratedRegex(@"^fits\s+slot\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^fits\s+slot\s+([a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex FitsSlotRegex();
 
-    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex TemplateExposesRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex SlotDeclarationRegex();
 
-    [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?(?:\s+columns\s+(\d+))?(?:\s+rows\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?(?:\s+columns\s+(\d+))?(?:\s+rows\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ContainerRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+width\s+(\d+))?(?:\s+height\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+width\s+(\d+))?(?:\s+height\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex SlotLeafRegex();
 
-    [GeneratedRegex(@"^when\s+(?:width\s+(compact|regular)(?:\s*,\s*height\s+(compact|regular))?|height\s+(compact|regular))$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+(?:width\s+(compact|regular)(?:\s*,\s*height\s+(compact|regular))?|height\s+(compact|regular))$", RegexOptions.NonBacktracking)]
     private static partial Regex OverrideRegex();
 
-    [GeneratedRegex(@"^variant\s+width\s+(compact|regular)\s*,\s*height\s+(compact|regular)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^variant\s+width\s+(compact|regular)\s*,\s*height\s+(compact|regular)$", RegexOptions.NonBacktracking)]
     private static partial Regex VariantRegex();
 
-    [GeneratedRegex(@"^place\s+([a-z_]\w*)\s+(?:(hidden)|at\s+(\d+)\s*,\s*(\d+)\s+size\s+(fill|\d+)\s*,\s*(fill|\d+))$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^place\s+([a-z_]\w*)\s+(?:(hidden)|at\s+(\d+)\s*,\s*(\d+)\s+size\s+(fill|\d+)\s*,\s*(fill|\d+))$", RegexOptions.NonBacktracking)]
     private static partial Regex PlaceRegex();
 
     /// <summary>

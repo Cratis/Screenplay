@@ -192,21 +192,21 @@ internal static partial class UiProfileParser
         }
     }
 
-    [GeneratedRegex(@"^ui\s+profile\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^ui\s+profile\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^target\s+platform\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^target\s+platform\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex TargetPlatformRegex();
 
-    [GeneratedRegex(@"^target\s+size\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^target\s+size\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex TargetSizeRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex PackageNameRegex();
 
-    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ThemeReferenceRegex();
 
-    [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex LayoutReferenceRegex();
 }

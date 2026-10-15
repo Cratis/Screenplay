@@ -95,12 +95,12 @@ internal static partial class WorkspaceDuplicateComplianceRepairs
         return line[..suffix.Index] + unique + line[(suffix.Index + suffix.Length)..];
     }
 
-    [GeneratedRegex(@"[^\r\n]+(?:\r\n|\r|\n)?|(?:\r\n|\r|\n)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"[^\r\n]+(?:\r\n|\r|\n)?|(?:\r\n|\r|\n)", RegexOptions.NonBacktracking)]
     private static partial Regex LineRegex();
 
-    [GeneratedRegex(@"^(\s*concept\s+\w+\s*:\s*\w+)((?:[^\S\r\n]+@?\w+)*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(\s*concept\s+\w+\s*:\s*\w+)((?:[^\S\r\n]+@?\w+)*)", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"[^\S\r\n]+(@?\w+)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"[^\S\r\n]+(@?\w+)", RegexOptions.NonBacktracking)]
     private static partial Regex MarkerRegex();
 }

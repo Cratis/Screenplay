@@ -225,15 +225,15 @@ internal static partial class QueryParser
         return match.Groups[1].Value;
     }
 
-    [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?(?:\?|\s+optional)?\s+by\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?(?:\?|\s+optional)?\s+by\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex KeyedHeaderRegex();
 
-    [GeneratedRegex(@"^scoped\s+to\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^scoped\s+to\s+([a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ScopeRegex();
 
-    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+(.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ParameterRegex();
 }

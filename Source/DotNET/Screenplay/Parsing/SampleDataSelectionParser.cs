@@ -120,12 +120,12 @@ internal static partial class SampleDataSelectionParser
             $"Invalid sample data line '{line.Content}' - expected 'active <pack>', 'active blueprint <id>', 'shape <Shape> maps to <ReadModel>' or 'bind <ReadModel> to <pack>'",
             line.Location);
 
-    [GeneratedRegex(@"^active\s+((?:blueprint\s+[a-z0-9]+(?:[._-][a-z0-9]+)*)|(?:[A-Za-z_]\w*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^active\s+((?:blueprint\s+[a-z0-9]+(?:[._-][a-z0-9]+)*)|(?:[A-Za-z_]\w*))$", RegexOptions.NonBacktracking)]
     private static partial Regex ActiveRegex();
 
-    [GeneratedRegex(@"^shape\s+([A-Za-z_]\w*)\s+maps\s+to\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^shape\s+([A-Za-z_]\w*)\s+maps\s+to\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 
-    [GeneratedRegex(@"^bind\s+([A-Za-z_]\w*)\s+to\s+((?:blueprint\s+[a-z0-9]+(?:[._-][a-z0-9]+)*)|(?:[A-Za-z_]\w*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^bind\s+([A-Za-z_]\w*)\s+to\s+((?:blueprint\s+[a-z0-9]+(?:[._-][a-z0-9]+)*)|(?:[A-Za-z_]\w*))$", RegexOptions.NonBacktracking)]
     private static partial Regex BindingRegex();
 }

@@ -130,13 +130,13 @@ internal static partial class SpecificationParser
         }
     }
 
-    [GeneratedRegex(@"^case\s+([A-Za-z_]\w*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^case\s+([A-Za-z_]\w*)(?:\s+(?<property>[\w.]+)\s*=(?:\s+(?<value>.+)|(?<value>[^=>\n].*)))?$", RegexOptions.NonBacktracking)]
     private static partial Regex CaseHeaderRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*'|(?<reference>\\bcase\\.[a-z_]\\w*)", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*'|(?<reference>\\bcase\\.[a-z_]\\w*)", RegexOptions.NonBacktracking)]
     private static partial Regex CaseTokenRegex();
 
-    [GeneratedRegex(@"^case\.([a-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^case\.([a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex CaseReferenceRegex();
 
     sealed class CaseReferences : ScreenplaySyntaxWalker

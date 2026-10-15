@@ -106,9 +106,9 @@ internal static partial class EventParser
             line.Location);
     }
 
-    [GeneratedRegex(@"^(?:(?<public>public)\s+)?event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:(?<public>public)\s+)?event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.NonBacktracking)]
     private static partial Regex TypeShapedRegex();
 }

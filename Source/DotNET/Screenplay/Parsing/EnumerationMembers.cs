@@ -47,9 +47,9 @@ internal sealed partial class EnumerationMembers
         return _numbered > 0 && _numbers.Count == count ? _numbers : null;
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s*=\s*(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s*=\s*(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex MemberRegex();
 
-    [GeneratedRegex(@"^-?(0|[1-9][0-9]*)\z", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^-?(0|[1-9][0-9]*)\z", RegexOptions.NonBacktracking)]
     private static partial Regex NumberRegex();
 }

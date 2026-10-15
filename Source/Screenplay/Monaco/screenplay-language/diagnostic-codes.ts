@@ -86,6 +86,7 @@ export const diagnosticCodes = {
     reducerIdentityMismatch: 'PLAY0690',
     generationSupportBudgetExceeded: 'PLAY0691',
     emptyGenerationSupport: 'PLAY0692',
+    invalidReactionBatchesDeclaration: 'PLAY0693',
     invalidDescription: 'PLAY0145',
     emptyDescription: 'PLAY0146',
     duplicateDescription: 'PLAY0147',

@@ -86,7 +86,7 @@ public sealed record ExecutableSemanticModel
     /// <returns>The validated model.</returns>
     public static ExecutableSemanticModel Create(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application, int utcAssessmentYear)
     {
-        EsmSchemaV21Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV22Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion, utcAssessmentYear);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -111,6 +111,12 @@ internal static partial class SemanticModelValidator
         var assessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
         var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application, assessmentYear);
         context.RegisterApplication(application);
+        if (application.ReactionProductionMode is { } mode &&
+            (mode != SemanticReactionProductionMode.Atomic || !semanticVersion.IsAtLeast(SemanticVersion.V22)))
+        {
+            throw new InvalidSemanticContract("Reaction production mode must be atomic and requires ESM v22 or later.");
+        }
+
         ValidateQueryRejectionVersion(application, semanticVersion);
         ValidateRefusalVersion(application, semanticVersion);
         ValidateRecoverySpecificationVersion(application, semanticVersion);

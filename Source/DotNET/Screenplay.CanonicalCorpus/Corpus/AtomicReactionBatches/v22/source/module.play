@@ -1,0 +1,187 @@
+module Accounts
+  feature Work
+    slice Automation Batches
+      event Started
+      event Changed
+        value String
+      event Claimed
+      event Released
+      event Prefix
+      event BranchFirst
+      event Later
+      command Start
+        id String identifier
+        produces Started
+          for id
+      command Secure
+        id String identifier
+        validate
+          require id != "a"
+            message "Refused"
+      command FollowUp
+        id String identifier
+        produces Later
+          for id
+      constraint UniqueValue
+        unique value on Changed
+        message "Already held"
+      constraint OneClaim
+        unique event Claimed
+        released by Released
+        message "Already claimed"
+      reaction LaterRejection
+        when Started
+          produces Changed
+            for "a"
+            value = "first"
+          produces Claimed
+            for "a"
+      reaction TwoSources
+        when Started
+          produces Changed
+            for "a"
+            value = "same"
+          produces Changed
+            for "b"
+            value = "same"
+      reaction OwnRepeat
+        when Started
+          produces Changed
+            for "a"
+            value = "same"
+          produces Changed
+            for "a"
+            value = "same"
+      reaction ValueChange
+        when Started
+          produces Changed
+            for "a"
+            value = "first"
+          produces Changed
+            for "a"
+            value = "second"
+          produces Changed
+            for "b"
+            value = "first"
+      reaction Cycle
+        when Started
+          produces Released
+            for "a"
+          produces Claimed
+            for "a"
+      reaction Refusal
+        when Started
+          produces Prefix
+          invokes Secure
+            id = "a"
+            on refused by validation
+              produces BranchFirst
+              produces Claimed
+                for "a"
+            on refused
+              acknowledge
+          invokes FollowUp
+            id = "a"
+      reaction Acknowledge
+        when Started
+          invokes Secure
+            id = "a"
+            on refused
+              acknowledge
+          invokes FollowUp
+            id = "a"
+      reaction Application
+        when Requested
+          produces Changed
+            for "a"
+            value = "first"
+          produces Changed
+            for "a"
+            value = "second"
+          produces Changed
+            for "b"
+            value = "third"
+      reaction Clock
+        every 1 days
+          produces Changed
+            for "clock"
+            value = "clock-first"
+          produces Changed
+            for "clock"
+            value = "clock-second"
+      specification ApplicationOccurrenceIsOneBatch
+        when trigger Requested
+        then Changed
+          for "a"
+          value = "first"
+        then Changed
+          for "a"
+          value = "second"
+        then Changed
+          for "b"
+          value = "third"
+      specification ClockOccurrenceIsOneBatch
+        given clock "2026-10-01T00:00:00Z"
+        when clock "2026-10-02T00:00:00Z"
+        then Changed
+          for "clock"
+          value = "clock-first"
+        then Changed
+          for "clock"
+          value = "clock-second"
+      specification LaterEventRejects
+        given Claimed
+          for "a"
+        given Started
+          for "a"
+        when redelivered Started to LaterRejection
+        then error "Already claimed"
+      specification TwoSourcesCollide
+        given Started
+          for "a"
+        when redelivered Started to TwoSources
+        then error "Already held"
+      specification SameSourceRepeats
+        given Started
+          for "a"
+        when redelivered Started to OwnRepeat
+        then Changed
+          for "a"
+          value = "same"
+        then Changed
+          for "a"
+          value = "same"
+      specification ReservationSurvivesChange
+        given Started
+          for "a"
+        when redelivered Started to ValueChange
+        then error "Already held"
+      specification EventCycleReleases
+        given Claimed
+          for "a"
+        given Started
+          for "a"
+        when redelivered Started to Cycle
+        then Released
+          for "a"
+        then Claimed
+          for "a"
+      specification RefusalBatchRejects
+        given Claimed
+          for "a"
+        given Started
+          for "a"
+        when redelivered Started to Refusal
+        then error "Already claimed"
+      specification AcknowledgementHasNoEvents
+        given Started
+          for "a"
+        when redelivered Started to Acknowledge
+        then no events
+    slice StateView CurrentValue
+      readmodel Current
+        accountId String key
+        value String
+      projection Current => Current
+        from Changed
+          accountId = $eventSourceId

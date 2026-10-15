@@ -115,6 +115,6 @@ internal static partial class DescriptionParser
         return description;
     }
 
-    [GeneratedRegex(@"^description\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^description\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex DescriptionRegex();
 }

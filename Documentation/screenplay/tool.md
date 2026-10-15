@@ -2,6 +2,8 @@
 
 You have a folder of `.play` files and want to know they are valid before anything consumes them. The Screenplay compiler ships in two forms: a .NET library you can embed, and a command line tool that verifies every `.play` file in a directory tree and prints any problems in a readable, compiler style format.
 
+Application-root `reaction batches atomic` selects ESM v22 for the composed application. No CLI flag or dependency update opts existing files in. Formatting and export preserve the declaration; omission retains legacy per-fact reaction semantics. Execution and rendering consumers must explicitly admit v22.
+
 ## Install the CLI
 
 The CLI is a [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools) published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:
@@ -159,7 +161,7 @@ selects no checks. `all` expands to every check supported by the running version
 so upgrading can strengthen your gate. An explicit list pins its membership.
 Reports deduplicate checks and order them by the check catalog's declaration order.
 `openQuestions` accepts `report` or `fail`; omitted means notes are not evaluated.
-The [v1 JSON Schema](screenplay-v1.schema.json) validates the authored shape in editors.
+The [v1 JSON Schema](https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/screenplay-v1.schema.json) validates the authored shape in editors.
 
 The tool starts its root search at the target folder, or a file target's parent.
 It chooses the nearest folder at or above that start containing `screenplay.json`

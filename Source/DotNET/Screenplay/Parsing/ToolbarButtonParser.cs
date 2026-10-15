@@ -50,14 +50,14 @@ internal static partial class ToolbarButtonParser
         while (position < rest.Length)
         {
             var part = PartRegex().Match(rest, position);
-            if (!part.Success)
+            if (!part.Success || part.Index != position)
             {
                 context.Error(DiagnosticCodes.InvalidToolbarButton, $"Invalid toolbar button '{line.Content}' - unexpected '{rest[position..].Trim()}'; expected {Expected}", line.Location);
                 valid = false;
                 break;
             }
 
-            position = part.Index + part.Length;
+            position = part.Groups["end"].Index;
             var key = part.Groups[1].Value;
             var quoted = part.Groups[2].Success;
             var localized = part.Groups[3].Success;
@@ -152,12 +152,12 @@ internal static partial class ToolbarButtonParser
         return part.Groups[3].Success ? part.Groups[3].Value : part.Groups[4].Value;
     }
 
-    [GeneratedRegex("^button\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^button\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ButtonRegex();
 
-    [GeneratedRegex("\\G\\s*(title|slice|emphasis|icon)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\s*(title|slice|emphasis|icon)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex PartRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex SliceRegex();
 }

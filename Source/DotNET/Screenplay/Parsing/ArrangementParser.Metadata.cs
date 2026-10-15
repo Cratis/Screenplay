@@ -130,10 +130,10 @@ internal static partial class ArrangementParser
         }
     }
 
-    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex QuotedTextRegex();
 
-    [GeneratedRegex(@"^content\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^content\s+([a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ContentRegex();
 
     /// <summary>

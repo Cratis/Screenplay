@@ -103,6 +103,6 @@ public static partial class ScreenplayContract
 
     static JsonArray Strings(IEnumerable<string> values) => new([.. values.Select(value => (JsonNode?)JsonValue.Create(value))]);
 
-    [GeneratedRegex(@"^EsmSchemaV\d+Support$", RegexOptions.None, 2000)]
+    [GeneratedRegex(@"^EsmSchemaV\d+Support$", RegexOptions.NonBacktracking)]
     private static partial Regex SchemaSupportRegex();
 }

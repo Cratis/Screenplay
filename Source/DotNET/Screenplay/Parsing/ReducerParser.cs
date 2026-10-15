@@ -119,9 +119,9 @@ internal static partial class ReducerParser
         return new(@event, file, code, line.Location, description) { DirectiveLocations = directiveLocations };
     }
 
-    [GeneratedRegex(@"^reducer\s+([A-Za-z_]\w*)\s*=>\s*([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^reducer\s+([A-Za-z_]\w*)\s*=>\s*([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^on\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OnRegex();
 }
