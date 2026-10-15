@@ -40,7 +40,7 @@ static class McpGenerationRules
         if (unknownReason is not null) return RuleConsistencyResult.Unproven(unknownReason);
         if (rule is null) return RuleConsistencyResult.Unproven("The validation rule could not be bound; see executable diagnostics.");
 
-        return RuleConsistency.Check(concept!.Generation, concept.Primitive, rule);
+        return RuleConsistency.Check(concept!.Generation, concept.Primitive, rule, DateTimeOffset.UtcNow.Year);
     }
 
     static Dictionary<string, object?> Describe(

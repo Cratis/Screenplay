@@ -97,7 +97,7 @@ static class McpGenerationDetails
             if (bits is null && GenerationEntropy.ExactSupportCount(generation, DateTimeOffset.UtcNow.Year) is { } count)
             {
                 bits = GenerationEntropy.SupportBits(count);
-                if (generation.Strategy is "pattern" or "random") result.Add("supportCount", Number(count.ToString(CultureInfo.InvariantCulture)));
+                if (string.Equals(generation.Strategy, "pattern", StringComparison.Ordinal) || string.Equals(generation.Strategy, "random", StringComparison.Ordinal)) result.Add("supportCount", Number(count.ToString(CultureInfo.InvariantCulture)));
             }
         }
         catch (Exception error) when (error is InvalidGenerationPattern or GenerationSupportBudgetExceeded or EmptyGenerationSupport or InvalidSemanticContract)
