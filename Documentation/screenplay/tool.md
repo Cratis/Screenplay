@@ -159,7 +159,7 @@ selects no checks. `all` expands to every check supported by the running version
 so upgrading can strengthen your gate. An explicit list pins its membership.
 Reports deduplicate checks and order them by the check catalog's declaration order.
 `openQuestions` accepts `report` or `fail`; omitted means notes are not evaluated.
-The [v1 JSON Schema](screenplay-v1.schema.json) validates the authored shape in editors.
+The [v1 JSON Schema](https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/screenplay-v1.schema.json) validates the authored shape in editors.
 
 The tool starts its root search at the target folder, or a file target's parent.
 It chooses the nearest folder at or above that start containing `screenplay.json`
