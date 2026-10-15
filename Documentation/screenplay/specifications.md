@@ -473,7 +473,7 @@ specification ChasingAnOverdueInvoiceEveryMorning
 | `given clock "<instant>"` | The scenario happens at this instant. Everything mapped from `$context.occurred` takes this value, so an event property mapped from it can be asserted. At most once. |
 | `when clock "<instant>"` | The clock reaches this instant, so every reaction scheduled with `every` or `at` that is due by then runs. |
 | `when trigger <Trigger>` | A declared or registered application trigger fires, carrying the values beneath it. A value the trigger does not carry is a warning (`PLAY0466`). |
-| `given capture <Capture>` | An earlier record of a non-event capture's source, so a value transition such as `when status from "sent" to "paid"` has something to transition from. Repeatable. |
+| `given capture <Capture>` | The last-seen record of a non-event capture's source for its typed key, so field changes and transitions have previous state to compare. Repeatable for different keys. |
 | `when capture <Capture>` | A non-event capture sees this record of its source. The lines beneath are the record's fields, named as the source names them. |
 
 An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00:00Z` (`PLAY0461` otherwise), so the same text means the same moment wherever the specification runs.
@@ -485,6 +485,20 @@ These forms, and the automation and translate slices whose reactions and capture
 - **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
 - **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
 - **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Numeric and text keys remain distinct. Nested objects and lists of objects in a record are a capture's `nested` record and `children`. Child identities must be present and unique in each collection; reordering does not create additions or removals.
+
+**First observations are added only.** Without a `given capture` for the same capture and typed key, a record
+has no previous state. `when added` holds; field-change guards, `and`/`or` and transitions do not. A given
+for another key does not seed this one, and numeric and text keys stay distinct. The same rule applies at
+child and nested level: a new child identity or a nested record whose earlier field was missing or null is
+added only, even under a known root. Maps, expression guards and unguarded appends keep their meaning on
+first records.
+
+This aligns record captures with Chronicle and captures over events
+([decision 0080](https://github.com/Cratis/Screenplay/blob/main/decisions/0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md)).
+If an existing specification expected a field-guarded append on a first record, either add a separate
+`when added` append for that event and keep the field guard for updates, or supply `given capture` with the
+same key's earlier state when the scenario means a modification. The runner reports missing expected events;
+there is no new compiler diagnostic. The correction applies from ESM v6 without changing canonical bytes.
 
 **Captures over events use event fixtures.** For `source events` (ESM v9 and later), write `given <Event>` and `when append <Event>` for a declared `from` event. The incoming event's required key identifies per-key state; givens overlay in authored order without appending, and the action overlays its own properties before root capture appends run. Omitted properties keep prior values; a carried null replaces a prior value. An optional `for` is non-empty, opaque text identifying the foreign source, without a local producer type or route. It does not replace the content key.
 
