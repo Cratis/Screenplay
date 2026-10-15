@@ -34,4 +34,10 @@ public record TenantId(string Value)
     /// <param name="value">The value to convert.</param>
     /// <returns>The converted <see cref="TenantId"/>.</returns>
     public static implicit operator TenantId(string value) => new(value);
+
+    /// <summary>
+    /// Returns the underlying tenant identifier value.
+    /// </summary>
+    /// <returns>The underlying value.</returns>
+    public override string ToString() => Value;
 }
