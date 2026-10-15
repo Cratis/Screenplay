@@ -78,3 +78,4 @@
 | [0079](0079-warn-when-a-directionless-translate-slice-reacts-to-its-own-capture.md) | Warn when a directionless Translate slice reacts to an event its own capture appends | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |
 | [0080](0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md) | Treat the first record of a key in a record capture as added only, as Chronicle does | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |
 | [0081](0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md) | Choose the active sample data pack once in the ui profile | accepted | implemented | 2026-10-15 | Einar Ingebrigtsen |
+| [0085](0085-admit-protected-command-reads-through-an-explicit-preamble.md) | Admit protected command reads in the next ESM version through an explicit preamble | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
