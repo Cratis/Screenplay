@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -17,6 +18,8 @@ namespace Cratis.Screenplay.Files;
 /// </remarks>
 public static class PlayGlob
 {
+    static readonly ConcurrentDictionary<string, Regex> _patterns = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Gets whether a pattern holds a wildcard, as opposed to naming one file.
     /// </summary>
@@ -88,7 +91,11 @@ public static class PlayGlob
     /// <returns><c>true</c> when the path is a <c>.play</c> file the pattern names.</returns>
     public static bool IsMatch(string resolvedPattern, string path) =>
         path.EndsWith(".play", StringComparison.OrdinalIgnoreCase) &&
-        new Regex(ToRegex(resolvedPattern), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)).IsMatch(path);
+        _patterns.GetOrAdd(resolvedPattern, Create).IsMatch(path);
+
+    // A glob only produces classes, escapes and repeated groups, so the linear-time engine runs it without a timeout.
+    static Regex Create(string resolvedPattern) =>
+        new(ToRegex(resolvedPattern), RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, Regex.InfiniteMatchTimeout);
 
     static string ToRegex(string pattern)
     {
