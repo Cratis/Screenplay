@@ -65,6 +65,12 @@ An inbound `Translate` slice turns the public events of another application into
 ```screenplay
 slice Translate TrackShipments
   direction inbound
+  event ShipmentDispatched from "shipping"
+    orderId String
+    status String
+  event ShipmentDelivered from "shipping"
+    orderId String
+    status String
   event OrderShipped
     orderId String
   capture ShipmentTracking
@@ -73,11 +79,24 @@ slice Translate TrackShipments
       from ShipmentDelivered
     key orderId
     append OrderShipped
-      when status from "pending" to "dispatched"
+      when added
         orderId = $.orderId
+  specification RecordingTheFirstDispatch
+    when append ShipmentDispatched
+      orderId = "order-42"
+      status = "dispatched"
+    then OrderShipped
+      for "order-42"
+      orderId = "order-42"
 ```
 
-One capture reads one origin: all its `from` events must have the exact same origin string (`PLAY0687`); split events from different origins into separate captures. Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form selects ESM v9 and binds to an executable capture over events. The reference evaluator has no outside records to present to such a capture, so a `when capture` specification over events reports a typed Unsupported outcome instead of passing or failing. Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
+One capture reads one origin: all its `from` events must have the exact same origin string (`PLAY0687`); split events from different origins into separate captures. Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form selects ESM v9 and binds to an executable capture over events. Present the declared event through `given <Event>` or `when append <Event>`; its fields are typed by that event. `given capture` and `when capture` over events are compile errors (`PLAY0701`), with a repair only when there is exactly one `from` event. A fixture's optional `for` identifies the foreign event source as opaque, non-empty text, not the capture's key. Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
+
+The key must be a required property of every `from` event (`PLAY0700`), never a context key. Each incoming event overlays its own top-level properties onto remembered state for that key; absent properties retain earlier values, while objects and lists replace whole values. Givens fold in authored order without appending. Keys come from the incoming event, not remembered state: empty or whitespace-only text fails execution with a contract rejection naming the capture, event and key, including before the action when a given has an empty key. Non-text, non-numeric keys are Unsupported; numeric and text keys stay distinct.
+
+The first event is `added`, not a field modification. An unchanged overlay appends nothing. Field, `and`/`or` and transition guards hold only on modifications; `when added` holds only on the first event, and root `when removed` never holds. An append without `when` holds on any change; expression guards evaluate the after state only on a change. Maps apply to both states, and `$.field` reads the mapped merged state. `$context.occurred` is the incoming occurrence, supplied by the scenario's `given clock`; other context members are not admitted.
+
+Delivery follows the fact's settled reactions, in capture semantic-identity order. Each capture append settles its own cascade before the next; the 1,000-fact scenario budget includes those appends. `children` and `nested` over events remain Unsupported, as do composite/list values used as scalars or watched by guards. The reference stores no new capture state across specifications and does not prove redelivery deduplication, observer ordering, retry safety or context propagation. Stage must still reject event-capture forms Chronicle cannot realize, including maps, expression guards and an append without `when`.
 
 ## The CDL vocabulary at a glance
 
@@ -105,7 +124,7 @@ One capture reads one origin: all its `from` events must have the exact same ori
 ## In the executable semantic model
 
 Captures bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)).
-The reference evaluator is handed records - `given capture` and `when capture` in a [specification](specifications.md#clocks-triggers-and-captures) -
+For non-event sources, the reference evaluator is handed records - `given capture` and `when capture` in a [specification](specifications.md#clocks-triggers-and-captures) -
 and never contacts a `source`, which stays realization metadata. For each record:
 
 - `map` operations apply in order, each to the record as the ones before it left it. A field `map` does not

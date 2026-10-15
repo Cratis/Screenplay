@@ -99,7 +99,7 @@ The largest file has 123 lines.
   - State changes use `given caller`, `when <Command>` and `then <Event>`, plus `then error` and `then denied` specifications.
   - Projected views use `when append` with `then readmodel` and `then query`.
   - The search index view uses `when query` with `then result`, `then no result` and `then denied`.
-  - The translations use `given capture` and `when capture`. One automation is driven by `when clock`, another by `when trigger`.
+  - Record translations use `given capture` and `when capture`; the inbound carrier dispatch translation uses `when append` of the carrier's declared public event. One automation is driven by `when clock`, another by `when trigger`.
   - `given clock` fixes the time a cancellation is stamped with.
 
 ## Verify it

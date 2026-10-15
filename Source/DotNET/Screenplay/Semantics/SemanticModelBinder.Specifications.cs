@@ -249,6 +249,16 @@ public sealed partial class SemanticModelBinder
                 type = producerTypes.Length == 1 ? producerTypes[0] : null;
             }
 
+            if (type is null && @event.Contract.Origin is not null && value.For is not null)
+            {
+                type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text);
+                if (BindConcreteValue(value.For, type, "foreign event source", false) is not SemanticTextValue source || string.IsNullOrWhiteSpace(source.Value))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, "A foreign event source fixture requires non-empty text.", value.For.Location);
+                    return null;
+                }
+            }
+
             return new(
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))

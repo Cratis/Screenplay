@@ -473,18 +473,24 @@ specification ChasingAnOverdueInvoiceEveryMorning
 | `given clock "<instant>"` | The scenario happens at this instant. Everything mapped from `$context.occurred` takes this value, so an event property mapped from it can be asserted. At most once. |
 | `when clock "<instant>"` | The clock reaches this instant, so every reaction scheduled with `every` or `at` that is due by then runs. |
 | `when trigger <Trigger>` | A declared or registered application trigger fires, carrying the values beneath it. A value the trigger does not carry is a warning (`PLAY0466`). |
-| `given capture <Capture>` | An earlier record of a capture's source, so a value transition such as `when status from "sent" to "paid"` has something to transition from. Repeatable. |
-| `when capture <Capture>` | The capture sees this record of its source. The lines beneath are the record's fields, named as the source names them. |
+| `given capture <Capture>` | An earlier record of a non-event capture's source, so a value transition such as `when status from "sent" to "paid"` has something to transition from. Repeatable. |
+| `when capture <Capture>` | A non-event capture sees this record of its source. The lines beneath are the record's fields, named as the source names them. |
 
 An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00:00Z` (`PLAY0461` otherwise), so the same text means the same moment wherever the specification runs.
 
 These forms, and the automation and translate slices whose reactions and captures they drive, bind to ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)), and the reference runner executes them:
 
 - **Every action sets reactions off.** After a command, an append, a clock tick, a trigger or a capture record, each new fact runs the reactions to its event, and what those append or the commands they invoke run more, until nothing is left to react to. `then` events compare every new fact, the action's and the reactions'.
-- **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions appended - the way a command's `then` events are what it produced.
+- **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions and captures appended - the way a command's `then` events are what it produced.
 - **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
 - **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
 - **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Numeric and text keys remain distinct. Nested objects and lists of objects in a record are a capture's `nested` record and `children`. Child identities must be present and unique in each collection; reordering does not create additions or removals.
+
+**Captures over events use event fixtures.** For `source events` (ESM v9 and later), write `given <Event>` and `when append <Event>` for a declared `from` event. The incoming event's required key identifies per-key state; givens overlay in authored order without appending, and the action overlays its own properties before root capture appends run. Omitted properties keep prior values; a carried null replaces a prior value. An optional `for` is non-empty, opaque text identifying the foreign source, without a local producer type or route. It does not replace the content key.
+
+A first event is `added` only; field and transition guards require a modification, and an identical event appends nothing. Capture maps apply to both states, `$.field` reads mapped merged state and `$context.occurred` requires `given clock`. Reactions settle before delivery in capture semantic-identity order; each append settles its cascade. An empty text key is a contract failure, including before the action for an empty given key. Children/nested event-capture scopes and structured values used as scalars remain Unsupported. See [captures](captures.md#capturing-from-public-events) for the full contract and runtime limits.
+
+`given capture` and `when capture` naming an event capture are compile errors (`PLAY0701`). Only a single-`from` capture has an automatic repair to the corresponding event fixture. Its key must be a required property on every source event (`PLAY0700`). Canonical models already carrying event-capture record fixtures stay valid but execute as Unsupported, including given records.
 
 Reached reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. Unrelated reactions and bodies excluded by `where` do not run. A later reaction failure retains earlier accepted facts; each invoked command remains atomic. The reference permits at most 1,000 new facts per scenario and 10,000 due occurrences per clock advance, failing closed at either limit. Clock occurrences are not fake input events, and capture sources are never contacted. A command a reaction invokes runs through its full pipeline with the reaction's declared system identity, or no caller when none is declared. Without an identity a gated command rejects, ending the scenario. This matches an unmarked Arc reactor: Arc supplies a system principal only to returned commands of a reactor carrying `[ExecuteCommandsAsSystem]`. Declare that path with [`runs as system role`](reactions.md#returned-command-identity), which selects released ESM v10. Its authentication and exact roles can satisfy a gate; claim conditions are unknown, including under `not`, and a final unknown denies. Authorization identity does not supply `$context.causedBy`, which remains unsupported in invocations. `given caller` still supplies no actor to reaction invocations. Without `runs as` or another later construct, these automation forms select language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
 
@@ -562,10 +568,10 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
 | `when redelivered <EventType> to <Reaction>` | Deliver exactly one given occurrence to one event-trigger reaction, without appending it again (ESM v17). |
 | `given clock "<instant>"` | The instant the scenario happens at. |
-| `given capture <Capture>` | An earlier record of a capture's source. |
+| `given capture <Capture>` | An earlier record of a non-event capture's source. Event captures use `given <Event>`. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
 | `when trigger <Trigger>` | An application trigger fires with the values it carries. |
-| `when capture <Capture>` | A capture sees one record of its source. |
+| `when capture <Capture>` | A non-event capture sees one record of its source. Event captures use `when append <Event>`. |
 | `when query <Query>` | Perform a query with its arguments. |
 | `then result [exactly]` | One expected row of the performed query; repeat for several. |
 | `then no result` | The performed query returns nothing. |

@@ -665,6 +665,8 @@ Private origins continue to use the existing invalid event/import declaration di
 | `PLAY0619` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
 | `PLAY0620` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
 | `PLAY0687` | Error | A capture's `source events` originate from several event stores; split it into one capture per origin. |
+| `PLAY0700` | Error | A capture over events names a key that is not a required property of every declared `from` event, including a `$`-context key. |
+| `PLAY0701` | Error | `given capture` or `when capture` names a capture over events; present the typed source event with `given <Event>` or `when append <Event>`. |
 
 The operational edges checked are seed appends, command and reaction productions (including refusal branches), capture appends,
 projection event sources and joins/removals, reducers and constraints. Projection `all` includes every declared
@@ -678,10 +680,12 @@ Existing syntax restrictions remain: qualified reaction triggers do not parse, a
 still report `PLAY0497`. Programmatic qualified references are resolved and checked, not treated as private.
 The TypeScript compiler and both editors report the same codes (see [editor diagnostics](editor-diagnostics.md)).
 
-Repairs: only `PLAY0614` has one. It declares `direction inbound` or `direction outbound` on the slice, and is offered
+Repairs: `PLAY0701` has a compiler-authored MCP repair when the capture has exactly one `from` event. It rewrites the record step to `given <Event>` or `when append <Event>` with the same fields; multiple source events are ambiguous and have no repair. The subject is the specification, canonical formatting and individual review are required, and pinned evidence and fix-all are not supported. `PLAY0700` has no automatic repair: choose a required key carried by every source event or change those contracts deliberately.
+
+`PLAY0614` also has a repair. It declares `direction inbound` or `direction outbound` on the slice, and is offered
 only when exactly one direction is consistent with the slice's events and constructs (C# `propose-repair` and
-`read-workspace` view `repairs` over MCP; the TypeScript quick fix in Monaco and VS Code). Every other code in this
-section has no automatic repair because each one is a contract decision for the author, not a spelling:
+`read-workspace` view `repairs` over MCP; the TypeScript quick fix in Monaco and VS Code). The remaining codes in this
+section have no automatic repair because each one is a contract decision for the author, not a spelling:
 `PLAY0607`, `PLAY0608`, `PLAY0613` and `PLAY0617` would change which events a slice publishes or produces;
 `PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;

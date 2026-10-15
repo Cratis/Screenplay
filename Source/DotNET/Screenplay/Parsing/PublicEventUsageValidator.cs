@@ -99,6 +99,7 @@ internal static class PublicEventUsageValidator
             RecordCaptureOrigin(use.Node, contract, captureOrigins);
         }
         ValidateCaptureOrigins(slice, captureOrigins, context);
+        CaptureEventFixturesValidator.Validate(application, slice, scope, events, context);
 
         // 'all' really subscribes to every event type, unlike 'every', which only maps the projection's inputs.
         foreach (var all in collector.AllEvents)

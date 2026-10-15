@@ -19,7 +19,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="evaluator">The evaluator invoked commands run through.</param>
 /// <param name="plan">The capability-admitted plan.</param>
 /// <param name="world">The world the loop starts from.</param>
-internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, SemanticExecutionPlan plan, SemanticWorld world)
+internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator, SemanticExecutionPlan plan, SemanticWorld world)
 {
     /// <summary>
     /// The most facts one scenario may append before its reactions are taken not to settle.
@@ -111,6 +111,7 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
     /// <returns>The rejected or unsupported result, or <c>null</c> when the reactions settled.</returns>
     public SemanticExecutionResult? Settle()
     {
+        var captures = new List<(SemanticFact Fact, DateTimeOffset? Occurred)>();
         while (_pending.TryDequeue(out var item))
         {
             var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
@@ -124,6 +125,13 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
                     }
                 }
             }
+            captures.Add(item);
+        }
+
+        // All reactions, including their cascades, settle before delivering their facts to captures.
+        foreach (var item in captures)
+        {
+            if (DeliverCaptures(item.Fact, item.Occurred, history: false) is { } failure) return failure;
         }
 
         return null;
