@@ -38,4 +38,29 @@ public sealed record SemanticGeneration(string Kind)
     /// Gets the random byte encoding.
     /// </summary>
     public string? Encoding { get; init; }
+
+    /// <summary>
+    /// Gets the finite generation pattern (v21).
+    /// </summary>
+    public string? Pattern { get; init; }
+
+    /// <summary>
+    /// Gets the closed checksum algorithm applied to the pattern (v21).
+    /// </summary>
+    public string? Checksum { get; init; }
+
+    /// <summary>
+    /// Gets the inclusive Int64 lower bound (v21).
+    /// </summary>
+    public long? Minimum { get; init; }
+
+    /// <summary>
+    /// Gets the inclusive Int64 upper bound (v21).
+    /// </summary>
+    public long? Maximum { get; init; }
+
+    /// <summary>
+    /// Gets the ValueGeneration implementation requirement identity (v21).
+    /// </summary>
+    public string? RequirementId { get; init; }
 }

@@ -11,6 +11,11 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WriteStartObject("generation");
         writer.WriteString("kind", generation.Kind);
+        if (generation.Pattern is { } pattern) CanonicalJson.WriteString(writer, "pattern", pattern);
+        if (generation.Checksum is { } checksum) writer.WriteString("checksum", checksum);
+        if (generation.Minimum is { } minimum) writer.WriteNumber("min", minimum);
+        if (generation.Maximum is { } maximum) writer.WriteNumber("max", maximum);
+        if (generation.RequirementId is { } requirement) writer.WriteString("requirement", requirement);
         if (generation.Size is { } size) writer.WriteNumber("size", size);
         if (generation.Count is { } count) writer.WriteNumber("count", count);
         if (generation.Encoding is { } encoding) writer.WriteString("encoding", encoding);

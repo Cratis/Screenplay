@@ -1,0 +1,20 @@
+{
+  "rules": [
+    { "range": "9007199254740992..9007199254740993", "kind": "Maximum", "operand": "9007199254740992", "status": "Refuted", "witness": "9007199254740993", "reason": null },
+    { "range": "9007199254740992..9007199254740993", "kind": "Minimum", "operand": "9007199254740992", "status": "Proven", "witness": null, "reason": null },
+    { "range": "9007199254740992..9007199254740993", "kind": "Minimum", "operand": "9007199254740993", "status": "Refuted", "witness": "9007199254740992", "reason": null },
+    { "range": "-9223372036854775808..9223372036854775807", "kind": "Minimum", "operand": "-9223372036854775808", "status": "Proven", "witness": null, "reason": null },
+    { "range": "-9223372036854775808..9223372036854775807", "kind": "Maximum", "operand": "9223372036854775807", "status": "Proven", "witness": null, "reason": null },
+    { "range": "-9223372036854775808..9223372036854775807", "kind": "Minimum", "operand": "0", "status": "Refuted", "witness": "-9223372036854775808", "reason": null },
+    { "range": "-9223372036854775808..9223372036854775807", "kind": "Maximum", "operand": "0", "status": "Refuted", "witness": "9223372036854775807", "reason": null },
+    { "range": "-2..2", "kind": "Minimum", "operand": "-2.000000000000000000000000001", "status": "Proven", "witness": null, "reason": null },
+    { "range": "-2..2", "kind": "Minimum", "operand": "-1.999999999999999999999999999", "status": "Refuted", "witness": "-2", "reason": null },
+    { "range": "-2..2", "kind": "Maximum", "operand": "1.999999999999999999999999999", "status": "Refuted", "witness": "2", "reason": null },
+    { "range": "-2..2", "kind": "Maximum", "operand": "2.000000000000000000000000001", "status": "Proven", "witness": null, "reason": null },
+    { "range": "7..7", "kind": "Maximum", "operand": "6", "status": "Refuted", "witness": "7", "reason": null },
+    { "range": "7..7", "kind": "Minimum", "operand": "8", "status": "Refuted", "witness": "7", "reason": null },
+    { "range": "-2..2", "kind": "RulePredicate", "status": "Unproven", "witness": null, "reason": "opaque" },
+    { "range": "-2..2", "kind": "CodeValidation", "status": "Unproven", "witness": null, "reason": "opaque" },
+    { "range": "-2..2", "kind": "Matches", "status": "Unproven", "witness": null, "reason": "unsupported rule" }
+  ]
+}

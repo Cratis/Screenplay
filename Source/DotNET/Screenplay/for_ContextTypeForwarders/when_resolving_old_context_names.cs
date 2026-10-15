@@ -10,7 +10,7 @@ public class when_resolving_old_context_names : Specification
     static readonly Type[] MovedTypes =
     [
         typeof(Causation), typeof(CausedBy), typeof(Claim), typeof(CommandContext),
-        typeof(ContextPayloadTypeMismatch), typeof(Identity), typeof(PolicyContext),
+        typeof(ContextPayloadTypeMismatch), typeof(GenerationContext), typeof(Identity), typeof(PolicyContext),
         typeof(QueryContext), typeof(ReducerContext), typeof(RuleContext), typeof(TenantId)
     ];
 

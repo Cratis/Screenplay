@@ -1,0 +1,20 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+numbers exact
+
+concept InvoiceRef : String
+  generate pattern "INV-{yyyy}-#{7}" checksum luhn
+  validate checksum luhn
+
+concept ShipmentRef : String
+  validate
+    checksum mod11 message "Check the shipment reference"
+    not empty
+
+concept ReturnRef : String
+  validate checksum mod97 severity warning message "Check the return reference"
+
+concept StockRef : String
+  validate
+    checksum luhn severity information message "Check the stock reference"

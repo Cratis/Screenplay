@@ -81,7 +81,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'slice':
             return items.sliceItemsFor(header?.split(/\s+/)[1]);
         case 'concept':
-            return /:\s*Enum\b/.test(header ?? '') ? [...items.conceptItems, { label: 'enum member (numbered)', insertText: '${1:value} = ${2:0}', documentation: 'Every member must declare a unique int32 number. Keep published numbers unchanged; specifications name members, not numbers.' }] : items.conceptItems;
+            return /:\s*Enum\b/.test(header ?? '') ? [...items.conceptItems.filter(item => item.label !== 'validate checksum'), { label: 'enum member (numbered)', insertText: '${1:value} = ${2:0}', documentation: 'Every member must declare a unique int32 number. Keep published numbers unchanged; specifications name members, not numbers.' }] : items.conceptItems.filter(item => item.label !== 'validate checksum' || /:\s*String\b/.test(header ?? ''));
         case 'type':
             return items.typeItems;
         case 'command':
@@ -154,7 +154,9 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'policy':
             return items.policyItems;
         case 'validate':
-            return items.validateItems;
+            return chain.includes('concept') && /:\s*String\b/.test(where.headers.find(header => /^concept\s/.test(header)) ?? '')
+                ? [...items.validateItems, { label: 'checksum', insertText: 'checksum ${1|luhn,mod11,mod97|}', documentation: 'Exact trailing check digits over preceding ASCII digits. String concepts only; also validates inputs and stored values.' }]
+                : items.validateItems;
         case 'action':
             return items.actionItems;
         case 'table':
@@ -186,8 +188,15 @@ export function planCompletions(
     if (/^\s*concept\s+[\p{L}\p{Mn}\p{Nd}\p{Pc}]+\s*:\s*\w+\s+(?:(?:pii|personal|secret)\s+)*\w*$/u.test(textBefore)) {
         return { kind: 'entries', entries: ['pii', 'secret'].filter(marker => !new RegExp(`\\b${marker}\\b`).test(textBefore)).map(marker => ({ label: marker, insertText: marker, documentation: marker === 'pii' ? 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]' : 'Operational secret; renders [Encrypted] + [NotAudited].' })) };
     }
-    const inConcept = enclosingChain(lines, fences, lineIndex, indentOf(textBefore))[0] === 'concept';
-    const generationEntries = inConcept ? generationCompletions(lines, lineIndex, textBefore) : null;
+    const generationChain = enclosingChain(lines, fences, lineIndex, indentOf(textBefore));
+    const inConcept = generationChain[0] === 'concept';
+    if (generationChain[0] === 'generate' && generationChain[1] === 'concept' && /^generate\s+rule\s+/.test((nearestEnclosingLine(lines, fences, lineIndex, indentOf(textBefore)) ?? '').trim())) {
+        return { kind: 'entries', entries: [
+            { label: 'file', insertText: 'file ${1:Generator.cs}', documentation: 'The sole ValueGeneration source. Receives GenerationContext with Now and Tenant; returns String.' },
+            { label: 'csharp', insertText: '```csharp\n${1:return value;}\n```', documentation: 'The sole ValueGeneration body. Reference execution requires fixtures; it never invokes this code.' },
+        ] };
+    }
+    const generationEntries = inConcept || (generationChain[0] === 'validate' && generationChain[1] === 'concept') ? generationCompletions(lines, lineIndex, textBefore) : null;
     if (generationEntries !== null) return { kind: 'entries', entries: generationEntries };
     if (inConcept && /^\s*(?:secret|sensitive|@sensitive)\s+scope\s+\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: ['subject', 'namespace', 'global'].map(scope => ({ label: scope, insertText: scope, documentation: 'Explicit secret encryption scope.' })) };

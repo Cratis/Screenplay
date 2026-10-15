@@ -27,7 +27,7 @@ internal static partial class SemanticModelValidator
             _concepts.TryGetValue(type.Target, out var concept) &&
             (concept.Primitive == SemanticPrimitiveType.Uuid || concept.Generation is not null) &&
             (concept.Compliance is null || concept.Generation is null) && (concept.Validations.IsEmpty || _semanticVersion.IsAtLeast(SemanticVersion.V20)) &&
-            (!property.IsIdentifier || (concept.Primitive is SemanticPrimitiveType.Uuid or SemanticPrimitiveType.Text && SemanticGenerationContract.Bits(concept.Generation) >= 64));
+            (!property.IsIdentifier || (concept.Primitive is SemanticPrimitiveType.Uuid or SemanticPrimitiveType.Text && SemanticGenerationContract.HasIdentifierSupport(concept.Generation, _utcAssessmentYear)));
 
         void ValidateTypeReference(SemanticTypeReference type)
         {

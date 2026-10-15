@@ -3,6 +3,7 @@
 
 import { CommandSyntax, ValidationRuleSyntax } from './Commands';
 import { ConceptSyntax } from './Declarations';
+import { GenerationSyntax } from './GenerationSyntax';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax, EventStreamIdPartSyntax } from './EventSources';
 import { PropertyMappingSyntax } from './Expressions';
 import { HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
@@ -40,6 +41,13 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
         }
         for (const validation of concept.validations ?? []) {
             if (validation.kind === 'DeclarativeValidateSyntax' && validation.rules.some(rule => rule.implementation != null)) refuse('Implementation wrappers on named rules are supported only on commands.');
+        }
+    }
+    if (node.kind === 'GenerationSyntax') {
+        const generation = node as GenerationSyntax;
+        if (generation.file != null || generation.code != null) {
+            if (generation.strategy !== 'rule' || typeof generation.rule !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$(?![\s\S])/.test(generation.rule)) refuse('A generation body requires a named generation rule.');
+            if (generation.file != null && generation.code != null) refuse('A generation rule has exactly one file or inline payload.');
         }
     }
     if (node.kind === 'ValidationRuleSyntax') {

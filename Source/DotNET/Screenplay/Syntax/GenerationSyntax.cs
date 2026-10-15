@@ -43,22 +43,32 @@ public sealed record GenerationSyntax(string Strategy, SourceLocation Location) 
     public string? Encoding { get; init; }
 
     /// <summary>
-    /// Gets the preview pattern argument.
+    /// Gets the finite pattern argument.
     /// </summary>
     public string? Pattern { get; init; }
 
     /// <summary>
-    /// Gets the preview checksum modifier.
+    /// Gets the appended checksum algorithm.
     /// </summary>
     public string? Checksum { get; init; }
 
     /// <summary>
-    /// Gets the preview integer range, retaining exact source digits.
+    /// Gets the inclusive integer range, retaining exact source digits.
     /// </summary>
     public string? Range { get; init; }
 
     /// <summary>
-    /// Gets the preview implementation name.
+    /// Gets the generation rule's implementation name.
     /// </summary>
     public string? Rule { get; init; }
+
+    /// <summary>
+    /// Gets the generation rule's implementation file, distinct from concept provenance.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the generation rule's tagged inline implementation.
+    /// </summary>
+    public CodeBlockSyntax? Code { get; init; }
 }

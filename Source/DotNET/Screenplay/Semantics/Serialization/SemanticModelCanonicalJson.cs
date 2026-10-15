@@ -808,6 +808,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
         SemanticValidationRuleKind.Matches => "matches",
+        SemanticValidationRuleKind.Checksum => "checksum",
         SemanticValidationRuleKind.RulePredicate => "rulePredicate",
         SemanticValidationRuleKind.CodeValidation => "codeValidation",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)

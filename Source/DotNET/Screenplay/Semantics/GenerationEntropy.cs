@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using System.Numerics;
+using Cratis.Screenplay.Semantics.Generation;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -18,6 +20,56 @@ public static class GenerationEntropy
     /// <param name="generation">The authored strategy, or null for implicit UUID generation.</param>
     /// <returns>The finite, non-negative random bits, or null when the strategy or its inputs have unknown entropy.</returns>
     public static double? Bits(GenerationSyntax? generation) => Bits(generation?.Strategy, generation?.Size, generation?.Alphabet, generation?.Count);
+
+    /// <summary>
+    /// Counts the exact distinct support of an authored strategy, with UTC date segments fixed per assessment.
+    /// </summary>
+    /// <param name="generation">The authored strategy, or null for implicit UUID generation.</param>
+    /// <param name="utcAssessmentYear">The injected UTC year; used only for the inclusive date horizon.</param>
+    /// <returns>The exact support count, or null for opaque or invalid strategy arguments.</returns>
+    /// <remarks>Assessing a parsed strategy does not admit it into an executable semantic model.</remarks>
+    public static BigInteger? ExactSupportCount(GenerationSyntax? generation, int utcAssessmentYear)
+    {
+        var alphabet = generation?.Alphabet ?? SemanticGenerationContract.DefaultAlphabet;
+        var size = generation?.Size ?? 21;
+
+        return generation?.Strategy switch
+        {
+            null or "uuid" => BigInteger.One << 122,
+            "uuidv7" or "typeid" => BigInteger.One << 74,
+            "ulid" => BigInteger.One << 80,
+            "nanoid" when size is >= 1 and <= 256 && alphabet.Length >= 2 && alphabet.All(character => character is >= ' ' and <= '~') && alphabet.Distinct().Count() == alphabet.Length => BigInteger.Pow(alphabet.Length, size),
+            "bytes" when generation.Count is >= 1 and <= 512 => BigInteger.One << (8 * generation.Count.Value),
+            "pattern" when generation.Pattern is { } pattern => GenerationPatternAssessment.CachedMinimumCount(pattern, generation.Checksum, utcAssessmentYear),
+            "random" when generation.Range is { } range => GenerationIntegerRange.Parse(range).Count,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Calculates display entropy from an exact, positive conditioned support count.
+    /// </summary>
+    /// <param name="supportCount">The number of distinct admissible values, not repeat decompositions.</param>
+    /// <returns>The base-two logarithm, for display and collision estimates only.</returns>
+    public static double SupportBits(BigInteger supportCount)
+    {
+        if (supportCount <= BigInteger.Zero) throw new InvalidSemanticContract("Entropy requires positive generation support.");
+
+        return BigInteger.Log(supportCount, 2);
+    }
+
+    /// <summary>
+    /// Compares an exact support count to a random-bit threshold without rounding through floating point.
+    /// </summary>
+    /// <param name="supportCount">The number of distinct admissible values.</param>
+    /// <param name="bits">The non-negative bit threshold.</param>
+    /// <returns>Whether the support has at least two to the specified power values.</returns>
+    public static bool HasAtLeastBits(BigInteger supportCount, int bits)
+    {
+        if (supportCount <= BigInteger.Zero || bits < 0) throw new InvalidSemanticContract("Entropy thresholds require positive support and non-negative bits.");
+
+        return bits <= supportCount.GetBitLength() && supportCount >= (BigInteger.One << bits);
+    }
 
     /// <summary>
     /// Estimates how many values reach one percent birthday collision probability.

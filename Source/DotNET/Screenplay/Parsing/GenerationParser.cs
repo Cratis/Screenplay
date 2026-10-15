@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics.Generation;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -11,6 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class GenerationParser
 {
+    const string ExpandedLengthReason = "expanded length";
     internal static GenerationSyntax? Parse(ParserContext context, SourceLine line, string primitive)
     {
         var tokens = TokenRegex().Matches(line.Content).Select(match => match.Value).Skip(1).ToArray();
@@ -36,7 +38,7 @@ internal static partial class GenerationParser
 
         var result = Modifiers(context, line, primitive, generation, tokens, next);
         Validate(context, line, primitive, result);
-        return result;
+        return ParseBody(context, line, result);
     }
 
     static (GenerationSyntax Generation, int Next, bool Valid) Arguments(GenerationSyntax source, string[] tokens)
@@ -100,6 +102,18 @@ internal static partial class GenerationParser
     static void Validate(ParserContext context, SourceLine line, string primitive, GenerationSyntax generation)
     {
         var strategy = generation.Strategy;
+        if (strategy == "pattern" && generation.Pattern is { } pattern)
+        {
+            try
+            {
+                _ = GenerationPattern.Parse(pattern, generation.Checksum);
+            }
+            catch (InvalidGenerationPattern error)
+            {
+                var code = error.Message.Contains(ExpandedLengthReason, StringComparison.Ordinal) ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument;
+                context.Error(code, error.Message, line.Location);
+            }
+        }
         var allowed = strategy == "sequence" || primitive switch
         {
             "Uuid" => OneOf(strategy, "uuid", "uuidv7"),

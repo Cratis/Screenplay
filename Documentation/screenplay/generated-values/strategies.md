@@ -99,9 +99,9 @@ concept InviteCode : String
     matches "^[A-Za-z0-9_-]{21}$"
 ```
 
-This rule is Proven and admitted silently. A rule requiring only digits would be Refuted: NanoID can emit letters, `_` and `-`. `PLAY0688` is an error regardless of the rule's authored severity and includes a quoted witness. `PLAY0689` is a warning with an Unproven reason, not evidence that every generated value is valid. Code and named-rule predicates are opaque. Outside-fragment regexes can still be refuted by a failing sample; passing samples prove nothing. A containment proof is Proven only when the pattern's Glushkov automaton is deterministic (1-unambiguous): the first-position character classes are pairwise disjoint, as are the follow-set classes for every position, after projection onto printable ASCII, and no repeat that can run more than once (such as `*`, `+` or `{2,5}`) applies to a group that can match nothing, like `(a?)*`. Otherwise it is Unproven with reason `ambiguous pattern; the runtime regex may backtrack`. Refuted results are unchanged. Determinism checks retain authored branches before shape-length clipping; construction budgets still apply. This conservative check can warn on bounded optional repeats and unanchored search wrappers even when samples pass. Strategy-derived patterns are deterministic and stay Proven, so the derived-`matches` repair still produces a proven rule. Runtime samples remain defence-in-depth.
+This rule is Proven and admitted silently. A rule requiring only digits would be Refuted: NanoID can emit letters, `_` and `-`. `PLAY0688` is an error regardless of the rule's authored severity and includes a quoted witness. `PLAY0689` is a warning with an Unproven reason, not evidence that every generated value is valid. Code and named-rule predicates are opaque. Outside-fragment regexes can still be refuted by a failing sample; passing samples prove nothing. A containment proof is Proven only when the pattern's Glushkov automaton is deterministic (1-unambiguous): the first-position character classes are pairwise disjoint, as are the follow-set classes for every position, after projection onto printable ASCII, and no repeat that can run more than once (such as `*`, `+` or `{2,5}`) applies to a group that can match nothing, like `(a?)*`. Otherwise it is Unproven with reason `ambiguous pattern; the runtime regex may backtrack`. Refuted results are unchanged. Determinism checks retain authored branches before shape-length clipping; construction budgets still apply. This conservative check can warn on bounded optional repeats and unanchored search wrappers even when samples pass. Built-in strategy-derived patterns are deterministic and stay Proven. A finite-pattern repair is offered only when its derived regex is deterministic and bounded; ambiguous repeats may have no repair. Date/checksum digit shapes are approximations and do not establish a containment proof. Runtime samples remain defense-in-depth.
 
-Proof covers `not empty` (at least one non-whitespace character under decision 0071), text `min`, `max`, `length ==`, text equality/inequality, and `matches`, including named match patterns such as email. Existing rule/type compatibility still applies. The generator's exact shape includes prefix, case, UUID version/variant and unused encoding bits; stored values are not checked against a new strategy unless their authored rules say so.
+Proof covers `not empty` (at least one non-whitespace character under decision 0071), text `min`, `max`, `length ==`, text equality/inequality, and `matches`, including named match patterns such as email. ESM v21 adds exact numeric interval min/max checks and checksum-by-construction for a pattern declaring the same algorithm. Different checksum algorithms remain Unproven without a conditioned-support proof; a digit-shape counterexample is not a genuine refutation. Existing rule/type compatibility still applies. The generator's exact shape includes prefix, case, UUID version/variant and unused encoding bits; stored values are not checked against a new strategy unless their authored rules say so.
 
 Fragment R accepts ASCII literals and syntax escapes; `\\t`, `\\n`, `\\r`, `\\f`, `\\v`; positive/negated classes and ranges; `\\d`, `\\D`, `\\w`, `\\W`, `\\s`, `\\S`; dot; alternation; ordinary and noncapturing groups; `?`, `*`, `+`, `{m}`, `{m,n}`, `{m,}` and lazy equivalents. Anchors are allowed only at the ends of top-level alternatives. Unanchored patterns retain search semantics. `$` means end of input. Lookaround, backreferences, named groups, flags, word boundaries, non-ASCII patterns and other escapes are outside R, as are empty `[]`/`[^]` classes. The alphabet is projected onto the printable ASCII emitted by these strategies.
 
@@ -116,19 +116,29 @@ Rule consistency bounds construction before checking containment: at most 2,048 
 | `prefix "text"` | uuid, uuidv7, ulid, nanoid, bytes | Printable ASCII, at most 32 characters. UUIDs require String backing. Literal text is regex-escaped in derived shapes. |
 | `case lower|upper` | String uuid/uuidv7, ulid, hex/base32 bytes | Changes only the encoded portion, never the prefix. |
 | `alphabet "chars"` | nanoid | Distinct printable ASCII characters; replaces the entire alphabet. |
-| `checksum luhn|mod11|mod97` | pattern | Parsed, not yet executable. |
+| `checksum luhn|mod11|mod97` | pattern | Appends one luhn/mod11 digit or two mod97 digits; adds no entropy. |
 
-## Parsed, not yet executable
+## pattern, random and rule (ESM v21)
 
-```screenplay
-concept OrderNumber : String
-  generate pattern "ORD-#{7}" checksum luhn
+````screenplay
+concept InvoiceRef : String
+  generate pattern "INV-{yyyy}{MM}-#{7}" checksum luhn
+  validate checksum luhn
 concept TicketNumber : Int
   generate random 100000..999999
-concept LegacyReference : String
-  generate rule MakeReference
-```
+concept TenantOrderId : String
+  generate rule TenantOrder
+    ```csharp
+    return $"{context.Tenant}:order_{context.Now:yyyyMMdd}-{Guid.NewGuid():N}";
+    ```
+````
 
-These strategies parse and print, but binding refuses them with `PLAY0268` naming #616. `pattern` has planned digits (`#`), letters (`?`), alphanumerics (`*`), classes, repeats and UTC date segments. Short patterns carry little entropy; dates and checksums add none. UTC year boundaries affect date literals, and checksum support can be empty. Their executable shapes and entropy are not admitted yet. `random` describes an inclusive Int range; `rule` is an opaque implementation with unknown entropy. `generate sequence` is reserved and receives `PLAY0682` at binding until #619.
+`pattern` generates distinct strings from a finite printable-ASCII language. Dates and appended checksum digits add no entropy. See [patterns and checksums](patterns.md) for grammar, support budgets, UTC clocks and fixture policy. Short references are values: map them to a single-property unique constraint, not a low-entropy generated identifier.
+
+`random` has inclusive signed Int64 endpoints, including the full interval -9223372036854775808..9223372036854775807 (2^64 values). Range cardinality and min/max proofs are exact; a fixture is an integral number, never numeric text. It is an Int value, not an identifier.
+
+`rule` requires exactly one direct file or tagged fence. It creates a ValueGeneration implementation requirement with unknown entropy and String result. Its version-1 [GenerationContext](../context.md) has only Now (DateTimeOffset) and Tenant (TenantId). Requirement identity follows concept identity and rule name, not source path; body changes affect the attachment manifest, not ESM body bytes. Providers supply the implementation; the reference runner consumes a primitive String fixture and never invokes it. An opaque validator still makes execution Unsupported.
+
+These constructs select ESM v21; earlier goldens and built-in defaults stay unchanged. `generate sequence` remains reserved (`PLAY0682`, #619). Explicit generation with compliance markers remains refused.
 
 See [choosing a strategy](choosing.md) for the decision guide and [generated values](../generated-values.md) for freshness and pinned fixtures.

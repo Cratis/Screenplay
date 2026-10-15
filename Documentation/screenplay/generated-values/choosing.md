@@ -23,8 +23,9 @@ Your shop needs recognizable customer and order identities without turning them 
 | Typed String identity | typeid | Lowercase prefix plus UUIDv7 base32; empty prefix has no separator. |
 | Compact opaque String | nanoid | Default 21 characters, 126 bits; custom alphabets reduce bits per character. |
 | Exact random-byte budget | bytes | Count × 8 random bits; choose an encoding, not a padding convention. |
-| Readable date/checksum reference | pattern | Parsed, not yet executable. |
-| Numeric range or custom implementation | random or rule | Parsed, not yet executable. |
+| Readable date/checksum reference | pattern | ESM v21; dates and checksums add no entropy. Pin the UTC clock and declare checksum validation separately. |
+| Numeric queue ticket | random | ESM v21 inclusive signed Int64 range; value, never an identifier. |
+| Tenant-bearing custom identity | rule | ESM v21 ValueGeneration attachment with Now/Tenant context; entropy is unknown, not zero. |
 
 Prefixes help a person recognize a value but add no random bits. Generated identifiers require at least 64 bits. For short non-identifier codes, add a unique constraint on the event property they populate rather than ignoring the collision warning. See the [strategy reference](strategies.md) for exact encodings and collision bounds.
 
@@ -56,7 +57,7 @@ The customer prefix helps you recognize the value; it adds no entropy. ULID supp
 
 Inspect rule diagnostics before proceeding. A Refuted rule (`PLAY0688`) needs a model change, not a retry. Review the derived-`matches` repair if the strategy is the intended contract; it changes validation for all values of that concept. An Unproven rule (`PLAY0689`) needs provider validation, and opaque rules remain Unsupported in the reference evaluator. Never remove an intended business rule merely to silence a warning.
 
-Pin the generated identifier with `for` and other generated values by name. Use `given clock` for scenarios asserting `$context.occurred`; the evaluator does not draw a time-ordered identifier from that clock, so pin the whole identifier. A seed is not a portable fixture. Test a second creation against prior facts on the same source to witness v15 Guarded freshness. Models without a serialized strategy remain Unguarded, even if a rule selects V20; adding a serialized generation declaration guards implicit UUID generated destinations too. Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
+Pin the generated identifier with `for` and other generated values by name. Use `given clock` for pattern date segments and scenarios asserting `$context.occurred`; the evaluator does not draw a time-ordered identifier from that clock, so pin the whole identifier. A seed is not a portable fixture. Test a second creation against prior facts on the same source to witness v15 Guarded freshness. Models without a serialized strategy remain Unguarded, even if a rule selects V20; adding a serialized generation declaration guards implicit UUID generated destinations too. Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
 
 For an API key, plan a separate `ApiKeyId` identity and a secret `ApiKey` value with 32 random bytes. Do not put the key into plaintext event-source metadata. Generated secret admission is not available yet; `[NotAudited]` protects only command causation values, while encryption protects the stored value, not arbitrary logs.
 

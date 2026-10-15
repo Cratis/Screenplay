@@ -369,7 +369,7 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, concept.Description, concept);
             WriteFile(writer, concept.File);
-            if (concept.Generation is { } generation) writer.Line(GenerationText.Format(generation), generation);
+            if (concept.Generation is { } generation) WriteGeneration(writer, generation);
 
             foreach (var attribute in reasoned)
             {

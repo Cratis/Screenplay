@@ -1,0 +1,46 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "code": {
+          "kind": "CodeBlockSyntax",
+          "code": "return $\"{context.Tenant}-{context.Now:yyyyMMdd}\";",
+          "language": "csharp"
+        },
+        "rule": "TenantOrder",
+        "strategy": "rule"
+      },
+      "name": "TenantOrderId",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "generation": {
+        "kind": "GenerationSyntax",
+        "file": {
+          "kind": "FileReferenceSyntax",
+          "path": "Generators/Reference.cs"
+        },
+        "rule": "ExternalReference",
+        "strategy": "rule"
+      },
+      "name": "ExternalRef",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

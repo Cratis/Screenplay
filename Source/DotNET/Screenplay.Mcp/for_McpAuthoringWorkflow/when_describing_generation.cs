@@ -33,19 +33,19 @@ public class when_describing_generation : given.an_authoring_connection
     }
 
     [Theory]
-    [InlineData("pattern \"ORD-#{7}\"", "PLAY0268", "pattern", "ORD-#{7}")]
-    [InlineData("random 1..9", "PLAY0268", "range", "1..9")]
-    [InlineData("rule Make", "PLAY0268", "rule", "Make")]
-    [InlineData("sequence", "PLAY0682", null, null)]
-    void should_report_unknown_entropy_and_compiler_refusals(string strategy, string code, string? argument, string? value)
+    [InlineData("pattern \"ORD-#{7}\"", "PLAY0268", "pattern", "ORD-#{7}", "admitted")]
+    [InlineData("random 1..9", "PLAY0268", "range", "1..9", "admitted")]
+    [InlineData("rule Make", "PLAY0268", "rule", "Make", "refused")]
+    [InlineData("sequence", "PLAY0682", null, null, "refused")]
+    void should_preserve_inspection_data_and_report_current_compiler_admission(string strategy, string code, string? argument, string? value, string status)
     {
         Start($"concept Code : {(strategy.StartsWith("random", StringComparison.Ordinal) ? "Int" : "String")}\n  generate {strategy}\n");
         var details = Generation();
         details.GetProperty("entropyBits").ValueKind.ShouldEqual(JsonValueKind.Null);
         details.GetProperty("valuesAtOnePercentCollision").ValueKind.ShouldEqual(JsonValueKind.Null);
         details.GetProperty("entropyUnknownReason").GetString().ShouldContain("unknown");
-        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual("refused");
-        details.GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Select(item => item.GetString()).ShouldContain(code);
+        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual(status);
+        details.GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Any(item => item.GetString() == code).ShouldEqual(status == "refused");
         if (argument is not null)
         {
             details.GetProperty("previewArguments").GetProperty(argument).GetProperty("value").GetString().ShouldEqual(value);

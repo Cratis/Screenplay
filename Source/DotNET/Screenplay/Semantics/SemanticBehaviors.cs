@@ -91,7 +91,12 @@ public enum SemanticValidationRuleKind
     RulePredicate = 13,
 
     /// <summary>An opaque concept code validation block yielding zero or more rejection messages.</summary>
-    CodeValidation = 14
+    CodeValidation = 14,
+
+    /// <summary>
+    /// A String concept must end in the exact check digits over its preceding ASCII digits.
+    /// </summary>
+    Checksum = 15
 }
 
 /// <summary>

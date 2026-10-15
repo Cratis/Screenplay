@@ -25,6 +25,10 @@ Use its [`propose-move`](mcp/edit.md#move-a-slice-or-feature-to-another-parent) 
 for identity-preserving slice and feature moves across logical parents. This is an
 MCP proposal, reviewed and applied through `apply`, not a CLI move command.
 
+## Check generated references
+
+The compiler accepts ESM v21 pattern/random/rule declarations and String-concept checksum validation. Source validity is separate from executable admission and reference-specification results. PLAY0691 is a hard generation-support budget error; PLAY0692 means empty conditioned support on an assessed UTC date. Neither is a successful unknown result. Use whole generated fixtures and `given clock` for pattern dates—never a seed or wall-clock assumption. See [patterns and checksums](generated-values/patterns.md) for the shop's invoice reference and numeric ticket, and [contexts](context.md) for ValueGeneration attachments. Providers must explicitly admit v21; parsing alone does not prove they can render or execute it.
+
 ## Admit and check released event revisions
 
 Persist the workspace's `.screenplay/identities.json` before admission. At release time, run:

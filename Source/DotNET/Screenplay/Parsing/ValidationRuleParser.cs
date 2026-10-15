@@ -117,6 +117,11 @@ internal static partial class ValidationRuleParser
             return (ValidationRuleKind.NotEmpty, null);
         }
 
+        if (LineText.FirstWord(rule) == "checksum")
+        {
+            return ParseChecksum(context, rule, line);
+        }
+
         var operand = OperandRegex().Match(rule);
         if (!operand.Success)
         {

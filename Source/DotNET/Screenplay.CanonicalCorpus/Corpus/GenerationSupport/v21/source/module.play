@@ -1,0 +1,18 @@
+module Shop
+  feature References
+    slice StateChange Record
+      event ReferenceRecorded
+        reference InvoiceRef
+      command RecordReference
+        id OrderId identifier
+        reference InvoiceRef
+        produces ReferenceRecorded
+          for id
+          reference = reference
+      specification ValidStoredChecksum
+        when RecordReference
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          reference = "A0"
+        then ReferenceRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          reference = "A0"

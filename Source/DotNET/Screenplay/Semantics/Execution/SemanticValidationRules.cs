@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Semantics.Generation;
 
 namespace Cratis.Screenplay.Semantics.Execution;
 
@@ -36,7 +37,8 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.Length or
         SemanticValidationRuleKind.AllGreaterThan or
         SemanticValidationRuleKind.AllGreaterThanOrEqual or
-        SemanticValidationRuleKind.Matches;
+        SemanticValidationRuleKind.Matches or
+        SemanticValidationRuleKind.Checksum;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -58,6 +60,7 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThanOrEqual => Measure(value) <= Number(rule.Operand),
         SemanticValidationRuleKind.Length => value is SemanticTextValue text ? text.Value.Length == Number(rule.Operand) : throw SemanticValueRules.Malformed(),
         SemanticValidationRuleKind.Matches => Matches(value, rule.Operand),
+        SemanticValidationRuleKind.Checksum => Checksum(value, rule.Operand),
         SemanticValidationRuleKind.AllGreaterThan => Elements(value).All(_ => Measure(_) > Number(rule.Operand)),
         SemanticValidationRuleKind.AllGreaterThanOrEqual => Elements(value).All(_ => Measure(_) >= Number(rule.Operand)),
         _ => throw new InvalidSemanticContract($"Validation rule '{rule.Kind}' is not executable by the reference evaluator.")
@@ -85,10 +88,16 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThanOrEqual => $"A value must be at most {Format(rule.Operand)}.",
         SemanticValidationRuleKind.Length => $"A value must be exactly {Format(rule.Operand)} characters long.",
         SemanticValidationRuleKind.Matches => "A value must match the required pattern.",
+        SemanticValidationRuleKind.Checksum => $"A value must end in the exact {Format(rule.Operand)} check digits.",
         SemanticValidationRuleKind.AllGreaterThan => $"Every value must be greater than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => $"Every value must be at least {Format(rule.Operand)}.",
         _ => $"A value does not satisfy the '{rule.Kind}' rule."
     };
+
+    static bool Checksum(SemanticValue value, SemanticValue? operand) =>
+        value is SemanticTextValue text && operand is SemanticTextValue algorithm
+            ? GenerationChecksum.Matches(text.Value, algorithm.Value)
+            : throw SemanticValueRules.Malformed();
 
     static bool Matches(SemanticValue value, SemanticValue? operand)
     {

@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "query-validation") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -284,7 +284,7 @@ public class when_freezing_legacy_source_syntax_bytes
         InstanceContributions = [],
 
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
-        Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId")
+        Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))
             .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
         Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
         Personas = application.Personas.Where(persona => persona.Name != "InvoiceDraftCreator").Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),

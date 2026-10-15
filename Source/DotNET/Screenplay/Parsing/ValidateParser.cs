@@ -72,6 +72,13 @@ internal static class ValidateParser
             return new DeclarativeValidateSyntax(rules, line.Location, requirements);
         }
 
+        if (owner == ValidationOwnerKind.Concept && LineText.FirstWord(line.Content["validate".Length..].TrimStart()) == "checksum")
+        {
+            var ruleLine = line with { Content = line.Content["validate".Length..].TrimStart() };
+            var rule = ValidationRuleParser.ParseImpliedSubject(context, ruleLine);
+            return rule is null ? null : new DeclarativeValidateSyntax([rule], line.Location);
+        }
+
         if (line.Content == "validate csharp")
         {
             context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'validate csharp' is deprecated - use 'validate' followed by '```csharp' instead", line.Location);

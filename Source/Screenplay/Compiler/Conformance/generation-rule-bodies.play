@@ -1,0 +1,9 @@
+concept TenantOrderId : String
+  file Provenance/Order.cs
+  generate rule TenantOrder
+    ```csharp
+    return $"{context.Tenant}-{context.Now:yyyyMMdd}";
+    ```
+concept ExternalRef : String
+  generate rule ExternalReference
+    file Generators/Reference.cs

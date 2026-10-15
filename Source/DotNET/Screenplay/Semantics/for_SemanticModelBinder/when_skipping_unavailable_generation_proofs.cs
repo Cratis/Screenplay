@@ -8,7 +8,6 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 public class when_skipping_unavailable_generation_proofs : given.a_semantic_binder
 {
     [Theory]
-    [InlineData("pattern \"ORD-#{7}\"")]
     [InlineData("sequence")]
     [InlineData("rule Make")]
     void should_not_treat_a_refused_generation_as_an_implicit_uuid(string strategy)

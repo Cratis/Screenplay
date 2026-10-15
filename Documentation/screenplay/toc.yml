@@ -19,6 +19,8 @@
       href: generated-values/choosing.md
     - name: Strategy reference
       href: generated-values/strategies.md
+    - name: Patterns and checksums
+      href: generated-values/patterns.md
 - name: Processing purposes
   href: purposes.md
 - name: Types

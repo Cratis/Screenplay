@@ -21,7 +21,7 @@ public sealed partial class SemanticModelBinder
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("GenerationInspection"));
         var documents = SemanticDocumentSet.Create([.. sources.Select(source => SemanticSourceDocument.Create(catalog.ResolveDocument(source.Key), source.Key, source.Key, source.Value))], catalog);
         var expansion = SpecificationExamples.Expand(application);
-        var context = new BindingContext("GenerationInspection", expansion.Application, documents, new Dictionary<SyntaxNode, EffectiveSpecificationStep>(), expansion);
+        var context = new BindingContext("GenerationInspection", expansion.Application, documents, new Dictionary<SyntaxNode, EffectiveSpecificationStep>(), expansion, DateTimeOffset.UtcNow.Year);
 
         try
         {

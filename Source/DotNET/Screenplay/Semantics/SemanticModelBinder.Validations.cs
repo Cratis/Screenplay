@@ -16,11 +16,13 @@ public sealed partial class SemanticModelBinder
     /// <param name="Primitive">The underlying primitive of the subject, or <see cref="SemanticPrimitiveType.Unknown"/> for a composite.</param>
     /// <param name="IsCollection">Whether the subject is a collection.</param>
     /// <param name="Values">The declared members when the subject is an enumeration.</param>
+    /// <param name="IsStringConcept">Whether the subject is the value of a String concept, not a command property.</param>
     sealed record ValidationSubject(
         string Description,
         SemanticPrimitiveType Primitive,
         bool IsCollection,
-        ImmutableArray<string> Values)
+        ImmutableArray<string> Values,
+        bool IsStringConcept = false)
     {
         public bool IsNumber => Primitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber;
 
@@ -36,6 +38,9 @@ public sealed partial class SemanticModelBinder
         static string? Inadmissible(SemanticValidationRuleKind kind, ValidationSubject subject) => kind switch
         {
             SemanticValidationRuleKind.Unknown => "ESM v1 does not define this rule",
+            SemanticValidationRuleKind.Checksum when !subject.IsStringConcept =>
+                "checksum requires a String concept",
+            SemanticValidationRuleKind.Checksum => null,
             SemanticValidationRuleKind.NotEmpty when !subject.IsCollection && subject.Primitive != SemanticPrimitiveType.Text =>
                 "not empty requires text or a collection",
             SemanticValidationRuleKind.NotEmpty => null,
@@ -59,6 +64,10 @@ public sealed partial class SemanticModelBinder
 
         static string? OperandMismatch(SemanticValue operand, SemanticValidationRuleKind kind, ValidationSubject subject)
         {
+            if (kind == SemanticValidationRuleKind.Checksum)
+            {
+                return operand is SemanticTextValue algorithm && (algorithm.Value == "luhn" || algorithm.Value == "mod11" || algorithm.Value == "mod97") ? null : "requires luhn, mod11 or mod97";
+            }
             if (operand is SemanticNullValue)
             {
                 return "cannot be null - use 'not empty' to require a value";
@@ -104,6 +113,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
             ValidationRuleKind.Matches => SemanticValidationRuleKind.Matches,
+            ValidationRuleKind.Checksum => SemanticValidationRuleKind.Checksum,
             ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
             ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
             _ => SemanticValidationRuleKind.Unknown
@@ -130,6 +140,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.NotEqual => "!=",
             ValidationRuleKind.Length => "length ==",
             ValidationRuleKind.Matches => "matches",
+            ValidationRuleKind.Checksum => "checksum",
             ValidationRuleKind.AllGreaterThan => "all >",
             ValidationRuleKind.AllGreaterThanOrEqual => "all >=",
             ValidationRuleKind.Rule => "rule",
@@ -151,7 +162,8 @@ public sealed partial class SemanticModelBinder
             $"concept '{concept.Name}'",
             concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type),
             false,
-            concept.IsEnum ? [.. concept.Values] : []);
+            concept.IsEnum ? [.. concept.Values] : [],
+            concept.Type == "String");
 
         (SemanticPrimitiveType Primitive, ImmutableArray<string> Values) ConceptShape(SemanticId id)
         {

@@ -54,7 +54,7 @@ internal sealed partial class SemanticCommandExecution
             validator.Validate(fixture.Value, property.Type, $"generated command property '{property.Name}'");
             var concept = plan.Model.Application.Concepts.Single(concept => concept.Id == property.Type.Target);
             if ((SemanticModelValidator.UsesConceptGeneration(plan.Model.Application) || !concept.Validations.IsEmpty) &&
-                !SemanticGeneratedFixture.Matches(concept, fixture.Value))
+                !SemanticGeneratedFixture.Matches(concept, fixture.Value, request.Occurrence?.Occurred))
             {
                 return Contract($"Generated fixture for '{property.Name}' does not match its generation strategy shape.");
             }

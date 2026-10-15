@@ -20,6 +20,8 @@ public static class RuleConsistency
     public static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule)
     {
         if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
+        if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule);
+        if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
         var shape = GenerationShape.Create(generation);
         if (shape is null) return RuleConsistencyResult.Unproven("opaque generation strategy");
         if (primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid)) return RuleConsistencyResult.Unproven("unsupported primitive");
@@ -36,6 +38,30 @@ public static class RuleConsistency
             _ => RuleConsistencyResult.Unproven("unsupported rule")
         };
     }
+
+    /// <summary>
+    /// Checks a finite pattern without admitting the strategy into an executable semantic model.
+    /// </summary>
+    /// <param name="pattern">The authored finite pattern.</param>
+    /// <param name="checksum">The optional conditioning checksum.</param>
+    /// <param name="rule">The concept validation rule.</param>
+    /// <param name="assessmentDate">A fixed UTC assessment date for genuine date-bearing counterexamples.</param>
+    /// <returns>The proof status; approximate-only witnesses never refute the rule.</returns>
+    public static RuleConsistencyResult CheckPattern(string pattern, string? checksum, SemanticValidationRule rule, DateOnly? assessmentDate = null) =>
+        FiniteGenerationRules.Check(GenerationPattern.Parse(pattern, checksum), rule, assessmentDate);
+
+    /// <summary>
+    /// Checks numeric minimum and maximum rules against an exact inclusive Int64 generation range.
+    /// </summary>
+    /// <param name="range">The authored inclusive range.</param>
+    /// <param name="rule">The concept validation rule.</param>
+    /// <returns>The proof status, with an exact integer witness on refutation.</returns>
+    public static RuleConsistencyResult CheckRandom(string range, SemanticValidationRule rule) => FiniteGenerationRules.Check(GenerationIntegerRange.Parse(range), rule);
+
+    internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear) =>
+        generation?.Kind == "pattern" && generation.Pattern is { } pattern
+            ? CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1))
+            : Check(generation, primitive, rule);
 
     internal static RuleConsistencyResult CrossCheck(GenerationShape shape, RuleConsistencyResult proof, Func<string, bool> matches, bool complement = false) =>
         proof.Status == RuleConsistencyStatus.Proven ? Samples(shape, matches, complement, null) : proof;
