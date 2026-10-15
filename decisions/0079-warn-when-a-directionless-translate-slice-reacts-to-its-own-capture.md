@@ -2,7 +2,7 @@
 id: 0079
 title: Warn when a directionless Translate slice reacts to an event its own capture appends
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-15
 decider: Sindre Alstad Wilting
 class: contract
