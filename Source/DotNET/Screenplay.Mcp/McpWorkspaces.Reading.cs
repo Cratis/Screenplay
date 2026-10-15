@@ -181,7 +181,7 @@ internal sealed partial class McpWorkspaces
         executionReadiness = entry.State == "pending" ? "Unsupported: no predicate attachment (PLAY0268)." : "Opaque predicate; execution requires an admitting target, not the reference runner."
     };
 
-    static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
+    static object DescribeHandlerIntent(WorkspaceImplementationEntry entry, CompilationResult<SemanticCompilation> compilation) => new
     {
         placementStatus = "resolved",
         handle = McpAstHandles.Describe(entry.Handle),
@@ -195,8 +195,19 @@ internal sealed partial class McpWorkspaces
         file = entry.File,
         language = entry.Language,
         state = entry.State,
-        executableReady = false
+        executableReady = DescribedHandlerReady(entry, compilation),
+        admission = HandlerAdmission(entry, compilation)
     };
+
+    static string HandlerAdmission(WorkspaceImplementationEntry entry, CompilationResult<SemanticCompilation> compilation)
+    {
+        if (DescribedHandlerReady(entry, compilation)) return "described";
+        return entry.State == "pending" ? "refused" : "authoring-only";
+    }
+
+    static bool DescribedHandlerReady(WorkspaceImplementationEntry entry, CompilationResult<SemanticCompilation> compilation) => compilation.Success &&
+        compilation.ImplementationRequirements.Any(requirement => requirement.RequirementId == entry.RequirementId &&
+            requirement.Role == SemanticImplementationRole.CommandHandler && requirement.AttachmentResolution == SemanticAttachmentResolution.Pending);
 
     static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {
@@ -286,6 +297,10 @@ internal sealed partial class McpWorkspaces
         requirement.ResultVersion,
         requirement.RequiredCapability,
         attachmentResolution = requirement.AttachmentResolution.ToString(),
+        hints = requirement.Hints,
+        hintCount = requirement.Hints.Length,
+        provisional = requirement.IsProvisional,
+        ambiguous = requirement.IsAmbiguous,
         owner = McpSemanticAddresses.Describe(requirement.Owner),
         requirement.Member,
         requirement.Language,

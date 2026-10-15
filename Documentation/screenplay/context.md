@@ -63,14 +63,14 @@ It returns the String primitive in context/result contract version 1. There are 
 
 These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
-A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. Pending/file/inline describes model selection only. Handler executable admission remains unsupported; a context descriptor is not permission to execute, render or confirm an implementation.
+A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body. Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran. Attached file/inline handlers remain unadmitted.
 
 ## Implementation wrapper support
 
 | Owner | Authoring wrapper | Executable contract |
 | --- | --- | --- |
 | Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
-| Command handler | Hints with zero or one source | Authoring only; handler binding remains unsupported. |
+| Command handler | Hints with zero or one source | Pending with unconditional `produces`: ESM v23 CommandHandler context/result v1. File/inline remains `PLAY0268`; production-less pending is `PLAY0696`, conditional is `PLAY0697`. |
 | Operation execute/compensate phase | Hints with zero or one source | Authoring only; not admitted by any supported executable model (ESM) version yet. |
 | Concept generation rule | No wrapper: exactly one direct file/tagged fence | ESM v21 ValueGeneration, context/result v1, String result; no body is refused with PLAY0268. |
 | Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |
