@@ -1,0 +1,134 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module Billing
+  feature Import
+    slice Translate Records
+      capture Records
+        source api
+          api LegacyApi
+          route /records
+        key id
+        map
+          status = sourceStatus translate
+            "sendt" => sent
+            "betalt" => paid
+        append Added
+          when added
+            status = $.status
+        append Changed
+          when status
+        append AnyChanged
+          when status or label
+        append AllChanged
+          when status and label
+        append Transitioned
+          when status from "sent" to "paid"
+        append Flagged
+          when `status == "paid"`
+        append Observed
+          status = $.status
+        children items identified by id
+          append ChildAdded
+            when added
+          append ChildChanged
+            when value
+          append ChildAnyChanged
+            when value or id
+          append ChildAllChanged
+            when value and id
+          append ChildTransitioned
+            when value from "before" to "after"
+        nested contact
+          append NestedAdded
+            when added
+          append NestedChanged
+            when value
+          append NestedAnyChanged
+            when value or label
+          append NestedAllChanged
+            when value and label
+          append NestedTransitioned
+            when value from "before" to "after"
+      event Added
+        status String
+      event Changed
+      event AnyChanged
+      event AllChanged
+      event Transitioned
+      event Flagged
+      event Observed
+        status String
+      event ChildAdded
+      event ChildChanged
+      event ChildAnyChanged
+      event ChildAllChanged
+      event ChildTransitioned
+      event NestedAdded
+      event NestedChanged
+      event NestedAnyChanged
+      event NestedAllChanged
+      event NestedTransitioned
+      specification FirstRecord
+        when capture Records
+          id = "root"
+          sourceStatus = "betalt"
+          label = "new"
+          items = [{"id":"child","value":"after"}]
+          contact = {"value":"after","label":"new"}
+        then Added
+          for "root"
+          status = "paid"
+        then Flagged
+        then Observed
+          status = "paid"
+        then ChildAdded
+        then NestedAdded
+      specification ModifiedRecord
+        given capture Records
+          id = "root"
+          sourceStatus = "sendt"
+          label = "old"
+        when capture Records
+          id = "root"
+          sourceStatus = "betalt"
+          label = "new"
+        then Changed
+        then AnyChanged
+        then AllChanged
+        then Transitioned
+        then Flagged
+        then Observed
+          status = "paid"
+      specification DifferentKey
+        given capture Records
+          id = "other"
+          sourceStatus = "sendt"
+          label = "old"
+        when capture Records
+          id = "root"
+          sourceStatus = "betalt"
+          label = "new"
+        then Added
+          status = "paid"
+        then Flagged
+        then Observed
+          status = "paid"
+      specification NewChildAndNestedRecord
+        given capture Records
+          id = "root"
+          sourceStatus = "sendt"
+          items = [{"id":"known","value":"before"}]
+          contact = null
+        when capture Records
+          id = "root"
+          sourceStatus = "sendt"
+          items = [{"id":"known","value":"after"},{"id":"new","value":"after"}]
+          contact = {"value":"after","label":"new"}
+        then Observed
+          status = "sent"
+        then ChildChanged
+        then ChildAnyChanged
+        then ChildTransitioned
+        then ChildAdded
+        then NestedAdded
