@@ -8,6 +8,7 @@ Regions are blocks inside a [`layout`](templates.md), next to its slots. The app
 
 ```screenplay
 layout AppShell
+  category application
   topbar
   navigation contributes Navigation
   content
@@ -44,6 +45,7 @@ A module declares a block only for a region it changes. A region it does not men
 
 ```screenplay
 layout AppShell
+  category application
   content
 
   navigation sidebar

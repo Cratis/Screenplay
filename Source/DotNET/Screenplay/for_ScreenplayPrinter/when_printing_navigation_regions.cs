@@ -10,6 +10,7 @@ public class when_printing_navigation_regions : given.a_printer
     const string Source =
         """
         layout AppShell
+          category application
           topbar
           navigation contributes Navigation
           content

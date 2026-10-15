@@ -17,6 +17,7 @@ public class a_navigation_document : a_compiler
     public const string Foundation =
         """
         layout AppShell
+          category application
           topbar
           navigation contributes Navigation
           content
