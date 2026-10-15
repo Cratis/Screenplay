@@ -118,9 +118,9 @@ internal static partial class EventSourceInvariants
         if (type is not null && (type.Name is null || !TypeNameRegex().IsMatch(type.Name))) throw new InvalidSyntaxJson("Source identifiers and stream ids require an exact type reference name.");
     }
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*(?![\s\S])", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*\z", RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
 
-    [GeneratedRegex(@"^[\w.]+(?![\s\S])", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[\w.]+\z", RegexOptions.NonBacktracking)]
     private static partial Regex TypeNameRegex();
 }

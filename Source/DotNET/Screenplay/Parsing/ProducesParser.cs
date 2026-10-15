@@ -285,7 +285,7 @@ internal static partial class ProducesParser
         return EventSourceParser.ParseRoute(context, line, candidate, false);
     }
 
-    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*\.[A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*\.[A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ProductionRouteRegex();
 
     static bool RejectReserved(ParserContext context, SourceLine line)
@@ -301,30 +301,30 @@ internal static partial class ProducesParser
         return true;
     }
 
-    [GeneratedRegex(@"^produces\s+operation(?:\s+|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+operation(?:\s+|$)", RegexOptions.NonBacktracking)]
     private static partial Regex InlineOperationTargetRegex();
 
-    [GeneratedRegex(@"^produces\s+operation(?:\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+operation(?:\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex InlineOperationPrefixRegex();
 
-    [GeneratedRegex(@"^produces\s+event\s+([A-Za-z_]\w*)(?:\s+(generation)(?:\s+.*)?)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+event\s+([A-Za-z_]\w*)(?:\s+(generation)(?:\s+.*)?)?$", RegexOptions.NonBacktracking)]
     private static partial Regex InlineHeaderRegex();
 
-    [GeneratedRegex(@"^(.+?)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(.+?)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex TypedMappingRegex();
 
-    [GeneratedRegex(@"^produces\s+when\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+when\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ProducesWhenRegex();
 
-    [GeneratedRegex(@"^produces\s+([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ProducesRegex();
 
-    [GeneratedRegex(@"^([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EventNameRegex();
 
-    [GeneratedRegex(@"^for\s+(\S.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^for\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ForRegex();
 
-    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 }

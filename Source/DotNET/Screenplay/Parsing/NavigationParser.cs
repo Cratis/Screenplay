@@ -29,7 +29,7 @@ internal static partial class NavigationParser
     /// </summary>
     /// <param name="content">The content of the line.</param>
     /// <returns><c>true</c> when the line is <c>navigation</c> followed by something other than <c>contributes</c>.</returns>
-    public static bool IsRegionHeader(string content) => RegionStartRegex().IsMatch(content);
+    public static bool IsRegionHeader(string content) => RegionStartRegex().IsMatch(content) && !ContributionStartRegex().IsMatch(content);
 
     /// <summary>
     /// Parses a navigation region from its already consumed header line.
@@ -129,14 +129,14 @@ internal static partial class NavigationParser
         while (position < rest.Length)
         {
             var part = PartRegex().Match(rest, position);
-            if (!part.Success)
+            if (!part.Success || part.Index != position)
             {
                 context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid navigation item '{line.Content}' - unexpected '{rest[position..].Trim()}'; expected {Expected}", line.Location);
                 valid = false;
                 break;
             }
 
-            position = part.Index + part.Length;
+            position = part.Groups["end"].Index;
             var key = part.Groups[1].Value;
             var isQuoted = part.Groups[2].Success;
             var isLocalized = part.Groups[3].Success;
@@ -231,24 +231,27 @@ internal static partial class NavigationParser
         return match.Groups[localizedGroup].Success ? match.Groups[localizedGroup].Value : match.Groups[bareGroup].Value;
     }
 
-    [GeneratedRegex(@"^navigation\s+(?!contributes\b)\S", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigation\s+\S", RegexOptions.NonBacktracking)]
     private static partial Regex RegionStartRegex();
 
-    [GeneratedRegex(@"^navigation\s+(topbar|sidebar)(?:\s+(inherits|extends|overrides))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigation\s+contributes\b", RegexOptions.NonBacktracking)]
+    private static partial Regex ContributionStartRegex();
+
+    [GeneratedRegex(@"^navigation\s+(topbar|sidebar)(?:\s+(inherits|extends|overrides))?$", RegexOptions.NonBacktracking)]
     private static partial Regex RegionHeaderRegex();
 
-    [GeneratedRegex("^logo\\s+image\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s+title\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^logo\\s+image\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s+title\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex LogoRegex();
 
-    [GeneratedRegex("^item\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^item\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemRegex();
 
-    [GeneratedRegex("\\G\\s*(title|icon|slot|target)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\s*(title|icon|slot|target)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex PartRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex IdentifierRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex TargetRegex();
 }

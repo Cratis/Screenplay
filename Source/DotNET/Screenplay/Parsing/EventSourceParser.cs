@@ -238,24 +238,24 @@ internal static partial class EventSourceParser
 
     static void Invalid(ParserContext context, SourceLine line, string message) => context.Error(DiagnosticCodes.InvalidEventSourceDeclaration, message, line.Location);
 
-    [GeneratedRegex(@"^eventsource\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^eventsource\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex SourceHeaderRegex();
 
-    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex StreamHeaderRegex();
 
-    [GeneratedRegex(@"^(identifier|streamId)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(identifier|streamId)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.NonBacktracking)]
     private static partial Regex TypeDirectiveRegex();
 
-    [GeneratedRegex(@"^id\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^id\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex PinRegex();
 
-    [GeneratedRegex(@"^streamId\s*=\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^streamId\s*=\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.NonBacktracking)]
     private static partial Regex PartDeclarationRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex PartMappingRegex();
 }

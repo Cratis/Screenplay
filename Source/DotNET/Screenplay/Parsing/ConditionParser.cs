@@ -42,11 +42,22 @@ internal static partial class ConditionParser
 
         return LogicalConditionParser.Parse<ConditionSyntax>(
             context,
-            [.. regex.Matches(text).Select(_ => _.Value)],
+            [.. Tokenize(regex, text)],
             location,
             ParseComparison,
             static (left, @operator, right, location) => new LogicalConditionSyntax(left, @operator, right, location),
             _diagnostics);
+    }
+
+    internal static IEnumerable<string> Tokenize(Regex regex, string text)
+    {
+        for (var match = regex.Match(text); match.Success;)
+        {
+            // Exact numbers consume their delimiter instead of looking ahead; visit that delimiter again.
+            var token = match.Groups["number"].Success ? match.Groups["number"] : match.Groups[0];
+            yield return token.Value;
+            match = regex.Match(text, token.Index + token.Length);
+        }
     }
 
     static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
@@ -109,15 +120,15 @@ internal static partial class ConditionParser
         };
     }
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|(?<number>-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?:$|[\\s()])|[\\w.$-]+", RegexOptions.NonBacktracking)]
     private static partial Regex ExactGuardTokenRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|(?<number>-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?:$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.NonBacktracking)]
     private static partial Regex ExactTokenRegex();
 
-    [GeneratedRegex(@"\s", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\s", RegexOptions.NonBacktracking)]
     private static partial Regex WhitespaceRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 }
