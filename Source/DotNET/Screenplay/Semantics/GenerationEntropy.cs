@@ -40,7 +40,7 @@ public static class GenerationEntropy
             "ulid" => BigInteger.One << 80,
             "nanoid" when size is >= 1 and <= 256 && alphabet.Length >= 2 && alphabet.All(character => character is >= ' ' and <= '~') && alphabet.Distinct().Count() == alphabet.Length => BigInteger.Pow(alphabet.Length, size),
             "bytes" when generation.Count is >= 1 and <= 512 => BigInteger.One << (8 * generation.Count.Value),
-            "pattern" when generation.Pattern is { } pattern => GenerationPatternAssessment.MinimumCount(GenerationPattern.Parse(pattern, generation.Checksum), utcAssessmentYear),
+            "pattern" when generation.Pattern is { } pattern => GenerationPatternAssessment.CachedMinimumCount(pattern, generation.Checksum, utcAssessmentYear),
             "random" when generation.Range is { } range => GenerationIntegerRange.Parse(range).Count,
             _ => null
         };

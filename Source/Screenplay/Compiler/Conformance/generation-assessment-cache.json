@@ -1,0 +1,12 @@
+{
+  "capacity": 2,
+  "requests": [
+    { "pattern": "{yyyy}#", "year": 2024, "value": "10", "expected": "10", "computations": 1 },
+    { "pattern": "{yyyy}#", "year": 2024, "value": "999", "expected": "10", "computations": 1 },
+    { "pattern": "{yyyy}#", "checksum": "luhn", "year": 2024, "value": "20", "expected": "20", "computations": 2 },
+    { "pattern": "{yyyy}#", "year": 2025, "value": "30", "expected": "30", "computations": 3 },
+    { "pattern": "{yyyy}#", "checksum": "luhn", "year": 2024, "value": "999", "expected": "20", "computations": 3 },
+    { "pattern": "{yyyy}#", "year": 2024, "value": "40", "expected": "40", "computations": 4 },
+    { "pattern": "{yyyy}#", "checksum": "luhn", "year": 2024, "value": "50", "expected": "50", "computations": 5 }
+  ]
+}

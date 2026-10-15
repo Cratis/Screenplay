@@ -8,20 +8,15 @@ namespace Cratis.Screenplay.Semantics.Generation.for_GenerationPattern;
 
 public class when_assessing_shared_date_vectors
 {
-    public static TheoryData<JsonElement> Vectors
+    [Fact]
+    void should_preserve_exact_support_and_first_empty_date_with_bounded_actual_work()
     {
-        get
-        {
-            var data = new TheoryData<JsonElement>();
-            foreach (var vector in given.shared_generation_vectors.Read("assessments")) data.Add(vector);
-
-            return data;
-        }
+        var vectors = given.shared_generation_vectors.Read("assessments");
+        vectors.Length.ShouldEqual(10);
+        foreach (var vector in vectors) Check(vector);
     }
 
-    [Theory]
-    [MemberData(nameof(Vectors))]
-    void should_preserve_exact_support_and_first_empty_date_with_bounded_actual_work(JsonElement vector)
+    static void Check(JsonElement vector)
     {
         var budget = new GenerationWorkBudget(vector.GetProperty("budget").GetInt64());
         var pattern = given.shared_generation_vectors.Pattern(vector);

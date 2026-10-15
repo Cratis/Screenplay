@@ -13,7 +13,7 @@ internal static partial class SemanticGenerationContract
     internal static BigInteger? SupportCount(SemanticGeneration? generation, int utcYear)
     {
         if (generation?.Kind == "implementation") return null;
-        if (generation?.Kind == "pattern") return GenerationPatternAssessment.MinimumCount(GenerationPattern.Parse(generation.Pattern!, generation.Checksum), utcYear);
+        if (generation?.Kind == "pattern") return GenerationPatternAssessment.CachedMinimumCount(generation.Pattern!, generation.Checksum, utcYear);
         if (generation?.Kind == "random") return new GenerationIntegerRange(generation.Minimum!.Value, generation.Maximum!.Value).Count;
         var source = generation is null ? null : new Syntax.GenerationSyntax(generation.Kind, Diagnostics.SourceLocation.Start)
         {

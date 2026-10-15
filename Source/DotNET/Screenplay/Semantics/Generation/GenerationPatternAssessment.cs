@@ -7,6 +7,9 @@ namespace Cratis.Screenplay.Semantics.Generation;
 
 internal static class GenerationPatternAssessment
 {
+    internal static BigInteger CachedMinimumCount(string pattern, string? checksum, int utcYear) =>
+        GenerationAssessmentCache.Shared.Get(pattern, checksum, utcYear, () => MinimumCount(GenerationPattern.Parse(pattern, checksum), utcYear));
+
     internal static BigInteger MinimumCount(GenerationPattern pattern, int utcYear, GenerationWorkBudget? budget = null)
     {
         budget ??= new();
