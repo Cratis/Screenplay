@@ -2,7 +2,7 @@
 id: 0080
 title: Treat the first record of a key in a record capture as added only, as Chronicle does
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-15
 decider: Sindre Alstad Wilting
 class: contract
