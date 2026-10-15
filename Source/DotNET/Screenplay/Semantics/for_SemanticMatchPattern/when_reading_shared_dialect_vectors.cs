@@ -18,7 +18,7 @@ public class when_reading_shared_dialect_vectors
             if (result.Accepted)
             {
                 result.JavaScriptPattern.ShouldEqual(vector.GetProperty("pattern").GetString());
-                SemanticMatchPattern.Create(result).GetGroupNames().Length.ShouldEqual(1);
+                SemanticMatchPattern.Create(result).StateCount.ShouldBeGreaterThan(0);
                 continue;
             }
             result.Invalid.ShouldEqual(vector.GetProperty("invalid").GetBoolean());

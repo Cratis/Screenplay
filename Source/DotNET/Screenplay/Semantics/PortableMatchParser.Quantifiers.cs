@@ -7,27 +7,40 @@ namespace Cratis.Screenplay.Semantics;
 
 internal sealed partial class PortableMatchParser
 {
+    static int Bounded(BigInteger value) => (int)BigInteger.Min(SizeLimit + 1, value);
+
     Fragment Quantify(Fragment atom)
     {
         if (_failure is not null || _offset >= pattern.Length) return atom;
         var start = _offset;
         var count = BigInteger.One;
-        if (At('*') || At('+') || At('?'))
+        var minimum = BigInteger.Zero;
+        BigInteger? maximum = null;
+        if (Take('*'))
         {
-            _offset++;
+            // Zero or more, with one copy in the admission budget.
+        }
+        else if (Take('+'))
+        {
+            minimum = BigInteger.One;
+        }
+        else if (Take('?'))
+        {
+            maximum = BigInteger.One;
         }
         else if (Take('{'))
         {
-            if (!Digits(out var minimum))
+            if (!Digits(out minimum))
             {
                 Refuse("unescaped brace", start);
                 return atom;
             }
-            count = minimum;
+            maximum = count = minimum;
             if (Take(','))
             {
                 if (At('}'))
                 {
+                    maximum = null;
                     count = minimum + 1;
                 }
                 else if (!Digits(out count))
@@ -35,9 +48,10 @@ internal sealed partial class PortableMatchParser
                     Refuse("unescaped brace", start);
                     return atom;
                 }
-                else if (count < minimum)
+                else
                 {
-                    Invalid("reversed counted repeat", start);
+                    maximum = count;
+                    if (count < minimum) Invalid("reversed counted repeat", start);
                 }
             }
             if (!Take('}')) Refuse("unescaped brace", start);
@@ -48,11 +62,13 @@ internal sealed partial class PortableMatchParser
         }
         if (!atom.Quantifiable) Invalid("quantified assertion", start);
         Take('?');
-        var size = (int)BigInteger.Min(SizeLimit + 1, atom.Size * count);
+        var size = Bounded(atom.Size * count);
         int? budgetOffset = size > SizeLimit ? atom.BudgetOffset ?? start : null;
 
-        // An empty group repeated any number of times still matches only the empty string.
-        return new(size == 0 ? "(?:)" : atom.Text + pattern[start.._offset], size, false, budgetOffset);
+        // Zero-position bodies are empty. Huge counts are harmless only when a zero repeat erases them.
+        var node = size == 0 ? MatchExpression.Empty : new MatchRepeatExpression(atom.Node, Bounded(minimum), maximum is { } upper ? Bounded(upper) : null);
+
+        return new(node, size, false, budgetOffset);
     }
 
     bool Digits(out BigInteger value)

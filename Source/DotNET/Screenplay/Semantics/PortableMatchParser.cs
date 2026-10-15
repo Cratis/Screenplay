@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text;
-
 namespace Cratis.Screenplay.Semantics;
 
 // Decision 0084: this parser, not the host regex engine, decides dialect admission.
@@ -22,14 +20,15 @@ internal sealed partial class PortableMatchParser(string pattern)
         if (_failure is null && _offset != pattern.Length) Invalid("unmatched closing group", _offset);
         if (expression.Size > SizeLimit) Refuse("expanded pattern size", expression.BudgetOffset ?? _offset);
 
-        return _failure ?? new(pattern, expression.Text, null, 0, false, null);
+        return _failure ?? new(pattern, expression.Node, null, 0, false, null);
     }
 
     static bool NameStart(char character) => char.IsAsciiLetter(character) || character == '_';
 
     Fragment Expression()
     {
-        var text = new StringBuilder();
+        var alternatives = new List<MatchExpression>();
+        var sequence = new List<MatchExpression>();
         var size = 0;
         int? budgetOffset = null;
         var scope = _scope++;
@@ -38,7 +37,8 @@ internal sealed partial class PortableMatchParser(string pattern)
         {
             if (pattern[_offset] == '|')
             {
-                text.Append('|');
+                alternatives.Add(MatchExpression.Sequence(sequence));
+                sequence = [];
                 _branches[^1] = (scope, _branches[^1].Alternative + 1);
                 _offset++;
                 continue;
@@ -46,13 +46,15 @@ internal sealed partial class PortableMatchParser(string pattern)
             var start = _offset;
             var atom = Atom();
             atom = Quantify(atom);
-            text.Append(atom.Text);
+            if (atom.Node != MatchExpression.Empty) sequence.Add(atom.Node);
             size = Math.Min(SizeLimit + 1, size + atom.Size);
             if (size > SizeLimit) budgetOffset ??= atom.BudgetOffset ?? start;
         }
         _branches.RemoveAt(_branches.Count - 1);
 
-        return new(text.ToString(), size, BudgetOffset: budgetOffset);
+        alternatives.Add(MatchExpression.Sequence(sequence));
+
+        return new(MatchExpression.Choice(alternatives), size, BudgetOffset: budgetOffset);
     }
 
     Fragment Atom()
@@ -62,18 +64,18 @@ internal sealed partial class PortableMatchParser(string pattern)
         switch (character)
         {
             case '(': return Group(start);
-            case '[': return new(CharacterClass(start).Emit(), 1);
-            case '\\': return new(Escape(start, false).Emit(), 1);
-            case '.': return new(MatchCharacterSet.Dot().Emit(), 1);
-            case '^': return new(@"\A", 1, false);
-            case '$': return new(@"\z", 1, false);
+            case '[': return new(new MatchCharacterExpression(CharacterClass(start)), 1);
+            case '\\': return new(new MatchCharacterExpression(Escape(start, false)), 1);
+            case '.': return new(new MatchCharacterExpression(MatchCharacterSet.Dot()), 1);
+            case '^': return new(new MatchAssertionExpression(true), 1, false);
+            case '$': return new(new MatchAssertionExpression(false), 1, false);
             case ']': Refuse("unescaped closing bracket", start); break;
             case '{': case '}': Refuse("unescaped brace", start); break;
             case '*': case '+': case '?': Invalid("quantifier without an atom", start); break;
-            default: return new(MatchCharacterSet.Character(character).Emit(), 1);
+            default: return new(new MatchCharacterExpression(MatchCharacterSet.Character(character)), 1);
         }
 
-        return new(string.Empty, 0);
+        return new(MatchExpression.Empty, 0);
     }
 
     Fragment Group(int start)
@@ -102,7 +104,7 @@ internal sealed partial class PortableMatchParser(string pattern)
         var body = Expression();
         if (!Take(')')) Invalid("unterminated group", start);
 
-        return new($"(?:{body.Text})", body.Size, BudgetOffset: body.BudgetOffset);
+        return body;
     }
 
     void RegisterName(string name, int start)
@@ -128,5 +130,5 @@ internal sealed partial class PortableMatchParser(string pattern)
 
     void Invalid(string construct, int offset) => _failure ??= new(pattern, null, construct, offset, true, null);
 
-    readonly record struct Fragment(string Text, int Size, bool Quantifiable = true, int? BudgetOffset = null);
+    readonly record struct Fragment(MatchExpression Node, int Size, bool Quantifiable = true, int? BudgetOffset = null);
 }

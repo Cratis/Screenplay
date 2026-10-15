@@ -6,22 +6,21 @@ namespace Cratis.Screenplay.Semantics.for_SemanticMatchPattern;
 public class when_checking_match_engine_boundaries
 {
     [Fact]
-    void should_centralize_engine_construction_and_never_catch_a_timeout_as_a_verdict()
+    void should_never_construct_a_platform_regex_on_a_matches_path()
     {
         var root = Path.Combine(PortableMatchVectors.Root(), "Source/DotNET/Screenplay/Semantics");
-        string[] paths = ["SemanticModelBinder.Validations.cs", "SemanticModelValidator.Validations.cs", "Execution/SemanticValidationRules.cs", "Execution/SemanticExecutionPlan.cs", "Generation/RuleConsistency.cs", "Generation/FiniteGenerationRules.cs"];
-        paths.Length.ShouldEqual(6);
+        string[] consumers = ["SemanticModelBinder.Validations.cs", "SemanticModelValidator.Validations.cs", "Execution/SemanticValidationRules.cs", "Execution/SemanticExecutionPlan.cs", "Generation/RuleConsistency.cs", "Generation/FiniteGenerationRules.cs"];
+        var matcher = Directory.GetFiles(root, "*.cs").Where(path => Path.GetFileName(path).StartsWith("Match", StringComparison.Ordinal) || Path.GetFileName(path).StartsWith("PortableMatch", StringComparison.Ordinal) || Path.GetFileName(path) == "SemanticMatchPattern.cs");
+        var paths = consumers.Select(path => Path.Combine(root, path)).Concat(matcher).ToArray();
+        paths.Length.ShouldBeGreaterThan(15);
         foreach (var path in paths)
         {
-            var source = File.ReadAllText(Path.Combine(root, path));
+            var source = File.ReadAllText(path);
+            source.ShouldNotContain("System.Text.RegularExpressions");
             source.ShouldNotContain("new Regex(");
             source.ShouldNotContain("RegexOptions.");
             source.ShouldNotContain("RegexMatchTimeoutException");
             source.ShouldNotContain("TimeSpan.From");
         }
-        var factory = File.ReadAllText(Path.Combine(root, "SemanticMatchPattern.cs"));
-        factory.ShouldContain("RegexOptions.NonBacktracking | RegexOptions.CultureInvariant, Regex.InfiniteMatchTimeout");
-        factory.ShouldNotContain("RegexOptions.ECMAScript");
-        factory.ShouldNotContain("TimeSpan.From");
     }
 }

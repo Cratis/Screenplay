@@ -3,9 +3,12 @@
 
 namespace Cratis.Screenplay.Semantics;
 
-internal sealed record MatchPatternResult(string JavaScriptPattern, string? DotNetPattern, string? Construct, int Offset, bool Invalid, string? Suggestion)
+internal sealed record MatchPatternResult(string JavaScriptPattern, MatchExpression? Expression, string? Construct, int Offset, bool Invalid, string? Suggestion)
 {
     internal bool Accepted => Construct is null;
+
+    // An on-demand renderer export, never the reference matcher's execution path.
+    internal string NormalizedDotNetPattern => Expression is { } node ? MatchExpressionWriter.DotNet(node) : throw new InvalidSemanticContract("A refused match pattern has no normalized form.");
 
     internal string Description => $"{Construct} at offset {Offset}. {Suggestion}".TrimEnd();
 }

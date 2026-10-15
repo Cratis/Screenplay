@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text.RegularExpressions;
-
 namespace Cratis.Screenplay.Semantics.Generation.for_RuleConsistency;
 
 public class when_cross_checking_a_proof : Specification
@@ -19,7 +17,7 @@ public class when_cross_checking_a_proof : Specification
 
     [Fact]
     void should_not_convert_an_unexpected_engine_failure_into_a_verdict() =>
-        Catch.Exception(() => RuleConsistency.CrossCheck(_shape, RuleConsistencyResult.Proven, _ => throw new RegexMatchTimeoutException())).ShouldBeOfExactType<RegexMatchTimeoutException>();
+        Catch.Exception(() => RuleConsistency.CrossCheck(_shape, RuleConsistencyResult.Proven, _ => throw new InvalidSemanticContract("Unexpected match failure."))).ShouldBeOfExactType<InvalidSemanticContract>();
 
     [Fact]
     void should_refuse_to_prove_an_ambiguous_in_fragment_pattern()

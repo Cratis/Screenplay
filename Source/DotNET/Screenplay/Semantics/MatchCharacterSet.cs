@@ -1,15 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Globalization;
-using System.Text;
-
 namespace Cratis.Screenplay.Semantics;
 
 // Sorted disjoint intervals of UTF-16 code units, independent of host Unicode categories.
 internal sealed class MatchCharacterSet
 {
     List<(int First, int Last)> _ranges = [];
+
+    internal IEnumerable<(int First, int Last)> Ranges => _ranges;
 
     internal char? Single => _ranges.Count == 1 && _ranges[0].First == _ranges[0].Last ? (char)_ranges[0].First : null;
 
@@ -72,20 +71,21 @@ internal sealed class MatchCharacterSet
         _ranges = complement;
     }
 
-    internal string Emit()
+    internal bool Contains(char character)
     {
-        if (_ranges.Count == 0) return @"[^\u0000-\uffff]";
-        var text = new StringBuilder("[");
-        foreach (var (first, last) in _ranges)
+        var first = 0;
+        var last = _ranges.Count - 1;
+        while (first <= last)
         {
-            text.Append(Code(first));
-            if (last != first) text.Append('-').Append(Code(last));
+            var middle = first + ((last - first) / 2);
+            var range = _ranges[middle];
+            if (character < range.First) last = middle - 1;
+            else if (character > range.Last) first = middle + 1;
+            else return true;
         }
 
-        return text.Append(']').ToString();
+        return false;
     }
-
-    static string Code(int code) => "\\u" + code.ToString("x4", CultureInfo.InvariantCulture);
 
     static MatchCharacterSet Word()
     {

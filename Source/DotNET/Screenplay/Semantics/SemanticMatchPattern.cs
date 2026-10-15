@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text.RegularExpressions;
-
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
@@ -15,19 +13,12 @@ internal static class SemanticMatchPattern
 
     internal static MatchPatternResult Parse(string pattern) => new PortableMatchParser(pattern).Parse();
 
-    internal static Regex Create(string pattern) => Create(Parse(pattern));
+    internal static PortableMatchMachine Create(string pattern) => Create(Parse(pattern));
 
-    internal static Regex Create(MatchPatternResult parsed)
+    internal static PortableMatchMachine Create(MatchPatternResult parsed)
     {
         if (!parsed.Accepted) throw new InvalidSemanticContract($"Matches pattern is not executable: {parsed.Description}");
 
-        try
-        {
-            return new(parsed.DotNetPattern!, RegexOptions.NonBacktracking | RegexOptions.CultureInvariant, Regex.InfiniteMatchTimeout);
-        }
-        catch (NotSupportedException error)
-        {
-            throw new MatchPatternHostConfigurationError(error);
-        }
+        return new MatchAutomatonBuilder().Compile(parsed.Expression!);
     }
 }
