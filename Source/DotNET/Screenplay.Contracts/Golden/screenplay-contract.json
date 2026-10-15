@@ -22511,8 +22511,9 @@
     {
       "code": "PLAY0198",
       "name": "AmbiguousReference",
-      "severity": "warning",
+      "severity": "error",
       "severities": [
+        "error",
         "warning"
       ],
       "title": "A bare name matches more than one declaration at the same depth, so which one it means is undecided.",

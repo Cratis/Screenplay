@@ -91,8 +91,9 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.InvalidSpecificationDenied, "'then denied' cannot be combined with success or error outcomes.", specification.ThenDenied.Location);
             }
 
-            if ((command?.Authorization is not null || specification.ThenQueries.Any(query =>
-                _queries.TryGetValue(ShortName(query.Query), out var referenced) && referenced.Authorization is not null)) && specification.GivenCaller is null)
+            var queries = specification.ThenQueries.Select(value => (Syntax: value, Query: ResolveQuery(slice, value)))
+                .Where(value => value.Query is not null).ToArray();
+            if ((command?.Authorization is not null || queries.Any(value => value.Query!.Authorization is not null)) && specification.GivenCaller is null)
             {
                 Error(DiagnosticCodes.MissingSpecificationCaller, "An authorized specification requires an explicit 'given caller' fixture; missing identity context is never assumed.", specification.Location);
             }
@@ -113,7 +114,7 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var thenQueries = specification.ThenQueries.Select(BindSpecificationQuery).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var thenQueries = queries.Select(value => BindSpecificationQuery(value.Syntax, value.Query!)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenAbsentReadModels = specification.ThenAbsentReadModels.Select(BindAbsentReadModel).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             if (specification.ThenAbsentReadModels.Any()) UsesV5 = true;
             if (specification.ThenErrors.Count() > 1)
@@ -351,14 +352,8 @@ public sealed partial class SemanticModelBinder
             return key is null ? null : new(readModel.Model.Id, key);
         }
 
-        SemanticSpecificationQueryResult? BindSpecificationQuery(SpecificationQuerySyntax value)
+        SemanticSpecificationQueryResult? BindSpecificationQuery(SpecificationQuerySyntax value, SemanticKeyedQuery query)
         {
-            if (!_queries.TryGetValue(ShortName(value.Query), out var query))
-            {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification query '{value.Query}' is unresolved.", value.Location);
-                return null;
-            }
-
             var parameters = query.Filters.Select(filter => new SemanticReadModelQueryArgument(filter.Id, filter.Name, filter.Type))
                 .Concat(query.Argument is null ? [] : new[] { query.Argument }).ToDictionary(argument => argument.Name, StringComparer.Ordinal);
             var arguments = new Dictionary<string, SemanticValue>(StringComparer.Ordinal);
