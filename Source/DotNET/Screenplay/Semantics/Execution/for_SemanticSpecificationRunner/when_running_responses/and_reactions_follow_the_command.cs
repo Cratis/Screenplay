@@ -65,7 +65,7 @@ public class and_reactions_follow_the_command : given.a_v6_scenario
     [Fact]
     void should_retain_accepted_facts_without_a_response_when_a_scenario_query_fails()
     {
-        CompileScenario("policy SignedIn\n  require authenticated\n" + Prefix + "    slice StateView View\n      readmodel Details\n        id String\n      query ById => Details optional\n        by id String\n        authorize SignedIn\n      specification QueryFails\n        when C\n          id = \"hello\"\n        then Started\n          id = \"hello\"\n        then query ById\n          arguments\n            id = \"hello\"\n        then returns \"hello\"");
+        CompileScenario("policy SignedIn\n  require authenticated\n" + Prefix + "    slice StateView View\n      readmodel Details\n        id String\n      query ById => Details optional\n        by id String\n        authorize SignedIn\n      specification QueryFails\n        given caller\n        when C\n          id = \"hello\"\n        then Started\n          id = \"hello\"\n        then query ById\n          arguments\n            id = \"hello\"\n        then returns \"hello\"");
         var run = Run("QueryFails");
         ((SemanticRejected)run.Execution).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
         run.Execution.World.Facts.Length.ShouldEqual(1);

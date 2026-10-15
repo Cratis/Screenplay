@@ -286,7 +286,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<EventSyntax, BoundEvent> _eventDeclarations = [];
         readonly Dictionary<string, BoundEvent> _events = new(StringComparer.Ordinal);
         readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
-        readonly Dictionary<string, SemanticKeyedQuery> _queries = new(StringComparer.Ordinal);
         readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
         readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
@@ -530,11 +529,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                         continue;
                     }
 
-                    _queryDeclarations.Add(query, bound);
-                    if (!_queries.TryAdd(query.Name, bound))
+                    _queryDeclarations.Add(query, bound with
                     {
-                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query reference '{query.Name}' is ambiguous across slices in the current ESM v1 binder.", query.Location);
-                    }
+                        Authorization = EffectiveAuthorization(
+                            query.Authorize,
+                            bound.Argument is null ? [] : [new(bound.Argument.Id, bound.Argument.Name, bound.Argument.Type, false)],
+                            module,
+                            featurePath)
+                    });
                 }
             }
         }
