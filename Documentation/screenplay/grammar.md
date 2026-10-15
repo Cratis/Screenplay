@@ -500,9 +500,20 @@ TemplatePicker = "display", String, NL
                | "description", String, NL
                | TemplateScopes ;
 
-TemplateScopes = "scopes", ( TemplateScope, { ",", TemplateScope } | "none" ), NL ;
+TemplateScopes = "scopes", ( TemplateScopeItem, { ",", TemplateScopeItem } | "none" ), NL ;
+
+TemplateScopeItem = TemplateScope
+                  | "slice", SliceKindList ;           (* narrows a slice scope *)
 
 TemplateScope  = "application" | "module" | "feature" | "subfeature" | "slice" ;
+
+SliceKindList  = SliceKindName, { "|", SliceKindName } ;
+
+SliceKindName  = "statechange" | "stateview" ;         (* case-insensitive *)
+
+(* Every layout, screen template and dialog template declares a "category" -
+   a warning (PLAY0720) when it does not, an error in a blueprint package
+   build, which treats warnings as errors.                                   *)
 
 SlotContentDecl = "content", Ident, NL,
                  INDENT, { ScreenDirective }, DEDENT ;
@@ -1413,8 +1424,16 @@ NavigateOption = "route", LocalizableString, NL
                | "outlet", Ident, NL
                | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL ;
 
-TemplateRef    = "template", Ident, NL,
+TemplateRef    = "template", TemplateRefName, NL,
                  INDENT, { FilledSlot }, DEDENT ;
+
+(* An own template by name, or a template a blueprint package ships with the
+   semver range of the blueprint the author accepts. The same reference
+   assigns a default template at application, module, feature or slice scope
+   ("template" on its own line, no body).                                    *)
+
+TemplateRefName = Ident
+                | "blueprint", Ident, Ident, [ "version", String ] ;
 
 FilledSlot     = Ident, NL,
                  [ INDENT, { ScreenDirective }, DEDENT ] ;

@@ -1,5 +1,6 @@
 module Workspaces
   screen template Shell
+    category Workspace
     header contributes WorkspaceActions
     body
 

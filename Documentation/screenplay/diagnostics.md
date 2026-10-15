@@ -665,6 +665,7 @@ Private origins continue to use the existing invalid event/import declaration di
 | `PLAY0619` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
 | `PLAY0620` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
 | `PLAY0687` | Error | A capture's `source events` originate from several event stores; split it into one capture per origin. |
+| `PLAY0694` | Warning | An unrouted reaction in a directionless Translate slice consumes an event a capture in that same slice appends. Keep the capture here and move the reaction to an Automation slice. |
 | `PLAY0700` | Error | A capture over events names a key that is not a required property of every declared `from` event, including a `$`-context key. |
 | `PLAY0701` | Error | `given capture` or `when capture` names a capture over events; present the typed source event with `given <Event>` or `when append <Event>`. |
 
@@ -690,6 +691,32 @@ section have no automatic repair because each one is a contract decision for the
 `PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
 `PLAY0620` is malformed `source events` input with no single intended correction. `PLAY0687` requires splitting a capture by origin, with no single intended correction.
+
+### Directionless translation doing two jobs
+
+`PLAY0694` reports one warning at each reaction, listing the distinct matching events, even in a purely private
+model. For example, `FollowUp` below reacts to the fact that `Feed` just captured:
+
+```screenplay
+module Orders
+  feature Importing
+    slice Translate ReceiveOrder
+      event OrderReceived
+      capture Feed
+        append OrderReceived
+      reaction FollowUp
+        when OrderReceived
+```
+
+The check compares resolved event declarations across the assembled model, including imports and generations, not
+name strings. Child and nested capture appends count; specification fixtures and captures in other slices do not.
+Other producers elsewhere do not suppress the warning. Reactions with a `from` filter, reactions to other events,
+Automation slices and slices with an explicit `direction` are unchanged (`PLAY0616` still checks explicit inbound).
+Unresolved or ambiguous references never establish a match.
+
+Ordinary compilation still succeeds; `--warnaserror` fails until the slice is split. Use the
+[manual Translate/Automation split](slices.md#one-slice-one-job). There is no automatic repair: creating the new slice
+requires an author to choose its name, placement and specifications. No executable-model or binding behavior changes.
 
 ### Production routes and observer filters
 
@@ -741,11 +768,14 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0628` | Error | An instance uses `set` on a collection exposure, or `items` on a single-value exposure. |
 | `PLAY0629` | Error | A template's `content <slot>` names a slot the template does not declare. |
 | `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
-| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
+| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope, or - at `slice` scope - whose slice kinds (`scopes slice statechange`) exclude the slice's kind. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 | `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
 | `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
 | `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
+| `PLAY0720` | Warning | A `layout`, `screen template` or `dialog template` declares no `category`. A template picker groups by category, so every template needs one. A blueprint package build runs with warnings as errors, so there a missing category fails the build; an own template only warns. See [Layouts and templates](templates.md#category-and-picker-metadata). |
+| `PLAY0721` | Error | A template reference's `version` is not a range Scene understands: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. |
+| `PLAY0722` | Error | A `template blueprint <Blueprint> <Name>` reference names a blueprint no `ui profile` lists under `packages`. Only checked when at least one profile declares packages. |
 
 ## Identity details
 

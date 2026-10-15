@@ -11,6 +11,7 @@ public class when_compiling_a_screen_template_with_a_flow_arrangement : given.a_
         """
         module Invoicing
           screen template MasterDetail
+            category Test
             fits slot content
 
             sidebar contributes Navigation

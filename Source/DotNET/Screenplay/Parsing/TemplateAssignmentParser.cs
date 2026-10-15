@@ -11,10 +11,15 @@ internal static partial class TemplateAssignmentParser
 {
     public static TemplateAssignmentSyntax? Parse(ParserContext context, SourceLine line)
     {
+        var text = line.Content["template".Length..].Trim();
+        var blueprint = TemplateReferenceText.StartsBlueprint(text);
         var match = TemplateRegex().Match(line.Content);
-        if (!match.Success)
+        if (blueprint ? !TemplateReferenceText.TryParseBlueprint(text, out _) : !match.Success)
         {
-            context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Invalid template assignment '{line.Content}' - expected 'template <Name>'", line.Location);
+            context.Error(
+                DiagnosticCodes.UnknownLayoutDirective,
+                $"Invalid template assignment '{line.Content}' - expected 'template <Name>' or 'template blueprint <Blueprint> <Name> [version \"<range>\"]'",
+                line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -23,6 +28,19 @@ internal static partial class TemplateAssignmentParser
         {
             context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Unexpected block under template assignment '{line.Content}' - assign one template per line", line.Location);
             context.SkipBlock(line.Indent);
+        }
+
+        if (blueprint && TemplateReferenceText.TryParseBlueprint(text, out var reference))
+        {
+            if (reference.Version is not null && !TemplateVersionRange.IsValid(reference.Version))
+            {
+                context.Error(
+                    DiagnosticCodes.InvalidTemplateVersionRange,
+                    $"The template version range '{reference.Version}' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\"",
+                    line.Location);
+            }
+
+            return new(reference.Name, line.Location) { Blueprint = reference.Blueprint, Version = reference.Version };
         }
 
         return new(match.Groups[1].Value, line.Location);

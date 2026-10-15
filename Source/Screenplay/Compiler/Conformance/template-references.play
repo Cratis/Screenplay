@@ -1,0 +1,45 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+layout AppShell
+  category Shell
+  content
+
+module Sales
+  screen template Workspace
+    fits slot content
+    category Workspace
+    body
+
+  screen template OrderList
+    fits slot body
+    category List
+    scopes slice stateview
+    body
+
+  dialog template ConfirmOrder
+    category Dialog
+    scopes slice statechange
+    body
+    actions
+
+  feature Orders
+    slice StateView OrderList
+      template OrderList
+
+      screen Orders
+        template blueprint Crm CustomerDetail version "~1.4.2"
+          body
+            title "Orders"
+
+    slice StateChange PlaceOrder
+      screen PlaceOrder
+        template blueprint Crm ConfirmOrder
+          body
+            title "Place order"
+
+ui profile Desktop
+  target platform web
+  layout AppShell
+  packages
+    Crm

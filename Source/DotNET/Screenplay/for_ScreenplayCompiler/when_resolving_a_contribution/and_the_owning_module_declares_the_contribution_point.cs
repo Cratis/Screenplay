@@ -14,6 +14,7 @@ public class and_the_owning_module_declares_the_contribution_point : given.a_com
         """
         module Invoicing
           screen template AppShell
+            category Test
             navbar contributes Navigation
             main
 
@@ -26,6 +27,7 @@ public class and_the_owning_module_declares_the_contribution_point : given.a_com
 
         module Reporting
           screen template ReportShell
+            category Test
             navbar contributes Navigation
             main
         """;

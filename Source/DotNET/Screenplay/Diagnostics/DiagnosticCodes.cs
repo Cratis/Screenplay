@@ -3212,6 +3212,11 @@ public static class DiagnosticCodes
     public const string EmptyGenerationSupport = "PLAY0692";
 
     /// <summary>
+    /// A directionless Translate slice reacts to an event its own capture appends.
+    /// </summary>
+    public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";
+
+    /// <summary>
     /// A capture over events requires its key as a required property on every source event.
     /// </summary>
     public const string CaptureEventsKeyNotRequired = "PLAY0700";
@@ -3220,6 +3225,21 @@ public static class DiagnosticCodes
     /// A capture over events must be presented with event fixtures, not capture records.
     /// </summary>
     public const string CaptureEventsRecordFixture = "PLAY0701";
+
+    /// <summary>
+    /// A layout, screen template or dialog template declares no <c>category</c>. A blueprint package build treats it as an error (warnings as errors); an own template only warns.
+    /// </summary>
+    public const string TemplateCategoryMissing = "PLAY0720";
+
+    /// <summary>
+    /// A template reference's <c>version</c> is not a range Scene understands.
+    /// </summary>
+    public const string InvalidTemplateVersionRange = "PLAY0721";
+
+    /// <summary>
+    /// A <c>template blueprint</c> reference names a blueprint no <c>ui profile</c> lists in its <c>packages</c>.
+    /// </summary>
+    public const string UnknownTemplateBlueprint = "PLAY0722";
 
     // Navigation regions - topbar and sidebar of the application shell, with module level inherit, extend and override.
 

@@ -11,6 +11,7 @@ public class when_printing_a_contribution : given.a_printer
         """
         module Invoicing
           screen template AppShell
+            category Test
             navbar contributes Navigation
             main
 

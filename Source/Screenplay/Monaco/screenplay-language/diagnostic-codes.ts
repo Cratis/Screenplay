@@ -11,6 +11,7 @@
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
     repeatedSingularDeclarationAcrossFiles: 'PLAY0172',
+    directionlessTranslationReactsToOwnCapture: 'PLAY0694',
     invalidExposureDeclaration: 'PLAY0621',
     unknownExposureOwner: 'PLAY0622',
     reExposureCycle: 'PLAY0623',
@@ -26,6 +27,9 @@ export const diagnosticCodes = {
     unknownNavigationDestination: 'PLAY0654',
     unknownScreenContributionPoint: 'PLAY0655',
     templateNestingCycle: 'PLAY0656',
+    templateCategoryMissing: 'PLAY0720',
+    invalidTemplateVersionRange: 'PLAY0721',
+    unknownTemplateBlueprint: 'PLAY0722',
     mixedEnumerationNumbering: 'PLAY0667',
     duplicateEnumerationNumber: 'PLAY0668',
     enumerationNumberOutsideInt32: 'PLAY0669',
