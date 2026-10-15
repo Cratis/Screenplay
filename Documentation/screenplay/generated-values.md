@@ -69,7 +69,7 @@ TypeID carries time, not a tenant slot. Keep tenant isolation in the namespace; 
 
 The customer and invitation rules above are Proven: every value those exact shapes produce satisfies them. A Refuted rule stops binding with `PLAY0688`, naming the strategy and a quoted violating value. An Unproven rule produces `PLAY0689` with the reason: a regex outside fragment R, a construction budget, or opaque validation. That warning is not a proof. Providers still validate every generated value and treat a failure as a server defect; they never silently draw another one.
 
-Rules select V20 even when an implicit-UUID concept serializes no strategy. No proof status is serialized. Changing generation never adds or changes validation automatically, so stored values keep their authored rules. The [strategy reference](generated-values/strategies.md#rule-consistency) describes fragment R and proof limits.
+Rules select V20 even when an implicit-UUID concept serializes no strategy. No proof status is serialized: consumers derive it with `RuleConsistency.Check(concept)` on concepts used by generated properties, including implicit UUID. This avoids stale status after a package or UTC-year change. Renderers that support unpinned generation can use it when every rule is Proven; Unproven rules require pinned fixtures. Changing generation never adds or changes validation automatically, so stored values keep their authored rules. The [strategy reference](generated-values/strategies.md#rule-consistency) describes fragment R and proof limits.
 
 ## Work with strategies through MCP
 

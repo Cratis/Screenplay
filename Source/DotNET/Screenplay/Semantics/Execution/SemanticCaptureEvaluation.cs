@@ -13,8 +13,9 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <remarks>
 /// <para>
 /// Map operations apply in order, each to the record as the ones before it left it, and conditions compare the mapped
-/// records. A field the earlier record lacked has changed when the new one has it, so a first record has changed in
-/// every field it carries. <c>$.field</c> reads the item being evaluated, and the enclosing record when the item lacks it.
+/// records. A first observation is added only, at root, child and nested level. With previous state, a field the
+/// earlier record lacked has changed when the new one has it. <c>$.field</c> reads the item being evaluated, and the
+/// enclosing record when the item lacks it.
 /// </para>
 /// <para>
 /// The record's own appends run first, then each child collection's - current children in order, then the removed
@@ -298,16 +299,19 @@ internal static partial class SemanticCaptureEvaluation
             SemanticCaptureConditionKind.Added => before is null && after is not null,
             SemanticCaptureConditionKind.Removed => before is not null && after is null,
             _ when after is null => false,
-            _ when eventsSource && before is null && when is { Kind: not SemanticCaptureConditionKind.Expression } first => FirstEventDoesNotModify(first, after),
-            SemanticCaptureConditionKind.AnyChanged => when.Fields.Any(field => Unsupported is null && Changed(before, after, field)),
-            SemanticCaptureConditionKind.AllChanged => when.Fields.All(field => Unsupported is null && Changed(before, after, field)),
-            SemanticCaptureConditionKind.Transition => before is not null && Transition(before, after, when),
+            _ when before is null && when is { Kind: SemanticCaptureConditionKind.AnyChanged or SemanticCaptureConditionKind.AllChanged } first => FirstObservationDoesNotModify(first, after),
+            SemanticCaptureConditionKind.AnyChanged => when.Fields.Any(field => Unsupported is null && Changed(before!, after, field)),
+            SemanticCaptureConditionKind.AllChanged => when.Fields.All(field => Unsupported is null && Changed(before!, after, field)),
+            SemanticCaptureConditionKind.Transition => before is not null
+                ? Transition(before, after, when)
+                : eventsSource && FirstObservationDoesNotModify(when, after),
             SemanticCaptureConditionKind.Expression => ExpressionHolds(when.Expression, after),
             _ => throw new InvalidSemanticContract($"Capture condition '{when.Kind}' is unknown.")
         };
 
-        bool FirstEventDoesNotModify(SemanticCaptureCondition when, Dictionary<string, SemanticCaptureField> after)
+        bool FirstObservationDoesNotModify(SemanticCaptureCondition when, Dictionary<string, SemanticCaptureField> after)
         {
+            // A first observation cannot modify a field, but watching a non-scalar still fails closed.
             foreach (var field in when.Fields)
             {
                 if (Read(after, field).Unsupported is not null) return false;
@@ -331,16 +335,14 @@ internal static partial class SemanticCaptureEvaluation
             return now.Unsupported is null && SemanticValueRules.CaptureText(now.Value) == when.To;
         }
 
-        bool Changed(Dictionary<string, SemanticCaptureField>? before, Dictionary<string, SemanticCaptureField> after, string field)
+        bool Changed(Dictionary<string, SemanticCaptureField> before, Dictionary<string, SemanticCaptureField> after, string field)
         {
             var was = Read(before, field);
             if (was.Unsupported is not null) return false;
             var now = Read(after, field);
             if (now.Unsupported is not null) return false;
-            return before is null
-                ? after.ContainsKey(field)
-                : before.ContainsKey(field) != after.ContainsKey(field) ||
-                  (was.Value is not null && now.Value is not null && !SemanticValueRules.AreEqual(was.Value, now.Value));
+            return before.ContainsKey(field) != after.ContainsKey(field) ||
+                (was.Value is not null && now.Value is not null && !SemanticValueRules.AreEqual(was.Value, now.Value));
         }
 
         SemanticValue Value(SemanticExpression expression) => expression switch

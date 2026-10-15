@@ -3212,6 +3212,11 @@ public static class DiagnosticCodes
     public const string EmptyGenerationSupport = "PLAY0692";
 
     /// <summary>
+    /// A directionless Translate slice reacts to an event its own capture appends.
+    /// </summary>
+    public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";
+
+    /// <summary>
     /// A capture over events requires its key as a required property on every source event.
     /// </summary>
     public const string CaptureEventsKeyNotRequired = "PLAY0700";

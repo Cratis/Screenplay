@@ -18,6 +18,8 @@ applies-to:
   - Documentation/screenplay/captures.md
 ---
 
+> **2026-10-15 - clarification.** Accepted [decision 0080](0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md) supersedes this record's first-record field-change rule: a record with no previous state is added only at root, child and nested level, as Chronicle does. Field-change guards and their `and`/`or` combinations require previous state; transitions, maps, expression guards and unguarded appends keep their meaning. Canonical bytes and ESM versions are unchanged.
+
 ## Context
 
 Specifications start from commands, appended events and read-model state. Automation and translate slices are driven by other things: a clock (`every`, `at`), an application trigger (`trigger DirectoryChanged`), or a capture's source record. They also produce consequences through reactions, and the executable semantic model (ESM) does not run reactions. A slice of those kinds can therefore only specify its event-driven part, and an assertion after `when append` must equal the appended fact. The reaction's own effect cannot be asserted at all. Separately, a specification cannot state the occurrence time, so an event property mapped from `$context.occurred` can never be asserted exactly.

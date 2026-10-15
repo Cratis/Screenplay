@@ -40,6 +40,7 @@ export const DiagnosticCodes = {
     EventsSourceOutsideInboundTranslation: 'PLAY0619',
     InvalidCaptureEventsSource: 'PLAY0620',
     CaptureEventsFromSeveralOrigins: 'PLAY0687',
+    DirectionlessTranslationReactsToOwnCapture: 'PLAY0694',
     CaptureEventsKeyNotRequired: 'PLAY0700',
     CaptureEventsRecordFixture: 'PLAY0701',
     RefutedGeneratedConceptRule: 'PLAY0688',
