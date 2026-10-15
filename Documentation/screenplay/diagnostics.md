@@ -749,6 +749,7 @@ requires an author to choose its name, placement and specifications. No executab
 | `PLAY0689` | Warning | Consistency is Unproven for a generated concept rule; names the opaque/outside-fragment/budget/timeout reason. Passing samples are not proof. |
 | `PLAY0691` | Error | Generation support exceeds 2,048 automaton positions, 10,000 distinct states, or 100,000,000 inspected edges/counting transitions/assessed UTC dates. Reduce the pattern or conditioned support complexity; exhaustion never admits an unknown generator. |
 | `PLAY0692` | Error | A pattern has no admissible support after checksum conditioning, including on an assessed UTC date in the complete 101-year horizon. Change the digit payload or pattern; the diagnostic identifies the offending date when applicable. |
+| `PLAY0693` | Error | A `reaction batches` declaration is duplicate, conflicting or invalid for the application root. Declare `reaction batches atomic` once for the composed application; imported reactions inherit it. There is no automatic repair because removing the declaration changes production semantics. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 

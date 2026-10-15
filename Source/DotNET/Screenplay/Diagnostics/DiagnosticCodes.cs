@@ -3212,6 +3212,11 @@ public static class DiagnosticCodes
     public const string EmptyGenerationSupport = "PLAY0692";
 
     /// <summary>
+    /// A reaction batches declaration is repeated, conflicting or outside the application root.
+    /// </summary>
+    public const string InvalidReactionBatchesDeclaration = "PLAY0693";
+
+    /// <summary>
     /// A directionless Translate slice reacts to an event its own capture appends.
     /// </summary>
     public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";

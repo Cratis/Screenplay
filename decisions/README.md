@@ -74,6 +74,6 @@
 | [0075](0075-carry-the-stored-event-type-name-in-the-executable-model.md) | Carry the stored event type name in the executable model | accepted | none | 2026-10-13 | Sindre Alstad Wilting |
 | [0076](0076-declare-the-validation-gate-in-a-model-root-file.md) | Declare the validation gate in an authored screenplay.json at the model root | accepted | implemented | 2026-10-14 | Sindre Alstad Wilting |
 | [0077](0077-present-consumed-public-events-to-captures-over-events.md) | Present a consumed public event to a capture over events as the event itself, and fold it into per-key state as Chronicle does | accepted | implemented | 2026-10-14 | Sindre Alstad Wilting |
-| [0078](0078-opt-into-atomic-reaction-production-batches.md) | Opt into atomic reaction-production batches without changing existing models | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
+| [0078](0078-opt-into-atomic-reaction-production-batches.md) | Opt into atomic reaction-production batches without changing existing models | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |
 | [0079](0079-warn-when-a-directionless-translate-slice-reacts-to-its-own-capture.md) | Warn when a directionless Translate slice reacts to an event its own capture appends | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |
 | [0080](0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md) | Treat the first record of a key in a record capture as added only, as Chronicle does | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |

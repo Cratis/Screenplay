@@ -77,7 +77,7 @@ static class SemanticConstraintEnforcement
     // An event source holds at most one claim per constraint: a newer constrained event replaces its claim, so it
     // may claim its own value again or change it (Chronicle Kernel/Storage.MongoDB/Events/Constraints/UniqueConstraintsStorage.cs:40,67-70).
     // A releasing event drops the claim (Chronicle Kernel/Core/Events/Constraints/UniqueConstraintIndexUpdater.cs:28-31).
-    static bool ViolatesUniqueValue(SemanticConstraint constraint, SemanticFact candidate, ImmutableArray<SemanticFact> history)
+    internal static bool ViolatesUniqueValue(SemanticConstraint constraint, SemanticFact candidate, ImmutableArray<SemanticFact> history)
     {
         var value = ConstrainedValue(constraint, candidate);
         if (value.IsEmpty)
@@ -110,7 +110,7 @@ static class SemanticConstraintEnforcement
 
     // The event source's own stream decides: a constrained event is open until a releasing event follows it
     // (Chronicle Kernel/Storage.MongoDB/Events/Constraints/UniqueEventTypesConstraintsStorage.cs:44-65).
-    static bool ViolatesUniqueOccurrence(SemanticConstraint constraint, SemanticFact candidate, ImmutableArray<SemanticFact> history)
+    internal static bool ViolatesUniqueOccurrence(SemanticConstraint constraint, SemanticFact candidate, ImmutableArray<SemanticFact> history)
     {
         var open = false;
         foreach (var fact in history.Where(_ => SemanticValueRules.AreEqual(SourceOf(_, candidate.Destination), candidate.Destination)))
@@ -130,7 +130,7 @@ static class SemanticConstraintEnforcement
 
     // Null values are skipped, and a fact whose constrained values are all null claims and checks nothing
     // (Chronicle Kernel/Core/Events/Constraints/UniqueConstraintDefinitionExtensions.cs:32-40, UniqueConstraintValidator.cs:32-36).
-    static ImmutableArray<SemanticValue> ConstrainedValue(SemanticConstraint constraint, SemanticFact fact) =>
+    internal static ImmutableArray<SemanticValue> ConstrainedValue(SemanticConstraint constraint, SemanticFact fact) =>
     [
         .. Target(constraint, fact.EventContract)!.Properties
             .Select(property => fact.Values.FirstOrDefault(_ => _.TargetProperty == property)?.Value)
@@ -140,7 +140,7 @@ static class SemanticConstraintEnforcement
 
     // Ignoring casing compares text values in invariant lower case, as Chronicle does before hashing
     // (Chronicle Kernel/Core/Events/Constraints/UniqueConstraintDefinitionExtensions.cs:53-61).
-    static bool SameValue(ImmutableArray<SemanticValue> left, ImmutableArray<SemanticValue> right, bool ignoreCasing) =>
+    internal static bool SameValue(ImmutableArray<SemanticValue> left, ImmutableArray<SemanticValue> right, bool ignoreCasing) =>
         left.Length == right.Length && left.Zip(right).All(pair => (pair.First, pair.Second, ignoreCasing) switch
         {
             (SemanticTextValue first, SemanticTextValue second, true) =>
@@ -148,7 +148,7 @@ static class SemanticConstraintEnforcement
             _ => SemanticValueRules.AreEqual(pair.First, pair.Second)
         });
 
-    static SemanticConstraintTarget? Target(SemanticConstraint constraint, SemanticId eventContract) =>
+    internal static SemanticConstraintTarget? Target(SemanticConstraint constraint, SemanticId eventContract) =>
         constraint.Targets.FirstOrDefault(_ => _.EventContract == eventContract);
 
     static SemanticValue SourceOf(SemanticFact fact, SemanticValue candidate) =>

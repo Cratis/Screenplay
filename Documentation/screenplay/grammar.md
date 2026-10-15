@@ -19,7 +19,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
@@ -34,6 +34,11 @@ Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | T
 (* -------------------------------------------------------------- *)
 (* Numeric source mode — syntax-only exact authoring                *)
 (* -------------------------------------------------------------- *)
+
+ReactionBatchesPreamble = "reaction", "batches", "atomic", NL ;
+(* Application root only, at most once across composed documents (PLAY0693).
+   Imported reactions inherit the mode. Absence keeps legacy per-fact behavior;
+   explicit presence selects ESM v22. It is not a reaction declaration. *)
 
 NumericPreamble = "numbers", "exact", NL ;
 

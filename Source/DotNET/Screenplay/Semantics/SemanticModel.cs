@@ -118,6 +118,11 @@ public sealed record SemanticApplication(
     /// Gets the declared event sources, or an empty collection for models without event routes.
     /// </summary>
     public ImmutableArray<SemanticEventSource> EventSources { get; init; } = [];
+
+    /// <summary>
+    /// Gets the explicit reaction production mode; absence retains legacy per-fact semantics.
+    /// </summary>
+    public SemanticReactionProductionMode? ReactionProductionMode { get; init; }
 }
 
 /// <summary>

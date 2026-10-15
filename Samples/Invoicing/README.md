@@ -16,6 +16,10 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## Atomic reaction batches
+
+The root declares `reaction batches atomic` for all imported and local reactions. Direct productions from one trigger occurrence and each selected refusal branch form independent all-or-none batches (ESM v22); commands remain separate transactions. Omission preserves legacy per-fact behavior, not the default recommended for new models. The showcase still contains other constructs outside executable admission.
+
 ## Concept compliance
 
 PersonName and EmailAddress declare personal data; BankAccount declares both personal data and an operational secret, with personal protection taking precedence. These markers, qualifiers and scopes are admitted as ESM v13, with the event source as the data subject. Reasons remain report-only, and reference specifications have unchanged outcomes. Identity and enum compliance are refused, as are events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark until lineage is admitted. The sample still demonstrates other constructs outside executable admission.

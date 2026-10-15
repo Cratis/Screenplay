@@ -27,6 +27,10 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+## Atomic reaction production mode
+
+`ApplicationSyntax.ReactionProductionMode` is a nullable init-only `ReactionProductionMode` enum. The only admitted value is `Atomic`, authored as application-root `reaction batches atomic`; absence preserves legacy behavior and is omitted from syntax JSON. The scalar is visible to `VisitApplication`, not a new child node. Folder layout keeps it only in the root document, and imported reactions inherit it. Strict transport readers reject unknown values. ESM v22 writes the distinct optional final application member `reactionProductionMode: "atomic"`; consumers must preserve the choice during source recovery or refuse it.
+
 ## Generation rule bodies and checksum validation
 
 `GenerationSyntax.File` and `.Code` are nullable init-only members; old omissions remain absent in transport. They belong to `generate rule Name`, independently of a concept's provenance file. Preserve and walk them when rewriting concepts. Exactly one direct source is required for executable admission. `ValidationRuleKind.Checksum` and the semantic counterpart are appended enum members; earlier numeric values are unchanged. Checksum uses the existing rule operand and severity/message envelope.
