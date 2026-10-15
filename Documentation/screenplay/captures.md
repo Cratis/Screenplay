@@ -129,11 +129,17 @@ and never contacts a `source`, which stays realization metadata. For each record
 
 - `map` operations apply in order, each to the record as the ones before it left it. A field `map` does not
   touch passes through unchanged.
-- A condition compares the mapped record with the mapped record the capture last saw for the same `key`. A
-  field the earlier record lacked has changed when the new one has it, so a first record has changed in every
-  field it carries. `when status from "sent" to "paid"` compares mapped values.
+- A condition compares the mapped record with the mapped record the capture last saw for the same typed `key`.
+  With no previous state, the record is `added` only: `when added` holds, but field-change guards, `and`/`or`
+  combinations and transitions do not. With previous state, a field the earlier record lacked has changed when
+  the new one has it. `when status from "sent" to "paid"` compares mapped values.
+- The first-observation rule applies independently to children and nested records. A child identity absent from
+  the parent's previous collection, or a nested record whose field was missing or null, is `added` only.
+  Every child of a first root record is new, even when other roots have children with the same identity.
 - `` when `<expression>` `` holds a small portable grammar: fields, string, number, boolean and `null`
   literals, `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&`, `||`, `!` and parentheses. Ordering compares numbers only.
+  Expressions evaluate the mapped current record even on its first observation; unguarded appends also run
+  on a first record. Maps, expressions and unguarded appends keep their existing meaning.
 - `$.<field>` reads the item being evaluated - the record, a child or the nested record - and falls back to the
   enclosing record when the item lacks the field. `$context.occurred` is the scenario's `given clock`.
 - Everything is appended to the event source the record's `key` names. Its type is the one the event's
@@ -153,6 +159,15 @@ store a new last-seen record or acknowledge an external source, on success or fa
 explicitly in each subsequent specification. Retained prefix facts do not imply successful source processing
 or acknowledgement. A present object or collection used as a scalar mapping is Unsupported, not a missing
 value or a passing `then error`.
+
+Record captures and captures over events share Chronicle's added-only first-observation rule
+([decision 0080](https://github.com/Cratis/Screenplay/blob/main/decisions/0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md)).
+Earlier reference execution treated every field of a first record as changed. If a specification relied on
+that behavior, add a separate append with `when added` when the event should also be recorded on first sight,
+and keep the field-guarded append for updates. If the scenario meant an update, seed the same key's previous
+state with `given capture`. This corrects execution in ESM v6 and later without changing canonical bytes or
+adding a compiler diagnostic. Stage must refuse or realize reference-only maps, expressions, children and
+nested scopes that Chronicle does not support.
 
 A capture without a `key`, or a condition outside the grammar above, does not bind (`PLAY0268`).
 
