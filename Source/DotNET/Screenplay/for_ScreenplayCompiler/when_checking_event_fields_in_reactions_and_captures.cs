@@ -37,6 +37,6 @@ public class when_checking_event_fields_in_reactions_and_captures : given.a_comp
 
     void Because() => _result = _compiler.Compile(Source);
 
-    [Fact] void should_check_every_event_producer_mapping() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField);
+    [Fact] void should_check_every_event_producer_mapping() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField, DiagnosticCodes.UnknownEventField, DiagnosticCodes.DirectionlessTranslationReactsToOwnCapture);
     [Fact] void should_fail_compilation() => _result.Success.ShouldBeFalse();
 }

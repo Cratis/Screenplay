@@ -16,12 +16,16 @@ internal static class PublicEventUsageValidator
     {
         var resolver = new AuthoringProductionResolver(application);
         var slices = ScreenplayValidator.ScopedSlices(application).ToArray();
+        var events = new AuthoringProductionResolver(resolver.Declarations.Where(declaration => declaration.Kind == AuthoringProductionKind.Event));
+        foreach (var (slice, scope) in slices)
+        {
+            ValidateOwnCaptureReactions(application, slice, scope, events, context);
+        }
         if (!HasPublicContracts(resolver, application, slices))
         {
             return;
         }
 
-        var events = new AuthoringProductionResolver(resolver.Declarations.Where(declaration => declaration.Kind == AuthoringProductionKind.Event));
         foreach (var (slice, scope) in slices)
         {
             ValidateSlice(application, slice, scope, resolver, events, context);
@@ -132,6 +136,29 @@ internal static class PublicEventUsageValidator
         foreach (var capture in slice.Captures)
         {
             context.Error(DiagnosticCodes.TranslationConstructDirection, "An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.", capture.Location);
+        }
+    }
+
+    static void ValidateOwnCaptureReactions(ApplicationSyntax application, SliceSyntax slice, DeclarationScope scope, AuthoringProductionResolver events, ParserContext context)
+    {
+        if (slice.Type != SliceType.Translate || slice.Direction is not null) return;
+        var collector = new PublicEventUsageCollector();
+        collector.VisitSlice(slice);
+
+        // Resolution diagnostics belong to the existing reference validators, not this co-location warning.
+        var resolutionContext = ParserContext.ForDiagnostics();
+        var appended = collector.Uses.Where(use => use.Node is CaptureAppendSyntax)
+            .Select(use => Resolve(application, events, scope.Segments, use.Name, use.Node, true, resolutionContext)?.Node)
+            .Where(node => node is not null).ToHashSet(ReferenceEqualityComparer.Instance);
+        foreach (var reaction in slice.Reactions.Where(reaction => reaction.From is null))
+        {
+            var matching = reaction.Triggers.Select(trigger => trigger.Source).OfType<NamedTriggerSourceSyntax>()
+                .Select(source => (source.Name, Node: Resolve(application, events, scope.Segments, source.Name, source, false, resolutionContext)?.Node))
+                .Where(item => item.Node is not null && appended.Contains(item.Node))
+                .DistinctBy(item => item.Node, ReferenceEqualityComparer.Instance).Select(item => item.Name).ToArray();
+            if (matching.Length == 0) continue;
+            context.Warning(DiagnosticCodes.DirectionlessTranslationReactsToOwnCapture,
+                $"Reaction '{reaction.Name}' reacts to events appended by a capture in the same directionless Translate slice ({string.Join(", ", matching)}); keep the capture in this Translate slice and move the reaction to an Automation slice.", reaction.Location);
         }
     }
 
