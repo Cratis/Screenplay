@@ -28,29 +28,28 @@ public class when_describing_generation : given.an_authoring_connection
         if (strategy.StartsWith("typeid", StringComparison.Ordinal)) details.GetProperty("modifiers").GetProperty("prefix").GetString().ShouldEqual("user");
         if (strategy.Contains("upper", StringComparison.Ordinal)) details.GetProperty("modifiers").GetProperty("case").GetString().ShouldEqual("upper");
         if (strategy == "nanoid") details.GetProperty("modifiers").TryGetProperty("size", out _).ShouldBeFalse();
+        details.TryGetProperty("arguments", out _).ShouldBeFalse();
+        details.TryGetProperty("supportCount", out _).ShouldBeFalse();
         details.TryGetProperty("derivedRegex", out _).ShouldBeFalse();
         details.TryGetProperty("ruleProofStatus", out _).ShouldBeFalse();
     }
 
     [Theory]
-    [InlineData("pattern \"ORD-#{7}\"", "PLAY0268", "pattern", "ORD-#{7}", "admitted")]
-    [InlineData("random 1..9", "PLAY0268", "range", "1..9", "admitted")]
-    [InlineData("rule Make", "PLAY0268", "rule", "Make", "refused")]
-    [InlineData("sequence", "PLAY0682", null, null, "refused")]
-    void should_preserve_inspection_data_and_report_current_compiler_admission(string strategy, string code, string? argument, string? value, string status)
+    [InlineData("pattern \"ORD-#{7}\"", "PLAY0268", "admitted")]
+    [InlineData("random 1..9", "PLAY0268", "admitted")]
+    [InlineData("rule Make", "PLAY0268", "refused")]
+    [InlineData("sequence", "PLAY0682", "refused")]
+    void should_preserve_inspection_data_and_report_current_compiler_admission(string strategy, string code, string status)
     {
         Start($"concept Code : {(strategy.StartsWith("random", StringComparison.Ordinal) ? "Int" : "String")}\n  generate {strategy}\n");
         var details = Generation();
-        details.GetProperty("entropyBits").ValueKind.ShouldEqual(JsonValueKind.Null);
-        details.GetProperty("valuesAtOnePercentCollision").ValueKind.ShouldEqual(JsonValueKind.Null);
-        details.GetProperty("entropyUnknownReason").GetString().ShouldContain("unknown");
+        details.GetProperty("entropyBits").ValueKind.ShouldEqual(status == "admitted" ? JsonValueKind.Number : JsonValueKind.Null);
+        details.GetProperty("valuesAtOnePercentCollision").ValueKind.ShouldEqual(status == "admitted" ? JsonValueKind.Number : JsonValueKind.Null);
+        details.TryGetProperty("entropyUnknownReason", out _).ShouldEqual(status == "refused");
         details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual(status);
         details.GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Any(item => item.GetString() == code).ShouldEqual(status == "refused");
-        if (argument is not null)
-        {
-            details.GetProperty("previewArguments").GetProperty(argument).GetProperty("value").GetString().ShouldEqual(value);
-            details.GetProperty("previewArguments").GetProperty(argument).GetProperty("executable").GetBoolean().ShouldBeFalse();
-        }
+        details.TryGetProperty("previewArguments", out _).ShouldBeFalse();
+        details.TryGetProperty("arguments", out _).ShouldEqual(strategy != "sequence");
     }
 
     [Fact]
