@@ -145,6 +145,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case SlotSyntax { Contributes: not null } value: Declare("ContributionPoint", value.Contributes, value); break;
             case UiProfileSyntax value: Declare("UiProfile", value.Name, value); break;
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
+            case SampleDataPackSyntax value: Declare("SampleDataPack", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
             case ReactionSyntax value: Declare("Reaction", value.Name, value, value.Description); break;
             case ProjectionSyntax value: Declare("Projection", value.Name, value, value.Description); break;

@@ -43,7 +43,7 @@ static class ReferenceKinds
         ScreenActionAlternativeSyntax value => [(value.Command, ["Command"], "actionAlternative")],
         ScreenActionOtherwiseSyntax { Command: { } command } => [(command, ["Command"], "actionOtherwise")],
         ScreenNavigateSyntax value => [(value.Screen, ["Screen"], "navigate")],
-        ScreenTemplateReferenceSyntax value => [(value.Name, ["ScreenTemplate", "DialogTemplate"], "template")],
+        ScreenTemplateReferenceSyntax { Blueprint: null } value => [(value.Name, ["ScreenTemplate", "DialogTemplate"], "template")],
         FormSyntax value => [(value.For, ["Command"], "formCommand")],
         FormPopulateViaQuerySyntax value => [(value.Query, ["Query"], "populate")],
         SpecificationExampleSyntax value => [(value.Type, ["Event", "Command", "ReadModel"], "exampleType")],

@@ -65,15 +65,16 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteTemplateScopes(ScreenplayWriter writer, bool restrictsScopes, IEnumerable<string> scopes)
+    void WriteTemplateScopes(ScreenplayWriter writer, bool restrictsScopes, IEnumerable<string> scopes, IEnumerable<string> sliceKinds)
     {
         if (restrictsScopes)
         {
-            writer.Line($"scopes {List(scopes)}");
+            var kinds = string.Join('|', sliceKinds.Select(kind => kind.ToLowerInvariant()));
+            writer.Line($"scopes {List(scopes.Select(scope => scope == "slice" && kinds.Length > 0 ? $"slice {kinds}" : scope))}");
         }
     }
 
-    void WriteTemplatePicker(ScreenplayWriter writer, string? displayName, string? description, bool restrictsScopes, IEnumerable<string> scopes)
+    void WriteTemplatePicker(ScreenplayWriter writer, string? displayName, string? description, bool restrictsScopes, IEnumerable<string> scopes, IEnumerable<string> sliceKinds)
     {
         if (displayName is not null)
         {
@@ -85,7 +86,7 @@ public partial class ScreenplayPrinter
             writer.Line($"description {StringLiteral.Quote(description)}");
         }
 
-        WriteTemplateScopes(writer, restrictsScopes, scopes);
+        WriteTemplateScopes(writer, restrictsScopes, scopes, sliceKinds);
     }
 
     void WriteTemplateContent(ScreenplayWriter writer, IEnumerable<TemplateSlotContentSyntax> content)

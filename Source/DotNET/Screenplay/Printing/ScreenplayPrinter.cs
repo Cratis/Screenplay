@@ -116,6 +116,15 @@ public sealed partial class ScreenplayPrinter :
     static bool HasAttributeDirective(ConceptAttributeSyntax attribute) =>
         attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal;
 
+    static string PackReference(SampleDataPackReferenceSyntax reference) => reference.IsBlueprint ? $"blueprint {reference.Name}" : reference.Name;
+
+    static string SampleDataValue(SampleDataFieldSyntax field) => field.Kind switch
+    {
+        SampleDataValueKind.Text => StringLiteral.Quote(field.Value ?? string.Empty),
+        SampleDataValueKind.Null => "null",
+        _ => field.Value ?? string.Empty
+    };
+
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
         using var anchor = writer.Anchor(application);
@@ -166,6 +175,7 @@ public sealed partial class ScreenplayPrinter :
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
+        WriteSection(writer, application.SampleDataPacks, WriteSampleDataPack);
         WriteSection(writer, application.Triggers ?? [], WriteTrigger);
         WriteSection(writer, application.Behaviors, WriteBehavior);
         WriteSection(writer, application.Layouts ?? [], WriteLayout);
@@ -215,6 +225,7 @@ public sealed partial class ScreenplayPrinter :
             WriteUiProfileList(writer, uiProfile, ("packages", "package"), [.. uiProfile.Packages]);
             WriteUiProfileList(writer, uiProfile, ("icons", "icon"), [.. uiProfile.Icons]);
             WriteUiProfileAppearance(writer, uiProfile);
+            WriteSampleDataSelection(writer, uiProfile.SampleData);
         }
     }
 
@@ -251,6 +262,71 @@ public sealed partial class ScreenplayPrinter :
         if (uiProfile.Theme is not null)
         {
             writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
+        }
+    }
+
+    void WriteSampleDataSelection(ScreenplayWriter writer, SampleDataSelectionSyntax? selection)
+    {
+        if (selection is null)
+        {
+            return;
+        }
+
+        writer.Blank();
+        writer.Line("sample data", selection);
+        using (writer.Indent())
+        {
+            if (selection.Active is not null)
+            {
+                writer.Line($"active {PackReference(selection.Active)}", selection.Active);
+            }
+
+            foreach (var mapping in selection.Mappings)
+            {
+                writer.Line($"shape {mapping.Shape} maps to {mapping.ReadModel}", mapping);
+            }
+
+            foreach (var binding in selection.Bindings)
+            {
+                writer.Line($"bind {binding.ReadModel} to {PackReference(binding.Pack)}", binding);
+            }
+        }
+    }
+
+    void WriteSampleDataPack(ScreenplayWriter writer, SampleDataPackSyntax pack)
+    {
+        using var anchor = writer.Anchor(pack);
+        writer.Line($"sample data {pack.Name}");
+        using (writer.Indent())
+        {
+            if (pack.Title is not null)
+            {
+                writer.Line($"title {StringLiteral.Quote(pack.Title)}");
+            }
+
+            if (pack.Locale is not null)
+            {
+                writer.Line($"locale {pack.Locale}");
+            }
+
+            foreach (var set in pack.Sets)
+            {
+                writer.Line($"shape {set.Shape}", set);
+                using (writer.Indent())
+                {
+                    foreach (var row in set.Rows)
+                    {
+                        writer.Line("row", row);
+                        using (writer.Indent())
+                        {
+                            foreach (var field in row.Fields)
+                            {
+                                writer.Line($"{field.Name} = {SampleDataValue(field)}", field);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -521,10 +597,12 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 7, WriteContribution);
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
+        AddSeparatedMembers(members, writer, module.Navigation, 10, WriteNavigationRegion);
         WriteMembers(members, module);
     }
 
-    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) => writer.Line($"template {template.Name}", template);
+    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) =>
+        writer.Line($"template {WriteTemplateReference(template.Blueprint, template.Name, template.Version)}", template);
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
     {

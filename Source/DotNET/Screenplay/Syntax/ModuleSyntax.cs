@@ -79,6 +79,11 @@ public record ModuleSyntax(
     /// Gets the processing purposes covering this module and its descendants.
     /// </summary>
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the navigation regions this module changes. A region it does not declare inherits the application's.
+    /// </summary>
+    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
 }
 
 /// <summary>

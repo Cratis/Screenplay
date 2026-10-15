@@ -177,7 +177,40 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="UiProfileSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="UiProfileSyntax"/> to visit.</param>
-    public virtual void VisitUiProfile(UiProfileSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitUiProfile(UiProfileSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.SampleData is { } selection)
+        {
+            VisitSampleDataSelection(selection);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataSelectionSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataSelectionSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataSelection(SampleDataSelectionSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Active is not null)
+        {
+            VisitNode(syntax.Active);
+        }
+
+        foreach (var mapping in syntax.Mappings)
+        {
+            VisitNode(mapping);
+        }
+
+        foreach (var binding in syntax.Bindings)
+        {
+            VisitNode(binding);
+            VisitNode(binding.Pack);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="ThemeSyntax"/> node.
@@ -243,6 +276,48 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var property in syntax.Properties)
         {
             VisitPropertyMapping(property);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataPackSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataPackSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataPack(SampleDataPackSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var set in syntax.Sets)
+        {
+            VisitSampleDataSet(set);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataSetSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataSetSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataSet(SampleDataSetSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var row in syntax.Rows)
+        {
+            VisitSampleDataRow(row);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataRowSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataRowSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataRow(SampleDataRowSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var field in syntax.Fields)
+        {
+            VisitNode(field);
         }
     }
 }

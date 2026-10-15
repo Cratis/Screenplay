@@ -59,7 +59,7 @@ const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'Dat
 
 // Top-level, module and feature constructs the C# compiler knows that this compiler does not model. They
 // are skipped whole, not reported.
-const opaqueTopLevel = new Set(['policy', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior']);
+const opaqueTopLevel = new Set(['policy', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior', 'sample']);
 
 // What belongs in a module or feature body; at the top level of a whole document it gets a hint saying so.
 const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
@@ -223,7 +223,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme or layout';
+            : ' - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);

@@ -111,6 +111,10 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.themeItems;
         case 'ui':
             return scope.uiProfileItems;
+        case 'sample':
+            return chain.includes('ui') ? scope.profileSampleDataItems : scope.sampleDataItems;
+        case 'shape':
+            return chain[1] === 'sample' ? scope.sampleShapeItems : [];
         case 'on':
         case 'success':
         case 'failure':
@@ -118,6 +122,10 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.outcomeItems;
         case 'layout':
             return scope.layoutItems;
+        case 'navigation':
+            return scope.navigationItems;
+        case 'toolbar':
+            return scope.toolbarItems;
         case 'system':
             return items.operationItems.filter(item => item.label === 'description');
         case 'operation':

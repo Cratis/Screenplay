@@ -62,6 +62,11 @@ public record ApplicationSyntax(
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
 
     /// <summary>
+    /// Gets the sample data packs the document declares: design and preview time demo rows, never part of the executable model.
+    /// </summary>
+    public IEnumerable<SampleDataPackSyntax> SampleDataPacks { get; init; } = [];
+
+    /// <summary>
     /// Gets what each layout or template exposes to whatever sits inside it.
     /// </summary>
     public IEnumerable<ExposureSyntax> Exposures { get; init; } = [];

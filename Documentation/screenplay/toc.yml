@@ -35,6 +35,8 @@
   href: identity.md
 - name: UI profile
   href: ui-profile.md
+- name: Sample data
+  href: sample-data.md
 - name: Theme
   href: theme.md
 - name: Internationalization
@@ -83,6 +85,8 @@
   href: forms.md
 - name: Contributions
   href: contributions.md
+- name: Navigation regions
+  href: navigation.md
 - name: Sub-languages and inline code
   href: sub-languages.md
 - name: File references

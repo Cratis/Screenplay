@@ -1,0 +1,21 @@
+// Toolbar buttons that invoke State Change slices - the C# and TypeScript compilers read them the same way.
+module Shop
+  feature Orders
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        produces OrderPlaced
+          orderId = orderId
+      event OrderPlaced
+        orderId Uuid
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+      screen List
+        toolbar actions
+          item legacy action PlaceOrder
+            label "Legacy"
+          button place title "Place \"new\" order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+          button "nav:later" title $strings.orders.later slice Orders.PlaceOrder emphasis quiet
+          button secondary title "Secondary" slice PlaceOrder emphasis secondary
+          button idle title "Idle"

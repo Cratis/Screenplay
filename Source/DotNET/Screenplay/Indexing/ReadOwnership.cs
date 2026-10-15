@@ -92,6 +92,9 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
     public override void VisitUiProfile(UiProfileSyntax syntax) => Owned(syntax, () => base.VisitUiProfile(syntax));
 
     /// <inheritdoc/>
+    public override void VisitSampleDataPack(SampleDataPackSyntax syntax) => Owned(syntax, () => base.VisitSampleDataPack(syntax));
+
+    /// <inheritdoc/>
     public override void VisitTheme(ThemeSyntax syntax) => Owned(syntax, () => base.VisitTheme(syntax));
 
     /// <inheritdoc/>

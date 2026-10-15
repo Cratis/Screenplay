@@ -14,6 +14,7 @@ public class when_printing_fits_slot_comments : given.a_printer
           screen template Shell
             // shell goes in the content region
             fits slot content // target slot
+            category Test
             main contributes Navigation
           feature Ordering
             slice StateView Landing

@@ -26,6 +26,7 @@ public class when_printing_screen_composition : given.a_printer
 
         module Sales
           screen template Shell
+            category Test
             outlet detail
             display "Sales shell"
             description "A list beside its details"
@@ -48,6 +49,7 @@ public class when_printing_screen_composition : given.a_printer
                   detail grow
 
           screen template Pane
+            category Test
             scopes none
             body
 

@@ -33,6 +33,7 @@ internal static partial class UiProfileParser
         var hasIconsBlock = false;
         var hasTheme = false;
         var hasLayout = false;
+        SampleDataSelectionSyntax? sampleData = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -111,14 +112,25 @@ internal static partial class UiProfileParser
                     layout = layoutMatch.Groups[1].Value;
                     directiveLocations["layout"] = line.Location;
                     break;
+                case "sample":
+                    var selection = SampleDataSelectionParser.Parse(context, line);
+                    if (sampleData is not null)
+                    {
+                        context.Error(DiagnosticCodes.DuplicateSampleDataSelection, "This ui profile already declares a sample data block - a profile can have at most one", line.Location);
+                        break;
+                    }
+
+                    sampleData = selection;
+                    directiveLocations["sample data"] = line.Location;
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, theme or layout", line.Location);
+                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, icons, theme, layout or sample data", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons };
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons, SampleData = sampleData };
     }
 
     static void ParseTarget(ParserContext context, SourceLine line, List<string> platforms, ref bool hasTargetPlatform, ref bool hasTargetSize, ref string? defaultSizeClass)

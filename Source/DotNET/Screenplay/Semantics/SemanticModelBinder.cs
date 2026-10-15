@@ -434,6 +434,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"UI profile '{profile.Name}' is explicitly deferred from the backend ESM v1 profile.", profile.Location);
             }
 
+            foreach (var pack in syntax.SampleDataPacks)
+            {
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Sample data pack '{pack.Name}' is design and preview time only and is explicitly deferred from the backend ESM v1 profile.", pack.Location);
+            }
+
             foreach (var theme in syntax.Themes ?? [])
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Theme '{theme.Name}' is explicitly deferred from the backend ESM v1 profile.", theme.Location);

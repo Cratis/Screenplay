@@ -155,6 +155,7 @@ theme Nordic
 // Its slots are the outermost a template can fit into, which makes the shell the
 // natural home of an application wide contribution point like Navigation.
 layout AppShell
+  category Shell
   topbar
   navigation contributes Navigation
   content
@@ -188,12 +189,14 @@ module Invoicing
   // and is the one rule that lets templates nest arbitrarily deep.
   screen template MasterDetail
     fits slot content
+    category Workspace
 
     sidebar
     main
 
   screen template Dashboard
     fits slot content
+    category Workspace
 
     header
     left
@@ -203,6 +206,7 @@ module Invoicing
   // A 'dialog template' is the same, for content that opens over the application.
   // It declares no 'fits slot', because it occupies none.
   dialog template RegisterInvoiceDialog
+    category Dialog
     body
     actions
 

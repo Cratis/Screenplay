@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation") continue;
+            if (name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -55,6 +55,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
 
+            // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
+            legacy = WithoutTemplateCategories(legacy);
+
             // Report-only metadata has its own conformance vector. Keep existing event metadata
             // protected, and project only the newly supported owners out of pre-metadata bytes.
             var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
@@ -72,7 +75,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -104,6 +109,16 @@ public class when_freezing_legacy_source_syntax_bytes
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
 
+    static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with
+    {
+        Layouts = application.Layouts?.Select(layout => layout with { Category = null }),
+        Modules = application.Modules.Select(module => module with
+        {
+            ScreenTemplates = module.ScreenTemplates.Select(template => template with { Category = null }),
+            DialogTemplates = module.DialogTemplates?.Select(template => template with { Category = null })
+        })
+    };
+
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
         Purposes = [],
@@ -115,14 +130,19 @@ public class when_freezing_legacy_source_syntax_bytes
             Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
         }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
+        Layouts = application.Layouts?.Select(layout => layout with { Navigation = [] }),
         Modules = application.Modules.Select(module => module with
         {
+            Navigation = [],
             Documentation = null,
             Purposes = [],
             Forms = module.Forms?.Select(form => form with { Description = null }),
             Features = module.Features.Select(WithoutNewAuthoringMetadata)
         })
     };
+
+    // Toolbar buttons have their own conformance vector; project them out of the pre-button bytes.
+    static ScreenDirectiveSyntax WithoutToolbarButtons(ScreenDirectiveSyntax directive) => directive is ScreenToolbarSyntax toolbar ? toolbar with { Buttons = [] } : directive;
 
     // Restore only the living sample's moved processing prose; current conformance covers its new text.
     static string? LegacyReason(string concept, string marker, string? reason) => (concept, marker, reason) switch
@@ -144,7 +164,7 @@ public class when_freezing_legacy_source_syntax_bytes
             Purposes = [],
             Constraints = slice.Constraints.Select(constraint => constraint with { Description = null }),
             Projections = slice.Projections.Select(projection => projection with { Description = null }),
-            Screens = slice.Screens.Select(screen => screen with { Description = null }),
+            Screens = slice.Screens.Select(screen => screen with { Description = null, Directives = screen.Directives.Select(WithoutToolbarButtons) }),
             Commands = slice.Commands.Select(command => command with { Documentation = null }),
             ReadModels = (slice.ReadModels ?? []).Select(readModel => readModel with { Documentation = null }),
             Reactions = slice.Reactions.Select(reaction => reaction with { Documentation = null, RunsAs = null }),
@@ -280,6 +300,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {
+        // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
+        SampleDataPacks = [],
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null }),
         Exposures = [],
         InstanceContributions = [],
 

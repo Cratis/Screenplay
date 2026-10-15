@@ -102,8 +102,10 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
+| `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
+| `navigation topbar` and `navigation sidebar` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
-| module `description` (fenced), `authorize`, `on event`, `contribute to` | `module Invoicing` |
+| module `description` (fenced), `authorize`, `on event`, `contribute to`, `navigation sidebar extends` | `module Invoicing` |
 | `screen template` with `fits slot`, `flow` with `grid`/`span`, `freeform` with `variant`/`place … hidden`, a `contributes` slot; `dialog template` with `on leave` | `module Invoicing` |
 | `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate` by a returned identity, `on change` | `module Invoicing`; `RegisterInvoiceForm` binds the returned `invoiceId`; `TagInvoiceForm` reuses the selected row |
 | feature `authorize`, `depends on`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |

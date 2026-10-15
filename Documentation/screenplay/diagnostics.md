@@ -624,6 +624,27 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. |
 | `PLAY0232` | Warning | A `ui profile` selects a theme not declared compatible with one of the profile's own packages. |
 
+### Sample data
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0702` | Error | A `sample data` line is not `sample data <Name>`. |
+| `PLAY0703` | Error | Two `sample data` blocks in the same document declare the same pack name. |
+| `PLAY0704` | Error | A line in a `sample data` block is not `title`, `locale` or `shape`, a line in a `shape` block is not `row`, or `title` or `locale` is repeated. |
+| `PLAY0705` | Error | A `locale` line in a `sample data` block is not `locale <BCP 47 tag>` such as `nb-NO`. |
+| `PLAY0706` | Error | A line in a `row` is not `<field> = <literal>`, or the value is not a string, number, `true`, `false` or `null` literal. |
+| `PLAY0707` | Error | A `sample data` pack declares the same `shape` more than once. |
+| `PLAY0708` | Error | A `row` sets the same field more than once. |
+| `PLAY0709` | Warning | A pack `shape` names no read model, neither by name nor through a `shape ... maps to ...` line of a `ui profile`. A warning, because a blueprint may supply the read model. |
+| `PLAY0710` | Error | A `row` field is not a property of the read model its shape supplies rows for. |
+| `PLAY0711` | Error | A `row` literal does not fit the type of the read model property: a string for a number, a number for text, `null` for a property that is not optional. |
+| `PLAY0712` | Error | A line in a `ui profile` `sample data` block is not `active <pack>`, `active blueprint <id>`, `shape <Shape> maps to <ReadModel>` or `bind <ReadModel> to <pack>`. |
+| `PLAY0713` | Error | A `ui profile` declares more than one `sample data` block or more than one `active` line, or repeats a `shape ... maps to ...` or `bind ... to ...` line. |
+| `PLAY0714` | Error | A `ui profile` `sample data` block names a pack the document does not declare. A `blueprint <id>` pack is resolved by the build against its packages and is not checked here. |
+| `PLAY0715` | Error | A `shape ... maps to ...` or `bind ... to ...` line names a read model the document does not declare. |
+
+Sample data is design and preview time only: it has no repair, and binding reports it as deferred (`PLAY0269`) rather than executable. See [Sample data](sample-data.md).
+
 ### Arrangement
 
 | Code | Severity | Reported when |
@@ -769,11 +790,14 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0628` | Error | An instance uses `set` on a collection exposure, or `items` on a single-value exposure. |
 | `PLAY0629` | Error | A template's `content <slot>` names a slot the template does not declare. |
 | `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
-| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
+| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope, or - at `slice` scope - whose slice kinds (`scopes slice statechange`) exclude the slice's kind. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 | `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
 | `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
 | `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
+| `PLAY0720` | Warning | A `layout`, `screen template` or `dialog template` declares no `category`. A template picker groups by category, so every template needs one. A blueprint package build runs with warnings as errors, so there a missing category fails the build; an own template only warns. See [Layouts and templates](templates.md#category-and-picker-metadata). |
+| `PLAY0721` | Error | A template reference's `version` is not a range Scene understands: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. |
+| `PLAY0722` | Error | A `template blueprint <Blueprint> <Name>` reference names a blueprint no `ui profile` lists under `packages`. Only checked when at least one profile declares packages. |
 
 ## Identity details
 
@@ -1364,6 +1388,39 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 | `PLAY0564` | Warning / Information | Opaque `where` on click, double click or select is deprecated. A strict item condition warns and has a C# typed repair; other text is Information without a repair. Other triggers are unchanged. |
 
 Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
+
+## Navigation regions
+
+The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0740` | Error | A `navigation` header is not `navigation topbar|sidebar`, optionally followed by `inherits`, `extends` or `overrides`. |
+| `PLAY0741` | Error | A line in a navigation region is not a well formed `item <id> title "…" [icon X] [target Module[.Feature]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
+| `PLAY0742` | Error | A layout or module declares the same navigation region (`topbar` or `sidebar`) more than once. |
+| `PLAY0743` | Error | A `logo` line is not `logo image "…" title "…"`. |
+| `PLAY0744` | Error | A `logo` is declared in a module's navigation, or a layout declares a second logo. The logo belongs to the application. |
+| `PLAY0745` | Error | A layout's region states `inherits`, `extends` or `overrides` - the application is the base and has no mode - or a module region that `inherits` lists items of its own. |
+| `PLAY0746` | Error | A topbar item has sub-items. Only the sidebar nests items. |
+| `PLAY0747` | Error | Two items of one region share an id, within the region or between an extending module and the application. Mirrors Scene `navDuplicateId`. |
+| `PLAY0748` | Error | An item has neither a target nor sub-items, or targets a module or feature the document does not declare. Mirrors Scene `navTargetMissing`. |
+| `PLAY0749` | Error | An item's `slot` is declared by no layout. An item without a slot renders into the layout's primary content slot. Mirrors Scene `navSlotUnknown`. |
+| `PLAY0750` | Error | A module's own item targets another module. Mirrors Scene `navTargetOutOfScope`. |
+| `PLAY0751` | Warning | An item targets a module that has no feature to go to. Mirrors Scene `navModuleWithoutFeatures`. |
+| `PLAY0752` | Warning | A module region that `overrides` the application's declares no items, so the region is empty in that module. |
+
+## Toolbar buttons
+
+The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0760` | Error | A toolbar `button` line is malformed: no or an unquoted title, an unknown or repeated part, an unknown `emphasis`, or a block under it. |
+| `PLAY0761` | Error | A toolbar button's `slice` names no slice the document declares. Mirrors Scene `toolbarButtonSliceNotFound`. |
+| `PLAY0762` | Error | A toolbar button's `slice` is a State View, Automation or Translate slice; a button invokes State Change slices only. Mirrors Scene `toolbarButtonSliceNotStateChange`. |
+| `PLAY0763` | Warning | A toolbar button names no `slice`, so it invokes nothing. Mirrors Scene `toolbarButtonSliceEmpty`. |
+| `PLAY0764` | Error | A toolbar button's `slice` matches slices in more than one feature; qualify it with the feature or module. |
+| `PLAY0765` | Error | Two buttons, or a button and an item, of one toolbar share an id. |
 
 ## Specification case tables
 

@@ -30,7 +30,8 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 
 | Criterion | Syntax | Semantics | Diagnostics | Not expressible |
 | --- | --- | --- | --- | --- |
-| Template categories and assignment (536.2, 536.3) | `layout`, `screen template`, `dialog template`, `category`, `type`, `template <Name>` at module, feature or slice | Hierarchical; the nearest assignment wins | `PLAY0026`, `PLAY0631` scope mismatch | None |
+| Template categories and assignment (536.2, 536.3) | `layout`, `screen template`, `dialog template`, `category`, `type`, `template <Name>` at module, feature or slice | Hierarchical; the nearest assignment wins | `PLAY0026`, `PLAY0631` scope mismatch, `PLAY0720` missing category | None |
+| Blueprint template references and slice kinds (Scene#98) | `template blueprint <Blueprint> <Name> [version "<range>"]`; `scopes slice statechange\|stateview` | Scene `TemplateReference` (`source`, `id`, `blueprint`, `version`) and `Metadata.SliceKinds`; applicability by `ApplicableTemplates` | `PLAY0721` invalid version range, `PLAY0722` blueprint not in a profile, `PLAY0631` slice kind mismatch | None |
 | Template picker metadata | `display`, `description`, `scopes` | Scene `DisplayName`, `Description`, `Metadata.Scopes` | `PLAY0026`, `PLAY0631` | None |
 | Template content | `content <slot>` with screen directives | Scene template `Content` | `PLAY0629` unknown slot, `PLAY0656` nesting cycle | None |
 | Arrangements | `arrangement flow\|freeform`, `row`, `column`, `grid columns rows`, `grow`, `span`, `when`, `variant`, `place` | Scene `FlowArrangement`, `FreeformArrangement` | `PLAY0235`, `PLAY0236` | None |
@@ -45,6 +46,8 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | --- | --- | --- | --- | --- |
 | Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `outlet`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
 | Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0654` unknown destination | None |
+| Application navigation regions (spec NAV1-NAV12) | `navigation topbar\|sidebar [inherits\|extends\|overrides]` with `logo`, `item <id> title target slot`, nested sidebar items, in a `layout` and a `module` | Scene `NavigationModel`: `ApplicationNavigation`, `ModuleNavigation`, `NavigationRegion` and `NavItem`; the module mode is Scene's `NavigationRegionMode` | `PLAY0740`-`PLAY0752` | None. The TypeScript compiler skips the blocks; the checks are C#-only |
+| Toolbar buttons invoking State Change slices (spec TB1-TB6) | `button <id> title "…" [slice <Slice>] [emphasis primary\|secondary\|quiet] [icon <name>]` in a screen `toolbar` | Scene `ToolbarButton` (`Slice`, `Emphasis`, `Icon`) | `PLAY0760`-`PLAY0765` | None. The TypeScript compiler skips the lines; the checks are C#-only |
 | Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0654` | None |
 
 ## Packages and design-time output

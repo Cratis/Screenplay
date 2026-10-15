@@ -7258,6 +7258,23 @@
                     },
                     {
                       "kind": "ScreenToolbarSyntax",
+                      "buttons": [
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Primary",
+                          "icon": "add",
+                          "id": "newInvoice",
+                          "slice": "Invoicing.InvoiceManagement.RegisterInvoice",
+                          "title": "$strings.invoices.actions.newInvoice"
+                        },
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Quiet",
+                          "id": "cancelInvoice",
+                          "slice": "CancelInvoice",
+                          "title": "$strings.invoices.actions.cancel"
+                        }
+                      ],
                       "items": [
                         {
                           "kind": "ToolbarItemSyntax",

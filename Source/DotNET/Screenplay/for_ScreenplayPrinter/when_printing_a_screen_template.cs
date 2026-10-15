@@ -11,6 +11,7 @@ public class when_printing_a_screen_template : given.a_printer
         """
         module Invoicing
           screen template MasterDetail
+            category Test
             fits slot content
 
             sidebar contributes Navigation

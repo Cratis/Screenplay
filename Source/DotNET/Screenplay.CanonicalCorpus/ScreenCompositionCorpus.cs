@@ -110,7 +110,14 @@ public static class ScreenCompositionCorpus
                         "ScreenContributionSyntax",
                         "TemplateSlotContentSyntax",
                         "ArrangementContainerSyntax",
-                        "ContributionDestinationSyntax"
+                        "ContributionDestinationSyntax",
+                        "SampleDataPackSyntax",
+                        "SampleDataSetSyntax",
+                        "SampleDataRowSyntax",
+                        "SampleDataFieldSyntax",
+                        "SampleDataSelectionSyntax",
+                        "SampleDataPackReferenceSyntax",
+                        "SampleDataMappingSyntax"
                     ]
                 }
             ],

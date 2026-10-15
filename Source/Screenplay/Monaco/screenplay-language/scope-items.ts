@@ -27,6 +27,7 @@ export const moduleScopeItems: CompletionEntry[] = [
     { label: 'dialog template', insertText: 'dialog template ${1:Name}\n    ${2:body}\n    ${3:actions}', documentation: 'Declares a reusable dialog shape that opens over the shell.' },
     { label: 'form', insertText: 'form ${1:Name} for ${2:Command}\n    field ${3:property} label "${4:Label}"', documentation: 'Declares a form bound to a command.' },
     { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a slot of the shell, such as navigation.' },
+    { label: 'navigation sidebar extends', insertText: 'navigation ${1|sidebar,topbar|} ${2|extends,overrides,inherits|}\n    item ${3:id} title "${4:Title}" target ${5:Module.Feature}', documentation: 'Changes a navigation region for this module: `extends` adds items after the application\'s, `overrides` replaces them, `inherits` shows the application\'s.' },
     ...interactionItems,
 ];
 
@@ -126,12 +127,43 @@ export const uiProfileItems: CompletionEntry[] = [
     { label: 'packages', insertText: 'packages\n    ${1:Package}', documentation: 'The component packages the profile uses.' },
     { label: 'layout', insertText: 'layout ${1:Layout}', documentation: 'The layout of the profile.' },
     { label: 'theme', insertText: 'theme ${1:Theme}', documentation: 'The theme of the profile.' },
+    { label: 'sample data', insertText: 'sample data\n    active ${1:Pack}', documentation: 'The sample data the whole application previews with, chosen once here.' },
+];
+
+export const profileSampleDataItems: CompletionEntry[] = [
+    { label: 'active', insertText: 'active ${1:Pack}', documentation: 'The active sample data pack of the whole application: one declared in the document, or `blueprint <id>`.' },
+    { label: 'shape maps to', insertText: 'shape ${1:Shape} maps to ${2:ReadModel}', documentation: 'Maps a sample data shape to the read model it supplies rows for.' },
+    { label: 'bind', insertText: 'bind ${1:ReadModel} to ${2:Pack}', documentation: 'A rare override: binds one read model to a pack.' },
+];
+
+export const sampleDataItems: CompletionEntry[] = [
+    { label: 'title', insertText: 'title "${1:Title}"', documentation: 'The display title of the pack.' },
+    { label: 'locale', insertText: 'locale ${1:en-GB}', documentation: 'The BCP 47 locale tag of the data.' },
+    { label: 'shape', insertText: 'shape ${1:ReadModel}\n    row\n        ${2:field} = ${3:"value"}', documentation: 'The rows for one shape: the read model of the same name, or the one a ui profile maps it to.' },
+];
+
+export const sampleShapeItems: CompletionEntry[] = [
+    { label: 'row', insertText: 'row\n    ${1:field} = ${2:"value"}', documentation: 'One row of the shape.' },
 ];
 
 export const layoutItems: CompletionEntry[] = [
     { label: 'slot', insertText: '${1:slot}', documentation: 'A named slot of the shell.' },
     { label: 'slot contributes', insertText: '${1:slot} contributes ${2:Name}', documentation: 'A slot other declarations contribute to, such as `navigation contributes Navigation`.' },
+    { label: 'navigation topbar', insertText: 'navigation ${1|topbar,sidebar|}\n    logo image "${2:/logo.svg}" title "${3:Application}"\n    item ${4:id} title "${5:Title}" target ${6:Module}', documentation: 'The application\'s navigation region: a logo and items that target a module or feature.' },
     { label: 'arrangement', insertText: 'arrangement flow\n    column\n        ${1:slot}', documentation: 'How the slots are placed.' },
+];
+
+export const toolbarItems: CompletionEntry[] = [
+    { label: 'button', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice}', documentation: 'A button that invokes a State Change slice. The slice names the command and the dialog it opens over the page.' },
+    { label: 'button (with emphasis)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} emphasis ${4|primary,secondary,quiet|} icon ${5:icon}', documentation: 'A toolbar button with an emphasis and an icon.' },
+    { label: 'item action', insertText: 'item ${1:name} action ${2:Command}', documentation: 'A toolbar entry that runs a command.' },
+    { label: 'item navigate', insertText: 'item ${1:name} navigate to ${2:Screen}', documentation: 'A toolbar entry that navigates to a screen.' },
+];
+
+export const navigationItems: CompletionEntry[] = [
+    { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout.' },
+    { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item with a title, an optional `icon`, a `target` module or feature and an optional rendering `slot`. Sidebar items may nest `item` lines.' },
+    { label: 'item (with slot)', insertText: 'item ${1:id} title "${2:Title}" icon ${3:icon} target ${4:Module.Feature} slot ${5:content}', documentation: 'A navigation item that renders its target into a named layout slot.' },
 ];
 
 export const templateItems: CompletionEntry[] = [

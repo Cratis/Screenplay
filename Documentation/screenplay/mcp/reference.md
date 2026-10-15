@@ -1144,8 +1144,8 @@ event contracts, identities and dependant records. Allowed values are:
 `Application`, `Capture`, `Command`, `Concept`, `Constraint`, `ContributionPoint`,
 `DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
 `Layout`, `Module`, `Operation`, `Persona`, `Policy`, `Projection`, `Property`,
-`Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `Screen`,
-`ScreenTemplate`, `Slice`, `Specification`, `System`, `Theme`, `Trigger`, `Type`,
+`Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `SampleDataPack`,
+`Screen`, `ScreenTemplate`, `Slice`, `Specification`, `System`, `Theme`, `Trigger`, `Type`,
 and `UiProfile`. Event contracts use `Event`, and composite types use `Type`;
 `eventContractId` distinguishes event-contract identity records. A property's
 aggregated dependants retain `kind: "Property"`, not the owner's kind.

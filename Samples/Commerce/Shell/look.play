@@ -6,6 +6,7 @@ theme Harbor
   compatible with Cratis.Components
 
 layout Storefront
+  category Shell
   topbar
   navigation contributes Navigation
   content

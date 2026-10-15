@@ -3230,4 +3230,190 @@ public static class DiagnosticCodes
     /// A capture over events must be presented with event fixtures, not capture records.
     /// </summary>
     public const string CaptureEventsRecordFixture = "PLAY0701";
+
+    /// <summary>
+    /// A layout, screen template or dialog template declares no <c>category</c>. A blueprint package build treats it as an error (warnings as errors); an own template only warns.
+    /// </summary>
+    public const string TemplateCategoryMissing = "PLAY0720";
+
+    /// <summary>
+    /// A template reference's <c>version</c> is not a range Scene understands.
+    /// </summary>
+    public const string InvalidTemplateVersionRange = "PLAY0721";
+
+    /// <summary>
+    /// A <c>template blueprint</c> reference names a blueprint no <c>ui profile</c> lists in its <c>packages</c>.
+    /// </summary>
+    public const string UnknownTemplateBlueprint = "PLAY0722";
+
+    // Navigation regions - topbar and sidebar of the application shell, with module level inherit, extend and override.
+
+    /// <summary>
+    /// A <c>navigation</c> block header is not <c>navigation topbar|sidebar [inherits|extends|overrides]</c>.
+    /// </summary>
+    public const string InvalidNavigationRegionDeclaration = "PLAY0740";
+
+    /// <summary>
+    /// A line in a navigation region is not a well formed <c>item &lt;id&gt; title "..." [icon X] [target Module[.Feature]] [slot name]</c> or <c>logo</c> line.
+    /// </summary>
+    public const string InvalidNavigationItem = "PLAY0741";
+
+    /// <summary>
+    /// A layout or module declares the same navigation region more than once.
+    /// </summary>
+    public const string DuplicateNavigationRegion = "PLAY0742";
+
+    /// <summary>
+    /// A <c>logo</c> line is not <c>logo image "..." title "..."</c>.
+    /// </summary>
+    public const string InvalidNavigationLogo = "PLAY0743";
+
+    /// <summary>
+    /// A <c>logo</c> is declared in a module's navigation, or twice in one layout. The logo belongs to the application and is declared once.
+    /// </summary>
+    public const string NavigationLogoNotAllowed = "PLAY0744";
+
+    /// <summary>
+    /// A layout's region states <c>inherits</c>, <c>extends</c> or <c>overrides</c> - the application is the base and has no mode - or a region that <c>inherits</c> lists items of its own.
+    /// </summary>
+    public const string NavigationRegionModeNotAllowed = "PLAY0745";
+
+    /// <summary>
+    /// A topbar item has sub-items; only the sidebar nests items.
+    /// </summary>
+    public const string NavigationChildrenNotAllowed = "PLAY0746";
+
+    /// <summary>
+    /// Two items of one navigation region share an id, within the region or between an extending module and the application (Scene <c>navDuplicateId</c>).
+    /// </summary>
+    public const string NavDuplicateId = "PLAY0747";
+
+    /// <summary>
+    /// A navigation item has neither a target nor sub-items, or targets a module or feature that does not exist (Scene <c>navTargetMissing</c>).
+    /// </summary>
+    public const string NavTargetMissing = "PLAY0748";
+
+    /// <summary>
+    /// A navigation item renders into a slot no layout declares (Scene <c>navSlotUnknown</c>).
+    /// </summary>
+    public const string NavSlotUnknown = "PLAY0749";
+
+    /// <summary>
+    /// A module's own navigation item targets a different module; a module's items may only target the module itself (Scene <c>navTargetOutOfScope</c>).
+    /// </summary>
+    public const string NavTargetOutOfScope = "PLAY0750";
+
+    /// <summary>
+    /// A navigation item targets a module that has no feature to go to (Scene <c>navModuleWithoutFeatures</c>).
+    /// </summary>
+    public const string NavModuleWithoutFeatures = "PLAY0751";
+
+    /// <summary>
+    /// A module region that <c>overrides</c> the application's declares no items, so the region is empty in that module.
+    /// </summary>
+    public const string NavOverrideWithoutItems = "PLAY0752";
+
+    // Toolbar buttons that invoke State Change slices.
+
+    /// <summary>
+    /// A toolbar <c>button</c> line is not <c>button &lt;id&gt; title "..." [slice &lt;Slice&gt;] [emphasis primary|secondary|quiet] [icon X]</c>: no or an unquoted title, an unknown or repeated part, or an unknown emphasis.
+    /// </summary>
+    public const string InvalidToolbarButton = "PLAY0760";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> names no slice the document declares (Scene <c>toolbarButtonSliceNotFound</c>).
+    /// </summary>
+    public const string ToolbarButtonSliceNotFound = "PLAY0761";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> is a State View, Automation or Translate slice. A button invokes State Change slices only (Scene <c>toolbarButtonSliceNotStateChange</c>).
+    /// </summary>
+    public const string ToolbarButtonSliceNotStateChange = "PLAY0762";
+
+    /// <summary>
+    /// A toolbar button names no <c>slice</c>. Legal while designing, but it invokes nothing (Scene <c>toolbarButtonSliceEmpty</c>).
+    /// </summary>
+    public const string ToolbarButtonWithoutSlice = "PLAY0763";
+
+    /// <summary>
+    /// A toolbar button's <c>slice</c> matches slices in more than one feature; qualify it with the feature or module.
+    /// </summary>
+    public const string ToolbarButtonSliceAmbiguous = "PLAY0764";
+
+    /// <summary>
+    /// Two buttons, or a button and an item, of one toolbar share an id.
+    /// </summary>
+    public const string DuplicateToolbarButton = "PLAY0765";
+
+    // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
+
+    /// <summary>
+    /// A sample data line is not sample data &lt;Name&gt;.
+    /// </summary>
+    public const string InvalidSampleDataDeclaration = "PLAY0702";
+
+    /// <summary>
+    /// Two sample data blocks in the same document declare the same pack name.
+    /// </summary>
+    public const string DuplicateSampleDataPack = "PLAY0703";
+
+    /// <summary>
+    /// A line in a sample data block or one of its shape blocks is not title, locale, shape or row as it should be there, or repeats title or locale.
+    /// </summary>
+    public const string UnknownSampleDataDirective = "PLAY0704";
+
+    /// <summary>
+    /// A locale line in a sample data block is not locale &lt;BCP 47 tag&gt; such as nb-NO.
+    /// </summary>
+    public const string InvalidSampleDataLocale = "PLAY0705";
+
+    /// <summary>
+    /// A line in a row is not &lt;field&gt; = &lt;literal&gt;, or the value is not a string, number, true, false or null literal.
+    /// </summary>
+    public const string InvalidSampleDataValue = "PLAY0706";
+
+    /// <summary>
+    /// A sample data pack declares the same shape more than once.
+    /// </summary>
+    public const string DuplicateSampleDataShape = "PLAY0707";
+
+    /// <summary>
+    /// A row sets the same field more than once.
+    /// </summary>
+    public const string DuplicateSampleDataField = "PLAY0708";
+
+    /// <summary>
+    /// A pack shape names no read model, neither by name nor through a shape ... maps to ... line of a ui profile. Reported as a warning, because a blueprint may supply the read model.
+    /// </summary>
+    public const string UnknownSampleDataShape = "PLAY0709";
+
+    /// <summary>
+    /// A row field is not a property of the read model its shape supplies rows for.
+    /// </summary>
+    public const string UnknownSampleDataField = "PLAY0710";
+
+    /// <summary>
+    /// A row literal does not fit the type of the read model property: a string for a number, a number for text, null for a property that is not optional, and so on.
+    /// </summary>
+    public const string SampleDataTypeMismatch = "PLAY0711";
+
+    /// <summary>
+    /// A line in a ui profile sample data block is not active &lt;pack&gt;, active blueprint &lt;id&gt;, shape &lt;Shape&gt; maps to &lt;ReadModel&gt; or bind &lt;ReadModel&gt; to &lt;pack&gt;.
+    /// </summary>
+    public const string InvalidSampleDataSelection = "PLAY0712";
+
+    /// <summary>
+    /// A ui profile declares more than one sample data block or more than one active line, or repeats a shape ... maps to ... or bind ... to ... line.
+    /// </summary>
+    public const string DuplicateSampleDataSelection = "PLAY0713";
+
+    /// <summary>
+    /// A ui profile sample data block names a pack the document does not declare. A blueprint &lt;id&gt; pack is resolved by the build against its packages and is not checked here.
+    /// </summary>
+    public const string UnknownSampleDataPack = "PLAY0714";
+
+    /// <summary>
+    /// A shape ... maps to ... or bind ... to ... line names a read model the document does not declare.
+    /// </summary>
+    public const string UnknownSampleDataReadModel = "PLAY0715";
 }

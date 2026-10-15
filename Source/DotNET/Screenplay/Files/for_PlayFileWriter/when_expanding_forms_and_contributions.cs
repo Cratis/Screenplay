@@ -17,6 +17,7 @@ public class when_expanding_forms_and_contributions : Specification
           uses Confirming
 
           screen template Shell
+            category Test
             navbar contributes Navigation
             main
 

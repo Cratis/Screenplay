@@ -18,14 +18,20 @@ ui profile <Name>
   icons
     <IconSetOrPackage>
     ...
+
+  sample data
+    active <Pack>
+    shape <Shape> maps to <ReadModel>
+    bind <ReadModel> to <Pack>
 ```
 
 - `ui profile <Name>` - top level, alongside authentication, modules and everything else. A document can declare more than one; each name must be unique.
 - `target platform` - the platform(s) this profile targets, e.g. `web`, `ios`, `android`. At most one per profile.
 - `target size` - the size class assumed by default: `compact`, `regular` or `expanded` (Apple/Material-style named classes, not raw pixel breakpoints - a narrow browser window and a compact phone are "the same" class, and a raw breakpoint means nothing on native). At most one per profile. The two-axis width x height matrix a `layout` resolves against is a separate, more specific concern.
-- `packages` - the component packages this profile draws from, one per line, in **override-priority order**: a later package's `Button` shadows an earlier one's on a name collision. `core`, the built-in vocabulary (`button`, `table`, `form`, `title`, ...), is always the final fallback regardless of what a profile lists here.
+- `packages` - the component packages this profile draws from, one per line, in **override-priority order**: a later package's `Button` shadows an earlier one's on a name collision. A package that is a blueprint can also be named by a `template blueprint <Blueprint> <Name>` reference (see [Layouts and templates](templates.md#own-and-blueprint-templates)); a reference to a blueprint no profile lists is `PLAY0722`. `core`, the built-in vocabulary (`button`, `table`, `form`, `title`, ...), is always the final fallback regardless of what a profile lists here.
 - `icons` - the icon sets or packages this profile makes available to `icon <name>` references on components, toolbar items and actions. The compiler preserves the list; Stage checks whether the selected packages can resolve each icon.
 - `theme` - the visual theme this profile applies. Optional, at most one per profile. A theme is only meaningful relative to a specific set of packages - see [Theme](theme.md) for how that compatibility is declared and checked.
+- `sample data` - which sample data the whole application previews with: the active pack, chosen **once here** and inherited by every screen, slice and component, plus the rare shape-to-read-model mappings and per-read-model bindings. Optional, at most one per profile. It is design and preview time only and never part of a production build. See [Sample data](sample-data.md).
 - `layout` - the application's base navigational shell this profile renders inside. Optional, at most one per profile. This is where an application states which shell it uses; naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
 
 ## Example

@@ -243,6 +243,21 @@ internal sealed partial class WorkspaceRefactoring
         var collision = index.Entries.FirstOrDefault(entry => currentAddress.Equals(entry.Address));
         if (collision is not null) throw new InvalidWorkspaceAuthoring($"Destination collision with '{MoveAddress(collision.Address)}' at '{Position(workspace.Documents, collision)}'.");
 
+        var movedNames = request.Target.Parts.Skip(1).Select(part => part.Key).ToArray();
+        var navigationTarget = index.Entries.FirstOrDefault(entry => entry.Node is NavigationTargetSyntax navigation &&
+            NavigationNames(navigation).Take(movedNames.Length).SequenceEqual(movedNames));
+        if (navigationTarget is not null)
+        {
+            throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is the target of a navigation item at '{Position(workspace.Documents, navigationTarget)}'. Move it and the navigation 'target' with explicit coordinated typed edits; moving does not rewrite navigation targets.");
+        }
+
+        var movedName = request.Target.Parts[^1].Key;
+        var buttonSlice = index.Entries.FirstOrDefault(entry => entry.Node is ToolbarButtonSyntax { Slice: { } slice } && slice.Split('.').Contains(movedName));
+        if (buttonSlice is not null)
+        {
+            throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is named by the slice of a toolbar button at '{Position(workspace.Documents, buttonSlice)}'. Move it and the button's 'slice' with explicit coordinated typed edits; moving does not rewrite toolbar button slices.");
+        }
+
         var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         bindings.RequireNoCollisions();
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));

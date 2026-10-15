@@ -37,6 +37,12 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 ESM v21 generation has only authored pattern/checksum, exact Int64 min/max, or implementation requirement id members, according to strategy. No current year, support counts, proof status or body bytes serialize. A ValueGeneration requirement and its Now/Tenant typed-context descriptor belong to the same compilation and attachment manifest; an ESM-only reader cannot invent them. Consumers explicitly admit v21 or reject it. Earlier ESM and corpus bytes are frozen.
 
+## Navigation regions
+
+`LayoutSyntax.Navigation` and `ModuleSyntax.Navigation` are additive init-only collections of `NavigationRegionSyntax`; the JSON omits them when empty, so documents without navigation regions keep their bytes. `NavigationRegionKind` (`Topbar`, `Sidebar`) and `NavigationRegionMode` (`Unspecified`, `Inherit`, `Extend`, `Override`) are appended-only enums: a layout's regions are `Unspecified`, a module's carry their mode. `NavigationItemSyntax` nests sub-items in `Children`, and `NavigationTargetSyntax` holds the module and the dotted feature path. See [Navigation regions](navigation.md).
+
+`ScreenToolbarSyntax.Buttons` is an additive init-only collection of `ToolbarButtonSyntax` (`Id`, `Title`, optional `Slice`, `Emphasis`, `Icon`). The JSON omits `buttons` when empty and the optional members when null. `ToolbarEmphasis` (`Primary`, `Secondary`, `Quiet`) is append-only. See [Toolbar buttons](screens.md#toolbar-buttons).
+
 ## Enum member numbers
 
 `ConceptSyntax.ValueNumbers` is a nullable init-only collection of int32, not a positional constructor parameter. Absent numbers stay null and the syntax JSON omits `valueNumbers`, keeping existing documents' bytes. Populated numbers parallel `values` in authored order; cardinality must match, numbers must be unique, and the concept must be an enum. Preserve the distinction between absent and populated numbers when rewriting. Positional pins retain the original executable bytes; other numbers select ESM v12 and become the optional canonical `numbers` member, parallel to ESM `values`. Consumers must explicitly admit that contract.

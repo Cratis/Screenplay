@@ -98,10 +98,15 @@ export interface ScreenNavigationParameterSyntax extends SyntaxNode {
     readonly binding: UiBindingSyntax;
 }
 
-// 'template <Name>' and the slots it fills.
+// 'template <Name>' - or 'template blueprint <Blueprint> <Name> [version "<range>"]' for a template a blueprint
+// package ships - and the slots it fills.
 export interface ScreenTemplateReferenceSyntax extends SyntaxNode {
     readonly kind: 'ScreenTemplateReferenceSyntax';
     readonly name: string;
+    // The blueprint package the template comes from; absent for an own template.
+    readonly blueprint?: string;
+    // The semver range of the blueprint the reference accepts; absent when it does not pin a version.
+    readonly version?: string;
     readonly slots: readonly ScreenSlotSyntax[];
 }
 
@@ -204,10 +209,23 @@ export interface ToolbarItemSyntax extends SyntaxNode {
     readonly presentation: readonly PresentationValueSyntax[];
 }
 
+export type ToolbarEmphasis = 'Primary' | 'Secondary' | 'Quiet';
+
+// A toolbar button that invokes a State Change slice. The slice is a dotted path, or an unambiguous suffix of one.
+export interface ToolbarButtonSyntax extends SyntaxNode {
+    readonly kind: 'ToolbarButtonSyntax';
+    readonly id: string;
+    readonly title: string;
+    readonly slice?: string | null;
+    readonly emphasis?: ToolbarEmphasis | null;
+    readonly icon?: string | null;
+}
+
 export interface ScreenToolbarSyntax extends SyntaxNode {
     readonly kind: 'ScreenToolbarSyntax';
     readonly name: string;
     readonly items: readonly ToolbarItemSyntax[];
+    readonly buttons?: readonly ToolbarButtonSyntax[];
 }
 
 // Inline code in a registered language.

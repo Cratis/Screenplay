@@ -75,6 +75,7 @@ internal static partial class PlayFolderMerge
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],
+            SampleDataPacks = DeclaredInOneFile(applications.SelectMany(application => application.SampleDataPacks), pack => pack.Name, pack => pack.Location, "sample data pack", context),
             Purposes = DeclaredInOneFile(applications.SelectMany(application => application.Purposes), purpose => purpose.Name, purpose => purpose.Location, "purpose", context),
 
             // Preserve physical parents; a duplicate source makes every child scope ambiguous.

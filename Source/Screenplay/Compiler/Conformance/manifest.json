@@ -51,6 +51,8 @@
         { "name": "invoicing", "path": "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play" },
         { "name": "invoicing-editor-sample", "path": "Source/Screenplay/Monaco/screenplay-editor/samples/invoicing.play" },
         { "name": "library-sample", "path": "Samples/Library/library.play" },
-        { "name": "invoicing-sample", "path": "Samples/Invoicing/invoicing.play" }
+        { "name": "invoicing-sample", "path": "Samples/Invoicing/invoicing.play" },
+        { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
+        { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" }
     ]
 }
