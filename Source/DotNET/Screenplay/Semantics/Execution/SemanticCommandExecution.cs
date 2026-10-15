@@ -42,6 +42,11 @@ internal sealed partial class SemanticCommandExecution(
             return preparation;
         }
 
+        if (command.Handler is { } handler)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, $"Command '{command.Name}' is described but not implemented (requirement {handler.RequirementId}); its handler body requires a target.");
+        }
+
         foreach (var produced in command.Produces)
         {
             if (Produce(produced) is { } production)
@@ -153,7 +158,7 @@ internal sealed partial class SemanticCommandExecution(
     }
 
     bool NeedsOccurrenceUpFront() =>
-        !plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) &&
+        command.Handler is null && !plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) &&
         command.Produces.Any(HasContextMapping) && request.Occurrence is null;
 
     SemanticExecutionResult? PrepareProduction()
@@ -236,6 +241,7 @@ internal sealed partial class SemanticCommandExecution(
 
     SemanticExecutionResult? RefuseOccurrence(SemanticProducedEvent produced)
     {
+        if (command.Handler is not null) return null;
         if (request.Occurrence is null && HasContextMapping(produced))
         {
             return Contract(NeedsOccurrenceMessage);

@@ -31,7 +31,7 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("handler", StringComparison.OrdinalIgnoreCase)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0696" && diagnostic.Message.Contains("Deposit", StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Fact]

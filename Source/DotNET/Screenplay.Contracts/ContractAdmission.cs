@@ -60,6 +60,9 @@ static class ContractAdmission
             Slice + Event + Command,
             [
                 Slice + Event + Command.Replace("value String", "value String\n        validate\n          value rule BeUnique", StringComparison.Ordinal),
+                Slice + Event + Command + "        handler\n          implementation\n            hint \"Choose the payload\"\n",
+                Slice + "      command Record\n        value String\n        returns value\n        handler\n          implementation\n",
+                Slice + Event + Command.Replace("produces Recorded\n          value = value", "produces when value == \"test\"\n          Recorded\n            value = value", StringComparison.Ordinal) + "        handler\n          implementation\n",
                 Slice + Event + Command.Replace("value String", "value String\n        id Uuid identifier", StringComparison.Ordinal).Replace("value = value", "for id\n          value = value", StringComparison.Ordinal),
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id generated\n",
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
@@ -176,7 +179,7 @@ static class ContractAdmission
         return ScreenplayWorkspace.Create("Contract", [.. documents], catalog).Compilation;
     }
 
-    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration;
+    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration || diagnostic.Code == DiagnosticCodes.DescribedCommandWithoutProductions || diagnostic.Code == DiagnosticCodes.DescribedCommandCardinalityNotAdmitted;
 
     static void EnsureValidProbe(string probe, CompilationResult<SemanticCompilation> compilation)
     {

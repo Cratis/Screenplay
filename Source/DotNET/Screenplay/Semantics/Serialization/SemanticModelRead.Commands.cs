@@ -41,6 +41,14 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
+    static SemanticCommandHandler CommandHandler(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "command handler");
+        var state = new CommandHandlerState();
+        CommandHandlerState.Fields.Read(ref reader, state);
+        return state.Build();
+    }
+
     sealed class CommandState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<CommandState> Fields = TableFor<CommandState>("command")
@@ -52,7 +60,8 @@ internal static partial class SemanticModelRead
             .Add("authorization", (ref Utf8JsonReader reader, CommandState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property))
             .Add("destination", (ref Utf8JsonReader reader, CommandState state, string property) => state.Destination = Nested(ref reader, StateChangeDestination, property))
             .Add("response", 7, (ref Utf8JsonReader reader, CommandState state, string property) => state.Response = Nested(ref reader, SemanticModelRead.Response, property))
-            .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property));
+            .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
+            .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, CommandHandler, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
 
@@ -72,6 +81,8 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandRoute? Route { get; set; }
 
+        public SemanticCommandHandler? Handler { get; set; }
+
         public SemanticCommand Build()
         {
             Required(HasIdentity && !Properties.IsDefault && !Validations.IsDefault && !Produces.IsDefault, "command");
@@ -82,8 +93,26 @@ internal static partial class SemanticModelRead
                 Destination = Destination,
                 Authorization = Authorization,
                 Response = Response,
-                Route = Route
+                Route = Route,
+                Handler = Handler
             };
+        }
+    }
+
+    sealed class CommandHandlerState() : ReadState(0)
+    {
+        public static readonly FieldTable<CommandHandlerState> Fields = new FieldTable<CommandHandlerState>("command handler")
+            .Add("requirementId", (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.RequirementId = String(ref reader, property))
+            .Add("resultVersion", (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.ResultVersion = UInt32(ref reader, property));
+
+        public string? RequirementId { get; set; }
+
+        public uint? ResultVersion { get; set; }
+
+        public SemanticCommandHandler Build()
+        {
+            Required(RequirementId is not null && ResultVersion.HasValue, "command handler");
+            return new(RequirementId!, ResultVersion!.Value);
         }
     }
 

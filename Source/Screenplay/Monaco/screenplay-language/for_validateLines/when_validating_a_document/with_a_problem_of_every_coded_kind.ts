@@ -158,6 +158,9 @@ describe('when validating a document with a problem of every coded kind', () => 
         ];
         issues.push(...publicUses.flatMap(([kind, body]) => validateLines([...publicContracts, `    slice ${kind} Transfer`, ...(`      ${body}`).split('\n')])));
         issues.push(...validateLines(['module Billing', '  feature Invoices', '    slice StateView Lookup', '      readmodel Invoice', '        number String', '      query GetInvoice => Invoice optional', '        by number String', '      specification Rejection', '        when query GetInvoice', '          number = "A"', '        then error', '        then no result']));
+        for (const code of [diagnosticCodes.describedCommandNotImplemented, diagnosticCodes.describedCommandWithoutProductions, diagnosticCodes.describedCommandCardinalityNotAdmitted]) {
+            issues.push(...validateLines(['module M'], { compilerDiagnostics: [{ code, severity: 'error', message: 'C# binding disposition', location: { line: 1, column: 1 } }] }));
+        }
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
     });
 

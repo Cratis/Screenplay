@@ -7,8 +7,19 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesDescribedHandlers(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
     static IEnumerable<SemanticSlice> SlicesOf(SemanticApplication application) =>
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
+
+    static void ValidateDescribedHandlerVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesDescribedHandlers(application),
+            version,
+            SemanticVersion.V23,
+            "An ESM v23 model must contain a described command.",
+            "Described command handlers require ESM v23 or later.");
 
     static void ValidateEventSourceVersion(SemanticApplication application, SemanticVersion semanticVersion)
     {
