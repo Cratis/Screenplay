@@ -245,4 +245,46 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitPropertyMapping(property);
         }
     }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataPackSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataPackSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataPack(SampleDataPackSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var set in syntax.Sets)
+        {
+            VisitSampleDataSet(set);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataSetSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataSetSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataSet(SampleDataSetSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var row in syntax.Rows)
+        {
+            VisitSampleDataRow(row);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SampleDataRowSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SampleDataRowSyntax"/> to visit.</param>
+    public virtual void VisitSampleDataRow(SampleDataRowSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var field in syntax.Fields)
+        {
+            VisitNode(field);
+        }
+    }
 }

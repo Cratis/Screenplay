@@ -50,6 +50,7 @@ internal static partial class ScreenplayParser
         var seeds = new List<SeedSyntax>();
         var uiProfiles = new List<UiProfileSyntax>();
         var themes = new List<ThemeSyntax>();
+        var sampleDataPacks = new List<SampleDataPackSyntax>();
         var triggers = new List<TriggerSyntax>();
         var layouts = new List<LayoutSyntax>();
         var behaviors = new List<BehaviorSyntax>();
@@ -154,6 +155,9 @@ internal static partial class ScreenplayParser
                 case "ui":
                     AddUiProfile(context, UiProfileParser.Parse(context, line), uiProfiles);
                     break;
+                case "sample":
+                    AddSampleDataPack(context, SampleDataPackParser.Parse(context, line), sampleDataPacks);
+                    break;
                 case "theme":
                     AddTheme(context, ThemeParser.Parse(context, line), themes);
                     break;
@@ -209,6 +213,7 @@ internal static partial class ScreenplayParser
             Purposes = purposes,
             Examples = examples,
             Systems = systems,
+            SampleDataPacks = sampleDataPacks,
             EventSources = eventSources,
             Behaviors = behaviors,
             FileImports = fileImports,
@@ -352,7 +357,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme or layout";
+                : " - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
@@ -390,6 +395,17 @@ internal static partial class ScreenplayParser
         }
 
         uiProfiles.Add(profile);
+    }
+
+    static void AddSampleDataPack(ParserContext context, SampleDataPackSyntax pack, List<SampleDataPackSyntax> packs)
+    {
+        if (packs.Exists(existing => existing.Name == pack.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateSampleDataPack, $"A sample data pack named '{pack.Name}' is already declared - pack names must be unique", pack.Location);
+            return;
+        }
+
+        packs.Add(pack);
     }
 
     static void AddTheme(ParserContext context, ThemeSyntax theme, List<ThemeSyntax> themes)

@@ -308,7 +308,7 @@ CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
                    { TargetPlatformDecl | TargetSizeDecl | PackagesBlock
-                   | ProfileLayoutDecl | ProfileThemeDecl },
+                   | ProfileLayoutDecl | ProfileThemeDecl | ProfileSampleDataDecl },
                  DEDENT ;
 
 TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
@@ -328,14 +328,58 @@ ProfileThemeDecl = "theme", Ident, NL ;
 
 PackageName    = Ident, { ".", Ident } ;
 
-(* Each of the five is optional and may appear at most once, in any order - the
+ProfileSampleDataDecl = "sample", "data", NL,
+                 INDENT, { SampleActiveDecl | SampleMapDecl | SampleBindDecl }, DEDENT ;
+
+SampleActiveDecl = "active", SamplePackRef, NL ;
+
+SampleMapDecl  = "shape", Ident, "maps", "to", Ident, NL ;
+
+SampleBindDecl = "bind", Ident, "to", SamplePackRef, NL ;
+
+SamplePackRef  = Ident | "blueprint", BlueprintPackId ;
+
+BlueprintPackId = Lower, { Lower | Digit | ".", "_", "-" } ;
+
+(* Each of the six is optional and may appear at most once, in any order - the
    body is read line by line rather than positionally. The size class names a
    class rather than a pixel breakpoint, because a narrow browser window and a
    compact phone are the same class and a breakpoint means nothing natively.
    A profile's "theme" and "layout" each select one declared elsewhere in the
    document - the layout being the navigational shell the build renders inside.
    The width x height matrix an arrangement resolves against is a separate
-   concern.                                                                  *)
+   concern. The "sample data" block is where the whole application's active
+   sample data pack is chosen, once; "active" and "shape ... maps to ..." may
+   each appear as often as it is distinct, "active" at most once.            *)
+
+(* -------------------------------------------------------------- *)
+(* Sample data                                                     *)
+(* -------------------------------------------------------------- *)
+
+SampleDataDecl = "sample", "data", Ident, NL,
+                 INDENT, { SampleTitleDecl | SampleLocaleDecl | SampleShapeDecl }, DEDENT ;
+
+SampleTitleDecl  = "title", StringLiteral, NL ;
+
+SampleLocaleDecl = "locale", LocaleTag, NL ;
+
+LocaleTag      = Letter, Letter, [ Letter ], { "-", Alnum, Alnum, { Alnum } } ;
+
+SampleShapeDecl = "shape", Ident, NL,
+                 [ INDENT, { SampleRowDecl }, DEDENT ] ;
+
+SampleRowDecl  = "row", NL,
+                 [ INDENT, { SampleFieldDecl }, DEDENT ] ;
+
+SampleFieldDecl = Ident, "=", SampleLiteral, NL ;
+
+SampleLiteral  = StringLiteral | Number | "true" | "false" | "null" ;
+
+(* Sample data is design and preview time only: demo rows a design surface or
+   preview shows instead of a backend. It is not part of the executable semantic
+   model (PLAY0269) and never reaches backend or production output. A shape
+   supplies rows for the read model of the same name, or the one a profile's
+   "shape ... maps to ..." names, and every field must be a property of it.   *)
 
 (* -------------------------------------------------------------- *)
 (* Module                                                          *)

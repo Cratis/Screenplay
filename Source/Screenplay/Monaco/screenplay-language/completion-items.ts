@@ -59,6 +59,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    ${2:slot}', documentation: 'Declares the application shell with named slots.' },
     { label: 'theme', insertText: 'theme ${1:Name}\n    compatible with ${2:Package}', documentation: 'Declares a theme and the component packages it is compatible with.' },
+    { label: 'sample data', insertText: 'sample data ${1:Name}\n    title "${2:Title}"\n    locale ${3:en-GB}\n    shape ${4:ReadModel}\n        row\n            ${5:field} = ${6:"value"}', documentation: 'Declares a pack of demo rows a design surface or preview shows instead of a backend. Design and preview time only.' },
     { label: 'ui profile', insertText: 'ui profile ${1:Name}\n    target platform ${2:web}\n    layout ${3:Layout}\n    theme ${4:Theme}', documentation: 'Binds a target platform and size to a layout, theme and component packages.' },
     { label: 'behavior', insertText: 'behavior ${1:Name}\n    on ${2:click}\n        ${3:execute command}', documentation: 'A named interaction wiring, attached to a screen, form or dialog with `uses`.' },
     { label: 'trigger', insertText: 'trigger ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an integration signal a reaction can run on.' },

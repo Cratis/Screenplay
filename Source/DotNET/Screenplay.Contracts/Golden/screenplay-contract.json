@@ -3,6 +3,7 @@
   "keywords": [
     "acknowledge",
     "action",
+    "active",
     "add",
     "added",
     "all",
@@ -25,7 +26,9 @@
     "back",
     "basis",
     "behavior",
+    "bind",
     "biometric",
+    "blueprint",
     "by",
     "bytes",
     "caller",
@@ -172,10 +175,12 @@
     "length",
     "literal",
     "load",
+    "locale",
     "luhn",
     "madePublic",
     "manual",
     "map",
+    "maps",
     "matches",
     "max",
     "message",
@@ -269,6 +274,7 @@
     "rule",
     "runs",
     "safeguard",
+    "sample",
     "scope",
     "scoped",
     "scopes",
@@ -284,6 +290,7 @@
     "set",
     "severity",
     "sexLifeOrSexualOrientation",
+    "shape",
     "size",
     "slice",
     "slot",
@@ -358,6 +365,7 @@
     "policy",
     "purpose",
     "runs",
+    "sample",
     "seed",
     "system",
     "template",
@@ -15565,6 +15573,283 @@
       ]
     },
     {
+      "name": "sample",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      readmodel View\n        value String\nsample data Demo\n  shape View\n    row\n      value = \u0022test\u0022\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        }
+      ]
+    },
+    {
       "name": "screen",
       "parseStatus": "accepted",
       "probes": [
@@ -26726,6 +27011,160 @@
         "error"
       ],
       "title": "A capture over events must be presented with event fixtures, not capture records.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0702",
+      "name": "InvalidSampleDataDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A sample data line is not sample data \u003CName\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0703",
+      "name": "DuplicateSampleDataPack",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Two sample data blocks in the same document declare the same pack name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0704",
+      "name": "UnknownSampleDataDirective",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line in a sample data block or one of its shape blocks is not title, locale, shape or row as it should be there, or repeats title or locale.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0705",
+      "name": "InvalidSampleDataLocale",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A locale line in a sample data block is not locale \u003CBCP 47 tag\u003E such as nb-NO.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0706",
+      "name": "InvalidSampleDataValue",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line in a row is not \u003Cfield\u003E = \u003Cliteral\u003E, or the value is not a string, number, true, false or null literal.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0707",
+      "name": "DuplicateSampleDataShape",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A sample data pack declares the same shape more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0708",
+      "name": "DuplicateSampleDataField",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A row sets the same field more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0709",
+      "name": "UnknownSampleDataShape",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A pack shape names no read model, neither by name nor through a shape ... maps to ... line of a ui profile. Reported as a warning, because a blueprint may supply the read model.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0710",
+      "name": "UnknownSampleDataField",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A row field is not a property of the read model its shape supplies rows for.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0711",
+      "name": "SampleDataTypeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A row literal does not fit the type of the read model property: a string for a number, a number for text, null for a property that is not optional, and so on.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0712",
+      "name": "InvalidSampleDataSelection",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line in a ui profile sample data block is not active \u003Cpack\u003E, active blueprint \u003Cid\u003E, shape \u003CShape\u003E maps to \u003CReadModel\u003E or bind \u003CReadModel\u003E to \u003Cpack\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0713",
+      "name": "DuplicateSampleDataSelection",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A ui profile declares more than one sample data block or more than one active line, or repeats a shape ... maps to ... or bind ... to ... line.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0714",
+      "name": "UnknownSampleDataPack",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A ui profile sample data block names a pack the document does not declare. A blueprint \u003Cid\u003E pack is resolved by the build against its packages and is not checked here.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0715",
+      "name": "UnknownSampleDataReadModel",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A shape ... maps to ... or bind ... to ... line names a read model the document does not declare.",
       "reserved": false,
       "retired": false
     }

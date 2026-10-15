@@ -13,8 +13,8 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
-    'a domain': ['domain Catalog\n  ', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'the root': ['', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'a domain': ['domain Catalog\n  ', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
@@ -30,7 +30,10 @@ const scopes: Record<string, [string, string[]]> = {
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
     'a seed': ['seed\n  ', ['for']],
     'a theme': ['theme T\n  ', ['compatible with']],
-    'a ui profile': ['ui profile P\n  ', ['layout', 'packages', 'target platform', 'target size', 'theme']],
+    'a ui profile': ['ui profile P\n  ', ['layout', 'packages', 'sample data', 'target platform', 'target size', 'theme']],
+    'a sample data pack': ['sample data P\n  ', ['locale', 'shape', 'title']],
+    'a sample data shape': ['sample data P\n  shape S\n    ', ['row']],
+    'a ui profile sample data block': ['ui profile P\n  sample data\n    ', ['active', 'bind', 'shape maps to']],
     'a layout': ['layout L\n  ', ['arrangement', 'slot', 'slot contributes']],
 };
 
