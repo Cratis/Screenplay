@@ -53,11 +53,30 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21):
+A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21). The normative version-1 contract is the language-neutral descriptor: `Now` (an instant), `Tenant` (the portable `TenantId`) and a `String` result. Each language provider binds that descriptor to its target's native type; Screenplay does not choose one runtime type for all targets.
 
-```csharp
-public record GenerationContext(DateTimeOffset Now, TenantId Tenant);
-```
+| Target | Binding of the descriptor |
+| --- | --- |
+| Cratis C# (Stage, Arc) | `Cratis.Concepts.GenerationContext` from Fundamentals, a struct of `DateTimeOffset Now` and `string Tenant` |
+| BCL-only C# hosts | `Cratis.Screenplay.Contexts.GenerationContext`, `record GenerationContext(DateTimeOffset Now, TenantId Tenant)` |
+| Other languages | The provider's own type for the same descriptor |
+
+The provider, not the fence's language tag, decides the binding: a `csharp` tag does not distinguish the Cratis C# target from a host that uses the Screenplay record, and file attachments carry no tag. Each provider compiles or admits a body against its own binding and rejects a body that does not fit it.
+
+`Cratis.Screenplay.Contexts.GenerationContext` stays BCL-only with its current shape. It is name-compatible with the Fundamentals type (`Now`, `Tenant`), not type-identical.
+
+A body is portable across targets only when it stays in the portable subset:
+
+- It uses `context.Now`, the tenant in string interpolation or string assignment, and BCL types. `TenantId` formats as its value, so `$"{context.Tenant}"` gives the same string on both bindings.
+
+These uses are target-bound, because they mean something only for one binding:
+
+- Passing `context` to `GenerateValue.*`.
+- Naming `GenerationContext` or `GenerationContext.DefaultTenant`.
+- Constructing a context.
+- Reading `context.Tenant.Value`.
+
+Passing `context` to Fundamentals APIs is valid only on the Cratis C# target. See the [generate rule example](generated-values/strategies.md#pattern-random-and-rule-esm-v21) and [decision 0083](../../decisions/0083-bind-the-generation-context-per-language-target.md).
 
 It returns the String primitive in context/result contract version 1. There are no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly rather than reading ambient time/tenant APIs or comparing raw `"Default"` strings. The reference runner consumes a fixture and never invokes the body; opaque validation still remains Unsupported. Input-derived generation belongs to #308.
 

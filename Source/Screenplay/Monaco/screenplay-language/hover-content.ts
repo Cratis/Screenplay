@@ -72,7 +72,7 @@ export function hoverContent(
             case: 'lower or upper for String UUIDs, ULID, hex/base32 bytes. Never base64url, NanoID or TypeID.',
             pattern: 'ESM v21 finite ASCII pattern: # digits, ? uppercase letters, * uppercase letters and digits, classes, repeats 1..64 and UTC yyyy/yy/MM/dd segments. Final value including checksum is at most 256 characters. Counts distinct strings, not repeat decompositions; dates and check digits add no entropy.',
             random: 'ESM v21 inclusive signed Int64 range for an Int value. Fixtures must be integral numbers within the exact bounds. Int cannot be a generated identifier.',
-            rule: 'ESM v21 ValueGeneration requirement with exactly one direct file or tagged fence. Returns String; closed GenerationContext supplies Now (DateTimeOffset) and Tenant (TenantId). Entropy is unknown. The reference runner uses a fixture and never executes the body.',
+            rule: 'ESM v21 ValueGeneration requirement with exactly one direct file or tagged fence. Returns String; the closed GenerationContext descriptor (Now, Tenant) is bound by each provider to its own type; Cratis C# binds the Fundamentals GenerationContext. Entropy is unknown. The reference runner uses a fixture and never executes the body.',
             checksum: 'Appends luhn/mod11/mod97 check digits, adding no entropy. mod11 excludes check digit 10. Generated fixtures check only suffix digit shape unless validate checksum is authored.',
             sequence: 'Reserved; binding refuses it until #619 is admitted.',
         };
