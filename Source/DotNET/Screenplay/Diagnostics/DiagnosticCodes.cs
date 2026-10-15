@@ -3210,4 +3210,14 @@ public static class DiagnosticCodes
     /// A generation pattern has no admissible support on an assessed UTC date.
     /// </summary>
     public const string EmptyGenerationSupport = "PLAY0692";
+
+    /// <summary>
+    /// A capture over events requires its key as a required property on every source event.
+    /// </summary>
+    public const string CaptureEventsKeyNotRequired = "PLAY0700";
+
+    /// <summary>
+    /// A capture over events must be presented with event fixtures, not capture records.
+    /// </summary>
+    public const string CaptureEventsRecordFixture = "PLAY0701";
 }

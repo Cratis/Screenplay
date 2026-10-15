@@ -67,6 +67,8 @@ export const diagnosticCodes = {
     eventsSourceOutsideInboundTranslation: 'PLAY0619',
     invalidCaptureEventsSource: 'PLAY0620',
     captureEventsFromSeveralOrigins: 'PLAY0687',
+    captureEventsKeyNotRequired: 'PLAY0700',
+    captureEventsRecordFixture: 'PLAY0701',
     refutedGeneratedConceptRule: 'PLAY0688',
     unprovenGeneratedConceptRule: 'PLAY0689',
     invalidReadModelKey: 'PLAY0660',

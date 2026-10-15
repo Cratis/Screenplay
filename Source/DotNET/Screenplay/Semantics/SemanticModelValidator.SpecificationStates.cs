@@ -25,7 +25,16 @@ internal static partial class SemanticModelValidator
             ValidateFixtureRoute(value.Route, value.Unrouted, then, value.EventSource, value.EventContract);
             if (value.EventSource is not null)
             {
+                ValidateForeignFixtureSource(value.EventSource, value.EventContract);
                 ValidateEventSource(value.EventSource, FixtureEventSourceType(value.Route, value.EventContract));
+            }
+        }
+
+        void ValidateForeignFixtureSource(SemanticEventSourceIdentity source, SemanticId eventContract)
+        {
+            if (_events[eventContract].Origin is not null && (source.Value is not SemanticTextValue text || string.IsNullOrWhiteSpace(text.Value)))
+            {
+                throw new InvalidSemanticContract("A foreign event source fixture requires non-empty text.");
             }
         }
 

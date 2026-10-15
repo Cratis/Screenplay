@@ -8,7 +8,7 @@ using Cratis.Screenplay.Semantics.Execution;
 namespace Cratis.Screenplay.CanonicalCorpus;
 
 /// <summary>Provides the source-backed public events conformance vector.</summary>
-public static class PublicEventsCorpus
+public static partial class PublicEventsCorpus
 {
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.PublicEvents.v9";
 

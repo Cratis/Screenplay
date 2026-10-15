@@ -141,6 +141,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("An appended event source requires one unambiguous scalar destination type.");
                 }
 
+                ValidateForeignFixtureSource(appended.EventSource, appended.EventContract);
                 ValidateEventSource(appended.EventSource, destinationType);
             }
         }
