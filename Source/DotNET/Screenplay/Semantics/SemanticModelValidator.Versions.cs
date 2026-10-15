@@ -10,6 +10,20 @@ internal static partial class SemanticModelValidator
     static IEnumerable<SemanticSlice> SlicesOf(SemanticApplication application) =>
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
 
+    static void ValidateDecisionReadVersion(SemanticApplication application, SemanticVersion version)
+    {
+        if (application.CommandReadMode is { } mode && mode != SemanticCommandReadMode.Protected)
+            throw new InvalidSemanticContract("Command read mode must be protected.");
+        ValidateFeatureVersion(
+            application.CommandReadMode is not null,
+            version,
+            SemanticVersion.V24,
+            "An ESM v24 model must explicitly select protected command reads.",
+            "Protected command reads require ESM v24.");
+        if (application.CommandReadMode is null && SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => !command.Reads.IsDefaultOrEmpty))
+            throw new InvalidSemanticContract("Command reads require the protected command read mode.");
+    }
+
     static void ValidateEventSourceVersion(SemanticApplication application, SemanticVersion semanticVersion)
     {
         if (semanticVersion == SemanticVersion.V2 && !SlicesOf(application).Any(UsesEventSource))

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -121,14 +122,14 @@ public sealed partial class SemanticModelBinder
             var events = EventDeclarations.In(slice).Select(value => _eventDeclarations[value]).Distinct().ToArray();
             var commands = slice.Commands.Select(value =>
             {
-                var bound = BindCommand(address, value, _events);
+                var bound = BindCommand(address, value, _events, new DeclarationScope([module, .. featurePath, slice.Name]));
                 bound = bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath, value.Name) };
                 _exampleCommands[value] = bound;
 
                 return bound;
             }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
-            var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
+            var projections = slice.Projections.SelectMany(value => syntax.CommandReadMode is null ? BindProjections(address, value) : _decisionProjections[value]).ToImmutableArray();
             var reducers = BindReducers(address, slice);
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value)).OfType<SemanticKeyedQuery>().ToImmutableArray();
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);

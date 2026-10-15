@@ -35,11 +35,12 @@ internal static partial class SemanticModelValidator
         {
             ValidateCommandDestination(command);
             ValidateProperties(command.Properties, true);
+            ValidateDecisionReads(command);
             foreach (var identifier in command.Properties.Where(property => property.IsIdentifier)) ValidateComplianceIdentity(identifier.Type);
             ValidateResponse(command);
             ValidateCommandRoute(command);
             var properties = Properties([.. command.Properties.Where(property => !property.IsGenerated)]);
-            ValidateCommandRequirements(command, properties);
+            WithDecisionReadPaths(() => ValidateCommandRequirements(command, properties));
             RequireCodeValidations(command);
             ValidateCommandValidations(command, properties);
             RejectDuplicateRequirementIds(
@@ -50,6 +51,7 @@ internal static partial class SemanticModelValidator
             {
                 ValidateProducedEvent(produced, command);
             }
+            _validatedDecisionReads.Clear();
         }
 
         void RequireCodeValidations(SemanticCommand command)
@@ -115,7 +117,7 @@ internal static partial class SemanticModelValidator
                 ValidateProducedDestination(produced, command, sources);
             }
 
-            ValidateMappings(produced.Mappings, Properties(eventContract.Properties), SemanticExpressionRootKind.Command, sources);
+            WithDecisionReadPaths(() => ValidateMappings(produced.Mappings, Properties(eventContract.Properties), SemanticExpressionRootKind.Command, sources));
             var mapped = produced.Mappings.Select(_ => _.TargetProperty).ToHashSet();
             if (eventContract.Properties.Any(_ => !_.Type.IsOptional && !mapped.Contains(_.Id)))
             {

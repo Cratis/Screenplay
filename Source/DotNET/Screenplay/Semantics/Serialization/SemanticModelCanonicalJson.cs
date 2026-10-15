@@ -99,6 +99,7 @@ public static partial class SemanticModelCanonicalJson
         if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
         if (!application.EventSources.IsDefaultOrEmpty) WriteArray(writer, "eventSources", application.EventSources.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventSourceDeclaration);
         if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
+        if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
         writer.WriteEndObject();
     }
 
@@ -330,6 +331,17 @@ public static partial class SemanticModelCanonicalJson
             WriteResponse(writer, command.Response);
         }
         if (command.Route is not null) WriteCommandRoute(writer, command.Route);
+        if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
+        writer.WriteEndObject();
+    }
+
+    static void WriteDecisionRead(Utf8JsonWriter writer, SemanticDecisionRead read)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", read.Name);
+        writer.WriteString("readModel", read.ReadModel.ToString());
+        writer.WriteString("key", read.Key.ToString());
+        writer.WriteString("presence", "required");
         writer.WriteEndObject();
     }
 
@@ -620,6 +632,10 @@ public static partial class SemanticModelCanonicalJson
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, refusal.Type);
                 break;
+            case SemanticReadPathExpression readPath:
+                CanonicalJson.WriteString(writer, "read", readPath.Read);
+                writer.WriteString("property", readPath.PropertyId.ToString());
+                break;
             case SemanticResolvedExpression resolved:
                 writer.WriteString("root", ExpressionRoot(resolved.Root));
                 writer.WriteString("source", ExpressionSource(resolved.Source));
@@ -831,6 +847,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticExpressionKind.Resolved => "resolved",
         SemanticExpressionKind.EventContext => "eventContext",
         SemanticExpressionKind.Refusal => "refusal",
+        SemanticExpressionKind.ReadPath => "readPath",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

@@ -44,14 +44,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
         }
 
-        if (syntax.CommandReadMode is not null)
-        {
-            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
-                DiagnosticCodes.UnsupportedSemanticSyntax,
-                "Protected command reads are not admitted by any supported executable model (ESM) version yet (#129).",
-                syntax.Location)]);
-        }
-
         var numeric = SourceNumericModes.Errors(syntax);
         if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
         if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
@@ -204,6 +196,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.CommandReadMode is not null) return (LanguageVersion.V24, SemanticVersion.V24);
         if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
         if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
         if (SemanticModelValidator.UsesGeneratedConceptRules(application))
@@ -347,6 +340,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
+            if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections();
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
@@ -361,11 +355,13 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Policies = policies,
                 Triggers = triggers,
                 EventSources = eventSources,
-                ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic
+                ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
+                CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
             application = BindRoutedFixtureSources(application);
             UsesEventRoutes = SemanticEventRouting.Uses(application);
+            ReportLegacyDecisionReads();
 
             return application;
         }

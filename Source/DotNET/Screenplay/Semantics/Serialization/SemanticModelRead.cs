@@ -68,7 +68,8 @@ internal static partial class SemanticModelRead
             .Add("policies", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Policies = Array(ref reader, Policy, property))
             .Add("triggers", 6, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Triggers = Array(ref reader, Trigger, property))
             .Add("eventSources", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadEventSources(ref reader, property))
-            .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."));
+            .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."))
+            .Add("commandReadMode", LanguageVersion.V24.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
@@ -84,6 +85,8 @@ internal static partial class SemanticModelRead
 
         public SemanticReactionProductionMode? ReactionProductionMode { get; set; }
 
+        public SemanticCommandReadMode? CommandReadMode { get; set; }
+
         bool HasCollections => !Concepts.IsDefault && !Types.IsDefault && !Modules.IsDefault;
 
         public void ReadEventSources(ref Utf8JsonReader reader, string property)
@@ -95,7 +98,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections, "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode };
+            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode };
         }
     }
 

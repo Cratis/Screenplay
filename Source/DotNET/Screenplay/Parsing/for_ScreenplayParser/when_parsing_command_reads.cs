@@ -56,13 +56,13 @@ public class when_parsing_command_reads : Specification
     }
 
     [Fact]
-    void should_refuse_execution_until_protected_reads_are_admitted()
+    void should_bind_the_explicit_preamble_without_reads()
     {
         var syntax = new ScreenplayCompiler().Parse("command reads protected").Value!;
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("ProtectedReads"));
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("single"), "single", "single.play", "command reads protected");
         var result = new SemanticModelBinder().Bind("ProtectedReads", syntax, SemanticDocumentSet.Create([document], catalog));
-        result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#129", StringComparison.Ordinal));
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
     }
 }

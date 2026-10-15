@@ -52,7 +52,8 @@ internal static partial class SemanticModelRead
             .Add("authorization", (ref Utf8JsonReader reader, CommandState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property))
             .Add("destination", (ref Utf8JsonReader reader, CommandState state, string property) => state.Destination = Nested(ref reader, StateChangeDestination, property))
             .Add("response", 7, (ref Utf8JsonReader reader, CommandState state, string property) => state.Response = Nested(ref reader, SemanticModelRead.Response, property))
-            .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property));
+            .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
+            .Add("reads", LanguageVersion.V24.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
 
@@ -70,6 +71,8 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandResponse? Response { get; set; }
 
+        public ImmutableArray<SemanticDecisionRead> Reads { get; set; } = [];
+
         public SemanticCommandRoute? Route { get; set; }
 
         public SemanticCommand Build()
@@ -82,6 +85,7 @@ internal static partial class SemanticModelRead
                 Destination = Destination,
                 Authorization = Authorization,
                 Response = Response,
+                Reads = Reads,
                 Route = Route
             };
         }

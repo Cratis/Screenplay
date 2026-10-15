@@ -64,6 +64,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v22.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV22()` on the full v21 model, adding only the optional final application member `reactionProductionMode: "atomic"` under decision 0078. `AtomicReactionBatchesCorpus.V22` and its legacy control pin equivalent-source bytes and reference outcomes, including rejected-world counts, refusal branches, redelivery, application and clock triggers. Earlier golden/corpus bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=22`; regenerate the source corpus with `SCREENPLAY_REGENERATE_ATOMIC_REACTION_BATCHES_CORPUS=1`. Both selectors fail deliberately; rebuild embedded resources before strict reruns.
 
+`full-esm-v24.json` pins the working protected command reads contract under decision 0085. `canonical_serialization_golden_vectors.CreateSemanticModelV24()` binds a required read over a finite event-source-keyed projection with removal handling, a read-backed requirement and a produced-event read-path mapping. The final application member is `commandReadMode: "protected"`; each read writes `name`, `readModel`, `key` and `presence: "required"`. Read-path expressions write `kind: "readPath"`, `read` and `property`; condition property operands add `read` for a view property. Reference execution is explicitly unsupported pending decide/commit, absence and conflict evaluation. Regenerate only this vector with `SCREENPLAY_REGENERATE_GOLDEN=24`, rebuild and rerun strictly. Released v1–v22 bytes remain unchanged.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:

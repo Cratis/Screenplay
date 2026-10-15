@@ -47,6 +47,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         if (operand.Property.IsSet)
         {
+            if (operand.Read is not null) CanonicalJson.WriteString(writer, "read", operand.Read);
             writer.WriteString("property", operand.Property.ToString());
         }
         else
@@ -128,18 +129,20 @@ internal static partial class SemanticModelRead
         SemanticId propertyId = default;
         SemanticValue? value = null;
         var valueRead = false;
+        string? read = null;
         while (NextProperty(ref reader, seen, "condition operand") is { } property)
         {
             switch (property)
             {
+                case "read": read = String(ref reader, property); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");
             }
         }
 
-        Required(propertyId.IsSet != valueRead, "condition operand");
-        return new(propertyId, value);
+        Required(propertyId.IsSet != valueRead && (read is null || propertyId.IsSet), "condition operand");
+        return new(propertyId, value) { Read = read };
     }
 
     internal static SemanticRequirement Requirement(ref Utf8JsonReader reader)

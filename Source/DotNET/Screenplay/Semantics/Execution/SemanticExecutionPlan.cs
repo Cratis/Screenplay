@@ -48,7 +48,12 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A slice selection contains an identity that is not a slice in the model.
     /// </summary>
-    InvalidSliceSelection = 6
+    InvalidSliceSelection = 6,
+
+    /// <summary>
+    /// Protected decision reads await decide/commit and absence evaluation.
+    /// </summary>
+    UnsupportedDecisionReads = 7
 }
 
 /// <summary>
@@ -214,6 +219,8 @@ public sealed class SemanticExecutionPlan
 
         foreach (var command in slices.SelectMany(_ => _.Commands))
         {
+            if (!command.Reads.IsDefaultOrEmpty)
+                issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedDecisionReads, "Protected command reads require decide/commit, required-read absence and conflict evaluation, which are not implemented yet (#129)."));
             foreach (var validation in command.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));

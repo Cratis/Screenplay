@@ -361,6 +361,11 @@ public sealed record SemanticCommand(
     public SemanticCommandResponse? Response { get; init; }
 
     /// <summary>
+    /// Gets the required protected decision reads, in declaration order.
+    /// </summary>
+    public ImmutableArray<SemanticDecisionRead> Reads { get; init; } = [];
+
+    /// <summary>
     /// Gets the route shared by the command's facts, or null for an unrouted command.
     /// </summary>
     public SemanticCommandRoute? Route { get; init; }

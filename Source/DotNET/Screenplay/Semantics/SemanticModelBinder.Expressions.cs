@@ -41,13 +41,18 @@ public sealed partial class SemanticModelBinder
             ExpressionSyntax expression,
             Dictionary<string, SemanticProperty> properties,
             SemanticExpressionRootKind root,
-            string description) => expression switch
+            string description,
+            bool allowReadPaths = false) => expression switch
         {
             PathExpressionSyntax path when properties.TryGetValue(path.Path, out var property) =>
                 SemanticExpression.Property(root, property.Id),
+            PathExpressionSyntax path when allowReadPaths && syntax.CommandReadMode is not null && path.Path.Contains('.') => BindReadMapping(path, description),
             LiteralExpressionSyntax literal => SemanticExpression.FromValue(BindLiteral(literal)),
             _ => UnsupportedExpression(expression, description)
         };
+
+        SemanticReadPathExpression? BindReadMapping(PathExpressionSyntax path, string position) =>
+            BindReadPath(path.Path, path.Location, position) is { } read ? new SemanticReadPathExpression(read.Read, read.Property.Id) : null;
 
         SemanticValue BindLiteral(LiteralExpressionSyntax expression) => expression.Value switch
         {
