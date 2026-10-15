@@ -23,6 +23,9 @@ public class and_a_capture_record_is_presented : given.a_v6_scenario
                     lastName
                     firstName
                   summary = `${status} invoice`
+                append LegacyInvoiceAdded
+                  when added
+                    status = $.status
                 append LegacyStatusChanged
                   when status
                     status    = $.status
@@ -54,6 +57,8 @@ public class and_a_capture_record_is_presented : given.a_v6_scenario
                   append LegacyContactChanged
                     when email
                       email = $.email
+              event LegacyInvoiceAdded
+                status String
               event LegacyStatusChanged
                 status String
                 summary String
@@ -120,18 +125,9 @@ public class and_a_capture_record_is_presented : given.a_v6_scenario
                   status      = "sendt"
                   contactName = "Hopper, Grace"
                   overdue     = false
-                then events in any order
-                then LegacyStatusChanged
+                then LegacyInvoiceAdded
                   for "inv-43"
-                  status    = "sent"
-                  summary   = "sent invoice"
-                  changedAt = "2026-10-02T12:00:00Z"
-                then LegacyNeedsAttention
-                  for "inv-43"
-                  source = "legacy"
-                then LegacyFullyChanged
-                  for "inv-43"
-                  source = "legacy"
+                  status = "sent"
         """;
 
     SemanticSpecificationRun _changed;
@@ -146,6 +142,6 @@ public class and_a_capture_record_is_presented : given.a_v6_scenario
     }
 
     [Fact] void should_append_what_changed_since_the_record_it_last_saw() => _changed.Passed.ShouldBeTrue();
-    [Fact] void should_treat_every_field_of_a_first_record_as_changed() => _first.Passed.ShouldBeTrue();
+    [Fact] void should_treat_a_first_record_as_added_only() => _first.Passed.ShouldBeTrue();
     [Fact] void should_append_to_the_event_source_the_key_names() => ((SemanticAccepted)_changed.Execution).Facts.All(fact => fact.Destination == SemanticValue.Text("inv-42")).ShouldBeTrue();
 }
