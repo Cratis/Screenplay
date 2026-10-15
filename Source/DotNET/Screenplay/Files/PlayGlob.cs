@@ -93,12 +93,49 @@ public static class PlayGlob
     {
         readonly string[] _pattern = pattern;
         readonly string[] _path = path;
-        readonly bool?[,] _decided = new bool?[pattern.Length + 1, path.Length + 1];
+        readonly bool?[][] _decided = [.. Enumerable.Range(0, pattern.Length + 1).Select(_ => new bool?[path.Length + 1])];
 
         public bool Matches() => Matches(0, 0);
 
+        // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
+        // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
+        // and quadratic at worst.
+        static bool SegmentMatches(string glob, string segment)
+        {
+            var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
+            while (segmentIndex < segment.Length)
+            {
+                if (patternIndex < glob.Length && (glob[patternIndex] == '?' || glob[patternIndex] == segment[segmentIndex]) && glob[patternIndex] != '*')
+                {
+                    patternIndex++;
+                    segmentIndex++;
+                }
+                else if (patternIndex < glob.Length && glob[patternIndex] == '*')
+                {
+                    star = patternIndex++;
+                    starSegmentIndex = segmentIndex;
+                }
+                else if (star >= 0)
+                {
+                    patternIndex = star + 1;
+                    segmentIndex = ++starSegmentIndex;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            while (patternIndex < glob.Length && glob[patternIndex] == '*')
+            {
+                patternIndex++;
+            }
+
+            return patternIndex == glob.Length;
+        }
+
         bool Matches(int patternIndex, int pathIndex) =>
-            _decided[patternIndex, pathIndex] ??= Decide(patternIndex, pathIndex);
+            _decided[patternIndex][pathIndex] ??= Decide(patternIndex, pathIndex);
 
         bool Decide(int patternIndex, int pathIndex)
         {
@@ -133,43 +170,6 @@ public static class PlayGlob
             return pathIndex < _path.Length &&
                 SegmentMatches(_pattern[patternIndex], _path[pathIndex]) &&
                 Matches(patternIndex + 1, pathIndex + 1);
-        }
-
-        // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
-        // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
-        // and quadratic at worst.
-        static bool SegmentMatches(string pattern, string segment)
-        {
-            var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
-            while (segmentIndex < segment.Length)
-            {
-                if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' || pattern[patternIndex] == segment[segmentIndex]) && pattern[patternIndex] != '*')
-                {
-                    patternIndex++;
-                    segmentIndex++;
-                }
-                else if (patternIndex < pattern.Length && pattern[patternIndex] == '*')
-                {
-                    star = patternIndex++;
-                    starSegmentIndex = segmentIndex;
-                }
-                else if (star >= 0)
-                {
-                    patternIndex = star + 1;
-                    segmentIndex = ++starSegmentIndex;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            while (patternIndex < pattern.Length && pattern[patternIndex] == '*')
-            {
-                patternIndex++;
-            }
-
-            return patternIndex == pattern.Length;
         }
     }
 }
