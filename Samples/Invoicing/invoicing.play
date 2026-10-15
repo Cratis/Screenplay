@@ -359,10 +359,21 @@ theme NordicDark
   compatible with Cratis.Components
 
 layout AppShell
+  category Shell
   topbar
   navigation contributes Navigation
   content
   footer
+
+  // The application's own navigation. A module inherits these items, extends them or overrides them.
+  navigation topbar
+    logo image "/assets/billing-hub.svg" title "Billing Hub"
+    item invoicing title "Invoicing" icon receipt target Invoicing
+  navigation sidebar
+    item invoicing title "Invoicing" icon receipt target Invoicing
+      item invoices title "Invoices" target Invoicing.InvoiceManagement
+      item payments title "Payments" target Invoicing.Payments
+      item portal title "Customer portal" target Invoicing.CustomerPortal slot content
 
   arrangement flow
     column
@@ -379,6 +390,7 @@ layout AppShell
         navigation height 64
 
 layout PortalShell
+  category Shell
   header
   content
 
@@ -482,9 +494,14 @@ module Invoicing
     group "Billing"
     destination outlet detail
 
+  // The sidebar keeps the application's items and adds the module's own; the topbar is inherited as is.
+  navigation sidebar extends
+    item auditing title "Auditing" icon shield target Invoicing.Auditing
+
   // Screen templates fit a slot of the shell; dialog templates open over it.
   screen template MasterDetail
     fits slot content
+    category Workspace
 
     sidebar
     main
@@ -501,6 +518,7 @@ module Invoicing
 
   screen template Dashboard
     fits slot content
+    category Workspace
 
     header
     left
@@ -522,6 +540,7 @@ module Invoicing
 
   screen template Board
     fits slot content
+    category Workspace
     display "Board"
     description "Invoices grouped into columns by payment state"
     scopes slice
@@ -546,11 +565,13 @@ module Invoicing
 
   screen template List
     fits slot content
+    category Workspace
 
     toolbar
     items
 
   dialog template CommandDialog
+    category Dialog
     body
     actions
 
@@ -1482,6 +1503,9 @@ module Invoicing
             icon batch
             parameter invoiceId from component invoiceGrid.selected.invoiceId
             presentation placement "secondary"
+          // Buttons invoke State Change slices; the slice names the command and the dialog it opens over the page.
+          button newInvoice title $strings.invoices.actions.newInvoice slice Invoicing.InvoiceManagement.RegisterInvoice emphasis primary icon add
+          button cancelInvoice title $strings.invoices.actions.cancel slice CancelInvoice emphasis quiet
         component Cratis.Components.DataGrid invoiceGrid
           context from query ListInvoices
           property title = "Invoices"

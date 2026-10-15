@@ -9,6 +9,7 @@ instance WorkItemList
 
 module Workspaces
   screen template FeatureShell
+    category Workspace
     header
 
     content footer

@@ -10,6 +10,7 @@ module Fulfillment
 
   screen template WarehouseBoard
     fits slot content
+    category Workspace
 
     queue
     help
@@ -24,6 +25,7 @@ module Fulfillment
           queue
 
   dialog template ShipmentDialog
+    category Dialog
     body
     actions
 

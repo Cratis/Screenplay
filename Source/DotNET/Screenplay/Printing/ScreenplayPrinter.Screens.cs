@@ -183,7 +183,7 @@ public partial class ScreenplayPrinter
     void WriteScreenTemplateReference(ScreenplayWriter writer, ScreenTemplateReferenceSyntax template)
     {
         using var anchor = writer.Anchor(template);
-        writer.Line($"template {template.Name}");
+        writer.Line($"template {WriteTemplateReference(template.Blueprint, template.Name, template.Version)}");
         using (writer.Indent())
         {
             foreach (var slot in template.Slots)
@@ -330,7 +330,21 @@ public partial class ScreenplayPrinter
             {
                 WriteToolbarItem(writer, item);
             }
+
+            foreach (var button in toolbar.Buttons)
+            {
+                WriteToolbarButton(writer, button);
+            }
         }
+    }
+
+    void WriteToolbarButton(ScreenplayWriter writer, ToolbarButtonSyntax button)
+    {
+        var line = $"button {WriteItemId(button.Id)} title {ScreenplaySyntaxText.LocalizableString(button.Title)}";
+        if (button.Slice is not null) line += $" slice {button.Slice}";
+        if (button.Emphasis is { } emphasis) line += $" emphasis {emphasis.ToString().ToLowerInvariant()}";
+        if (button.Icon is not null) line += $" icon {WriteItemValue(button.Icon)}";
+        writer.Line(line, button);
     }
 
     void WriteToolbarItem(ScreenplayWriter writer, ToolbarItemSyntax item)

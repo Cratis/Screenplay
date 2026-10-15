@@ -5,6 +5,7 @@ concept WorkStatus : Enum
   closed
 
 layout AppShell
+  category Shell
   topbar
   navigation contributes Navigation
   content

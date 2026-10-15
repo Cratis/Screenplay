@@ -123,7 +123,7 @@ The compiler reads what an event model is made of:
 - projection keys and mappings, including variants
 - unique and file constraints
 - specifications with the values they state, structured values included
-- screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
+- screens with their data, actions, navigation, titles, tables, summaries, sections, template slots, toolbar items and slice buttons, and inline code
 
 Finite pattern support, exact bigint range/checksum math and rule consistency have a mirrored pure TypeScript implementation and shared vectors. This includes ESM v21 source syntax for direct generation-rule bodies and String-concept checksum validation. It is not a TypeScript ESM binder, generator or executor: semantic admission and clock-pinned fixture execution remain native. Monaco and VS Code share strategy/checksum help, completions and host diagnostic codes PLAY0691/PLAY0692.
 
@@ -131,7 +131,7 @@ Systems and operations remain syntax-only and unadmitted. Event sources, streams
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
-- reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, behaviors and screen templates
+- reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, module navigation regions, behaviors and screen templates
 - the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
 - authentication, themes and UI profiles
 - command handler execution; handler implementation intent retains its typed hints and selected file/code

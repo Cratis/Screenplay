@@ -21,6 +21,7 @@ public class when_printing_interaction_at_every_attachment_point : given.a_print
             confirm $strings.areYouSure
 
         layout AppShell
+          category Test
           main
 
           on enter
@@ -30,6 +31,7 @@ public class when_printing_interaction_at_every_attachment_point : given.a_print
           uses ConfirmDestructive
 
           screen template Workspace
+            category Test
             fits slot main
             content
 
@@ -37,6 +39,7 @@ public class when_printing_interaction_at_every_attachment_point : given.a_print
               refresh Invoices
 
           dialog template InvoiceDetails
+            category Test
             content
 
             on unload

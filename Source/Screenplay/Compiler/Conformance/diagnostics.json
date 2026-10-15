@@ -4647,6 +4647,10 @@
                 "        then denied"
             ],
             "diagnostics": ["PLAY0465@8"]
-        }
+        },
+        { "name": "A blueprint template reference pins the blueprint version", "source": ["module M", "  feature F", "    slice StateView S", "      screen Home", "        template blueprint Crm CustomerDetail version \"^1.4\"", "          body", "            title \"Home\""], "diagnostics": [] },
+        { "name": "A blueprint template reference without a version accepts any", "source": ["module M", "  feature F", "    slice StateView S", "      screen Home", "        template blueprint Crm CustomerDetail", "          body", "            title \"Home\""], "diagnostics": [] },
+        { "name": "A template version range Scene cannot read", "source": ["module M", "  feature F", "    slice StateView S", "      screen Home", "        template blueprint Crm CustomerDetail version \"latest\"", "          body", "            title \"Home\""], "diagnostics": ["PLAY0721@5"] },
+        { "name": "A blueprint template reference without its template name", "source": ["module M", "  feature F", "    slice StateView S", "      screen Home", "        template blueprint Crm", "          body", "            title \"Home\""], "diagnostics": ["PLAY0026@5"] }
     ]
 }

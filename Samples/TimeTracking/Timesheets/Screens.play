@@ -5,6 +5,7 @@
 // features add their buttons to it without the template knowing them.
 screen template WeekView
   fits slot content
+  category Workspace
 
   toolbar contributes TimesheetActions
   days
@@ -24,6 +25,7 @@ screen template WeekView
         days grow
 
 dialog template TimesheetDialog
+  category Dialog
   body
   actions
 

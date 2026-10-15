@@ -22,6 +22,7 @@ public class when_printing_a_screen_with_attached_interaction : given.a_printer
 
         module Invoicing
           dialog template InvoiceDetails
+            category Test
             content
 
           feature InvoiceManagement

@@ -351,6 +351,7 @@ Module         = "module", Ident, NL,
                    | DialogTemplateDecl
                    | FormDecl
                    | ContributionDecl
+                   | NavigationRegionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl
                    | ExampleDecl
@@ -450,6 +451,23 @@ ContributionDirective = NavigateDecl
                       | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
                       | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
 
+(* A navigation region is one part of the application shell's navigation:
+   "topbar" or "sidebar". A layout declares the application's regions and has
+   no mode; a module declares only what it changes - "inherits" (the default
+   when absent), "extends" (the application's items, then its own) or
+   "overrides" (its own only). The logo is the application's and is declared
+   once, in a layout. Items nest only under the sidebar. "target" names a
+   module, or a module and a feature path; "slot" names a layout slot.        *)
+
+NavigationRegionDecl = "navigation", ( "topbar" | "sidebar" ), [ "inherits" | "extends" | "overrides" ], NL,
+                 [ INDENT, { NavigationLogoDecl | NavigationItemDecl }, DEDENT ] ;
+
+NavigationLogoDecl = "logo", "image", String, "title", LocalizableString, NL ;
+
+NavigationItemDecl = "item", ( Ident | String ), "title", LocalizableString,
+                 [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
+                 [ INDENT, { NavigationItemDecl }, DEDENT ] ;
+
 (* Forms describe command input and optional query-backed population. A
    contribution adds one navigable item to a named contribution point. Forms
    are module-scoped; contributions may be declared on modules or features. *)
@@ -482,16 +500,27 @@ TemplatePicker = "display", String, NL
                | "description", String, NL
                | TemplateScopes ;
 
-TemplateScopes = "scopes", ( TemplateScope, { ",", TemplateScope } | "none" ), NL ;
+TemplateScopes = "scopes", ( TemplateScopeItem, { ",", TemplateScopeItem } | "none" ), NL ;
+
+TemplateScopeItem = TemplateScope
+                  | "slice", SliceKindList ;           (* narrows a slice scope *)
 
 TemplateScope  = "application" | "module" | "feature" | "subfeature" | "slice" ;
+
+SliceKindList  = SliceKindName, { "|", SliceKindName } ;
+
+SliceKindName  = "statechange" | "stateview" ;         (* case-insensitive *)
+
+(* Every layout, screen template and dialog template declares a "category" -
+   a warning (PLAY0720) when it does not, an error in a blueprint package
+   build, which treats warnings as errors.                                   *)
 
 SlotContentDecl = "content", Ident, NL,
                  INDENT, { ScreenDirective }, DEDENT ;
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
+StructureBody  = { SlotDecl | NavigationRegionDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
 (* At most one arrangement; a screen template has at most one fits slot. *)
 
 SlotDecl       = Ident, [ "contributes", Ident ], NL ;
@@ -1359,6 +1388,7 @@ ScreenBody     = FileDirective                          (* full external file  *
 ScreenDirective = DataDecl
                | ActionDecl
                | SectionDecl
+               | ToolbarDecl
                | TemplateRef
                | InteractionBinding
                | UsesBehaviorDecl
@@ -1366,6 +1396,23 @@ ScreenDirective = DataDecl
 
 (* A screen, a section and a filled slot attach interactions the same way a
    module or feature does - see interactions.md.                              *)
+
+(* A toolbar holds items - an action, a navigation or a dialog entry - and
+   buttons. A button invokes a State Change slice: the slice names the command
+   and the dialog it opens over the page. "slice" is a dotted path
+   Module.Feature.Slice or any unambiguous suffix of it; without one the button
+   invokes nothing and warns. Item and button ids are unique in the toolbar.   *)
+
+ToolbarDecl    = "toolbar", Ident, NL,
+                 [ INDENT, { ToolbarItem | ToolbarButton }, DEDENT ] ;
+
+ToolbarItem    = "item", Ident, ( "action" | "dialog" ), QualifiedName, NL,
+               | "item", Ident, "navigate", "to", QualifiedName, NL ;
+
+ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
+                 [ "slice", QualifiedName ],
+                 [ "emphasis", ( "primary" | "secondary" | "quiet" ) ],
+                 [ "icon", ( Ident | String ) ], NL ;
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
@@ -1395,8 +1442,16 @@ NavigateOption = "route", LocalizableString, NL
                | "outlet", Ident, NL
                | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL ;
 
-TemplateRef    = "template", Ident, NL,
+TemplateRef    = "template", TemplateRefName, NL,
                  INDENT, { FilledSlot }, DEDENT ;
+
+(* An own template by name, or a template a blueprint package ships with the
+   semver range of the blueprint the author accepts. The same reference
+   assigns a default template at application, module, feature or slice scope
+   ("template" on its own line, no body).                                    *)
+
+TemplateRefName = Ident
+                | "blueprint", Ident, Ident, [ "version", String ] ;
 
 FilledSlot     = Ident, NL,
                  [ INDENT, { ScreenDirective }, DEDENT ] ;

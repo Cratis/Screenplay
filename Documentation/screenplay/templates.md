@@ -32,9 +32,10 @@ layout AppShell
 ```
 
 - Each plain line in the body **declares a slot**. `contributes <ContributionPoint>` opens it up to contributors declared anywhere in the document — see [Contributions](contributions.md). The application shell is where an application-wide contribution point such as `Navigation` belongs.
-- `category <name>` and `type <name>` provide catalog metadata for designers and renderers.
+- `category <name>` and `type <name>` provide catalog metadata for designers and renderers. Every layout and template needs a `category` (`PLAY0720`).
 - `exposes <name> [<Type>]` names a value the structure makes available to descendants or package tooling.
 - `outlet <name>` declares a recursive fill point for package components and design-time tools.
+- `navigation topbar` and `navigation sidebar` blocks hold the application's own navigation: a logo and items with targets, slots and sub-items. A module inherits, extends or overrides them - see [Navigation regions](navigation.md).
 - `arrangement` says how those slots share the space. It is optional: a layout that only names its slots is a complete declaration.
 
 An application selects its layout from a [ui profile](ui-profile.md), the same way it selects its theme:
@@ -143,6 +144,22 @@ module Invoicing
 
 A screen never names the application's `layout`. The shell is selected once, per build, by a `ui profile` — which is what keeps a screen portable across web, mobile and desktop instead of tied to one shell.
 
+## Own and blueprint templates
+
+A template comes from one of two places: the application's **own** templates, declared in its modules, or a **blueprint** - a package a `ui profile` lists under `packages` that ships ready-made layouts, screen templates and dialog templates. A reference says which:
+
+```screenplay
+template MasterDetail
+template blueprint Crm CustomerDetail
+template blueprint Crm CustomerDetail version "^1.4"
+```
+
+- `template <Name>` names an own template.
+- `template blueprint <Blueprint> <Name> [version "<range>"]` names the template `<Name>` of the blueprint package `<Blueprint>`. The optional `version` is the semver range of the blueprint the author accepts - Scene's subset: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. A range Scene cannot read is `PLAY0721`. Studio writes `^<installed version>` when it picks a template from the picker; leaving it out accepts any version.
+- Both forms are valid wherever `template` is: as an assignment at application, module, feature or slice scope, and inside a screen. Scene resolves a reference with `resolveTemplateReference` (C# `TemplateReferenceResolver.Resolve`): `UnknownBlueprint`, `VersionNotSatisfied` (the installed blueprint has drifted outside the range) and `UnknownTemplate` are reported where the blueprint is installed, because the compiler has no visibility into a package's catalog.
+- When at least one `ui profile` lists packages, a blueprint reference whose blueprint no profile lists is `PLAY0722`, the same rule `PLAY0632` applies to components.
+- A blueprint reference is not checked against the document's own `scopes` or nesting - the blueprint's templates carry their own metadata, which Scene checks with `ApplicableTemplates`.
+
 ## Inheriting a template choice
 
 A bare `template <Name>` can also appear at application, module, feature or slice scope. It assigns the default template for the declarations below that scope until a more specific scope overrides it:
@@ -183,9 +200,38 @@ module Invoicing
 
 - `content <slot>` holds screen directives the template renders in that slot itself. The slot must be one the template declares (`PLAY0629`). Content may use another template, but templates cannot nest in a cycle (`PLAY0656`).
 - `display` and `description` are the name and one-line description a picker shows.
-- `scopes` restricts where the template may be used: `application`, `module`, `feature`, `subfeature` or `slice`, or `none`. Without it the structural role decides. Using a restricted template outside its scopes is `PLAY0631`. A layout may declare `scopes` too.
+- `scopes` restricts where the template may be used: `application`, `module`, `feature`, `subfeature` or `slice` (optionally with slice kinds, see below), or `none`. Without it the structural role decides. Using a restricted template outside its scopes is `PLAY0631`. A layout may declare `scopes` too.
 
-These map to Scene's `ScreenTemplate.Content`, `DisplayName`, `Description` and `Metadata.Scopes`.
+These map to Scene's `ScreenTemplate.Content`, `DisplayName`, `Description` and `Metadata.Scopes` and `Metadata.SliceKinds`.
+
+## Category and picker metadata
+
+Every `layout`, `screen template` and `dialog template` declares a `category` - the group a template picker lists it under, such as `category Workspace` or `category "Business / List"`. A template without one is `PLAY0720`, a warning. A blueprint package is built with warnings as errors, so there a missing category fails the build; an own template only warns until the author gives it one. The category is a free string; one a picker does not know is kept and shown as written. It never decides where a template may be used - `scopes` does.
+
+## Applicability: `scopes` and slice kinds
+
+`scopes` restricts where a template may be used. At `slice` scope it can also name the slice kinds the template is for:
+
+```screenplay
+module Invoicing
+  screen template InvoiceList
+    category List
+    scopes slice stateview
+
+  dialog template RegisterInvoiceDialog
+    category Dialog
+    scopes slice statechange
+
+  screen template Workspace
+    category Workspace
+    scopes module, feature, subfeature
+```
+
+- `scopes slice stateview` allows the template on a state view slice only, `scopes slice statechange` on a state change slice only, `scopes slice statechange|stateview` on either. `scopes slice` alone allows any slice that presents something. Kind names are case-insensitive and print lower-case.
+- A slice that presents nothing - an automation or translate slice - takes no template: using a restricted template there is `PLAY0631`, as is using one on a slice kind it excludes.
+- A template that declares no `scopes` is not restricted: the structural role decides, and the compiler accepts it wherever it is used.
+
+These are the rules of Scene's `ApplicableTemplates` (`scopes` and `sliceKinds` of the template metadata override the per-level defaults; an Automation slice has no presentation). The conformance vector `when_checking_template_applicability_against_the_scene_vectors` restates the cases of Scene's shared `template-applicability-fixtures.json` as Screenplay source and holds the two to the same decisions; the picker itself - which templates to offer where, from the own and blueprint templates - is Scene's `ApplicableTemplates`, and Studio calls it rather than repeating the rules.
 
 ## `exposure` — letting a template be configured
 
@@ -230,4 +276,5 @@ The instance must be a screen, screen template or dialog template (`PLAY0626`). 
 - [Layout arrangement](layout-arrangement.md) — how a layout or template arranges the slots it declares.
 - [Screens](screens.md) — the three levels a screen is expressible at, and how its names resolve.
 - [Contributions](contributions.md) — the many-to-one counterpart of a slot.
+- [Navigation regions](navigation.md) — the topbar and sidebar of the shell, with module level inherit, extend and override.
 - [UI profile](ui-profile.md) — where a build selects its layout, theme, platforms and packages.

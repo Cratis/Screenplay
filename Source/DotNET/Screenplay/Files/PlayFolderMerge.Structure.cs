@@ -67,6 +67,7 @@ internal static partial class PlayFolderMerge
                 context,
                 $"module '{group.Key}'"),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Navigation = [.. parts.SelectMany(part => part.Navigation)],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"module '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"module '{group.Key}'", context),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)

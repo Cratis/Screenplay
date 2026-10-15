@@ -514,10 +514,12 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 7, WriteContribution);
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
+        AddSeparatedMembers(members, writer, module.Navigation, 10, WriteNavigationRegion);
         WriteMembers(members, module);
     }
 
-    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) => writer.Line($"template {template.Name}", template);
+    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) =>
+        writer.Line($"template {WriteTemplateReference(template.Blueprint, template.Name, template.Version)}", template);
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
     {

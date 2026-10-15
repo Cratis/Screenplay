@@ -18,6 +18,7 @@ static class CompositionDefaults
     {
         ["restrictsScopes"] = Default.False,
         ["scopes"] = Default.Empty,
+        ["sliceKinds"] = Default.Empty,
         ["content"] = Default.Empty,
         ["displayName"] = Default.Null,
         ["description"] = Default.Null
@@ -29,7 +30,14 @@ static class CompositionDefaults
         [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty },
         [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["outlet"] = Default.Null },
         [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["destination"] = Default.Null },
-        [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty },
+        [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty, ["sliceKinds"] = Default.Empty, ["navigation"] = Default.Empty },
+        [typeof(TemplateAssignmentSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
+        [typeof(ScreenTemplateReferenceSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
+        [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["navigation"] = Default.Empty },
+        [typeof(ScreenToolbarSyntax)] = new(StringComparer.Ordinal) { ["buttons"] = Default.Empty },
+        [typeof(ToolbarButtonSyntax)] = new(StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null },
+        [typeof(NavigationRegionSyntax)] = new(StringComparer.Ordinal) { ["logo"] = Default.Null },
+        [typeof(NavigationItemSyntax)] = new(StringComparer.Ordinal) { ["icon"] = Default.Null, ["target"] = Default.Null, ["slot"] = Default.Null, ["children"] = Default.Empty },
         [typeof(ScreenTemplateSyntax)] = _templateMembers,
         [typeof(DialogTemplateSyntax)] = _templateMembers,
         [typeof(ArrangementContainerSyntax)] = new(StringComparer.Ordinal) { ["columns"] = Default.Null, ["rows"] = Default.Null, ["grow"] = Default.Null, ["span"] = Default.Null },

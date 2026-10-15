@@ -15,7 +15,7 @@ const offered = (text: string): string[] => {
 const scopes: Record<string, [string, string[]]> = {
     'the root': ['', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
     'a domain': ['domain Catalog\n  ', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
-    'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'screen', 'screen template', 'uses']],
+    'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'navigation sidebar extends', 'on', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
     'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event from', 'event generation', 'example', 'file', 'projection', 'public event', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
@@ -31,7 +31,9 @@ const scopes: Record<string, [string, string[]]> = {
     'a seed': ['seed\n  ', ['for']],
     'a theme': ['theme T\n  ', ['compatible with']],
     'a ui profile': ['ui profile P\n  ', ['layout', 'packages', 'target platform', 'target size', 'theme']],
-    'a layout': ['layout L\n  ', ['arrangement', 'slot', 'slot contributes']],
+    'a navigation region': ['layout L\n  navigation topbar\n    ', ['item', 'item (with slot)', 'logo']],
+    'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (with emphasis)', 'item action', 'item navigate']],
+    'a layout': ['layout L\n  ', ['arrangement', 'navigation topbar', 'slot', 'slot contributes']],
 };
 
 describe('when completing an empty line in each scope', () => {
