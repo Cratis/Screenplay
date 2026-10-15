@@ -45,7 +45,8 @@ internal static partial class LayoutParser
             Exposes = body.Exposes,
             Outlets = body.Outlets,
             RestrictsScopes = body.RestrictsScopes,
-            Scopes = body.Scopes
+            Scopes = body.Scopes,
+            Navigation = body.Navigation
         };
     }
 

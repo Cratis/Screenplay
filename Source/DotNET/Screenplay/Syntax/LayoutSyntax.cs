@@ -71,6 +71,11 @@ public record LayoutSyntax(
     /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
     /// </summary>
     public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>navigation topbar</c> and <c>navigation sidebar</c> blocks - the application's base navigation.
+    /// </summary>
+    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
 }
 
 /// <summary>

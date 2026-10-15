@@ -17,7 +17,7 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, navigation, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];
@@ -32,6 +32,7 @@ internal sealed class ModuleBody(string name)
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
+    readonly List<NavigationRegionSyntax> _navigation = [];
     int _restatedHeaders;
     string? _description;
     string? _documentation;
@@ -92,6 +93,9 @@ internal sealed class ModuleBody(string name)
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
+            case "navigation":
+                _navigation.Add(NavigationParser.ParseRegion(context, line));
+                return true;
             case "template":
                 if (TemplateAssignmentParser.Parse(context, line) is { } template)
                 {
@@ -129,7 +133,8 @@ internal sealed class ModuleBody(string name)
             FileImports = _fileImports,
             IsPlacement = isPlacement,
             Templates = _templates,
-            Purposes = _purposes
+            Purposes = _purposes,
+            Navigation = _navigation
         };
 
     internal void RecordRestatedHeader(SourceLocation location) =>

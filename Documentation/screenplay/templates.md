@@ -35,6 +35,7 @@ layout AppShell
 - `category <name>` and `type <name>` provide catalog metadata for designers and renderers.
 - `exposes <name> [<Type>]` names a value the structure makes available to descendants or package tooling.
 - `outlet <name>` declares a recursive fill point for package components and design-time tools.
+- `navigation topbar` and `navigation sidebar` blocks hold the application's own navigation: a logo and items with targets, slots and sub-items. A module inherits, extends or overrides them - see [Navigation regions](navigation.md).
 - `arrangement` says how those slots share the space. It is optional: a layout that only names its slots is a complete declaration.
 
 An application selects its layout from a [ui profile](ui-profile.md), the same way it selects its theme:
@@ -230,4 +231,5 @@ The instance must be a screen, screen template or dialog template (`PLAY0626`). 
 - [Layout arrangement](layout-arrangement.md) — how a layout or template arranges the slots it declares.
 - [Screens](screens.md) — the three levels a screen is expressible at, and how its names resolve.
 - [Contributions](contributions.md) — the many-to-one counterpart of a slot.
+- [Navigation regions](navigation.md) — the topbar and sidebar of the shell, with module level inherit, extend and override.
 - [UI profile](ui-profile.md) — where a build selects its layout, theme, platforms and packages.

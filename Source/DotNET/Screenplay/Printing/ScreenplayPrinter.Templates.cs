@@ -19,6 +19,11 @@ public sealed partial class ScreenplayPrinter
             WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets));
             WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes);
             WriteSlots(writer, layout.Slots);
+            foreach (var region in layout.Navigation)
+            {
+                WriteNavigationRegion(writer, region);
+            }
+
             WriteArrangement(writer, layout.Arrangement);
             WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
         }

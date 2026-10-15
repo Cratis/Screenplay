@@ -48,6 +48,11 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Contribution to '{contribution.ContributionPoint}' is explicitly deferred from the backend ESM v1 profile.", contribution.Location);
             }
 
+            foreach (var region in module.Navigation)
+            {
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Navigation {(region.Region == NavigationRegionKind.Sidebar ? "sidebar" : "topbar")} of module '{module.Name}' is explicitly deferred from the backend ESM v1 profile.", region.Location);
+            }
+
             var address = SemanticAddress.ForModule(_applicationIdentity, module.Name);
             var id = Resolve(address, module.Location);
             var features = module.Features.Select(feature => BindFeature(module.Name, [], feature)).ToImmutableArray();
