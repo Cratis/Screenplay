@@ -27,6 +27,7 @@ export const moduleScopeItems: CompletionEntry[] = [
     { label: 'dialog template', insertText: 'dialog template ${1:Name}\n    ${2:body}\n    ${3:actions}', documentation: 'Declares a reusable dialog shape that opens over the shell.' },
     { label: 'form', insertText: 'form ${1:Name} for ${2:Command}\n    field ${3:property} label "${4:Label}"', documentation: 'Declares a form bound to a command.' },
     { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a slot of the shell, such as navigation.' },
+    { label: 'navigation sidebar extends', insertText: 'navigation ${1|sidebar,topbar|} ${2|extends,overrides,inherits|}\n    item ${3:id} title "${4:Title}" target ${5:Module.Feature}', documentation: 'Changes a navigation region for this module: `extends` adds items after the application\'s, `overrides` replaces them, `inherits` shows the application\'s.' },
     ...interactionItems,
 ];
 
@@ -131,7 +132,14 @@ export const uiProfileItems: CompletionEntry[] = [
 export const layoutItems: CompletionEntry[] = [
     { label: 'slot', insertText: '${1:slot}', documentation: 'A named slot of the shell.' },
     { label: 'slot contributes', insertText: '${1:slot} contributes ${2:Name}', documentation: 'A slot other declarations contribute to, such as `navigation contributes Navigation`.' },
+    { label: 'navigation topbar', insertText: 'navigation ${1|topbar,sidebar|}\n    logo image "${2:/logo.svg}" title "${3:Application}"\n    item ${4:id} title "${5:Title}" target ${6:Module}', documentation: 'The application\'s navigation region: a logo and items that target a module or feature.' },
     { label: 'arrangement', insertText: 'arrangement flow\n    column\n        ${1:slot}', documentation: 'How the slots are placed.' },
+];
+
+export const navigationItems: CompletionEntry[] = [
+    { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout.' },
+    { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item with a title, an optional `icon`, a `target` module or feature and an optional rendering `slot`. Sidebar items may nest `item` lines.' },
+    { label: 'item (with slot)', insertText: 'item ${1:id} title "${2:Title}" icon ${3:icon} target ${4:Module.Feature} slot ${5:content}', documentation: 'A navigation item that renders its target into a named layout slot.' },
 ];
 
 export const templateItems: CompletionEntry[] = [

@@ -365,6 +365,16 @@ layout AppShell
   content
   footer
 
+  // The application's own navigation. A module inherits these items, extends them or overrides them.
+  navigation topbar
+    logo image "/assets/billing-hub.svg" title "Billing Hub"
+    item invoicing title "Invoicing" icon receipt target Invoicing
+  navigation sidebar
+    item invoicing title "Invoicing" icon receipt target Invoicing
+      item invoices title "Invoices" target Invoicing.InvoiceManagement
+      item payments title "Payments" target Invoicing.Payments
+      item portal title "Customer portal" target Invoicing.CustomerPortal slot content
+
   arrangement flow
     column
       topbar height 56
@@ -483,6 +493,10 @@ module Invoicing
     presentation primary
     group "Billing"
     destination outlet detail
+
+  // The sidebar keeps the application's items and adds the module's own; the topbar is inherited as is.
+  navigation sidebar extends
+    item auditing title "Auditing" icon shield target Invoicing.Auditing
 
   // Screen templates fit a slot of the shell; dialog templates open over it.
   screen template MasterDetail

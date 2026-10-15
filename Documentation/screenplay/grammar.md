@@ -351,6 +351,7 @@ Module         = "module", Ident, NL,
                    | DialogTemplateDecl
                    | FormDecl
                    | ContributionDecl
+                   | NavigationRegionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl
                    | ExampleDecl
@@ -450,6 +451,23 @@ ContributionDirective = NavigateDecl
                       | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
                       | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
 
+(* A navigation region is one part of the application shell's navigation:
+   "topbar" or "sidebar". A layout declares the application's regions and has
+   no mode; a module declares only what it changes - "inherits" (the default
+   when absent), "extends" (the application's items, then its own) or
+   "overrides" (its own only). The logo is the application's and is declared
+   once, in a layout. Items nest only under the sidebar. "target" names a
+   module, or a module and a feature path; "slot" names a layout slot.        *)
+
+NavigationRegionDecl = "navigation", ( "topbar" | "sidebar" ), [ "inherits" | "extends" | "overrides" ], NL,
+                 [ INDENT, { NavigationLogoDecl | NavigationItemDecl }, DEDENT ] ;
+
+NavigationLogoDecl = "logo", "image", String, "title", LocalizableString, NL ;
+
+NavigationItemDecl = "item", ( Ident | String ), "title", LocalizableString,
+                 [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
+                 [ INDENT, { NavigationItemDecl }, DEDENT ] ;
+
 (* Forms describe command input and optional query-backed population. A
    contribution adds one navigable item to a named contribution point. Forms
    are module-scoped; contributions may be declared on modules or features. *)
@@ -502,7 +520,7 @@ SlotContentDecl = "content", Ident, NL,
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
+StructureBody  = { SlotDecl | NavigationRegionDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
 (* At most one arrangement; a screen template has at most one fits slot. *)
 
 SlotDecl       = Ident, [ "contributes", Ident ], NL ;

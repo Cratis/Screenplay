@@ -120,6 +120,7 @@ export const keywordDocs: Record<string, string> = {
     dialog: 'A dialog opened over the shell, or with `dialog template` a reusable dialog shape.',
     form: 'A form bound to a command — `form <Name> for <Command>` with a `field` per input.',
     contribute: 'Contributes entries to a slot of the shell — `contribute to Navigation` with `navigate to`, `label` and `order`.',
+    navigation: 'A navigation region of the shell — `navigation topbar` or `navigation sidebar`. A layout declares the application\'s regions with a `logo` and `item` lines; a module adds `inherits`, `extends` or `overrides` to change what it shows.',
     theme: 'A named theme and the component packages it is compatible with.',
     ui: 'A UI profile — `ui profile <Name>` binds a target platform and size to a layout, theme and packages.',
     behavior: 'A named interaction wiring of `on <interaction>` handlers, attached to a screen, form or dialog with `uses`.',

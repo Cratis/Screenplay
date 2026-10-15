@@ -43,6 +43,7 @@ internal static partial class ArrangementParser
         var exposes = new List<TemplateExposedValueSyntax>();
         var outlets = new List<TemplateOutletSyntax>();
         var metadata = new TemplateMetadata();
+        var navigation = new List<NavigationRegionSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -83,6 +84,18 @@ internal static partial class ArrangementParser
                     // A bare word is a slot declaration, so a slot may still be named 'content' or 'display'.
                     ParseMetadata(context, child, keyword, metadata);
                     break;
+                case "navigation" when NavigationParser.IsRegionHeader(child.Content):
+                    var region = NavigationParser.ParseRegion(context, child);
+                    if (keyword == "layout")
+                    {
+                        navigation.Add(region);
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.UnknownLayoutDirective, $"A {keyword} cannot declare a 'navigation' region - the application's navigation belongs in the 'layout', and a module declares it beneath 'module'", child.Location);
+                    }
+
+                    break;
                 case "on":
                 case "uses":
                     // A behavior here applies to every screen using this structure, which is how a template
@@ -104,7 +117,8 @@ internal static partial class ArrangementParser
             SliceKinds = metadata.SliceKinds,
             DisplayName = metadata.DisplayName,
             Description = metadata.Description,
-            Content = metadata.Content
+            Content = metadata.Content,
+            Navigation = navigation
         };
     }
 
@@ -552,6 +566,11 @@ internal static partial class ArrangementParser
         /// Gets the template picker display name, or <c>null</c>.
         /// </summary>
         public string? DisplayName { get; init; }
+
+        /// <summary>
+        /// Gets the navigation regions a layout declares.
+        /// </summary>
+        public IReadOnlyList<NavigationRegionSyntax> Navigation { get; init; } = [];
 
         /// <summary>
         /// Gets the template picker description, or <c>null</c>.

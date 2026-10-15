@@ -102,7 +102,8 @@ static class ContractAdmission
             VariantBaselines: [PersonaCallerContext, null]),
         new("dialog", "module M\n  dialog template Dialog\n    body\n    actions\n"),
         new("form", Slice + Event + Command + "  form Input for Record\n    field value\n", [Slice + Event + Command + "  form Input for Record\n    description \"Form intent\"\n    field value\n"]),
-        new("contribute", "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n")
+        new("contribute", "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n"),
+        new("navigation", "layout Shell\n  content\n  navigation sidebar\n    item home title \"Home\" target M\nmodule M\n  navigation sidebar extends\n    item reports title \"Reports\" target M.F\n  feature F\n    slice StateView S\n      screen Screen\n"),
     ];
 
     internal static JsonArray Create(IEnumerable<string> keywords, JsonArray versions)

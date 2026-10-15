@@ -69,6 +69,7 @@ internal static class PlayFileDocument
         DialogTemplates = [],
         Forms = [],
         Contributions = [],
+        Navigation = [],
         Features = [],
         DependsOn = [],
         Description = null,

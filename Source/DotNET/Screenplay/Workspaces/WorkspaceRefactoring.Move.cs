@@ -243,6 +243,14 @@ internal sealed partial class WorkspaceRefactoring
         var collision = index.Entries.FirstOrDefault(entry => currentAddress.Equals(entry.Address));
         if (collision is not null) throw new InvalidWorkspaceAuthoring($"Destination collision with '{MoveAddress(collision.Address)}' at '{Position(workspace.Documents, collision)}'.");
 
+        var movedNames = request.Target.Parts.Skip(1).Select(part => part.Key).ToArray();
+        var navigationTarget = index.Entries.FirstOrDefault(entry => entry.Node is NavigationTargetSyntax navigation &&
+            NavigationNames(navigation).Take(movedNames.Length).SequenceEqual(movedNames));
+        if (navigationTarget is not null)
+        {
+            throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is the target of a navigation item at '{Position(workspace.Documents, navigationTarget)}'. Move it and the navigation 'target' with explicit coordinated typed edits; moving does not rewrite navigation targets.");
+        }
+
         var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         bindings.RequireNoCollisions();
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
