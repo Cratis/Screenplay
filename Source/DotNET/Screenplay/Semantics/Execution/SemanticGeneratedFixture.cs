@@ -92,6 +92,6 @@ internal static partial class SemanticGeneratedFixture
         return (alphabet.IndexOf(value[^1], StringComparison.Ordinal) & ((1 << unused) - 1)) == 0;
     }
 
-    [GeneratedRegex(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex UuidRegex();
 }

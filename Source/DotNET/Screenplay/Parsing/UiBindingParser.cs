@@ -156,27 +156,27 @@ internal static partial class UiBindingParser
     static UiBindingSyntax Create(UiBindingKind kind, string path, SourceLocation location, string raw) =>
         new(kind, path, location) { RawText = kind == UiBindingKind.Invalid ? raw : null };
 
-    [GeneratedRegex(@"^(data|query|component)\s+(\S+)(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(data|query|component)\s+(\S+)(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex BindingHeadRegex();
 
-    [GeneratedRegex(@"^literal\s+(.+?)(?:\s+(mode\s+.+|null\s+.+|expected\s+.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^literal\s+(.+?)(?:\s+(mode\s+.+|null\s+.+|expected\s+.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex LiteralBindingHeadRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)(?:\.(.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)(?:\.(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex QualifiedPathRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\.(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\.(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex RequiredQualifiedPathRegex();
 
-    [GeneratedRegex("^\\\"(" + Cratis.Screenplay.Text.StringLiteral.BodyPattern + ")\\\"\\.(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^\\\"(" + Cratis.Screenplay.Text.StringLiteral.BodyPattern + ")\\\"\\.(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex QuotedComponentPathRegex();
 
-    [GeneratedRegex(@"^mode\s+(oneWay|twoWay)\b(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^mode\s+(oneWay|twoWay)\b(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ModeRegex();
 
-    [GeneratedRegex(@"^null\s+(propagate|clear|preserve)\b(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^null\s+(propagate|clear|preserve)\b(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex NullRegex();
 
-    [GeneratedRegex(@"^expected\s+(\w+(?:\.\w+)*)(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^expected\s+(\w+(?:\.\w+)*)(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ExpectedRegex();
 }

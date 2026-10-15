@@ -124,12 +124,12 @@ internal static partial class IdentityParser
         }
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+(.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex DetailRegex();
 
-    [GeneratedRegex(@"^claim\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^claim\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex ClaimRegex();
 
-    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)(?:\s+by\s+(.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)(?:\s+by\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex QueryRegex();
 }

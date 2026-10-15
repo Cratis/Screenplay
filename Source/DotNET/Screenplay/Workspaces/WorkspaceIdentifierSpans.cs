@@ -165,15 +165,15 @@ internal static partial class WorkspaceIdentifierSpans
         }
     }
 
-    [GeneratedRegex(@"^(?:(?:public\s+)?event|produces\s+event)\s+(?<name>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:(?:public\s+)?event|produces\s+event)\s+(?<name>[A-Za-z_]\w*)", RegexOptions.NonBacktracking)]
     private static partial Regex EventHeaderRegex();
 
-    [GeneratedRegex(@"^when\s+redelivered\s+(?<eventType>[A-Za-z_]\w*(?:\.\w+)*)\s+to\s+(?<reaction>[A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+redelivered\s+(?<eventType>[A-Za-z_]\w*(?:\.\w+)*)\s+to\s+(?<reaction>[A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex RedeliveryRegex();
 
-    [GeneratedRegex(@"^\s*from\s+(?<eventSource>[A-Za-z_]\w*)(?:\.(?<stream>[A-Za-z_]\w*))?(?:\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^\s*from\s+(?<eventSource>[A-Za-z_]\w*)(?:\.(?<stream>[A-Za-z_]\w*))?(?:\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex ObserverFilterRegex();
 
-    [GeneratedRegex(@"^stream\s+(?<eventSource>[A-Za-z_]\w*)\.(?<stream>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^stream\s+(?<eventSource>[A-Za-z_]\w*)\.(?<stream>[A-Za-z_]\w*)", RegexOptions.NonBacktracking)]
     private static partial Regex StreamRouteRegex();
 }

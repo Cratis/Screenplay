@@ -52,9 +52,9 @@ internal static partial class FileImportParser
         return match.Success ? new(match.Groups[1].Value, line.Location) : null;
     }
 
-    [GeneratedRegex(@"^import\s+""([^""\\]+)""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^import\s+""([^""\\]+)""$", RegexOptions.NonBacktracking)]
     private static partial Regex FileImportRegex();
 
-    [GeneratedRegex(@"^import\s+""", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^import\s+""", RegexOptions.NonBacktracking)]
     private static partial Regex QuotedRegex();
 }

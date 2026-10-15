@@ -207,18 +207,18 @@ internal static partial class ConstraintParser
         return LineText.FirstWord(header.Content);
     }
 
-    [GeneratedRegex(@"^constraint\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^constraint\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^unique\s+event\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^unique\s+event\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UniqueEventRegex();
 
-    [GeneratedRegex(@"^unique\s+([a-z_][\w.]*(?:\s*,\s*[a-z_][\w.]*)*)\s+on\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^unique\s+([a-z_][\w.]*(?:\s*,\s*[a-z_][\w.]*)*)\s+on\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UniquePropertyRegex();
 
-    [GeneratedRegex(@"^released\s+by\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^released\s+by\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ReleaseRegex();
 
-    [GeneratedRegex("^message\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^message\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex MessageRegex();
 }

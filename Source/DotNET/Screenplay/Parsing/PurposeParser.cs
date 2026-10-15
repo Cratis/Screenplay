@@ -131,21 +131,21 @@ internal static partial class PurposeParser
         return purpose;
     }
 
-    [GeneratedRegex(@"^purpose\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^purpose\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^(basis|condition)\s+(\w+)(?:\s+""(" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(basis|condition)\s+(\w+)(?:\s+""(" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.NonBacktracking)]
     private static partial Regex VocabularyRegex();
 
-    [GeneratedRegex(@"^(interest|authorization|retention|recipient)\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(interest|authorization|retention|recipient)\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex TextRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex IdentifierRegex();
 
-    [GeneratedRegex(@"^erasure\s+exception\s+(\w+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^erasure\s+exception\s+(\w+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ErasureRegex();
 
-    [GeneratedRegex(@"^transfer\s+""(" + StringLiteral.BodyPattern + @")""\s+safeguard\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^transfer\s+""(" + StringLiteral.BodyPattern + @")""\s+safeguard\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex TransferRegex();
 }

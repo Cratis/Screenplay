@@ -99,12 +99,12 @@ internal static partial class ReadsParser
         }
     }
 
-    [GeneratedRegex(@"^([a-z_]\w*)\s*=\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)\s*=\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex PartRegex();
 
-    [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ReadsRegex();
 
-    [GeneratedRegex(@"^reads\s+[A-Z]\w*\s+optional(?:\s|$)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^reads\s+[A-Z]\w*\s+optional(?:\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex OptionalReadsRegex();
 }

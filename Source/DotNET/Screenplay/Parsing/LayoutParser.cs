@@ -121,12 +121,12 @@ internal static partial class LayoutParser
         };
     }
 
-    [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex LayoutRegex();
 
-    [GeneratedRegex(@"^screen\s+template\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^screen\s+template\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ScreenTemplateRegex();
 
-    [GeneratedRegex(@"^dialog\s+template\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^dialog\s+template\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex DialogTemplateRegex();
 }

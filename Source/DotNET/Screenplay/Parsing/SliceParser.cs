@@ -193,9 +193,9 @@ internal static partial class SliceParser
         return word == "public" || word == "direction" ? word : LineText.FirstWord(content);
     }
 
-    [GeneratedRegex(@"^direction\s+(inbound|outbound)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^direction\s+(inbound|outbound)$", RegexOptions.NonBacktracking)]
     private static partial Regex DirectionRegex();
 
-    [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 }

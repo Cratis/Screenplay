@@ -89,9 +89,9 @@ internal static partial class RequirementParser
         return condition is null ? null : new RequirementSyntax(condition, message, line.Location) { Severity = severity, DirectiveLocations = directiveLocations };
     }
 
-    [GeneratedRegex(@"^require\s+(\S.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^require\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex RequireRegex();
 
-    [GeneratedRegex("^message\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^message\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MessageRegex();
 }

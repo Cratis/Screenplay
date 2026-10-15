@@ -38,6 +38,6 @@ internal static partial class TemplateReferenceText
     /// <returns><see langword="true"/> when the first word is <c>blueprint</c> and more follows.</returns>
     public static bool StartsBlueprint(string text) => text.StartsWith("blueprint ", StringComparison.Ordinal);
 
-    [GeneratedRegex("^blueprint\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(?:\\s+version\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^blueprint\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(?:\\s+version\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.NonBacktracking)]
     private static partial Regex BlueprintRegex();
 }

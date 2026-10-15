@@ -464,6 +464,6 @@ internal static partial class ScreenplaySyntaxText
     static UnsupportedSyntaxForPrinting Unsupported(string construct, SyntaxNode node) =>
         new(construct, node.GetType().Name);
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex IdentifierRegex();
 }

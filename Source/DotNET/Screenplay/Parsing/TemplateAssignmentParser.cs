@@ -46,6 +46,6 @@ internal static partial class TemplateAssignmentParser
         return new(match.Groups[1].Value, line.Location);
     }
 
-    [GeneratedRegex(@"^template\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^template\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex TemplateRegex();
 }
