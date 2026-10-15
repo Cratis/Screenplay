@@ -148,7 +148,7 @@ export const keywordDocs: Record<string, string> = {
     filter: 'An optional query filter parameter.',
     on: 'The event a constraint applies to, the day a schedule narrows to, or a widget interaction such as `on row-click`.',
     message: 'The validation message reported when the rule fails.',
-    matches: 'Searches text using the portable flagless JavaScript match dialect, or `email`. Use ^ and $ for the whole input. Lookarounds, backreferences and other refused constructs report PLAY0699; patterns have at most 1000 source code units and 1500 expanded positions.',
+    matches: 'Searches text using the portable flagless JavaScript match dialect, or `email`. Use ^ and $ for the whole input. Lookarounds, backreferences and other refused constructs report PLAY0699; patterns have at most 1000 source code units and 3000 expanded nodes, including optional, loop and alternative choice points.',
     all: 'Applies a comparison to every element of a collection.',
     max: 'Maximum length or value.',
     min: 'Minimum length or value.',

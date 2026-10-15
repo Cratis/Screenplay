@@ -896,8 +896,10 @@ RuleOp         = "not empty"
    see Commands / Portable match dialect for admitted forms, escapes by context,
    refused constructs (PLAY0699) and substring-matching semantics.
    UTF-16 code units; $ means end of input, never before a trailing newline.
-   At most 1000 source code units and 1500 expanded positions; counted repeats
-   multiply the body by the upper bound, or by lower + 1 when unbounded.    *)
+   At most 1000 source code units and 3000 expanded nodes: one per literal,
+   class, anchor and optional/loop/alternative choice point. Counted repeats
+   multiply the body by the upper bound, or by lower + 1 when unbounded,
+   adding a choice point per optional copy (one loop when unbounded).      *)
 
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
