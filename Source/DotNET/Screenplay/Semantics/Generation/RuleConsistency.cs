@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
 namespace Cratis.Screenplay.Semantics.Generation;
@@ -11,33 +12,31 @@ namespace Cratis.Screenplay.Semantics.Generation;
 public static class RuleConsistency
 {
     /// <summary>
-    /// Checks the exact built-in generation shape against one rule.
+    /// Checks every validation rule on a concept used by a generated property.
+    /// </summary>
+    /// <param name="concept">The concept used with explicit generation or implicit UUID generation; a null generation strategy means UUID.</param>
+    /// <param name="utcAssessmentYear">The UTC year used to assess date patterns, or null for <see cref="DateTimeOffset.UtcNow"/>'s year.</param>
+    /// <returns>One result per entry in <see cref="SemanticConcept.Validations"/>, in the same order.</returns>
+    /// <remarks>
+    /// Results are deterministic for a given concept, package version and UTC assessment year.
+    /// Refuted results cannot occur in a model that passed validation for that package version and year.
+    /// </remarks>
+    public static ImmutableArray<RuleConsistencyResult> Check(SemanticConcept concept, int? utcAssessmentYear = null)
+    {
+        var assessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
+
+        return [.. concept.Validations.Select(rule => Check(concept.Generation, concept.Primitive, rule, assessmentYear))];
+    }
+
+    /// <summary>
+    /// Checks the exact generation shape against one rule using the current UTC assessment year.
     /// </summary>
     /// <param name="generation">The admitted strategy, or null for implicit UUID generation.</param>
     /// <param name="primitive">The concept primitive.</param>
     /// <param name="rule">The validation rule; severity does not affect proof status.</param>
     /// <returns>The proof status, with a violating value or a reason when applicable.</returns>
-    public static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule)
-    {
-        if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
-        if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule);
-        if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
-        var shape = GenerationShape.Create(generation);
-        if (shape is null) return RuleConsistencyResult.Unproven("opaque generation strategy");
-        if (primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid)) return RuleConsistencyResult.Unproven("unsupported primitive");
-        var length = shape.Positions.Length;
-        return (rule.Kind, rule.Operand) switch
-        {
-            (SemanticValidationRuleKind.NotEmpty, _) => NotEmpty(shape),
-            (SemanticValidationRuleKind.Minimum, SemanticNumberValue number) => Length(shape, length >= number.Value),
-            (SemanticValidationRuleKind.Maximum, SemanticNumberValue number) => Length(shape, length <= number.Value),
-            (SemanticValidationRuleKind.Length, SemanticNumberValue number) => Length(shape, length == number.Value),
-            (SemanticValidationRuleKind.Equal, SemanticTextValue text) => Equal(shape, text.Value, false),
-            (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) => Equal(shape, text.Value, true),
-            (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(shape, text.Value),
-            _ => RuleConsistencyResult.Unproven("unsupported rule")
-        };
-    }
+    public static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule) =>
+        Check(generation, primitive, rule, DateTimeOffset.UtcNow.Year);
 
     /// <summary>
     /// Checks a finite pattern without admitting the strategy into an executable semantic model.
@@ -58,10 +57,27 @@ public static class RuleConsistency
     /// <returns>The proof status, with an exact integer witness on refutation.</returns>
     public static RuleConsistencyResult CheckRandom(string range, SemanticValidationRule rule) => FiniteGenerationRules.Check(GenerationIntegerRange.Parse(range), rule);
 
-    internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear) =>
-        generation?.Kind == "pattern" && generation.Pattern is { } pattern
-            ? CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1))
-            : Check(generation, primitive, rule);
+    internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear)
+    {
+        if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
+        if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1));
+        if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
+        var shape = GenerationShape.Create(generation);
+        if (shape is null) return RuleConsistencyResult.Unproven("opaque generation strategy");
+        if (primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid)) return RuleConsistencyResult.Unproven("unsupported primitive");
+        var length = shape.Positions.Length;
+        return (rule.Kind, rule.Operand) switch
+        {
+            (SemanticValidationRuleKind.NotEmpty, _) => NotEmpty(shape),
+            (SemanticValidationRuleKind.Minimum, SemanticNumberValue number) => Length(shape, length >= number.Value),
+            (SemanticValidationRuleKind.Maximum, SemanticNumberValue number) => Length(shape, length <= number.Value),
+            (SemanticValidationRuleKind.Length, SemanticNumberValue number) => Length(shape, length == number.Value),
+            (SemanticValidationRuleKind.Equal, SemanticTextValue text) => Equal(shape, text.Value, false),
+            (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) => Equal(shape, text.Value, true),
+            (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(shape, text.Value),
+            _ => RuleConsistencyResult.Unproven("unsupported rule")
+        };
+    }
 
     internal static RuleConsistencyResult CrossCheck(GenerationShape shape, RuleConsistencyResult proof, Func<string, bool> matches, bool complement = false) =>
         proof.Status == RuleConsistencyStatus.Proven ? Samples(shape, matches, complement, null) : proof;
