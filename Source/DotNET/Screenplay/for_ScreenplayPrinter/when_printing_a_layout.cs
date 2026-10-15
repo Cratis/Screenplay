@@ -10,6 +10,7 @@ public class when_printing_a_layout : given.a_printer
     const string Source =
         """
         layout AppShell
+          category Test
           topbar
           navigation contributes Navigation
           content
@@ -36,7 +37,7 @@ public class when_printing_a_layout : given.a_printer
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_the_layout_header() => _roundtrip.Printed.ShouldContain("layout AppShell");
-    [Fact] void should_print_the_slots_it_declares() => _roundtrip.Printed.ShouldContain("layout AppShell\n  topbar\n  navigation contributes Navigation\n  content\n  footer");
+    [Fact] void should_print_the_slots_it_declares() => _roundtrip.Printed.ShouldContain("layout AppShell\n  category Test\n  topbar\n  navigation contributes Navigation\n  content\n  footer");
     [Fact] void should_print_the_arrangement() => _roundtrip.Printed.ShouldContain("arrangement flow");
     [Fact] void should_print_the_nested_tree() => _roundtrip.Printed.ShouldContain("navigation width 240");
     [Fact] void should_print_the_layout_the_profile_selects() => _roundtrip.Printed.ShouldContain("ui profile Desktop\n  target platform web\n\n  layout AppShell");

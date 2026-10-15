@@ -14,6 +14,7 @@ namespace Cratis.Screenplay.Parsing;
 internal static partial class ArrangementParser
 {
     static readonly string[] _templateScopes = ["application", "module", "feature", "subfeature", "slice"];
+    static readonly string[] _sliceKinds = ["StateChange", "StateView"];
 
     static void ParseMetadata(ParserContext context, SourceLine line, string keyword, TemplateMetadata metadata)
     {
@@ -28,7 +29,11 @@ internal static partial class ArrangementParser
         switch (directive)
         {
             case "scopes":
-                metadata.Scopes = ParseScopes(context, line) ?? metadata.Scopes;
+                if (ParseScopes(context, line) is { } parsed)
+                {
+                    (metadata.Scopes, metadata.SliceKinds) = parsed;
+                }
+
                 break;
             case "display":
                 metadata.DisplayName = ParseText(context, line, "display") ?? metadata.DisplayName;
@@ -42,22 +47,51 @@ internal static partial class ArrangementParser
         }
     }
 
-    static List<string>? ParseScopes(ParserContext context, SourceLine line)
+    static (List<string> Scopes, List<string> SliceKinds)? ParseScopes(ParserContext context, SourceLine line)
     {
         var text = line.Content["scopes".Length..].Trim();
         if (text == "none")
         {
-            return [];
+            return ([], []);
         }
 
-        var scopes = text.Split(',', StringSplitOptions.TrimEntries).ToList();
-        if (scopes.Count == 0 || scopes.Exists(scope => !_templateScopes.Contains(scope, StringComparer.Ordinal)))
+        var scopes = new List<string>();
+        var sliceKinds = new List<string>();
+        var valid = text.Length > 0;
+        foreach (var item in text.Split(',', StringSplitOptions.TrimEntries))
         {
-            context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Invalid template scopes '{line.Content}' - expected 'scopes <application|module|feature|subfeature|slice>, ...' or 'scopes none'", line.Location);
+            var words = item.Split([' ', '|'], StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0 || !_templateScopes.Contains(words[0], StringComparer.Ordinal) || (words.Length > 1 && words[0] != "slice"))
+            {
+                valid = false;
+                continue;
+            }
+
+            scopes.Add(words[0]);
+            foreach (var word in words.Skip(1))
+            {
+                var kind = _sliceKinds.FirstOrDefault(candidate => string.Equals(candidate, word, StringComparison.OrdinalIgnoreCase));
+                if (kind is null)
+                {
+                    valid = false;
+                }
+                else if (!sliceKinds.Contains(kind, StringComparer.Ordinal))
+                {
+                    sliceKinds.Add(kind);
+                }
+            }
+        }
+
+        if (!valid)
+        {
+            context.Error(
+                DiagnosticCodes.UnknownLayoutDirective,
+                $"Invalid template scopes '{line.Content}' - expected 'scopes <application|module|feature|subfeature|slice>, ...' where slice may be followed by 'statechange' and/or 'stateview', or 'scopes none'",
+                line.Location);
             return null;
         }
 
-        return scopes;
+        return (scopes, sliceKinds);
     }
 
     static string? ParseText(ParserContext context, SourceLine line, string directive)
@@ -108,6 +142,8 @@ internal static partial class ArrangementParser
     sealed class TemplateMetadata
     {
         public List<string>? Scopes { get; set; }
+
+        public List<string> SliceKinds { get; set; } = [];
 
         public string? DisplayName { get; set; }
 

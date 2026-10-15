@@ -12,6 +12,7 @@ public class when_compiling_a_dialog_template_that_fits_a_slot : given.a_compile
         """
         module Invoicing
           dialog template RegisterInvoiceDialog
+            category Test
             fits slot content
 
             body

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -10,14 +11,17 @@ namespace Cratis.Screenplay.Printing;
 /// </content>
 public sealed partial class ScreenplayPrinter
 {
+    static string WriteTemplateReference(string? blueprint, string name, string? version) =>
+        blueprint is null ? name : $"blueprint {blueprint} {name}{(version is null ? string.Empty : $" version {StringLiteral.Quote(version)}")}";
+
     void WriteLayout(ScreenplayWriter writer, LayoutSyntax layout)
     {
         using var anchor = writer.Anchor(layout);
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
-            WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets));
-            WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes);
+            WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets), layout);
+            WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes, layout.SliceKinds);
             WriteSlots(writer, layout.Slots);
             WriteArrangement(writer, layout.Arrangement);
             WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
@@ -36,8 +40,8 @@ public sealed partial class ScreenplayPrinter
                 writer.Blank();
             }
 
-            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets));
-            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
+            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets), template);
+            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
             WriteArrangement(writer, template.Arrangement);
@@ -51,8 +55,8 @@ public sealed partial class ScreenplayPrinter
         writer.Line($"dialog template {template.Name}");
         using (writer.Indent())
         {
-            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets));
-            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
+            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets), template);
+            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
             WriteArrangement(writer, template.Arrangement);
@@ -60,11 +64,11 @@ public sealed partial class ScreenplayPrinter
         }
     }
 
-    void WriteTemplateMetadata(ScreenplayWriter writer, TemplateMetadata metadata)
+    void WriteTemplateMetadata(ScreenplayWriter writer, TemplateMetadata metadata, SyntaxNode owner)
     {
         if (metadata.Category is not null)
         {
-            writer.Line($"category {metadata.Category}");
+            writer.DirectiveLine($"category {metadata.Category}", owner, "category");
         }
 
         if (metadata.TemplateType is not null)

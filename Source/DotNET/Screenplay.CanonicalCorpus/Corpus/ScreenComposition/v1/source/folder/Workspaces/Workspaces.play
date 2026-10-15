@@ -1,6 +1,7 @@
 module Workspaces
   screen template MasterDetail
     fits slot content
+    category Workspace
     list
     details
 
@@ -14,6 +15,7 @@ module Workspaces
           list
 
   dialog template EditDialog
+    category Dialog
     body
     actions
 

@@ -8,6 +8,7 @@ theme Fjord
 // 'navigation contributes Navigation' opens the slot to every module - each adds
 // its own entry with 'contribute to Navigation'.
 layout AppShell
+  category Shell
   topbar
   navigation contributes Navigation
   content

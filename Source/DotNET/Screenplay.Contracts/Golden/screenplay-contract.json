@@ -26,6 +26,7 @@
     "basis",
     "behavior",
     "biometric",
+    "blueprint",
     "by",
     "bytes",
     "caller",
@@ -332,6 +333,7 @@
     "validate",
     "validation",
     "variant",
+    "version",
     "via",
     "vitalInterests",
     "warning",
@@ -5761,6 +5763,10 @@
           "diagnostic": "PLAY0269",
           "diagnostics": [
             {
+              "code": "PLAY0720",
+              "severity": "warning"
+            },
+            {
               "code": "PLAY0269",
               "severity": "information"
             },
@@ -6041,6 +6047,10 @@
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
+            {
+              "code": "PLAY0720",
+              "severity": "warning"
+            },
             {
               "code": "PLAY0269",
               "severity": "information"
@@ -10042,6 +10052,10 @@
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
+            {
+              "code": "PLAY0720",
+              "severity": "warning"
+            },
             {
               "code": "PLAY0269",
               "severity": "information"
@@ -19471,6 +19485,10 @@
           "diagnostic": "PLAY0269",
           "diagnostics": [
             {
+              "code": "PLAY0720",
+              "severity": "warning"
+            },
+            {
               "code": "PLAY0269",
               "severity": "information"
             },
@@ -26737,6 +26755,39 @@
         "error"
       ],
       "title": "A capture over events must be presented with event fixtures, not capture records.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0720",
+      "name": "TemplateCategoryMissing",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A layout, screen template or dialog template declares no category. A blueprint package build treats it as an error (warnings as errors); an own template only warns.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0721",
+      "name": "InvalidTemplateVersionRange",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A template reference\u0027s version is not a range Scene understands.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0722",
+      "name": "UnknownTemplateBlueprint",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A template blueprint reference names a blueprint no ui profile lists in its packages.",
       "reserved": false,
       "retired": false
     }

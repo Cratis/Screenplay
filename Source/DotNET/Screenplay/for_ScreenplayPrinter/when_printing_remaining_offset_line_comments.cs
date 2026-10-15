@@ -31,6 +31,7 @@ public class when_printing_remaining_offset_line_comments : given.a_printer
           description "An action" // behavior description
         module Shop
           dialog template Details
+            category Test
             content
           feature Orders
             slice StateChange Place

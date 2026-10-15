@@ -11,6 +11,7 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
         """
         module Invoicing
           screen template AppShell
+            category Test
             navbar contributes Navigation
             main
 

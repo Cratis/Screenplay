@@ -71,6 +71,12 @@ public record LayoutSyntax(
     /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
     /// </summary>
     public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the slice kinds - <c>StateChange</c> or <c>StateView</c> - the template is restricted to at <c>slice</c> scope
+    /// (<c>scopes slice statechange</c>); empty when the template applies to every slice kind its scope allows.
+    /// </summary>
+    public IEnumerable<string> SliceKinds { get; init; } = [];
 }
 
 /// <summary>
@@ -141,6 +147,12 @@ public record ScreenTemplateSyntax(
     /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
     /// </summary>
     public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the slice kinds - <c>StateChange</c> or <c>StateView</c> - the template is restricted to at <c>slice</c> scope
+    /// (<c>scopes slice statechange</c>); empty when the template applies to every slice kind its scope allows.
+    /// </summary>
+    public IEnumerable<string> SliceKinds { get; init; } = [];
 
     /// <summary>
     /// Gets the human-readable name for a template picker, or <c>null</c> to use <see cref="Name"/>.
@@ -217,6 +229,12 @@ public record DialogTemplateSyntax(
     /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
     /// </summary>
     public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the slice kinds - <c>StateChange</c> or <c>StateView</c> - the template is restricted to at <c>slice</c> scope
+    /// (<c>scopes slice statechange</c>); empty when the template applies to every slice kind its scope allows.
+    /// </summary>
+    public IEnumerable<string> SliceKinds { get; init; } = [];
 
     /// <summary>
     /// Gets the human-readable name for a template picker, or <c>null</c> to use <see cref="Name"/>.

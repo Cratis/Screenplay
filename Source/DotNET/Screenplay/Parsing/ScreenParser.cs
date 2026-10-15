@@ -242,6 +242,30 @@ internal static partial class ScreenParser
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
     {
         var name = line.Content["template".Length..].Trim();
+        string? blueprint = null;
+        string? version = null;
+        if (TemplateReferenceText.StartsBlueprint(name))
+        {
+            if (TemplateReferenceText.TryParseBlueprint(name, out var reference))
+            {
+                (blueprint, name, version) = reference;
+                if (version is not null && !TemplateVersionRange.IsValid(version))
+                {
+                    context.Error(
+                        DiagnosticCodes.InvalidTemplateVersionRange,
+                        $"The template version range '{version}' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\"",
+                        line.Location);
+                }
+            }
+            else
+            {
+                context.Error(
+                    DiagnosticCodes.UnknownLayoutDirective,
+                    $"Invalid template reference '{line.Content}' - expected 'template <Name>' or 'template blueprint <Blueprint> <Name> [version \"<range>\"]'",
+                    line.Location);
+            }
+        }
+
         var slots = new List<ScreenSlotSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -267,7 +291,7 @@ internal static partial class ScreenParser
             slots.Add(new(child.Content, directives, child.Location));
         }
 
-        return new(name, slots, line.Location);
+        return new(name, slots, line.Location) { Blueprint = blueprint, Version = version };
     }
 
     static ScreenSectionSyntax ParseSection(ParserContext context, SourceLine line)

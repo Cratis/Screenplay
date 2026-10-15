@@ -10,6 +10,7 @@ exposure for InspectionShell
 
 module Inspections
   screen template InspectionShell
+    category Workspace
     scopes slice
     checklist
 

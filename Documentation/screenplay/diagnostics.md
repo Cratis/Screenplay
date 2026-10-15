@@ -768,11 +768,14 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0628` | Error | An instance uses `set` on a collection exposure, or `items` on a single-value exposure. |
 | `PLAY0629` | Error | A template's `content <slot>` names a slot the template does not declare. |
 | `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
-| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
+| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope, or - at `slice` scope - whose slice kinds (`scopes slice statechange`) exclude the slice's kind. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 | `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
 | `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
 | `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
+| `PLAY0720` | Warning | A `layout`, `screen template` or `dialog template` declares no `category`. A template picker groups by category, so every template needs one. A blueprint package build runs with warnings as errors, so there a missing category fails the build; an own template only warns. See [Layouts and templates](templates.md#category-and-picker-metadata). |
+| `PLAY0721` | Error | A template reference's `version` is not a range Scene understands: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. |
+| `PLAY0722` | Error | A `template blueprint <Blueprint> <Name>` reference names a blueprint no `ui profile` lists under `packages`. Only checked when at least one profile declares packages. |
 
 ## Identity details
 

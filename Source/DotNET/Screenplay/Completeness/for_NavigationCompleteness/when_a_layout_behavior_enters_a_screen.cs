@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Completeness.for_NavigationCompleteness;
 
 public class when_a_layout_behavior_enters_a_screen : given.screens
 {
-    void Establish() => Compile("screen Home", root: "layout Shell\n  content\n  on load\n    navigate to Home\n");
+    void Establish() => Compile("screen Home", root: "layout Shell\n  category Test\n  content\n  on load\n    navigate to Home\n");
     void Because() => Findings = ModelCompleteness.Check(Compilation, new([CompletenessCheck.Navigation]));
 
     [Fact] void should_reach_the_layout_behavior_target() => Findings.ShouldBeEmpty();

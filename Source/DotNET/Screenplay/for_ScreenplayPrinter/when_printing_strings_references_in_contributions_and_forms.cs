@@ -11,6 +11,7 @@ public class when_printing_strings_references_in_contributions_and_forms : given
         """
         module Invoicing
           screen template AppShell
+            category Test
             navbar contributes Navigation
             main
 

@@ -30,7 +30,8 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 
 | Criterion | Syntax | Semantics | Diagnostics | Not expressible |
 | --- | --- | --- | --- | --- |
-| Template categories and assignment (536.2, 536.3) | `layout`, `screen template`, `dialog template`, `category`, `type`, `template <Name>` at module, feature or slice | Hierarchical; the nearest assignment wins | `PLAY0026`, `PLAY0631` scope mismatch | None |
+| Template categories and assignment (536.2, 536.3) | `layout`, `screen template`, `dialog template`, `category`, `type`, `template <Name>` at module, feature or slice | Hierarchical; the nearest assignment wins | `PLAY0026`, `PLAY0631` scope mismatch, `PLAY0720` missing category | None |
+| Blueprint template references and slice kinds (Scene#98) | `template blueprint <Blueprint> <Name> [version "<range>"]`; `scopes slice statechange\|stateview` | Scene `TemplateReference` (`source`, `id`, `blueprint`, `version`) and `Metadata.SliceKinds`; applicability by `ApplicableTemplates` | `PLAY0721` invalid version range, `PLAY0722` blueprint not in a profile, `PLAY0631` slice kind mismatch | None |
 | Template picker metadata | `display`, `description`, `scopes` | Scene `DisplayName`, `Description`, `Metadata.Scopes` | `PLAY0026`, `PLAY0631` | None |
 | Template content | `content <slot>` with screen directives | Scene template `Content` | `PLAY0629` unknown slot, `PLAY0656` nesting cycle | None |
 | Arrangements | `arrangement flow\|freeform`, `row`, `column`, `grid columns rows`, `grow`, `span`, `when`, `variant`, `place` | Scene `FlowArrangement`, `FreeformArrangement` | `PLAY0235`, `PLAY0236` | None |

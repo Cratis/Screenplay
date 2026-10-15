@@ -20,6 +20,7 @@ public class and_a_module_is_split_across_files : given.a_folder_of_play_files
               description "Everything related to invoicing customers"
 
               screen template MasterDetail
+                category Test
                 sidebar
                 main
             """);

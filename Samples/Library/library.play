@@ -41,6 +41,7 @@ module Lending
   description "Books, the members who borrow them, and the loans between them"
 
   dialog template Dialog
+    category Dialog
     body
     actions
 
