@@ -69,6 +69,8 @@ export const constructKeywords = [
 export const typeModifierKeywords = ['optional'];
 
 export const clauseKeywords = [
+    'batches',
+    'atomic',
     'depends',
     'direction',
     'inbound',
@@ -255,7 +257,7 @@ export const conceptAttributes = ['pii', 'personal', 'secret'];
 
 // The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
 // `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.
-export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|identity|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
+export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command|event|readmodel|reducer|projection|capture|reaction(?!\s+batches\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|identity|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
 
 export const languageConfiguration: languages.LanguageConfiguration = {
     comments: {
@@ -285,7 +287,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     ],
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|identity|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|generate\s+rule|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s*$|\s+execute\b)|concurrency|seed|for|when|then|arguments|result|every|at|invokes|on)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|identity|provider|event|command|query|type|screen|projection|capture|reaction(?!\s+batches\b)|trigger|constraint|specification|layout|template|generate\s+rule|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s*$|\s+execute\b)|concurrency|seed|for|when|then|arguments|result|every|at|invokes|on)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

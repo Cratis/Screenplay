@@ -2,6 +2,8 @@
 
 You have a folder of `.play` files and want to know they are valid before anything consumes them. The Screenplay compiler ships in two forms: a .NET library you can embed, and a command line tool that verifies every `.play` file in a directory tree and prints any problems in a readable, compiler style format.
 
+Application-root `reaction batches atomic` selects ESM v22 for the composed application. No CLI flag or dependency update opts existing files in. Formatting and export preserve the declaration; omission retains legacy per-fact reaction semantics. Execution and rendering consumers must explicitly admit v22.
+
 ## Install the CLI
 
 The CLI is a [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools) published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:

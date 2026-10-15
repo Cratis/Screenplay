@@ -166,6 +166,7 @@ sealed class AuthoringSnapshot : IPlayFiles
             applications.SelectMany(application => application.Modules),
             Diagnostics.SourceLocation.Start)
         {
+            ReactionProductionMode = applications.FirstOrDefault(application => application.ReactionProductionMode is not null)?.ReactionProductionMode,
             Types = applications.SelectMany(application => application.Types ?? []),
             Examples = applications.SelectMany(application => application.Examples),
             Systems = applications.SelectMany(application => application.Systems),
