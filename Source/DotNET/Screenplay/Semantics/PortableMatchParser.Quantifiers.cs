@@ -72,6 +72,20 @@ internal sealed partial class PortableMatchParser
         return new(node, size, false, budgetOffset);
     }
 
+    bool IsCountedRepeat(int start)
+    {
+        var cursor = start + 1;
+        while (cursor < pattern.Length && char.IsAsciiDigit(pattern[cursor])) cursor++;
+        if (cursor == start + 1) return false;
+        if (cursor < pattern.Length && pattern[cursor] == ',')
+        {
+            cursor++;
+            while (cursor < pattern.Length && char.IsAsciiDigit(pattern[cursor])) cursor++;
+        }
+
+        return cursor < pattern.Length && pattern[cursor] == '}';
+    }
+
     bool Digits(out BigInteger value)
     {
         var start = _offset;

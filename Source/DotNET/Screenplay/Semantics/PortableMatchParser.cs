@@ -72,6 +72,7 @@ internal sealed partial class PortableMatchParser(string pattern)
             case '^': return new(new MatchAssertionExpression(true), 1, false);
             case '$': return new(new MatchAssertionExpression(false), 1, false);
             case ']': Refuse("unescaped closing bracket", start); break;
+            case '{' when IsCountedRepeat(start): Invalid("quantifier without an atom", start); break;
             case '{': case '}': Refuse("unescaped brace", start); break;
             case '*': case '+': case '?': Invalid("quantifier without an atom", start); break;
             default: return new(new MatchCharacterExpression(MatchCharacterSet.Character(character)), 1);
@@ -94,9 +95,10 @@ internal sealed partial class PortableMatchParser(string pattern)
                 var nameStart = _offset;
                 while (_offset < pattern.Length && pattern[_offset] != '>') _offset++;
                 var name = pattern[nameStart.._offset];
-                if (name.Length == 0 || !NameStart(name[0]) || name.Skip(1).Any(character => !NameStart(character) && !char.IsAsciiDigit(character))) Refuse("group name", nameStart);
-                else RegisterName(name, nameStart);
                 if (!Take('>')) Invalid("unterminated group name", nameStart);
+                else if (!PortableMatchGroupName.IsJavaScriptName(name)) Invalid("group name", nameStart);
+                else if (!NameStart(name[0]) || name.Skip(1).Any(character => !NameStart(character) && !char.IsAsciiDigit(character))) Refuse("group name", nameStart);
+                else RegisterName(name, nameStart);
             }
             else
             {

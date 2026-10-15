@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { isJavaScriptGroupName } from './PortableMatchGroupName';
 import { portableMatchSuggestions } from './PortableMatchSuggestions';
 
 export const emailMatchPattern = '^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$';
@@ -59,6 +60,7 @@ class PortableMatchParser {
         if (character === '[') this.characterClass(start);
         else if (character === '\\') this.escape(start, false);
         else if (character === ']') this.fail('unescaped closing bracket', start);
+        else if (character === '{' && /^\{[0-9]+(?:,[0-9]*)?\}/.test(this.pattern.slice(start))) this.fail('quantifier without an atom', start, true);
         else if (character === '{' || character === '}') this.fail('unescaped brace', start);
         else if ('*+?'.includes(character)) this.fail('quantifier without an atom', start, true);
         return { size: 1, quantifiable: character !== '^' && character !== '$' };
@@ -72,9 +74,10 @@ class PortableMatchParser {
                 const nameStart = this.offset;
                 while (this.offset < this.pattern.length && !this.at('>')) this.offset++;
                 const name = this.pattern.slice(nameStart, this.offset);
-                if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) this.fail('group name', nameStart);
-                else this.registerName(name, nameStart);
                 if (!this.take('>')) this.fail('unterminated group name', nameStart, true);
+                else if (!isJavaScriptGroupName(name)) this.fail('group name', nameStart, true);
+                else if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) this.fail('group name', nameStart);
+                else this.registerName(name, nameStart);
             } else this.fail('ims-'.includes(this.pattern[this.offset] ?? ' ') ? 'inline options' : 'group extension', start);
         }
         const body = this.expression();

@@ -24,6 +24,28 @@
     "expanded pattern size": "Reduce repeats and alternatives to at most 3000 expanded nodes, including choice points."
   },
   "cases": [
+    { "pattern": "a+?+", "accepted": false, "invalid": true, "construct": "quantifier without an atom", "offset": 3, "javaScriptValid": false },
+    { "pattern": "a{2}{3}", "accepted": false, "invalid": true, "construct": "quantifier without an atom", "offset": 4, "javaScriptValid": false },
+    { "pattern": "a+{2}", "accepted": false, "invalid": true, "construct": "quantifier without an atom", "offset": 2, "javaScriptValid": false },
+    { "pattern": "a{2}?{3,}", "accepted": false, "invalid": true, "construct": "quantifier without an atom", "offset": 5, "javaScriptValid": false },
+    { "pattern": "{2}", "accepted": false, "invalid": true, "construct": "quantifier without an atom", "offset": 0, "javaScriptValid": false },
+    { "pattern": "a{2}{x}", "accepted": false, "invalid": false, "construct": "unescaped brace", "offset": 4, "javaScriptValid": true },
+    { "pattern": "a{2}{3", "accepted": false, "invalid": false, "construct": "unescaped brace", "offset": 4, "javaScriptValid": true },
+    { "pattern": "(?<é>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<𝒜>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<a‌>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<a·>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<\\u0078>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<\\u{78}>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<\\uD835\\uDC9C>a)", "accepted": false, "invalid": false, "construct": "group name", "offset": 3, "javaScriptValid": true },
+    { "pattern": "(?<a!>a)", "accepted": false, "invalid": true, "construct": "group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?<😀>a)", "accepted": false, "invalid": true, "construct": "group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?<\\u0031>a)", "accepted": false, "invalid": true, "construct": "group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?<\\u{110000}>a)", "accepted": false, "invalid": true, "construct": "group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?<\\uGGGG>a)", "accepted": false, "invalid": true, "construct": "group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?<1", "accepted": false, "invalid": true, "construct": "unterminated group name", "offset": 3, "javaScriptValid": false },
+    { "pattern": "(?:(?<x>a)|(?<x>b))+", "accepted": true, "javaScriptValid": true },
+    { "pattern": "(?<x>a)|(?<x>b)(?<x>c)", "accepted": false, "invalid": true, "construct": "duplicate group name", "offset": 18, "javaScriptValid": false },
     {
       "pattern": "",
       "accepted": true
@@ -388,7 +410,8 @@
     {
       "pattern": "(?<a-b>a)",
       "accepted": false,
-      "invalid": false,
+      "invalid": true,
+      "javaScriptValid": false,
       "construct": "group name",
       "offset": 3
     },
@@ -479,14 +502,16 @@
     {
       "pattern": "(?<>a)",
       "accepted": false,
-      "invalid": false,
+      "invalid": true,
+      "javaScriptValid": false,
       "construct": "group name",
       "offset": 3
     },
     {
       "pattern": "(?<1>a)",
       "accepted": false,
-      "invalid": false,
+      "invalid": true,
+      "javaScriptValid": false,
       "construct": "group name",
       "offset": 3
     },
