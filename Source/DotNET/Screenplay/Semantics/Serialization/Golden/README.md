@@ -62,6 +62,8 @@ and descriptor sidecars with these bytes.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 
+`full-esm-v22.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV22()` on the full v21 model, adding only the optional final application member `reactionProductionMode: "atomic"` under decision 0078. `AtomicReactionBatchesCorpus.V22` and its legacy control pin equivalent-source bytes and reference outcomes, including rejected-world counts, refusal branches, redelivery, application and clock triggers. Earlier golden/corpus bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=22`; regenerate the source corpus with `SCREENPLAY_REGENERATE_ATOMIC_REACTION_BATCHES_CORPUS=1`. Both selectors fail deliberately; rebuild embedded resources before strict reruns.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:

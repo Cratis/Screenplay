@@ -39,6 +39,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
+        {
+            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
+        }
+
         var numeric = SourceNumericModes.Errors(syntax);
         if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
         if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
@@ -191,6 +196,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
         if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
         if (SemanticModelValidator.UsesGeneratedConceptRules(application))
         {
@@ -346,7 +352,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             {
                 Policies = policies,
                 Triggers = triggers,
-                EventSources = eventSources
+                EventSources = eventSources,
+                ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic
             };
             ValidateExampleAdmission(application);
             application = BindRoutedFixtureSources(application);

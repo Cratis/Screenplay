@@ -2,7 +2,7 @@
 id: 0078
 title: Opt into atomic reaction-production batches without changing existing models
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-15
 decider: Sindre Alstad Wilting
 class: contract
@@ -95,5 +95,7 @@ Private append claims and private projections are separate responsibilities. Cur
 Consumer work must be tracked when implementation is authorized: Cratis/AI first (reaction, automation, consistency, specification, authoring and toolchain guidance), Arc#3093, Stage, Studio, cli, Screenplay.Generation, Prologue when its syntax emitter is affected, Screenplay.CritterStack and Chronicle conformance. Targets that cannot realize the mode reject it. Consumer issues are filed with the implementation.
 
 ## Status notes
+
+**2026-10-15 — implementation targets ESM v22 (#769).** The source mode is an optional `ApplicationSyntax.ReactionProductionMode` init-only enum (`Atomic`), retained by syntax transport, canonical printing, imports and root-only layout export. It binds the optional final application member `reactionProductionMode: "atomic"` and selects language/semantic `22.0` only when declared. `EsmSchemaV22Support` extends the frozen v21 support; prior readers and validators reject the member. `PLAY0693` (`InvalidReactionBatchesDeclaration`) diagnoses duplicate, conflicting and invalid application-root declarations. `full-esm-v22.json` and `AtomicReactionBatchesCorpus.V22` provide the canonical and source-backed contract, with an identical-source legacy control. The evaluator stages materialization, durable-plus-reserved claims, projections and publications before budgeted adoption, and carries `SemanticRejected.Production` without changing authored errors. The 0022 and 0030 clarification banners remain in force. Closing constraints and routed direct productions remain outside admission (#770). This records implementation, not publication, downstream realization or runtime-oracle verification; consumer admission remains separate.
 
 **2026-10-15 — accepted.** Accepted by Sindre Alstad Wilting (delegated through the coordinator) with all six recommended choices: the application-level `reaction batches atomic` mode serialized as `reactionProductionMode: "atomic"` (absent keeps per-fact behavior); one trigger occurrence's direct productions and each refusal branch as separate batches, with invoked commands separate; a Chronicle-style append accumulator in the new mode only; shipping for constructs admitted today with closure and routed vectors as follow-ups (#770); first violated fact in authored order, then constraint-name order, with a typed locator; primary facts then publications, projections adopted all or none, rollback proven with world counts. Addition: new models declare the mode by default (#771). The ESM version is assigned at admission under 0025, after #616 phase 3.

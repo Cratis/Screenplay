@@ -17070,6 +17070,7 @@
       "transfers": []
     }
   ],
+  "reactionProductionMode": "Atomic",
   "systems": [],
   "types": [
     {
