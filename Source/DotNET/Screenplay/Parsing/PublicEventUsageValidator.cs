@@ -153,12 +153,13 @@ internal static class PublicEventUsageValidator
         foreach (var reaction in slice.Reactions.Where(reaction => reaction.From is null))
         {
             var matching = reaction.Triggers.Select(trigger => trigger.Source).OfType<NamedTriggerSourceSyntax>()
-                .Select(source => (source.Name, Node: Resolve(application, events, scope.Segments, source.Name, source, false, resolutionContext)?.Node))
+                .Select(source => (source.Name, Resolve(application, events, scope.Segments, source.Name, source, false, resolutionContext)?.Node))
+                .Select(item => (item.Name, Node: item.Item2))
                 .Where(item => item.Node is not null && appended.Contains(item.Node))
                 .DistinctBy(item => item.Node, ReferenceEqualityComparer.Instance).Select(item => item.Name).ToArray();
             if (matching.Length == 0) continue;
-            context.Warning(DiagnosticCodes.DirectionlessTranslationReactsToOwnCapture,
-                $"Reaction '{reaction.Name}' reacts to events appended by a capture in the same directionless Translate slice ({string.Join(", ", matching)}); keep the capture in this Translate slice and move the reaction to an Automation slice.", reaction.Location);
+            var message = $"Reaction '{reaction.Name}' reacts to events appended by a capture in the same directionless Translate slice ({string.Join(", ", matching)}); keep the capture in this Translate slice and move the reaction to an Automation slice.";
+            context.Warning(DiagnosticCodes.DirectionlessTranslationReactsToOwnCapture, message, reaction.Location);
         }
     }
 
