@@ -48,9 +48,8 @@ internal static partial class SemanticModelValidator
             "Rules on generated concepts require ESM v20 or later.");
         foreach (var concept in GeneratedConceptsWithRules(application))
         {
-            foreach (var rule in concept.Validations)
+            foreach (var result in RuleConsistency.Check(concept, assessmentYear))
             {
-                var result = RuleConsistency.Check(concept.Generation, concept.Primitive, rule, assessmentYear);
                 if (result.Status == RuleConsistencyStatus.Refuted)
                 {
                     throw new InvalidSemanticContract($"Generation strategy '{concept.Generation?.Kind ?? "uuid"}' for concept '{concept.Name}' violates a rule; witness {System.Text.Json.JsonSerializer.Serialize(result.Witness)}.");
