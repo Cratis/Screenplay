@@ -423,6 +423,13 @@ ui profile Desktop
   layout AppShell
   theme Nordic
 
+  // The active sample data pack is chosen once, here, for the whole application - never per
+  // screen or slice. A design surface or preview shows these rows instead of a backend.
+  sample data
+    active NordicDemo
+    shape Invoice maps to InvoiceListReadModel
+    bind InvoiceListReadModel to NordicDemo
+
 ui profile Mobile
   target platform ios, android
   target size compact
@@ -432,6 +439,39 @@ ui profile Mobile
     Cratis.Icons
   layout PortalShell
   theme NordicDark
+
+  // A pack a blueprint ships is named with 'blueprint'; the build resolves it against its packages.
+  sample data
+    active blueprint invoicing-nordic
+
+// Demo rows for design and preview time only: not part of the executable model and never
+// part of a production build. A shape supplies rows for the read model of the same name.
+sample data NordicDemo
+  title "Invoicing - Nordic demo"
+  locale nb-NO
+  shape Invoice
+    row
+      invoiceId = "0192b6a0-7c1e-7b3a-9d0e-4f6a1c2b3d4e"
+      customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      invoiceNumber = "INV-1001"
+      currency = "NOK"
+      status = "sent"
+      lineCount = 3
+      dueDate = "2026-11-14"
+      channel = "Peppol"
+      touched = true
+      lastActivityAt = "2026-10-15T08:30:00Z"
+    row
+      invoiceId = "0192b6a0-7c1e-7b3a-9d0e-4f6a1c2b3d4f"
+      customerId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-1002"
+      currency = "NOK"
+      status = "overdue"
+      lineCount = 1
+      dueDate = "2026-09-30"
+      channel = "Email"
+      touched = null
+      lastActivityAt = null
 
 // ------------------------------------------------------------
 // Behaviors - named interaction wiring, attached with 'uses'

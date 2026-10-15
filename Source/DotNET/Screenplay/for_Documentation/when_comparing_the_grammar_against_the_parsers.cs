@@ -51,6 +51,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["runs"] = ("ReactionIdentityDecl", "reactions.md"),
             ["readmodel"] = ("ReadModelDecl", "readmodels.md"),
             ["reducer"] = ("ReducerDecl", "readmodels.md"),
+            ["sample"] = ("SampleDataDecl", "sample-data.md"),
             ["screen"] = ("ScreenDecl", "screens.md"),
             ["seed"] = ("SeedDecl", "seeding.md"),
             ["slice"] = ("SliceDecl", "slices.md"),

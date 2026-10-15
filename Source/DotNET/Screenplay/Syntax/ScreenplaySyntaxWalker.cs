@@ -153,6 +153,11 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitSeed(seed);
         }
+
+        foreach (var pack in syntax.SampleDataPacks)
+        {
+            VisitSampleDataPack(pack);
+        }
     }
 
     /// <summary>

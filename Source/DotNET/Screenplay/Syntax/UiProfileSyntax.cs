@@ -34,4 +34,9 @@ public record UiProfileSyntax(
     /// Gets the selected icon sets or packages available to this profile.
     /// </summary>
     public IEnumerable<string> Icons { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>sample data</c> block: which sample data the whole application previews with, chosen once here, or <c>null</c> for none.
+    /// </summary>
+    public SampleDataSelectionSyntax? SampleData { get; init; }
 }

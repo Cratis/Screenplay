@@ -75,7 +75,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -298,6 +300,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {
+        // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
+        SampleDataPacks = [],
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null }),
         Exposures = [],
         InstanceContributions = [],
 

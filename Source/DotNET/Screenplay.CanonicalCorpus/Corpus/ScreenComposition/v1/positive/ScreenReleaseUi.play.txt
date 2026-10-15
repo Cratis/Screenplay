@@ -26,6 +26,10 @@ ui profile Web
     scene.icons
     workspace.icons
 
+  sample data
+    active WorkspaceDemo
+    shape WorkItem maps to WorkItemSummary
+
 template ApplicationShell
 
 exposure for WorkspaceFeatureShell
@@ -291,3 +295,24 @@ module Workspaces
                 icon save
               item cancel navigate to WorkItemDetails
                 parameter workItemId from data.workItemId
+
+sample data WorkspaceDemo
+  title "Workspaces demo"
+  locale en-GB
+  shape WorkItem
+    row
+      workItemId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      title = "Prepare the quarterly review"
+      priority = 2
+      status = "open"
+    row
+      workItemId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      title = "Renew the support contract"
+      priority = 1
+      status = "closed"
+  shape WorkItemDetails
+    row
+      workItemId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      title = "Prepare the quarterly review"
+      priority = 2
+      status = "open"

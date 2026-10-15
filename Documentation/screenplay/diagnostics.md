@@ -624,6 +624,27 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. |
 | `PLAY0232` | Warning | A `ui profile` selects a theme not declared compatible with one of the profile's own packages. |
 
+### Sample data
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0702` | Error | A `sample data` line is not `sample data <Name>`. |
+| `PLAY0703` | Error | Two `sample data` blocks in the same document declare the same pack name. |
+| `PLAY0704` | Error | A line in a `sample data` block is not `title`, `locale` or `shape`, a line in a `shape` block is not `row`, or `title` or `locale` is repeated. |
+| `PLAY0705` | Error | A `locale` line in a `sample data` block is not `locale <BCP 47 tag>` such as `nb-NO`. |
+| `PLAY0706` | Error | A line in a `row` is not `<field> = <literal>`, or the value is not a string, number, `true`, `false` or `null` literal. |
+| `PLAY0707` | Error | A `sample data` pack declares the same `shape` more than once. |
+| `PLAY0708` | Error | A `row` sets the same field more than once. |
+| `PLAY0709` | Warning | A pack `shape` names no read model, neither by name nor through a `shape ... maps to ...` line of a `ui profile`. A warning, because a blueprint may supply the read model. |
+| `PLAY0710` | Error | A `row` field is not a property of the read model its shape supplies rows for. |
+| `PLAY0711` | Error | A `row` literal does not fit the type of the read model property: a string for a number, a number for text, `null` for a property that is not optional. |
+| `PLAY0712` | Error | A line in a `ui profile` `sample data` block is not `active <pack>`, `active blueprint <id>`, `shape <Shape> maps to <ReadModel>` or `bind <ReadModel> to <pack>`. |
+| `PLAY0713` | Error | A `ui profile` declares more than one `sample data` block or more than one `active` line, or repeats a `shape ... maps to ...` or `bind ... to ...` line. |
+| `PLAY0714` | Error | A `ui profile` `sample data` block names a pack the document does not declare. A `blueprint <id>` pack is resolved by the build against its packages and is not checked here. |
+| `PLAY0715` | Error | A `shape ... maps to ...` or `bind ... to ...` line names a read model the document does not declare. |
+
+Sample data is design and preview time only: it has no repair, and binding reports it as deferred (`PLAY0269`) rather than executable. See [Sample data](sample-data.md).
+
 ### Arrangement
 
 | Code | Severity | Reported when |

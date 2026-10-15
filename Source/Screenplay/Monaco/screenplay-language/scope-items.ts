@@ -127,6 +127,23 @@ export const uiProfileItems: CompletionEntry[] = [
     { label: 'packages', insertText: 'packages\n    ${1:Package}', documentation: 'The component packages the profile uses.' },
     { label: 'layout', insertText: 'layout ${1:Layout}', documentation: 'The layout of the profile.' },
     { label: 'theme', insertText: 'theme ${1:Theme}', documentation: 'The theme of the profile.' },
+    { label: 'sample data', insertText: 'sample data\n    active ${1:Pack}', documentation: 'The sample data the whole application previews with, chosen once here.' },
+];
+
+export const profileSampleDataItems: CompletionEntry[] = [
+    { label: 'active', insertText: 'active ${1:Pack}', documentation: 'The active sample data pack of the whole application: one declared in the document, or `blueprint <id>`.' },
+    { label: 'shape maps to', insertText: 'shape ${1:Shape} maps to ${2:ReadModel}', documentation: 'Maps a sample data shape to the read model it supplies rows for.' },
+    { label: 'bind', insertText: 'bind ${1:ReadModel} to ${2:Pack}', documentation: 'A rare override: binds one read model to a pack.' },
+];
+
+export const sampleDataItems: CompletionEntry[] = [
+    { label: 'title', insertText: 'title "${1:Title}"', documentation: 'The display title of the pack.' },
+    { label: 'locale', insertText: 'locale ${1:en-GB}', documentation: 'The BCP 47 locale tag of the data.' },
+    { label: 'shape', insertText: 'shape ${1:ReadModel}\n    row\n        ${2:field} = ${3:"value"}', documentation: 'The rows for one shape: the read model of the same name, or the one a ui profile maps it to.' },
+];
+
+export const sampleShapeItems: CompletionEntry[] = [
+    { label: 'row', insertText: 'row\n    ${1:field} = ${2:"value"}', documentation: 'One row of the shape.' },
 ];
 
 export const layoutItems: CompletionEntry[] = [

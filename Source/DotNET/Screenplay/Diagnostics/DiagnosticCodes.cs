@@ -3339,4 +3339,76 @@ public static class DiagnosticCodes
     /// Two buttons, or a button and an item, of one toolbar share an id.
     /// </summary>
     public const string DuplicateToolbarButton = "PLAY0765";
+
+    // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
+
+    /// <summary>
+    /// A sample data line is not sample data &lt;Name&gt;.
+    /// </summary>
+    public const string InvalidSampleDataDeclaration = "PLAY0702";
+
+    /// <summary>
+    /// Two sample data blocks in the same document declare the same pack name.
+    /// </summary>
+    public const string DuplicateSampleDataPack = "PLAY0703";
+
+    /// <summary>
+    /// A line in a sample data block or one of its shape blocks is not title, locale, shape or row as it should be there, or repeats title or locale.
+    /// </summary>
+    public const string UnknownSampleDataDirective = "PLAY0704";
+
+    /// <summary>
+    /// A locale line in a sample data block is not locale &lt;BCP 47 tag&gt; such as nb-NO.
+    /// </summary>
+    public const string InvalidSampleDataLocale = "PLAY0705";
+
+    /// <summary>
+    /// A line in a row is not &lt;field&gt; = &lt;literal&gt;, or the value is not a string, number, true, false or null literal.
+    /// </summary>
+    public const string InvalidSampleDataValue = "PLAY0706";
+
+    /// <summary>
+    /// A sample data pack declares the same shape more than once.
+    /// </summary>
+    public const string DuplicateSampleDataShape = "PLAY0707";
+
+    /// <summary>
+    /// A row sets the same field more than once.
+    /// </summary>
+    public const string DuplicateSampleDataField = "PLAY0708";
+
+    /// <summary>
+    /// A pack shape names no read model, neither by name nor through a shape ... maps to ... line of a ui profile. Reported as a warning, because a blueprint may supply the read model.
+    /// </summary>
+    public const string UnknownSampleDataShape = "PLAY0709";
+
+    /// <summary>
+    /// A row field is not a property of the read model its shape supplies rows for.
+    /// </summary>
+    public const string UnknownSampleDataField = "PLAY0710";
+
+    /// <summary>
+    /// A row literal does not fit the type of the read model property: a string for a number, a number for text, null for a property that is not optional, and so on.
+    /// </summary>
+    public const string SampleDataTypeMismatch = "PLAY0711";
+
+    /// <summary>
+    /// A line in a ui profile sample data block is not active &lt;pack&gt;, active blueprint &lt;id&gt;, shape &lt;Shape&gt; maps to &lt;ReadModel&gt; or bind &lt;ReadModel&gt; to &lt;pack&gt;.
+    /// </summary>
+    public const string InvalidSampleDataSelection = "PLAY0712";
+
+    /// <summary>
+    /// A ui profile declares more than one sample data block or more than one active line, or repeats a shape ... maps to ... or bind ... to ... line.
+    /// </summary>
+    public const string DuplicateSampleDataSelection = "PLAY0713";
+
+    /// <summary>
+    /// A ui profile sample data block names a pack the document does not declare. A blueprint &lt;id&gt; pack is resolved by the build against its packages and is not checked here.
+    /// </summary>
+    public const string UnknownSampleDataPack = "PLAY0714";
+
+    /// <summary>
+    /// A shape ... maps to ... or bind ... to ... line names a read model the document does not declare.
+    /// </summary>
+    public const string UnknownSampleDataReadModel = "PLAY0715";
 }

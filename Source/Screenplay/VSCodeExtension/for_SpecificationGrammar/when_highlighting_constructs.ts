@@ -13,7 +13,7 @@ function scopedAsConstruct(line: string): boolean {
 
 describe('when highlighting declaration constructs', () => {
     it('scopes every construct the parsers dispatch on as a construct keyword', () => {
-        const constructs = ['domain', 'import', 'concept', 'type', 'policy', 'persona', 'authentication', 'module', 'layout', 'theme', 'ui', 'feature', 'slice', 'event', 'system', 'eventsource', 'operation', 'command', 'query', 'projection', 'capture', 'reaction', 'reducer', 'readmodel', 'trigger', 'screen', 'dialog', 'form', 'contribute', 'constraint', 'specification', 'seed', 'behavior'];
+        const constructs = ['domain', 'import', 'concept', 'type', 'policy', 'persona', 'authentication', 'module', 'layout', 'theme', 'ui', 'sample', 'feature', 'slice', 'event', 'system', 'eventsource', 'operation', 'command', 'query', 'projection', 'capture', 'reaction', 'reducer', 'readmodel', 'trigger', 'screen', 'dialog', 'form', 'contribute', 'constraint', 'specification', 'seed', 'behavior'];
         constructs.filter(construct => !scopedAsConstruct(`            ${construct} Name`)).should.deep.equal([]);
     });
 });
