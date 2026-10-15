@@ -79,3 +79,4 @@
 | [0080](0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md) | Treat the first record of a key in a record capture as added only, as Chronicle does | accepted | implemented | 2026-10-15 | Sindre Alstad Wilting |
 | [0081](0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md) | Choose the active sample data pack once in the ui profile | accepted | implemented | 2026-10-15 | Einar Ingebrigtsen |
 | [0083](0083-bind-the-generation-context-per-language-target.md) | Bind the version-1 generation context to each language target's native type | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
+| [0084](0084-define-matches-patterns-as-a-portable-linear-dialect.md) | Define matches patterns as a portable linear dialect and evaluate them without a timeout | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
