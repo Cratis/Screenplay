@@ -590,6 +590,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 7, WriteContribution);
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
+        AddSeparatedMembers(members, writer, module.Navigation, 10, WriteNavigationRegion);
         WriteMembers(members, module);
     }
 

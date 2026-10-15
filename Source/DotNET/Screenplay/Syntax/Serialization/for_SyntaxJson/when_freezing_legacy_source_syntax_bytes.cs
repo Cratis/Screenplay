@@ -130,8 +130,10 @@ public class when_freezing_legacy_source_syntax_bytes
             Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
         }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
+        Layouts = application.Layouts?.Select(layout => layout with { Navigation = [] }),
         Modules = application.Modules.Select(module => module with
         {
+            Navigation = [],
             Documentation = null,
             Purposes = [],
             Forms = module.Forms?.Select(form => form with { Description = null }),

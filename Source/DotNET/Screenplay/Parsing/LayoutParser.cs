@@ -47,7 +47,8 @@ internal static partial class LayoutParser
             DirectiveLocations = body.DirectiveLocations,
             RestrictsScopes = body.RestrictsScopes,
             Scopes = body.Scopes,
-            SliceKinds = body.SliceKinds
+            SliceKinds = body.SliceKinds,
+            Navigation = body.Navigation
         };
     }
 

@@ -49,6 +49,8 @@ module Invoicing
       order 10
 ```
 
+`contribute to Navigation` adds one flat item to a slot. For the application's topbar and sidebar as a whole - hierarchy, targets, rendering slots and module level inherit, extend and override - use the [`navigation` regions](navigation.md).
+
 ## Navigation item metadata
 
 A navigation entry can carry the rest of Scene's `NavigationItem`: a stable id, an icon, a presentation hint, a group and where it opens.

@@ -1388,6 +1388,26 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 
 Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
 
+## Navigation regions
+
+The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0740` | Error | A `navigation` header is not `navigation topbar|sidebar`, optionally followed by `inherits`, `extends` or `overrides`. |
+| `PLAY0741` | Error | A line in a navigation region is not a well formed `item <id> title "…" [icon X] [target Module[.Feature]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
+| `PLAY0742` | Error | A layout or module declares the same navigation region (`topbar` or `sidebar`) more than once. |
+| `PLAY0743` | Error | A `logo` line is not `logo image "…" title "…"`. |
+| `PLAY0744` | Error | A `logo` is declared in a module's navigation, or a layout declares a second logo. The logo belongs to the application. |
+| `PLAY0745` | Error | A layout's region states `inherits`, `extends` or `overrides` - the application is the base and has no mode - or a module region that `inherits` lists items of its own. |
+| `PLAY0746` | Error | A topbar item has sub-items. Only the sidebar nests items. |
+| `PLAY0747` | Error | Two items of one region share an id, within the region or between an extending module and the application. Mirrors Scene `navDuplicateId`. |
+| `PLAY0748` | Error | An item has neither a target nor sub-items, or targets a module or feature the document does not declare. Mirrors Scene `navTargetMissing`. |
+| `PLAY0749` | Error | An item's `slot` is declared by no layout. An item without a slot renders into the layout's primary content slot. Mirrors Scene `navSlotUnknown`. |
+| `PLAY0750` | Error | A module's own item targets another module. Mirrors Scene `navTargetOutOfScope`. |
+| `PLAY0751` | Warning | An item targets a module that has no feature to go to. Mirrors Scene `navModuleWithoutFeatures`. |
+| `PLAY0752` | Warning | A module region that `overrides` the application's declares no items, so the region is empty in that module. |
+
 ## Specification case tables
 
 | Code | Severity | Meaning |

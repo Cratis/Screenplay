@@ -108,6 +108,7 @@
     "exposes",
     "exposure",
     "expression",
+    "extends",
     "external",
     "fails",
     "failure",
@@ -150,6 +151,7 @@
     "identifier",
     "identity",
     "ignore",
+    "image",
     "implementation",
     "import",
     "in",
@@ -157,6 +159,7 @@
     "increment",
     "info",
     "information",
+    "inherits",
     "instance",
     "interest",
     "interval",
@@ -176,6 +179,7 @@
     "literal",
     "load",
     "locale",
+    "logo",
     "luhn",
     "madePublic",
     "manual",
@@ -193,6 +197,7 @@
     "namespace",
     "nanoid",
     "navigate",
+    "navigation",
     "nested",
     "no",
     "none",
@@ -215,6 +220,7 @@
     "otherwise",
     "outbound",
     "outlet",
+    "overrides",
     "packages",
     "parameter",
     "parent",
@@ -291,6 +297,7 @@
     "severity",
     "sexLifeOrSexualOrientation",
     "shape",
+    "sidebar",
     "size",
     "slice",
     "slot",
@@ -322,6 +329,7 @@
     "title",
     "to",
     "toolbar",
+    "topbar",
     "tradeUnionMembership",
     "transfer",
     "translate",
@@ -10591,6 +10599,291 @@
           "esmVersion": 21,
           "status": "admitted",
           "diagnostic": null,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "name": "navigation",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "layout Shell\n  content\n  navigation sidebar\n    item home title \u0022Home\u0022 target M\nmodule M\n  navigation sidebar extends\n    item reports title \u0022Reports\u0022 target M.F\n  feature F\n    slice StateView S\n      screen Screen\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0720",
+              "severity": "warning"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         }
       ]
@@ -27226,6 +27519,149 @@
         "error"
       ],
       "title": "A template blueprint reference names a blueprint no ui profile lists in its packages.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0740",
+      "name": "InvalidNavigationRegionDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation block header is not navigation topbar|sidebar [inherits|extends|overrides].",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0741",
+      "name": "InvalidNavigationItem",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line in a navigation region is not a well formed item \u003Cid\u003E title \u0022...\u0022 [icon X] [target Module[.Feature]] [slot name] or logo line.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0742",
+      "name": "DuplicateNavigationRegion",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout or module declares the same navigation region more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0743",
+      "name": "InvalidNavigationLogo",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A logo line is not logo image \u0022...\u0022 title \u0022...\u0022.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0744",
+      "name": "NavigationLogoNotAllowed",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A logo is declared in a module\u0027s navigation, or twice in one layout. The logo belongs to the application and is declared once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0745",
+      "name": "NavigationRegionModeNotAllowed",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout\u0027s region states inherits, extends or overrides - the application is the base and has no mode - or a region that inherits lists items of its own.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0746",
+      "name": "NavigationChildrenNotAllowed",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A topbar item has sub-items; only the sidebar nests items.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0747",
+      "name": "NavDuplicateId",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Two items of one navigation region share an id, within the region or between an extending module and the application (Scene navDuplicateId).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0748",
+      "name": "NavTargetMissing",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation item has neither a target nor sub-items, or targets a module or feature that does not exist (Scene navTargetMissing).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0749",
+      "name": "NavSlotUnknown",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation item renders into a slot no layout declares (Scene navSlotUnknown).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0750",
+      "name": "NavTargetOutOfScope",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A module\u0027s own navigation item targets a different module; a module\u0027s items may only target the module itself (Scene navTargetOutOfScope).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0751",
+      "name": "NavModuleWithoutFeatures",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A navigation item targets a module that has no feature to go to (Scene navModuleWithoutFeatures).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0752",
+      "name": "NavOverrideWithoutItems",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A module region that overrides the application\u0027s declares no items, so the region is empty in that module.",
       "reserved": false,
       "retired": false
     }

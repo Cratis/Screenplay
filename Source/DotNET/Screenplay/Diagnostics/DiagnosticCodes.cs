@@ -3241,6 +3241,73 @@ public static class DiagnosticCodes
     /// </summary>
     public const string UnknownTemplateBlueprint = "PLAY0722";
 
+    // Navigation regions - topbar and sidebar of the application shell, with module level inherit, extend and override.
+
+    /// <summary>
+    /// A <c>navigation</c> block header is not <c>navigation topbar|sidebar [inherits|extends|overrides]</c>.
+    /// </summary>
+    public const string InvalidNavigationRegionDeclaration = "PLAY0740";
+
+    /// <summary>
+    /// A line in a navigation region is not a well formed <c>item &lt;id&gt; title "..." [icon X] [target Module[.Feature]] [slot name]</c> or <c>logo</c> line.
+    /// </summary>
+    public const string InvalidNavigationItem = "PLAY0741";
+
+    /// <summary>
+    /// A layout or module declares the same navigation region more than once.
+    /// </summary>
+    public const string DuplicateNavigationRegion = "PLAY0742";
+
+    /// <summary>
+    /// A <c>logo</c> line is not <c>logo image "..." title "..."</c>.
+    /// </summary>
+    public const string InvalidNavigationLogo = "PLAY0743";
+
+    /// <summary>
+    /// A <c>logo</c> is declared in a module's navigation, or twice in one layout. The logo belongs to the application and is declared once.
+    /// </summary>
+    public const string NavigationLogoNotAllowed = "PLAY0744";
+
+    /// <summary>
+    /// A layout's region states <c>inherits</c>, <c>extends</c> or <c>overrides</c> - the application is the base and has no mode - or a region that <c>inherits</c> lists items of its own.
+    /// </summary>
+    public const string NavigationRegionModeNotAllowed = "PLAY0745";
+
+    /// <summary>
+    /// A topbar item has sub-items; only the sidebar nests items.
+    /// </summary>
+    public const string NavigationChildrenNotAllowed = "PLAY0746";
+
+    /// <summary>
+    /// Two items of one navigation region share an id, within the region or between an extending module and the application (Scene <c>navDuplicateId</c>).
+    /// </summary>
+    public const string NavDuplicateId = "PLAY0747";
+
+    /// <summary>
+    /// A navigation item has neither a target nor sub-items, or targets a module or feature that does not exist (Scene <c>navTargetMissing</c>).
+    /// </summary>
+    public const string NavTargetMissing = "PLAY0748";
+
+    /// <summary>
+    /// A navigation item renders into a slot no layout declares (Scene <c>navSlotUnknown</c>).
+    /// </summary>
+    public const string NavSlotUnknown = "PLAY0749";
+
+    /// <summary>
+    /// A module's own navigation item targets a different module; a module's items may only target the module itself (Scene <c>navTargetOutOfScope</c>).
+    /// </summary>
+    public const string NavTargetOutOfScope = "PLAY0750";
+
+    /// <summary>
+    /// A navigation item targets a module that has no feature to go to (Scene <c>navModuleWithoutFeatures</c>).
+    /// </summary>
+    public const string NavModuleWithoutFeatures = "PLAY0751";
+
+    /// <summary>
+    /// A module region that <c>overrides</c> the application's declares no items, so the region is empty in that module.
+    /// </summary>
+    public const string NavOverrideWithoutItems = "PLAY0752";
+
     // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
 
     /// <summary>

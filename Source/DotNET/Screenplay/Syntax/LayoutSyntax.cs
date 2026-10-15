@@ -77,6 +77,11 @@ public record LayoutSyntax(
     /// (<c>scopes slice statechange</c>); empty when the template applies to every slice kind its scope allows.
     /// </summary>
     public IEnumerable<string> SliceKinds { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>navigation topbar</c> and <c>navigation sidebar</c> blocks - the application's base navigation.
+    /// </summary>
+    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
 }
 
 /// <summary>
