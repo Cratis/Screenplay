@@ -7,28 +7,22 @@ namespace Cratis.Screenplay.Semantics.for_SemanticMatchPattern;
 
 public class when_enforcing_expanded_size : for_SemanticModelBinder.given.a_semantic_binder
 {
-    [Theory]
-    [InlineData("a{1500}", 1500)]
-    [InlineData("a{1499,}", 1499)]
-    [InlineData("^a{1498}$", 1498)]
-    [InlineData("^(?:a{2}){749}$", 1498)]
-    [InlineData("^a{1497,}$", 1497)]
-    void should_evaluate_a_1500_position_pattern(string pattern, int length) =>
-        SemanticMatchPattern.Create(pattern).IsMatch(new string('a', length)).ShouldBeTrue();
-
-    [Theory]
-    [InlineData("a{1501}")]
-    [InlineData("a{1500,}")]
-    [InlineData("^a{1499}$")]
-    [InlineData("^(?:a{2}){749}a$")]
-    [InlineData("^a{1498,}$")]
-    void should_refuse_1501_positions_before_building_a_matcher(string pattern)
+    [Fact]
+    void should_report_play0699_for_every_shared_over_budget_shape_before_building_a_matcher()
     {
-        var parsed = SemanticMatchPattern.Parse(pattern);
-        parsed.Accepted.ShouldBeFalse();
-        parsed.Construct.ShouldEqual("expanded pattern size");
-        parsed.Expression.ShouldBeNull();
-        var result = Bind("concept Code : String\n  validate\n    matches \"" + pattern + "\"\n");
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.PatternOutsidePortableMatchDialect).ShouldBeTrue();
+        using var document = PortableMatchVectors.Read("portable-match-differential.json");
+        var refused = document.RootElement.GetProperty("budgetCases").EnumerateArray().Where(vector => !vector.GetProperty("accepted").GetBoolean()).ToArray();
+        refused.Length.ShouldBeGreaterThan(10);
+        foreach (var vector in refused)
+        {
+            var pattern = vector.GetProperty("pattern").GetString()!;
+            var parsed = SemanticMatchPattern.Parse(pattern);
+            parsed.Accepted.ShouldBeFalse();
+            parsed.Construct.ShouldEqual("expanded pattern size");
+            parsed.Expression.ShouldBeNull();
+            parsed.Offset.ShouldEqual(vector.GetProperty("offset").GetInt32());
+            var result = Bind("concept Code : String\n  validate\n    matches \"" + pattern + "\"\n");
+            result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.PatternOutsidePortableMatchDialect).ShouldBeTrue();
+        }
     }
 }

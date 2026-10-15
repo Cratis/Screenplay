@@ -29,7 +29,7 @@ internal static class PortableMatchSuggestions
         "group name" => "Use a name matching [A-Za-z_][A-Za-z0-9_]*.",
         "group extension" => "Use an ordinary group or a (?:...) non-capturing group.",
         "pattern length" => "Shorten the pattern to at most 1000 UTF-16 code units.",
-        "expanded pattern size" => "Reduce counted repeats and alternatives to at most 1500 expanded positions.",
+        "expanded pattern size" => "Reduce repeats and alternatives to at most 3000 expanded nodes, including choice points.",
         _ => "Correct the regular expression syntax."
     };
 }

@@ -4,6 +4,10 @@
 namespace Cratis.Screenplay.Semantics;
 
 // Thompson construction in continuation order. No input-dependent backtracking or determinization.
+// For expanded size S, Build adds at most S states: one per character/assertion and choice point,
+// none for sequences/groups, and repeats copy only their budgeted bodies and choices. Flattening
+// choices and reusing the + body can only reduce that count. Compile adds one Accept state, so
+// StateCount <= S + 1 <= 2 * S (k = 2 for S >= 1). S = 0 has exactly the single Accept state.
 internal sealed class MatchAutomatonBuilder
 {
     readonly List<MatchInstruction> _states = [];
@@ -56,7 +60,7 @@ internal sealed class MatchAutomatonBuilder
         var body = Build(repeat.Body, loop);
         _states[loop] = _states[loop] with { Next = body };
 
-        // Reuse the body's states for +, whose admission size counts its body only once.
+        // Reuse the body's states for +; {1,} may also reuse them, below its conservative budget.
         if (repeat.Minimum == 1) return body;
         var start = loop;
         for (var count = 0; count < repeat.Minimum; count++) start = Build(repeat.Body, start);

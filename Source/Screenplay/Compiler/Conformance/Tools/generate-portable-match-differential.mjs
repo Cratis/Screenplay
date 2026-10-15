@@ -4,9 +4,13 @@
 // Regenerate from the repository root with:
 // node Source/Screenplay/Compiler/Conformance/Tools/generate-portable-match-differential.mjs
 // No Screenplay matcher participates in choosing or recording a verdict.
+// Node's default engine checks risky budget/nested-nullable shapes only on <= 6 code units,
+// in isolated workers with a 2-second watchdog. Long budget inputs are checked separately
+// against .NET 10 NonBacktracking (100-1000 units), plus C# completion at 10000 units.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { evaluate } from './portable-match-oracle.mjs';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const root = resolve(directory, '../../../../..');
@@ -20,17 +24,22 @@ const pick = values => values[random(values.length)];
 const units = input => Array.from({ length: input.length }, (_, index) => input.charCodeAt(index));
 const patterns = new Map();
 const exclusions = [];
-function add(pattern, inputs, origin) {
+function add(pattern, inputs, origin, budgetEdge = false) {
     let entry = patterns.get(pattern);
     if (entry === undefined) {
-        entry = { pattern, origins: [], cases: new Map(), oracle: new RegExp(pattern) };
+        entry = { pattern, origins: [], cases: new Map(), budgetEdge: false };
         patterns.set(pattern, entry);
     }
+    entry.budgetEdge ||= budgetEdge;
     if (!entry.origins.includes(origin)) entry.origins.push(origin);
     for (const input of inputs) {
         const inputCodeUnits = units(input);
+        if (entry.budgetEdge && input.length > 6) {
+            exclusions.push({ pattern, inputCodeUnits, origin, reason: 'Long budget inputs belong to the .NET 10 NonBacktracking spec, not the Node oracle' });
+            continue;
+        }
         const key = JSON.stringify(inputCodeUnits);
-        if (!entry.cases.has(key)) entry.cases.set(key, { inputCodeUnits, expected: entry.oracle.test(input) });
+        if (!entry.cases.has(key)) entry.cases.set(key, { inputCodeUnits });
     }
 }
 
@@ -43,6 +52,8 @@ const atoms = [
     ['[a-cb-d]', 'd'], ['[{}]', '{'], ['[\\-]', '-'], ['[a-]', '-'], ['[-a]', '-'], ['[[]', '['],
     ['[\\s\\d]', '\u2000'], ['[^\\w]', '\u0130'], ['[\\w\\W]', '\ud83d'], ['[^\\w\\W]', 'a'],
     ['[^\\D0]', '1'], ['[\\x00-\\x7f]', '\0'], ['[^\\u0000\\uffff]', 'b'],
+    ['[\\uD800-\\uDFFF]', '\ud83d'], ['[^\\uD800-\\uDFFF]', 'a'],
+    ['[\\uD7FF-\\uE000]', '\ude00'], ['[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]', '😀'],
     ['\\u2028', '\u2028'], ['\\u2029', '\u2029'], ['\\u0130', '\u0130'], ['\\u00A0', '\u00a0']
 ];
 for (const syntax of '^$\\.*+?()[]{}|/') atoms.push(['\\' + syntax, syntax]);
@@ -55,18 +66,55 @@ for (const [text, witness] of atoms) add(`^(?:${text})$`, [...interesting, witne
 for (const quantifier of ['*', '+', '?', '{0}', '{2}', '{2,}', '{1,3}']) {
     for (const lazy of ['', '?']) add(`^(?:a|b)${quantifier}${lazy}$`, interesting, 'quantifiers');
 }
-for (const pattern of ['^a|b', 'a$|^b', '(a^|b$)', '^(a?)*$', '^((|a)*)*$', '(?<name_0>a)|(?<name_0>b)',
-    '^(a{2000}){0}$', '(){999999999999999999999999999}', 'a{1500}', '^a{1498}$',
-    '^(?:a{2}){749}$', '^a{1497,}$']) {
-    add(pattern, [...interesting, 'a'.repeat(1498), 'a'.repeat(1500)], 'regressions-and-boundaries');
+for (const pattern of ['^a|b', 'a$|^b', '(a^|b$)', '(?<name_0>a)|(?<name_0>b)', '^(a{2000}){0}$']) {
+    add(pattern, interesting, 'regressions');
+}
+const shortInputs = ['', 'a', 'aa', 'aaaaaa', 'aaaaab', 'b', 'bbbbbb', 'ab', 'x', 'xxxxxx',
+    '\ud800', '\udfff', '😀', 'a😀b', '\n', '\u00a0'];
+for (const pattern of ['^(a?)*$', '^((|a)*)*$', '(){999999999999999999999999999}', 'a{1500}', '^a{1498}$',
+    '^(?:a{2}){749}$', '^a{1497,}$', '(^)*', '(^)+', '(^)?', '(^){0,1500}',
+    'a{3000}', '^a{2998}$', 'a{2998,}', 'a{0,1500}', '(a*){1500}', '(a+){1500}', '(a?){1500}',
+    '(a|b){1000}', '(a|){1500}', '(){0,3000}', '(?:a{3001}){0}']) {
+    add(pattern, shortInputs, 'regressions-and-boundaries', true);
+}
+
+// Independently authored size expectations shared by both compilers. Refused cases never reach
+// Node's backtracking engine; nested nullable repeats need only tiny inputs to exercise semantics.
+const nested = depth => '('.repeat(depth) + 'a' + ')*'.repeat(depth);
+const budgetCases = [
+    ['x{1500}', 1500], ['x{3000}', 3000], ['x{3001}', 3001, 1],
+    ['a{0,1500}', 3000], ['a{0,1501}', 3002, 1], ['(a*){1500}', 3000], ['(a*){1501}', 3002, 4],
+    ['(a+){1500}', 3000], ['(a?){1500}', 3000], ['a{2998,}', 3000], ['a{2999,}', 3001, 1],
+    ['a{1500,2250}', 3000], ['a{1500,2251}', 3002, 1], ['(^){0,1500}', 3000],
+    ['(a|b){1000}', 3000], ['(a|b){1001}', 3003, 5], ['(a|){1500}', 3000],
+    ['(a|){1501}', 3002, 4], ['(){0,3000}', 3000], ['(){0,3001}', 3001, 2],
+    ['()'.repeat(500), 0], ['('.repeat(500) + ')'.repeat(500), 0],
+    ['('.repeat(499) + 'a' + ')'.repeat(499), 1], [nested(333), 334],
+    ['(^)*', 2], ['^(a*){1498}b$', 2999], ['[\\uD800-\\uDFFF]{3000}', 3000], ['[^\\uD800-\\uDFFF]{0,1500}', 3000],
+    ['', 0], ['(){999999999999999999999999999}', 0], ['(a{3001}){0}', 0],
+    ['a{3000}|', 3001, 7], ['a{3000}|b', 3002, 7], ['(a{3000}|){0}', 0], ['((a*){1501}){0}', 0]
+].map(([pattern, expandedSize, offset]) => ({ pattern, expandedSize, accepted: expandedSize <= 3000, ...(offset === undefined ? {} : { offset }) }));
+for (const depth of [1, 2, 3, 10, 100, 330]) {
+    const body = `(${nested(depth)})`;
+    const copies = Math.floor(3000 / (depth + 1));
+    budgetCases.push({ pattern: `${body}{${copies}}`, expandedSize: (depth + 1) * copies, accepted: true });
+    budgetCases.push({ pattern: `${body}{${copies + 1}}`, expandedSize: (depth + 1) * (copies + 1), accepted: false, offset: body.length });
+    add(`${body}{${copies}}`, shortInputs, 'nested-nullable-budget-edges', true);
+}
+const counterexample = `(${nested(330)}){1499}b`;
+if (counterexample.length !== 1000) throw new Error('Counterexample must exactly fill the source limit');
+budgetCases.push({ pattern: counterexample, expandedSize: 331 * 1499 + 1, accepted: false, offset: 993 });
+for (const { pattern, accepted } of budgetCases) {
+    if (accepted) add(pattern, shortInputs, 'shared-budget-boundaries', true);
 }
 
 // Include the existing semantic oracle without reinterpreting any expected value.
 const original = JSON.parse(readFileSync(join(directory, '../portable-match-semantics.json'), 'utf8'));
 for (const vector of original.vectors) {
     const input = vector.inputCodeUnits === undefined ? vector.input : String.fromCharCode(...vector.inputCodeUnits);
-    if (new RegExp(vector.pattern).test(input) !== vector.expected) throw new Error('Existing Node oracle changed');
     add(vector.pattern, [input], 'original-semantic-vectors');
+    const recorded = patterns.get(vector.pattern).cases.get(JSON.stringify(units(input)));
+    if (recorded !== undefined) recorded.originalExpected = vector.expected;
 }
 
 function* files(path) {
@@ -108,7 +156,7 @@ function expression(depth) {
             } else if (random(9) === 0) atom = { text: pick(['^', '$']), witness: '', size: 1, assertion: true };
             else {
                 const [literal, value] = pick(atoms);
-                atom = { text: literal, witness: value, size: literal === '😀' ? 2 : literal === '(?:\\uD83D\\uDE00)' ? 2 : 1 };
+                atom = { text: literal, witness: value, size: ['😀', '(?:\\uD83D\\uDE00)', '[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]'].includes(literal) ? 2 : 1 };
             }
             if (!atom.assertion && random(3) === 0) {
                 const minimum = random(3), maximum = minimum + random(3);
@@ -116,27 +164,63 @@ function expression(depth) {
                 const quantifier = ['*', '+', '?', `{${minimum}}`, `{${minimum},}`, `{${minimum},${maximum}}`, '{0}'][choice];
                 const copies = [1, 1, 1, minimum, minimum + 1, maximum, 0][choice];
                 const witnessCopies = [random(3), 1, random(2), minimum, minimum, minimum, 0][choice];
-                atom = { text: `(?:${atom.text})${quantifier}${random(2) === 0 ? '?' : ''}`, witness: atom.witness.repeat(witnessCopies), size: atom.size * copies };
+                const choices = [1, 1, 1, 0, 1, maximum - minimum, 0][choice];
+                atom = { text: `(?:${atom.text})${quantifier}${random(2) === 0 ? '?' : ''}`, witness: atom.witness.repeat(witnessCopies), size: atom.size * copies + choices };
             }
             text += atom.text; witness += atom.witness; size += atom.size;
         }
         branches.push({ text, witness, size });
     }
-    return { text: branches.map(branch => branch.text).join('|'), witness: branches[0].witness, size: branches.reduce((size, branch) => size + branch.size, 0) };
+    return { text: branches.map(branch => branch.text).join('|'), witness: branches[0].witness, size: branches.reduce((size, branch) => size + branch.size, branches.length - 1) };
 }
 const alphabet = 'abAB09_- /{}[]\0\t\n\r\u00a0\u1680\u2000\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\u0130\u0131😀'.split('');
 let generated = 0, attempts = 0;
 while (generated < 1500) {
     if (++attempts > 10000) throw new Error('Pattern generation exhausted its attempt fuse');
-    const pattern = expression(3);
-    if (pattern.text.length > 1000 || pattern.size > 1500 || patterns.has(pattern.text)) continue;
+    const pattern = expression(pick([3, 4, 5]));
+    // Keep randomized inputs small too; the worker watchdog bounds any V8 backtracking.
+    if (pattern.text.length > 1000 || pattern.size > 3000 || pattern.witness.length > 8 || patterns.has(pattern.text)) continue;
     const inputs = [pattern.witness, 'z' + pattern.witness, pattern.witness + 'z', 'z' + pattern.witness + 'z'];
-    for (let sample = 0; sample < 4; sample++) inputs.push(Array.from({ length: random(13) }, () => pick(alphabet)).join(''));
+    for (let sample = 0; sample < 4; sample++) inputs.push(Array.from({ length: random(5) }, () => pick(alphabet)).join(''));
     add(pattern.text, inputs, 'seeded-generator');
     generated++;
 }
-const entries = [...patterns.values()].map(({ pattern, origins, cases }) => ({ pattern, origins, cases: [...cases.values()] }));
+const entries = [...patterns.values()].map(({ pattern, origins, cases, budgetEdge }) => ({
+    pattern, origins, category: budgetEdge ? 'budget-edge' : 'general', engine: 'node-default', cases: [...cases.values()]
+}));
+const skipped = [];
+let budgetAttempts = 0;
+for (let first = 0; first < entries.length; first += 4) {
+    await Promise.all(entries.slice(first, first + 4).map(async entry => {
+        if (entry.category === 'budget-edge') {
+            if (entry.cases.some(vector => vector.inputCodeUnits.length > 6)) throw new Error(`Long Node budget input: ${entry.pattern}`);
+            budgetAttempts += entry.cases.length;
+        }
+        const outcome = await evaluate(entry.pattern, entry.cases);
+        for (const vector of outcome.skipped) {
+            const skip = { pattern: entry.pattern, inputCodeUnits: vector.inputCodeUnits, category: entry.category,
+                engine: entry.engine, reason: 'Node default engine case watchdog exceeded 2000 ms before a verdict' };
+            skipped.push(skip);
+            console.error(`Skipped ${JSON.stringify(skip)}`);
+        }
+        entry.cases = entry.cases.flatMap((vector, index) => {
+            if (!outcome.results.has(index)) return [];
+            const expected = outcome.results.get(index);
+            if (vector.originalExpected !== undefined && vector.originalExpected !== expected) throw new Error('Existing Node oracle changed');
+            return [{ inputCodeUnits: vector.inputCodeUnits, expected }];
+        });
+    }));
+}
+// Concurrent worker completion must not reorder the checked-in skipped-case list.
+skipped.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right), 'en'));
 const caseCount = entries.reduce((count, entry) => count + entry.cases.length, 0);
-const output = { generator: 'Tools/generate-portable-match-differential.mjs', seed, oracle: 'flagless JavaScript RegExp.test', generatedPatterns: generated, patternCount: entries.length, caseCount, exclusions, patterns: entries };
-writeFileSync(join(directory, '../portable-match-differential.json'), JSON.stringify(output, null, 2) + '\n');
-console.log(`Seed ${seed}: ${entries.length} patterns, ${caseCount} cases, ${exclusions.length} explicitly excluded reference examples.`);
+const budgetEdgeCases = entries.filter(entry => entry.category === 'budget-edge').reduce((count, entry) => count + entry.cases.length, 0);
+const budgetSkipped = skipped.filter(entry => entry.category === 'budget-edge').length;
+if (budgetEdgeCases < 300 || budgetSkipped > budgetAttempts * 0.05 || skipped.length > (caseCount + skipped.length) * 0.05) {
+    throw new Error(`Insufficient oracle coverage: budget=${budgetEdgeCases}/${budgetAttempts}, skipped=${skipped.length}`);
+}
+const output = { generator: 'Tools/generate-portable-match-differential.mjs', seed, nodeVersion: process.version,
+    oracle: 'flagless JavaScript RegExp.test (default engine)', generatedPatterns: generated, patternCount: entries.length,
+    caseCount, generalCases: caseCount - budgetEdgeCases, budgetEdgeCases, exclusions, skipped, budgetCases, patterns: entries };
+writeFileSync(join(directory, '../portable-match-differential.json'), JSON.stringify(output) + '\n');
+console.log(`Node ${process.version}; seed ${seed}: ${entries.length} patterns; general=${output.generalCases}, budget-edge=${budgetEdgeCases}, skipped=${skipped.length}; bytes=${Buffer.byteLength(JSON.stringify(output) + '\n')}.`);

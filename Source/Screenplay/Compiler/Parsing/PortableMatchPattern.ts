@@ -7,7 +7,7 @@ export const emailMatchPattern = '^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$';
 export interface MatchPatternIssue { construct: string; offset: number; invalid: boolean; suggestion?: string }
 interface Fragment { size: number; quantifiable: boolean; budgetOffset?: number }
 interface Branch { scope: number; alternative: number }
-const sizeLimit = 1500;
+const sizeLimit = 3000;
 
 /** Decision 0084. This validates syntax without invoking a browser's backtracking engine. */
 export function validateMatchPattern(pattern: string): MatchPatternIssue | undefined {
@@ -36,7 +36,13 @@ class PortableMatchParser {
         const branch: Branch = { scope: this.scope++, alternative: 0 };
         this.branches.push(branch);
         while (this.issue === undefined && this.offset < this.pattern.length && !this.at(')')) {
-            if (this.take('|')) { branch.alternative++; continue; }
+            if (this.at('|')) {
+                size = Math.min(sizeLimit + 1, size + 1);
+                if (size > sizeLimit) budgetOffset ??= this.offset;
+                this.offset++;
+                branch.alternative++;
+                continue;
+            }
             const start = this.offset;
             const atom = this.quantify(this.atom());
             size = Math.min(sizeLimit + 1, size + atom.size);
@@ -120,17 +126,20 @@ class PortableMatchParser {
         if (this.issue !== undefined || this.offset >= this.pattern.length) return atom;
         const start = this.offset;
         let count = 1n;
+        let choices = 1n;
         if (this.at('*') || this.at('+') || this.at('?')) this.offset++;
         else if (this.take('{')) {
             const minimum = this.digits();
             if (minimum === undefined) { this.fail('unescaped brace', start); return atom; }
             count = minimum;
+            choices = 0n;
             if (this.take(',')) {
-                if (this.at('}')) count = minimum + 1n;
+                if (this.at('}')) { count = minimum + 1n; choices = 1n; }
                 else {
                     const maximum = this.digits();
                     if (maximum === undefined) { this.fail('unescaped brace', start); return atom; }
                     count = maximum;
+                    choices = maximum - minimum;
                     if (count < minimum) this.fail('reversed counted repeat', start, true);
                 }
             }
@@ -138,7 +147,7 @@ class PortableMatchParser {
         } else return atom;
         if (!atom.quantifiable) this.fail('quantified assertion', start, true);
         this.take('?');
-        const expanded = BigInt(atom.size) * count;
+        const expanded = BigInt(atom.size) * count + choices;
         const size = Number(expanded > BigInt(sizeLimit + 1) ? BigInt(sizeLimit + 1) : expanded);
         return { size, quantifiable: false, budgetOffset: size > sizeLimit ? atom.budgetOffset ?? start : undefined };
     }

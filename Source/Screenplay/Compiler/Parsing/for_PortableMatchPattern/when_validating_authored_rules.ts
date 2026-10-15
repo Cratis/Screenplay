@@ -6,7 +6,7 @@ import { parse } from '../../ScreenplayCompiler';
 import { DiagnosticCodes } from '../../Diagnostics/DiagnosticCodes';
 
 describe('when validating authored match rules', () => {
-    for (const [operand, code] of [['phone', DiagnosticCodes.UnknownMatchPattern], ['"["', DiagnosticCodes.InvalidMatchPattern], ['"(?=a)"', DiagnosticCodes.PatternOutsidePortableMatchDialect], ['"^a{1499}$"', DiagnosticCodes.PatternOutsidePortableMatchDialect]]) {
+    for (const [operand, code] of [['phone', DiagnosticCodes.UnknownMatchPattern], ['"["', DiagnosticCodes.InvalidMatchPattern], ['"(?=a)"', DiagnosticCodes.PatternOutsidePortableMatchDialect], ['"^a{2999}$"', DiagnosticCodes.PatternOutsidePortableMatchDialect]]) {
         it(`should report ${code} for ${operand}`, () => {
             const result = parse(`concept Code : String\n  validate\n    matches ${operand}`);
             result.diagnostics.some(diagnostic => diagnostic.code === code && diagnostic.location.line === 3).should.be.true;

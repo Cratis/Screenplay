@@ -7,6 +7,8 @@ internal sealed record MatchPatternResult(string JavaScriptPattern, MatchExpress
 {
     internal bool Accepted => Construct is null;
 
+    internal int ExpandedSize { get; init; }
+
     // An on-demand renderer export, never the reference matcher's execution path.
     internal string NormalizedDotNetPattern => Expression is { } node ? MatchExpressionWriter.DotNet(node) : throw new InvalidSemanticContract("A refused match pattern has no normalized form.");
 

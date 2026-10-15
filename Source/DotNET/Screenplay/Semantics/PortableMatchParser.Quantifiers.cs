@@ -18,7 +18,7 @@ internal sealed partial class PortableMatchParser
         BigInteger? maximum = null;
         if (Take('*'))
         {
-            // Zero or more, with one copy in the admission budget.
+            // One body copy and one loop choice point.
         }
         else if (Take('+'))
         {
@@ -62,10 +62,11 @@ internal sealed partial class PortableMatchParser
         }
         if (!atom.Quantifiable) Invalid("quantified assertion", start);
         Take('?');
-        var size = Bounded(atom.Size * count);
+        var choices = maximum is { } upperBound ? upperBound - minimum : BigInteger.One;
+        var size = Bounded((atom.Size * count) + choices);
         int? budgetOffset = size > SizeLimit ? atom.BudgetOffset ?? start : null;
 
-        // Zero-position bodies are empty. Huge counts are harmless only when a zero repeat erases them.
+        // Only zero-node expressions are empty; nullable bodies can still contain choice points.
         var node = size == 0 ? MatchExpression.Empty : new MatchRepeatExpression(atom.Node, Bounded(minimum), maximum is { } upper ? Bounded(upper) : null);
 
         return new(node, size, false, budgetOffset);

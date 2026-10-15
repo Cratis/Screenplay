@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics;
 // Decision 0084: this parser, not the host regex engine, decides dialect admission.
 internal sealed partial class PortableMatchParser(string pattern)
 {
-    const int SizeLimit = 1500;
+    const int SizeLimit = 3000;
     readonly Dictionary<string, List<(int Scope, int Alternative)[]>> _names = new(StringComparer.Ordinal);
     readonly List<(int Scope, int Alternative)> _branches = [];
     int _scope;
@@ -20,7 +20,7 @@ internal sealed partial class PortableMatchParser(string pattern)
         if (_failure is null && _offset != pattern.Length) Invalid("unmatched closing group", _offset);
         if (expression.Size > SizeLimit) Refuse("expanded pattern size", expression.BudgetOffset ?? _offset);
 
-        return _failure ?? new(pattern, expression.Node, null, 0, false, null);
+        return _failure ?? new(pattern, expression.Node, null, 0, false, null) { ExpandedSize = expression.Size };
     }
 
     static bool NameStart(char character) => char.IsAsciiLetter(character) || character == '_';
@@ -40,6 +40,8 @@ internal sealed partial class PortableMatchParser(string pattern)
                 alternatives.Add(MatchExpression.Sequence(sequence));
                 sequence = [];
                 _branches[^1] = (scope, _branches[^1].Alternative + 1);
+                size = Math.Min(SizeLimit + 1, size + 1);
+                if (size > SizeLimit) budgetOffset ??= _offset;
                 _offset++;
                 continue;
             }

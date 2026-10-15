@@ -8,21 +8,26 @@ namespace Cratis.Screenplay.CanonicalVectors.Specs.for_PortableMatch;
 public class when_matching_boundaries
 {
     [Theory]
-    [InlineData("a{1500}", 1500)]
-    [InlineData("a{1499,}", 1499)]
-    [InlineData("^a{1498}$", 1498)]
-    [InlineData("^(?:a{2}){749}$", 1498)]
-    [InlineData("^a{1497,}$", 1497)]
-    void should_evaluate_at_1500_positions_on_every_target_framework(string pattern, int length) =>
-        SemanticMatchPattern.Create(pattern).IsMatch(new string('a', length)).ShouldBeTrue();
+    [InlineData("x{1500}", 1500)]
+    [InlineData("a{3000}", 3000)]
+    [InlineData("a{2998,}", 2998)]
+    [InlineData("^a{2998}$", 2998)]
+    [InlineData("^(?:a{2}){1499}$", 2998)]
+    [InlineData("^a{2996,}$", 2996)]
+    [InlineData("a{0,1500}", 1500)]
+    [InlineData("(a*){1500}", 1500)]
+    void should_evaluate_at_the_3000_node_budget_on_every_target_framework(string pattern, int length) =>
+        SemanticMatchPattern.Create(pattern).IsMatch(new string(pattern[0] == 'x' ? 'x' : 'a', length)).ShouldBeTrue();
 
     [Theory]
-    [InlineData("a{1501}")]
-    [InlineData("a{1500,}")]
-    [InlineData("^a{1499}$")]
-    [InlineData("^(?:a{2}){749}a$")]
-    [InlineData("^a{1498,}$")]
-    void should_refuse_1501_positions_before_building_an_automaton(string pattern)
+    [InlineData("a{3001}")]
+    [InlineData("a{2999,}")]
+    [InlineData("^a{2999}$")]
+    [InlineData("^(?:a{2}){1499}a$")]
+    [InlineData("^a{2997,}$")]
+    [InlineData("a{0,1501}")]
+    [InlineData("(a*){1501}")]
+    void should_refuse_more_than_3000_nodes_before_building_an_automaton(string pattern)
     {
         var result = SemanticMatchPattern.Parse(pattern);
         result.Accepted.ShouldBeFalse();
