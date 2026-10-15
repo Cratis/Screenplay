@@ -43,7 +43,7 @@ describe('when completing an empty line in each scope', () => {
     for (const [scope, [text, expected]] of Object.entries(scopes)) {
         const supportsPurpose = ['the root', 'a domain', 'a module', 'a feature', 'a state change slice', 'a state view slice', 'an automation slice', 'a translate slice'].includes(scope);
         it(`should offer only what ${scope} can hold`, () => {
-            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose'] : [], ...['the root', 'a domain'].includes(scope) ? ['reaction batches atomic'] : []].sort());
+            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose'] : [], ...['the root', 'a domain'].includes(scope) ? ['command reads protected', 'reaction batches atomic'] : []].sort());
         });
     }
 

@@ -61,6 +61,7 @@ export const keywordDocs: Record<string, string> = {
     from: 'On a reaction or reducer, `from Source[.Stream]` observes only matching routed facts. It does not filter stream ids. Admitted by ESM v10. On a query parameter, fills it from the query context instead of the caller, as in `filter tenantId TenantId from $context.tenant`.',
     projection: 'Declares how events project into a read model, using the embedded Projection Declaration Language (PDL).',
     capture: 'Converts external data into events, using the embedded Change Data Capture Language (CDL).',
+    protected: 'Application-root `command reads protected` declares the protected command reads mode. Parsed syntax only: protected reads are not yet admitted by any supported ESM version (#129). Without the preamble, legacy reads retain their existing refusals.',
     batches: 'Application-root `reaction batches atomic` opts into ESM v22 atomic direct and refusal-branch batches. Invoked commands remain separate transactions.',
     atomic: 'All productions in one reaction trigger occurrence or selected refusal branch are adopted together or not at all. Absence retains legacy per-fact semantics.',
     reaction: 'Behavior that runs when something happens. Lives inside Automation slices. A trigger with no body states intent on its own — `file`/code is optional realization metadata.',

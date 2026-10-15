@@ -44,6 +44,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
         }
 
+        if (syntax.CommandReadMode is not null)
+        {
+            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
+                DiagnosticCodes.UnsupportedSemanticSyntax,
+                "Protected command reads are not admitted by any supported executable model (ESM) version yet (#129).",
+                syntax.Location)]);
+        }
+
         var numeric = SourceNumericModes.Errors(syntax);
         if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
         if (syntax.SourceOptions.NumericMode == NumericMode.Exact)

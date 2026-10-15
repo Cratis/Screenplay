@@ -48,6 +48,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
     for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
+    const readModes = applications.filter(application => application.commandReadMode != null);
+    for (const extra of readModes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidCommandReadsDeclaration,
+        "Declare 'command reads protected' once at the application root.", extra.location));
     const modes = applications.filter(application => application.reactionProductionMode != null);
     for (const extra of modes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidReactionBatchesDeclaration,
         "Declare 'reaction batches atomic' once at the application root.", extra.location));
@@ -63,6 +66,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         kind: 'ApplicationSyntax',
         sourceOptions,
         ...(modes.length === 0 ? {} : { reactionProductionMode: modes[0].reactionProductionMode }),
+        ...(readModes.length === 0 ? {} : { commandReadMode: readModes[0].commandReadMode }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),

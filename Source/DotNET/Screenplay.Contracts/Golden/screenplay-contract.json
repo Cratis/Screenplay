@@ -246,6 +246,7 @@
     "projection",
     "propagate",
     "property",
+    "protected",
     "provider",
     "public",
     "publicHealth",
@@ -366,6 +367,7 @@
   "topLevelConstructs": [
     "authentication",
     "behavior",
+    "command",
     "concept",
     "domain",
     "eventsource",
@@ -28778,6 +28780,83 @@
       ],
       "title": "Two buttons, or a button and an item, of one toolbar share an id.",
       "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0780",
+      "name": "InvalidCommandReadsDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command reads declaration is repeated, conflicting or outside the application root.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0781",
+      "name": "UnprotectableDecisionRead",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command decision read cannot be protected, with a closed refusal reason describing its shape or key.",
+      "reserved": true,
+      "retired": false
+    },
+    {
+      "code": "PLAY0782",
+      "name": "DecisionReadWithoutIdentifier",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A protected command read omits its lookup property and the command has no declared identifier.",
+      "reserved": true,
+      "retired": false
+    },
+    {
+      "code": "PLAY0783",
+      "name": "DecisionReadsWithConcurrency",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command declares both protected reads and concurrency, making its consistency boundary ambiguous.",
+      "reserved": true,
+      "retired": false
+    },
+    {
+      "code": "PLAY0784",
+      "name": "UnknownReadPath",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read path does not name a declared command read or alias.",
+      "reserved": true,
+      "retired": false
+    },
+    {
+      "code": "PLAY0785",
+      "name": "AmbiguousReadPath",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read path names a view read more than once instead of a distinguishing alias.",
+      "reserved": true,
+      "retired": false
+    },
+    {
+      "code": "PLAY0786",
+      "name": "LegacyCommandReadsRepairAvailable",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "A legacy command read has a typed repair offering the explicit protected-read preamble.",
+      "reserved": true,
       "retired": false
     }
   ],

@@ -511,6 +511,20 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0444` | Warning | A reaction trigger reads a primitive type name as a view; use `@reads <PrimitiveType>` if `reads` is a trigger value. |
 | `PLAY0451` | Error | A `reads` line in a command or reaction trigger has children other than one `by` block, or combines that block with a single `by` value. Invalid children are skipped, not parsed as owner values or properties. |
 
+### Protected command reads
+
+Today only `PLAY0780` fires. `PLAY0781`–`PLAY0785` are reserved for the binder and `PLAY0786` for the workspace once protected reads are admitted. The preamble currently parses but is refused at binding with `PLAY0268`.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0780` | Error | A `command reads` preamble is duplicate, conflicting or outside the application root; declare `command reads protected` once for the composed application. |
+| `PLAY0781` | Error | Once admitted, the binder refuses a decision read whose view shape or lookup key cannot be protected, naming the closed refusal reason. |
+| `PLAY0782` | Error | Once admitted, the binder finds a protected read with no `by` property and no declared command identifier to use as its key. |
+| `PLAY0783` | Error | Once admitted, the binder finds both `reads` and `concurrency` on a command, leaving its consistency boundary ambiguous. |
+| `PLAY0784` | Error | Once admitted, the binder finds a read path that names no declared read or alias. |
+| `PLAY0785` | Error | Once admitted, the binder finds a read path naming a view read more than once instead of a distinguishing alias. |
+| `PLAY0786` | Information | Once admitted, the workspace reports the first legacy `reads` in a model and offers a revision-checked preamble repair only when every read is admissible. |
+
 ### Rules about the whole artifact
 
 | Code | Severity | Reported when |

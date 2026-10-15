@@ -13,6 +13,8 @@ import { ValidationIssue, validateLines } from '../../validation';
 const document = [
     'reaction batches atomic',
     'reaction batches atomic',
+    'command reads protected',
+    'command reads protected',
     'type OptionalExamples',
     '  value String?',
     '  id Uuid identifier optional',

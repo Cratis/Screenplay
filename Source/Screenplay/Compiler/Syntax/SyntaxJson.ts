@@ -98,7 +98,7 @@ function dataArray<T>(): T[] {
 
 // Members omitted from the wire form when null (or undefined), by node kind.
 const omittedWhenNull: Record<string, readonly string[]> = {
-    ApplicationSyntax: ['identity', 'reactionProductionMode'],
+    ApplicationSyntax: ['identity', 'reactionProductionMode', 'commandReadMode'],
     EventSyntax: ['origin'],
     ImportSyntax: ['origin'],
     SliceSyntax: ['direction'],
