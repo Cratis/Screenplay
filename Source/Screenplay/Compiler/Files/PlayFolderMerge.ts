@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateIdentity } from '../Parsing/IdentityValidator';
+import { validateApplicationHandlers } from '../Parsing/CommandHandlerValidator';
 import { ParserContext } from '../Parsing/ParserContext';
 import { LineReader } from '../Parsing/LineReader';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
@@ -79,6 +80,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const identityContext = new ParserContext(new LineReader([]));
+    validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];

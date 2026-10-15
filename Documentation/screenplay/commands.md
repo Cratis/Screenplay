@@ -604,7 +604,7 @@ handler
     ```
 ````
 
-A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+A command uses either `produces` blocks or a file/code `handler` — not both. A pending handler intent may sit beside `produces`. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
@@ -620,6 +620,10 @@ handler
 ```
 
 This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
+
+A pending handler (an `implementation` wrapper with no `file` or code, with optional ordered hints) may coexist with `produces`. It cannot coexist with another `handler` occurrence, even another pending intent (`PLAY0698`), in either order.
+
+Under result contract version 1, the eventual body owns **event payload values only**. The events, their count and order, destinations, tags, generated values, response, authorization and validation stay declarative. Event-property mappings are non-normative hints, not expressions a renderer or reference evaluator executes for that body. Executable binding will admit this contract in a later step; it still reports `PLAY0268` today.
 
 | Owner | `implementation` wrapper |
 | --- | --- |

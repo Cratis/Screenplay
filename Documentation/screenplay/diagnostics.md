@@ -218,7 +218,8 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 |---|---|---|
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
-| `PLAY0035` | Error | A command declares both `produces` and `handler`, which say the same thing two ways. |
+| `PLAY0035` | Error | A command declares both `produces` and a file or code `handler`. A pending implementation intent may coexist with `produces`. |
+| `PLAY0698` | Error | A pending command handler intent coexists with another `handler` occurrence, including another pending intent. Keep one handler; the error is located at the second occurrence. |
 | `PLAY0036` | Error | A command marks more than one property as its identifier. |
 | `PLAY0037` | Error | A `concurrency` line carries anything beyond the keyword. |
 | `PLAY0038` | Error | A command declares more than one concurrency block, and a command has at most one. |

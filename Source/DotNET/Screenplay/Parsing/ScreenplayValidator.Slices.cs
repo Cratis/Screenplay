@@ -89,6 +89,7 @@ internal static partial class ScreenplayValidator
 
     static void ValidateSlice(SliceSyntax slice, DocumentNames names, AuthoringProductionResolver productionResolver, ParserContext context)
     {
+        CommandHandlerValidator.Validate(slice.Commands, context);
         ValidateDeclaredTypes(slice, names, context);
         ValidateConcurrency(slice, context);
         foreach (var authorize in slice.Commands.Select(command => command.Authorize)

@@ -49,6 +49,18 @@ describe('when authoring handler implementation intent', () => {
         expect(issue?.startColumn).toBe(7);
         expect(responseAnalysis(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0493')).toHaveLength(1);
     });
+    it.each([
+        ['implementation', 'file C.cs'],
+        ['file C.cs', 'implementation'],
+        ['implementation', 'implementation'],
+    ])('should mark the second handler for %s followed by %s', (first, second) => {
+        const source = ['command C', '  handler', `    ${first}`, '  handler', `    ${second}`];
+        const issues = validateLines(source).filter(issue => issue.code === 'PLAY0698');
+        issues.should.have.lengthOf(1);
+        issues[0].line.should.equal(3);
+        issues[0].startColumn.should.equal(3);
+        issues[0].severity.should.equal('error');
+    });
     it('should isolate code fences', () => {
         const source = ['command C', '  handler', '    implementation', '      ```csharp', '      hint " "', '      ```'];
         expect(validateLines(source).filter(issue => issue.code === 'PLAY0493')).toEqual([]);

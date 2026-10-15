@@ -41,6 +41,7 @@ export const DiagnosticCodes = {
     InvalidCaptureEventsSource: 'PLAY0620',
     CaptureEventsFromSeveralOrigins: 'PLAY0687',
     DirectionlessTranslationReactsToOwnCapture: 'PLAY0694',
+    PendingIntentWithOtherHandler: 'PLAY0698',
     CaptureEventsKeyNotRequired: 'PLAY0700',
     CaptureEventsRecordFixture: 'PLAY0701',
     RefutedGeneratedConceptRule: 'PLAY0688',

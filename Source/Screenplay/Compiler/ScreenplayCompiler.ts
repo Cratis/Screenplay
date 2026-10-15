@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateIdentity } from './Parsing/IdentityValidator';
+import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples, validateSpecificationExampleTypes } from './Parsing/SpecificationCommandExamples';
@@ -77,6 +78,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validateApplicationHandlers(value, context);
         validateIdentity(value, context);
         validatePurposes(value, context);
         validateInlineEvents(value, context);

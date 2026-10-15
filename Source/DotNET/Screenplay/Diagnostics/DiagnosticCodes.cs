@@ -3217,6 +3217,11 @@ public static class DiagnosticCodes
     public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";
 
     /// <summary>
+    /// A pending command handler intent coexists with another handler occurrence.
+    /// </summary>
+    public const string PendingIntentWithOtherHandler = "PLAY0698";
+
+    /// <summary>
     /// A capture over events requires its key as a required property on every source event.
     /// </summary>
     public const string CaptureEventsKeyNotRequired = "PLAY0700";

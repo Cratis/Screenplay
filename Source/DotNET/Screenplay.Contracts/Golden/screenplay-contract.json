@@ -27320,6 +27320,17 @@
       "retired": false
     },
     {
+      "code": "PLAY0698",
+      "name": "PendingIntentWithOtherHandler",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A pending command handler intent coexists with another handler occurrence.",
+      "reserved": false,
+      "retired": false
+    },
+    {
       "code": "PLAY0700",
       "name": "CaptureEventsKeyNotRequired",
       "severity": "error",
