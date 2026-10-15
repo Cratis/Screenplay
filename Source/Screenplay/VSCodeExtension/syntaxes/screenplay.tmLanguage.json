@@ -8,6 +8,7 @@
     "patterns": [
         { "include": "#comment" },
         { "include": "#numeric-preamble" },
+        { "include": "#reaction-batches-preamble" },
         { "include": "#fenced-csharp" },
         { "include": "#fenced-react" },
         { "include": "#fenced-typescript" },
@@ -36,6 +37,10 @@
         { "include": "#common" }
     ],
     "repository": {
+        "reaction-batches-preamble": {
+            "match": "^(reaction)(\\s+)(batches)(\\s+)(atomic)(?=\\s*(?://.*)?$)",
+            "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } }
+        },
         "identity-block": {
             "begin": "^()(identity)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.control.screenplay" } },

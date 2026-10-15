@@ -141,11 +141,23 @@ concept TenantOrderId : String
     ```
 ````
 
+The `TenantOrderId` body above is portable: it uses only `context.Now`, the tenant in string interpolation and BCL types. A body that passes `context` to a Fundamentals API is bound to the Cratis C# target, where the context is `Cratis.Concepts.GenerationContext`:
+
+````screenplay
+concept TenantUlid : String
+  generate rule TenantUlid
+    ```csharp
+    return $"{context.Tenant}:{GenerateValue.Ulid(context)}";
+    ```
+````
+
+This second example is Cratis C# target-bound. Other providers reject it unless their own binding supports it. See [GenerationContext](../context.md) for the bindings and the portable subset.
+
 `pattern` generates distinct strings from a finite printable-ASCII language. Dates and appended checksum digits add no entropy. See [patterns and checksums](patterns.md) for grammar, support budgets, UTC clocks and fixture policy. Short references are values: map them to a single-property unique constraint, not a low-entropy generated identifier.
 
 `random` has inclusive signed Int64 endpoints, including the full interval -9223372036854775808..9223372036854775807 (2^64 values). Range cardinality and min/max proofs are exact; a fixture is an integral number, never numeric text. It is an Int value, not an identifier.
 
-`rule` requires exactly one direct file or tagged fence. It creates a ValueGeneration implementation requirement with unknown entropy and String result. Its version-1 [GenerationContext](../context.md) has only Now (DateTimeOffset) and Tenant (TenantId). Requirement identity follows concept identity and rule name, not source path; body changes affect the attachment manifest, not ESM body bytes. Providers supply the implementation; the reference runner consumes a primitive String fixture and never invokes it. An opaque validator still makes execution Unsupported.
+`rule` requires exactly one direct file or tagged fence. It creates a ValueGeneration implementation requirement with unknown entropy and String result. Its version-1 [GenerationContext](../context.md) is a language-neutral descriptor with only Now and Tenant that each provider binds to its own type. Requirement identity follows concept identity and rule name, not source path; body changes affect the attachment manifest, not ESM body bytes. Providers supply the implementation; the reference runner consumes a primitive String fixture and never invokes it. An opaque validator still makes execution Unsupported.
 
 These constructs select ESM v21; earlier goldens and built-in defaults stay unchanged. `generate sequence` remains reserved (`PLAY0682`, #619). Explicit generation with compliance markers remains refused.
 

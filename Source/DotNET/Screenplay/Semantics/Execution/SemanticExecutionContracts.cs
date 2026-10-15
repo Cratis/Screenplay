@@ -351,6 +351,11 @@ public sealed record SemanticRejected(
     /// Gets constraint failures in result order for an invocation with refusal handling.
     /// </summary>
     public ImmutableArray<SemanticConstraintFailure> ConstraintFailures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the first violating atomic reaction production, when rejection arose in a batch.
+    /// </summary>
+    public SemanticProductionLocator? Production { get; init; }
 }
 
 /// <summary>

@@ -98,6 +98,7 @@ public static partial class SemanticModelCanonicalJson
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
         if (!application.EventSources.IsDefaultOrEmpty) WriteArray(writer, "eventSources", application.EventSources.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventSourceDeclaration);
+        if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
         writer.WriteEndObject();
     }
 

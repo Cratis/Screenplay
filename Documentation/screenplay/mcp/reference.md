@@ -8,6 +8,10 @@ assistant, start with [the MCP server overview](index.md), and see
 [Create a model](create.md), [Explore a model](explore.md), [View a model](view.md)
 and [Edit a model](edit.md) for prompts.
 
+## Atomic reaction batch admission
+
+Application source and AST proposals preserve the optional `ApplicationSyntax.reactionProductionMode` enum (`Atomic`). Application-root `reaction batches atomic` selects ESM v22; absence preserves legacy per-fact semantics even in newer versions. `describe-application` summary exposes `reactionProductionMode` and `reactionProductionReadiness`; construct readiness is separate from target realization. Direct productions and each selected refusal branch form separate atomic batches. Invoked commands remain independent. Direct routes and closing constraints are still unadmitted (#770). A target must explicitly admit v22 or refuse it.
+
 ## Key and route admission
 
 Typed source and AST proposals retain read-model key marks, named query/read key parts, production routes and observer filters. Composite read-model keys remain authoring-only (`PLAY0268`, #599). Production route overrides and observer filters select ESM v10. Source inventories include production route references. Declaration details retain the authored lookup parts and filters.

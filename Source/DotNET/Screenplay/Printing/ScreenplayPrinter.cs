@@ -149,6 +149,13 @@ public sealed partial class ScreenplayPrinter :
             writer.Line($"import {import.QualifiedName}{origin}", import);
         }
 
+        if (application.ReactionProductionMode is { } mode)
+        {
+            if (mode != ReactionProductionMode.Atomic) throw new UnsupportedSyntaxForPrinting("reaction batches", mode.ToString());
+            writer.Line("reaction batches atomic");
+            writer.Blank();
+        }
+
         WriteFileImports(writer, application.FileImports);
     }
 

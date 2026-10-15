@@ -116,6 +116,7 @@ public class when_holding_invoicing_to_the_language : Specification
             slice.Captures.Any(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source))).ShouldBeTrue();
     [Fact] void should_show_explicit_no_event_assertions_in_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents && specification.WhenAppended is not null).ShouldBeTrue();
     [Fact] void should_show_recovery_redelivery_in_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.WhenRedelivered is not null && specification.Given.Any() && specification.ThenEvents.Any()).ShouldBeTrue();
+    [Fact] void should_opt_into_atomic_reaction_batches_in_invoicing() => _invoicing.ReactionProductionMode.ShouldEqual(ReactionProductionMode.Atomic);
     [Fact] void should_keep_exact_numeric_mode_out_of_invoicing() => _invoicing.SourceOptions.NumericMode.ShouldEqual(NumericMode.Legacy);
     [Fact] void should_demonstrate_exact_numeric_mode_in_its_preview_fixture() => _exact.SourceOptions.NumericMode.ShouldEqual(NumericMode.Exact);
     [Fact] void should_keep_the_documented_preview_table_equal_to_the_enforced_list() => _documentedPreview.ShouldEqual(Preview.Select(preview => $"| {preview.Construct} | #{preview.Issue} | {string.Join(", ", preview.Fixtures.Select(fixture => $"`{fixture.Path}`"))} |"));

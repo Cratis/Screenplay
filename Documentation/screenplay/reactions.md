@@ -294,6 +294,16 @@ The first matching branch wins. Classification gives authorization precedence ov
 
 Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications).
 
+## Atomic production batches
+
+Declare `reaction batches atomic` at the application root to prevent a rejected later production from leaving an accepted prefix. Imported reactions inherit this mode. It selects ESM v22 and the optional final application member `reactionProductionMode: "atomic"`. Duplicate or conflicting declarations report `PLAY0693`; unknown modes are invalid.
+
+One trigger occurrence's direct `produces` list is one batch. Each selected invocation-refusal branch is another batch; invoked commands keep their own atomic appends. Another trigger or occurrence is never silently combined with it. All candidates are materialized and append-validated before private projections and publications are prepared. Primary facts are adopted first, followed by derived publications, and only adopted facts start cascades. The complete expanded result must fit the 1,000-new-fact budget before adoption. Given history does not consume that budget.
+
+A failed batch leaves its pre-batch facts, read models and pending children unchanged. Earlier accepted batches and commands remain. The first violation is selected by authored production order, then ordinal constraint name; `SemanticRejected.Production` carries a zero-based index, event contract and route without changing the authored message. Property-value reservations made inside a batch are not freed by a source changing value or releasing; the same source may repeat its own claim. Unique-event cycles do honor a valid release before a later claim.
+
+Without the declaration, **per-fact production is legacy behavior kept for byte stability**, even in a newer ESM version. Recompilation never opts an existing model in. New models should declare the mode. Atomic batches do not admit direct-production stream routes or closing constraints (#770), deduplicate redelivery, promise atomic observer snapshots, or recover an unknown storage outcome. Consumers must explicitly admit v22 or refuse it.
+
 ## In the executable semantic model
 
 Reactions bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)),
@@ -326,7 +336,7 @@ so a specification can assert what a reaction does. In the reference evaluator:
   comparisons, enumeration constants and logical groups use the command condition contract.
 - The scenario budget counts new accepted facts, not established history. A command batch that would exceed
   1,000 facts is unsupported before any of its facts or projection changes enter the world. Prior accepted
-  facts remain; direct reaction and capture appends retain their individual append disposition.
+  facts remain; legacy direct reaction and capture appends retain their individual append disposition. Explicit atomic reaction batches reserve their complete expanded result before adoption.
 - A body in code - a `file` or an inline block - is a target's to run. Reaching one returns `SemanticUnsupported`,
   never a guessed result. Reached opaque reducers also fail closed in v6.
 
