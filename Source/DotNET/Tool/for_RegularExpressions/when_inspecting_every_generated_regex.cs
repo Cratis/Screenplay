@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Cratis.Screenplay.Tool.for_RegularExpressions;
 
-public class when_inspecting_every_shipped_regex : Specification
+public class when_inspecting_every_generated_regex : Specification
 {
     Dictionary<MethodInfo, Regex> _expressions = null!;
 

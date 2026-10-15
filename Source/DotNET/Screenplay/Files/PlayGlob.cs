@@ -1,10 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Concurrent;
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace Cratis.Screenplay.Files;
 
 /// <summary>
@@ -18,8 +14,6 @@ namespace Cratis.Screenplay.Files;
 /// </remarks>
 public static class PlayGlob
 {
-    static readonly ConcurrentDictionary<string, Regex> _patterns = new(StringComparer.Ordinal);
-
     /// <summary>
     /// Gets whether a pattern holds a wildcard, as opposed to naming one file.
     /// </summary>
@@ -91,41 +85,91 @@ public static class PlayGlob
     /// <returns><c>true</c> when the path is a <c>.play</c> file the pattern names.</returns>
     public static bool IsMatch(string resolvedPattern, string path) =>
         path.EndsWith(".play", StringComparison.OrdinalIgnoreCase) &&
-        _patterns.GetOrAdd(resolvedPattern, Create).IsMatch(path);
+        new SegmentMatcher(resolvedPattern.Split('/'), path.Split('/')).Matches();
 
-    // A glob only produces classes, escapes and repeated groups, so the linear-time engine runs it without a timeout.
-    static Regex Create(string resolvedPattern) =>
-        new(ToRegex(resolvedPattern), RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, Regex.InfiniteMatchTimeout);
-
-    static string ToRegex(string pattern)
+    // Matches segment by segment, remembering each (pattern, path) position it has decided, so any number of '**'
+    // segments costs at most one decision per position pair and no input can make the match backtrack exponentially.
+    sealed class SegmentMatcher(string[] pattern, string[] path)
     {
-        var builder = new StringBuilder("^");
-        var segments = pattern.Split('/');
-        for (var index = 0; index < segments.Length; index++)
+        readonly string[] _pattern = pattern;
+        readonly string[] _path = path;
+        readonly bool?[,] _decided = new bool?[pattern.Length + 1, path.Length + 1];
+
+        public bool Matches() => Matches(0, 0);
+
+        bool Matches(int patternIndex, int pathIndex) =>
+            _decided[patternIndex, pathIndex] ??= Decide(patternIndex, pathIndex);
+
+        bool Decide(int patternIndex, int pathIndex)
         {
-            var last = index == segments.Length - 1;
-            if (segments[index] == "**")
+            if (patternIndex == _pattern.Length)
             {
-                builder.Append(last ? ".*" : "(?:[^/]+/)*");
-                continue;
+                return pathIndex == _path.Length;
             }
 
-            foreach (var character in segments[index])
+            if (_pattern[patternIndex] == "**")
             {
-                builder.Append(character switch
+                // A trailing '**' takes the rest of the path, at least one segment; an inner one takes any number of
+                // whole, non-empty folders.
+                if (patternIndex == _pattern.Length - 1)
                 {
-                    '*' => "[^/]*",
-                    '?' => "[^/]",
-                    _ => Regex.Escape(character.ToString())
-                });
+                    return pathIndex < _path.Length;
+                }
+
+                for (var next = pathIndex; ; next++)
+                {
+                    if (Matches(patternIndex + 1, next))
+                    {
+                        return true;
+                    }
+
+                    if (next == _path.Length || _path[next].Length == 0)
+                    {
+                        return false;
+                    }
+                }
             }
 
-            if (!last)
-            {
-                builder.Append('/');
-            }
+            return pathIndex < _path.Length &&
+                SegmentMatches(_pattern[patternIndex], _path[pathIndex]) &&
+                Matches(patternIndex + 1, pathIndex + 1);
         }
 
-        return builder.Append('$').ToString();
+        // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
+        // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
+        // and quadratic at worst.
+        static bool SegmentMatches(string pattern, string segment)
+        {
+            var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
+            while (segmentIndex < segment.Length)
+            {
+                if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' || pattern[patternIndex] == segment[segmentIndex]) && pattern[patternIndex] != '*')
+                {
+                    patternIndex++;
+                    segmentIndex++;
+                }
+                else if (patternIndex < pattern.Length && pattern[patternIndex] == '*')
+                {
+                    star = patternIndex++;
+                    starSegmentIndex = segmentIndex;
+                }
+                else if (star >= 0)
+                {
+                    patternIndex = star + 1;
+                    segmentIndex = ++starSegmentIndex;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            while (patternIndex < pattern.Length && pattern[patternIndex] == '*')
+            {
+                patternIndex++;
+            }
+
+            return patternIndex == pattern.Length;
+        }
     }
 }
