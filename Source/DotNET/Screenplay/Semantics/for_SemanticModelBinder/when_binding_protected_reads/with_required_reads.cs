@@ -19,5 +19,5 @@ public class with_required_reads : given.a_protected_read_model
     [Fact] void should_bind_a_read_path_mapping() => Command(_result.Value!.Model).Produces.Single().Mappings.Single().Source.ShouldBeOfExactType<SemanticReadPathExpression>();
     [Fact] void should_bind_a_read_path_requirement() => ((SemanticComparison)Command(_result.Value!.Model).Requirements.Single().Condition).Left.Read.ShouldEqual("View");
     [Fact] void should_round_trip_the_model() => SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(_result.Value!.Model)).Revision.ShouldEqual(_result.Value.Model.Revision);
-    [Fact] void should_not_execute_unguarded() => SemanticExecutionPlan.Compile(_result.Value!.Model).Issues.ShouldContain(issue => issue.Kind == SemanticPlanIssueKind.UnsupportedDecisionReads);
+    [Fact] void should_admit_protected_read_execution() => SemanticExecutionPlan.Compile(_result.Value!.Model).Success.ShouldBeTrue();
 }

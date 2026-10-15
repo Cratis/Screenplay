@@ -51,7 +51,7 @@ public enum SemanticPlanIssueKind
     InvalidSliceSelection = 6,
 
     /// <summary>
-    /// Protected decision reads await decide/commit and absence evaluation.
+    /// Reserved legacy issue kind (no longer emitted; protected decision reads are evaluated).
     /// </summary>
     UnsupportedDecisionReads = 7
 }
@@ -219,8 +219,6 @@ public sealed class SemanticExecutionPlan
 
         foreach (var command in slices.SelectMany(_ => _.Commands))
         {
-            if (!command.Reads.IsDefaultOrEmpty)
-                issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedDecisionReads, "Protected command reads require decide/commit, required-read absence and conflict evaluation, which are not implemented yet (#129)."));
             foreach (var validation in command.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
@@ -268,7 +266,8 @@ public sealed class SemanticExecutionPlan
                 [.. slices.SelectMany(_ => _.Reactions).OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)],
                 slices.SelectMany(_ => _.Captures).ToImmutableDictionary(_ => _.Id),
                 [.. unselected.Select(issue => issue.Artifact)]),
-            []) { UnselectedIssues = unselected };
+            [])
+        { UnselectedIssues = unselected };
     }
 
     internal bool IsUnadmittedReadModel(SemanticId readModel) =>
