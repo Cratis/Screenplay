@@ -6,7 +6,9 @@ exposure for Inner
 
 module Workspaces
   screen template Outer
+    category Workspace
     header
 
   screen template Inner
+    category Workspace
     body

@@ -12,6 +12,7 @@ public class and_a_flow_arrangement_declares_a_variant : given.a_compiler
         """
         module Dashboards
           screen template DashboardCanvas
+            category Test
             arrangement flow
               variant width regular, height regular
                 place header at 0,0 size fill,64

@@ -33,6 +33,8 @@ internal static class CompositionValidator
         ValidateScreenContributions(application, collector, context);
         ValidateTemplateNesting(application, context);
         ValidateTemplateScopes(application, context);
+        ValidateTemplateCategories(application, context);
+        ValidateTemplateBlueprints(application, context);
         ValidatePackages(application, collector, context);
     }
 
@@ -196,6 +198,7 @@ internal static class CompositionValidator
             entry => entry.Value.Content
                 .SelectMany(content => content.Directives)
                 .OfType<ScreenTemplateReferenceSyntax>()
+                .Where(reference => reference.Blueprint is null)
                 .ToList(),
             StringComparer.Ordinal);
 
@@ -236,48 +239,120 @@ internal static class CompositionValidator
 
     static void ValidateTemplateScopes(ApplicationSyntax application, ParserContext context)
     {
-        var scopes = application.Modules
-            .SelectMany(module => module.ScreenTemplates)
+        var restricted = application.Modules
+            .SelectMany(module => module.ScreenTemplates.Select(template => (template.Name, template.RestrictsScopes, template.Scopes, template.SliceKinds))
+                .Concat((module.DialogTemplates ?? []).Select(template => (template.Name, template.RestrictsScopes, template.Scopes, template.SliceKinds))))
             .Where(template => template.RestrictsScopes)
             .GroupBy(template => template.Name, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First().Scopes.ToList(), StringComparer.Ordinal);
+            .ToDictionary(group => group.Key, group => (Scopes: group.First().Scopes.ToList(), SliceKinds: group.First().SliceKinds.ToList()), StringComparer.Ordinal);
 
         foreach (var module in application.Modules)
         {
-            CheckAssignments(module.Templates, "module", scopes, context);
+            CheckAssignments(module.Templates, "module", null, restricted, context);
             foreach (var (feature, depth) in Features(module.Features, 0))
             {
-                CheckAssignments(feature.Templates, depth == 0 ? "feature" : "subfeature", scopes, context);
+                CheckAssignments(feature.Templates, depth == 0 ? "feature" : "subfeature", null, restricted, context);
                 foreach (var slice in feature.Slices)
                 {
-                    CheckAssignments(slice.Templates, "slice", scopes, context);
-                    foreach (var reference in slice.Screens.SelectMany(screen => screen.Directives).OfType<ScreenTemplateReferenceSyntax>())
+                    CheckAssignments(slice.Templates, "slice", slice.Type, restricted, context);
+                    foreach (var reference in slice.Screens.SelectMany(screen => screen.Directives).OfType<ScreenTemplateReferenceSyntax>().Where(reference => reference.Blueprint is null))
                     {
-                        Check(reference.Name, "slice", reference.Location, scopes, context);
+                        Check(reference.Name, "slice", slice.Type, reference.Location, restricted, context);
                     }
                 }
             }
         }
     }
 
-    static void CheckAssignments(IEnumerable<TemplateAssignmentSyntax> assignments, string scope, Dictionary<string, List<string>> scopes, ParserContext context)
+    static void CheckAssignments(IEnumerable<TemplateAssignmentSyntax> assignments, string scope, SliceType? sliceType, Dictionary<string, (List<string> Scopes, List<string> SliceKinds)> restricted, ParserContext context)
     {
-        foreach (var assignment in assignments)
+        foreach (var assignment in assignments.Where(assignment => assignment.Blueprint is null))
         {
-            Check(assignment.Name, scope, assignment.Location, scopes, context);
+            Check(assignment.Name, scope, sliceType, assignment.Location, restricted, context);
         }
     }
 
-    static void Check(string template, string scope, SourceLocation location, Dictionary<string, List<string>> scopes, ParserContext context)
+    static void Check(string template, string scope, SliceType? sliceType, SourceLocation location, Dictionary<string, (List<string> Scopes, List<string> SliceKinds)> restricted, ParserContext context)
     {
-        if (scopes.TryGetValue(template, out var allowed) && !allowed.Contains(scope, StringComparer.Ordinal))
+        if (!restricted.TryGetValue(template, out var allowed))
         {
-            var allows = allowed.Count == 0 ? "no scope" : string.Join(", ", allowed);
+            return;
+        }
+
+        if (!allowed.Scopes.Contains(scope, StringComparer.Ordinal))
+        {
+            var allows = allowed.Scopes.Count == 0 ? "no scope" : string.Join(", ", allowed.Scopes);
             context.Error(
                 DiagnosticCodes.TemplateScopeMismatch,
                 $"The screen template '{template}' cannot be used at {scope} scope - it allows {allows}",
                 location);
         }
+        else if (scope == "slice" && sliceType is SliceType.Automation or SliceType.Translate)
+        {
+            // Scene's ApplicableTemplates: a slice that reacts or translates presents nothing, so no template applies to it.
+            context.Error(
+                DiagnosticCodes.TemplateScopeMismatch,
+                $"The screen template '{template}' cannot be used on a {sliceType} slice - it presents nothing, so no template applies",
+                location);
+        }
+        else if (scope == "slice" && sliceType is { } type && allowed.SliceKinds.Count > 0 && !allowed.SliceKinds.Contains(type.ToString(), StringComparer.Ordinal))
+        {
+            context.Error(
+                DiagnosticCodes.TemplateScopeMismatch,
+                $"The screen template '{template}' cannot be used on a {type} slice - it allows {string.Join(", ", allowed.SliceKinds.Select(kind => kind.ToLowerInvariant()))}",
+                location);
+        }
+    }
+
+    static void ValidateTemplateCategories(ApplicationSyntax application, ParserContext context)
+    {
+        foreach (var (kind, name, category, location) in (application.Layouts ?? []).Select(layout => ("layout", layout.Name, layout.Category, layout.Location))
+            .Concat(application.Modules.SelectMany(module => module.ScreenTemplates.Select(template => ("screen template", template.Name, template.Category, template.Location))))
+            .Concat(application.Modules.SelectMany(module => (module.DialogTemplates ?? []).Select(template => ("dialog template", template.Name, template.Category, template.Location)))))
+        {
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                context.Warning(
+                    DiagnosticCodes.TemplateCategoryMissing,
+                    $"The {kind} '{name}' declares no 'category' - every template needs one so a template picker can group it; a blueprint package build rejects a missing category",
+                    location);
+            }
+        }
+    }
+
+    static void ValidateTemplateBlueprints(ApplicationSyntax application, ParserContext context)
+    {
+        var packages = (application.UiProfiles ?? []).SelectMany(profile => profile.Packages).ToHashSet(StringComparer.Ordinal);
+        if (packages.Count == 0)
+        {
+            return;
+        }
+
+        var references = application.Templates.Select(template => (template.Blueprint, template.Name, template.Location))
+            .Concat(application.Modules.SelectMany(Assignments));
+        foreach (var (blueprint, name, location) in references.Where(reference => reference.Blueprint is not null && !packages.Contains(reference.Blueprint)))
+        {
+            context.Error(
+                DiagnosticCodes.UnknownTemplateBlueprint,
+                $"The template '{name}' comes from blueprint '{blueprint}', which no ui profile declares - add it to a profile's 'packages'",
+                location);
+        }
+    }
+
+    static List<(string? Blueprint, string Name, SourceLocation Location)> Assignments(ModuleSyntax module)
+    {
+        var assignments = module.Templates.Select(template => (template.Blueprint, template.Name, template.Location)).ToList();
+        foreach (var (feature, _) in Features(module.Features, 0))
+        {
+            assignments.AddRange(feature.Templates.Select(template => (template.Blueprint, template.Name, template.Location)));
+            foreach (var slice in feature.Slices)
+            {
+                assignments.AddRange(slice.Templates.Select(template => (template.Blueprint, template.Name, template.Location)));
+                assignments.AddRange(slice.Screens.SelectMany(screen => screen.Directives).OfType<ScreenTemplateReferenceSyntax>().Select(reference => (reference.Blueprint, reference.Name, reference.Location)));
+            }
+        }
+
+        return assignments;
     }
 
     static IEnumerable<(FeatureSyntax Feature, int Depth)> Features(IEnumerable<FeatureSyntax> features, int depth)

@@ -60,6 +60,9 @@ export const DiagnosticCodes = {
     UnknownNavigationDestination: 'PLAY0654',
     UnknownScreenContributionPoint: 'PLAY0655',
     TemplateNestingCycle: 'PLAY0656',
+    TemplateCategoryMissing: 'PLAY0720', // C# only: template declarations are not modeled by this compiler.
+    InvalidTemplateVersionRange: 'PLAY0721',
+    UnknownTemplateBlueprint: 'PLAY0722', // C# only: ui profile packages are not modeled by this compiler.
     DuplicateComplianceMarker: 'PLAY0653',
     LegacyComplianceMarker: 'PLAY0565',
     UnknownComplianceMarker: 'PLAY0566',
@@ -181,6 +184,7 @@ export const DiagnosticCodes = {
     UnknownActionDirective: 'PLAY0106',
     InvalidNavigation: 'PLAY0107',
     InvalidScreenLayoutSlot: 'PLAY0108',
+    UnknownLayoutDirective: 'PLAY0026',
     InvalidTitleDirective: 'PLAY0109',
     UnknownTableDirective: 'PLAY0110',
     UnknownSummaryDirective: 'PLAY0111',

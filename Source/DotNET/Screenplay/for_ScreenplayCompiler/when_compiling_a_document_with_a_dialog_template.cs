@@ -11,6 +11,7 @@ public class when_compiling_a_document_with_a_dialog_template : given.a_compiler
         """
         module Invoicing
           dialog template RegisterInvoiceDialog
+            category Test
             body
             actions
 

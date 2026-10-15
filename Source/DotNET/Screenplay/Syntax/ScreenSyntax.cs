@@ -115,7 +115,18 @@ public record ScreenNavigateSyntax(string Screen, string? By, SourceLocation Loc
 /// is a template - the application's <see cref="LayoutSyntax"/> is selected once by a <see cref="UiProfileSyntax"/>
 /// rather than named per screen.
 /// </remarks>
-public record ScreenTemplateReferenceSyntax(string Name, IEnumerable<ScreenSlotSyntax> Slots, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+public record ScreenTemplateReferenceSyntax(string Name, IEnumerable<ScreenSlotSyntax> Slots, SourceLocation Location) : ScreenDirectiveSyntax(Location)
+{
+    /// <summary>
+    /// Gets the name of the blueprint package the template comes from (<c>template blueprint &lt;Blueprint&gt; &lt;Name&gt;</c>), or <c>null</c> for an own template.
+    /// </summary>
+    public string? Blueprint { get; init; }
+
+    /// <summary>
+    /// Gets the semver range of the blueprint the reference accepts (<c>version "^1.2"</c>), or <c>null</c> when it does not pin a version.
+    /// </summary>
+    public string? Version { get; init; }
+}
 
 /// <summary>
 /// Represents a named slot within a template reference.

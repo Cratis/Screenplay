@@ -18,6 +18,7 @@ import { parseGuardedAction } from './GuardedActionParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { isValidTemplateVersionRange, parseBlueprintReference, startsBlueprintReference } from './TemplateReferenceText';
 import { parseTypeRef } from './PropertyLineParser';
 import { parseFromClause } from './UiBindingParser';
 import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
@@ -210,7 +211,20 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
 }
 
 function parseTemplateReference(context: ParserContext, line: SourceLine): ScreenTemplateReferenceSyntax {
-    const name = line.content.substring('template'.length).trim();
+    let name = line.content.substring('template'.length).trim();
+    let blueprint: string | null = null;
+    let version: string | null = null;
+    if (startsBlueprintReference(name)) {
+        const reference = parseBlueprintReference(name);
+        if (reference === undefined) {
+            context.error(DiagnosticCodes.UnknownLayoutDirective, `Invalid template reference '${line.content}' - expected 'template <Name>' or 'template blueprint <Blueprint> <Name> [version "<range>"]'`, locationOf(line));
+        } else {
+            ({ blueprint, name, version } = reference);
+            if (version !== null && !isValidTemplateVersionRange(version)) {
+                context.error(DiagnosticCodes.InvalidTemplateVersionRange, `The template version range '${version}' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as "^1.2"`, locationOf(line));
+            }
+        }
+    }
     const slots: ScreenSlotSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -221,7 +235,7 @@ function parseTemplateReference(context: ParserContext, line: SourceLine): Scree
         }
         slots.push({ kind: 'ScreenSlotSyntax', name: child.content, directives: parseDirectives(context, child), location: locationOf(child) });
     }
-    return { kind: 'ScreenTemplateReferenceSyntax', name, slots, location: locationOf(line) };
+    return { kind: 'ScreenTemplateReferenceSyntax', name, slots, ...(blueprint === null ? {} : { blueprint }), ...(version === null ? {} : { version }), location: locationOf(line) };
 }
 
 function parseSection(context: ParserContext, line: SourceLine): ScreenSectionSyntax {
