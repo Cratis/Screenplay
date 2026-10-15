@@ -42,13 +42,8 @@ public sealed partial class SemanticModelBinder
                     command.Concurrency.Location);
             }
 
-            if (command.Handler is not null)
-            {
-                RequireImplementation(SemanticImplementationRole.CommandHandler, SemanticAddress.ForCommand(slice, command.Name), command.Handler.File, command.Handler.Code);
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' handler requires a constrained implementation attachment.", command.Handler.Location);
-            }
-
             var address = SemanticAddress.ForCommand(slice, command.Name);
+            var handler = BindCommandHandler(address, command);
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier, commandProperty: true) with { IsGenerated = property.IsGenerated }).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
@@ -104,6 +99,7 @@ public sealed partial class SemanticModelBinder
                 : null;
             return new(id, command.Name, properties, validations, produced)
             {
+                Handler = handler,
                 Response = BindResponse(command, propertiesByName),
                 Route = BindCommandRoute(command, propertiesByName, produced),
                 CodeValidations = codeValidations,

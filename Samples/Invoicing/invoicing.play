@@ -1130,6 +1130,54 @@ module Invoicing
           refund    = false
         then error "$strings.invoices.validation.reasonRequired"
 
+    // A described body supplies event payload values; produces is its fixed result contract.
+    slice StateChange ApplyLateFee
+      description "Calculate a late fee for an overdue invoice"
+
+      command ApplyLateFee
+        invoiceId InvoiceId identifier
+        daysOverdue DaysOverdue
+        authorize IsAccountant
+        validate
+          daysOverdue >= 1 message "The invoice must be overdue"
+        handler
+          implementation
+            hint "Calculate the late fee from overdue days using the agreed daily rate"
+        produces LateFeeApplied
+          for invoiceId
+
+      event LateFeeApplied
+        // Required, deliberately unmapped: only the eventual body decides the amount.
+        amount Money
+
+      screen ApplyLateFeeScreen
+        template CommandDialog
+          body
+            title "Apply late fee"
+          actions
+            action ApplyLateFee
+
+      specification DenyingALateFeeForAnInvoiceManager
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when ApplyLateFee
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          daysOverdue = 3
+        then denied
+
+      specification ApplyingALateFee
+        // Body-reaching acceptance requires a target; reference outcome is Unsupported (ImplementationBody).
+        given caller
+          authenticated
+          role "Accountant"
+        when ApplyLateFee
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          daysOverdue = 3
+        then LateFeeApplied
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 30
+
     slice StateChange TagInvoice
       description "Labels an invoice so it can be found again - 'tag' is a field here, not a directive"
 

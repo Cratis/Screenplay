@@ -357,6 +357,11 @@ public sealed record SemanticCommand(
     ImmutableArray<SemanticProducedEvent> Produces)
 {
     /// <summary>
+    /// Gets the described handler contract, or null for a declarative command.
+    /// </summary>
+    public SemanticCommandHandler? Handler { get; init; }
+
+    /// <summary>
     /// Gets the transient response contract, or null when the command has no response.
     /// </summary>
     public SemanticCommandResponse? Response { get; init; }

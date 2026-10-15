@@ -4799,6 +4799,305 @@
                     "kind": "AuthorizeSyntax",
                     "requirement": {
                       "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": null,
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": [
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": "Calculate the late fee from overdue days using the agreed daily rate"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "ApplyLateFee",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "LateFeeApplied",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "daysOverdue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DaysOverdue"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "The invoice must be overdue",
+                          "property": "daysOverdue",
+                          "rule": "GreaterThanOrEqual",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": "Calculate a late fee for an overdue invoice",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "LateFeeApplied",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "ApplyLateFee",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "CommandDialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Apply late fee"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "ApplyLateFee",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ApplyLateFeeScreen"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "DenyingALateFeeForAnInvoiceManager",
+                  "thenCompensated": [],
+                  "thenDenied": {
+                    "kind": "SpecificationDeniedSyntax"
+                  },
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "ApplyLateFee",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "daysOverdue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 3
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ApplyingALateFee",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "LateFeeApplied",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 30
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "ApplyLateFee",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "daysOverdue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 3
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
                       "name": "CanManageInvoice"
                     }
                   },

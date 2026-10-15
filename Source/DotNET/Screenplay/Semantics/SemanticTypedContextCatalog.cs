@@ -47,7 +47,11 @@ internal static class SemanticTypedContextCatalog
         ImmutableArray<SemanticImplementationRequirement> requirements,
         bool strict)
     {
-        if (strict) SemanticGenerationLinkage.Validate(application, requirements);
+        if (strict)
+        {
+            SemanticGenerationLinkage.Validate(application, requirements);
+            SemanticHandlerLinkage.Validate(application, requirements);
+        }
         var slices = application.Modules.SelectMany(AllSlices).ToArray();
         var commands = slices.SelectMany(slice => slice.Commands).ToArray();
         var queries = slices.SelectMany(slice => slice.Queries).ToArray();

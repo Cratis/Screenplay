@@ -1,0 +1,81 @@
+module Billing
+  feature Fees
+    slice StateChange ApplyLateFee
+      command ApplyLateFee
+        invoiceId String identifier
+        days Int
+        authorize Accountant
+        validate
+          days >= 1 message "Invoice must be overdue"
+        handler
+          implementation
+            hint "Calculate the fee from overdue days"
+            hint "Use the agreed daily rate"
+        produces LateFeeApplied
+          for invoiceId
+      event LateFeeApplied
+        amount Int
+      command NoOp
+      specification Denied
+        given caller
+          authenticated
+        when ApplyLateFee
+          invoiceId = "invoice-1"
+          days = 3
+        then denied
+      specification Invalid
+        given caller
+          authenticated
+          role "Accountant"
+        when ApplyLateFee
+          invoiceId = "invoice-1"
+          days = 0
+        then error "Invoice must be overdue"
+      specification Body
+        given caller
+          authenticated
+          role "Accountant"
+        when ApplyLateFee
+          invoiceId = "invoice-1"
+          days = 3
+        then LateFeeApplied
+          for "invoice-1"
+          amount = 30
+      specification History
+        given LateFeeApplied
+          for "invoice-1"
+          amount = 30
+        when NoOp
+        then no events
+    slice Automation RequestedFees
+      event FeeRequested
+        days Int
+      event UnauthorizedFeeRequested
+      event Refused
+      reaction RequestedFee
+        runs as system role "Accountant"
+        when FeeRequested
+          invokes ApplyLateFee
+            invoiceId = "invoice-1"
+            days = days
+            on refused by validation
+              produces Refused
+      reaction UnauthorizedFee
+        runs as system
+        when UnauthorizedFeeRequested
+          invokes ApplyLateFee
+            invoiceId = "invoice-1"
+            days = 3
+      specification InvokedBody
+        when append FeeRequested
+          days = 3
+        then LateFeeApplied
+          for "invoice-1"
+          amount = 30
+      specification InvokedInvalid
+        when append FeeRequested
+          days = 0
+        then Refused
+      specification InvokedDenied
+        when append UnauthorizedFeeRequested
+        then denied

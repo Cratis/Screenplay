@@ -30,6 +30,11 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
+    void should_pin_the_described_command_information() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.DescribedCommandNotImplemented && diagnostic.Severity == DiagnosticSeverity.Information &&
+        diagnostic.Message.Contains("ApplyLateFee", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
     void should_pin_the_composite_key_disposition() => _diagnostics.Any(diagnostic =>
         diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("InvoicePaymentMethodTotals", StringComparison.Ordinal) &&
         diagnostic.Message.Contains("issues/599", StringComparison.Ordinal)).ShouldBeTrue();

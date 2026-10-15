@@ -30,7 +30,7 @@ command <Name>
 
   [produces ...]                  ← declarative — repeatable
 
-  [handler                        ← imperative fallback — instead of produces
+  [handler                        ← file/code fallback, or pending intent beside produces
     file <Path>
     | <inline csharp block returning events to append>]
 
@@ -130,7 +130,7 @@ ESM v21 adds pattern, random and implementation generation. Numeric fixtures and
 
 A generated identifier supplies an inline production's implicit destination. Plain `produces` without `for` keeps its separate legacy allocation channel; a generation fixture never satisfies that allocation. A response-only command records no facts. No response differs from a scalar response whose optional source is `Null`. Record fields preserve authored order and have external contract names, not independent semantic identities.
 
-Responses also parse beside a handler, but handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
+Responses also parse beside a handler. ESM v23 admits described command handlers with unconditional event productions; response-only pending handlers are refused (`PLAY0696`). File/inline handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
 
 The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [specification fixtures and return assertions](specifications.md#generated-fixtures-and-return-expectations).
 
@@ -494,7 +494,7 @@ Policies are declared at the top of the file — see [Policies](policies.md). De
 
 ## The `produces` block
 
-Declares what events a command emits. Supports single, multiple, and conditional forms. For a fully imperative implementation, use a [handler](#the-handler-block) instead.
+Declares what events a command emits. Supports single, multiple, and conditional forms. Beside a pending [handler](#the-handler-block), unconditional `produces` doubles as the body's result contract, not a payload implementation. A file/code handler remains mutually exclusive with `produces`.
 
 ### Single event with property mapping
 
@@ -634,7 +634,7 @@ handler
     ```
 ````
 
-A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+A command uses either `produces` blocks or a file/code `handler` — not both. A pending handler intent may sit beside `produces`. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
@@ -651,6 +651,26 @@ handler
 
 This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
 
+A pending handler (an `implementation` wrapper with no `file` or code, with optional ordered hints) may coexist with `produces`. It cannot coexist with another `handler` occurrence, even another pending intent (`PLAY0698`), in either order.
+
+A pending command handler with unconditional `produces` is a **described command**, admitted by ESM **v23**. Under a pending intent, `produces` doubles as **result contract version 1**:
+
+| Part | Owner in result contract v1 |
+| --- | --- |
+| Events, count and order | Declarative: each `produces` line yields exactly one event, in declared order |
+| Destination (`for`, routes and allocation) | Declarative, as for ordinary productions |
+| Tags and other production metadata | Declarative |
+| Generated values | Declarative; generated before the body and available to it |
+| Response | Declarative: the declared command property |
+| Authorization and validation | Declarative; run before the body, which denial or refusal never reaches |
+| Event property values | **The body**; mappings are non-normative hints and required properties may be unmapped |
+
+Neither renderers nor reference execution evaluate these event-property mappings. The exemption is limited to payload values; mapping type checks still apply. Binding reports information `PLAY0695` naming the command and RequirementId. No productions (including response-only pending commands) fails binding with `PLAY0696`; conditional `produces when` fails with `PLAY0697`. Result v1 does not admit repeated/occurrence productions or body-decided cardinality, and the body cannot reject. Source remains valid when binding refuses it. Legacy command `reads` remains outside admission.
+
+Reference execution evaluates authorization, validation, routing and generated values in their ordinary order, then returns **Unsupported (`ImplementationBody`)** when it reaches the body, directly or through an invoking reaction. The reason names the command and RequirementId; no production mapping runs or event is emitted. Earlier denial/validation specifications still execute; unsupported specifications are counted separately and an all-unsupported run is never green. Historical `given` events remain ordinary facts.
+
+**Realization is deferred.** The pending sidecar requirement carries ordered hints, flags and a CommandHandler typed-context descriptor with context/result versions 1. An admitting target supplies the body, not Screenplay. Moving to a file keeps the RequirementId, but attached handlers cannot keep `produces` today and remain refused with `PLAY0268`. Screenplay defines no filled-body reuse across renders until a later decision defines the attached result contract and body ABI.
+
 | Owner | `implementation` wrapper |
 | --- | --- |
 | Command handler | Supported; direct file/fence forms remain supported |
@@ -658,7 +678,7 @@ This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/m
 | Operation execute/compensate phases | New syntax-only authoring wrapper; not admitted by any supported executable model (ESM) version yet |
 | Provisioning | Deferred |
 
-`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
+`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. File/inline handlers still fail executable admission with `PLAY0268`; described command admission requires consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 
 ## Concurrency
 

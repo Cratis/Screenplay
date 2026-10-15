@@ -89,7 +89,7 @@ conditions are reported without a code until the compiler checks them too.
 ### Event sources and command streams
 
 Event-source declarations and command stream routes are admitted by ESM v8.
-Property-path mappings and handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
+Property-path mappings and file/inline handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
 for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
 `Default`, the reserved stored stream name `All` (including `id "All"`), or a routed fixture whose source identifier type cannot be resolved. Reserved-name checks are binding-only; authoring validation still accepts the declarations. For `All`, [rename the stream without retaining that stored-name pin](event-sources.md#rename-a-source-or-stream).
 A stream reference selects a classification, never the identity destination supplied by `for`.
@@ -218,7 +218,11 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 |---|---|---|
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
-| `PLAY0035` | Error | A command declares both `produces` and `handler`, which say the same thing two ways. |
+| `PLAY0035` | Error | A command declares both `produces` and a file or code `handler`. A pending implementation intent may coexist with `produces`. |
+| `PLAY0695` | Information | A described command is admitted in ESM v23 but its pending payload implementation needs a target. The message names the command and RequirementId. |
+| `PLAY0696` | Error | A pending command handler has no productions, including response-only commands. Source remains valid; executable binding requires at least one production. |
+| `PLAY0697` | Error | A pending command handler has conditional productions (`produces when`). Result contract v1 requires unconditional productions. |
+| `PLAY0698` | Error | A pending command handler intent coexists with another `handler` occurrence, including another pending intent. Keep one handler; the error is located at the second occurrence. |
 | `PLAY0036` | Error | A command marks more than one property as its identifier. |
 | `PLAY0037` | Error | A `concurrency` line carries anything beyond the keyword. |
 | `PLAY0038` | Error | A command declares more than one concurrency block, and a command has at most one. |
@@ -886,7 +890,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths ([#129](https://github.com/Cratis/Screenplay/issues/129)), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including file/inline command handlers, query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths ([#129](https://github.com/Cratis/Screenplay/issues/129)), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -1330,7 +1334,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` reports that exact numeric mode is not admitted by any supported executable model (ESM) version yet, and unmarked documents keep their existing numeric behavior.
 
-These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. Attached file/inline handlers remain unsupported independently. Pending command handlers with unconditional productions bind in ESM v23 with `PLAY0695`; production-less and conditional forms report `PLAY0696` and `PLAY0697`. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
 ### Timeline order
 
@@ -1368,7 +1372,7 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
-Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths and handler commands still fail with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths and attached file/inline handler commands still fail with `PLAY0268`. Pending command handlers with unconditional productions select ESM v23 (`PLAY0695`); no productions and conditional productions are binding errors `PLAY0696` and `PLAY0697`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ### Negated claim targets
 
