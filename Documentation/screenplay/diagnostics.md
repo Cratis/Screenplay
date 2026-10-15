@@ -1052,8 +1052,9 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
-| `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
+| `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted portable pattern for custom matching. |
+| `PLAY0367` | Error | A quoted `matches` operand has invalid regular expression syntax. |
+| `PLAY0699` | Error | A `matches` pattern uses a construct outside the [portable match dialect](commands.md#portable-match-dialect), exceeds 1,000 source code units or exceeds 1,500 expanded positions. Names the construct and suggests an equivalent where one exists; both compilers report it. |
 | `PLAY0368` | Error | A validation rule names a severity other than `information`, `warning` or `error`. |
 | `PLAY0369` | Error | A `require` body has an invalid or repeated `severity` directive. |
 

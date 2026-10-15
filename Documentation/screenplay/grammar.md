@@ -892,9 +892,12 @@ RuleOp         = "not empty"
                | "rule", Ident ;
 
 (* "email" is the one defined named match pattern. StringLiteral here holds an
-   ECMAScript regular expression, not another named pattern; see Commands for
-   its definition and substring-matching semantics.
-   The $ anchor means end of input, never before a trailing newline.        *)
+   portable flagless JavaScript regular expression, not another named pattern;
+   see Commands / Portable match dialect for admitted forms, escapes by context,
+   refused constructs (PLAY0699) and substring-matching semantics.
+   UTF-16 code units; $ means end of input, never before a trailing newline.
+   At most 1000 source code units and 1500 expanded positions; counted repeats
+   multiply the body by the upper bound, or by lower + 1 when unbounded.    *)
 
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
