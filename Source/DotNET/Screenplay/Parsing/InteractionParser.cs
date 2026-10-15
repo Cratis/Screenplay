@@ -244,7 +244,7 @@ internal static partial class InteractionParser
         return new(match.Groups[1].Value, arguments, line.Location);
     }
 
-    [GeneratedRegex(@"^with\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^with\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.NonBacktracking)]
     internal static partial Regex WithRegex();
 
     static void ParseParameter(ParserContext context, SourceLine line, List<BehaviorParameterSyntax> parameters)
@@ -748,66 +748,66 @@ internal static partial class InteractionParser
             : match.Groups[quotedGroup + 2].Value;
     }
 
-    [GeneratedRegex(@"^behavior\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^behavior\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ParameterRegex();
 
-    [GeneratedRegex(@"^order\s+(-?\d+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^order\s+(-?\d+)$", RegexOptions.NonBacktracking)]
     private static partial Regex OrderRegex();
 
-    [GeneratedRegex(@"^on\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex OnRegex();
 
-    [GeneratedRegex(@"^where\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^where\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhereRegex();
 
-    [GeneratedRegex(@"^event\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^event\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EventTriggerRegex();
 
-    [GeneratedRegex(@"^interval\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^interval\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.NonBacktracking)]
     private static partial Regex IntervalTriggerRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex ApplicationTriggerRegex();
 
-    [GeneratedRegex(@"^on\s+(success|failure|result)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+(success|failure|result)$", RegexOptions.NonBacktracking)]
     private static partial Regex ContinuationRegex();
 
-    [GeneratedRegex(@"^execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ExecuteRegex();
 
-    [GeneratedRegex(@"^navigate\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigate\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex NavigateToRegex();
 
-    [GeneratedRegex(@"^navigate\s+back$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^navigate\s+back$", RegexOptions.NonBacktracking)]
     private static partial Regex NavigateBackRegex();
 
-    [GeneratedRegex(@"^open\s+dialog\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^open\s+dialog\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OpenDialogRegex();
 
-    [GeneratedRegex(@"^close\s+dialog$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^close\s+dialog$", RegexOptions.NonBacktracking)]
     private static partial Regex CloseDialogRegex();
 
-    [GeneratedRegex(@"^refresh\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^refresh\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex RefreshRegex();
 
-    [GeneratedRegex(@"^set\s+([\w.]+)\s+to\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^set\s+([\w.]+)\s+to\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SetRegex();
 
-    [GeneratedRegex("^notify\\s+(info|warning|error)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^notify\\s+(info|warning|error)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$", RegexOptions.NonBacktracking)]
     private static partial Regex NotifyRegex();
 
-    [GeneratedRegex("^confirm\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^confirm\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$", RegexOptions.NonBacktracking)]
     private static partial Regex ConfirmRegex();
 
-    [GeneratedRegex(@"^raise\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^raise\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex RaiseRegex();
 
-    [GeneratedRegex(@"^uses\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^uses\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UsesRegex();
 
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex BehaviorArgumentRegex();
 }

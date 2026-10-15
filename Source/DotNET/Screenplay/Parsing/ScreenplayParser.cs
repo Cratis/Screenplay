@@ -657,30 +657,30 @@ internal static partial class ScreenplayParser
         return body.Build(line.Location);
     }
 
-    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex DomainRegex();
 
-    [GeneratedRegex(@"^import\s+([\w.]+)(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^import\s+([\w.]+)(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.NonBacktracking)]
     private static partial Regex ImportRegex();
 
-    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ConceptRegex();
 
-    [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex EnumValueRegex();
 
-    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaRegex();
 
-    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaPolicyRegex();
 
-    [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ModuleRegex();
 
-    [GeneratedRegex(@"^feature\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^feature\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex FeatureRegex();
 
-    [GeneratedRegex(@"^[ ]*\t", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[ ]*\t", RegexOptions.NonBacktracking)]
     private static partial Regex TabIndentRegex();
 }

@@ -367,9 +367,9 @@ internal static partial class ExpressionParser
         return new(parts, location);
     }
 
-    [GeneratedRegex(@"^@?[A-Za-z_]\w*(\.@?[A-Za-z_$]\w*)*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[A-Za-z_]\w*(\.@?[A-Za-z_$]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex PathRegex();
 
-    [GeneratedRegex(@"^-?\d+(\.\d+)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^-?\d+(\.\d+)?$", RegexOptions.NonBacktracking)]
     private static partial Regex NumberRegex();
 }

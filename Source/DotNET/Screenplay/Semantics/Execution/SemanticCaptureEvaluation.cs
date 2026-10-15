@@ -104,7 +104,7 @@ internal static partial class SemanticCaptureEvaluation
         return context.Result;
     }
 
-    [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.NonBacktracking)]
     private static partial Regex IsoInstant();
 
     static Dictionary<string, SemanticCaptureField> Fields(SemanticCaptureRecord record) =>

@@ -150,12 +150,12 @@ internal static partial class ConceptComplianceParser
         }
     }
 
-    [GeneratedRegex(@"\s+", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\s+", RegexOptions.NonBacktracking)]
     private static partial Regex WhitespaceRegex();
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+(reason|scope|special|criminal)(?:\s+(.*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+(reason|scope|special|criminal)(?:\s+(.*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex DirectiveRegex();
 
-    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex ReasonRegex();
 }

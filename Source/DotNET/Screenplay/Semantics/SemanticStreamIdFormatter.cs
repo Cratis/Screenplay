@@ -180,9 +180,9 @@ public static partial class SemanticStreamIdFormatter
         _ => string.Empty
     };
 
-    [GeneratedRegex(@"^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))(?![\s\S])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex UuidRegex();
 
-    [GeneratedRegex(@"^-?[0-9]+(?![\s\S])", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^-?[0-9]+\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex IntegerRegex();
 }

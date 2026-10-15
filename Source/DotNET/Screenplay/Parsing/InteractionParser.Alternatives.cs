@@ -59,6 +59,6 @@ internal static partial class InteractionParser
         return actions;
     }
 
-    [GeneratedRegex(@"^when\s+(.+)\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+(.+)\s+execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex InlineAlternativeRegex();
 }

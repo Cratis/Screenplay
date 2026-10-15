@@ -143,7 +143,7 @@ internal static partial class SpecificationParser
         values.Add(value);
     }
 
-    [GeneratedRegex(@"^example\s+([A-Z]\w*)\s*:\s*([A-Z]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^example\s+([A-Z]\w*)\s*:\s*([A-Z]\w*(?:\.\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ExampleHeaderRegex();
 
     sealed class FixtureBody

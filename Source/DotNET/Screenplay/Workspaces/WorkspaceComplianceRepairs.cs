@@ -110,15 +110,15 @@ internal static partial class WorkspaceComplianceRepairs
         Title = "Use bare pii and secret compliance markers"
     };
 
-    [GeneratedRegex(@"[^\r\n]+(?:\r\n|\r|\n)?|(?:\r\n|\r|\n)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"[^\r\n]+(?:\r\n|\r|\n)?|(?:\r\n|\r|\n)", RegexOptions.NonBacktracking)]
     private static partial Regex LineRegex();
 
-    [GeneratedRegex(@"^(\s*concept\s+\w+\s*:\s*\w+)((?:[^\S\r\n]+@?\w+)*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(\s*concept\s+\w+\s*:\s*\w+)((?:[^\S\r\n]+@?\w+)*)", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"@pii\b|@?sensitive\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"@pii\b|@?sensitive\b", RegexOptions.NonBacktracking)]
     private static partial Regex MarkerRegex();
 
-    [GeneratedRegex(@"^(\s*)(@pii|@?sensitive)\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(\s*)(@pii|@?sensitive)\b", RegexOptions.NonBacktracking)]
     private static partial Regex DirectiveRegex();
 }

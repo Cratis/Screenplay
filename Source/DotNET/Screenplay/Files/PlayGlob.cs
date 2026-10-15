@@ -1,9 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace Cratis.Screenplay.Files;
 
 /// <summary>
@@ -88,37 +85,76 @@ public static class PlayGlob
     /// <returns><c>true</c> when the path is a <c>.play</c> file the pattern names.</returns>
     public static bool IsMatch(string resolvedPattern, string path) =>
         path.EndsWith(".play", StringComparison.OrdinalIgnoreCase) &&
-        new Regex(ToRegex(resolvedPattern), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)).IsMatch(path);
+        Matches(resolvedPattern.Split('/'), path.Split('/'));
 
-    static string ToRegex(string pattern)
+    // Walks the pattern one segment at a time, keeping the set of path positions reachable so far. Each step looks at
+    // every path position once, so any number of '**' segments costs pattern length x path length, without recursion.
+    static bool Matches(string[] pattern, string[] path)
     {
-        var builder = new StringBuilder("^");
-        var segments = pattern.Split('/');
-        for (var index = 0; index < segments.Length; index++)
+        var reachable = new bool[path.Length + 1];
+        reachable[0] = true;
+        for (var patternIndex = 0; patternIndex < pattern.Length; patternIndex++)
         {
-            var last = index == segments.Length - 1;
-            if (segments[index] == "**")
+            if (pattern[patternIndex] == "**" && patternIndex == pattern.Length - 1)
             {
-                builder.Append(last ? ".*" : "(?:[^/]+/)*");
-                continue;
+                // A trailing '**' takes the rest of the path, at least one segment.
+                return reachable.AsSpan(0, path.Length).Contains(true);
             }
 
-            foreach (var character in segments[index])
+            var next = new bool[path.Length + 1];
+            for (var pathIndex = 0; pathIndex <= path.Length; pathIndex++)
             {
-                builder.Append(character switch
+                if (pattern[patternIndex] == "**")
                 {
-                    '*' => "[^/]*",
-                    '?' => "[^/]",
-                    _ => Regex.Escape(character.ToString())
-                });
+                    // An inner '**' takes any number of whole, non-empty folders.
+                    next[pathIndex] = reachable[pathIndex] || (pathIndex > 0 && next[pathIndex - 1] && path[pathIndex - 1].Length > 0);
+                }
+                else if (pathIndex > 0 && reachable[pathIndex - 1] && SegmentMatches(pattern[patternIndex], path[pathIndex - 1]))
+                {
+                    next[pathIndex] = true;
+                }
             }
 
-            if (!last)
+            reachable = next;
+        }
+
+        return reachable[path.Length];
+    }
+
+    // '*' takes any run of characters within the segment and '?' exactly one; everything else matches itself.
+    // Retrying from the most recent '*' only is enough for these two wildcards, so this stays linear in practice
+    // and quadratic at worst.
+    static bool SegmentMatches(string glob, string segment)
+    {
+        var (patternIndex, segmentIndex, star, starSegmentIndex) = (0, 0, -1, 0);
+        while (segmentIndex < segment.Length)
+        {
+            if (patternIndex < glob.Length && (glob[patternIndex] == '?' || glob[patternIndex] == segment[segmentIndex]) && glob[patternIndex] != '*')
             {
-                builder.Append('/');
+                patternIndex++;
+                segmentIndex++;
+            }
+            else if (patternIndex < glob.Length && glob[patternIndex] == '*')
+            {
+                star = patternIndex++;
+                starSegmentIndex = segmentIndex;
+            }
+            else if (star >= 0)
+            {
+                patternIndex = star + 1;
+                segmentIndex = ++starSegmentIndex;
+            }
+            else
+            {
+                return false;
             }
         }
 
-        return builder.Append('$').ToString();
+        while (patternIndex < glob.Length && glob[patternIndex] == '*')
+        {
+            patternIndex++;
+        }
+
+        return patternIndex == glob.Length;
     }
 }

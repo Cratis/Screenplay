@@ -71,6 +71,6 @@ internal static partial class SemanticGenerationContract
 
     static bool Printable(string value) => value.All(character => character is >= ' ' and <= '~');
 
-    [GeneratedRegex(@"^([a-z]([a-z_]{0,61}[a-z])?)?\z", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"^([a-z]([a-z_]{0,61}[a-z])?)?\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex TypeIdPrefixRegex();
 }

@@ -184,14 +184,14 @@ internal static partial class OperationParser
         context.SkipBlock(line.Indent);
     }
 
-    [GeneratedRegex(@"^system\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^system\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex SystemHeaderRegex();
-    [GeneratedRegex(@"^operation\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^operation\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
-    [GeneratedRegex(@"^produces\s+operation\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+operation\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex InlineHeaderRegex();
-    [GeneratedRegex(@"^uses\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^uses\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UsesRegex();
-    [GeneratedRegex(@"^(.+?)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(.+?)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex TypedMappingRegex();
 }

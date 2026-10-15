@@ -226,18 +226,18 @@ internal static partial class ValidationRuleParser
         return source;
     }
 
-    [GeneratedRegex(@"\bseverity\s+(\S+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\bseverity\s+(\S+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SeverityRegex();
 
-    [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MessageRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex RuleRegex();
 
-    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\s*(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\s*(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OperandRegex();
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
 }

@@ -29,7 +29,7 @@ internal static partial class ReactionIdentityParser
             return null;
         }
 
-        var roles = match.Groups["role"].Captures.Select(capture => StringLiteral.Unescape(capture.Value)).ToArray();
+        var roles = RoleRegex().Matches(line.Content).Select(role => StringLiteral.Unescape(role.Groups[1].Value)).ToArray();
         if (roles.Any(string.IsNullOrEmpty) || roles.Distinct(StringComparer.Ordinal).Count() != roles.Length)
         {
             context.Error(DiagnosticCodes.InvalidReactionIdentity, "Reaction identity roles must be nonempty and distinct quoted literals.", line.Location);
@@ -45,9 +45,12 @@ internal static partial class ReactionIdentityParser
         context.SkipBlock(line.Indent);
     }
 
-    [GeneratedRegex(@"^runs\s+as\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^runs\s+as\b", RegexOptions.NonBacktracking)]
     private static partial Regex PrefixRegex();
 
-    [GeneratedRegex(@"^runs\s+as\s+system(?:\s+role\s+""(?<role>" + StringLiteral.BodyPattern + @")""(?:\s+and\s+role\s+""(?<role>" + StringLiteral.BodyPattern + @")"")*)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^runs\s+as\s+system(?:\s+role\s+""(?<role>" + StringLiteral.BodyPattern + @")""(?:\s+and\s+role\s+""(?<role>" + StringLiteral.BodyPattern + @")"")*)?$", RegexOptions.NonBacktracking)]
     private static partial Regex IdentityRegex();
+
+    [GeneratedRegex("\"(" + StringLiteral.BodyPattern + ")\"", RegexOptions.NonBacktracking)]
+    private static partial Regex RoleRegex();
 }

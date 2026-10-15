@@ -84,12 +84,12 @@ internal static partial class SeedParser
         return properties;
     }
 
-    [GeneratedRegex("^for\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^for\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex ForRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex EventNameRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex MappingRegex();
 }

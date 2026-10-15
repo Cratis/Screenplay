@@ -108,12 +108,12 @@ internal static partial class AuthorizeParser
 
     static bool IsName(string token) => token is not ("(" or ")" or "and" or "or");
 
-    [GeneratedRegex(@"^(?:(?:or|and)\s+)?[A-Za-z_(][\w\s()]*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:(?:or|and)\s+)?[A-Za-z_(][\w\s()]*$", RegexOptions.NonBacktracking)]
     private static partial Regex ContinuationRegex();
 
-    [GeneratedRegex(@"\(|\)|[A-Za-z_]\w*", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"\(|\)|[A-Za-z_]\w*", RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
 }
