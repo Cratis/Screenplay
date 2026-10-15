@@ -154,7 +154,6 @@ internal static class PublicEventUsageValidator
         {
             var matching = reaction.Triggers.Select(trigger => trigger.Source).OfType<NamedTriggerSourceSyntax>()
                 .Select(source => (source.Name, Resolve(application, events, scope.Segments, source.Name, source, false, resolutionContext)?.Node))
-                .Select(item => (item.Name, Node: item.Item2))
                 .Where(item => item.Node is not null && appended.Contains(item.Node))
                 .DistinctBy(item => item.Node, ReferenceEqualityComparer.Instance).Select(item => item.Name).ToArray();
             if (matching.Length == 0) continue;
