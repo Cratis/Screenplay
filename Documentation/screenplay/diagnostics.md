@@ -686,6 +686,7 @@ Private origins continue to use the existing invalid event/import declaration di
 | `PLAY0619` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
 | `PLAY0620` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
 | `PLAY0687` | Error | A capture's `source events` originate from several event stores; split it into one capture per origin. |
+| `PLAY0694` | Warning | An unrouted reaction in a directionless Translate slice consumes an event a capture in that same slice appends. Keep the capture here and move the reaction to an Automation slice. |
 | `PLAY0700` | Error | A capture over events names a key that is not a required property of every declared `from` event, including a `$`-context key. |
 | `PLAY0701` | Error | `given capture` or `when capture` names a capture over events; present the typed source event with `given <Event>` or `when append <Event>`. |
 
@@ -711,6 +712,32 @@ section have no automatic repair because each one is a contract decision for the
 `PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
 `PLAY0620` is malformed `source events` input with no single intended correction. `PLAY0687` requires splitting a capture by origin, with no single intended correction.
+
+### Directionless translation doing two jobs
+
+`PLAY0694` reports one warning at each reaction, listing the distinct matching events, even in a purely private
+model. For example, `FollowUp` below reacts to the fact that `Feed` just captured:
+
+```screenplay
+module Orders
+  feature Importing
+    slice Translate ReceiveOrder
+      event OrderReceived
+      capture Feed
+        append OrderReceived
+      reaction FollowUp
+        when OrderReceived
+```
+
+The check compares resolved event declarations across the assembled model, including imports and generations, not
+name strings. Child and nested capture appends count; specification fixtures and captures in other slices do not.
+Other producers elsewhere do not suppress the warning. Reactions with a `from` filter, reactions to other events,
+Automation slices and slices with an explicit `direction` are unchanged (`PLAY0616` still checks explicit inbound).
+Unresolved or ambiguous references never establish a match.
+
+Ordinary compilation still succeeds; `--warnaserror` fails until the slice is split. Use the
+[manual Translate/Automation split](slices.md#one-slice-one-job). There is no automatic repair: creating the new slice
+requires an author to choose its name, placement and specifications. No executable-model or binding behavior changes.
 
 ### Production routes and observer filters
 

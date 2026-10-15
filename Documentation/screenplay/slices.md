@@ -148,6 +148,36 @@ target is that event ([projecting to an event](projections/index.md#projecting-t
 or with a reaction. An inbound slice may consume another application's public events with
 [`source events`](captures.md#capturing-from-public-events). Both select ESM v9.
 
+### One slice, one job
+
+Capturing an outside occurrence and reacting to the resulting local fact are two behaviors. Keep the capture in a
+Translate slice and put the follow-up in an Automation slice, each with its own specifications:
+
+```screenplay
+module Orders
+  feature Importing
+    slice Translate ReceiveOrder
+      event OrderReceived
+      capture Feed
+        append OrderReceived
+      specification ReceivesOrder
+        when capture Feed
+        then OrderReceived
+    slice Automation FollowUpOrder
+      reaction FollowUp
+        when OrderReceived
+      specification ReactsToOrder
+        when append OrderReceived
+```
+
+A directionless Translate slice that instead contains an unrouted reaction to an event its own capture appends gets
+warning `PLAY0694` at the reaction. This includes child and nested appends, but not fixtures or captures in other
+slices. The check compares resolved event declarations; unresolved or ambiguous references never match. A reaction
+with a `from` filter is excluded because captures are unrouted. Other producers of the event elsewhere do not make
+co-location appropriate. Ordinary compilation remains valid, but `--warnaserror` requires the split. Adding
+`direction inbound` is not the repair: explicit inbound consumption of local facts is refused by `PLAY0616`.
+There is no automatic split because the new slice's name, placement and specifications require author choices.
+
 ### What goes in a slice
 
 | Construct | Typical slice type | Page |
