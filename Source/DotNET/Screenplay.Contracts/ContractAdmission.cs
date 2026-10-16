@@ -66,6 +66,25 @@ static class ContractAdmission
               event Recorded
         """;
 
+    internal const string CommandUuidComparisons = """
+        concept MemberId : Uuid
+        module M
+          feature F
+            slice StateChange S
+              command Record
+                id String identifier
+                requestedBy MemberId
+                approvedBy MemberId
+                raw Uuid
+                validate
+                  require approvedBy != requestedBy
+                  require raw == "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+                produces when requestedBy == raw
+                  Recorded
+                    for id
+              event Recorded
+        """;
+
     internal const string ProtectedReads = """
         command reads protected
         module M
@@ -147,7 +166,10 @@ static class ContractAdmission
                 "eventsource Account\n  identifier String\n  stream Archive\n" + Slice + "      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.Archive\n",
                 "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n      command Run\n        produces External\n",
                 CommandDateComparisons,
-                CommandDateComparisons.Replace("end >= start", "end >= today", StringComparison.Ordinal)
+                CommandDateComparisons.Replace("end >= start", "end >= today", StringComparison.Ordinal),
+                CommandUuidComparisons,
+                CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy < requestedBy", StringComparison.Ordinal),
+                CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy != raw", StringComparison.Ordinal)
             ]),
         new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
         new(

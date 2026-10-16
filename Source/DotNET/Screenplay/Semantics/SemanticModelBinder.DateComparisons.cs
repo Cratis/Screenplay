@@ -10,7 +10,7 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        static SemanticComparisonOperator DateOperator(ComparisonOperator op) => op switch
+        static SemanticComparisonOperator ConditionOperator(ComparisonOperator op) => op switch
         {
             ComparisonOperator.Equal => SemanticComparisonOperator.Equal,
             ComparisonOperator.NotEqual => SemanticComparisonOperator.NotEqual,
@@ -57,7 +57,7 @@ public sealed partial class SemanticModelBinder
                 right = new(default, value);
             }
 
-            return new SemanticComparison(left, DateOperator(comparison.Operator), right);
+            return new SemanticComparison(left, ConditionOperator(comparison.Operator), right);
         }
 
         SemanticValidationRule? BindDateRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject)

@@ -1072,6 +1072,8 @@ Caller-supplied equality filters on collection queries are admitted by ESM v14. 
 
 ESM v26 admits chronological Date/DateTime comparisons only in command `require`, `produces when` and command/property validation rules. `PLAY0268` refuses mixed primitives, optional condition operands, concept rules, reaction `where`, protected read paths, `$context` and `today`; a refused whole comparison reports only this code, without checking literals. In an admitted position, an invalid date literal or a DateTime literal without an explicit offset or Z reports `PLAY0273`. Runtime offset-less DateTime inputs on participating properties reject with Validation before rules, even for skipped comparisons. See [command date comparisons](commands.md#chronological-command-date-comparisons).
 
+ESM v28 admits Uuid `==` and `!=` only in command `require` and `produces when`. `PLAY0268` refuses ordering, optional or collection operands, two different Uuid concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules and concept rules; a refused whole comparison reports only this code, without checking its literal. In an admitted comparison, a literal that is not a lowercase hyphenated 36-character Uuid reports `PLAY0273`. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
+
 For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
 ### AST authoring

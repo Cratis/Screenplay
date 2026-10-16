@@ -9,15 +9,15 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
-        void ValidateCondition(SemanticCondition condition, Dictionary<SemanticId, SemanticProperty> properties, int depth = 0, bool allowDateComparisons = false)
+        void ValidateCondition(SemanticCondition condition, Dictionary<SemanticId, SemanticProperty> properties, int depth = 0, bool allowCommandComparisons = false)
         {
             if (depth > 32) throw new InvalidSemanticContract("Condition nesting exceeds the portable limit of 32.");
             switch (condition)
             {
                 case SemanticLogicalCondition logical:
                     if (!Enum.IsDefined(logical.Operator)) throw new InvalidSemanticContract("Unknown logical condition operator.");
-                    ValidateCondition(logical.Left, properties, depth + 1, allowDateComparisons);
-                    ValidateCondition(logical.Right, properties, depth + 1, allowDateComparisons);
+                    ValidateCondition(logical.Left, properties, depth + 1, allowCommandComparisons);
+                    ValidateCondition(logical.Right, properties, depth + 1, allowCommandComparisons);
                     break;
                 case SemanticComparison comparison:
                     if (!Enum.IsDefined(comparison.Operator)) throw new InvalidSemanticContract("Unknown comparison operator.");
@@ -26,7 +26,12 @@ internal static partial class SemanticModelValidator
                     var leftPrimitive = UnderlyingPrimitive(left);
                     if (SemanticDateComparison.IsDate(leftPrimitive) && _semanticVersion.IsAtLeast(SemanticVersion.V26))
                     {
-                        ValidateDateCondition(comparison, left, right, leftPrimitive, allowDateComparisons);
+                        ValidateDateCondition(comparison, left, right, leftPrimitive, allowCommandComparisons);
+                        break;
+                    }
+                    if (leftPrimitive == SemanticPrimitiveType.Uuid && _semanticVersion.IsAtLeast(SemanticVersion.V28))
+                    {
+                        ValidateUuidCondition(comparison, left, right, allowCommandComparisons);
                         break;
                     }
                     var rightPrimitive = UnderlyingPrimitive(right);
@@ -54,6 +59,25 @@ internal static partial class SemanticModelValidator
             if (comparison.Right.Value is { } value) SemanticDateComparison.ValidateConstant(value, primitive);
             else if (UnderlyingPrimitive(right) != primitive)
                 throw new InvalidSemanticContract("Date condition properties must have the same primitive.");
+        }
+
+        void ValidateUuidCondition(SemanticComparison comparison, SemanticTypeReference left, SemanticTypeReference right, bool allowed)
+        {
+            if (!allowed || !comparison.Left.Property.IsSet || comparison.Operator is not (SemanticComparisonOperator.Equal or SemanticComparisonOperator.NotEqual) ||
+                left.IsCollection || left.IsOptional || right.IsCollection || right.IsOptional)
+            {
+                throw new InvalidSemanticContract("Uuid conditions require == or != between required scalar operands in require or produces when.");
+            }
+            if (comparison.Right.Value is { } value)
+            {
+                if (value is not SemanticTextValue text || !SemanticValueRules.ValidateText(text.Value, SemanticPrimitiveType.Uuid))
+                    throw new InvalidSemanticContract("A Uuid condition constant must be a canonical lowercase hyphenated Uuid.");
+                return;
+            }
+            if (UnderlyingPrimitive(right) != SemanticPrimitiveType.Uuid)
+                throw new InvalidSemanticContract("Uuid condition operands must both be Uuid.");
+            if (left.Kind == SemanticTypeReferenceKind.Concept && right.Kind == SemanticTypeReferenceKind.Concept && left.Target != right.Target)
+                throw new InvalidSemanticContract("Uuid condition operands that are both concepts must be the same concept.");
         }
 
         SemanticTypeReference ConditionOperandType(SemanticConditionOperand operand, Dictionary<SemanticId, SemanticProperty> properties)
