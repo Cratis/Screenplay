@@ -16,12 +16,16 @@ public class when_refusing_invalid_projection_parts : Specification
     [InlineData("from Recorded\n  key\n    first = first\n    second = second\n    unknown = first", "PLAY0662")]
     [InlineData("from Recorded\n  key\n    first = first\n    first = first\n    second = second", "PLAY0662")]
     [InlineData("from Recorded\n  key\n    first = amount\n    second = second", "PLAY0662")]
+    [InlineData("from Recorded\n  key\n    first = first + second\n    second = second", "PLAY0662")]
     [InlineData("remove with Removed", "PLAY0661")]
     [InlineData("remove with Removed key first", "PLAY0661")]
     [InlineData("remove with Removed\n  parent first", "PLAY0661")]
     [InlineData("remove with Removed\n  key\n    first = first", "PLAY0661")]
     [InlineData("remove with Removed\n  key\n    first = first\n    second = second\n    unknown = first", "PLAY0662")]
     [InlineData("remove with Removed\n  key\n    first = amount\n    second = second", "PLAY0662")]
+    [InlineData("remove with Removed\n  key first", "PLAY0661")]
+    [InlineData("remove with Removed\n  key\n    first = first\n    first = first\n    second = second", "PLAY0662")]
+    [InlineData("remove with Removed\n  key\n    first = first + second\n    second = second", "PLAY0662")]
     public void should_refuse_the_projection_with_its_key_diagnostic(string block, string expected)
     {
         var source = """
