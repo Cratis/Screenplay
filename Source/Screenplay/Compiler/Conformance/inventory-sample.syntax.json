@@ -1,0 +1,4263 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "MovementId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "SupplierId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "LocationId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemSku",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "CategoryName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "LocationName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "LocationPath",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "SupplierName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PersonName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "EmailAddress",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PhoneNumber",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Quantity",
+      "type": "Int",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Money",
+      "type": "Decimal",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "inStock",
+        "lowStock",
+        "outOfStock"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "MovementType",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "values": [
+        "checkIn",
+        "checkOut",
+        "transfer",
+        "adjustment"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "SupplierStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1
+      ],
+      "values": [
+        "active",
+        "onHold"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Inventory"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsWarehouseClerk"
+        }
+      },
+      "description": "Items, where they are kept, how they move and who supplies them",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What the warehouse keeps",
+          "features": [
+            {
+              "kind": "FeatureSyntax",
+              "authorize": null,
+              "description": "Every item as a card with its picture",
+              "features": [],
+              "fileImports": [],
+              "isPlacement": false,
+              "name": "Gallery",
+              "slices": [
+                {
+                  "kind": "SliceSyntax",
+                  "captures": [],
+                  "commands": [],
+                  "constraints": [],
+                  "description": "The same items as cards, each with its picture",
+                  "events": [],
+                  "name": "ItemCards",
+                  "operations": [],
+                  "projections": [
+                    {
+                      "kind": "ProjectionSyntax",
+                      "autoMap": "Inherit",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "ItemRegistered"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "itemId"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "sku"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "name"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "quantity"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "status"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "StockAdjusted"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "quantity"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "status"
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "ItemCardsProjection",
+                      "readModel": "ItemCards",
+                      "sequence": null
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "kind": "QuerySyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "IsWarehouseClerk"
+                        }
+                      },
+                      "by": null,
+                      "description": null,
+                      "filters": [],
+                      "isObservable": true,
+                      "name": "AllItemCards",
+                      "returnType": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "ItemCards"
+                      },
+                      "scope": null
+                    }
+                  ],
+                  "reactions": [],
+                  "readModels": [
+                    {
+                      "kind": "ReadModelSyntax",
+                      "description": null,
+                      "name": "ItemCards",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "itemId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "ItemId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "sku",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "ItemSku"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "ItemName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "quantity",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Quantity"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "status",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "ItemStatus"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "screens": [
+                    {
+                      "kind": "ScreenSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTemplateReferenceSyntax",
+                          "blueprint": "Cratis.Blueprint.Inventory",
+                          "name": "InventoryItemGallery",
+                          "slots": [],
+                          "version": "^1.0"
+                        }
+                      ],
+                      "name": "Gallery"
+                    }
+                  ],
+                  "specifications": [
+                    {
+                      "kind": "SpecificationSyntax",
+                      "given": [
+                        {
+                          "kind": "SpecificationEventSyntax",
+                          "eventType": "ItemRegistered",
+                          "for": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                          },
+                          "values": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "sku",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "EQ-1001"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "name",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Pallet jack"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "category",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Equipment"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "location",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Main warehouse / Aisle A / Shelf A1"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "quantity",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 6
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "reorderLevel",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 2
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "unitCost",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 289
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "status",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "inStock"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "supplier",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Hartley Industrial"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [],
+                        "roles": [
+                          "WarehouseClerk"
+                        ]
+                      },
+                      "givenCaptures": [],
+                      "givenClock": null,
+                      "givenOperationFailures": [],
+                      "givenReadModels": [],
+                      "name": "ShowingTheRegisteredItemAsACard",
+                      "thenCompensated": [],
+                      "thenDenied": null,
+                      "thenErrors": [],
+                      "thenEvents": [],
+                      "thenEventsInAnyOrder": false,
+                      "thenNoResult": null,
+                      "thenOperations": [],
+                      "thenReadModels": [
+                        {
+                          "kind": "SpecificationReadModelSyntax",
+                          "exactly": false,
+                          "name": "ItemCards",
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "itemId",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "name",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Pallet jack"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "thenResults": [],
+                      "thenReturns": null,
+                      "when": null,
+                      "whenAppended": null,
+                      "whenCapture": null,
+                      "whenClock": null,
+                      "whenQuery": null,
+                      "whenTrigger": null
+                    }
+                  ],
+                  "type": "StateView"
+                }
+              ]
+            }
+          ],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Items",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterItem",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ItemRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "itemId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sku",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "sku"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "category",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "category"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "location"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "quantity"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reorderLevel",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reorderLevel"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitCost",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "unitCost"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplier",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "supplier"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "sku",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemSku"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "category",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CategoryName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reorderLevel",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitCost",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "supplier",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Adds an item to the warehouse",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ItemRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "sku",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemSku"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "category",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CategoryName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reorderLevel",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitCost",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "supplier",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterItem",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryQuickCreateItem",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterItem",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewItem"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAnItem",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ItemRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sku",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "EQ-1001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "category",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Equipment"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reorderLevel",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 2
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitCost",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 289
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inStock"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplier",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterItem",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "itemId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "sku",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "EQ-1001"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Pallet jack"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "category",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Equipment"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "location",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Main warehouse / Aisle A / Shelf A1"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "quantity",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 6
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reorderLevel",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 2
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "unitCost",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 289
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "inStock"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "supplier",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Hartley Industrial"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "AdjustStock",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "StockAdjusted",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "itemId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "quantity"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Corrects the stock of an item after a count",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "StockAdjusted",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "AdjustStock",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryAdjustStock",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "AdjustStock",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "AdjustStock"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ItemRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sku",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "EQ-1001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "category",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Equipment"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reorderLevel",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 2
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitCost",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 289
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inStock"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplier",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "AdjustingTheStockOfAnItem",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "StockAdjusted",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "lowStock"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "AdjustStock",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "itemId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "quantity",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 4
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "lowStock"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "What the warehouse keeps and how much of it",
+              "events": [],
+              "name": "ItemList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ItemRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "itemId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "sku"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "category"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "location"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "reorderLevel"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "unitCost"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "supplier"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "StockAdjusted"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ItemsProjection",
+                  "readModel": "Items",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Items"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "itemId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "ItemId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetItem",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Items"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Items",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "sku",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemSku"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "category",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CategoryName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reorderLevel",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitCost",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "supplier",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryItemList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Items"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryItemPage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "ItemRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ItemRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sku",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "EQ-1001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "category",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Equipment"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reorderLevel",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 2
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitCost",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 289
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inStock"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplier",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredItem",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Items",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Where things are kept",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Locations",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterLocation",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "LocationRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "locationId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "path",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "path"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "locationId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "path",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Adds a place to keep things",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "LocationRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "path",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterLocation",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Add a location"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterLocation",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "NewLocation"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringALocation",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "LocationRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "path",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterLocation",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "locationId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Shelf A1"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "path",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Main warehouse / Aisle A / Shelf A1"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "The places the warehouse keeps things, as a tree",
+              "events": [],
+              "name": "LocationTree",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "LocationRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "locationId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "path"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "LocationsProjection",
+                  "readModel": "Locations",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllLocations",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Locations"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "locationId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "LocationId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetLocation",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Locations"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Locations",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "locationId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "path",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryLocations",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Locations"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "LocationRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "path",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredLocation",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Locations",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "locationId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "path",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What came in, went out and moved",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Movements",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterMovement",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "MovementRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "movementId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "moved",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "moved"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "item",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "item"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "movementType",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "movementType"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "quantity"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "location"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "handledBy",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "handledBy"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "movementId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "moved",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "item",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "movementType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "handledBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Records that stock came in, went out or moved",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "MovementRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "moved",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "item",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "movementType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "handledBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterMovement",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryCheckInOut",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterMovement",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "CheckInOut"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAMovement",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "MovementRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "moved",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-16"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "item",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "movementType",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkIn"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "handledBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hannah Cole"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterMovement",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "movementId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "moved",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-16"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "item",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Pallet jack"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "movementType",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "checkIn"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "quantity",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 4
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "location",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Main warehouse / Aisle A / Shelf A1"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "handledBy",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Hannah Cole"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every check in, check out, transfer and adjustment",
+              "events": [],
+              "name": "MovementList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "MovementRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "movementId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "moved"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "item"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "movementType"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "location"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "handledBy"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "MovementsProjection",
+                  "readModel": "Movements",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllMovements",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Movements"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "movementId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "MovementId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetMovement",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Movements"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Movements",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "movementId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "moved",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "item",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "movementType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Quantity"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LocationPath"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "handledBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryMovementList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Movements"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "MovementRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "moved",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-16"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "item",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "movementType",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkIn"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "handledBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hannah Cole"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredMovement",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Movements",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "movementId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "item",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Where the stock comes from",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Suppliers",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterSupplier",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "SupplierRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "supplierId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contact",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "contact"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "email"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "phone"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "supplierId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contact",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Adds a supplier",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "SupplierRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contact",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterSupplier",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryQuickCreateSupplier",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterSupplier",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewSupplier"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringASupplier",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "SupplierRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contact",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ben Hartley"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "orders@hartley.example.co.uk"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "+44 20 7946 0210"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterSupplier",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "supplierId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Hartley Industrial"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "contact",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Ben Hartley"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "email",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "orders@hartley.example.co.uk"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "phone",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "+44 20 7946 0210"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "active"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "The companies items are bought from",
+              "events": [],
+              "name": "SupplierList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "SupplierRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "supplierId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "contact"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "email"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "phone"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "SuppliersProjection",
+                  "readModel": "Suppliers",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllSuppliers",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Suppliers"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "supplierId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "SupplierId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetSupplier",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Suppliers"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Suppliers",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "supplierId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contact",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "SupplierStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventorySupplierList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Suppliers"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "SupplierRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contact",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ben Hartley"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "orders@hartley.example.co.uk"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "+44 20 7946 0210"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredSupplier",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Suppliers",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplierId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "How the stock is doing",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Dashboard",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "How much is in stock and how many items the warehouse holds",
+              "events": [],
+              "name": "InventoryDashboard",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ItemRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "summaryId"
+                        },
+                        {
+                          "kind": "AddMappingSyntax",
+                          "property": "unitsOnHand"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "itemCount"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InventoryFiguresProjection",
+                  "readModel": "InventoryFigures",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsWarehouseClerk"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "summaryId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "String"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "CurrentFigures",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "InventoryFigures"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "InventoryFigures",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "summaryId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemCount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitsOnHand",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Inventory",
+                      "name": "InventoryDashboard",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Dashboard"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ItemRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sku",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "EQ-1001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Pallet jack"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "category",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Equipment"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Main warehouse / Aisle A / Shelf A1"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reorderLevel",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 2
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitCost",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 289
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inStock"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "supplier",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartley Industrial"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "WarehouseClerk"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "CountingWhatIsInStock",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "InventoryFigures",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "summaryId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "global"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitsOnHand",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemCount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Inventory"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Keeps the warehouse in order: registers items, checks them in and out and adjusts the stock when a count disagrees",
+      "name": "WarehouseClerk",
+      "policies": [
+        "IsWarehouseClerk"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}

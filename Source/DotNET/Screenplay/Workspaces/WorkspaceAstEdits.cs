@@ -431,7 +431,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         var entry = Expected(parent, expected);
         var collection = RequireSlotType(entry, member, value);
         var owner = Resolve(parent).AsObject();
-        if (!owner.ContainsKey(member))
+
+        // A member at its default (an empty collection of navigation regions, toolbar buttons, contributions ...) is omitted from the
+        // canonical JSON, so its absence only proves the member unknown when the node kind does not declare it.
+        if (!owner.ContainsKey(member) && !SyntaxKinds.All.Single(kind => kind.Type == entry.Node.GetType()).Members.Any(declared => declared.Name == member))
         {
             throw new InvalidWorkspaceAuthoring($"Unknown typed syntax member '{member}'.");
         }

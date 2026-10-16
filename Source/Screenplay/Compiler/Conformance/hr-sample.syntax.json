@@ -1,0 +1,4482 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "EmployeeId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "TimeOffRequestId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "BalanceId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "OnboardingId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PersonName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "JobTitle",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "DepartmentName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "OfficeName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "EmailAddress",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PhoneNumber",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Days",
+      "type": "Int",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Percent",
+      "type": "Int",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "EmploymentStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "active",
+        "probation",
+        "leave"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "LeaveType",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "values": [
+        "vacation",
+        "sickLeave",
+        "parentalLeave",
+        "timeInLieu"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "RequestStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "pending",
+        "approved",
+        "declined"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "OnboardingStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "waiting",
+        "inProgress",
+        "completed"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Hr"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsHrManager"
+        }
+      },
+      "description": "The people of the company, their time off and their first weeks",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "The people of the company",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Directory",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterEmployee",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "EmployeeRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "employeeId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "title"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "department",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "department"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "location"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "email"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "phone"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "manager",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "manager"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "employeeId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmployeeId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "department",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DepartmentName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OfficeName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmploymentStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "manager",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Adds a person to the directory",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "EmployeeRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "department",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DepartmentName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OfficeName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmploymentStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "manager",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterEmployee",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrQuickCreateEmployee",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterEmployee",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewEmployee"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAnEmployee",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "EmployeeRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Seniorutvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "department",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikling"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Bergen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "silje.andersen@eksempel.no"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "+47 400 10 200"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "manager",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Jonas Eriksen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterEmployee",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "employeeId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Silje Andersen"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "title",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Seniorutvikler"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "department",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Utvikling"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "location",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Bergen"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "email",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "silje.andersen@eksempel.no"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "phone",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "+47 400 10 200"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "active"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "manager",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Jonas Eriksen"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Everyone in the company as cards with photo, title, department and contact",
+              "events": [],
+              "name": "EmployeeDirectory",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "EmployeeRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "employeeId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "department"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "location"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "email"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "phone"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "manager"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "EmployeesProjection",
+                  "readModel": "Employees",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllEmployees",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Employees"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "employeeId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "EmployeeId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetEmployee",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Employees"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Employees",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "employeeId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmployeeId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "department",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DepartmentName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OfficeName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmailAddress"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "phone",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PhoneNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmploymentStatus"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "manager",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrEmployeeDirectory",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Directory"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrEmployeePage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "EmployeeRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "EmployeeRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Seniorutvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "department",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikling"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Bergen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "silje.andersen@eksempel.no"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "+47 400 10 200"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "manager",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Jonas Eriksen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredEmployee",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Employees",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employeeId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Who reports to whom",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "OrgChart",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Who reports to whom, as a tree",
+              "events": [],
+              "name": "ReportingLines",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "EmployeeRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "employeeId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "manager"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ReportingLinesProjection",
+                  "readModel": "ReportingLines",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllReportingLines",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "ReportingLines"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "ReportingLines",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "employeeId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "EmployeeId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "manager",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrOrgChart",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "OrgChart"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "EmployeeRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Seniorutvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "department",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikling"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Bergen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "email",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "silje.andersen@eksempel.no"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "phone",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "+47 400 10 200"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "manager",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Jonas Eriksen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "PlacingAnEmployeeInTheChart",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "ReportingLines",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employeeId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Asking for time off and seeing who is away",
+          "features": [
+            {
+              "kind": "FeatureSyntax",
+              "authorize": null,
+              "description": "What each person has taken and has left",
+              "features": [],
+              "fileImports": [],
+              "isPlacement": false,
+              "name": "Balances",
+              "slices": [
+                {
+                  "kind": "SliceSyntax",
+                  "captures": [],
+                  "commands": [
+                    {
+                      "kind": "CommandSyntax",
+                      "authorize": null,
+                      "description": null,
+                      "handler": null,
+                      "name": "OpenBalance",
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "BalanceRegistered",
+                          "for": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "balanceId"
+                          },
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "employee",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "employee"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "department",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "department"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "entitlement",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "entitlement"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "taken",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "taken"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "remaining",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "remaining"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "used",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "used"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": true,
+                          "name": "balanceId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "BalanceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "employee",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "PersonName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "department",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DepartmentName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "entitlement",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "taken",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "remaining",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "used",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Percent"
+                          }
+                        }
+                      ],
+                      "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
+                      "validations": []
+                    }
+                  ],
+                  "constraints": [],
+                  "description": "Opens the leave balance of a person for the year",
+                  "events": [
+                    {
+                      "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
+                      "generation": 1,
+                      "hasGenerationMarker": false,
+                      "id": null,
+                      "name": "BalanceRegistered",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "employee",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "PersonName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "department",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DepartmentName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "entitlement",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "taken",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "remaining",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "used",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Percent"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "name": "OpenBalance",
+                  "operations": [],
+                  "projections": [],
+                  "queries": [],
+                  "reactions": [],
+                  "readModels": [],
+                  "screens": [
+                    {
+                      "kind": "ScreenSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTemplateReferenceSyntax",
+                          "name": "Dialog",
+                          "slots": [
+                            {
+                              "kind": "ScreenSlotSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Open a leave balance"
+                                }
+                              ],
+                              "name": "body"
+                            },
+                            {
+                              "kind": "ScreenSlotSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenActionSyntax",
+                                  "command": "OpenBalance",
+                                  "label": null,
+                                  "navigate": null
+                                }
+                              ],
+                              "name": "actions"
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "OpenBalance"
+                    }
+                  ],
+                  "specifications": [
+                    {
+                      "kind": "SpecificationSyntax",
+                      "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [],
+                        "roles": [
+                          "HrManager"
+                        ]
+                      },
+                      "givenCaptures": [],
+                      "givenClock": null,
+                      "givenOperationFailures": [],
+                      "givenReadModels": [],
+                      "name": "RegisteringABalance",
+                      "thenCompensated": [],
+                      "thenDenied": null,
+                      "thenErrors": [],
+                      "thenEvents": [
+                        {
+                          "kind": "SpecificationEventSyntax",
+                          "eventType": "BalanceRegistered",
+                          "for": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                          },
+                          "values": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "employee",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Silje Andersen"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "department",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Utvikling"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "entitlement",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 25
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "taken",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 7
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "remaining",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 18
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "used",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 28
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "thenEventsInAnyOrder": false,
+                      "thenNoResult": null,
+                      "thenOperations": [],
+                      "thenReadModels": [],
+                      "thenResults": [],
+                      "thenReturns": null,
+                      "when": {
+                        "kind": "SpecificationCommandSyntax",
+                        "commandType": "OpenBalance",
+                        "for": null,
+                        "generatedValues": [],
+                        "values": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "balanceId",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "employee",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "Silje Andersen"
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "department",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "Utvikling"
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "entitlement",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 25
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "taken",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 7
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "remaining",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 18
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "used",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 28
+                            }
+                          }
+                        ]
+                      },
+                      "whenAppended": null,
+                      "whenCapture": null,
+                      "whenClock": null,
+                      "whenQuery": null,
+                      "whenTrigger": null
+                    }
+                  ],
+                  "type": "StateChange"
+                },
+                {
+                  "kind": "SliceSyntax",
+                  "captures": [],
+                  "commands": [],
+                  "constraints": [],
+                  "description": "Entitlement, days taken and days left for each person",
+                  "events": [],
+                  "name": "BalanceList",
+                  "operations": [],
+                  "projections": [
+                    {
+                      "kind": "ProjectionSyntax",
+                      "autoMap": "Inherit",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "BalanceRegistered"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "balanceId"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "employee"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "department"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "entitlement"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "taken"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "remaining"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "used"
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "BalancesProjection",
+                      "readModel": "Balances",
+                      "sequence": null
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "kind": "QuerySyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "IsHrManager"
+                        }
+                      },
+                      "by": null,
+                      "description": null,
+                      "filters": [],
+                      "isObservable": true,
+                      "name": "AllBalances",
+                      "returnType": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Balances"
+                      },
+                      "scope": null
+                    },
+                    {
+                      "kind": "QuerySyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "IsHrManager"
+                        }
+                      },
+                      "by": {
+                        "kind": "QueryParameterSyntax",
+                        "name": "balanceId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "BalanceId"
+                        }
+                      },
+                      "description": null,
+                      "filters": [],
+                      "isObservable": false,
+                      "name": "GetBalance",
+                      "returnType": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Balances"
+                      },
+                      "scope": null
+                    }
+                  ],
+                  "reactions": [],
+                  "readModels": [
+                    {
+                      "kind": "ReadModelSyntax",
+                      "description": null,
+                      "name": "Balances",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "balanceId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "BalanceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "employee",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "PersonName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "department",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DepartmentName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "entitlement",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "taken",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "remaining",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Days"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "used",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Percent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "screens": [
+                    {
+                      "kind": "ScreenSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTemplateReferenceSyntax",
+                          "blueprint": "Cratis.Blueprint.Hr",
+                          "name": "HrTimeOffBalanceList",
+                          "slots": [],
+                          "version": "^1.0"
+                        }
+                      ],
+                      "name": "Balances"
+                    }
+                  ],
+                  "specifications": [
+                    {
+                      "kind": "SpecificationSyntax",
+                      "given": [
+                        {
+                          "kind": "SpecificationEventSyntax",
+                          "eventType": "BalanceRegistered",
+                          "for": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                          },
+                          "values": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "employee",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Silje Andersen"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "department",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Utvikling"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "entitlement",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 25
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "taken",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 7
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "remaining",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 18
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "used",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 28
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [],
+                        "roles": [
+                          "HrManager"
+                        ]
+                      },
+                      "givenCaptures": [],
+                      "givenClock": null,
+                      "givenOperationFailures": [],
+                      "givenReadModels": [],
+                      "name": "ListingTheRegisteredBalance",
+                      "thenCompensated": [],
+                      "thenDenied": null,
+                      "thenErrors": [],
+                      "thenEvents": [],
+                      "thenEventsInAnyOrder": false,
+                      "thenNoResult": null,
+                      "thenOperations": [],
+                      "thenReadModels": [
+                        {
+                          "kind": "SpecificationReadModelSyntax",
+                          "exactly": false,
+                          "name": "Balances",
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "balanceId",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0003"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "employee",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Silje Andersen"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "thenResults": [],
+                      "thenReturns": null,
+                      "when": null,
+                      "whenAppended": null,
+                      "whenCapture": null,
+                      "whenClock": null,
+                      "whenQuery": null,
+                      "whenTrigger": null
+                    }
+                  ],
+                  "type": "StateView"
+                }
+              ]
+            }
+          ],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "TimeOff",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RequestTimeOff",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "TimeOffRequestRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "requestId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employee",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "employee"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "leaveType",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "leaveType"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "fromDate"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "toDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "toDate"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "days",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "days"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "requestId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TimeOffRequestId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "employee",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "leaveType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LeaveType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "toDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "days",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Days"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RequestStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Asks for time off",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "TimeOffRequestRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "employee",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "leaveType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LeaveType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "toDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "days",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Days"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RequestStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RequestTimeOff",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrRequestTimeOff",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RequestTimeOff",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "RequestTimeOff"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringATimeOffRequest",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "TimeOffRequestRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employee",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "leaveType",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "vacation"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-26"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "toDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "days",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "pending"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RequestTimeOff",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "requestId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "employee",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Silje Andersen"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "leaveType",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "vacation"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "fromDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-26"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "toDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-30"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "days",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 5
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "pending"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "DecideTimeOff",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "TimeOffDecided",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "requestId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "requestId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TimeOffRequestId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RequestStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Approves or declines a request",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "TimeOffDecided",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RequestStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "DecideTimeOff",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrTimeOffList",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "DecideTimeOff",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "DecideRequest"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "TimeOffRequestRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employee",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "leaveType",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "vacation"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-26"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "toDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "days",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "pending"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ApprovingATimeOffRequest",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "TimeOffDecided",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "approved"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "DecideTimeOff",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "requestId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "approved"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every request with who asked, for when and what became of it",
+              "events": [],
+              "name": "TimeOffList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "TimeOffRequestRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "requestId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "employee"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "leaveType"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "fromDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "toDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "days"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "TimeOffDecided"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "TimeOffRequestsProjection",
+                  "readModel": "TimeOffRequests",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllTimeOffRequests",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "TimeOffRequests"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "requestId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "TimeOffRequestId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetTimeOffRequest",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "TimeOffRequests"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "TimeOffRequests",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "requestId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TimeOffRequestId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "employee",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "leaveType",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LeaveType"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "toDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "days",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Days"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RequestStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrTimeOffList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "TimeOff"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "TimeOffRequestRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employee",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "leaveType",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "vacation"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-26"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "toDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "days",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "pending"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredTimeOffRequest",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "TimeOffRequests",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "requestId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "employee",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Silje Andersen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Getting new hires started",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Onboarding",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "StartOnboarding",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "OnboardingRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "onboardingId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "role",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "role"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "startDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "startDate"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "owner"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "progress"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "onboardingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "role",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "startDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "owner",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Starts the onboarding of a new hire",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OnboardingRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "role",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "startDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "owner",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "StartOnboarding",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Start an onboarding"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "StartOnboarding",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "StartOnboarding"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAnOnboarding",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "OnboardingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Emil Johansen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "role",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "startDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-01"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Marte Haugen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 58
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "StartOnboarding",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "onboardingId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Emil Johansen"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "role",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Utvikler"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "startDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-01"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "owner",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Marte Haugen"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "progress",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 58
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "inProgress"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "AdvanceOnboarding",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "OnboardingAdvanced",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "onboardingId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "progress"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "onboardingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Records how far along a new hire is",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OnboardingAdvanced",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "AdvanceOnboarding",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrOnboardingChecklist",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "AdvanceOnboarding",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "AdvanceChecklist"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "OnboardingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Emil Johansen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "role",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "startDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-01"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Marte Haugen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 58
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "AdvancingAnOnboarding",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "OnboardingAdvanced",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 75
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "AdvanceOnboarding",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "onboardingId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "progress",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 75
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "inProgress"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "New hires and how far along their onboarding is",
+              "events": [],
+              "name": "OnboardingList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "OnboardingRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "onboardingId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "role"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "startDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "owner"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "progress"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "OnboardingAdvanced"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "progress"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "OnboardingsProjection",
+                  "readModel": "Onboardings",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllOnboardings",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Onboardings"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsHrManager"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "onboardingId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "OnboardingId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetOnboarding",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Onboardings"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Onboardings",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "onboardingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "role",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "JobTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "startDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "owner",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OnboardingStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrOnboardingList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Onboarding"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Hr",
+                      "name": "HrOnboardingChecklist",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "OnboardingChecklist"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "OnboardingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Emil Johansen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "role",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Utvikler"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "startDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-01"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Marte Haugen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 58
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "HrManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredOnboarding",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Onboardings",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "onboardingId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Emil Johansen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Hr"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Looks after the people of the company: keeps the directory, answers time-off requests and walks new hires through their first weeks",
+      "name": "HrManager",
+      "policies": [
+        "IsHrManager"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}
