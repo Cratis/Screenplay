@@ -55,6 +55,10 @@
         { "name": "invoicing-sample", "path": "Samples/Invoicing/invoicing.play" },
         { "name": "crm-sample", "path": "Samples/Crm/crm.play" },
         { "name": "ticketing-sample", "path": "Samples/Ticketing/ticketing.play" },
+        { "name": "inventory-sample", "path": "Samples/Inventory/inventory.play" },
+        { "name": "hr-sample", "path": "Samples/Hr/hr.play" },
+        { "name": "projects-sample", "path": "Samples/Projects/projects.play" },
+        { "name": "administration-sample", "path": "Samples/Administration/administration.play" },
         { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
         { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" }
     ]

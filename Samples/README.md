@@ -13,6 +13,10 @@ screenplay --warnaserror Samples/<Sample>
 | [Invoicing](Invoicing) | 1 file, 30 slices | Every construct except the [preview constructs](../.cratis/ai/rules/project/samples.md#preview-constructs), used for something an invoicing system needs, with English and Norwegian `.strings` files. |
 | [Ticketing](Ticketing) | 1 file, 12 slices | A second application built from a domain blueprint: a help desk whose dialogs and board issue commands, a public portal form and a knowledge base. |
 | [Crm](Crm) | 1 file, 18 slices | An application built from a domain blueprint: screens that fill the CRM blueprint's templates (`template blueprint Crm ...`), the navigation regions, and a blueprint's sample-data pack as the preview data. |
+| [Inventory](Inventory) | 1 file, 11 slices | An application built from the Inventory and Assets blueprint: a warehouse's items, locations, movements and suppliers. |
+| [Hr](Hr) | 1 file, 10 slices | An application built from the HR blueprint: a directory, an org chart, time off and onboarding, with the blueprint's Norwegian pack. |
+| [Projects](Projects) | 1 file, 7 slices | An application built from the Project and Task Tracker blueprint: projects, my tasks and a board by status and by person. |
+| [Administration](Administration) | 1 file, 9 slices | An application built from the Administration blueprint: users, roles and permissions, settings and an audit log. |
 | [Commerce](Commerce) | many small files | An application composed with [imports](../Documentation/screenplay/imports.md) at every level: a root file that reads like a table of contents, a file per module and per feature that imports its own folder, and one file per slice that holds only the slice. |
 | [TimeTracking](TimeTracking) | many small files | An application composed from one root glob. Module files declare their features inline and import each feature's folder, and each step of the story is a file of its own. |
 
