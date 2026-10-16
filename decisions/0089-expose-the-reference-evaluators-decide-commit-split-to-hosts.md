@@ -96,11 +96,15 @@ cannot run them, so the rule has no shared proof.
    `command reads protected` preamble, its `esm-v25.json`, revision and catalog, and `races.v1.json`. The cases:
    `present-state-race-recorded`, `present-state-race-removal`, `same-event-other-key`, `other-view-same-key`,
    `merged-keys`, `no-fact-command-conflict`, `no-fact-command-accept`, `irrelevant-fact-preserved`,
-   `intervening-publication`, `absent-then-created`, `rejected-decision`, `late-uniqueness-claim`, `no-later-facts`, `repeat-commit-accept-then-conflict`,
+   `absent-then-created`, `rejected-decision`, `late-uniqueness-claim`, `no-later-facts`, `repeat-commit-accept-then-conflict`,
    `repeat-commit-late-constraint`, `repeat-commit-stale-generated-source`,
-   `reconstructed-nonprefix-history`, `publication-dependency-conflict` and `unchanged-publication-suppressed`. Each gives the decided facts, the request, the expected dependencies, the later facts and the
+   `reconstructed-nonprefix-history` and the remaining cases above. Each gives the decided facts, the request, the expected dependencies, the later facts and the
    expected outcome. The specs run them only through the public `EstablishWorld` → `Decide` → `ExtendWorld` → `Commit`, with an explicit second `Commit` step for the repeat-commit cases,
    and pin the bytes by SHA-256. Non-canonical UUID key casing is not a vector; the public path rejects it.
+   Publication races (an intervening publication, a publication matching the dependency set, and suppression of an
+   unchanged publication) are not vectors either: public replay does not accept facts of a locally published public
+   event, which only an outbound translation produces and which a live event log never holds, so no host can present
+   them. They stay covered by the evaluator's internal specifications (`with_intervening_publications`).
 10. **No new ESM version.** The vectors use the existing v25 model and the existing corpus stays frozen; no member is
    added to the ESM.
 11. **Out of scope.**
