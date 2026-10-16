@@ -106,7 +106,7 @@ ui profile Desktop
   target size regular
   packages
     Cratis.Components
-    Crm
+    Cratis.Blueprint.Crm
   layout AppShell
 
   // The blueprint ships the demo data; the application chooses which pack previews, once, here.
@@ -150,12 +150,12 @@ module Crm
         owner   OwnerName
 
       screen NewLead
-        template blueprint Crm CrmLeadCreateForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmLeadCreateForm version "^1.0"
           actions
             action RegisterLead
 
       screen QuickNewLead
-        template blueprint Crm CrmQuickCreateLead version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmQuickCreateLead version "^1.0"
 
       specification RegisteringALead
         given caller
@@ -208,7 +208,7 @@ module Crm
         owner   OwnerName
 
       screen EditLead
-        template blueprint Crm CrmLeadEditForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmLeadEditForm version "^1.0"
           actions
             action UpdateLead
 
@@ -266,8 +266,7 @@ module Crm
           owner   = owner
 
       screen Leads
-        template blueprint Crm CrmLeadList version "^1.0"
-        data Leads[] via query AllLeads
+        template blueprint Cratis.Blueprint.Crm CrmLeadList version "^1.0"
 
       specification ListingTheRegisteredLead
         given caller
@@ -315,12 +314,12 @@ module Crm
         owner   OwnerName
 
       screen NewContact
-        template blueprint Crm CrmContactCreateForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmContactCreateForm version "^1.0"
           actions
             action RegisterContact
 
       screen QuickNewContact
-        template blueprint Crm CrmQuickCreateContact version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmQuickCreateContact version "^1.0"
 
       specification RegisteringAContact
         given caller
@@ -368,7 +367,7 @@ module Crm
         owner   OwnerName
 
       screen EditContact
-        template blueprint Crm CrmContactEditForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmContactEditForm version "^1.0"
           actions
             action UpdateContact
 
@@ -425,12 +424,10 @@ module Crm
           owner   = owner
 
       screen Contacts
-        template blueprint Crm CrmContactList version "^1.0"
-        data Contacts[] via query AllContacts
+        template blueprint Cratis.Blueprint.Crm CrmContactList version "^1.0"
 
       screen ContactRecord
-        template blueprint Crm CrmContactPage version "^1.0"
-        data Contacts via query GetContact by contactId
+        template blueprint Cratis.Blueprint.Crm CrmContactPage version "^1.0"
 
       specification ListingTheRegisteredContact
         given caller
@@ -474,12 +471,12 @@ module Crm
         owner    OwnerName
 
       screen NewCompany
-        template blueprint Crm CrmCompanyCreateForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmCompanyCreateForm version "^1.0"
           actions
             action RegisterCompany
 
       screen QuickNewCompany
-        template blueprint Crm CrmQuickCreateCompany version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmQuickCreateCompany version "^1.0"
 
       specification RegisteringACompany
         given caller
@@ -522,7 +519,7 @@ module Crm
         owner    OwnerName
 
       screen EditCompany
-        template blueprint Crm CrmCompanyEditForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmCompanyEditForm version "^1.0"
           actions
             action UpdateCompany
 
@@ -574,12 +571,10 @@ module Crm
           owner    = owner
 
       screen Companies
-        template blueprint Crm CrmCompanyList version "^1.0"
-        data Companies[] via query AllCompanies
+        template blueprint Cratis.Blueprint.Crm CrmCompanyList version "^1.0"
 
       screen CompanyRecord
-        template blueprint Crm CrmCompanyPage version "^1.0"
-        data Companies via query GetCompany by companyId
+        template blueprint Cratis.Blueprint.Crm CrmCompanyPage version "^1.0"
 
       specification ListingTheRegisteredCompany
         given caller
@@ -628,12 +623,12 @@ module Crm
         owner   OwnerName
 
       screen NewDeal
-        template blueprint Crm CrmDealCreateForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmDealCreateForm version "^1.0"
           actions
             action RegisterDeal
 
       screen QuickNewDeal
-        template blueprint Crm CrmQuickCreateDeal version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmQuickCreateDeal version "^1.0"
 
       specification RegisteringADeal
         given caller
@@ -686,7 +681,7 @@ module Crm
         owner   OwnerName
 
       screen EditDeal
-        template blueprint Crm CrmDealEditForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmDealEditForm version "^1.0"
           actions
             action UpdateDeal
 
@@ -726,7 +721,7 @@ module Crm
         stage DealStage
 
       screen MoveDeal
-        template blueprint Crm CrmDealPipeline version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmDealPipeline version "^1.0"
           toolbar
             action MoveDeal
 
@@ -734,6 +729,14 @@ module Crm
         given caller
           authenticated
           role "SalesRep"
+        given DealRegistered
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+          name    = "Fjordtech driftsplattform"
+          company = "Fjordtech AS"
+          amount  = 48000
+          stage   = "new"
+          closes  = "2026-11-30"
+          owner   = "Ingrid Solberg"
         when MoveDeal
           dealId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
           stage  = "won"
@@ -780,12 +783,10 @@ module Crm
           owner   = owner
 
       screen Pipeline
-        template blueprint Crm CrmDealPipeline version "^1.0"
-        data Deals[] via query AllDeals
+        template blueprint Cratis.Blueprint.Crm CrmDealPipeline version "^1.0"
 
       screen DealRecord
-        template blueprint Crm CrmDealPage version "^1.0"
-        data Deals via query GetDeal by dealId
+        template blueprint Cratis.Blueprint.Crm CrmDealPage version "^1.0"
 
       specification ListingTheRegisteredDeal
         given caller
@@ -806,35 +807,61 @@ module Crm
     feature DealList
       description "Every deal as a table, grouped by stage"
 
-      slice StateView DealsByStage
-        description "The same deals, grouped by stage with the value of each stage"
+      slice StateView DealRows
+        description "The same deals as a table, grouped by stage with the value of each stage as its subtotal"
 
-        readmodel DealTotals
-          stage       DealStage
-          dealCount   Int
-          totalAmount Amount
+        readmodel DealRows
+          dealId  DealId
+          name    DealName
+          company CompanyName
+          amount  Amount
+          stage   DealStage
+          closes  Date
+          owner   OwnerName
 
-        query AllDealTotals => DealTotals[]
+        query AllDealRows => observable DealRows[]
           authorize IsSalesRep
-          performer
-            file Queries/DealTotals.cs
+
+        projection DealRowsProjection => DealRows
+          from DealRegistered
+            dealId  = $eventSourceId
+            name    = name
+            company = company
+            amount  = amount
+            stage   = stage
+            closes  = closes
+            owner   = owner
+          from DealMoved
+            stage = stage
+          from DealUpdated
+            name    = name
+            company = company
+            amount  = amount
+            stage   = stage
+            closes  = closes
+            owner   = owner
 
         screen DealList
-          template blueprint Crm CrmDealList version "^1.0"
-          data DealTotals[] via query AllDealTotals
+          template blueprint Cratis.Blueprint.Crm CrmDealList version "^1.0"
 
-        specification TotallingTheDealsOfAStage
+        specification GroupingADealByItsStage
           given caller
             authenticated
             role "SalesRep"
-          given readmodel DealTotals
-            stage       = "new"
-            dealCount   = 2
-            totalAmount = 96000
-          when query AllDealTotals
-          then result
-            stage     = "new"
-            dealCount = 2
+          given DealRegistered
+            for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+            name    = "Fjordtech driftsplattform"
+            company = "Fjordtech AS"
+            amount  = 48000
+            stage   = "new"
+            closes  = "2026-11-30"
+            owner   = "Ingrid Solberg"
+          when append DealMoved
+            for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+            stage = "proposal"
+          then readmodel DealRows
+            dealId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+            stage  = "proposal"
 
   feature Activities
     description "Calls, meetings, emails and tasks"
@@ -866,12 +893,12 @@ module Crm
         owner   OwnerName
 
       screen NewActivity
-        template blueprint Crm CrmActivityCreateForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmActivityCreateForm version "^1.0"
           actions
             action RegisterActivity
 
       screen QuickNewActivity
-        template blueprint Crm CrmQuickCreateActivity version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmQuickCreateActivity version "^1.0"
 
       specification RegisteringAnActivity
         given caller
@@ -919,7 +946,7 @@ module Crm
         owner   OwnerName
 
       screen EditActivity
-        template blueprint Crm CrmActivityEditForm version "^1.0"
+        template blueprint Cratis.Blueprint.Crm CrmActivityEditForm version "^1.0"
           actions
             action UpdateActivity
 
@@ -972,8 +999,7 @@ module Crm
           owner   = owner
 
       screen Activities
-        template blueprint Crm CrmActivityList version "^1.0"
-        data Activities[] via query AllActivities
+        template blueprint Cratis.Blueprint.Crm CrmActivityList version "^1.0"
 
       specification ListingTheRegisteredActivity
         given caller
@@ -991,34 +1017,43 @@ module Crm
           subject = "Behovsmote med Kari"
 
   feature Dashboard
-    description "How the pipeline is doing this month"
+    description "How the pipeline is doing"
 
     slice StateView SalesDashboard
-      description "Open pipeline value, what was won and the conversion rate"
+      description "What is in the pipeline and how many deals the team has"
 
       readmodel SalesFigures
+        summaryId    String
         openPipeline Amount
-        wonThisMonth Amount
-        conversion   Decimal
+        dealCount    Int
 
-      query CurrentFigures => SalesFigures
+      query CurrentFigures => observable SalesFigures optional
+        by summaryId String
         authorize IsSalesRep
-        performer
-          file Queries/SalesFigures.cs
+
+      projection SalesFiguresProjection => SalesFigures
+        from DealRegistered
+          key "global"
+          summaryId = "global"
+          add openPipeline by amount
+          increment dealCount
 
       screen Dashboard
-        template blueprint Crm CrmDashboard version "^1.0"
-        data SalesFigures via query CurrentFigures
+        template blueprint Cratis.Blueprint.Crm CrmDashboard version "^1.0"
 
-      specification ShowingTheFigures
+      specification CountingWhatIsInThePipeline
         given caller
           authenticated
           role "SalesRep"
-        given readmodel SalesFigures
-          openPipeline = 1245000
-          wonThisMonth = 312000
-          conversion   = 24.5
-        when query CurrentFigures
-        then result
-          openPipeline = 1245000
-          wonThisMonth = 312000
+        given DealRegistered
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+          name    = "Fjordtech driftsplattform"
+          company = "Fjordtech AS"
+          amount  = 48000
+          stage   = "new"
+          closes  = "2026-11-30"
+          owner   = "Ingrid Solberg"
+        then readmodel SalesFigures
+          summaryId    = "global"
+          openPipeline = 48000
+          dealCount    = 1

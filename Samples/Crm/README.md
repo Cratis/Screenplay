@@ -26,8 +26,8 @@ Crm/
 - **The data the preview shows.** The `ui profile` activates the blueprint's Norwegian pack with `active blueprint crm-nordic-smb`.
   No pack is declared in the document: the blueprint ships them, and the build resolves the reference against its packages.
 - **A read model for each thing a list shows.** `Leads`, `Contacts`, `Companies`, `Deals` and `Activities` are named after the shapes
-  the blueprint's pack supplies, so the same rows reach the screen in a preview and in a running application. `DealTotals` and
-  `SalesFigures` are built by a query `performer` - nothing in the model's history adds up a pipeline.
+  the blueprint's pack supplies, so the same rows reach the screen in a preview and in a running application. `DealRows` is a second
+  view of the deals for the grouped list, and `SalesFigures` is one row, keyed `global`, that adds up the pipeline as deals are registered.
 - **A quick-create dialog and a full form for one command.** `RegisterLead` has two screens: `NewLead` (the page) and `QuickNewLead`
   (the dialog opened from the list's header).
 

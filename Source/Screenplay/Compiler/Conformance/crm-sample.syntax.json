@@ -474,7 +474,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmLeadCreateForm",
                       "slots": [
                         {
@@ -500,7 +500,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmQuickCreateLead",
                       "slots": [],
                       "version": "^1.0"
@@ -933,7 +933,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmLeadEditForm",
                       "slots": [
                         {
@@ -1332,21 +1332,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmLeadList",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "AllLeads",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": true,
-                        "isOptional": false,
-                        "name": "Leads"
-                      }
                     }
                   ],
                   "name": "Leads"
@@ -1716,7 +1705,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmContactCreateForm",
                       "slots": [
                         {
@@ -1742,7 +1731,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmQuickCreateContact",
                       "slots": [],
                       "version": "^1.0"
@@ -2127,7 +2116,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmContactEditForm",
                       "slots": [
                         {
@@ -2521,21 +2510,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmContactList",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "AllContacts",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": true,
-                        "isOptional": false,
-                        "name": "Contacts"
-                      }
                     }
                   ],
                   "name": "Contacts"
@@ -2545,21 +2523,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmContactPage",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": "contactId",
-                      "query": "GetContact",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Contacts"
-                      }
                     }
                   ],
                   "name": "ContactRecord"
@@ -2889,7 +2856,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmCompanyCreateForm",
                       "slots": [
                         {
@@ -2915,7 +2882,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmQuickCreateCompany",
                       "slots": [],
                       "version": "^1.0"
@@ -3252,7 +3219,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmCompanyEditForm",
                       "slots": [
                         {
@@ -3610,21 +3577,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmCompanyList",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "AllCompanies",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": true,
-                        "isOptional": false,
-                        "name": "Companies"
-                      }
                     }
                   ],
                   "name": "Companies"
@@ -3634,21 +3590,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmCompanyPage",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": "companyId",
-                      "query": "GetCompany",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Companies"
-                      }
                     }
                   ],
                   "name": "CompanyRecord"
@@ -3779,11 +3724,110 @@
                   "captures": [],
                   "commands": [],
                   "constraints": [],
-                  "description": "The same deals, grouped by stage with the value of each stage",
+                  "description": "The same deals as a table, grouped by stage with the value of each stage as its subtotal",
                   "events": [],
-                  "name": "DealsByStage",
+                  "name": "DealRows",
                   "operations": [],
-                  "projections": [],
+                  "projections": [
+                    {
+                      "kind": "ProjectionSyntax",
+                      "autoMap": "Inherit",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "DealRegistered"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "dealId"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "name"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "company"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "amount"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "stage"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "closes"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "owner"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "DealMoved"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "stage"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "DealUpdated"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "name"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "company"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "amount"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "stage"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "closes"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "owner"
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "DealRowsProjection",
+                      "readModel": "DealRows",
+                      "sequence": null
+                    }
+                  ],
                   "queries": [
                     {
                       "kind": "QuerySyntax",
@@ -3797,13 +3841,13 @@
                       "by": null,
                       "description": null,
                       "filters": [],
-                      "isObservable": false,
-                      "name": "AllDealTotals",
+                      "isObservable": true,
+                      "name": "AllDealRows",
                       "returnType": {
                         "kind": "TypeRefSyntax",
                         "isCollection": true,
                         "isOptional": false,
-                        "name": "DealTotals"
+                        "name": "DealRows"
                       },
                       "scope": null
                     }
@@ -3813,8 +3857,56 @@
                     {
                       "kind": "ReadModelSyntax",
                       "description": null,
-                      "name": "DealTotals",
+                      "name": "DealRows",
                       "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "dealId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DealId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DealName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "company",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "CompanyName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "amount",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Amount"
+                          }
+                        },
                         {
                           "kind": "PropertySyntax",
                           "isGenerated": false,
@@ -3831,24 +3923,24 @@
                           "kind": "PropertySyntax",
                           "isGenerated": false,
                           "isIdentifier": false,
-                          "name": "dealCount",
+                          "name": "closes",
                           "type": {
                             "kind": "TypeRefSyntax",
                             "isCollection": false,
                             "isOptional": false,
-                            "name": "Int"
+                            "name": "Date"
                           }
                         },
                         {
                           "kind": "PropertySyntax",
                           "isGenerated": false,
                           "isIdentifier": false,
-                          "name": "totalAmount",
+                          "name": "owner",
                           "type": {
                             "kind": "TypeRefSyntax",
                             "isCollection": false,
                             "isOptional": false,
-                            "name": "Amount"
+                            "name": "OwnerName"
                           }
                         }
                       ]
@@ -3860,21 +3952,10 @@
                       "directives": [
                         {
                           "kind": "ScreenTemplateReferenceSyntax",
-                          "blueprint": "Crm",
+                          "blueprint": "Cratis.Blueprint.Crm",
                           "name": "CrmDealList",
                           "slots": [],
                           "version": "^1.0"
-                        },
-                        {
-                          "kind": "ScreenDataSyntax",
-                          "by": null,
-                          "query": "AllDealTotals",
-                          "type": {
-                            "kind": "TypeRefSyntax",
-                            "isCollection": true,
-                            "isOptional": false,
-                            "name": "DealTotals"
-                          }
                         }
                       ],
                       "name": "DealList"
@@ -3883,7 +3964,66 @@
                   "specifications": [
                     {
                       "kind": "SpecificationSyntax",
-                      "given": [],
+                      "given": [
+                        {
+                          "kind": "SpecificationEventSyntax",
+                          "eventType": "DealRegistered",
+                          "for": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                          },
+                          "values": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "name",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Fjordtech driftsplattform"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "company",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Fjordtech AS"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 48000
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "stage",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "new"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "closes",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "2026-11-30"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "owner",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Ingrid Solberg"
+                              }
+                            }
+                          ]
+                        }
+                      ],
                       "givenCaller": {
                         "kind": "SpecificationCallerSyntax",
                         "authenticated": true,
@@ -3895,40 +4035,8 @@
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
-                      "givenReadModels": [
-                        {
-                          "kind": "SpecificationReadModelSyntax",
-                          "exactly": false,
-                          "name": "DealTotals",
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "stage",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "new"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "dealCount",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 2
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "totalAmount",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 96000
-                              }
-                            }
-                          ]
-                        }
-                      ],
-                      "name": "TotallingTheDealsOfAStage",
+                      "givenReadModels": [],
+                      "name": "GroupingADealByItsStage",
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
@@ -3936,41 +4044,55 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenReadModels": [],
-                      "thenResults": [
+                      "thenReadModels": [
                         {
-                          "kind": "SpecificationQueryResultSyntax",
+                          "kind": "SpecificationReadModelSyntax",
                           "exactly": false,
+                          "name": "DealRows",
                           "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "dealId",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                              }
+                            },
                             {
                               "kind": "PropertyMappingSyntax",
                               "property": "stage",
                               "source": {
                                 "kind": "LiteralExpressionSyntax",
-                                "value": "new"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "dealCount",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 2
+                                "value": "proposal"
                               }
                             }
                           ]
                         }
                       ],
+                      "thenResults": [],
                       "thenReturns": null,
                       "when": null,
-                      "whenAppended": null,
+                      "whenAppended": {
+                        "kind": "SpecificationEventSyntax",
+                        "eventType": "DealMoved",
+                        "for": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                        },
+                        "values": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "stage",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "proposal"
+                            }
+                          }
+                        ]
+                      },
                       "whenCapture": null,
                       "whenClock": null,
-                      "whenQuery": {
-                        "kind": "SpecificationWhenQuerySyntax",
-                        "arguments": [],
-                        "query": "AllDealTotals"
-                      },
+                      "whenQuery": null,
                       "whenTrigger": null
                     }
                   ],
@@ -4248,7 +4370,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDealCreateForm",
                       "slots": [
                         {
@@ -4274,7 +4396,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmQuickCreateDeal",
                       "slots": [],
                       "version": "^1.0"
@@ -4707,7 +4829,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDealEditForm",
                       "slots": [
                         {
@@ -4993,7 +5115,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDealPipeline",
                       "slots": [
                         {
@@ -5018,7 +5140,66 @@
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
-                  "given": [],
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "DealRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjordtech driftsplattform"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "company",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjordtech AS"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 48000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stage",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "new"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "closes",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-30"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ingrid Solberg"
+                          }
+                        }
+                      ]
+                    }
+                  ],
                   "givenCaller": {
                     "kind": "SpecificationCallerSyntax",
                     "authenticated": true,
@@ -5358,21 +5539,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDealPipeline",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "AllDeals",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": true,
-                        "isOptional": false,
-                        "name": "Deals"
-                      }
                     }
                   ],
                   "name": "Pipeline"
@@ -5382,21 +5552,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDealPage",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": "dealId",
-                      "query": "GetDeal",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Deals"
-                      }
                     }
                   ],
                   "name": "DealRecord"
@@ -5766,7 +5925,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmActivityCreateForm",
                       "slots": [
                         {
@@ -5792,7 +5951,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmQuickCreateActivity",
                       "slots": [],
                       "version": "^1.0"
@@ -6177,7 +6336,7 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmActivityEditForm",
                       "slots": [
                         {
@@ -6540,21 +6699,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmActivityList",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "AllActivities",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": true,
-                        "isOptional": false,
-                        "name": "Activities"
-                      }
                     }
                   ],
                   "name": "Activities"
@@ -6677,7 +6825,7 @@
         {
           "kind": "FeatureSyntax",
           "authorize": null,
-          "description": "How the pipeline is doing this month",
+          "description": "How the pipeline is doing",
           "features": [],
           "fileImports": [],
           "isPlacement": false,
@@ -6688,11 +6836,44 @@
               "captures": [],
               "commands": [],
               "constraints": [],
-              "description": "Open pipeline value, what was won and the conversion rate",
+              "description": "What is in the pipeline and how many deals the team has",
               "events": [],
               "name": "SalesDashboard",
               "operations": [],
-              "projections": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "DealRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "summaryId"
+                        },
+                        {
+                          "kind": "AddMappingSyntax",
+                          "property": "openPipeline"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "dealCount"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "SalesFiguresProjection",
+                  "readModel": "SalesFigures",
+                  "sequence": null
+                }
+              ],
               "queries": [
                 {
                   "kind": "QuerySyntax",
@@ -6703,15 +6884,24 @@
                       "name": "IsSalesRep"
                     }
                   },
-                  "by": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "summaryId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "String"
+                    }
+                  },
                   "description": null,
                   "filters": [],
-                  "isObservable": false,
+                  "isObservable": true,
                   "name": "CurrentFigures",
                   "returnType": {
                     "kind": "TypeRefSyntax",
                     "isCollection": false,
-                    "isOptional": false,
+                    "isOptional": true,
                     "name": "SalesFigures"
                   },
                   "scope": null
@@ -6728,6 +6918,18 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
+                      "name": "summaryId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
                       "name": "openPipeline",
                       "type": {
                         "kind": "TypeRefSyntax",
@@ -6740,24 +6942,12 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
-                      "name": "wonThisMonth",
+                      "name": "dealCount",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
                         "isOptional": false,
-                        "name": "Amount"
-                      }
-                    },
-                    {
-                      "kind": "PropertySyntax",
-                      "isGenerated": false,
-                      "isIdentifier": false,
-                      "name": "conversion",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Decimal"
+                        "name": "Int"
                       }
                     }
                   ]
@@ -6769,21 +6959,10 @@
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
-                      "blueprint": "Crm",
+                      "blueprint": "Cratis.Blueprint.Crm",
                       "name": "CrmDashboard",
                       "slots": [],
                       "version": "^1.0"
-                    },
-                    {
-                      "kind": "ScreenDataSyntax",
-                      "by": null,
-                      "query": "CurrentFigures",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "SalesFigures"
-                      }
                     }
                   ],
                   "name": "Dashboard"
@@ -6792,7 +6971,66 @@
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
-                  "given": [],
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "DealRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjordtech driftsplattform"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "company",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjordtech AS"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 48000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stage",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "new"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "closes",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-30"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ingrid Solberg"
+                          }
+                        }
+                      ]
+                    }
+                  ],
                   "givenCaller": {
                     "kind": "SpecificationCallerSyntax",
                     "authenticated": true,
@@ -6804,40 +7042,8 @@
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
-                  "givenReadModels": [
-                    {
-                      "kind": "SpecificationReadModelSyntax",
-                      "exactly": false,
-                      "name": "SalesFigures",
-                      "properties": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "openPipeline",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 1245000
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "wonThisMonth",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 312000
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "conversion",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 24.5
-                          }
-                        }
-                      ]
-                    }
-                  ],
-                  "name": "ShowingTheFigures",
+                  "givenReadModels": [],
+                  "name": "CountingWhatIsInThePipeline",
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -6845,41 +7051,46 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenReadModels": [],
-                  "thenResults": [
+                  "thenReadModels": [
                     {
-                      "kind": "SpecificationQueryResultSyntax",
+                      "kind": "SpecificationReadModelSyntax",
                       "exactly": false,
+                      "name": "SalesFigures",
                       "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "summaryId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "global"
+                          }
+                        },
                         {
                           "kind": "PropertyMappingSyntax",
                           "property": "openPipeline",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": 1245000
+                            "value": 48000
                           }
                         },
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "wonThisMonth",
+                          "property": "dealCount",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": 312000
+                            "value": 1
                           }
                         }
                       ]
                     }
                   ],
+                  "thenResults": [],
                   "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
                   "whenClock": null,
-                  "whenQuery": {
-                    "kind": "SpecificationWhenQuerySyntax",
-                    "arguments": [],
-                    "query": "CurrentFigures"
-                  },
+                  "whenQuery": null,
                   "whenTrigger": null
                 }
               ],
