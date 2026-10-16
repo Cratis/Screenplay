@@ -12,6 +12,7 @@ public class when_printing_a_ui_profile_with_a_root_template : given.a_printer
         theme Aurora
           compatible with Cratis.Components
           compatible with Cratis.Blueprint.Default
+          compatible with crm
 
         layout AppFrame
           category Shell
@@ -24,6 +25,7 @@ public class when_printing_a_ui_profile_with_a_root_template : given.a_printer
           packages
             Cratis.Components
             Cratis.Blueprint.Default
+            crm
 
           theme Aurora
 
@@ -46,6 +48,13 @@ public class when_printing_a_ui_profile_with_a_root_template : given.a_printer
           root template AppFrame
 
           new screens use template Sheet
+
+        module Shell
+
+          screen template Sheet
+            category Page
+            scopes feature
+            body
         """;
 
     RoundTripResult _roundtrip;

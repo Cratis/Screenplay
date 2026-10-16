@@ -50,7 +50,7 @@ layout AppShell
 
 ui profile Desktop
   target platform web
-  layout AppShell
+  root template AppShell
 ```
 
 A document may declare more than one layout, so that different profiles can select different shells — but each profile selects exactly one, and a profile naming a layout the document does not declare is reported.

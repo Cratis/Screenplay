@@ -37,7 +37,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
+    return code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -127,6 +127,9 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: `Declare 'direction ${direction === TranslationDirection.Inbound ? 'inbound' : 'outbound'}'`, scope: 'occurrence', edits: [{ start: line.startOffset + line.raw.length, length: 0, text }] },
                     change: { node: slice, replacement: { ...slice, direction } as SliceSyntax } });
             }
+        } else if (diagnostic.code === DiagnosticCodes.LegacyProfileLayout) {
+            const fix = legacyProfileLayoutFix(lines, line.number - 1, diagnostic.code);
+            if (fix !== undefined) byLine.set(line.number, { line: line.number, fix });
         } else if (diagnostic.code === DiagnosticCodes.RedundantEventId && commentStart(line.raw) < 0) {
             const declaration = events.get(line.number);
             if (declaration?.id !== declaration?.name || declaration === undefined) continue;
@@ -211,6 +214,26 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         }
         return [...(occurrenceFix === undefined ? [] : [occurrenceFix]), ...duplicates, ...documents];
     };
+}
+
+// PLAY0791 is reported on the `ui profile` line. The canonical form is `root template <Name>`; beside a root template the legacy line is ignored, so it is removed.
+function legacyProfileLayoutFix(lines: readonly { readonly number: number; readonly raw: string; readonly startOffset: number }[], headerIndex: number, diagnosticCode: string): QuickFix | undefined {
+    const indentOf = (raw: string): number => /^\s*/.exec(raw)![0].length;
+    const headerIndent = indentOf(lines[headerIndex].raw);
+    let layout: { readonly index: number; readonly indent: number } | undefined;
+    let hasRoot = false;
+    for (let index = headerIndex + 1; index < lines.length; index++) {
+        const raw = lines[index].raw;
+        if (raw.trim().length === 0) continue;
+        if (indentOf(raw) <= headerIndent) break;
+        if (layout === undefined && /^\s*layout\s+[A-Za-z_]\w*\s*$/.test(raw)) layout = { index, indent: indentOf(raw) };
+        if (/^\s*root\s+template(\s|$)/.test(raw)) hasRoot = true;
+    }
+    if (layout === undefined) return undefined;
+    const line = lines[layout.index];
+    return hasRoot
+        ? { diagnosticCode, title: 'Remove the ignored layout line', scope: 'occurrence', edits: [{ start: line.startOffset, length: (lines[layout.index + 1]?.startOffset ?? line.startOffset + line.raw.length) - line.startOffset, text: '' }] }
+        : { diagnosticCode, title: "Use 'root template' instead of 'layout'", scope: 'occurrence', edits: [{ start: line.startOffset + layout.indent, length: 'layout'.length, text: 'root template' }] };
 }
 
 function duplicateComplianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {

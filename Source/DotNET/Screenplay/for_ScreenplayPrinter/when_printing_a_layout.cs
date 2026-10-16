@@ -26,7 +26,7 @@ public class when_printing_a_layout : given.a_printer
 
         ui profile Desktop
           target platform web
-          layout AppShell
+          root template AppShell
         """;
 
     RoundTripResult _roundtrip;
@@ -40,10 +40,10 @@ public class when_printing_a_layout : given.a_printer
     [Fact] void should_print_the_slots_it_declares() => _roundtrip.Printed.ShouldContain("layout AppShell\n  category Test\n  topbar\n  navigation contributes Navigation\n  content\n  footer");
     [Fact] void should_print_the_arrangement() => _roundtrip.Printed.ShouldContain("arrangement flow");
     [Fact] void should_print_the_nested_tree() => _roundtrip.Printed.ShouldContain("navigation width 240");
-    [Fact] void should_print_the_layout_the_profile_selects() => _roundtrip.Printed.ShouldContain("ui profile Desktop\n  target platform web\n\n  layout AppShell");
+    [Fact] void should_print_the_layout_the_profile_selects() => _roundtrip.Printed.ShouldContain("ui profile Desktop\n  target platform web\n\n  root template AppShell");
     [Fact] void should_preserve_the_layout_slots() => Layout.Slots.Select(slot => slot.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
     [Fact] void should_preserve_the_contribution_point() => Layout.Slots.Single(slot => slot.Name == "navigation").Contributes.ShouldEqual("Navigation");
-    [Fact] void should_preserve_the_profile_layout_selection() => _roundtrip.Reparsed.Value!.UiProfiles!.Single().Layout.ShouldEqual("AppShell");
+    [Fact] void should_preserve_the_profile_layout_selection() => _roundtrip.Reparsed.Value!.UiProfiles!.Single().Root!.Name.ShouldEqual("AppShell");
 
     LayoutSyntax Layout => _roundtrip.Reparsed.Value!.Layouts!.Single();
 }

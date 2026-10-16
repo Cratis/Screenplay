@@ -107,7 +107,7 @@ ui profile Desktop
   packages
     Cratis.Components
     Cratis.Blueprint.Crm
-  layout AppShell
+  root template AppShell
 
   // The blueprint ships the demo data; the application chooses which pack previews, once, here.
   sample data

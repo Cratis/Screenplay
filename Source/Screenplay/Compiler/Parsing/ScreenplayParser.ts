@@ -47,6 +47,7 @@ import { parseEventSource } from './EventSourceParser';
 import { parseExposure, parseInstance } from './CompositionParser';
 import { ExposureSyntax, InstanceContributionsSyntax } from '../Syntax/CompositionSyntax';
 import { parseExample } from './SpecificationExampleParser';
+import { parseUiProfile } from './UiProfileLegacyLayout';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -186,6 +187,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             if (name !== undefined) declaredTriggers.push({ name, data });
         } else if (opaqueTopLevel.has(keyword)) {
             if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
+            else if (keyword === 'ui') parseUiProfile(context, line);
             else context.skipOpaqueBlock(line.indent);
         } else if (placedBody?.tryParse(context, line) !== true) {
             reportUnexpectedTopLevel(context, line, placement);
