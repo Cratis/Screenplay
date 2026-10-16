@@ -121,7 +121,7 @@ internal static partial class SemanticModelValidator
                     ValidateAuthorization(
                         query.Authorization,
                         application.Policies,
-                        query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
+                        SemanticQueryArguments.KeyProperties(query));
                 }
                 foreach (var specification in slice.Specifications)
                 {

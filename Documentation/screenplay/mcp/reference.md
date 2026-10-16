@@ -24,7 +24,7 @@ Single-level `Read.property` or `alias.property` paths bind in `validate` → `r
 
 ## Key and route admission
 
-Typed source and AST proposals retain read-model key marks, named query/read key parts, production routes and observer filters. Composite read-model keys remain authoring-only (`PLAY0268`, #599). Production route overrides and observer filters select ESM v10. Source inventories include production route references. Declaration details retain the authored lookup parts and filters.
+Typed source and AST proposals retain read-model key marks, named query/read key parts, production routes and observer filters. Flat composite read-model identities use every named key part. Optional single-instance queries write `keyParts`; root projection and removal keys write `kind: "parts"`, without a composite type. Fixture identities reuse composite values; named absence parts expose their own declared field types. Missing/invalid projection keys report `PLAY0661`/`PLAY0662`; composite protected command reads remain `PLAY0781` / `ByParts`. Production route overrides and observer filters select ESM v10. Source inventories include production route references. Declaration details retain the authored lookup parts and filters.
 
 `PLAY0661` repairs command reads only when missing parts have unique same-named compatible inputs. Queries and trigger reads are not repaired. `PLAY0664` removes an identical production route through a typed proposal. Both require canonical formatting consent and explicit Apply. The saved-file attachment-evidence pin contract remains limited to PLAY0166 and PLAY0478. See [Authoring tools](authoring-tools.md).
 

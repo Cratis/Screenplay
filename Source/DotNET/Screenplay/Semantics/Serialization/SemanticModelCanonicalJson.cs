@@ -441,6 +441,10 @@ public static partial class SemanticModelCanonicalJson
             writer.WriteEndObject();
             writer.WriteString("keyProperty", keyProperty.ToString());
         }
+        if (!query.KeyParts.IsDefaultOrEmpty)
+        {
+            WriteArray(writer, "keyParts", query.KeyParts.OrderBy(part => part.KeyProperty.ToString(), StringComparer.Ordinal), WriteQueryKeyPart);
+        }
         if (!query.Filters.IsDefaultOrEmpty) WriteArray(writer, "filters", query.Filters, WriteQueryFilter);
         writer.WriteString("cardinality", QueryCardinality(query.Cardinality));
         writer.WriteString("delivery", QueryDelivery(query.Delivery));
@@ -449,6 +453,17 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, query.Authorization);
         }
+        writer.WriteEndObject();
+    }
+
+    static void WriteQueryKeyPart(Utf8JsonWriter writer, SemanticQueryKeyPart part)
+    {
+        writer.WriteStartObject();
+        WriteId(writer, part.Id);
+        CanonicalJson.WriteString(writer, "name", part.Name);
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, part.Type);
+        writer.WriteString("keyProperty", part.KeyProperty.ToString());
         writer.WriteEndObject();
     }
 

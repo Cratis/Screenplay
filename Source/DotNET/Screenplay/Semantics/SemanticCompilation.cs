@@ -245,6 +245,10 @@ sealed class SemanticCompilationIndex
             {
                 Register(SemanticAddress.ForQueryArgument(queryAddress, query.Argument.Name), query.Argument.Id);
             }
+            foreach (var part in query.KeyParts)
+            {
+                Register(SemanticAddress.ForQueryArgument(queryAddress, part.Name), part.Id);
+            }
             foreach (var filter in query.Filters)
             {
                 Register(SemanticAddress.ForQueryArgument(queryAddress, filter.Name), filter.Id);

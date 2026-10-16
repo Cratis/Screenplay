@@ -86,6 +86,7 @@ static class SemanticScopedProjectionIssues
     {
         SemanticProjectionValueKey value => UnsupportedContext(value.Value),
         SemanticProjectionCompositeKey composite => composite.Parts.Any(_ => UnsupportedContext(_.Value)),
+        SemanticProjectionPartsKey parts => parts.Parts.Any(part => UnsupportedContext(part.Value)),
         _ => false
     };
 

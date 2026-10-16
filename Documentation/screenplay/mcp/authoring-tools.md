@@ -170,7 +170,7 @@ Descriptions, documentation, and optional rename-only `id` remain syntax metadat
 
 ## Read-model key authoring
 
-Typed ASTs retain `PropertySyntax.isKey`, `QuerySyntax.byParts` and `ReadsSyntax.byParts`. Single and block lookup forms are mutually exclusive. Declaration details and fixtures retain every named part. A single explicit key binds without changing ESM bytes. Composite keys remain authoring-only and report `PLAY0268` citing #599. See [Read-model keys](../readmodels.md#keys).
+Typed ASTs retain `PropertySyntax.isKey`, `QuerySyntax.byParts` and `ReadsSyntax.byParts`. Single and block lookup forms are mutually exclusive. Declaration details and fixtures retain every named part. A single explicit key binds without changing ESM bytes. Flat composite keys bind named scalar parts. Optional single-instance query `by` blocks require every caller-supplied part; collection queries use equality filters or one scalar `by` line. `RemoveWithSyntax.partsKey` retains an untyped removal key block, beside its existing scalar `key`. Protected command reads by parts remain refused with `PLAY0781` / `ByParts`; source acceptance does not grant protection. See [Read-model keys](../readmodels.md#keys).
 
 ## Event source and stream authoring
 

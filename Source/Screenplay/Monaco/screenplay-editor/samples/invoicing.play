@@ -2338,6 +2338,13 @@ module Invoicing
         method PaymentMethod key
         total Money
 
+      projection InvoicePaymentMethodTotals => InvoicePaymentMethodTotals
+        from PaymentRecorded
+          key
+            invoiceId = invoiceId
+            method = method
+          add total by amount
+
       query ListInvoicePaymentMethodTotals => InvoicePaymentMethodTotals[]
         authorize IsAccountant
         performer
@@ -2380,6 +2387,28 @@ module Invoicing
           actions
             action RecordPayment
               navigate to CollectionsBoard
+
+      specification KeepingPaymentMethodsSeparate
+        given readmodel InvoicePaymentMethodTotals
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          method = "card"
+          total = 100
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          stream Payment.Transactions
+            streamId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 50
+          method = "cash"
+          receivedAt = "2026-10-05T09:00:00Z"
+        then readmodel InvoicePaymentMethodTotals
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          method = "card"
+          total = 100
+        then readmodel InvoicePaymentMethodTotals
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          method = "cash"
+          total = 50
 
       specification RecordingACardPayment
         given caller

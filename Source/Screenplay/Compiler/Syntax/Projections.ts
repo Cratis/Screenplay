@@ -110,6 +110,7 @@ export interface RemoveWithSyntax extends SyntaxNode {
     readonly kind: 'RemoveWithSyntax';
     readonly event: string;
     readonly key?: ExpressionSyntax | null;
+    readonly partsKey?: CompositeKeySyntax | null;
     readonly parentKey?: ExpressionSyntax | null;
 }
 

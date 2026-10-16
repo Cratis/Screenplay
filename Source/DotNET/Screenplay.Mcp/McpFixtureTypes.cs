@@ -63,6 +63,15 @@ static class McpFixtureTypes
         return fields.Length == 1 ? fields[0].Type : null;
     }
 
+    internal static TypeRefSyntax? ForKeyPart(McpSyntaxIndex index, McpFixtureOccurrence occurrence, string property)
+    {
+        var candidates = index.Resolve(occurrence.Reference);
+        if (candidates is not [var candidate] || candidate.Syntax is not ReadModelSyntax model) return null;
+        var parts = model.Properties.Where(field => field.IsKey && field.Name == property).ToArray();
+
+        return parts.Length == 1 ? parts[0].Type : null;
+    }
+
     static string? Source(RecordCommandResponseSyntax response, string property)
     {
         var fields = response.Fields.Where(field => field.Name == property).ToArray();

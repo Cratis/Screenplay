@@ -196,6 +196,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
         if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
         if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
         if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
@@ -543,7 +544,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                     {
                         Authorization = EffectiveAuthorization(
                             query.Authorize,
-                            bound.Argument is null ? [] : [new(bound.Argument.Id, bound.Argument.Name, bound.Argument.Type, false)],
+                            SemanticQueryArguments.KeyProperties(bound),
                             module,
                             featurePath)
                     });

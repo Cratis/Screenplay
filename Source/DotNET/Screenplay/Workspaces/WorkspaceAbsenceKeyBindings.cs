@@ -107,8 +107,9 @@ sealed class WorkspaceAbsenceKeyBindings
         {
             if (declared.Length > 1)
             {
-                reason = $"read model '{readModel.Name}' declares a composite key; executable key binding is tracked in #599";
-                return null;
+                type = readModelEntry;
+                reason = "resolved";
+                return readModelEntry;
             }
             reason = names.Length == 0
                 ? $"read model '{readModel.Name}' has no keyed query that names its identifier; give its slice a query that returns '{readModel.Name}' with 'by <property> <Type>' naming the property that identifies an instance"
@@ -199,16 +200,24 @@ sealed class WorkspaceAbsenceKeyBindings
     WorkspaceSyntaxEntry? Property(WorkspaceSyntaxEntry type, string name, ImmutableArray<WorkspaceSyntaxEntry>.Builder dependencies, out string reason)
     {
         // Every competing declaration is a dependency, so removing a duplicate is an explicit repair.
-        var matches = Children(type, "properties").Where(property => ((PropertySyntax)property.Node).Name == name).ToArray();
+        var matches = Children(type, "properties").Where(property => ((PropertySyntax)property.Node).Name == name &&
+            (type.Node is not ReadModelSyntax || ((PropertySyntax)property.Node).IsKey)).ToArray();
         dependencies.AddRange(matches);
         reason = matches.Length switch
         {
             1 => "resolved",
-            0 => $"type '{((TypeSyntax)type.Node).Name}' declares no property '{name}'",
-            _ => $"type '{((TypeSyntax)type.Node).Name}' declares property '{name}' more than once"
+            0 => $"type '{TypeName(type.Node)}' declares no property '{name}'",
+            _ => $"type '{TypeName(type.Node)}' declares property '{name}' more than once"
         };
         return matches.Length == 1 ? matches[0] : null;
     }
+
+    static string TypeName(SyntaxNode node) => node switch
+    {
+        ReadModelSyntax model => model.Name,
+        TypeSyntax type => type.Name,
+        _ => string.Empty
+    };
 
     IEnumerable<WorkspaceSyntaxEntry> Children(WorkspaceSyntaxEntry entry, string member) =>
         _children[entry.Handle].Where(child => child.Member == member);

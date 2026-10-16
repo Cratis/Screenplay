@@ -60,7 +60,7 @@ internal static class SemanticDecisionReadAdmission
             if (scope.Every is not null) return SemanticDecisionReadRefusal.OpenSubscription;
             foreach (var key in scope.From.Select(from => from.Key).Concat(scope.Removals.Select(removal => removal.Key)))
             {
-                if (key is SemanticProjectionCompositeKey) return SemanticDecisionReadRefusal.ByParts;
+                if (key is SemanticProjectionCompositeKey or SemanticProjectionPartsKey) return SemanticDecisionReadRefusal.ByParts;
                 if (key is not SemanticProjectionValueKey { Value: SemanticProjectionEventSourceIdentity }) return SemanticDecisionReadRefusal.PayloadKey;
             }
             handled.UnionWith(scope.From.Select(from => from.EventContract));

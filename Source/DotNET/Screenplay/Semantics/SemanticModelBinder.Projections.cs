@@ -77,6 +77,7 @@ public sealed partial class SemanticModelBinder
         }
 
         bool IsFlat(ProjectionSyntax projection, BoundReadModel readModel) =>
+            readModel.Model.Properties.Count(property => property.IsIdentifier) < 2 &&
             projection.Blocks.All(block => block is FromSyntax { ParentKey: null, Key: null or ExpressionKeySyntax } from &&
                 from.Events.All(spec => _events.TryGetValue(spec.Event, out var @event) &&
                     (spec.Key ?? (from.Key as ExpressionKeySyntax)?.Expression) is PathExpressionSyntax key && IsFlatProperty(key.Path, @event.Properties) &&

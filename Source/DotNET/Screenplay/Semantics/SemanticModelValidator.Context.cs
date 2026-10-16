@@ -131,7 +131,7 @@ internal static partial class SemanticModelValidator
             foreach (var readModel in slice.ReadModels)
             {
                 ValidateProperties(readModel.Properties);
-                IdentifierProperty(readModel);
+                ReadModelKeyProperties(readModel);
             }
         }
 

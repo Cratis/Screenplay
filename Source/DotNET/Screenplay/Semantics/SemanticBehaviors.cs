@@ -506,6 +506,11 @@ public sealed record SemanticKeyedQuery(
     /// Gets caller-supplied equality filters in declaration order.
     /// </summary>
     public ImmutableArray<SemanticQueryFilter> Filters { get; init; } = [];
+
+    /// <summary>
+    /// Gets the caller-supplied parts of a single-instance key, replacing Argument and KeyProperty when present.
+    /// </summary>
+    public ImmutableArray<SemanticQueryKeyPart> KeyParts { get; init; } = [];
 }
 
 /// <summary>

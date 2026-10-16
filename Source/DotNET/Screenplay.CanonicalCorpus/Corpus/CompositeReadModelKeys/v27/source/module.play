@@ -1,0 +1,123 @@
+module Billing
+  feature Payments
+    slice StateView Totals
+      event PaymentReceived
+        invoice InvoiceId
+        method PaymentMethod
+        amount Int
+      event PaymentRemoved
+        invoice InvoiceId
+        method PaymentMethod
+      readmodel PaymentTotals
+        invoiceId InvoiceId key
+        method PaymentMethod key
+        total Int
+      query Total => PaymentTotals optional
+        by
+          invoiceId InvoiceId
+          method PaymentMethod
+      query TotalsForInvoice => PaymentTotals[]
+        filter invoiceId InvoiceId
+        filter method PaymentMethod optional
+      query TotalsByInvoice => PaymentTotals[]
+        by invoiceId InvoiceId
+      projection PaymentTotals => PaymentTotals
+        no automap
+        from PaymentReceived
+          key
+            invoiceId = invoice
+            method = method
+          total = amount
+        remove with PaymentRemoved
+          key
+            method = method
+            invoiceId = invoice
+      specification SameInvoiceDifferentMethods
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "card"
+          total = 12
+        given readmodel PaymentTotals
+          method = "cash"
+          invoiceId = "INV-1"
+          total = 8
+        when query Total
+          method = "cash"
+          invoiceId = "INV-1"
+        then result
+          total = 8
+      specification FilterOnePart
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "card"
+          total = 12
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "cash"
+          total = 8
+        given readmodel PaymentTotals
+          invoiceId = "INV-2"
+          method = "card"
+          total = 3
+        when query TotalsForInvoice
+          invoiceId = "INV-1"
+        then result
+          invoiceId = "INV-1"
+          method = "cash"
+        then result
+          invoiceId = "INV-1"
+          method = "card"
+      specification ScalarListBy
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "cash"
+          total = 8
+        when query TotalsByInvoice
+          invoiceId = "INV-1"
+        then result
+          invoiceId = "INV-1"
+          method = "cash"
+      specification RemoveOnlyMatchingParts
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "card"
+          total = 12
+        given readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "cash"
+          total = 8
+        when append PaymentRemoved
+          invoice = "INV-1"
+          method = "card"
+        then no readmodel PaymentTotals for {"method":"card","invoiceId":"INV-1"}
+        then readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "cash"
+          total = 8
+      specification RecreateRemovedParts
+        given PaymentReceived
+          invoice = "INV-1"
+          method = "card"
+          amount = 12
+        given PaymentRemoved
+          invoice = "INV-1"
+          method = "card"
+        when append PaymentReceived
+          invoice = "INV-1"
+          method = "card"
+          amount = 20
+        then readmodel PaymentTotals
+          invoiceId = "INV-1"
+          method = "card"
+          total = 20
+      specification InvalidByPart
+        when query Total
+          invoiceId = "X"
+          method = "card"
+        then error "Invoice id is too short"
+      specification InvalidAssertedByPart
+        then query Total
+          arguments
+            invoiceId = "X"
+            method = "card"
+        then error

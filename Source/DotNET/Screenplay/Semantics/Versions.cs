@@ -133,6 +133,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V25 = new(25, 0);
 
     /// <summary>
+    /// Gets the language version admitting flat composite read-model keys.
+    /// </summary>
+    public static readonly LanguageVersion V27 = new(CompositeReadModelKeyVersion.Major, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -286,6 +291,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets protected command reads semantic version 25.0.
     /// </summary>
     public static readonly SemanticVersion V25 = new(25, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting flat composite read-model keys.
+    /// </summary>
+    public static readonly SemanticVersion V27 = new(CompositeReadModelKeyVersion.Major, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1106,7 +1116,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV25Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV27Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1119,7 +1129,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV25Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV27Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

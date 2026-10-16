@@ -268,6 +268,12 @@ your consumer still decides which ESM versions and extensions it supports.
 
 For profiles, admission, deterministic planning, scope behavior, publication boundaries, and verification, follow the canonical [Stage renderer target guide](/screenplay/stage/guides/build-renderer-target/).
 
+### Flat composite read-model keys
+
+The composite-key executable contract carries named, typed parts, not a storage encoding or an invented key type. A read model has several `identifier: true` properties. Optional single-instance queries carry `keyParts` sorted by key-property id, replacing the scalar `argument`/`keyProperty` pair. Scoped projection keys carry `kind: "parts"` with complete part mappings, sorted by property id and without `type`. Requests, fixture identities and absence keys reuse composite values.
+
+Only read models with at least two parts select this contract; a single explicit key keeps the same bytes as its inferred equivalent. Earlier contracts reject these shapes. Every renderer must explicitly admit the contract and either realize the named parts or refuse them. Stage must refuse single-instance composite lookups until [Chronicle#4265](https://github.com/Cratis/Chronicle/issues/4265) is realized; equality-filter list queries do not require that lookup capability. A Chronicle typed key, Marten identity or SQL column set remains the renderer's choice. See [read-model keys](readmodels.md#keys) and [projection key semantics](projections/semantic-model.md#flat-composite-identities).
+
 ## Ownership boundaries
 
 | Owner | Semantic responsibility | Does not own |

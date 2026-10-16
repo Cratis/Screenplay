@@ -132,7 +132,7 @@ static class McpFixtureQueries
         {
             foreach (var part in objectKey.Members)
             {
-                yield return new(occurrence.Specification, "thenAbsentReadModelKeyPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Name, McpFixtureTypes.For(index, occurrence, part.Name), part.Value.GetType().Name, Value(part.Value), part.Location, "authored", null, null);
+                yield return new(occurrence.Specification, "thenAbsentReadModelKeyPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Name, McpFixtureTypes.ForKeyPart(index, occurrence, part.Name), part.Value.GetType().Name, Value(part.Value), part.Location, "authored", null, null);
             }
         }
 

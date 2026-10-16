@@ -152,7 +152,7 @@ internal sealed partial class SemanticScopedProjection
 
     void Complete()
     {
-        var identifier = _readModel.Properties.Single(_ => _.IsIdentifier);
+        var identifiers = _readModel.Properties.Where(property => property.IsIdentifier).ToArray();
         foreach (var document in _documents.Where(_ => _.Touched && !_.Removed))
         {
             foreach (var property in _readModel.Properties)
@@ -179,10 +179,17 @@ internal sealed partial class SemanticScopedProjection
                 }
             }
 
-            if (!SemanticValueRules.AreEqual(document.State[identifier.Id], document.Key))
+            var keyParts = identifiers.Length == 1
+                ? new[] { new SemanticPropertyValue(identifiers[0].Id, document.Key) }
+                : SemanticKeyPartValues.Require(document.Key, identifiers.Select(property => property.Id)).ToArray();
+            foreach (var part in keyParts)
             {
-                Fail($"Projection '{projection.Name}' affected key disagrees with read-model identifier '{identifier.Name}'.");
-                return;
+                if (!SemanticValueRules.AreEqual(document.State[part.TargetProperty], part.Value))
+                {
+                    var identifier = identifiers.Single(property => property.Id == part.TargetProperty);
+                    Fail($"Projection '{projection.Name}' affected key disagrees with read-model identifier '{identifier.Name}'.");
+                    return;
+                }
             }
         }
     }

@@ -36,11 +36,6 @@ public sealed partial class SemanticModelBinder
             }
 
             var explicitKeys = readModel.Properties.Where(property => property.IsKey).Select(property => property.Name).ToArray();
-            if (explicitKeys.Length > 1)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read model '{readModel.Name}' has a composite key, which is not admitted into the executable model. See https://github.com/Cratis/Screenplay/issues/599.", readModel.Location);
-            }
-
             var identifierNames = owner.Queries
                 .Where(query => ShortName(query.ReturnType.Name) == readModel.Name && query.By is not null && !query.ReturnType.IsCollection)
                 .Select(query => query.By!.Name)
@@ -81,11 +76,10 @@ public sealed partial class SemanticModelBinder
                     readModel.Location);
             }
 
-            var identifier = identifierNames.Length == 1 ? identifierNames[0] : null;
             var address = SemanticAddress.ForReadModel(slice, readModel.Name);
             var id = Resolve(address, readModel.Location);
             var properties = readModel.Properties
-                .Select(property => BindProperty(address, property, property.Name == identifier))
+                .Select(property => BindProperty(address, property, identifierNames.Contains(property.Name, StringComparer.Ordinal)))
                 .ToImmutableArray();
             return new(
                 readModel,
@@ -95,9 +89,9 @@ public sealed partial class SemanticModelBinder
 
         SemanticKeyedQuery? BindQuery(SemanticAddress slice, QuerySyntax query)
         {
-            if (query.ByParts.Any())
+            if (query.ByParts.Any() && (query.ReturnType.IsCollection || !query.ReturnType.IsOptional || query.ByParts.Any(part => part.Source is not null)))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' has a composite by block, which is not admitted into the executable model. See https://github.com/Cratis/Screenplay/issues/599.", query.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' by block requires a caller-supplied complete key and an optional single read model; use equality filters for collections.", query.Location);
                 return null;
             }
 
@@ -143,7 +137,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (query.By is null && cardinality != SemanticQueryCardinality.Many)
+            if (query.By is null && !query.ByParts.Any() && cardinality != SemanticQueryCardinality.Many)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' without a 'by' argument must return a read-model collection in the admitted ESM query shapes.", query.Location);
                 return null;
@@ -183,7 +177,8 @@ public sealed partial class SemanticModelBinder
                 cardinality,
                 query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot)
             {
-                Filters = BindQueryFilters(address, query, readModel)
+                Filters = BindQueryFilters(address, query, readModel),
+                KeyParts = BindQueryKeyParts(address, query, readModel)
             };
         }
     }

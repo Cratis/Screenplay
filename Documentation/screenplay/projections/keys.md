@@ -2,7 +2,7 @@
 
 Keys on `from` blocks (or individual events in a `from`) identify individual projection instances. They determine which read model instance to create or update when an event occurs. A `key` directly on the projection is parsed and retained in syntax, but neither Chronicle's visitor nor the executable semantic model uses it to route events; it does not provide a default for `from`. The parser reports `PLAY0381` as a warning. Declare the key on every relevant `from` (or its events) instead.
 
-A declared [read-model key](../readmodels.md#keys) describes instance identity and lookup parts. A projection still declares its own event-to-instance key on each relevant `from` block. Align that mapping with the read model's key parts. A read-model key does not supply a projection route. Multipart read-model keys remain authoring-only and are refused at binding with `PLAY0268` (#599).
+A declared [read-model key](../readmodels.md#keys) describes instance identity and lookup parts. A projection still declares its own event-to-instance key on each relevant `from` block. Align that mapping with the read model's key parts. A read-model key does not supply a projection route. For several flat key properties, use an untyped key block naming every part exactly once. This is distinct from a single property whose value has a declared composite type; both shapes can coexist in one application.
 
 Reducers have no property-key option: their instances follow each event's event-source id, not its stream id. If [`PLAY0690`](../diagnostics.md#reducer-instance-identity) reports a reducer/query identity mismatch, use a projection with a property key on every relevant `from`, or [joins](joins.md) for related instances that already exist.
 
@@ -84,9 +84,25 @@ from LineItemAdded
   Quantity = quantity
 ```
 
+### Flat read-model key parts
+
+For a read model with several scalar `key` properties, leave out the composite type name:
+
+```pdl
+from PaymentRecorded
+  key
+    invoiceId = invoiceId
+    method = method
+  add total by amount
+```
+
+The block applies to every event named by `from`. The instance key is the set of named part values, independent of part order. On creation, each part is written to its read-model property even with `no automap`. After mappings run, every part property must still equal its key value; a contradictory mapping fails projection.
+
+Every root `from` and `remove with` on this shape needs a complete untyped block. Missing parts or scalar/default keys report `PLAY0661`; unknown, repeated, ill-typed or non-simple parts report `PLAY0662`. Root `from` and `remove with` are the only admitted projection blocks for flat composite identities. Joins, child/nested scopes, every/all, clear with, variants and remove via join remain refused with `PLAY0268`, as do reducers over these read models.
+
 ## Default Key Behavior
 
-If no key is specified, the event source ID is used as the key:
+For a read model with one identifier, if no key is specified, the event source ID is used as the key:
 
 ```pdl
 from UserRegistered

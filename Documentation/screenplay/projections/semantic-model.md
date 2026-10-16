@@ -8,7 +8,7 @@ The grammar belongs to Screenplay, and Chronicle uses the Screenplay parser as i
 
 In practice that means:
 
-- **Every block is legal at every level.** Chronicle lowers the projection body, a `children` body and a `nested` body with one recursive switch and no per-level restrictions, so `join`, `every`, `all`, `remove with`, `remove via join` and `clear with` bind inside `children` and `nested` as well as at the top.
+- **For single-key read models, every block is legal at every level.** Chronicle lowers the projection body, a `children` body and a `nested` body with one recursive switch and no per-level restrictions, so `join`, `every`, `all`, `remove with`, `remove via join` and `clear with` bind inside `children` and `nested` as well as at the top.
 - **The default key is the event source.** A `from` block without a key, and one with `key $eventSourceId`, are the same declaration. The key is resolved from the event's inline key, then the block's key, then the event source - never from a `key` written directly on the projection.
 - **`from A, B` is one transition per event**, and all of them share the block's mappings.
 - **`clear x` and `x = null` are one operation**, and **`count` is `increment`.**
@@ -53,6 +53,16 @@ projection OrderDetails => OrderView
 ```
 
 What a block means depends on the level it sits in. `remove with` deletes the instance at the top, removes one child inside `children`, and clears a nested object back to null inside `nested`. Keys inside `children` identify the child, and `parent` identifies the parent - the event source when it is left out. Inside `nested`, keys keep addressing the enclosing instance, because a nested object lives in the same document.
+
+## Flat composite identities
+
+A read model with two or more top-level scalar key properties always uses the scoped shape. Its root `from` and `remove with` blocks supply every part in an untyped key block. Canonical ESM writes these as `{kind: "parts", parts: [{property, value}]}`, ordered by property id, without a composite type. Declaration/display order is not identity. Each value compares under the existing semantic equality rules; Uuid values retain ordinal text comparison.
+
+Creation seeds every key property, including with auto-map disabled. Mappings may also set those properties, but completion requires each one to equal its resolved key part. Removal deletes only the instance whose parts all match; a later `from` can recreate it. Other projection blocks and reducers on this shape remain `PLAY0268` until separately admitted.
+
+A single-instance query writes `keyParts: [{id, name, type, keyProperty}]`, sorted by key-property id, instead of `argument` and `keyProperty`. Requests, state fixtures and absence assertions reuse composite values keyed by the read-model property ids. Query matching requires all key parts and supplied filters to match. Every supplied by-part value runs its concept rules after authorization, while fixtures and projected state receive type/shape/enum checks only. A part value that violates a concept can therefore bind in a specification and produce a Validation rejection at execution.
+
+Only a model with a read model of this shape selects the new contract; single-key models retain their bytes and versions. Earlier readers and validators reject several identifiers, `keyParts` and `kind: "parts"`. Renderer realization is separate: a target that cannot look up a single instance by parts must refuse that query, not encode a private string key.
 
 ## Which instances an event affects
 

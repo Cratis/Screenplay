@@ -91,7 +91,7 @@ BookBorrowed and BookReturned, with a query that finds one loan by its book id.
 Add a screen for it that a librarian can see.
 ```
 
-A specification that checks one instance needs its key. Mark the read-model property with trailing `key`, or let one unambiguous keyed query identify it. A composite view declares every key part and states all of them in read-model fixtures. Composite keys remain authoring-only (`PLAY0268`, #599). See [Read-model keys](../readmodels.md#keys).
+A specification that checks one instance needs its key. Mark the read-model property with trailing `key`, or let one unambiguous keyed query identify it. A composite view declares every key part and states all of them in read-model fixtures. An optional single-instance lookup supplies every part in a `by` block; collection queries use equality filters. Its projection maps every part in an untyped key block. A target must explicitly admit the composite-key executable contract before realizing it. See [Read-model keys](../readmodels.md#keys).
 
 Say "apply it when you're done" in the prompt, or at the start of the session, and
 the assistant applies the proposal once it checks out; a board open in fullscreen shows

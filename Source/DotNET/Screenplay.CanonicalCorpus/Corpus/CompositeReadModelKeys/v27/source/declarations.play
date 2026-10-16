@@ -1,0 +1,7 @@
+concept InvoiceId : String
+  validate
+    min 3 message "Invoice id is too short"
+concept PaymentMethod : Enum
+  card
+  cash
+

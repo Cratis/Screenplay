@@ -28,6 +28,7 @@ internal static class SyntaxJsonWriter
             if (node is ConceptSyntax && member.Name == "generation" && value is null) continue;
             if (node is GenerationSyntax && (member.Name == "file" || member.Name == "code") && value is null) continue;
             if (node is PropertySyntax && (member.Name == "isSubject" || member.Name == "isKey") && Equals(value, false)) continue;
+            if (node is Projections.RemoveWithSyntax && member.Name == "partsKey" && value is null) continue;
             if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;

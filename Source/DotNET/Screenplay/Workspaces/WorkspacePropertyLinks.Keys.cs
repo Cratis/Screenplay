@@ -80,7 +80,7 @@ internal sealed partial class WorkspacePropertyLinks
                 Add(ProjectionUse(scope, join), "key", new(join.On, Members(scope.Models, scope.Nested ?? join.On), Incomplete: scope.Nested is not null || join.On.Contains('.')));
                 break;
             case RemoveWithSyntax remove:
-                IndexEventKeys(Resolve(remove.Event, ["Event"], scope.Entry), [remove.Key, remove.ParentKey]);
+                IndexEventKeys(Resolve(remove.Event, ["Event"], scope.Entry), KeyExpressions(remove.PartsKey).Concat([remove.Key, remove.ParentKey]));
                 break;
             case RemoveViaJoinSyntax remove:
                 IndexEventKeys(Resolve(remove.Event, ["Event"], scope.Entry), [remove.Key]);

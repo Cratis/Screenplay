@@ -210,7 +210,7 @@ export class HoverProvider implements languages.HoverProvider {
             'from': '**from** *<EventType>*\n\nHandles specific event types and maps their properties to the read model.',
             'all': '**all**\n\nSubscribes to **all event types in the system**, regardless of explicit `from` blocks. Mappings inside `all` run for every event that arrives system-wide.',
             'every': '**every**\n\nHandles all events the projection **explicitly subscribes to** through `from` blocks, with automatic property mapping.',
-            'key': '**key** *<expression>*\n\nDefines the projection key or composite key type.',
+            'key': '**key** *<expression>*\n\nDefines the projection key or composite key type. An untyped key child block maps every flat read-model key part by name in from and remove with.',
             'parent': '**parent** *<expression>*\n\nDefines a parent relationship for hierarchical projections.',
             'join': '**join** *<collection>* **on** *<property>*\n\nJoins with a child collection based on a property.',
             'children': '**children** *<collection>* **id** *<expression>*\n\nDefines operations on child collections.',

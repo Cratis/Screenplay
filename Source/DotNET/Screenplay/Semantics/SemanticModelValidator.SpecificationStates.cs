@@ -55,7 +55,23 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification read model '{state.ReadModel}' is unresolved.");
             }
 
-            var identifier = IdentifierProperty(readModel);
+            var keys = ReadModelKeyProperties(readModel);
+            if (keys.Length > 1)
+            {
+                ValidateReadModelKeyValue(readModel, state.Key, "specification read model key");
+                ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
+                var parts = SemanticKeyPartValues.Require(state.Key, keys.Select(property => property.Id));
+                foreach (var part in parts)
+                {
+                    var value = state.Values.SingleOrDefault(value => value.TargetProperty == part.TargetProperty)?.Value;
+                    if (IsInconsistentIdentifier(part.Value, value, requireIdentifier))
+                    {
+                        throw new InvalidSemanticContract("A specification read model key must equal its identifier property value.");
+                    }
+                }
+                return;
+            }
+            var identifier = keys[0];
             ValidateValue(state.Key, identifier.Type, "specification read model key");
             ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
             var identifierValue = state.Values.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value;
@@ -75,6 +91,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification query '{result.Query}' is unresolved.");
             }
 
+            if (!query.KeyParts.IsEmpty) ValidateReadModelKeyValue(_readModels[query.ReadModel], result.Key, "specification query key");
             if (query.Argument is not null) ValidateValue(result.Key, query.Argument.Type, "specification query key");
             SemanticQueryFilterRules.ValidateValues(query, result.Filters, (value, type, description) => ValidateValue(value, type, description));
             RequireObjects(result.Results, nameof(result.Results), "specification query result state");

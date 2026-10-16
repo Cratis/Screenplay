@@ -54,6 +54,7 @@ sealed class SemanticQueryRun(
 
         var results = tentative.ReadModels
             .Where(instance => instance.ReadModel == query.ReadModel &&
+                (query.KeyParts.IsEmpty || SemanticValueRules.AreEqual(instance.Key, queryRequest.Key)) &&
                 (query.KeyProperty is null || instance.Values.Any(value =>
                     value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key))) &&
                 queryRequest.Filters.All(filterValue => instance.Values.Any(value =>
@@ -128,6 +129,14 @@ sealed class SemanticQueryRun(
         var properties = query.Argument is null
             ? []
             : new[] { new SemanticProperty(query.Argument.Id, query.Argument.Name, query.Argument.Type, false) };
+        if (key is SemanticCompositeValue composite)
+        {
+            foreach (var part in query.KeyParts)
+            {
+                if (composite.Properties.FirstOrDefault(value => value.TargetProperty == part.KeyProperty) is { } value) arguments[part.Name] = value.Value;
+            }
+            properties = [.. properties, .. query.KeyParts.Select(part => new SemanticProperty(part.Id, part.Name, part.Type, false))];
+        }
         var authorization = SemanticPolicyEvaluation.Evaluate(query.Authorization, plan, caller, arguments, key, properties);
         return authorization.Outcome switch
         {
