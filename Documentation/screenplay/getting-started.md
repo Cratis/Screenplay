@@ -31,9 +31,13 @@ yarn dev
 
 ## Model a slice
 
-Clear the editor and start a bounded context. A `.play` file is indentation-based — structure follows the offside rule, and a construct owns everything indented beneath it. Type the outline of a module with one feature and one slice:
+Clear the editor and start a bounded context. Begin your new model's root file with `reaction batches atomic`, so reactions you add use all-or-none production batches rather than legacy per-fact production; see [Atomic production batches](reactions.md#atomic-production-batches).
+
+A `.play` file is indentation-based — structure follows the offside rule, and a construct owns everything indented beneath it. Type the outline of a module with one feature and one slice:
 
 ```screenplay
+reaction batches atomic
+
 module Library
 
   feature Lending
