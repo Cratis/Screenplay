@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -14,7 +15,8 @@ public sealed partial class SemanticModelBinder
         SemanticCommand BindCommand(
             SemanticAddress slice,
             CommandSyntax command,
-            Dictionary<string, BoundEvent> events)
+            Dictionary<string, BoundEvent> events,
+            DeclarationScope scope)
         {
             if (command.Documentation is not null)
             {
@@ -26,7 +28,7 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' description is authoring metadata.", command.Location);
             }
 
-            foreach (var reads in command.Reads ?? [])
+            foreach (var reads in syntax.CommandReadMode is null ? command.Reads ?? [] : [])
             {
                 Error(
                     DiagnosticCodes.PreservedLegacySemanticSyntax,
@@ -34,7 +36,7 @@ public sealed partial class SemanticModelBinder
                     reads.Location);
             }
 
-            if (command.Concurrency is not null)
+            if (command.Concurrency is not null && (syntax.CommandReadMode is null || !(command.Reads?.Any() ?? false)))
             {
                 Error(
                     DiagnosticCodes.PreservedLegacySemanticSyntax,
@@ -47,6 +49,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier, commandProperty: true) with { IsGenerated = property.IsGenerated }).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
+            var boundReads = BindDecisionReads(command, propertiesByName, scope);
             if (properties.Any(property => property.IsGenerated) || command.Response is not null) UsesV7 = true;
             if (properties.Any(property => property.IsGenerated)) ValidateGeneratedProperties(command, propertiesByName);
             var validations = BindValidations(address, command, propertiesByName, out var codeValidations);
@@ -100,6 +103,7 @@ public sealed partial class SemanticModelBinder
             return new(id, command.Name, properties, validations, produced)
             {
                 Handler = handler,
+                Reads = boundReads,
                 Response = BindResponse(command, propertiesByName),
                 Route = BindCommandRoute(command, propertiesByName, produced),
                 CodeValidations = codeValidations,
@@ -196,7 +200,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var when = produced.When is null ? null : BindCondition(produced.When, commandProperties);
+            var when = produced.When is null ? null : BindCondition(produced.When, commandProperties, position: "produces when");
             var tags = BindTags(produced.Tags);
 
             if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty) &&
@@ -237,7 +241,7 @@ public sealed partial class SemanticModelBinder
                 {
                     ContextExpressionSyntax context => BindOccurrence(context, target.Type),
                     IdentityExpressionSyntax identity => BindOccurrence(identity, target.Type),
-                    _ => BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping")
+                    _ => BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping", allowReadPaths: true)
                 };
                 if (source is not null)
                 {

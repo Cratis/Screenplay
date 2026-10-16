@@ -52,7 +52,8 @@ internal sealed partial class McpWorkspaces
             : WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
         if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair))
         {
-            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602) { FailureKind = "UnknownRepair" };
+            var reason = code == "PLAY0786" ? " " + string.Join("; ", result.Conflicts.Select(conflict => conflict.Message)) : string.Empty;
+            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject." + reason, -32602) { FailureKind = "UnknownRepair" };
         }
 
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);

@@ -49,7 +49,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            return BindCondition(condition, properties);
+            return BindCondition(condition, properties, allowReadPaths: syntax.CommandReadMode is not null, position: "require");
         }
 
         SemanticCommandResponse? BindResponse(CommandSyntax command, Dictionary<string, SemanticProperty> properties)
@@ -83,6 +83,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticProperty? ResponseSource(CommandSyntax command, PropertyResponseSourceSyntax source, Dictionary<string, SemanticProperty> properties)
         {
+            if (syntax.CommandReadMode is not null && source.Property.Contains('.'))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read path '{source.Property}' is not admitted in response mappings.", source.Location);
+                return null;
+            }
             if (!properties.TryGetValue(source.Property, out var property))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Response source '{source.Property}' is not a property of command '{command.Name}'.", source.Location);

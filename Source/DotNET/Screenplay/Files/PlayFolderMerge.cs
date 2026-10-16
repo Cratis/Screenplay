@@ -71,6 +71,7 @@ internal static partial class PlayFolderMerge
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
+            CommandReadMode = MergeCommandReadMode(applications, context),
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
@@ -87,6 +88,17 @@ internal static partial class PlayFolderMerge
             FileImports = [.. applications.SelectMany(application => application.FileImports)],
             RegisteredTriggers = MergeRegisteredTriggers(applications, context)
         };
+    }
+
+    static CommandReadMode? MergeCommandReadMode(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)
+    {
+        var declared = applications.Where(application => application.CommandReadMode is not null).ToArray();
+        foreach (var extra in declared.Skip(1))
+        {
+            context.Error(DiagnosticCodes.InvalidCommandReadsDeclaration, "Declare 'command reads protected' once at the application root.", extra.Location);
+        }
+
+        return declared.FirstOrDefault()?.CommandReadMode;
     }
 
     static ReactionProductionMode? MergeReactionProductionMode(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)

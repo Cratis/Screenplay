@@ -209,8 +209,10 @@ public record CommandSyntax(
 /// Declaring it puts the read model in scope for the rest of the command, so a produces mapping can be fed from
 /// state and a validation rule can be stated against it, instead of both dropping to an inline code block.
 /// <para>
-/// <c>By</c> is absent for a read model that is not looked up by a key - a single view the whole application
-/// shares rather than one instance per identifier.
+/// Without <c>command reads protected</c>, an omitted <c>By</c> describes a read model that is not looked up
+/// by a key - a single view the whole application shares rather than one instance per identifier.
+/// With the preamble, an omitted <c>By</c> uses the command's declared identifier as the lookup key;
+/// singleton reads are not admitted. Declaring a read without the preamble does not confer protection.
 /// </para>
 /// </remarks>
 public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location) : SyntaxNode(Location)

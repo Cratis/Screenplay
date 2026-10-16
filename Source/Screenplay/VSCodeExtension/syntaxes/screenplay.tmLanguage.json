@@ -9,6 +9,7 @@
         { "include": "#comment" },
         { "include": "#numeric-preamble" },
         { "include": "#reaction-batches-preamble" },
+        { "include": "#command-reads-preamble" },
         { "include": "#fenced-csharp" },
         { "include": "#fenced-react" },
         { "include": "#fenced-typescript" },
@@ -37,6 +38,10 @@
         { "include": "#common" }
     ],
     "repository": {
+        "command-reads-preamble": {
+            "match": "^(command)(\\s+)(reads)(\\s+)(protected)(?=\\s*(?://.*)?$)",
+            "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } }
+        },
         "reaction-batches-preamble": {
             "match": "^(reaction)(\\s+)(batches)(\\s+)(atomic)(?=\\s*(?://.*)?$)",
             "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } }

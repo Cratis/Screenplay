@@ -15,6 +15,7 @@ public static class ScreenCompositionCorpus
     const string FolderSourceCase = "screen-composition/v1/source/folder";
     const string TypedScreenSourceCase = "screen-release-ui-positive";
     const string ShellSourceCase = "screen-shell-navigation-positive";
+    const string ShellRunnableSourceCase = "screen-shell-navigation-runnable";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -144,6 +145,29 @@ public static class ScreenCompositionCorpus
                         "SampleDataSelectionSyntax",
                         "SampleDataPackReferenceSyntax",
                         "SampleDataMappingSyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = ShellRunnableSourceCase,
+                    Document = Document("screen-shell-navigation-runnable", "positive/ScreenShellRunnable.play", $"{Prefix}.positive.ScreenShellRunnable.play.txt"),
+                    Requires = "Screenplay v4.180.0 navigation regions, toolbar slice buttons and sample data, with the queries and projections the generated backend needs so cratis render and cratis run (CLI 3.67.0 and later) accept it",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "NavigationRegionSyntax",
+                        "NavigationItemSyntax",
+                        "NavigationTargetSyntax",
+                        "NavigationLogoSyntax",
+                        "ScreenToolbarSyntax",
+                        "ToolbarButtonSyntax",
+                        "UiProfileSyntax",
+                        "SampleDataPackSyntax",
+                        "SampleDataSetSyntax",
+                        "SampleDataRowSyntax",
+                        "SampleDataFieldSyntax",
+                        "SampleDataSelectionSyntax",
+                        "SampleDataPackReferenceSyntax"
                     ]
                 }
             ],

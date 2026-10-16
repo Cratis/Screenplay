@@ -10,12 +10,12 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        SemanticCondition? BindCondition(ConditionSyntax syntax, Dictionary<string, SemanticProperty> properties)
+        SemanticCondition? BindCondition(ConditionSyntax syntax, Dictionary<string, SemanticProperty> properties, bool allowReadPaths = false, string position = "condition")
         {
             if (syntax is LogicalConditionSyntax logical)
             {
-                var left = BindCondition(logical.Left, properties);
-                var rightCondition = BindCondition(logical.Right, properties);
+                var left = BindCondition(logical.Left, properties, allowReadPaths, position);
+                var rightCondition = BindCondition(logical.Right, properties, allowReadPaths, position);
                 return left is null || rightCondition is null ? null : new SemanticLogicalCondition(
                     left, logical.Operator == LogicalOperator.And ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, rightCondition);
             }
@@ -26,14 +26,28 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            SemanticConditionOperand leftOperand;
             if (!properties.TryGetValue(comparison.Left, out var property))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition operand '{comparison.Left}' must be a declared command property; read-model paths require decision-consistent reads (#129).", comparison.Location);
-                return null;
+                if (allowReadPaths && comparison.Left.Contains('.'))
+                {
+                    if (BindReadPath(comparison.Left, comparison.Location, position) is not { } read) return null;
+                    property = read.Property;
+                    leftOperand = new(property.Id, null) { Read = read.Read };
+                }
+                else
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition operand '{comparison.Left}' must be a declared command property in {position}; read-model paths require the 'command reads protected' preamble (#129).", comparison.Location);
+                    return null;
+                }
+            }
+            else
+            {
+                leftOperand = new(property.Id, null);
             }
 
             var subject = CommandValidationSubject(property.Name, property.Type);
-            SemanticConditionOperand? right = comparison.Right switch
+            var right = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => new(default, BindLiteral(literal)),
                 PathExpressionSyntax path when properties.TryGetValue(path.Path, out var other) => new(other.Id, null),
@@ -41,6 +55,7 @@ public sealed partial class SemanticModelBinder
                 // A bare name that is no property of the command but a member of the compared enumeration is that
                 // member - 'status == sent' means the same as 'status == "sent"', as it does in a validation rule.
                 PathExpressionSyntax path when subject.Values.Contains(path.Path, StringComparer.Ordinal) => new(default, SemanticValue.Text(path.Path)),
+                PathExpressionSyntax path when allowReadPaths && path.Path.Contains('.') => BindReadConditionOperand(path, position),
                 _ => null
             };
             if (right is null)
@@ -50,7 +65,9 @@ public sealed partial class SemanticModelBinder
                     EnvironmentExpressionSyntax => "$env operands are non-deterministic across realizations",
                     ContextExpressionSyntax => "$context operands require ESM v2 (#226)",
                     IdentityExpressionSyntax => "$identity operands require ESM v2 (#226)",
-                    PathExpressionSyntax => "read-model paths require decision-consistent reads (#129); 'today' and undeclared command properties are not portable operands",
+                    PathExpressionSyntax => ProtectedCommandReads
+                        ? $"read-model paths are not admitted in {position}; 'today' and undeclared command properties are not portable operands"
+                        : "read-model paths require decision-consistent reads (#129); 'today' and undeclared command properties are not portable operands",
                     _ => "only command properties and constants are portable operands"
                 };
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition operand is not admitted: {reason}.", comparison.Right.Location);
@@ -73,7 +90,9 @@ public sealed partial class SemanticModelBinder
 
             if (right.Property.IsSet)
             {
-                var other = properties.Values.Single(_ => _.Id == right.Property);
+                var other = right.Read is { } readName
+                    ? _commandReads[readName].View.Properties.Values.Single(value => value.Id == right.Property)
+                    : properties.Values.Single(value => value.Id == right.Property);
                 var otherSubject = CommandValidationSubject(other.Name, other.Type);
                 if (otherSubject.Primitive != subject.Primitive || otherSubject.IsCollection || otherSubject.IsDate ||
                     (subject.Primitive == SemanticPrimitiveType.Text && !otherSubject.Values.SequenceEqual(subject.Values)))
@@ -92,7 +111,10 @@ public sealed partial class SemanticModelBinder
                 ComparisonOperator.LessThan => SemanticComparisonOperator.LessThan,
                 _ => SemanticComparisonOperator.LessThanOrEqual
             };
-            return new SemanticComparison(new(property.Id, null), op, right);
+            return new SemanticComparison(leftOperand, op, right);
         }
+
+        SemanticConditionOperand? BindReadConditionOperand(PathExpressionSyntax path, string position) =>
+            BindReadPath(path.Path, path.Location, position) is { } read ? new(read.Property.Id, null) { Read = read.Read } : null;
     }
 }

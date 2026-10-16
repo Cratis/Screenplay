@@ -3243,6 +3243,41 @@ public static class DiagnosticCodes
     public const string InvalidReactionBatchesDeclaration = "PLAY0693";
 
     /// <summary>
+    /// A command reads declaration is repeated, conflicting or outside the application root.
+    /// </summary>
+    public const string InvalidCommandReadsDeclaration = "PLAY0780";
+
+    /// <summary>
+    /// A command decision read cannot be protected, with a closed refusal reason describing its shape or key.
+    /// </summary>
+    public const string UnprotectableDecisionRead = "PLAY0781";
+
+    /// <summary>
+    /// A protected command read omits its lookup property and the command has no declared identifier.
+    /// </summary>
+    public const string DecisionReadWithoutIdentifier = "PLAY0782";
+
+    /// <summary>
+    /// A command declares both protected reads and concurrency, making its consistency boundary ambiguous.
+    /// </summary>
+    public const string DecisionReadsWithConcurrency = "PLAY0783";
+
+    /// <summary>
+    /// A read path does not name a declared command read or alias.
+    /// </summary>
+    public const string UnknownReadPath = "PLAY0784";
+
+    /// <summary>
+    /// A read path names a view read more than once instead of a distinguishing alias.
+    /// </summary>
+    public const string AmbiguousReadPath = "PLAY0785";
+
+    /// <summary>
+    /// A legacy command read has a typed repair offering the explicit protected-read preamble.
+    /// </summary>
+    public const string LegacyCommandReadsRepairAvailable = "PLAY0786";
+
+    /// <summary>
     /// A directionless Translate slice reacts to an event its own capture appends.
     /// </summary>
     public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";

@@ -17,6 +17,7 @@ import * as scope from './scope-items';
 import { CompletionEntry } from './completion-items';
 import { purposeItems } from './purpose-items';
 import { readModelKeyCompletions } from './read-model-key-completions';
+import { commandReadCompletions } from './command-read-completions';
 
 // Matches a validation rule line ending in "rule <Name>" (optionally followed by a
 // message clause) - both the command form ("<property> rule <Name>") and the
@@ -216,6 +217,8 @@ export function planCompletions(
     if (continuationEntries !== null) return { kind: 'entries', entries: continuationEntries };
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
+    const readEntries = commandReadCompletions(lines, lineIndex, textBefore, symbols);
+    if (readEntries !== null) return { kind: 'entries', entries: readEntries };
     const keyEntries = readModelKeyCompletions(lines, lineIndex, textBefore, symbols);
     if (keyEntries !== null) return { kind: 'entries', entries: keyEntries };
     const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);

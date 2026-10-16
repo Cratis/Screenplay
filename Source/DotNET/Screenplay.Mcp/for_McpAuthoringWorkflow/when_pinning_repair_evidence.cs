@@ -19,8 +19,8 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
         var capabilities = Result("repair-capabilities");
         capabilities.GetProperty("schemaVersion").GetInt32().ShouldEqual(1);
         capabilities.GetProperty("repairContractVersion").GetInt32().ShouldEqual(1);
-        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(12);
-        capabilities.GetProperty("actions").EnumerateArray().Select(action => action.GetProperty("diagnosticCode").GetString()).ShouldContainOnly("PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0787");
+        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(13);
+        capabilities.GetProperty("actions").EnumerateArray().Select(action => action.GetProperty("diagnosticCode").GetString()).ShouldContainOnly("PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0786", "PLAY0787");
         foreach (var code in new[] { "PLAY0683", "PLAY0684", "PLAY0688" })
         {
             var generation = capabilities.GetProperty("actions").EnumerateArray().Single(action => action.GetProperty("diagnosticCode").GetString() == code);

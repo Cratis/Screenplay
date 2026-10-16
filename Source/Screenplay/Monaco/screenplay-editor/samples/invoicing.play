@@ -24,6 +24,7 @@
 domain Acme.Invoicing
 
 reaction batches atomic
+command reads protected
 
 // Facts other bounded contexts own. An import names a contract this application
 // consumes; it never resolves against another file of the same application.
