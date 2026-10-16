@@ -9,7 +9,7 @@ public class when_checking_match_engine_boundaries
     void should_never_construct_a_platform_regex_on_a_matches_path()
     {
         var root = Path.Combine(PortableMatchVectors.Root(), "Source/DotNET/Screenplay/Semantics");
-        string[] consumers = ["SemanticModelBinder.Validations.cs", "SemanticModelValidator.Validations.cs", "Execution/SemanticValidationRules.cs", "Execution/SemanticExecutionPlan.cs", "Generation/RuleConsistency.cs", "Generation/FiniteGenerationRules.cs"];
+        string[] consumers = ["SemanticModelBinder.Validations.cs", "SemanticModelValidator.Validations.cs", "SemanticValidationRules.cs", "SemanticValidationRules.Checks.cs", "SemanticValidationRules.Types.cs", "Execution/SemanticExecutionPlan.cs", "Generation/RuleConsistency.cs", "Generation/FiniteGenerationRules.cs"];
         var matcher = Directory.GetFiles(root, "*.cs").Where(path => Path.GetFileName(path).StartsWith("Match", StringComparison.Ordinal) || Path.GetFileName(path).StartsWith("PortableMatch", StringComparison.Ordinal) || Path.GetFileName(path) == "SemanticMatchPattern.cs");
         var paths = consumers.Select(path => Path.Combine(root, path)).Concat(matcher).ToArray();
         paths.Length.ShouldBeGreaterThan(15);

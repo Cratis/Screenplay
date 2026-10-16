@@ -66,6 +66,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v23.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV23()` on the full v22 model, adding a described command with `handler: { requirementId, resultVersion }` and an unmapped required event property under decision 0082. Existing models without a described handler keep their version and bytes. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=23`; the run fails deliberately, then embedded resources must be rebuilt before a strict rerun.
 
+`full-esm-v24.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV24()` on the full v23 model, adding all four first-class ordinal text-rule discriminators. The allocation is held in `TextRuleVersion.Major`. `TextRulesCorpus.SourceForms` separately compares deprecated Studio lookaround source with first-class source, including identical canonical bytes and accepted/rejected reference specifications. Prior golden bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=24`; rebuild and rerun without the switch after reviewing the intentional failure.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:

@@ -21,6 +21,9 @@ internal static partial class SemanticModelValidator
             {
                 case SemanticValidationRuleKind.Length when !shape.Scalar || !shape.Text:
                     throw new InvalidSemanticContract("Length validation requires a scalar non-enumerated text value.");
+                case SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or
+                    SemanticValidationRuleKind.StartsWith or SemanticValidationRuleKind.EndsWith when !shape.Scalar || !shape.Text:
+                    throw new InvalidSemanticContract("Text comparison requires a scalar non-enumerated text value.");
                 case SemanticValidationRuleKind.Matches when !shape.Scalar || !shape.Text:
                     throw new InvalidSemanticContract("Matches validation requires a scalar non-enumerated text value.");
             }

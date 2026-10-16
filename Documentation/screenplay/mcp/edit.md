@@ -42,6 +42,47 @@ pointing at something that no longer exists is rejected under the default `Safe`
 reference policy, and the assistant can tell you what depends on it before it
 proposes anything.
 
+## Change the application shell
+
+The sidebar, topbar, toolbar buttons, blueprint template references and sample data are ordinary typed edits. Each is
+reviewed before it is applied, and a proposal made against an older revision is refused.
+
+```text
+In the Support module, switch the sidebar from overriding the application's
+navigation to extending it. Show me the difference before applying.
+```
+
+```text
+Give the Reports module its own sidebar: start from the application's items, point
+each at the Monthly feature, and propose it. Tell me what you had to change in the
+copies.
+```
+
+```text
+Add a sub-item "Tickets" under the Support item of the application sidebar,
+targeting the Support module, and render it into the side slot.
+```
+
+```text
+On the OrderList toolbar, add an "Export" button that invokes CancelOrder, then
+tell me whether the toolbar still validates.
+```
+
+```text
+Pin the Crm Workspace template of the Sales module to version ^2.0. If the profile
+does not list the Crm blueprint, say so instead of guessing.
+```
+
+```text
+Make NordicDemo the active sample data pack and show me where the profile selects
+it.
+```
+
+Copying application items into a module that overrides them needs one change: a module's own items may only target that
+module, so the assistant retargets each copy and says so. Pointing a button at a State View or Automation slice, giving a
+template reference a range Scene cannot read, or naming a sample data pack nothing declares is refused with the
+compiler's own diagnostic. See [Author the application shell](authoring-tools.md#author-the-application-shell).
+
 ## Rename without a find and replace
 
 ```text

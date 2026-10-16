@@ -1,0 +1,17 @@
+layout AppShell
+  category application
+  content
+
+  navigation topbar
+    logo image "/assets/acme.svg" title "Acme"
+    item sales title "Sales" target Sales
+
+module Sales
+  navigation topbar extends
+    logo image "/assets/sales.svg" title "Sales"
+    item orders title "Orders" target Sales.Orders
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        title String

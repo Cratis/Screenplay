@@ -78,7 +78,7 @@ describe('when validating a document with a problem of every coded kind', () => 
     beforeEach(() => {
         issues = validateLines(document);
         const responses = [
-            ['concept Code : String', '  validate', '    matches phone', '    matches "["', '    matches "(?=a)"'],
+            ['concept Code : String', '  validate', '    matches phone', '    matches "["', '    matches "(?=a)"', '    matches "^(?![\\s\\S]*a)"'],
             ['command C', 'example Fixture : C', '  no stream'],
             ['command C', '  handler', '    implementation', '      hint " "', '      unknown', '      file C.cs', '      file D.cs'],
             ['type Outside', '  id Uuid generated'],

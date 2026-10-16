@@ -412,3 +412,17 @@ and Screenplay#536. The closure is a scoping decision, not proof of native deliv
 | 559.3 | The Stage surface fills the space below announcements. | PARTIAL | A workspace-sized overlay ([Studio#1619](https://github.com/Cratis/Studio/pull/1619)). Not run in production. |
 | 559.4 | Stop restores chrome, zoom and focus; loading, failed-start and stop transitions are consistent. | PARTIAL | Failed-start and restart handling ([Studio#1619](https://github.com/Cratis/Studio/pull/1619), [Studio#1624](https://github.com/Cratis/Studio/pull/1624)). Not run in production. |
 | 559.5 | Browser assertions and screenshots across viewports, announcements and views. | PARTIAL | The automation exists ([Studio#1628](https://github.com/Cratis/Studio/pull/1628)). The production run is blocked by the deployment lock. |
+
+## Screen Editor and Blueprints (Scene#96)
+
+The follow-on epic adds the application shell to the language. These rows are the Screenplay side of it; the Stage, CLI
+and Studio rows are tracked in their repositories.
+
+### [Screenplay#765](https://github.com/Cratis/Screenplay/issues/765) MCP authoring, canonical vectors and docs for the application shell
+
+| # | Criterion | Status | Evidence or remaining work |
+| --- | --- | --- | --- |
+| 765.1 | An MCP transcript (open, propose, stale refusal, apply, reopen) for each new construct passes locally and against hosted Studio MCP. | PARTIAL | Locally: `when_authoring_the_screen_shell` (navigation regions, toolbar buttons, template references) and `when_authoring_sample_data`, with a stale revision refused for each. Hosted Studio MCP has not run. |
+| 765.2 | Corpus vectors pass in C#, TypeScript, Stage, CLI and Studio. | PARTIAL | C#: `screen-shell-navigation-positive` and seven rejection vectors in `ScreenCompositionCorpus.V1`. TypeScript: the same shell document and a module and feature template assignment are in `Conformance/diagnostics.json`, held by both compilers. Stage: `cratis/stage:4.119.1` loads the shell document and serves its navigation, toolbar buttons and blueprint template references (no sample data), byte-identical across two loads; the digest is pinned in the corpus's `Desktop` Stage plan. CLI and Studio plan parity wait for the CLI that bundles this Stage ([cli#374](https://github.com/Cratis/cli/pull/374), part of [cli#367](https://github.com/Cratis/cli/issues/367)) and for Studio's round trip ([StudioIssues#666](https://github.com/Cratis/StudioIssues/issues/666)). |
+| 765.3 | The capability matrix has no new "not expressible" rows. | PASS | [Screens capability matrix](screens-capability-matrix.md): none of the new shell rows lists something the language cannot express. |
+| 765.4 | Unit and specification tests for every new rule; docs updated; no rule lives only in Studio. | PASS | `when_adding_to_a_member_that_is_omitted_while_empty` for the one engine change; the shell rules are the compiler's own diagnostics (`PLAY0710`-`PLAY0714`, `PLAY0720`-`PLAY0722`, `PLAY0740`-`PLAY0765`), asserted by the rejection vectors. |

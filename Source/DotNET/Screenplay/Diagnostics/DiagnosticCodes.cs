@@ -1912,6 +1912,11 @@ public static class DiagnosticCodes
     public const string PatternOutsidePortableMatchDialect = "PLAY0699";
 
     /// <summary>
+    /// A Studio text-rule pattern has an equivalent first-class ordinal rule.
+    /// </summary>
+    public const string DeprecatedStudioTextRulePattern = "PLAY0787";
+
+    /// <summary>
     /// A validation rule names a severity other than information, warning or error.
     /// </summary>
     public const string InvalidValidationSeverity = "PLAY0368";

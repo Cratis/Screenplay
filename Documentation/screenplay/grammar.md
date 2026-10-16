@@ -891,6 +891,10 @@ RuleOp         = "not empty"
                | "==", Value
                | "!=", Value
                | "length", "==", Number
+               | "contains", StringLiteral
+               | "not", "contains", StringLiteral
+               | "starts", "with", StringLiteral
+               | "ends", "with", StringLiteral
                | "matches", ( "email" | StringLiteral )
                | "all", ">", Value
                | "all", ">=", Value

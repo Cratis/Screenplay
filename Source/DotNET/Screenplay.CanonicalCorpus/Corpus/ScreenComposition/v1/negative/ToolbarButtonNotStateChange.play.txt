@@ -1,0 +1,26 @@
+module Shop
+  feature Orders
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        reason String
+        produces OrderPlaced
+          for orderId
+          reason = reason
+      event OrderPlaced
+        reason String
+
+    slice Automation ChaseOrders
+      description "Reminds customers while an order is late"
+
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+        title String
+
+      screen OrderList
+        toolbar actions
+          button place title "New order" slice PlaceOrder emphasis primary
+          button list title "Refresh" slice OrderList emphasis quiet
+          button chase title "Chase" slice ChaseOrders
+          button missing title "Ghost" slice Shop.Orders.Ghost

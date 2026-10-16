@@ -223,6 +223,10 @@ Declarative validation covers the common cases without code:
 | `== <value>` | `currency == "NOK"` |
 | `!= <value>` | `status != "draft"` |
 | `length == <n>` | `currency length == 3` |
+| `contains "<text>"` | `reference contains "INV"` |
+| `not contains "<text>"` | `reference not contains " "` |
+| `starts with "<text>"` | `reference starts with "INV-"` |
+| `ends with "<text>"` | `reference ends with "-NOK"` |
 | `matches email` | `email matches email` |
 | `matches "<regex>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
@@ -232,6 +236,8 @@ Declarative validation covers the common cases without code:
 `max` and `min` take their meaning from the property's type: on text they bound its length (`reason max 500` — at most 500 characters), and on a number they bound its value (`quantity min 1`). There is one rule for each, not a separate length and value form.
 
 `matches "<regex>"` uses the [portable match dialect](#portable-match-dialect): a restricted, flagless JavaScript regular expression. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at authoring. The reference evaluator runs Screenplay's own Thompson automaton, not a platform regular-expression engine. Each input code unit visits at most the automaton's states; there is no timeout or host-specific engine limit. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
+
+The four literal text rules `contains`, `not contains`, `starts with` and `ends with` compare UTF-16 code units ordinally: case, accents, whitespace and Unicode normalization are not changed. They require one non-enumerated text value and a quoted text operand, not a collection, property reference or regular expression. An absent optional value passes; add `not empty` to require presence. Empty operands are admitted: `contains ""`, `starts with ""` and `ends with ""` always pass, while `not contains ""` always fails for present text. First-class text rules select their own executable-model version; models using none keep their existing version and bytes.
 
 ### Portable match dialect
 
@@ -245,7 +251,7 @@ Both contexts admit `\t \n \r \f \v`, `\0` not followed by a digit, `\xHH`, `\uH
 
 | Refused form | Replacement or limitation |
 | --- | --- |
-| Lookahead and lookbehind | No general equivalent. Replace a length-only assertion such as `^(?=.{21}$).*$` with `^.{21}$`. |
+| Lookahead and lookbehind | Except for the exact deprecated Studio text-rule shapes below, no general equivalent. Replace a length-only assertion such as `^(?=.{21}$).*$` with `^.{21}$`. |
 | Backreferences; `\b` and `\B` word boundaries | No equivalent assertion in this dialect. |
 | `\p` and `\P` Unicode properties | An explicit character class when its required set is known; no general equivalent. |
 | `\u{...}`, `\cX`, class `\b` | UTF-16 `\uHHHH` escapes, hexadecimal control escapes such as `\x01`, and `\x08`, respectively. |
@@ -257,7 +263,26 @@ Both contexts admit `\t \n \r \f \v`, `\0` not followed by a digit, `\xHH`, `\uH
 
 A pattern has at most 1,000 UTF-16 code units and 3,000 expanded nodes. Each literal, class and anchor counts one, as does each optional, loop or alternative choice point. A counted repeat multiplies its body by its upper bound; without an upper bound, by the lower bound plus one. It adds one choice point for each optional copy (one loop for an unbounded repeat). `*`, `+` and `?` count their body once plus one choice point. Thus `x{1500}` counts 1,500, `a{0,1500}` counts 3,000 and `(a*){1500}` counts 3,000. Exceeding either limit reports `PLAY0699` before automaton construction. The automaton has at most the expanded size plus one accepting state, including epsilon choice states; an empty expression needs only that accepting state.
 
-These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode spaces, so `matches email` rejects `a<U+00A0>@b.co`; dot rejects CR and U+2028/U+2029; `\w` rejects U+0130. Older ESM documents keep their authored pattern bytes and load even when the current parser classifies the pattern as invalid or outside the dialect. Either case produces plan-time `UnsupportedValidation` and deterministic generation Unproven, naming the construct. Re-authoring reports `PLAY0367` for invalid syntax or `PLAY0699` for a construct outside the dialect. The matcher has the same behavior on every supported target framework; platform regex settings cannot change a verdict.
+These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode spaces, so `matches email` rejects `a<U+00A0>@b.co`; dot rejects CR and U+2028/U+2029; `\w` rejects U+0130. Older ESM documents keep their authored pattern bytes and load even when the current parser classifies the pattern as invalid or outside the dialect. Except for the exact Studio text-rule shapes below, either case produces plan-time `UnsupportedValidation` and deterministic generation Unproven, naming the construct. Re-authoring reports `PLAY0367` for invalid syntax or `PLAY0699` for a construct outside the dialect. The matcher has the same behavior on every supported target framework; platform regex settings cannot change a verdict.
+
+### Deprecated Studio text-rule patterns
+
+Studio's exact escaped-literal lookaround shapes report warning `PLAY0787`, not `PLAY0699`. The syntax tree keeps the original `matches` text; executable binding stores the equivalent ordinal rule. The editor quick fix and MCP `propose-repair` migrate the source while preserving the rule's message and severity.
+
+| Decoded pattern (`L` is an escaped literal) | Replacement |
+| --- | --- |
+| `^(?![\s\S]*L)` | `not contains "literal"` |
+| `L(?![\s\S])` | `ends with "literal"` |
+| `^L(?![\s\S])` | `== "literal"` |
+| `^(?!L$)` or `^(?!L(?![\s\S]))` | `!= "literal"` |
+
+Recognition requires a lossless escape/decode round trip. Studio v1 uses .NET `Regex.Escape`; v2 escapes exactly `\ ^ $ . | ? * + ( ) [ ] { } /`. The not-contains wrapper accepts either escape set; the strict-end lookaround forms use v2 escaping, and the `$` inequality uses v1. Different assertion bodies, reversed `[\S\s]` sets, unescaped metacharacters and trailing regex syntax are not recognized and still report `PLAY0699`. Already-admitted non-lookaround forms, including `L`, `^L`, `^L$` and `L$`, are unchanged. No general lookaround support is added.
+
+Older serialized ESM `matches` rules with these exact shapes evaluate and participate in generation proofs as the replacement, without changing their stored bytes. New `not contains` and `ends with` rules select the text-rule ESM version; equality replacements keep the existing equality contract. The deprecation remains a warning until a later major release.
+
+### Checking patterns before authoring
+
+C# callers use `Cratis.Screenplay.Semantics.PortableMatchPattern.Check(pattern)`; TypeScript callers import `checkPortableMatchPattern` from `@cratis/screenplay-compiler`. Both return `PortableMatchCheck`: status, diagnostic code, construct, UTF-16 offset, suggestion, description and optional replacement. Status is Admitted, Deprecated, Refused or Invalid (lowercase strings in TypeScript). Deprecated has code `PLAY0787` and a replacement `{ kind, value }`; the semantic kind vocabulary is Equal, NotEqual, Contains, NotContains, StartsWith and EndsWith. Admitted has no diagnostic details; invalid syntax uses `PLAY0367` and other refused constructs use `PLAY0699`. Checking never executes the pattern or constructs a platform regex. This is authoring admission, not a claim that an application has rendered or run.
 
 Browser checks remain advisory: admitted patterns such as `(a+)+$` can still backtrack badly in JavaScript. The server-side linear check is authoritative.
 

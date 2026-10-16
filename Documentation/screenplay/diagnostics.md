@@ -1111,6 +1111,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted portable pattern for custom matching. |
 | `PLAY0367` | Error | A quoted `matches` operand has invalid regular expression syntax. |
 | `PLAY0699` | Error | A `matches` pattern uses a construct outside the [portable match dialect](commands.md#portable-match-dialect), exceeds 1,000 source code units or exceeds 3,000 expanded nodes (including optional, loop and alternative choice points). Names the construct and suggests an equivalent where one exists; both compilers report it. |
+| `PLAY0787` | Warning | An exact Studio v1/v2 lookaround text-rule shape is deprecated. Binding preserves the syntax but stores its equivalent first-class ordinal rule. Use the literal text rule or `==`/`!=` instead. Other lookarounds still report `PLAY0699`. |
 | `PLAY0368` | Error | A validation rule names a severity other than `information`, `warning` or `error`. |
 | `PLAY0369` | Error | A `require` body has an invalid or repeated `severity` directive. |
 
@@ -1447,7 +1448,7 @@ Both compilers check these forms. Repairs require individual review (`CanFixAll:
 
 ## Navigation regions
 
-The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts.
+The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts. The canonical corpus pins `PLAY0744`, `PLAY0747`, `PLAY0748` and `PLAY0749` as rejection vectors beside the `screen-shell-navigation-positive` shell, and a stale or breaking MCP edit meets the same codes (see [Author the application shell](mcp/authoring-tools.md#author-the-application-shell)).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1467,7 +1468,7 @@ The `navigation topbar` and `navigation sidebar` blocks of a layout and a module
 
 ## Toolbar buttons
 
-The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons).
+The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

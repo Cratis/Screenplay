@@ -1,0 +1,17 @@
+module Crm
+  feature Customers
+    slice StateView CustomerList
+      readmodel Customer
+        name String
+
+sample data NordicDemo
+  shape Customer
+    row
+      name = "Fjordline AS"
+      colour = "blue"
+
+ui profile Web
+  target platform web
+
+  sample data
+    active GhostDemo

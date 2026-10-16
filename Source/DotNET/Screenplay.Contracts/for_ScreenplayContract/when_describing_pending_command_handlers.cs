@@ -25,7 +25,7 @@ public class when_describing_pending_command_handlers : Specification
         probe["diagnostic"].ShouldBeNull();
         foreach (var entry in probe["admission"].AsArray())
         {
-            entry["status"].GetValue<string>().ShouldEqual(entry["esmVersion"].GetValue<int>() == 23 ? "admitted" : "refused");
+            entry["status"].GetValue<string>().ShouldEqual(entry["esmVersion"].GetValue<int>() >= 23 ? "admitted" : "refused");
         }
     }
 

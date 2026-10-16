@@ -97,7 +97,27 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// A String concept must end in the exact check digits over its preceding ASCII digits.
     /// </summary>
-    Checksum = 15
+    Checksum = 15,
+
+    /// <summary>
+    /// Scalar text must contain the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    Contains = 16,
+
+    /// <summary>
+    /// Scalar text must not contain the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    NotContains = 17,
+
+    /// <summary>
+    /// Scalar text must start with the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    StartsWith = 18,
+
+    /// <summary>
+    /// Scalar text must end with the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    EndsWith = 19
 }
 
 /// <summary>
