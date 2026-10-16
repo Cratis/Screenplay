@@ -1,0 +1,72 @@
+module Access
+  feature Approvals
+    slice StateChange Approve
+      command ApproveRequest
+        id String identifier
+        requestedBy MemberId
+        approvedBy MemberId
+        validate
+          require approvedBy != requestedBy
+            message "Approver must differ from requester."
+        produces RequestApproved
+          for id
+          approvedBy = approvedBy
+      event RequestApproved
+        approvedBy MemberId
+      specification ApprovingAnotherMember
+        when ApproveRequest
+          id = "request"
+          requestedBy = "a1111111-1111-4111-8111-111111111111"
+          approvedBy = "b2222222-2222-4222-8222-222222222222"
+        then RequestApproved
+          for "request"
+          approvedBy = "b2222222-2222-4222-8222-222222222222"
+      specification RejectingASelfApproval
+        when ApproveRequest
+          id = "request"
+          requestedBy = "a1111111-1111-4111-8111-111111111111"
+          approvedBy = "a1111111-1111-4111-8111-111111111111"
+        then error "Approver must differ from requester."
+    slice StateChange Flag
+      command FlagMember
+        id String identifier
+        member MemberId
+        produces when member == "a1111111-1111-4111-8111-111111111111"
+          MemberFlagged
+            for id
+      event MemberFlagged
+      specification FlaggingTheWatchedMember
+        when FlagMember
+          id = "flag"
+          member = "a1111111-1111-4111-8111-111111111111"
+        then MemberFlagged
+          for "flag"
+      specification IgnoringAnotherMember
+        when FlagMember
+          id = "flag"
+          member = "b2222222-2222-4222-8222-222222222222"
+        then no events
+    slice StateChange Match
+      command MatchMember
+        id String identifier
+        member MemberId
+        raw Uuid
+        validate
+          require raw == member
+            message "The values must match."
+        produces MemberMatched
+          for id
+      event MemberMatched
+      specification MatchingABareUuid
+        when MatchMember
+          id = "match"
+          member = "a1111111-1111-4111-8111-111111111111"
+          raw = "a1111111-1111-4111-8111-111111111111"
+        then MemberMatched
+          for "match"
+      specification RejectingADifferentUuid
+        when MatchMember
+          id = "match"
+          member = "a1111111-1111-4111-8111-111111111111"
+          raw = "b2222222-2222-4222-8222-222222222222"
+        then error "The values must match."

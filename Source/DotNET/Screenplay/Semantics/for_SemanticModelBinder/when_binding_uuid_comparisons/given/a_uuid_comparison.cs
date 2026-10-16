@@ -7,7 +7,7 @@ public class a_uuid_comparison : for_SemanticModelBinder.given.a_semantic_binder
 {
     public const string Canonical = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 
-    protected static string Model(string require, string? when = null)
+    public static string Model(string require, string? when = null)
     {
         var conditional = when is null ? string.Empty : $"\n        produces when {when}\n          Noted\n            for id";
         return $$"""
@@ -51,6 +51,8 @@ public class a_uuid_comparison : for_SemanticModelBinder.given.a_semantic_binder
                     by id String
             """;
     }
+
+    public static string GoldenSource => Model($"requestedBy == \"{Canonical}\" and View.memberId != requestedBy and raw == other", "approvedBy != requestedBy");
 
     protected static string[] Operators => ["==", "!="];
 
