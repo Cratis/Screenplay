@@ -873,7 +873,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 
         return (values, eventSource, stream, noStream);
@@ -948,7 +948,7 @@ internal static partial class SpecificationParser
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
                 continue;
             }
 
@@ -957,7 +957,7 @@ internal static partial class SpecificationParser
             {
                 if (values.Exists(existing => existing.Property == value.Property))
                 {
-                    context.Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Query argument '{value.Property}' is repeated.", value.Location);
+                    context.Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Query argument '{value.Property}' is repeated.", value.Location, DiagnosticArguments.Empty.With("argument", DiagnosticArgument.Text(value.Property)));
                 }
                 values.Add(value);
             }

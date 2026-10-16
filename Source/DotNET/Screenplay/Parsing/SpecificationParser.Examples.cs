@@ -15,7 +15,7 @@ internal static partial class SpecificationParser
         var match = ExampleHeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSpecificationExample, $"Invalid example declaration '{header.Content}' - expected 'example <Name> : <EventOrCommandOrReadModel>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationExample, $"Invalid example declaration '{header.Content}' - expected 'example <Name> : <EventOrCommandOrReadModel>'", header.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(header.Content)));
             SkipBody(context, header.Indent);
             return new(string.Empty, string.Empty, [], header.Location);
         }
@@ -113,7 +113,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 
         return body;
@@ -136,7 +136,7 @@ internal static partial class SpecificationParser
     {
         if (values.Concat(other ?? []).Any(existing => existing.Property == value.Property))
         {
-            context.Error(DiagnosticCodes.DuplicateSpecificationAssignment, $"Property '{value.Property}' is assigned more than once in this fixture - assign it only once, inline or indented", value.Location);
+            context.Error(DiagnosticCodes.DuplicateSpecificationAssignment, $"Property '{value.Property}' is assigned more than once in this fixture - assign it only once, inline or indented", value.Location, DiagnosticArguments.Empty.With("property", DiagnosticArgument.Text(value.Property)));
             return;
         }
 

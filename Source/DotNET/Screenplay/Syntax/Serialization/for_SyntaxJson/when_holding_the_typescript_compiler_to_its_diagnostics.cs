@@ -3,6 +3,7 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
@@ -12,14 +13,15 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 // same file, so the two report the same codes on the same lines - an error path cannot drift on one side.
 public class when_holding_the_typescript_compiler_to_its_diagnostics : Specification
 {
+    static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web);
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected, validate, registeredTriggers, messages) in _vectors)
+        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments) in _vectors)
         {
             var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: registeredTriggers.Select(triggerName => new TriggerDefinition(triggerName))));
             var result = validate ? compiler.Compile(source) : compiler.Parse(source);
@@ -27,6 +29,11 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
             {
                 _mismatches.Add($"{name}: expected [{string.Join(", ", expected)}], C# reports [{string.Join(", ", reported)}]");
+            }
+
+            if (arguments is not null && !result.Diagnostics.Select(diagnostic => diagnostic.Arguments).SequenceEqual(arguments))
+            {
+                _mismatches.Add($"{name}: diagnostic arguments differ: {JsonSerializer.Serialize(result.Diagnostics.Select(diagnostic => diagnostic.Arguments), _options)}");
             }
 
             if (messages is not null && !result.Diagnostics.Select(diagnostic => diagnostic.Message).SequenceEqual(messages, StringComparer.Ordinal))
@@ -53,7 +60,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
         return directory!.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages)> Vectors()
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -63,6 +70,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             vector.GetProperty("diagnostics").EnumerateArray().Select(diagnostic => diagnostic.GetString()!).ToArray(),
             vector.TryGetProperty("validate", out var validate) && validate.GetBoolean(),
             vector.TryGetProperty("registeredTriggers", out var triggers) ? triggers.EnumerateArray().Select(trigger => trigger.GetString()!).ToArray() : [],
-            vector.TryGetProperty("messages", out var messages) ? messages.EnumerateArray().Select(message => message.GetString()!).ToArray() : null))];
+            vector.TryGetProperty("messages", out var messages) ? messages.EnumerateArray().Select(message => message.GetString()!).ToArray() : null,
+            vector.TryGetProperty("arguments", out var arguments) ? JsonSerializer.Deserialize<DiagnosticArguments[]>(arguments.GetRawText(), _options) : null))];
     }
 }

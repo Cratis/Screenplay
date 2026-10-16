@@ -97,6 +97,7 @@ describe('when validating example types in a single document', () => {
         const result = parse('example Fact : Missing', 'application.play');
         result.diagnostics.should.deep.equal([{
             severity: 'error', code: 'PLAY0520',
+            arguments: { example: { kind: 'text', value: 'Fact' }, type: { kind: 'text', value: 'Missing' } },
             message: "Example 'Fact' type 'Missing' is unknown or ambiguous; qualify a declared event, command, or read model.",
             location: { path: 'application.play', line: 1, column: 1 }
         }]);

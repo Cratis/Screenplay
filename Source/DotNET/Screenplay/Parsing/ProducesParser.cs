@@ -160,7 +160,7 @@ internal static partial class ProducesParser
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
                 continue;
             }
 
@@ -244,7 +244,7 @@ internal static partial class ProducesParser
             }
             else if (!metadata.TryParse(context, line))
             {
-                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid inline property mapping '{line.Content}' - expected '<property> <Type> = <source>'", line.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid inline property mapping '{line.Content}' - expected '<property> <Type> = <source>'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
             }
         }
 

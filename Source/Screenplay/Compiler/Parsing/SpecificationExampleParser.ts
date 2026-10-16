@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import { SpecificationNoStreamSyntax, SpecificationStreamSyntax, SpecificationExampleSyntax } from '../Syntax/Specifications';
@@ -19,7 +20,7 @@ const mapping = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$'.replaceAll('\\s'
 export function parseExample(context: ParserContext, line: SourceLine): SpecificationExampleSyntax {
     const match = header.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidSpecificationExample, `Invalid example declaration '${line.content}' - expected 'example <Name> : <EventOrCommandOrReadModel>'`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidSpecificationExample, `Invalid example declaration '${line.content}' - expected 'example <Name> : <EventOrCommandOrReadModel>'`, locationOf(line), diagnosticText('text', line.content));
         context.skipOpaqueBlock(line.indent);
         return { kind: 'SpecificationExampleSyntax', name: '', type: '', values: [], generatedValues: [], for: null, description: null, location: locationOf(line) };
     }
@@ -40,7 +41,7 @@ export function addInlineValue(context: ParserContext, line: SourceLine, match: 
 
 export function addFixtureValue(context: ParserContext, values: PropertyMappingSyntax[], value: PropertyMappingSyntax, other: readonly PropertyMappingSyntax[] = []): void {
     if ([...values, ...other].some(existing => existing.property === value.property)) {
-        context.error(DiagnosticCodes.DuplicateSpecificationAssignment, `Property '${value.property}' is assigned more than once in this fixture - assign it only once, inline or indented`, value.location);
+        context.error(DiagnosticCodes.DuplicateSpecificationAssignment, `Property '${value.property}' is assigned more than once in this fixture - assign it only once, inline or indented`, value.location, diagnosticText('property', value.property));
         return;
     }
     values.push(value);
@@ -97,7 +98,7 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             else if (eventSource !== null) context.error(DiagnosticCodes.DuplicateSpecificationEventSource, 'A specification step can declare its event-source assertion only once', locationOf(child));
             else eventSource = parseMappingSource(source, locationOf(child), context);
         } else {
-            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
+            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }
     }
     return { values, for: eventSource, generatedValues, description, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };

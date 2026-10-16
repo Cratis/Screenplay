@@ -77,7 +77,8 @@ internal static class SpecificationActionValidator
             context.Error(
                 DiagnosticCodes.UnknownSpecificationQueryArgument,
                 $"Query '{performed.Query}' takes no argument '{argument.Property}' - its parameters are {(parameters.Count == 0 ? "none" : string.Join(", ", parameters.Select(parameter => $"'{parameter.Name}'")))}",
-                argument.Location);
+                argument.Location,
+                DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(performed.Query)).With("argument", DiagnosticArgument.Text(argument.Property)));
         }
 
         SpecificationValueConsistencyValidator.ValidateValues(performed.Arguments, parameters.Select(parameter => new PropertySyntax(parameter.Name, parameter.Type, parameter.Location)), declarations, context);
