@@ -1,0 +1,71 @@
+module Scheduling
+  feature Windows
+    slice StateChange Keep
+      command KeepWindow
+        id String identifier
+        from Instant
+        to Instant
+        validate
+          require to >= from
+            message "Window must not be inverted."
+        produces WindowKept
+          for id
+          to = to
+      event WindowKept
+        to Instant
+      specification OrderingAcrossOffsets
+        when KeepWindow
+          id = "window"
+          from = "2026-01-01T01:00:00.0000000+02:00"
+          to = "2025-12-31T23:00:00.0000001Z"
+        then WindowKept
+          for "window"
+          to = "2025-12-31T23:00:00.0000001Z"
+      specification RejectingAnInvertedWindow
+        when KeepWindow
+          id = "window"
+          from = "2026-01-01T00:00:00.0000001Z"
+          to = "2026-01-01T00:00:00.0000000Z"
+        then error "Window must not be inverted."
+    slice StateChange Compare
+      command CompareInstant
+        id String identifier
+        at Instant
+        validate
+          at == "2026-01-01T01:00:00+01:00" message "The instant must match."
+        produces InstantMatched
+          for id
+          at = at
+      event InstantMatched
+        at Instant
+      specification EqualityAcrossOffsets
+        when CompareInstant
+          id = "instant"
+          at = "2025-12-31T23:00:00.0000000-01:00"
+        then InstantMatched
+          for "instant"
+          at = "2025-12-31T23:00:00.0000000-01:00"
+      specification DistinctTicks
+        when CompareInstant
+          id = "instant"
+          at = "2026-01-01T00:00:00.0000001Z"
+        then error "The instant must match."
+    slice StateChange Calendar
+      command KeepDate
+        id String identifier
+        day Date
+        produces when day > "2026-01-01"
+          DateKept
+            for id
+      event DateKept
+      specification CalendarOrdering
+        when KeepDate
+          id = "date"
+          day = "2026-01-02"
+        then DateKept
+          for "date"
+      specification CalendarBeforeThreshold
+        when KeepDate
+          id = "date"
+          day = "2025-12-31"
+        then no events

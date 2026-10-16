@@ -239,6 +239,13 @@ the reaction asks to append, subject to append-time constraints, while a command
 something else that may authorize, validate and reject it. Using `produces` for both would say those are the same kind of
 consequence, and they are not.
 
+For an event-triggered reaction, map an invoked command's identifier with `orderId = $eventSourceId`
+(or `$eventContext.eventSourceId`) to address the triggering event's source without copying its identity into
+the event payload. The same source is available in reaction `produces` mappings. It needs a required scalar
+target, not a clock, caller or audit identity; clock and application triggers have no event source.
+The reference runner validates the source value against the mapping target's type without converting it.
+These mappings use the existing ESM v6 reaction contract.
+
 Both are declarations of *what happens*, not of how — a trigger can state its consequences and still carry a
 `file` or an inline block that implements them.
 

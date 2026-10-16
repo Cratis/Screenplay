@@ -1,0 +1,18 @@
+concept OrderId : String
+
+module Orders
+  feature Fulfilment
+    slice StateChange StartPicking
+      command StartPicking
+        orderId OrderId identifier
+        produces PickingStarted
+          for orderId
+      event PickingStarted
+    slice Automation Picking
+      event OrderPlaced
+      reaction PickOnPlacement
+        when OrderPlaced
+          invokes StartPicking
+            orderId = $eventSourceId
+          invokes StartPicking
+            orderId = $eventContext.eventSourceId

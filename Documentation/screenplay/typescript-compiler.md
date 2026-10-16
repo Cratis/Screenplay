@@ -8,6 +8,8 @@ It parses and checks inline-event declaration collisions and destination consist
 
 Query rejection specifications retain both `when query … then error` and actionless `then query … arguments` followed by an error. The shared `PLAY0465` shape checks require exactly one query, one error and no action or other outcome, including no result or `then no result`. TypeScript does not run concept rules or select ESM v18; native binding and the reference runner own that verdict. Validated query arguments reject with Validation in every reference ESM version, and only the new query-error specification shape selects v18.
 
+Date comparisons retain the existing comparison and validation syntax nodes. TypeScript parses Date/DateTime command rules and conditions without evaluating them, canonicalizing literals or selecting ESM v26. Native binding owns the position/operand restrictions, `PLAY0268` refusals and `PLAY0273` literal checks; the native reference evaluator compares UTC instants at tick precision and rejects offset-less compared inputs before rules. JavaScript `Date` is not a tick-precision evaluator. The Invoicing syntax conformance vector includes an admitted date-literal rule while its `today` rules remain native binder refusals.
+
 ## Parse a document
 
 `parse` turns the text of one document into an `ApplicationSyntax`, with the diagnostics found on the way:

@@ -10,6 +10,8 @@
 
 domain Commerce
 
+reaction batches atomic
+
 // What the whole application shares: values, shapes, and who may do what.
 import "Shared/*.play"
 

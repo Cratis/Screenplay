@@ -458,6 +458,7 @@ Every rule above parses, prints and round-trips. The executable semantic model (
 | `max`, `min` | text (bounds its length) or a whole or decimal number (bounds its value) | a non-negative whole number on text; a number of the property's type otherwise |
 | `>`, `>=`, `<`, `<=` | a whole or decimal number | a number of the property's type |
 | `==`, `!=` | text, an enum member, a whole or decimal number, or a boolean | a literal of the property's type, or a bare member name of an enum concept |
+| `==`, `!=`, `>`, `>=`, `<`, `<=` (ESM v26) | a scalar Date or DateTime command property | a date literal of the same primitive; DateTime needs an offset or Z |
 | `length ==` | text that is not an enum | a non-negative whole number |
 | `all >`, `all >=` | a collection of whole or decimal numbers | a number of the element type |
 
@@ -490,7 +491,7 @@ Still rejected, and why:
 
 | Rule | Why |
 | --- | --- |
-| any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
+| date comparisons in concept rules, reaction `where`, or with read paths, `$context` or `today` | These positions and operands are not admitted by date-comparison ESM v26. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid pattern syntax reports `PLAY0367`; constructs outside the portable dialect report `PLAY0699` with a suggested replacement where one exists. |
 | `require` over a read-model path without `command reads protected` | Protected-read admission requires explicit opt-in; with it, admitted single-level paths are executable. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
@@ -498,7 +499,24 @@ Still rejected, and why:
 
 A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Fenced `validate` blocks on commands and concepts also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
 
-Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. Both property operands must have compatible types. Under `command reads protected`, either operand may instead be a declared read's single-level property path. Requirements run after property validation and required-read presence checks and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
+### Chronological command date comparisons
+
+ESM v26 adds `==`, `!=`, `>`, `>=`, `<` and `<=` for `Date` and `DateTime` in command `require`, `produces when` and command/property validation rules. Conditions compare a required scalar command property with another required scalar command property of the same primitive, or with a literal. Validation rules still require a literal right operand; optional absent values continue to pass. A Date concept can type a command property, but date rules on the concept itself remain refused.
+
+```screenplay
+command KeepWindow
+  from DateTime
+  to DateTime
+  validate
+    require to >= from
+    to >= "2026-01-01T00:00:00Z"
+```
+
+`Date` compares calendar dates without a time zone. `DateTime` compares UTC instants at tick precision (seven fractional digits), including equality between different offsets naming the same instant. Literals bind to canonical text: `yyyy-MM-dd` or UTC with seven fractional digits and `Z`. An invalid date literal or a DateTime literal without an offset reports `PLAY0273`. A refused comparison reports only `PLAY0268`, without checking its literals.
+
+Every DateTime input property used by a comparison must carry an offset or `Z`. Input validation rejects a missing offset with a Validation outcome before any rule runs, even when a condition short-circuits or a production is skipped. Targets apply this before deserialization can attach a local offset. A target that cannot preserve tick precision refuses the comparison; JavaScript `Date` alone is insufficient. Client validators omit date ordering rules. Specification `then` matching, read-model keys, constraints and freshness keep ordinal equality. `$context`, protected read paths, `today`, mixed Date/DateTime operands and reaction `where` remain refused.
+
+Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. ESM v26 adds the date comparisons above. Both property operands must have compatible types. Under `command reads protected`, either operand may instead be a declared read's single-level property path. Requirements run after property validation and required-read presence checks and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
 
 ## Authorization
 

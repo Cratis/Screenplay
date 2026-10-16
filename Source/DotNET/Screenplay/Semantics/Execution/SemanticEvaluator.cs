@@ -126,8 +126,10 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         SemanticExpression expression,
         SemanticExpressionRootKind expectedRoot,
         Dictionary<SemanticId, SemanticValue> values,
-        SemanticCommandOccurrence? occurrence = null) => expression switch
+        SemanticCommandOccurrence? occurrence = null,
+        SemanticFact? cause = null) => expression switch
         {
+            SemanticEventContextExpression { Value: SemanticEventContextValueKind.EventSourceIdentity } when expectedRoot == SemanticExpressionRootKind.Event && cause is not null => cause.Destination,
             SemanticEventContextExpression context when occurrence is not null => context.Value switch
             {
                 SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),

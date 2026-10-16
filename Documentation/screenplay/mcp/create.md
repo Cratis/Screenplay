@@ -39,9 +39,12 @@ any comments would be dropped.
 
 A first proposal drops no comments because there are none yet. The assistant reads
 the proposal's changes and the `after` bytes of each document. For a brand-new
-model it can look like this:
+model it can look like this. A new model's root starts with `reaction batches atomic`,
+so reactions added later use [atomic production batches](../reactions.md#atomic-production-batches):
 
 ```screenplay
+reaction batches atomic
+
 module Sales
 
   feature Orders

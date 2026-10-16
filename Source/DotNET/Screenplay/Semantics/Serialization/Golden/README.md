@@ -69,6 +69,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v24.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV24()` on the full v23 model, adding all four first-class ordinal text-rule discriminators. The allocation is held in `TextRuleVersion.Major`. `TextRulesCorpus.SourceForms` separately compares deprecated Studio lookaround source with first-class source, including identical canonical bytes and accepted/rejected reference specifications. Prior golden bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=24`; rebuild and rerun without the switch after reviewing the intentional failure.
 
+`full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=26`; regenerate the source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`. Both fail deliberately; review, rebuild and rerun strictly without them.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:
