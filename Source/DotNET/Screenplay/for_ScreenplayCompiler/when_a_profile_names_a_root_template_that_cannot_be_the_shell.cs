@@ -55,7 +55,7 @@ public class when_a_profile_names_a_root_template_that_cannot_be_the_shell : giv
 
     void Because() => _result = _compiler.Compile(Source);
 
-    [Fact] void should_report_each_template_that_cannot_be_the_shell() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateNotApplicable).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(26, 29, 32, 35, 38);
+    [Fact] void should_report_each_template_that_cannot_be_the_shell() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateNotApplicable).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(27, 30, 33, 36, 39);
     [Fact] void should_report_errors() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateNotApplicable).ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     [Fact] void should_say_why_a_scope_excludes_it() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateNotApplicable).First().Message.ShouldContain("does not declare scope 'application'");
     [Fact] void should_say_why_a_type_excludes_it() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateNotApplicable).ElementAt(1).Message.ShouldContain("type 'Form' is for content");

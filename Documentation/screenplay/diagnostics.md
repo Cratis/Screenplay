@@ -759,7 +759,7 @@ Sample data is design and preview time only: it has no repair, and binding repor
 | `PLAY0795` | Error | The root template declares no `content` slot, so no screen can be placed in it. |
 | `PLAY0796` | Warning | A `root template` sets an `option` the shell does not expose. An own shell exposes the properties of its `exposure for <Shell>`; a shell that exposes nothing has no options. A blueprint's options are checked against the installed catalog. |
 | `PLAY0797` | Error | The `appearance` `color scheme` is not `light`, `dark` or `system`, or the `accent` is not a `#RGB`, `#RRGGBB` or `#RRGGBBAA` colour. |
-| `PLAY0799` | Error | The `new screens use template` default cannot start a screen in a feature: it is a layout, a dialog template, an application-scope root template, or a template whose `scopes` leave out `feature`. |
+| `PLAY0799` | Error | The `new screens use template` default cannot start a screen in a feature: it is a layout, an application-scope root template, or a template (a dialog template included) whose `scopes` leave out `feature`. |
 
 A `version` range that is not one Scene understands is `PLAY0721`, as for any template reference. Whether the root template exists, can be the shell and exposes its options is checked by the validator (`PLAY0790` to `PLAY0799`); what a blueprint ships is checked by `UiProfileShellBinder.Bind` against the host's installed catalog.
 

@@ -25,7 +25,7 @@ public class when_a_profile_names_an_unknown_root_template : given.a_compiler
 
     void Because() => _result = _compiler.Compile(Source);
 
-    [Fact] void should_report_the_root_template() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(8, 10);
+    [Fact] void should_report_the_root_template() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(7, 9);
     [Fact] void should_report_an_error() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     [Fact] void should_name_the_template() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).First().Message.ShouldContain("'Ghost'");
     [Fact] void should_carry_the_template_argument() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).First().Arguments["template"].ToString().ShouldContain("Ghost");
