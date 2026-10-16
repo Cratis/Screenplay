@@ -11,7 +11,7 @@ public class with_required_reads : given.a_protected_read_model
     CompilationResult<SemanticCompilation> _result;
     void Because() => _result = Bind(Source);
     [Fact] void should_bind() => Assert.True(_result.Success, string.Join('\n', _result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-    [Fact] void should_select_v24() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
+    [Fact] void should_select_v25() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
     [Fact] void should_select_the_protected_mode() => _result.Value!.Model.Application.CommandReadMode.ShouldEqual(SemanticCommandReadMode.Protected);
     [Fact] void should_bind_the_lookup_key() => Command(_result.Value!.Model).Reads.Single().Key.ShouldEqual(Command(_result.Value.Model).Properties.Single(property => property.Name == "id").Id);
     [Fact] void should_bind_the_view_identity() => Command(_result.Value!.Model).Reads.Single().ReadModel.ShouldEqual(View(_result.Value.Model).Id);

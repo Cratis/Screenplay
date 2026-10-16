@@ -69,7 +69,7 @@ internal static partial class SemanticModelRead
             .Add("triggers", 6, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Triggers = Array(ref reader, Trigger, property))
             .Add("eventSources", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadEventSources(ref reader, property))
             .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."))
-            .Add("commandReadMode", LanguageVersion.V24.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."));
+            .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 

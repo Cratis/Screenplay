@@ -10,7 +10,7 @@ public class when_validating_protected_read_routing : Specification
     [Fact]
     void should_refuse_a_handled_event_routed_by_a_command_producer()
     {
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV24();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV25();
         var application = ChangeSlices(model.Application, slice => slice with
         {
             Commands = [.. slice.Commands.Select(command => command with
@@ -26,7 +26,7 @@ public class when_validating_protected_read_routing : Specification
     [InlineData(true)]
     void should_refuse_a_handled_event_routed_by_a_reaction_including_a_refusal_branch(bool refusalBranch)
     {
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV24();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV25();
         var command = model.Application.Modules.Single().Features.Single().Slices.SelectMany(slice => slice.Commands).Single();
         var produced = command.Produces.Single() with { Route = new(command.Id, command.Id) };
         var sliceAddress = SemanticAddress.ForSlice(ApplicationIdentity.Create("Projects"), "M", "F", "Follow");
@@ -62,7 +62,7 @@ public class when_validating_protected_read_routing : Specification
 
     static void Refusal(SemanticApplication application, string reason)
     {
-        var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V24, SemanticVersion.V24, application));
+        var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V25, SemanticVersion.V25, application));
         error.ShouldBeOfExactType<InvalidSemanticContract>();
         error.Message.ShouldContain($"unprotectable: {reason}.");
     }

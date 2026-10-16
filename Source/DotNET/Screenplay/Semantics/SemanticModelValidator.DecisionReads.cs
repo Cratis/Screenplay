@@ -15,8 +15,8 @@ internal static partial class SemanticModelValidator
             _validatedDecisionReads.Clear();
             RequireObjects(command.Reads, nameof(command.Reads), "decision read");
             if (command.Reads.IsEmpty) return;
-            if (!_semanticVersion.IsAtLeast(SemanticVersion.V24) || _eventRoutesApplication.CommandReadMode != SemanticCommandReadMode.Protected)
-                throw new InvalidSemanticContract("Command reads require ESM v24 and protected command read mode.");
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V25) || _eventRoutesApplication.CommandReadMode != SemanticCommandReadMode.Protected)
+                throw new InvalidSemanticContract("Command reads require ESM v25 and protected command read mode.");
             RejectDuplicateNames(command.Reads.Select(read => read.Name), "decision read");
             var slices = AllSlices(_eventRoutesApplication).ToArray();
             foreach (var read in command.Reads)
@@ -45,10 +45,10 @@ internal static partial class SemanticModelValidator
 
         SemanticTypeReference ResolveDecisionReadProperty(string read, SemanticId property)
         {
-            if (!_allowDecisionReadPaths || !_semanticVersion.IsAtLeast(SemanticVersion.V24) ||
+            if (!_allowDecisionReadPaths || !_semanticVersion.IsAtLeast(SemanticVersion.V25) ||
                 !_validatedDecisionReads.TryGetValue(read, out var view) || view.Properties.SingleOrDefault(value => value.Id == property) is not { } member)
             {
-                throw new InvalidSemanticContract("A read path requires ESM v24, a declared command read and a view property, and is only admitted in requirements and produced-event mappings.");
+                throw new InvalidSemanticContract("A read path requires ESM v25, a declared command read and a view property, and is only admitted in requirements and produced-event mappings.");
             }
             return member.Type;
         }

@@ -215,6 +215,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceOptionalityRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.DeprecatedStudioTextRulePattern)
+        {
+            return WorkspaceTextRuleRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.RedundantProductionRoute)
         {
             return WorkspaceProductionRouteRepairs.Find(index, revision, diagnostic, verifyRepair);

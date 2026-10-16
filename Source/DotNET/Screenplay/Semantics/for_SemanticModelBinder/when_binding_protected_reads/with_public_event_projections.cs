@@ -25,7 +25,7 @@ public class with_public_event_projections : given.a_protected_read_model
         var legacyResult = Bind(source.Replace("command reads protected\n", string.Empty, StringComparison.Ordinal));
         Assert.True(protectedResult.Success, string.Join('\n', protectedResult.Diagnostics.Select(diagnostic => diagnostic.Message)));
         Assert.True(legacyResult.Success, string.Join('\n', legacyResult.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        protectedResult.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
+        protectedResult.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
         ProjectionJson(protectedResult.Value.Model).ShouldEqual(ProjectionJson(legacyResult.Value!.Model));
     }
 

@@ -1903,6 +1903,16 @@ public static class DiagnosticCodes
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
+    /// A match pattern uses a construct outside the portable linear dialect.
+    /// </summary>
+    public const string PatternOutsidePortableMatchDialect = "PLAY0699";
+
+    /// <summary>
+    /// A Studio text-rule pattern has an equivalent first-class ordinal rule.
+    /// </summary>
+    public const string DeprecatedStudioTextRulePattern = "PLAY0787";
+
+    /// <summary>
     /// A validation rule names a severity other than information, warning or error.
     /// </summary>
     public const string InvalidValidationSeverity = "PLAY0368";
@@ -3255,6 +3265,20 @@ public static class DiagnosticCodes
     /// A directionless Translate slice reacts to an event its own capture appends.
     /// </summary>
     public const string DirectionlessTranslationReactsToOwnCapture = "PLAY0694";
+
+    /// <summary>
+    /// A pending command handler intent coexists with another handler occurrence.
+    /// </summary>
+    public const string PendingIntentWithOtherHandler = "PLAY0698";
+
+    /// <summary>A described command requires a target implementation.</summary>
+    public const string DescribedCommandNotImplemented = "PLAY0695";
+
+    /// <summary>A described command must declare at least one production.</summary>
+    public const string DescribedCommandWithoutProductions = "PLAY0696";
+
+    /// <summary>A described command's result contract requires unconditional productions.</summary>
+    public const string DescribedCommandCardinalityNotAdmitted = "PLAY0697";
 
     /// <summary>
     /// A capture over events requires its key as a required property on every source event.

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { isPendingHandler, validateHandlerOccurrences } from './CommandHandlerValidator';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { RequirementSyntax } from '../Syntax/Conditions';
 import { parseCondition } from './ConditionParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
@@ -24,6 +26,7 @@ import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSynt
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { validateMatchOperand } from './MatchOperandValidation';
 import { isReactionIdentityLine, misplacedReactionIdentity } from './ReactionIdentityParser';
 import { commandReadSources } from './CommandReadSources';
 import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
@@ -38,7 +41,7 @@ const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
-const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
+const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|not contains|contains|starts with|ends with|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
 const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
@@ -54,6 +57,10 @@ const operandKinds: Record<string, ValidationRuleKind> = {
     '!=': 'NotEqual',
     'length ==': 'Length',
     matches: 'Matches',
+    contains: 'Contains',
+    'not contains': 'NotContains',
+    'starts with': 'StartsWith',
+    'ends with': 'EndsWith',
     'all >': 'AllGreaterThan',
     'all >=': 'AllGreaterThanOrEqual',
 };
@@ -95,6 +102,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     let documentation: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
     let handler: HandlerSyntax | null = null;
+    const handlers: { handler: HandlerSyntax | null; location: SourceLocation }[] = [];
     let stream: CommandStreamSyntax | null = null;
     const streamCandidates: CommandStreamSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -146,6 +154,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             if (production !== undefined) produces.push(production);
         } else if (keyword === 'handler') {
             handler = parseHandler(context, child);
+            handlers.push({ handler, location: locationOf(child) });
         } else if (opaqueDirectives.has(keyword)) {
             const reference = keyword === 'reads' ? parseReads(context, child) : undefined;
             if (reference !== undefined) referenceReads.push(reference);
@@ -184,7 +193,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             response = parsed;
         }
     }
-    if (handler !== null && produces.length > 0) {
+    validateHandlerOccurrences(handlers, context);
+    if (handler !== null && !isPendingHandler(handler) && produces.length > 0) {
         context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
     }
     const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
@@ -284,6 +294,7 @@ function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'c
     if (parsed === undefined) {
         return undefined;
     }
+    if (parsed.kind === 'Matches' && parsed.value !== null) validateMatchOperand(context, parsed.value, locationOf(line), line.raw);
     const source = parsed.kind === 'Rule' ? parseRuleImplementation(context, line, owner === 'command') : { file: null, code: null, implementation: null };
     return {
         kind: 'ValidationRuleSyntax',

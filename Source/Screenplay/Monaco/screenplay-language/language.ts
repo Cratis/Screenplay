@@ -200,6 +200,7 @@ export const clauseKeywords = [
     'invokes',
     'contains',
     'starts',
+    'ends',
     'with',
     'provider',
     // Interaction: the words a behavior body uses. The built-in interaction kinds ('click', 'submit', and

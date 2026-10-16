@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_validating_protected_reads : Specification
 {
-    static SemanticApplication Application() => canonical_serialization_golden_vectors.CreateSemanticModelV24().Application;
+    static SemanticApplication Application() => canonical_serialization_golden_vectors.CreateSemanticModelV25().Application;
 
     static SemanticApplication WithCommand(SemanticApplication application, Func<SemanticCommand, SemanticCommand> transform) => application with
     {
@@ -22,7 +22,7 @@ public class when_validating_protected_reads : Specification
 
     static void Refuse(SemanticApplication application, SemanticVersion? version = null)
     {
-        var selected = version ?? SemanticVersion.V24;
+        var selected = version ?? SemanticVersion.V25;
         Catch.Exception(() => ExecutableSemanticModel.Create(new(selected.Major, selected.Minor), selected, application)).ShouldBeOfExactType<InvalidSemanticContract>();
     }
 
@@ -30,11 +30,11 @@ public class when_validating_protected_reads : Specification
     void should_reject_the_mode_in_every_earlier_version()
     {
         var application = Application();
-        EsmSchemaV22Support.SemanticVersions.Length.ShouldEqual(22);
-        foreach (var version in EsmSchemaV22Support.SemanticVersions) Refuse(application, version);
+        EsmSchemaV24Support.SemanticVersions.Length.ShouldEqual(24);
+        foreach (var version in EsmSchemaV24Support.SemanticVersions) Refuse(application, version);
     }
 
-    [Fact] void should_require_the_preamble_at_v24() => Refuse(Application() with { CommandReadMode = null });
+    [Fact] void should_require_the_preamble_at_v25() => Refuse(Application() with { CommandReadMode = null });
     [Fact] void should_refuse_unknown_modes() => Refuse(Application() with { CommandReadMode = (SemanticCommandReadMode)99 });
     [Fact] void should_refuse_reads_without_the_mode_in_an_earlier_version() => Refuse(Application() with { CommandReadMode = null }, SemanticVersion.V22);
     [Fact] void should_refuse_read_paths_in_an_earlier_version_even_without_read_entries() => Refuse(WithCommand(Application() with { CommandReadMode = null }, command => command with { Reads = [] }), SemanticVersion.V22);

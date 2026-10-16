@@ -48,8 +48,8 @@ internal static partial class SemanticModelRead
             .Add("contextValue", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ContextValue = ParseContextValue(String(ref reader, property)))
             .Add("type", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Type = Nested(ref reader, TypeReference, property))
             .Add("member", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Member = String(ref reader, property))
-            .Add("read", LanguageVersion.V24.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Read = String(ref reader, property))
-            .Add("property", LanguageVersion.V24.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadProperty = Identifier(ref reader, property));
+            .Add("read", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Read = String(ref reader, property))
+            .Add("property", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadProperty = Identifier(ref reader, property));
 
         public SemanticExpressionKind? Kind { get; set; }
 
@@ -86,8 +86,8 @@ internal static partial class SemanticModelRead
         public void ReadKind(string value)
         {
             Kind = ParseExpressionKind(value);
-            if (Kind == SemanticExpressionKind.ReadPath && SchemaVersion < LanguageVersion.V24.Major)
-                throw Malformed("expression kind", "readPath requires schema v24");
+            if (Kind == SemanticExpressionKind.ReadPath && SchemaVersion < LanguageVersion.V25.Major)
+                throw Malformed("expression kind", "readPath requires schema v25");
         }
 
         public void ReadValue(ref Utf8JsonReader reader, string property)

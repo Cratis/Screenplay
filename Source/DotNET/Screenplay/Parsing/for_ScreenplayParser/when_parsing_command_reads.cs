@@ -63,6 +63,6 @@ public class when_parsing_command_reads : Specification
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("single"), "single", "single.play", "command reads protected");
         var result = new SemanticModelBinder().Bind("ProtectedReads", syntax, SemanticDocumentSet.Create([document], catalog));
         result.Success.ShouldBeTrue();
-        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
     }
 }

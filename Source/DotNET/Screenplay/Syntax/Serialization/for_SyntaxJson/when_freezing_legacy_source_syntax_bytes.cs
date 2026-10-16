@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons") continue;
+            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -34,7 +34,7 @@ public class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed)))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))))),
                 "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
@@ -188,6 +188,29 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
+    // Only the living Invoicing samples reach this projection. Dedicated text-rule specs protect
+    // their new rules; every prior rule, requirement, message and severity stays frozen here.
+    static ApplicationSyntax WithoutSampleTextRules(ApplicationSyntax application) => application with
+    {
+        Concepts = application.Concepts.Select(concept => concept with
+        {
+            Validations = concept.Validations?.SelectMany(WithoutNewTextRuleBlock)
+        })
+    };
+
+    static IEnumerable<ValidateSyntax> WithoutNewTextRuleBlock(ValidateSyntax validation)
+    {
+        if (validation is not DeclarativeValidateSyntax block || !block.Rules.Any(rule => IsTextRule(rule.Rule))) return [validation];
+        var retained = block.Rules.Where(rule => !IsTextRule(rule.Rule)).ToArray();
+
+        return retained.Length == 0 && !(block.Requirements ?? []).Any()
+            ? []
+            : [block with { Rules = retained }];
+    }
+
+    static bool IsTextRule(ValidationRuleKind kind) => kind is
+        ValidationRuleKind.Contains or ValidationRuleKind.NotContains or ValidationRuleKind.StartsWith or ValidationRuleKind.EndsWith;
+
     static ApplicationSyntax WithoutSampleExamples(ApplicationSyntax application)
     {
         var expanded = SpecificationExamples.Expand(application);
@@ -332,7 +355,8 @@ public class when_freezing_legacy_source_syntax_bytes
                 }),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
-                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
+                // Shared vectors cover both new slices; retain every pre-feature sample byte here.
+                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft" && slice.Name != "ApplyLateFee").Select(slice => slice.Name switch
                 {
                     "CancelInvoice" => slice with
                     {

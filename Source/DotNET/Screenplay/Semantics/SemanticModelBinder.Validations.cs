@@ -55,6 +55,9 @@ public sealed partial class SemanticModelBinder
                 "ordering compares one whole or decimal number",
             SemanticValidationRuleKind.Length when subject.IsCollection || !subject.IsText =>
                 "a length measures one text value that is not an enumeration",
+            SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or
+                SemanticValidationRuleKind.StartsWith or SemanticValidationRuleKind.EndsWith when subject.IsCollection || !subject.IsText =>
+                "text comparison requires one text value that is not an enumeration",
             SemanticValidationRuleKind.Matches when subject.IsCollection || !subject.IsText =>
                 "matches requires one text value that is not an enumeration",
             SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when !subject.IsCollection || !subject.IsNumber =>
@@ -113,6 +116,10 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
             ValidationRuleKind.Matches => SemanticValidationRuleKind.Matches,
+            ValidationRuleKind.Contains => SemanticValidationRuleKind.Contains,
+            ValidationRuleKind.NotContains => SemanticValidationRuleKind.NotContains,
+            ValidationRuleKind.StartsWith => SemanticValidationRuleKind.StartsWith,
+            ValidationRuleKind.EndsWith => SemanticValidationRuleKind.EndsWith,
             ValidationRuleKind.Checksum => SemanticValidationRuleKind.Checksum,
             ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
             ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
@@ -140,6 +147,10 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.NotEqual => "!=",
             ValidationRuleKind.Length => "length ==",
             ValidationRuleKind.Matches => "matches",
+            ValidationRuleKind.Contains => "contains",
+            ValidationRuleKind.NotContains => "not contains",
+            ValidationRuleKind.StartsWith => "starts with",
+            ValidationRuleKind.EndsWith => "ends with",
             ValidationRuleKind.Checksum => "checksum",
             ValidationRuleKind.AllGreaterThan => "all >",
             ValidationRuleKind.AllGreaterThanOrEqual => "all >=",
@@ -242,13 +253,20 @@ public sealed partial class SemanticModelBinder
                         return null;
                 }
 
-                try
+                var check = PortableMatchPattern.Check(pattern);
+                if (check.Replacement is { } replacement)
                 {
-                    _ = SemanticMatchPattern.Create(pattern);
+                    Warning(DiagnosticCodes.DeprecatedStudioTextRulePattern, check.Description, rule.Location);
+                    return new(property, replacement.Kind, SemanticValue.Text(replacement.Value), rule.Message) { Severity = Severity(rule.Severity) };
                 }
-                catch (ArgumentException exception)
+
+                var parsed = SemanticMatchPattern.Parse(pattern);
+                if (!parsed.Accepted)
                 {
-                    Error(DiagnosticCodes.InvalidMatchPattern, $"Invalid ECMAScript regular expression on {subject.Description}: {exception.Message}", rule.Location);
+                    Error(
+                        parsed.Invalid ? DiagnosticCodes.InvalidMatchPattern : DiagnosticCodes.PatternOutsidePortableMatchDialect,
+                        $"Match pattern on {subject.Description}: {parsed.Description}",
+                        MatchPatternLocation(rule, parsed.Offset));
                     return null;
                 }
 
@@ -257,6 +275,23 @@ public sealed partial class SemanticModelBinder
 
             var operand = BindValidationOperand(rule, kind, subject, spelling);
             return operand is null ? null : new(property, kind, operand, rule.Message) { Severity = Severity(rule.Severity) };
+        }
+
+        SourceLocation MatchPatternLocation(ValidationRuleSyntax rule, int patternOffset)
+        {
+            if (DocumentAt(rule.Location) is not { } document) return rule.Location;
+            var start = OffsetAt(document.Text, rule.Location);
+            var end = document.Text.IndexOf('\n', start);
+            if (end < 0) end = document.Text.Length;
+            var quote = document.Text.IndexOf('"', start, end - start);
+            if (quote < 0) return rule.Location;
+            var offset = quote + 1;
+            for (var decoded = 0; decoded < patternOffset && offset < end; decoded++, offset++)
+            {
+                if (document.Text[offset] == '\\' && offset + 1 < end && "\\\"nrt".Contains(document.Text[offset + 1], StringComparison.Ordinal)) offset++;
+            }
+
+            return rule.Location with { Column = rule.Location.Column + (offset - start) };
         }
 
         SemanticValue? BindValidationOperand(

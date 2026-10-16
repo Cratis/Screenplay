@@ -6,10 +6,10 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_prote
 public class without_declared_reads : given.a_protected_read_model
 {
     [Fact]
-    void should_select_v24_from_the_preamble_alone()
+    void should_select_v25_from_the_preamble_alone()
     {
         var result = Bind("command reads protected");
         result.Success.ShouldBeTrue();
-        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
     }
 }

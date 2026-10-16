@@ -8,29 +8,29 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 
 public class when_gating_protected_read_nodes : Specification
 {
-    static SemanticId Property => given.canonical_serialization_golden_vectors.CreateSemanticModelV24().Application.Modules.Single().Features.Single().Slices.SelectMany(slice => slice.Commands).Single().Properties[0].Id;
+    static SemanticId Property => given.canonical_serialization_golden_vectors.CreateSemanticModelV25().Application.Modules.Single().Features.Single().Slices.SelectMany(slice => slice.Commands).Single().Properties[0].Id;
 
     [Fact]
     void should_gate_read_operands_in_every_earlier_schema_before_model_validation()
     {
         var json = JsonSerializer.Serialize(new { read = "View", property = Property.ToString() });
-        foreach (var version in EsmSchemaV22Support.LanguageVersions)
+        foreach (var version in EsmSchemaV24Support.LanguageVersions)
         {
             var error = Catch.Exception(() => Operand(json, version.Major));
             error.ShouldBeOfExactType<InvalidSemanticContract>();
             error.Message.ShouldContain("read");
         }
-        Operand(json, 24).Read.ShouldEqual("View");
+        Operand(json, 25).Read.ShouldEqual("View");
     }
 
     [Fact]
     void should_gate_the_read_path_kind_in_every_earlier_schema()
     {
-        foreach (var version in EsmSchemaV22Support.LanguageVersions)
+        foreach (var version in EsmSchemaV24Support.LanguageVersions)
         {
             var error = Catch.Exception(() => Expression("{\"kind\":\"readPath\"}", version.Major));
             error.ShouldBeOfExactType<InvalidSemanticContract>();
-            error.Message.ShouldContain("requires schema v24");
+            error.Message.ShouldContain("requires schema v25");
         }
     }
 
@@ -40,7 +40,7 @@ public class when_gating_protected_read_nodes : Specification
     void should_gate_expression_read_members_before_shape_validation(string field, string? literal)
     {
         var json = $"{{\"kind\":\"value\",\"{field}\":{literal ?? JsonSerializer.Serialize(Property.ToString())}}}";
-        foreach (var version in EsmSchemaV22Support.LanguageVersions)
+        foreach (var version in EsmSchemaV24Support.LanguageVersions)
         {
             var error = Catch.Exception(() => Expression(json, version.Major));
             error.ShouldBeOfExactType<InvalidSemanticContract>();
@@ -49,10 +49,10 @@ public class when_gating_protected_read_nodes : Specification
     }
 
     [Fact]
-    void should_admit_the_expression_at_v24()
+    void should_admit_the_expression_at_v25()
     {
         var json = JsonSerializer.Serialize(new { kind = "readPath", read = "View", property = Property.ToString() });
-        var expression = (SemanticReadPathExpression)Expression(json, 24);
+        var expression = (SemanticReadPathExpression)Expression(json, 25);
         expression.Read.ShouldEqual("View");
         expression.PropertyId.ShouldEqual(Property);
     }

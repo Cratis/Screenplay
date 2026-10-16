@@ -55,7 +55,7 @@ static class ContractAdmission
         new("authentication", "authentication\n  provider GitHub\n"),
         new("identity", "identity\n  department String from claim \"department\"\n", ["identity\n  department String from claim \"department\"\n" + Slice + Event + Command.Replace("value = value", "value = $identity.department", StringComparison.Ordinal)], Baseline: string.Empty),
         new("behavior", "behavior B\n  parameter command\n"),
-        new("concept", "concept Value : String\n", ["concept Id : Uuid\n  generate uuidv7\n", "concept Code : String\n  generate nanoid\n", "concept InviteCode : String\n  generate nanoid\n  validate\n    matches \"^[A-Za-z0-9_-]{21}$\"\n", "concept Preview : String\n  generate pattern \"ORD-#{7}\"\n", "concept Ticket : Int\n  generate random 1..9\n", "concept Ref : String\n  validate checksum luhn\n", "concept Ref : String\n  generate rule Make\n    ```csharp\n    return value;\n    ```\n", "concept Reserved : String\n  generate sequence\n", "concept Status : Enum\n  draft = 1\n  issued = 4\n", "concept Status : Enum\n  draft = 0\n  issued = 1\n", "concept Value : String\n  description \"Value intent\"\n", "concept Value : String pii\n  pii reason \"Personal data\"\n", "concept Value : String pii\n  pii special health\n  pii criminal\n", "concept Value : String secret\n  secret scope namespace\n", "concept Value : String pii secret\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
+        new("concept", "concept Value : String\n", ["concept Id : Uuid\n  generate uuidv7\n", "concept Code : String\n  generate nanoid\n", "concept InviteCode : String\n  generate nanoid\n  validate\n    matches \"^[A-Za-z0-9_-]{21}$\"\n", "concept Preview : String\n  generate pattern \"ORD-#{7}\"\n", "concept Ticket : Int\n  generate random 1..9\n", "concept Ref : String\n  validate checksum luhn\n", "concept Ref : String\n  validate\n    contains \"A\"\n    not contains \"B\"\n    starts with \"A\"\n    ends with \"A\"\n", "concept Ref : String\n  generate rule Make\n    ```csharp\n    return value;\n    ```\n", "concept Reserved : String\n  generate sequence\n", "concept Status : Enum\n  draft = 1\n  issued = 4\n", "concept Status : Enum\n  draft = 0\n  issued = 1\n", "concept Value : String\n  description \"Value intent\"\n", "concept Value : String pii\n  pii reason \"Personal data\"\n", "concept Value : String pii\n  pii special health\n  pii criminal\n", "concept Value : String secret\n  secret scope namespace\n", "concept Value : String pii secret\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
         new("direction", Slice.Replace("StateChange", "Translate", StringComparison.Ordinal) + "      direction inbound\n"),
         new("domain", "domain Example\n"),
         new("eventsource", "concept Id : Uuid\neventsource Record\n  identifier Id\n"),
@@ -91,6 +91,9 @@ static class ContractAdmission
                 "command reads protected\n",
                 ProtectedReads,
                 Slice + Event + Command.Replace("value String", "value String\n        validate\n          value rule BeUnique", StringComparison.Ordinal),
+                Slice + Event + Command + "        handler\n          implementation\n            hint \"Choose the payload\"\n",
+                Slice + "      command Record\n        value String\n        returns value\n        handler\n          implementation\n",
+                Slice + Event + Command.Replace("produces Recorded\n          value = value", "produces when value == \"test\"\n          Recorded\n            value = value", StringComparison.Ordinal) + "        handler\n          implementation\n",
                 Slice + Event + Command.Replace("value String", "value String\n        id Uuid identifier", StringComparison.Ordinal).Replace("value = value", "for id\n          value = value", StringComparison.Ordinal),
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id generated\n",
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
@@ -207,7 +210,7 @@ static class ContractAdmission
         return ScreenplayWorkspace.Create("Contract", [.. documents], catalog).Compilation;
     }
 
-    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration;
+    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration || diagnostic.Code == DiagnosticCodes.DescribedCommandWithoutProductions || diagnostic.Code == DiagnosticCodes.DescribedCommandCardinalityNotAdmitted;
 
     static void EnsureValidProbe(string probe, CompilationResult<SemanticCompilation> compilation)
     {

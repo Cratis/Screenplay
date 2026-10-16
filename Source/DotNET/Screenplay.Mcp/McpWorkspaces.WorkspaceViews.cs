@@ -227,7 +227,7 @@ internal sealed partial class McpWorkspaces
             {
                 workspace = McpWorkspaceTransport.Describe(workspace), view,
                 coverage = WorkspaceImplementationInventory.Coverage,
-                handler = DescribeHandlerIntent(entry),
+                handler = DescribeHandlerIntent(entry, workspace.Compilation),
                 page = McpPaging.Page(entry.Hints, arguments, workspace.Revision.ToString())
             });
         }
@@ -245,7 +245,7 @@ internal sealed partial class McpWorkspaces
             workspace = McpWorkspaceTransport.Describe(workspace), view,
             coverage = WorkspaceImplementationInventory.Coverage,
             unresolvedPlacementCount = inventory.UnresolvedPlacementDocuments.Length,
-            page = McpPaging.Page(inventory.Entries.Select(DescribeHandlerIntent).Concat(unresolved), arguments, workspace.Revision.ToString())
+            page = McpPaging.Page(inventory.Entries.Select(entry => DescribeHandlerIntent(entry, workspace.Compilation)).Concat(unresolved), arguments, workspace.Revision.ToString())
         });
     }
 

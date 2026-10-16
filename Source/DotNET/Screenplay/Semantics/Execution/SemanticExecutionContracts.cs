@@ -95,7 +95,12 @@ public enum SemanticExecutionCapability
     /// <summary>
     /// A reaction: its body, or a cascade of reactions that does not settle.
     /// </summary>
-    Reaction = 6
+    Reaction = 6,
+
+    /// <summary>
+    /// A described command reached its pending implementation body.
+    /// </summary>
+    ImplementationBody = 7
 }
 
 /// <summary>

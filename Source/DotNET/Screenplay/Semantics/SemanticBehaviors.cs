@@ -83,7 +83,8 @@ public enum SemanticValidationRuleKind
     AllGreaterThanOrEqual = 11,
 
     /// <summary>
-    /// A scalar text value must contain a match for the ECMAScript regular expression in the text operand.
+    /// A scalar text value must contain a match for the portable flagless JavaScript pattern in the text operand.
+    /// Refused dialect constructs in older models block execution at plan time.
     /// </summary>
     Matches = 12,
 
@@ -96,7 +97,27 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// A String concept must end in the exact check digits over its preceding ASCII digits.
     /// </summary>
-    Checksum = 15
+    Checksum = 15,
+
+    /// <summary>
+    /// Scalar text must contain the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    Contains = 16,
+
+    /// <summary>
+    /// Scalar text must not contain the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    NotContains = 17,
+
+    /// <summary>
+    /// Scalar text must start with the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    StartsWith = 18,
+
+    /// <summary>
+    /// Scalar text must end with the literal operand using ordinal UTF-16 comparison.
+    /// </summary>
+    EndsWith = 19
 }
 
 /// <summary>
@@ -355,6 +376,11 @@ public sealed record SemanticCommand(
     ImmutableArray<SemanticValidationRule> Validations,
     ImmutableArray<SemanticProducedEvent> Produces)
 {
+    /// <summary>
+    /// Gets the described handler contract, or null for a declarative command.
+    /// </summary>
+    public SemanticCommandHandler? Handler { get; init; }
+
     /// <summary>
     /// Gets the transient response contract, or null when the command has no response.
     /// </summary>

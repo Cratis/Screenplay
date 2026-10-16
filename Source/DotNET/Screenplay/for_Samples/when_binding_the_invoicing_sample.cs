@@ -30,6 +30,11 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
+    void should_pin_the_described_command_information() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.DescribedCommandNotImplemented && diagnostic.Severity == DiagnosticSeverity.Information &&
+        diagnostic.Message.Contains("ApplyLateFee", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
     void should_pin_the_composite_key_disposition() => _diagnostics.Any(diagnostic =>
         diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("InvoicePaymentMethodTotals", StringComparison.Ordinal) &&
         diagnostic.Message.Contains("issues/599", StringComparison.Ordinal)).ShouldBeTrue();
@@ -69,6 +74,13 @@ public class when_binding_the_invoicing_sample : Specification
 
     [Fact]
     void should_admit_the_proven_generated_receipt_rule() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.RefutedGeneratedConceptRule || diagnostic.Code == DiagnosticCodes.UnprovenGeneratedConceptRule).ShouldBeFalse();
+
+    [Fact]
+    void should_show_each_literal_text_rule() => new[] { ValidationRuleKind.Contains, ValidationRuleKind.NotContains, ValidationRuleKind.StartsWith, ValidationRuleKind.EndsWith }.ShouldEachConformTo(kind =>
+        SyntaxNodes.Under(_application).OfType<ValidationRuleSyntax>().Any(rule => rule.Rule == kind));
+
+    [Fact]
+    void should_not_refuse_literal_text_rules() => _diagnostics.Any(diagnostic => diagnostic.Message.Contains("text comparison requires", StringComparison.Ordinal) || diagnostic.Code == DiagnosticCodes.DeprecatedStudioTextRulePattern).ShouldBeFalse();
 
     [Fact]
     void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(3);

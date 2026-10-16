@@ -6,19 +6,19 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Defines the working protected command reads version pairs (ESM v24).
+/// Defines the version pairs admitted by first-class ordinal text rules.
 /// </summary>
 public static class EsmSchemaV24Support
 {
     /// <summary>
     /// Gets the supported language versions.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV22Support.LanguageVersions, LanguageVersion.V24];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV23Support.LanguageVersions, LanguageVersion.V24];
 
     /// <summary>
     /// Gets the supported semantic versions.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV22Support.SemanticVersions, SemanticVersion.V24];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV23Support.SemanticVersions, SemanticVersion.V24];
 
     /// <summary>
     /// Determines whether the exact version pair has defined meaning.
@@ -27,7 +27,7 @@ public static class EsmSchemaV24Support
     /// <param name="semanticVersion">The semantic version.</param>
     /// <returns>Whether the pair is supported.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
-        EsmSchemaV22Support.Supports(languageVersion, semanticVersion) ||
+        EsmSchemaV23Support.Supports(languageVersion, semanticVersion) ||
         (languageVersion == LanguageVersion.V24 && semanticVersion == SemanticVersion.V24);
 
     /// <summary>
@@ -38,6 +38,6 @@ public static class EsmSchemaV24Support
     /// <exception cref="InvalidSemanticContract">The version pair is unsupported.</exception>
     public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
     {
-        if (!Supports(languageVersion, semanticVersion)) throw new InvalidSemanticContract($"The ESM schema-v24 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        if (!Supports(languageVersion, semanticVersion)) throw new InvalidSemanticContract($"The text-rule contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
     }
 }

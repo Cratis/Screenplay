@@ -10,7 +10,7 @@ public class when_validating_protected_enumeration_keys : Specification
     [Fact]
     void should_apply_the_shared_enumeration_key_refusal_to_programmatic_models()
     {
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV24();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV25();
         var conceptId = SemanticId.Create(SemanticAddress.ForConcept(ApplicationIdentity.Create("Projects"), "Key"));
         var type = SemanticTypeReference.ForConcept(conceptId);
         var application = model.Application with
@@ -35,7 +35,7 @@ public class when_validating_protected_enumeration_keys : Specification
                 })]
             })]
         };
-        var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V24, SemanticVersion.V24, application));
+        var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V25, SemanticVersion.V25, application));
         error.ShouldBeOfExactType<InvalidSemanticContract>();
         error!.Message.ShouldContain("unprotectable: KeyType.");
     }

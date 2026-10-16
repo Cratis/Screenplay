@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_protected_reads.given;
-
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 public static partial class canonical_serialization_golden_vectors
@@ -12,13 +10,13 @@ public static partial class canonical_serialization_golden_vectors
 
     public static ExecutableSemanticModel CreateSemanticModelV24()
     {
-        const string source = a_protected_read_model.Source;
-        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects"));
-        const string key = "application-document";
-        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);
-        var result = new SemanticModelBinder(2026).Bind("Projects", new ScreenplayCompiler().Parse(source).Value!, SemanticDocumentSet.Create([document], catalog));
-        if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        return result.Value!.Model;
+        var application = CreateSemanticModelV23().Application;
+        var rules = new[] { SemanticValidationRuleKind.Contains, SemanticValidationRuleKind.NotContains, SemanticValidationRuleKind.StartsWith, SemanticValidationRuleKind.EndsWith };
+        var concept = new SemanticConcept(Id(124000), "TextReference", SemanticPrimitiveType.Text, [],
+            [.. rules.Select(kind => new SemanticValidationRule(default, kind, SemanticValue.Text(kind == SemanticValidationRuleKind.NotContains ? " " : "A"), null))]);
+        application = application with { Concepts = application.Concepts.Add(concept) };
+
+        return ExecutableSemanticModel.Create(LanguageVersion.V24, SemanticVersion.V24, application, 2026);
     }
 }
 #endif

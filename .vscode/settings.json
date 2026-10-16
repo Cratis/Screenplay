@@ -53,6 +53,9 @@
     "typescript.tsdk": "./node_modules/typescript/lib",
     "npm.packageManager": "yarn",
     "cSpell.words": [
+        "contains",
+        "ends",
+        "starts",
         "base32",
         "base64url",
         "Crockford",

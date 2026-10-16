@@ -136,7 +136,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "read" when schemaVersion >= LanguageVersion.V24.Major: read = String(ref reader, property); break;
+                case "read" when schemaVersion >= LanguageVersion.V25.Major: read = String(ref reader, property); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");

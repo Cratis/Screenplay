@@ -2,7 +2,7 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Production route overrides and reaction/reducer observer filters select ESM v10. Composite read-model keys and by-block queries are authoring-only and report `PLAY0268` (#599). New concurrency flags, occurrence time and constraint scopes remain unadmitted.
+> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and attached file/inline handler routes remain refused with `PLAY0268`. Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Composite read-model keys and by-block queries are authoring-only and report `PLAY0268` (#599). New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 
 > Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, explicit query scopes and performers remain unadmitted (`PLAY0268`). Collection specification rows compare without regard to order. See [Queries](queries.md).
 
@@ -899,15 +899,24 @@ RuleOp         = "not empty"
                | "==", Value
                | "!=", Value
                | "length", "==", Number
+               | "contains", StringLiteral
+               | "not", "contains", StringLiteral
+               | "starts", "with", StringLiteral
+               | "ends", "with", StringLiteral
                | "matches", ( "email" | StringLiteral )
                | "all", ">", Value
                | "all", ">=", Value
                | "rule", Ident ;
 
 (* "email" is the one defined named match pattern. StringLiteral here holds an
-   ECMAScript regular expression, not another named pattern; see Commands for
-   its definition and substring-matching semantics.
-   The $ anchor means end of input, never before a trailing newline.        *)
+   portable flagless JavaScript regular expression, not another named pattern;
+   see Commands / Portable match dialect for admitted forms, escapes by context,
+   refused constructs (PLAY0699) and substring-matching semantics.
+   UTF-16 code units; $ means end of input, never before a trailing newline.
+   At most 1000 source code units and 3000 expanded nodes: one per literal,
+   class, anchor and optional/loop/alternative choice point. Counted repeats
+   multiply the body by the upper bound, or by lower + 1 when unbounded,
+   adding a choice point per optional copy (one loop when unbounded).      *)
 
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)

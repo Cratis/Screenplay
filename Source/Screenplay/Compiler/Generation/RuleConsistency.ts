@@ -10,10 +10,13 @@ import { GenerationValidationRule } from './GenerationValidationRule';
 import { GenerationValidationRuleKind as Kind } from './GenerationValidationRuleKind';
 import { checkRegexContainment } from './RegexContainment';
 import { RegexExpression } from './RegexExpression';
+import { normalizeLegacyTextRule } from './normalizeLegacyTextRule';
+import { textRuleExpression } from './TextRuleExpression';
 import { proven, refuted, RuleConsistencyResult, unproven } from './RuleConsistencyResult';
 
 /** Pure built-in proof port; it does not bind an ESM, generate values, or execute implementation bodies. */
 export function checkGenerationRule(generation: BuiltinGeneration | null, primitive: string, rule: GenerationValidationRule, runtime?: RegexSampleEvaluator): RuleConsistencyResult {
+    rule = normalizeLegacyTextRule(rule);
     if (rule.kind === Kind.RulePredicate || rule.kind === Kind.CodeValidation) return unproven('opaque');
     const shape = generationShape(generation);
     if (shape === null) return unproven('opaque generation strategy');
@@ -28,6 +31,8 @@ export function checkGenerationRule(generation: BuiltinGeneration | null, primit
         }
         case Kind.Equal: case Kind.NotEqual:
             return typeof rule.operand !== 'string' ? unproven('unsupported rule') : boundedRuleProof(() => checkRegexContainment(positions, RegexExpression.literal(rule.operand as string), rule.kind === Kind.NotEqual));
+        case Kind.Contains: case Kind.NotContains: case Kind.StartsWith: case Kind.EndsWith:
+            return typeof rule.operand !== 'string' ? unproven('unsupported rule') : boundedRuleProof(() => checkRegexContainment(positions, textRuleExpression(rule.kind, rule.operand as string, positions), rule.kind === Kind.NotContains));
         case Kind.Matches:
             return typeof rule.operand !== 'string' ? unproven('unsupported rule') : checkGenerationMatches(rule.operand, positions.length, expression => checkRegexContainment(positions, expression, false, true), samples, undefined, runtime);
         default: return unproven('unsupported rule');

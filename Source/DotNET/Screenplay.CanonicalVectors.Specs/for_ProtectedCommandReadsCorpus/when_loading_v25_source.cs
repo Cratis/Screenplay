@@ -11,7 +11,7 @@ using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ProtectedCommandReadsCorpus;
 
-public class when_loading_v24_source : Specification
+public class when_loading_v25_source : Specification
 {
     SemanticCompilation[] _protected;
     CompilationResult<SemanticCompilation>[] _legacy;
@@ -27,30 +27,30 @@ public class when_loading_v24_source : Specification
         })];
         _legacy = [.. ProtectedCommandReadsCorpus.LegacySourceForms.Select(Compile)];
         VerifySpecifications(_protected[0].Model);
-        if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS") == "1")
+        if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25") == "1")
         {
-            var root = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/v24");
+            var root = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/v25");
             Directory.CreateDirectory(Path.Combine(root, "expected"));
             Directory.CreateDirectory(Path.Combine(root, "identity"));
-            File.WriteAllBytes(Path.Combine(root, "expected/esm-v24.json"), SemanticModelSerializer.Serialize(_protected[0].Model));
+            File.WriteAllBytes(Path.Combine(root, "expected/esm-v25.json"), SemanticModelSerializer.Serialize(_protected[0].Model));
             File.WriteAllText(Path.Combine(root, "expected/semantic-revision.txt"), $"{_protected[0].Model.Revision}\n");
             File.WriteAllBytes(Path.Combine(root, "expected/legacy-diagnostics.json"), Diagnostics(_legacy[0]));
             File.WriteAllBytes(Path.Combine(root, "identity/catalog-v1.json"), [.. ProtectedCommandReadsCorpus.SourceForms[0].IdentityCatalogBytes]);
-            Assert.Fail("Protected command reads corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS.");
+            Assert.Fail("Protected command reads corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25.");
         }
     }
 
     [Fact]
-    void should_select_v24_only_with_the_mode()
+    void should_select_v25_only_with_the_mode()
     {
         _protected.Length.ShouldEqual(4);
-        _protected.All(form => form.Model.SemanticVersion == SemanticVersion.V24 && form.Model.Application.CommandReadMode == SemanticCommandReadMode.Protected).ShouldBeTrue();
+        _protected.All(form => form.Model.SemanticVersion == SemanticVersion.V25 && form.Model.Application.CommandReadMode == SemanticCommandReadMode.Protected).ShouldBeTrue();
     }
 
     [Fact]
     void should_pin_the_model_and_every_equivalent_source_form()
     {
-        var vector = ProtectedCommandReadsCorpus.V24;
+        var vector = ProtectedCommandReadsCorpus.V25;
         foreach (var form in _protected)
         {
             form.Model.Revision.ShouldEqual(vector.SemanticRevision);
@@ -104,7 +104,7 @@ public class when_loading_v24_source : Specification
     [Fact]
     void should_pin_every_specification_outcome_and_committed_world()
     {
-        var vector = ProtectedCommandReadsCorpus.V24;
+        var vector = ProtectedCommandReadsCorpus.V25;
         vector.SpecificationExpectations.Length.ShouldEqual(13);
         foreach (var form in _protected)
         {

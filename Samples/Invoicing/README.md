@@ -7,7 +7,7 @@ jump to the slice that uses it.
 
 ```text
 Invoicing/
-  invoicing.play         the whole application - 33 slices in one module
+  invoicing.play         the whole application - 34 slices in one module
   invoicing.en.strings   English text for every $strings key the document references
   invoicing.nb.strings   the same keys in Norwegian
 ```
@@ -27,6 +27,14 @@ PersonName and EmailAddress declare personal data; BankAccount declares both per
 ## Generated identities and receipts
 
 InvoiceId declares UUIDv7 generation; InvoiceReceiptId declares a 21-character NanoID with a Proven `matches` rule. StartInvoiceDraft also generates InvoiceRef (UTC year/month plus random digits and Luhn checksum), TicketNumber (inclusive Int range), and TenantOrderId (a direct tagged ValueGeneration body with Now/Tenant context). References and tickets are values, not stream identifiers; each maps to a single-property unique constraint. Specifications pin all fixtures, including numeric tickets, and `given clock` fixes every date segment. `validate checksum luhn` explicitly checks arithmetic on generated, supplied and stored references. The runner never executes the generation body. These forms select ESM v21 and creation guards the whole event source. Explicit generation with compliance markers remains unadmitted; other preview constructs in this showcase still prevent whole-model executable binding.
+
+## Literal text rules
+
+InvoiceNumber starts with `INV-`; ProductName must not contain a newline. EmailAddress contains `@` and ends with `.test`, the contact-domain convention for this sample portal. These are first-class ordinal UTF-16 comparisons, not regular-expression patterns. Presence still needs `not empty`.
+
+## Described command handlers
+
+`ApplyLateFee` uses the same CommandDialog input-screen and action shape as `TagInvoice`. It keeps the fee calculation as an ordered implementation hint beside an unconditional `produces LateFeeApplied`. Under ESM v23, `produces` doubles as result contract v1: exactly one declared event, with its required `amount` deliberately unmapped because the eventual body owns payload values. Binding reports information `PLAY0695`, not an error. Authorization and validation remain declarative: the invoice-manager denial can pass before the body; the accountant acceptance reaches the body and is Unsupported (`ImplementationBody`) in reference execution, never a passing implementation check. The full showcase still has unrelated binding refusals; the source-backed `DescribedCommandHandlersCorpus.V23` pins executable outcomes independently. Realization and reuse of filled bodies are deferred.
 
 ## Stored enum numbers
 
@@ -54,7 +62,7 @@ Invoice status, payment terms and payment method pin their current zero-based po
 | --- | --- | --- |
 | `InvoiceDraftCreator` | `IsAuthenticated`, `CanManageInvoice` | a focused authenticated draft-creation specification witness; broader screen roles remain below |
 | `InvoiceManager` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
-| `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
+| `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ApplyLateFee, ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
 | `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
 | `Customer` | `IsAuthenticated`, `IsPerson`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
 | `Auditor` | `IsAuthenticated`, `IsPerson`, `IsAuditor` | CancelledInvoices, SystemActivity |
@@ -66,7 +74,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 
 | Feature | State change | State view | Automation | Translate |
 | --- | --- | --- | --- | --- |
-| InvoiceManagement | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, UpdateBillingContact | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard | | |
+| InvoiceManagement | StartInvoiceDraft, RegisterInvoice, CancelInvoice, ApplyLateFee, TagInvoice, ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, UpdateBillingContact | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard | | |
 | InvoiceManagement › Adjustments | ApplyDiscount, WriteOffInvoice | | | |
 | Payments | RecordPayment | InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates | ReconcilePayments, ChaseOverdueInvoices | PaymentProviderSync |
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
@@ -75,7 +83,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
 Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
-batch, archive, cancellation, tagging, billing-contact, payment and payment-plan command screens before input
+batch, archive, cancellation, late-fee, tagging, billing-contact, payment and payment-plan command screens before input
 is supplied. Each command screen issues its own action; action navigation such as returning to `MyInvoices`
 happens only after success, never to the command's own input screen. Row clicks carry `invoiceId` to status,
 tagging, billing-contact, cancellation, payment and payment-plan screens. Payments are opened from the
@@ -116,7 +124,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$identity.*`, `$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
 | `reads … as … by` and `require` over read state | RecordPayment |
-| `handler` inline and `implementation` with a hint and existing `file`; `concurrency` | ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
+| Pending `handler implementation` with hint and unconditional `produces`; attached inline/file handlers; `concurrency` | ApplyLateFee (ESM v23 result contract), ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |
 | `readmodel` with `description` and `file`; `query` with `observable`, `by`/`filter … from`, `scoped to identity`/`global`, `performer` in ```` ```sql ````, ```` ```csharp ```` and `file` | InvoiceList, InvoiceLineReport, ExchangeRates, MyInvoices, CreditStatus |
@@ -173,7 +181,7 @@ This document is a showcase of the language, not of what runs today. The
 because they refuse the whole model before binding. Other syntax kinds covered by focused, tested fixtures
 are pinned in `when_holding_invoicing_to_the_language`. This document compiles with no errors or warnings, but much
 of it is outside what the executable semantic model admits: imported events, reducers, performers, list
-queries, handlers, command `reads`, `pii` concepts and code policies among them. Clocks, triggers, captures and
+queries, attached handlers, command `reads`, `pii` concepts and code policies among them. Clocks, triggers, captures and
 reactions are admitted as ESM v6 by
 [decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md), but
 because the document as a whole does not bind, the reference specification runner can not execute most of

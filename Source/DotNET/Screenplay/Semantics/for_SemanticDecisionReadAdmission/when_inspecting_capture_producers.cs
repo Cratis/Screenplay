@@ -10,7 +10,7 @@ public class when_inspecting_capture_producers : Specification
     [Fact]
     void should_include_root_child_and_nested_appends_without_inventing_output_routes()
     {
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV24();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV25();
         var slices = model.Application.Modules.Single().Features.Single().Slices;
         var command = slices.SelectMany(slice => slice.Commands).Single();
         var produced = command.Produces.Single();

@@ -331,6 +331,13 @@ public static partial class SemanticModelCanonicalJson
             WriteResponse(writer, command.Response);
         }
         if (command.Route is not null) WriteCommandRoute(writer, command.Route);
+        if (command.Handler is { } handler)
+        {
+            writer.WriteStartObject("handler");
+            writer.WriteString("requirementId", handler.RequirementId);
+            writer.WriteNumber("resultVersion", handler.ResultVersion);
+            writer.WriteEndObject();
+        }
         if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
         writer.WriteEndObject();
     }
@@ -826,6 +833,10 @@ public static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
         SemanticValidationRuleKind.Matches => "matches",
         SemanticValidationRuleKind.Checksum => "checksum",
+        SemanticValidationRuleKind.Contains => "contains",
+        SemanticValidationRuleKind.NotContains => "notContains",
+        SemanticValidationRuleKind.StartsWith => "startsWith",
+        SemanticValidationRuleKind.EndsWith => "endsWith",
         SemanticValidationRuleKind.RulePredicate => "rulePredicate",
         SemanticValidationRuleKind.CodeValidation => "codeValidation",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)

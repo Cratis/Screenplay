@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 
 namespace Cratis.Screenplay.Semantics.Generation;
 
@@ -59,6 +58,7 @@ public static class RuleConsistency
 
     internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear)
     {
+        rule = LegacyTextRulePatterns.Normalize(rule);
         if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
         if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1));
         if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
@@ -75,6 +75,8 @@ public static class RuleConsistency
             (SemanticValidationRuleKind.Equal, SemanticTextValue text) => Equal(shape, text.Value, false),
             (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) => Equal(shape, text.Value, true),
             (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(shape, text.Value),
+            (var kind, SemanticTextValue text) when TextRuleVersion.IsTextRule(kind) =>
+                RegexContainment.Check(shape, TextRuleExpression.Create(kind, text.Value, shape.Positions), kind == SemanticValidationRuleKind.NotContains),
             _ => RuleConsistencyResult.Unproven("unsupported rule")
         };
     }
@@ -105,6 +107,8 @@ public static class RuleConsistency
 
     static RuleConsistencyResult Match(GenerationShape shape, string pattern, bool complement = false)
     {
+        var parsed = SemanticMatchPattern.Parse(pattern);
+        if (!parsed.Accepted) return RuleConsistencyResult.Unproven($"outside the portable match dialect: {parsed.Construct}");
         RegexExpression? expression = null;
         string? reason = null;
         try
@@ -120,15 +124,7 @@ public static class RuleConsistency
             return RuleConsistencyResult.Unproven(error.Message);
         }
 
-        Regex runtime;
-        try
-        {
-            runtime = SemanticMatchPattern.Create(pattern);
-        }
-        catch (ArgumentException)
-        {
-            return RuleConsistencyResult.Unproven(reason ?? "invalid regex");
-        }
+        var runtime = SemanticMatchPattern.Create(parsed);
 
         if (expression is null) return Samples(shape, runtime.IsMatch, complement, reason);
         var proof = RegexContainment.Check(shape, expression, complement, requireDeterministic: true);
@@ -151,16 +147,9 @@ public static class RuleConsistency
 
     static RuleConsistencyResult Samples(GenerationShape shape, Func<string, bool> matches, bool complement, string? reason)
     {
-        try
+        foreach (var sample in shape.Samples())
         {
-            foreach (var sample in shape.Samples())
-            {
-                if (matches(sample) == complement) return RuleConsistencyResult.Refuted(sample);
-            }
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return RuleConsistencyResult.Unproven("runtime regex timed out");
+            if (matches(sample) == complement) return RuleConsistencyResult.Refuted(sample);
         }
 
         return reason is null ? RuleConsistencyResult.Proven : RuleConsistencyResult.Unproven(reason);

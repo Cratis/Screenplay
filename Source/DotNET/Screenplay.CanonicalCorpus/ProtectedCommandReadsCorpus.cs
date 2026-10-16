@@ -16,7 +16,7 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 public static class ProtectedCommandReadsCorpus
 {
     const string ApplicationName = "ProtectedCommandReads";
-    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ProtectedCommandReads.v24";
+    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ProtectedCommandReads.v25";
 
     /// <summary>
     /// Gets equivalent single, folder, reordered and relocated protected sources.
@@ -39,17 +39,17 @@ public static class ProtectedCommandReadsCorpus
     public static ImmutableArray<byte> LegacyDiagnosticsBytes => Resource("expected.legacy-diagnostics.json");
 
     /// <summary>
-    /// Gets the ESM v24 protected command reads vector.
+    /// Gets the ESM v25 protected command reads vector.
     /// </summary>
-    public static CanonicalCorpusVector V24 => new()
+    public static CanonicalCorpusVector V25 => new()
     {
-        Name = "protected-command-reads/v24",
+        Name = "protected-command-reads/v25",
         ApplicationName = ApplicationName,
         ApplicationIdentity = ApplicationIdentity.Create(ApplicationName),
         RuntimeStreamId = "reference",
         SourceForms = SourceForms,
         SpecificationExpectations = Expectations(),
-        EsmBytes = Resource("expected.esm-v24.json"),
+        EsmBytes = Resource("expected.esm-v25.json"),
         SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource("expected.semantic-revision.txt").AsSpan()).Trim())
     };
 

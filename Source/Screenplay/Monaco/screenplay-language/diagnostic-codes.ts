@@ -10,8 +10,16 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    unknownMatchPattern: 'PLAY0366',
+    invalidMatchPattern: 'PLAY0367',
+    patternOutsidePortableMatchDialect: 'PLAY0699',
+    deprecatedStudioTextRulePattern: 'PLAY0787',
     repeatedSingularDeclarationAcrossFiles: 'PLAY0172',
     directionlessTranslationReactsToOwnCapture: 'PLAY0694',
+    pendingIntentWithOtherHandler: 'PLAY0698',
+    describedCommandNotImplemented: 'PLAY0695', // C# only
+    describedCommandWithoutProductions: 'PLAY0696', // C# only
+    describedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only
     invalidExposureDeclaration: 'PLAY0621',
     unknownExposureOwner: 'PLAY0622',
     reExposureCycle: 'PLAY0623',

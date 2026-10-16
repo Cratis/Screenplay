@@ -38,6 +38,7 @@
         { "name": "source-streams", "path": "Source/Screenplay/Compiler/Conformance/source-streams.play" },
         { "name": "operations", "path": "Source/Screenplay/Compiler/Conformance/operations.play" },
         { "name": "named-rule-intent", "path": "Source/Screenplay/Compiler/Conformance/named-rule-intent.play" },
+        { "name": "described-handler", "path": "Source/Screenplay/Compiler/Conformance/described-handler.play" },
         { "name": "handler-intent", "path": "Source/Screenplay/Compiler/Conformance/handler-intent.play" },
         { "name": "responses", "path": "Source/Screenplay/Compiler/Conformance/responses.play" },
         { "name": "response-property-compatibility", "path": "Source/Screenplay/Compiler/Conformance/response-property-compatibility.play" },

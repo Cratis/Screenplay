@@ -53,24 +53,43 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21):
+A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21). The normative version-1 contract is the language-neutral descriptor: `Now` (an instant), `Tenant` (the portable `TenantId`) and a `String` result. Each language provider binds that descriptor to its target's native type; Screenplay does not choose one runtime type for all targets.
 
-```csharp
-public record GenerationContext(DateTimeOffset Now, TenantId Tenant);
-```
+| Target | Binding of the descriptor |
+| --- | --- |
+| Cratis C# (Stage, Arc) | `Cratis.Concepts.GenerationContext` from Fundamentals, a struct of `DateTimeOffset Now` and `string Tenant` |
+| BCL-only C# hosts | `Cratis.Screenplay.Contexts.GenerationContext`, `record GenerationContext(DateTimeOffset Now, TenantId Tenant)` |
+| Other languages | The provider's own type for the same descriptor |
+
+The provider, not the fence's language tag, decides the binding: a `csharp` tag does not distinguish the Cratis C# target from a host that uses the Screenplay record, and file attachments carry no tag. Each provider compiles or admits a body against its own binding and rejects a body that does not fit it.
+
+`Cratis.Screenplay.Contexts.GenerationContext` stays BCL-only with its current shape. It is name-compatible with the Fundamentals type (`Now`, `Tenant`), not type-identical.
+
+A body is portable across targets only when it stays in the portable subset:
+
+- It uses `context.Now`, the tenant in string interpolation or string assignment, and BCL types. `TenantId` formats as its value, so `$"{context.Tenant}"` gives the same string on both bindings.
+
+These uses are target-bound, because they mean something only for one binding:
+
+- Passing `context` to `GenerateValue.*`.
+- Naming `GenerationContext` or `GenerationContext.DefaultTenant`.
+- Constructing a context.
+- Reading `context.Tenant.Value`.
+
+Passing `context` to Fundamentals APIs is valid only on the Cratis C# target. See the [generate rule example](generated-values/strategies.md#pattern-random-and-rule-esm-v21) and [decision 0083](../../decisions/0083-bind-the-generation-context-per-language-target.md).
 
 It returns the String primitive in context/result contract version 1. There are no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly rather than reading ambient time/tenant APIs or comparing raw `"Default"` strings. The reference runner consumes a fixture and never invokes the body; opaque validation still remains Unsupported. Input-derived generation belongs to #308.
 
 These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
-A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. Pending/file/inline describes model selection only. Handler executable admission remains unsupported; a context descriptor is not permission to execute, render or confirm an implementation.
+A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body. Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran. Attached file/inline handlers remain unadmitted.
 
 ## Implementation wrapper support
 
 | Owner | Authoring wrapper | Executable contract |
 | --- | --- | --- |
 | Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
-| Command handler | Hints with zero or one source | Authoring only; handler binding remains unsupported. |
+| Command handler | Hints with zero or one source | Pending with unconditional `produces`: ESM v23 CommandHandler context/result v1. File/inline remains `PLAY0268`; production-less pending is `PLAY0696`, conditional is `PLAY0697`. |
 | Operation execute/compensate phase | Hints with zero or one source | Authoring only; not admitted by any supported executable model (ESM) version yet. |
 | Concept generation rule | No wrapper: exactly one direct file/tagged fence | ESM v21 ValueGeneration, context/result v1, String result; no body is refused with PLAY0268. |
 | Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |

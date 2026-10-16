@@ -7,6 +7,22 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesTextRules(SemanticApplication application) =>
+        application.Concepts.SelectMany(concept => concept.Validations)
+            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
+            .Any(rule => TextRuleVersion.IsTextRule(rule.Kind));
+
+    internal static bool UsesDescribedHandlers(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesTextRules(application),
+            version,
+            SemanticVersion.V24,
+            "A text-rule ESM must contain a first-class text rule.",
+            $"First-class text rules require ESM v{TextRuleVersion.Major} or later.");
+
     static IEnumerable<SemanticSlice> SlicesOf(SemanticApplication application) =>
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
 
@@ -17,12 +33,19 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             application.CommandReadMode is not null,
             version,
-            SemanticVersion.V24,
-            "An ESM v24 model must explicitly select protected command reads.",
-            "Protected command reads require ESM v24.");
+            SemanticVersion.V25,
+            "An ESM v25 model must explicitly select protected command reads.",
+            "Protected command reads require ESM v25.");
         if (application.CommandReadMode is null && SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => !command.Reads.IsDefaultOrEmpty))
             throw new InvalidSemanticContract("Command reads require the protected command read mode.");
     }
+    static void ValidateDescribedHandlerVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesDescribedHandlers(application),
+            version,
+            SemanticVersion.V23,
+            "An ESM v23 model must contain a described command.",
+            "Described command handlers require ESM v23 or later.");
 
     static void ValidateEventSourceVersion(SemanticApplication application, SemanticVersion semanticVersion)
     {

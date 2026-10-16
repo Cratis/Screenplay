@@ -30,7 +30,7 @@ command <Name>
 
   [produces ...]                  ← declarative — repeatable
 
-  [handler                        ← imperative fallback — instead of produces
+  [handler                        ← file/code fallback, or pending intent beside produces
     file <Path>
     | <inline csharp block returning events to append>]
 
@@ -130,7 +130,7 @@ ESM v21 adds pattern, random and implementation generation. Numeric fixtures and
 
 A generated identifier supplies an inline production's implicit destination. Plain `produces` without `for` keeps its separate legacy allocation channel; a generation fixture never satisfies that allocation. A response-only command records no facts. No response differs from a scalar response whose optional source is `Null`. Record fields preserve authored order and have external contract names, not independent semantic identities.
 
-Responses also parse beside a handler, but handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
+Responses also parse beside a handler. ESM v23 admits described command handlers with unconditional event productions; response-only pending handlers are refused (`PLAY0696`). File/inline handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
 
 The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [specification fixtures and return assertions](specifications.md#generated-fixtures-and-return-expectations).
 
@@ -232,6 +232,10 @@ Declarative validation covers the common cases without code:
 | `== <value>` | `currency == "NOK"` |
 | `!= <value>` | `status != "draft"` |
 | `length == <n>` | `currency length == 3` |
+| `contains "<text>"` | `reference contains "INV"` |
+| `not contains "<text>"` | `reference not contains " "` |
+| `starts with "<text>"` | `reference starts with "INV-"` |
+| `ends with "<text>"` | `reference ends with "-NOK"` |
 | `matches email` | `email matches email` |
 | `matches "<regex>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
@@ -240,7 +244,58 @@ Declarative validation covers the common cases without code:
 
 `max` and `min` take their meaning from the property's type: on text they bound its length (`reason max 500` — at most 500 characters), and on a number they bound its value (`quantity min 1`). There is one rule for each, not a separate length and value form.
 
-`matches "<regex>"` uses ECMAScript regular expression syntax. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at binding, and an execution timeout rejects rather than accepting the value. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
+`matches "<regex>"` uses the [portable match dialect](#portable-match-dialect): a restricted, flagless JavaScript regular expression. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at authoring. The reference evaluator runs Screenplay's own Thompson automaton, not a platform regular-expression engine. Each input code unit visits at most the automaton's states; there is no timeout or host-specific engine limit. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
+
+The four literal text rules `contains`, `not contains`, `starts with` and `ends with` compare UTF-16 code units ordinally: case, accents, whitespace and Unicode normalization are not changed. They require one non-enumerated text value and a quoted text operand, not a collection, property reference or regular expression. An absent optional value passes; add `not empty` to require presence. Empty operands are admitted: `contains ""`, `starts with ""` and `ends with ""` always pass, while `not contains ""` always fails for present text. First-class text rules select their own executable-model version; models using none keep their existing version and bytes.
+
+### Portable match dialect
+
+Patterns operate on UTF-16 code units, without flags. They admit literals, `.`, `^`, `$`, alternation, ordinary groups, `(?:...)`, and `(?<name>...)` with names matching `[A-Za-z_][A-Za-z0-9_]*`. Captures cannot be observed: backreferences are not admitted. Duplicate names are admitted only in disjoint alternatives, as in `(?<x>a)|(?<x>b)`; duplicate names that can participate together report `PLAY0367`. JavaScript-valid names outside the ASCII spelling (such as `$x`, `é` or `\u0078`) report `PLAY0699`; malformed names report `PLAY0367`. Quantifiers are `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}` and their lazy forms. Stacked quantifiers such as `a**`, `a+?+` and `a{2}{3}` report `PLAY0367`.
+
+Character classes contain literals, ranges with single-character endpoints, and `\d \D \w \W \s \S`. Negation and unions use set semantics: `[\w\W]` matches any code unit and `[^\w\W]` matches none. `\d` is `[0-9]`; `\w` is `[A-Za-z0-9_]`. `\s` is the fixed JavaScript set: U+0009–U+000D, U+0020, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F, U+3000 and U+FEFF. Dot excludes LF, CR, U+2028 and U+2029. `$` means the very end of input, not before a final newline.
+
+Both contexts admit `\t \n \r \f \v`, `\0` not followed by a digit, `\xHH`, `\uHHHH`, and escaped syntax characters `\^ \$ \\ \. \* \+ \? \( \) \[ \] \{ \} \| \/`. Inside a class, `\-` is also admitted and unescaped `{` and `}` are literal. Outside a class, an unescaped `{` must start a valid quantifier; escape a literal brace.
+
+`PLAY0699` names a refused construct and suggests a replacement where one exists:
+
+| Refused form | Replacement or limitation |
+| --- | --- |
+| Lookahead and lookbehind | Except for the exact deprecated Studio text-rule shapes below, no general equivalent. Replace a length-only assertion such as `^(?=.{21}$).*$` with `^.{21}$`. |
+| Backreferences; `\b` and `\B` word boundaries | No equivalent assertion in this dialect. |
+| `\p` and `\P` Unicode properties | An explicit character class when its required set is known; no general equivalent. |
+| `\u{...}`, `\cX`, class `\b` | UTF-16 `\uHHHH` escapes, hexadecimal control escapes such as `\x01`, and `\x08`, respectively. |
+| `\A`, `\z`, `\Z` | `^`, `$`, `$`, respectively. |
+| Inline options such as `(?i)` | Explicit case classes such as `[aA]`. Other group extensions and .NET-only syntax are not admitted. |
+| `[]`, `[^]`, a leading or lone `]` | Use `[^\s\S]` for no code unit, `[\s\S]` for any code unit, or escaped `\]` for a literal bracket. |
+| Class subtraction; class escapes as range endpoints, such as `[\d-a]` | Write explicit ranges or a union of classes. |
+| Octal and other identity escapes | Use `\xHH`, `\uHHHH`, or write the literal without a backslash. |
+
+A pattern has at most 1,000 UTF-16 code units and 3,000 expanded nodes. Each literal, class and anchor counts one, as does each optional, loop or alternative choice point. A counted repeat multiplies its body by its upper bound; without an upper bound, by the lower bound plus one. It adds one choice point for each optional copy (one loop for an unbounded repeat). `*`, `+` and `?` count their body once plus one choice point. Thus `x{1500}` counts 1,500, `a{0,1500}` counts 3,000 and `(a*){1500}` counts 3,000. Exceeding either limit reports `PLAY0699` before automaton construction. The automaton has at most the expanded size plus one accepting state, including epsilon choice states; an empty expression needs only that accepting state.
+
+These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode spaces, so `matches email` rejects `a<U+00A0>@b.co`; dot rejects CR and U+2028/U+2029; `\w` rejects U+0130. Older ESM documents keep their authored pattern bytes and load even when the current parser classifies the pattern as invalid or outside the dialect. Except for the exact Studio text-rule shapes below, either case produces plan-time `UnsupportedValidation` and deterministic generation Unproven, naming the construct. Re-authoring reports `PLAY0367` for invalid syntax or `PLAY0699` for a construct outside the dialect. The matcher has the same behavior on every supported target framework; platform regex settings cannot change a verdict.
+
+### Deprecated Studio text-rule patterns
+
+Studio's exact escaped-literal lookaround shapes report warning `PLAY0787`, not `PLAY0699`. The syntax tree keeps the original `matches` text; executable binding stores the equivalent ordinal rule. The editor quick fix and MCP `propose-repair` migrate the source while preserving the rule's message and severity.
+
+| Decoded pattern (`L` is an escaped literal) | Replacement |
+| --- | --- |
+| `^(?![\s\S]*L)` | `not contains "literal"` |
+| `L(?![\s\S])` | `ends with "literal"` |
+| `^L(?![\s\S])` | `== "literal"` |
+| `^(?!L$)` or `^(?!L(?![\s\S]))` | `!= "literal"` |
+
+Recognition requires a lossless escape/decode round trip. Studio v1 uses .NET `Regex.Escape`; v2 escapes exactly `\ ^ $ . | ? * + ( ) [ ] { } /`. The not-contains wrapper accepts either escape set; the strict-end lookaround forms use v2 escaping, and the `$` inequality uses v1. Different assertion bodies, reversed `[\S\s]` sets, unescaped metacharacters and trailing regex syntax are not recognized and still report `PLAY0699`. Already-admitted non-lookaround forms, including `L`, `^L`, `^L$` and `L$`, are unchanged. No general lookaround support is added.
+
+Older serialized ESM `matches` rules with these exact shapes evaluate and participate in generation proofs as the replacement, without changing their stored bytes. New `not contains` and `ends with` rules select the text-rule ESM version; equality replacements keep the existing equality contract. The deprecation remains a warning until a later major release.
+
+### Checking patterns before authoring
+
+C# callers use `Cratis.Screenplay.Semantics.PortableMatchPattern.Check(pattern)`; TypeScript callers import `checkPortableMatchPattern` from `@cratis/screenplay-compiler`. Both return `PortableMatchCheck`: status, diagnostic code, construct, UTF-16 offset, suggestion, description and optional replacement. Status is Admitted, Deprecated, Refused or Invalid (lowercase strings in TypeScript). Deprecated has code `PLAY0787` and a replacement `{ kind, value }`; the semantic kind vocabulary is Equal, NotEqual, Contains, NotContains, StartsWith and EndsWith. Admitted has no diagnostic details; invalid syntax uses `PLAY0367` and other refused constructs use `PLAY0699`. Checking never executes the pattern or constructs a platform regex. This is authoring admission, not a claim that an application has rendered or run.
+
+Browser checks remain advisory: admitted patterns such as `(a+)+$` can still backtrack badly in JavaScript. The server-side linear check is authoritative.
+
+### Rule messages and severity
 
 A rule may have a `message` shown when it fails. Add `severity information`, `severity warning` or `severity error` before the optional end-of-line `message`. The default is `error`; the printer omits it. Message remains last so its quoted text or `$strings` key is unambiguous:
 
@@ -436,7 +491,7 @@ Still rejected, and why:
 | Rule | Why |
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
-| a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
+| a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid pattern syntax reports `PLAY0367`; constructs outside the portable dialect report `PLAY0699` with a suggested replacement where one exists. |
 | `require` over a read-model path without `command reads protected` | Protected-read admission requires explicit opt-in; with it, admitted single-level paths are executable. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
@@ -473,7 +528,7 @@ Policies are declared at the top of the file — see [Policies](policies.md). De
 
 ## The `produces` block
 
-Declares what events a command emits. Supports single, multiple, and conditional forms. For a fully imperative implementation, use a [handler](#the-handler-block) instead.
+Declares what events a command emits. Supports single, multiple, and conditional forms. Beside a pending [handler](#the-handler-block), unconditional `produces` doubles as the body's result contract, not a payload implementation. A file/code handler remains mutually exclusive with `produces`.
 
 With application-root `command reads protected`, a produced-event mapping may source a single-level property from an admitted read, such as `amount = balance.outstanding`. Without the preamble, read-path mappings retain `PLAY0268` and point to the opt-in. This does not admit read paths in `produces when`, response fields, `for`, stream routes or derive/provide expressions.
 
@@ -615,7 +670,7 @@ handler
     ```
 ````
 
-A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+A command uses either `produces` blocks or a file/code `handler` — not both. A pending handler intent may sit beside `produces`. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
@@ -632,6 +687,26 @@ handler
 
 This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
 
+A pending handler (an `implementation` wrapper with no `file` or code, with optional ordered hints) may coexist with `produces`. It cannot coexist with another `handler` occurrence, even another pending intent (`PLAY0698`), in either order.
+
+A pending command handler with unconditional `produces` is a **described command**, admitted by ESM **v23**. Under a pending intent, `produces` doubles as **result contract version 1**:
+
+| Part | Owner in result contract v1 |
+| --- | --- |
+| Events, count and order | Declarative: each `produces` line yields exactly one event, in declared order |
+| Destination (`for`, routes and allocation) | Declarative, as for ordinary productions |
+| Tags and other production metadata | Declarative |
+| Generated values | Declarative; generated before the body and available to it |
+| Response | Declarative: the declared command property |
+| Authorization and validation | Declarative; run before the body, which denial or refusal never reaches |
+| Event property values | **The body**; mappings are non-normative hints and required properties may be unmapped |
+
+Neither renderers nor reference execution evaluate these event-property mappings. The exemption is limited to payload values; mapping type checks still apply. Binding reports information `PLAY0695` naming the command and RequirementId. No productions (including response-only pending commands) fails binding with `PLAY0696`; conditional `produces when` fails with `PLAY0697`. Result v1 does not admit repeated/occurrence productions or body-decided cardinality, and the body cannot reject. Source remains valid when binding refuses it. Legacy command `reads` remains outside admission.
+
+Reference execution evaluates authorization, validation, routing and generated values in their ordinary order, then returns **Unsupported (`ImplementationBody`)** when it reaches the body, directly or through an invoking reaction. The reason names the command and RequirementId; no production mapping runs or event is emitted. Earlier denial/validation specifications still execute; unsupported specifications are counted separately and an all-unsupported run is never green. Historical `given` events remain ordinary facts.
+
+**Realization is deferred.** The pending sidecar requirement carries ordered hints, flags and a CommandHandler typed-context descriptor with context/result versions 1. An admitting target supplies the body, not Screenplay. Moving to a file keeps the RequirementId, but attached handlers cannot keep `produces` today and remain refused with `PLAY0268`. Screenplay defines no filled-body reuse across renders until a later decision defines the attached result contract and body ABI.
+
 | Owner | `implementation` wrapper |
 | --- | --- |
 | Command handler | Supported; direct file/fence forms remain supported |
@@ -639,7 +714,7 @@ This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/m
 | Operation execute/compensate phases | New syntax-only authoring wrapper; not admitted by any supported executable model (ESM) version yet |
 | Provisioning | Deferred |
 
-`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
+`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. File/inline handlers still fail executable admission with `PLAY0268`; described command admission requires consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 
 ## Concurrency
 

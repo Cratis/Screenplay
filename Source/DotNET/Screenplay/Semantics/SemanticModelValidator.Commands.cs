@@ -9,6 +9,8 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
+        readonly HashSet<string> _handlerRequirements = new(StringComparer.Ordinal);
+
         void ValidateCommandDestination(SemanticCommand command)
         {
             if (command.Destination is null)
@@ -33,6 +35,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateCommand(SemanticCommand command)
         {
+            ValidateCommandHandler(command);
             ValidateCommandDestination(command);
             ValidateProperties(command.Properties, true);
             ValidateDecisionReads(command);
@@ -52,6 +55,22 @@ internal static partial class SemanticModelValidator
                 ValidateProducedEvent(produced, command);
             }
             _validatedDecisionReads.Clear();
+        }
+
+        void ValidateCommandHandler(SemanticCommand command)
+        {
+            if (command.Handler is not { } handler) return;
+            if (handler.ResultVersion != 1) throw new InvalidSemanticContract("Unknown described command handler result version.");
+            if (handler.RequirementId != ImplementationRequirementIdentity.Create(command.Id, SemanticImplementationRole.CommandHandler, null))
+            {
+                throw new InvalidSemanticContract("A described command handler requirement identity must match its owner.");
+            }
+
+            if (!_handlerRequirements.Add(handler.RequirementId)) throw new InvalidSemanticContract("A described command handler requirement identity cannot be duplicated.");
+            if (command.Produces.IsEmpty || command.Produces.Any(production => production.When is not null || production.Condition is not null))
+            {
+                throw new InvalidSemanticContract("A described command requires unconditional productions in result version 1.");
+            }
         }
 
         void RequireCodeValidations(SemanticCommand command)
@@ -119,7 +138,7 @@ internal static partial class SemanticModelValidator
 
             WithDecisionReadPaths(() => ValidateMappings(produced.Mappings, Properties(eventContract.Properties), SemanticExpressionRootKind.Command, sources));
             var mapped = produced.Mappings.Select(_ => _.TargetProperty).ToHashSet();
-            if (eventContract.Properties.Any(_ => !_.Type.IsOptional && !mapped.Contains(_.Id)))
+            if (command.Handler is null && eventContract.Properties.Any(_ => !_.Type.IsOptional && !mapped.Contains(_.Id)))
             {
                 throw new InvalidSemanticContract("A produced event must map every required event property.");
             }

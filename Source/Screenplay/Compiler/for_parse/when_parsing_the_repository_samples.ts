@@ -5,6 +5,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, beforeAll, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
+import { portableMatchSuggestions } from '../Parsing/PortableMatchSuggestions';
 
 const repository = resolve(__dirname, '../../../..');
 const corpus = join(repository, 'Source/DotNET/Screenplay.CanonicalCorpus/Corpus');
@@ -62,6 +63,7 @@ describe('when parsing the repository samples', () => {
             ].map(([line, text]) => `${join(eventRoutes, 'scalar/source/module.play')}:${line} PLAY0034 Unexpected '${text}' in command body`),
             ...[41, 46].map(line => `${join(eventRoutes, 'specifications/source/module.play')}:${line} PLAY0549 Stream 'Account.Archive' is NotFound; routing requires one physical source and stream.`),
             `${join(eventRoutes, 'specifications/source/module.play')}:50 PLAY0549 Stream 'Account.Notes' is NotFound; routing requires one physical source and stream.`,
+            `${join(corpus, 'GeneratedConceptRules/v20/source/declarations.play')}:8 PLAY0699 Match pattern: lookaround at offset 1. ${portableMatchSuggestions.lookaround}`,
             `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`,
             // The metadata-only fixture deliberately declares no operational public output.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0609 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`
