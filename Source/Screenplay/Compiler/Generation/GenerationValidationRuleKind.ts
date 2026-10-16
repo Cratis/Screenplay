@@ -19,5 +19,9 @@ export enum GenerationValidationRuleKind {
     Matches = 'Matches',
     RulePredicate = 'RulePredicate',
     CodeValidation = 'CodeValidation',
-    Checksum = 'Checksum'
+    Checksum = 'Checksum',
+    Contains = 'Contains',
+    NotContains = 'NotContains',
+    StartsWith = 'StartsWith',
+    EndsWith = 'EndsWith'
 }

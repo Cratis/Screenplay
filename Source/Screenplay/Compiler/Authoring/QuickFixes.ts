@@ -4,6 +4,9 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { PlayPlacement } from '../Files/PlayPlacement';
+import { checkPortableMatchPattern } from '../Parsing/checkPortableMatchPattern';
+import { ValidationRuleSyntax } from '../Syntax/Commands';
+import { stringBodyPattern } from '../Text/StringLiteral';
 import { complianceWireName } from '../Parsing/ConceptComplianceParser';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
@@ -34,7 +37,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
+    return code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -61,8 +64,10 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     const lines = splitLines(source);
     const eventsByLine = new Map<number, EventSyntax>();
     const slicesByLine = new Map<number, SliceSyntax>();
+    const rulesByLine = new Map<number, ValidationRuleSyntax>();
     // Index inline and standalone declarations once, without scanning the tree per diagnostic.
     const walker = new class extends ScreenplaySyntaxWalker {
+        override visitValidationRule(rule: ValidationRuleSyntax): void { rulesByLine.set(rule.location.line, rule); super.visitValidationRule(rule); }
         override visitEvent(event: EventSyntax): void { eventsByLine.set(event.location.line, event); }
         override visitSlice(slice: SliceSyntax): void { slicesByLine.set(slice.location.line, slice); super.visitSlice(slice); }
     }();
@@ -88,6 +93,17 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         const length = legacyOptionalTypeLength(line.raw, diagnostic);
         if (length > 0) {
             byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: "Use 'optional' instead of '?'", scope: 'occurrence', edits: [{ start: line.startOffset + diagnostic.location.column + length - 2, length: 1, text: ' optional' }] } });
+        } else if (diagnostic.code === DiagnosticCodes.DeprecatedStudioTextRulePattern) {
+            const rule = rulesByLine.get(line.number);
+            if (rule?.rule !== 'Matches' || rule.value?.kind !== 'LiteralExpressionSyntax' || typeof rule.value.value !== 'string') continue;
+            const replacement = checkPortableMatchPattern(rule.value.value).replacement;
+            const match = new RegExp(`\\bmatches\\s+"${stringBodyPattern}"`).exec(line.raw);
+            if (replacement === undefined || match === null) continue;
+            const spellings = { Equal: '==', NotEqual: '!=', Contains: 'contains', NotContains: 'not contains', StartsWith: 'starts with', EndsWith: 'ends with' };
+            const quoted = '"' + replacement.value.replace(/["\\\n\r\t]/g, character => JSON.stringify(character).slice(1, -1)) + '"';
+            byLine.set(line.number, { line: line.number,
+                fix: { diagnosticCode: diagnostic.code, title: 'Use the equivalent ordinal text rule', scope: 'occurrence', edits: [{ start: line.startOffset + match.index, length: match[0].length, text: spellings[replacement.kind] + ' ' + quoted }] },
+                change: { node: rule, replacement: { ...rule, rule: replacement.kind, value: { ...rule.value, value: replacement.value } } as ValidationRuleSyntax } });
         } else if (diagnostic.code === DiagnosticCodes.LegacyComplianceMarker) {
             const edit = complianceMarkerEdit(line.raw, line.startOffset);
             if (edit !== undefined) byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: 'Use bare pii and secret compliance markers', scope: 'occurrence', edits: [edit] } });

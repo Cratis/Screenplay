@@ -189,6 +189,8 @@ A concept can declare validation rules in an optional indented body — business
 
 `not empty` has the same meaning on a text concept as on a command property: null, empty text and text made only of Unicode `White_Space` characters fail. The [command rule reference](commands.md#what-the-executable-model-admits) lists the exact set. U+0085, U+00A0 and U+3000 are whitespace; U+FEFF is not. `" a "` passes without trimming the value. This applies to every ESM version; it does not change the separate emptiness rule for event-source and stream-id identity text.
 
+`contains "text"`, `not contains "text"`, `starts with "text"` and `ends with "text"` compare literal UTF-16 text ordinally, without case folding or normalization. They apply to one String value, not an enumeration or collection. An absent optional value passes; presence is a separate `not empty` rule. Empty operands are valid: contains, starts with and ends with pass, while not contains fails for present text.
+
 `matches` searches for a matching substring unless you add anchors. The `$` anchor means the very end of the input, not the position before a trailing newline: `matches "^[A-Z]{3}$"` accepts `ABC` but rejects `ABC\n`. Escaped `\$` and `$` inside a character class stay literal. The built-in `matches email` rule also rejects a trailing newline.
 
 ````screenplay
@@ -208,7 +210,7 @@ concept EmailAddress : String pii
 
 The optional severity (`information`, `warning` or `error`) comes before a rule's message and defaults to `error`. A failing concept rule rejects a command even if its severity is `warning` or `information`; the level only controls how the failure is presented. The printer omits the default.
 
-The named `email` pattern has the fixed definition documented under [command validation](commands.md#validation-rules); it is not RFC 5322 validation and rejects JavaScript whitespace, including U+00A0. Quoted patterns use the [portable match dialect](commands.md#portable-match-dialect), with the same UTF-16 meanings and authoring limits in both compilers. Both forms apply only to a text concept, and a match without anchors can match a substring.
+The named `email` pattern has the fixed definition documented under [command validation](commands.md#validation-rules); it is not RFC 5322 validation and rejects JavaScript whitespace, including U+00A0. Quoted patterns use the [portable match dialect](commands.md#portable-match-dialect), with the same UTF-16 meanings and authoring limits in both compilers. Both forms apply only to a text concept, and a match without anchors can match a substring. Exact legacy Studio lookaround text-rule shapes warn with `PLAY0787` and bind to ordinal literal rules; use `contains`, `not contains`, `starts with`, `ends with`, `==` or `!=` instead. Other lookarounds remain refused. The [pattern check API](commands.md#checking-patterns-before-authoring) reports the equivalent rule before an authoring proposal is made.
 
 Inside the block `context` is the [`RuleContext`](context.md) — for a concept rule there is no surrounding artifact, so `context.Artifact` and `context.Value` are both the concept's own value. The block yields the message of every rule the value breaks, and yields nothing when the value is valid.
 

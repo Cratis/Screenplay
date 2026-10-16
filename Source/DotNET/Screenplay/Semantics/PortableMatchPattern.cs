@@ -17,6 +17,20 @@ public static class PortableMatchPattern
     /// <returns>The admission result, diagnostic details and optional equivalent text rule.</returns>
     public static PortableMatchCheck Check(string pattern)
     {
+        if (LegacyTextRulePatterns.Recognize(pattern) is { } replacement)
+        {
+            var spelling = replacement.Kind switch
+            {
+                SemanticValidationRuleKind.Equal => "==",
+                SemanticValidationRuleKind.NotEqual => "!=",
+                SemanticValidationRuleKind.NotContains => "not contains",
+                _ => "ends with"
+            };
+            var suggestion = $"Use '{spelling}' with the literal text operand instead.";
+
+            return new(PortableMatchStatus.Deprecated, DiagnosticCodes.DeprecatedStudioTextRulePattern, "Studio text rule", 0, suggestion, $"This Studio lookaround pattern is deprecated. {suggestion}", replacement);
+        }
+
         var parsed = SemanticMatchPattern.Parse(pattern);
         if (parsed.Accepted) return new(PortableMatchStatus.Admitted, null, null, 0, null, string.Empty);
 

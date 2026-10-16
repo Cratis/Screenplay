@@ -37,7 +37,11 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.AllGreaterThan or
         SemanticValidationRuleKind.AllGreaterThanOrEqual or
         SemanticValidationRuleKind.Matches or
-        SemanticValidationRuleKind.Checksum;
+        SemanticValidationRuleKind.Checksum or
+        SemanticValidationRuleKind.Contains or
+        SemanticValidationRuleKind.NotContains or
+        SemanticValidationRuleKind.StartsWith or
+        SemanticValidationRuleKind.EndsWith;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -59,6 +63,10 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThanOrEqual => Measure(value) <= Number(rule.Operand),
         SemanticValidationRuleKind.Length => value is SemanticTextValue text ? text.Value.Length == Number(rule.Operand) : throw SemanticValueRules.Malformed(),
         SemanticValidationRuleKind.Matches => Matches(value, rule.Operand),
+        SemanticValidationRuleKind.Contains => Text(value).Contains(Text(rule.Operand), StringComparison.Ordinal),
+        SemanticValidationRuleKind.NotContains => !Text(value).Contains(Text(rule.Operand), StringComparison.Ordinal),
+        SemanticValidationRuleKind.StartsWith => Text(value).StartsWith(Text(rule.Operand), StringComparison.Ordinal),
+        SemanticValidationRuleKind.EndsWith => Text(value).EndsWith(Text(rule.Operand), StringComparison.Ordinal),
         SemanticValidationRuleKind.Checksum => Checksum(value, rule.Operand),
         SemanticValidationRuleKind.AllGreaterThan => Elements(value).All(_ => Measure(_) > Number(rule.Operand)),
         SemanticValidationRuleKind.AllGreaterThanOrEqual => Elements(value).All(_ => Measure(_) >= Number(rule.Operand)),
@@ -86,7 +94,12 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThan => $"A value must be less than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.LessThanOrEqual => $"A value must be at most {Format(rule.Operand)}.",
         SemanticValidationRuleKind.Length => $"A value must be exactly {Format(rule.Operand)} characters long.",
+        SemanticValidationRuleKind.Matches when LegacyTextRulePatterns.Normalize(rule) is { Kind: not SemanticValidationRuleKind.Matches } normalized => DefaultMessage(normalized, value, empty),
         SemanticValidationRuleKind.Matches => "A value must match the required pattern.",
+        SemanticValidationRuleKind.Contains => $"A value must contain {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.NotContains => $"A value must not contain {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.StartsWith => $"A value must start with {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.EndsWith => $"A value must end with {Format(rule.Operand)}.",
         SemanticValidationRuleKind.Checksum => $"A value must end in the exact {Format(rule.Operand)} check digits.",
         SemanticValidationRuleKind.AllGreaterThan => $"Every value must be greater than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => $"Every value must be at least {Format(rule.Operand)}.",
@@ -94,7 +107,7 @@ static class SemanticValidationRules
     };
 
     internal static string? UnsupportedPattern(SemanticValidationRule rule) =>
-        rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && SemanticMatchPattern.Parse(pattern.Value) is { Accepted: false } parsed
+        rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && LegacyTextRulePatterns.Recognize(pattern.Value) is null && SemanticMatchPattern.Parse(pattern.Value) is { Accepted: false } parsed
             ? $"outside the portable match dialect: {parsed.Construct}"
             : null;
 
@@ -110,8 +123,15 @@ static class SemanticValidationRules
             throw SemanticValueRules.Malformed();
         }
 
-        return SemanticMatchPattern.Create(pattern.Value).IsMatch(text.Value);
+        var normalized = LegacyTextRulePatterns.Normalize(new(default, SemanticValidationRuleKind.Matches, operand, null));
+
+        return normalized.Kind != SemanticValidationRuleKind.Matches
+            ? Satisfies(normalized, value)
+            : SemanticMatchPattern.Create(pattern.Value).IsMatch(text.Value);
     }
+
+    static string Text(SemanticValue? value) =>
+        value is SemanticTextValue text ? text.Value : throw SemanticValueRules.Malformed();
 
     static decimal Measure(SemanticValue value) => value switch
     {

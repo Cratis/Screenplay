@@ -12,6 +12,8 @@ import { boundedRuleProof, checkGenerationMatches } from './GenerationRuleProof'
 import { GenerationValidationRule } from './GenerationValidationRule';
 import { GenerationValidationRuleKind as Kind } from './GenerationValidationRuleKind';
 import { RegexExpression } from './RegexExpression';
+import { normalizeLegacyTextRule } from './normalizeLegacyTextRule';
+import { textRuleExpression } from './TextRuleExpression';
 import { proven, refuted, RuleConsistencyResult, unproven } from './RuleConsistencyResult';
 
 const approximateReason = 'checksum or UTC date shape is an over-approximation';
@@ -21,6 +23,7 @@ export function checkPatternRule(pattern: string, checksum: ChecksumAlgorithm | 
     return checkFiniteGenerationRule(parseGenerationPattern(pattern, checksum), rule, date, runtime);
 }
 export function checkFiniteGenerationRule(pattern: GenerationPattern, rule: GenerationValidationRule, date?: Date, runtime?: RegexSampleEvaluator): RuleConsistencyResult {
+    rule = normalizeLegacyTextRule(rule);
     if (rule.kind === Kind.RulePredicate || rule.kind === Kind.CodeValidation) return unproven('opaque');
     const approximate = pattern.hasDates || pattern.checksum !== undefined;
     const samples = finiteGenerationSamples(pattern, date);
@@ -31,6 +34,9 @@ export function checkFiniteGenerationRule(pattern: GenerationPattern, rule: Gene
         case Kind.Equal: case Kind.NotEqual:
             if (approximate || typeof rule.operand !== 'string') return unproven(approximate ? approximateReason : 'unsupported rule');
             return boundedRuleProof(() => checkFinitePatternContainment(pattern, RegexExpression.literal(rule.operand as string), rule.kind === Kind.NotEqual));
+        case Kind.Contains: case Kind.NotContains: case Kind.StartsWith: case Kind.EndsWith:
+            if (approximate || typeof rule.operand !== 'string') return unproven(approximate ? approximateReason : 'unsupported rule');
+            return boundedRuleProof(() => checkFinitePatternContainment(pattern, textRuleExpression(rule.kind, rule.operand as string, pattern.tokens.map(token => token.characters)), rule.kind === Kind.NotContains));
         case Kind.Matches:
             return typeof rule.operand !== 'string' ? unproven('unsupported rule') : checkGenerationMatches(rule.operand, pattern.maximumLength, expression => checkFinitePatternContainment(pattern, expression), samples, approximate ? approximateReason : undefined, runtime, true);
         case Kind.Checksum:

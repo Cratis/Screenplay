@@ -55,6 +55,9 @@ public sealed partial class SemanticModelBinder
                 "ordering compares one whole or decimal number",
             SemanticValidationRuleKind.Length when subject.IsCollection || !subject.IsText =>
                 "a length measures one text value that is not an enumeration",
+            SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or
+                SemanticValidationRuleKind.StartsWith or SemanticValidationRuleKind.EndsWith when subject.IsCollection || !subject.IsText =>
+                "text comparison requires one text value that is not an enumeration",
             SemanticValidationRuleKind.Matches when subject.IsCollection || !subject.IsText =>
                 "matches requires one text value that is not an enumeration",
             SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when !subject.IsCollection || !subject.IsNumber =>
@@ -113,6 +116,10 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
             ValidationRuleKind.Matches => SemanticValidationRuleKind.Matches,
+            ValidationRuleKind.Contains => SemanticValidationRuleKind.Contains,
+            ValidationRuleKind.NotContains => SemanticValidationRuleKind.NotContains,
+            ValidationRuleKind.StartsWith => SemanticValidationRuleKind.StartsWith,
+            ValidationRuleKind.EndsWith => SemanticValidationRuleKind.EndsWith,
             ValidationRuleKind.Checksum => SemanticValidationRuleKind.Checksum,
             ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
             ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
@@ -140,6 +147,10 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.NotEqual => "!=",
             ValidationRuleKind.Length => "length ==",
             ValidationRuleKind.Matches => "matches",
+            ValidationRuleKind.Contains => "contains",
+            ValidationRuleKind.NotContains => "not contains",
+            ValidationRuleKind.StartsWith => "starts with",
+            ValidationRuleKind.EndsWith => "ends with",
             ValidationRuleKind.Checksum => "checksum",
             ValidationRuleKind.AllGreaterThan => "all >",
             ValidationRuleKind.AllGreaterThanOrEqual => "all >=",
@@ -240,6 +251,13 @@ public sealed partial class SemanticModelBinder
                     default:
                         Error(DiagnosticCodes.InvalidSemanticBinding, $"The 'matches' operand on {subject.Description} must be a quoted ECMAScript regular expression or the named pattern 'email'.", rule.Location);
                         return null;
+                }
+
+                var check = PortableMatchPattern.Check(pattern);
+                if (check.Replacement is { } replacement)
+                {
+                    Warning(DiagnosticCodes.DeprecatedStudioTextRulePattern, check.Description, rule.Location);
+                    return new(property, replacement.Kind, SemanticValue.Text(replacement.Value), rule.Message) { Severity = Severity(rule.Severity) };
                 }
 
                 var parsed = SemanticMatchPattern.Parse(pattern);

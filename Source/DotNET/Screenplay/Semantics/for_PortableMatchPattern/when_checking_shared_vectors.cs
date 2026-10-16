@@ -20,7 +20,7 @@ public class when_checking_shared_vectors
             var invalid = !admitted && vector.GetProperty("invalid").GetBoolean();
             var (status, code) = (admitted, invalid) switch
             {
-                (true, _) => (PortableMatchStatus.Admitted, (string?)null),
+                (true, _) => (PortableMatchStatus.Admitted, null),
                 (_, true) => (PortableMatchStatus.Invalid, "PLAY0367"),
                 _ => (PortableMatchStatus.Refused, "PLAY0699")
             };

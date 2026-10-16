@@ -7,6 +7,7 @@ export const DiagnosticCodes = {
     UnknownMatchPattern: 'PLAY0366',
     InvalidMatchPattern: 'PLAY0367',
     PatternOutsidePortableMatchDialect: 'PLAY0699',
+    DeprecatedStudioTextRulePattern: 'PLAY0787',
     InvalidIdentityDeclaration: 'PLAY0633',
     DuplicateIdentity: 'PLAY0634',
     InvalidIdentityDetail: 'PLAY0635',

@@ -58,6 +58,7 @@ public static class RuleConsistency
 
     internal static RuleConsistencyResult Check(SemanticGeneration? generation, SemanticPrimitiveType primitive, SemanticValidationRule rule, int assessmentYear)
     {
+        rule = LegacyTextRulePatterns.Normalize(rule);
         if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
         if (generation?.Kind == "pattern" && generation.Pattern is { } pattern) return CheckPattern(pattern, generation.Checksum, rule, new DateOnly(assessmentYear, 1, 1));
         if (generation?.Kind == "random" && generation.Minimum is { } minimum && generation.Maximum is { } maximum) return FiniteGenerationRules.Check(new GenerationIntegerRange(minimum, maximum), rule);
@@ -74,6 +75,8 @@ public static class RuleConsistency
             (SemanticValidationRuleKind.Equal, SemanticTextValue text) => Equal(shape, text.Value, false),
             (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) => Equal(shape, text.Value, true),
             (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(shape, text.Value),
+            (var kind, SemanticTextValue text) when TextRuleVersion.IsTextRule(kind) =>
+                RegexContainment.Check(shape, TextRuleExpression.Create(kind, text.Value, shape.Positions), kind == SemanticValidationRuleKind.NotContains),
             _ => RuleConsistencyResult.Unproven("unsupported rule")
         };
     }
