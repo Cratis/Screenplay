@@ -25,7 +25,7 @@ import { locationOf, SourceLine } from './SourceLine';
 const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 
 // Feature members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
+const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
 export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';

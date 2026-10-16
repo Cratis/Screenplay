@@ -1397,7 +1397,7 @@ Both compilers check these forms. Repairs require individual review (`CanFixAll:
 
 ## Navigation regions
 
-The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts.
+The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts. The canonical corpus pins `PLAY0744`, `PLAY0747`, `PLAY0748` and `PLAY0749` as rejection vectors beside the `screen-shell-navigation-positive` shell, and a stale or breaking MCP edit meets the same codes (see [Author the application shell](mcp/authoring-tools.md#author-the-application-shell)).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1417,7 +1417,7 @@ The `navigation topbar` and `navigation sidebar` blocks of a layout and a module
 
 ## Toolbar buttons
 
-The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons).
+The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

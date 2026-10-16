@@ -1,0 +1,22 @@
+layout AppShell
+  category application
+  content
+
+  navigation sidebar
+    item sales title "Sales" target Sales
+    item support title "Support" target Support
+
+module Sales
+  navigation sidebar extends
+    item support title "Support again" target Sales.Orders
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        title String
+
+module Support
+  feature Tickets
+    slice StateView TicketList
+      readmodel TicketRow
+        title String

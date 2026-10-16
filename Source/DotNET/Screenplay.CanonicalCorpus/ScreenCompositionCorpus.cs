@@ -14,6 +14,7 @@ public static class ScreenCompositionCorpus
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ScreenComposition.v1";
     const string FolderSourceCase = "screen-composition/v1/source/folder";
     const string TypedScreenSourceCase = "screen-release-ui-positive";
+    const string ShellSourceCase = "screen-shell-navigation-positive";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -119,6 +120,31 @@ public static class ScreenCompositionCorpus
                         "SampleDataPackReferenceSyntax",
                         "SampleDataMappingSyntax"
                     ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = ShellSourceCase,
+                    Document = Document("screen-shell-navigation-positive", "positive/ScreenShell.play", $"{Prefix}.positive.ScreenShell.play.txt"),
+                    Requires = "Screenplay v4.180.0 navigation regions, toolbar slice buttons, template references and sample data",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "NavigationRegionSyntax",
+                        "NavigationItemSyntax",
+                        "NavigationTargetSyntax",
+                        "NavigationLogoSyntax",
+                        "ScreenToolbarSyntax",
+                        "ToolbarButtonSyntax",
+                        "ScreenTemplateReferenceSyntax",
+                        "UiProfileSyntax",
+                        "SampleDataPackSyntax",
+                        "SampleDataSetSyntax",
+                        "SampleDataRowSyntax",
+                        "SampleDataFieldSyntax",
+                        "SampleDataSelectionSyntax",
+                        "SampleDataPackReferenceSyntax",
+                        "SampleDataMappingSyntax"
+                    ]
                 }
             ],
             DesignTimeOutputs =
@@ -191,7 +217,39 @@ public static class ScreenCompositionCorpus
                     "unknown-navigation-destination",
                     "UnknownNavigationDestination",
                     Diagnostic("PLAY0654", "Unknown destination outlet 'sidebar' - nothing declares it"),
-                    Diagnostic("PLAY0654", "Unknown destination dialog template 'ConfirmDialog' - nothing declares it"))
+                    Diagnostic("PLAY0654", "Unknown destination dialog template 'ConfirmDialog' - nothing declares it")),
+                Rejection(
+                    "navigation-target-missing",
+                    "NavigationTargetMissing",
+                    Diagnostic("PLAY0748", "Navigation item 'ghost' in layout 'AppShell' targets module 'Ghost', which does not exist")),
+                Rejection(
+                    "navigation-slot-unknown",
+                    "NavigationSlotUnknown",
+                    Diagnostic("PLAY0749", "Navigation item 'sales' in layout 'AppShell' renders into slot 'missing', which no layout declares")),
+                Rejection(
+                    "navigation-duplicate-id",
+                    "NavigationDuplicateId",
+                    Diagnostic("PLAY0747", "Navigation item 'support' in module 'Sales' navigation sidebar is also used by an application item, and the region extends the application")),
+                Rejection(
+                    "navigation-logo-in-module",
+                    "NavigationLogoInModule",
+                    Diagnostic("PLAY0744", "The module 'Sales' declares a logo - the logo is the application's and belongs in the layout")),
+                Rejection(
+                    "toolbar-button-not-state-change",
+                    "ToolbarButtonNotStateChange",
+                    Diagnostic("PLAY0762", "Toolbar button 'list' invokes slice 'OrderList', a StateView slice - a button invokes State Change slices only"),
+                    Diagnostic("PLAY0762", "Toolbar button 'chase' invokes slice 'ChaseOrders', a Automation slice - a button invokes State Change slices only"),
+                    Diagnostic("PLAY0761", "Toolbar button 'missing' invokes slice 'Shop.Orders.Ghost', which the document does not declare")),
+                Rejection(
+                    "template-blueprint-not-listed",
+                    "TemplateBlueprintNotListed",
+                    Diagnostic("PLAY0721", "The template version range 'latest' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\""),
+                    Diagnostic("PLAY0722", "The template 'Workspace' comes from blueprint 'Hr', which no ui profile declares - add it to a profile's 'packages'")),
+                Rejection(
+                    "sample-data-unknown-pack",
+                    "SampleDataUnknownPack",
+                    Diagnostic("PLAY0710", "Field 'colour' of shape 'Customer' in sample data pack 'NordicDemo' is not a property of read model 'Customer'"),
+                    Diagnostic("PLAY0714", "Unknown sample data pack 'GhostDemo' - declare it with 'sample data GhostDemo' or use 'blueprint <id>' for a pack a blueprint ships"))
             ],
             BehaviorExpectations =
             [
@@ -355,7 +413,68 @@ public static class ScreenCompositionCorpus
                         Assertion("proposal.droppedComments", "equals", "0"),
                         Assertion("source.roundTrips", "equals", "true")
                     ],
-                    FolderSourceCase)
+                    FolderSourceCase),
+                Mcp(
+                    "mcp-edit-navigation-region-mode",
+                    "replace NavigationRegionSyntax sidebar of module Support: switch overrides to extends, copying the application items when switching from inherits to overrides",
+                    "module Support navigation sidebar",
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("proposal.validation", "equals", "Authoring"),
+                        Assertion("stale.expectedRevision", "refused", "StaleRevision"),
+                        Assertion("region.sidebar.mode", "equals", "extends"),
+                        Assertion("proposal.droppedComments", "equals", "0"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    ShellSourceCase),
+                Mcp(
+                    "mcp-edit-navigation-item",
+                    "add, replace the target of and remove a hierarchical sidebar NavigationItemSyntax",
+                    "layout AppShell navigation sidebar",
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("stale.expectedRevision", "refused", "StaleRevision"),
+                        Assertion("item.returns.slot", "equals", "side"),
+                        Assertion("item.unknownTarget", "refused", "PLAY0748"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    ShellSourceCase),
+                Mcp(
+                    "mcp-edit-toolbar-button",
+                    "add, replace the slice of and remove a ToolbarButtonSyntax; a State View slice is refused",
+                    "screen OrderList toolbar actions",
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("stale.expectedRevision", "refused", "StaleRevision"),
+                        Assertion("button.notStateChange", "refused", "PLAY0762"),
+                        Assertion("button.noSlice", "warns", "PLAY0763"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    ShellSourceCase),
+                Mcp(
+                    "mcp-edit-template-reference",
+                    "replace the version range and the blueprint of a template blueprint reference",
+                    "screen OrderList template blueprint Crm CustomerDetail",
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("stale.expectedRevision", "refused", "StaleRevision"),
+                        Assertion("template.invalidRange", "refused", "PLAY0721"),
+                        Assertion("template.unlistedBlueprint", "refused", "PLAY0722"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    ShellSourceCase),
+                Mcp(
+                    "mcp-edit-sample-data",
+                    "replace a row value and the active pack the ui profile selects",
+                    "sample data NordicDemo",
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("stale.expectedRevision", "refused", "StaleRevision"),
+                        Assertion("profile.active", "equals", "NordicDemo"),
+                        Assertion("profile.unknownPack", "refused", "PLAY0714"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    ShellSourceCase)
             ],
             Harnesses =
             [
@@ -903,6 +1022,38 @@ public static class ScreenCompositionCorpus
                         Assertion("plan.packages", "equals", "core,Cratis.Components"),
                         Assertion("plan.packageFallbacks", "equals", "0"),
                         Assertion("plan.missingIconFallbacks", "equals", "0")
+                    ]
+                },
+                new CanonicalStagePlanExpectation
+                {
+                    Target = "scene-web",
+                    Profile = "Desktop",
+                    PlanDigest = "released:scene-sha256:53e2a74364dadadc6baa42b5446e874cf446493452bb4b25058b0922bda3609e",
+                    RequiredVersionVector = "Stage 4.119.1 (cratis/stage:4.119.1 run on the shell document) + Screenplay 4.180.1 + Scene 4.30.0",
+                    PendingReason = "Executed on the published Stage image cratis/stage:4.119.1: its /stage/scene for screen-shell-navigation-positive hashes to the digest above, byte-identical across two loads, and carries the application and module navigation, the toolbar buttons as core:toolbarItem with their slices and the blueprint template references; sample data packs are not served (SD6). The public CLI render and the Studio plan of the same document wait for the CLI that bundles this Stage (Cratis/cli#374), so CLI and Studio plan parity is not yet asserted.",
+                    Artifacts = [],
+                    ObservedRefusalCodes = [],
+                    Assertions =
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("plan.profile", "equals", "Desktop"),
+                        Assertion("plan.layout", "contains", "AppShell"),
+                        Assertion("plan.navigation.application.logo.title", "equals", "Acme"),
+                        Assertion("plan.navigation.application.topbar.items", "equals", "sales,support"),
+                        Assertion("plan.navigation.application.sidebar.items", "equals", "sales,support"),
+                        Assertion("plan.navigation.application.sidebar.sales.children", "equals", "orders,returns"),
+                        Assertion("plan.navigation.application.sidebar.returns.slot", "equals", "side"),
+                        Assertion("plan.navigation.modules.Sales.sidebar.mode", "equals", "extend"),
+                        Assertion("plan.navigation.modules.Sales.topbar.mode", "equals", "inherit"),
+                        Assertion("plan.navigation.modules.Support.sidebar.mode", "equals", "override"),
+                        Assertion("plan.navigation.modules.Reports", "absent", "inherits both regions"),
+                        Assertion("plan.toolbar.OrderList.place.slice", "equals", "Sales.Orders.PlaceOrder"),
+                        Assertion("plan.toolbar.OrderList.place.emphasis", "equals", "primary"),
+                        Assertion("plan.toolbar.OrderList.cancel.slice", "equals", "Sales.Orders.CancelOrder"),
+                        Assertion("plan.templateReferences.Sales", "equals", "Crm/Workspace@^1.4"),
+                        Assertion("plan.templateReferences.Sales.Orders.OrderList.OrderList", "equals", "Crm/CustomerDetail@~1.4.2"),
+                        Assertion("plan.structure.Sales.Orders.PlaceOrder", "equals", "StateChange"),
+                        Assertion("plan.sampleData.served", "equals", "none")
                     ]
                 }
             ]

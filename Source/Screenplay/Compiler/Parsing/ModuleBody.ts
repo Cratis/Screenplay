@@ -25,7 +25,7 @@ import { locationOf, SourceLine } from './SourceLine';
 export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 
 // Module members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation']);
+const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
 export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, navigation, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
