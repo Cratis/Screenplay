@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "keywords": [
+    "accent",
     "acknowledge",
     "action",
     "active",
@@ -10,6 +11,7 @@
     "alphabet",
     "and",
     "any",
+    "appearance",
     "append",
     "application",
     "archiving",
@@ -49,6 +51,7 @@
     "click",
     "clock",
     "close",
+    "color",
     "column",
     "columnGap",
     "columnSpan",
@@ -204,6 +207,7 @@
     "navigate",
     "navigation",
     "nested",
+    "new",
     "no",
     "none",
     "not",
@@ -218,6 +222,7 @@
     "open",
     "operation",
     "operations",
+    "option",
     "optional",
     "or",
     "order",
@@ -280,6 +285,7 @@
     "retention",
     "returns",
     "role",
+    "root",
     "route",
     "row",
     "rowGap",
@@ -289,10 +295,12 @@
     "runs",
     "safeguard",
     "sample",
+    "scheme",
     "scope",
     "scoped",
     "scopes",
     "screen",
+    "screens",
     "second",
     "secondary",
     "seconds",
@@ -351,6 +359,7 @@
     "ulid",
     "unique",
     "unload",
+    "use",
     "uses",
     "using",
     "validate",
@@ -32909,6 +32918,39 @@
         "warning"
       ],
       "title": "A Studio text-rule pattern has an equivalent first-class ordinal rule.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0788",
+      "name": "InvalidProfileRootTemplate",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A ui profile root template, shell option or new screens use template line is malformed, an option is repeated, or new screens use template is repeated.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0789",
+      "name": "InvalidProfileAppearance",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A ui profile appearance block is malformed: a line in it is not color scheme \u003Cword\u003E or accent \u0022\u003Ccolour\u003E\u0022, a line is repeated, or the profile declares the block more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0798",
+      "name": "DuplicateProfileRootTemplate",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A ui profile declares more than one root template.",
       "reserved": false,
       "retired": false
     }

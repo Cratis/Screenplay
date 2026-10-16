@@ -429,8 +429,21 @@ ui profile Desktop
     Cratis.Components.Charts
   icons
     Cratis.Icons
-  layout AppShell
   theme Nordic
+
+  // The shell the whole application is drawn in: a template, own or from a blueprint, with the
+  // options it exposes. 'layout <Name>' is the older way to say the same thing and still reads.
+  root template AppShell
+    option navigationMode slim
+    option showFooter true
+
+  // How the application looks regardless of the shell.
+  appearance
+    color scheme dark
+    accent "#4f46e5"
+
+  // The template a new screen starts from in the designer.
+  new screens use template List
 
   // The active sample data pack is chosen once, here, for the whole application - never per
   // screen or slice. A design surface or preview shows these rows instead of a backend.

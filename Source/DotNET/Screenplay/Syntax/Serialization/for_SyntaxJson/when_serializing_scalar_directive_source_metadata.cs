@@ -15,7 +15,7 @@ public class when_serializing_scalar_directive_source_metadata : Specification
     };
 
     [Fact] void should_preserve_the_profile_json_contract() => SyntaxJson.Serialize(_profile).GetRawText().ShouldEqual(
-        "{\"kind\":\"UiProfileSyntax\",\"defaultSizeClass\":\"expanded\",\"icons\":[],\"layout\":\"Main\",\"name\":\"Desktop\",\"packages\":[\"core\"],\"platforms\":[\"web\"],\"sampleData\":null,\"theme\":\"Aurora\"}");
+        "{\"kind\":\"UiProfileSyntax\",\"appearance\":null,\"defaultSizeClass\":\"expanded\",\"icons\":[],\"layout\":\"Main\",\"name\":\"Desktop\",\"newScreenTemplate\":null,\"packages\":[\"core\"],\"platforms\":[\"web\"],\"root\":null,\"sampleData\":null,\"theme\":\"Aurora\"}");
 
     [Fact] void should_preserve_the_theme_json_contract() => SyntaxJson.Serialize(new ThemeSyntax("Aurora", ["core"], SourceLocation.Start)
     {

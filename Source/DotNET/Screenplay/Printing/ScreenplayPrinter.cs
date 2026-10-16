@@ -77,6 +77,18 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     string ICaptureSyntaxVisitor<string>.Visit(CaptureSyntax syntax) => Print(syntax);
 
+    static void BlankBetween(ScreenplayWriter writer, ref bool hasContent)
+    {
+        if (hasContent)
+        {
+            writer.Blank();
+        }
+
+        hasContent = true;
+    }
+
+    static string ShellOptionValue(ShellOptionSyntax option) => option.Kind == ShellOptionValueKind.Text ? StringLiteral.Quote(option.Value) : option.Value;
+
     static ScreenplayWriter DocumentWriter(SyntaxNode root)
     {
         SourceNumericModes.Validate(root);
@@ -232,6 +244,7 @@ public sealed partial class ScreenplayPrinter :
             WriteUiProfileList(writer, uiProfile, ("packages", "package"), [.. uiProfile.Packages]);
             WriteUiProfileList(writer, uiProfile, ("icons", "icon"), [.. uiProfile.Icons]);
             WriteUiProfileAppearance(writer, uiProfile);
+            WriteUiProfileShell(writer, uiProfile);
             WriteSampleDataSelection(writer, uiProfile.SampleData);
         }
     }
@@ -269,6 +282,47 @@ public sealed partial class ScreenplayPrinter :
         if (uiProfile.Theme is not null)
         {
             writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
+        }
+    }
+
+    void WriteUiProfileShell(ScreenplayWriter writer, UiProfileSyntax uiProfile)
+    {
+        var hasContent = uiProfile.Platforms.Any() || uiProfile.DefaultSizeClass is not null || uiProfile.Packages.Any() || uiProfile.Icons.Any() || uiProfile.Layout is not null || uiProfile.Theme is not null;
+        if (uiProfile.Root is { } root)
+        {
+            BlankBetween(writer, ref hasContent);
+            writer.Line($"root template {WriteTemplateReference(root.Blueprint, root.Name, root.Version)}", root);
+            using (writer.Indent())
+            {
+                foreach (var option in root.Options)
+                {
+                    writer.Line($"option {option.Name} {ShellOptionValue(option)}", option);
+                }
+            }
+        }
+
+        if (uiProfile.Appearance is { } appearance)
+        {
+            BlankBetween(writer, ref hasContent);
+            writer.Line("appearance", appearance);
+            using (writer.Indent())
+            {
+                if (appearance.ColorScheme is not null)
+                {
+                    writer.Line($"color scheme {appearance.ColorScheme}");
+                }
+
+                if (appearance.Accent is not null)
+                {
+                    writer.Line($"accent {StringLiteral.Quote(appearance.Accent)}");
+                }
+            }
+        }
+
+        if (uiProfile.NewScreenTemplate is { } newScreenTemplate)
+        {
+            BlankBetween(writer, ref hasContent);
+            writer.Line($"new screens use template {WriteTemplateReference(newScreenTemplate.Blueprint, newScreenTemplate.Name, newScreenTemplate.Version)}", newScreenTemplate);
         }
     }
 
