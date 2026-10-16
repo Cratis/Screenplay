@@ -220,6 +220,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var kind = Kind(rule.Rule);
+            if (subject.IsDate && property.IsSet && SemanticDateComparison.IsComparison(kind) && rule.Value is LiteralExpressionSyntax) return BindDateRule(rule, property, subject);
             if (Inadmissible(kind, subject) is { } reason)
             {
                 Error(

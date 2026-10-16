@@ -941,8 +941,11 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | 
 
 (* "max" and "min" take their meaning from the property type: a text length or
    a number's value. In a ValidationRule a Path operand names a member of an
-   enum concept - see Documentation/screenplay/commands.md for the rules the
-   executable model admits.                                                  *)
+   enum concept. ESM v26 admits same-primitive Date/DateTime comparisons in
+   command require and produces when (required command properties or literals),
+   and in command/property rules (literal only). Concept date rules, reaction
+   where, read paths, context and today stay refused. DateTime compares UTC ticks.
+   See Documentation/screenplay/commands.md for the rules the executable model admits.                                                  *)
 
 (* -------------------------------------------------------------- *)
 (* Produces                                                        *)
