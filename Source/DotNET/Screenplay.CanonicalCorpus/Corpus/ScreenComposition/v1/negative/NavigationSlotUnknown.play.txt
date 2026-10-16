@@ -1,0 +1,12 @@
+layout AppShell
+  category application
+  content
+
+  navigation sidebar
+    item sales title "Sales" target Sales slot missing
+
+module Sales
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        title String

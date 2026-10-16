@@ -313,6 +313,63 @@ across files has several occurrences, not one magic writable location. For a
 logical header rename, update all fragments in one batch; a partial rename is
 rejected.
 
+## Author the application shell
+
+The application shell - navigation regions, toolbar buttons, blueprint template references and sample data - is typed
+syntax like every other construct. `read-ast` returns it, `propose-ast` edits it, every proposal is checked against the
+compiler's own diagnostics before it can be applied, and `apply` refuses a proposal whose workspace or catalog revision no
+longer matches (`StaleRevision`). Each construct follows the same transcript: open, read the typed nodes, propose, refuse a
+stale revision, apply, reopen.
+
+| Construct | `read-ast` kind | Edit it with |
+| --- | --- | --- |
+| A navigation region of a layout or module | `NavigationRegionSyntax` | `replace` to change `mode` or `items`; `add` to `navigation` on a `LayoutSyntax` or `ModuleSyntax` |
+| A navigation item (and its sub-items) | `NavigationItemSyntax` | `replace` to retitle, retarget or reslot; `add` to a region's `items` or an item's `children`; `remove`; `move` |
+| The application logo | `NavigationLogoSyntax` | `replace`; it lives on the layout's region only (`PLAY0744`) |
+| A toolbar button | `ToolbarButtonSyntax` | `add` to a `ScreenToolbarSyntax`'s `buttons`; `replace` the `slice`, `emphasis`, `icon` or title; `remove` |
+| A template assignment or reference | `TemplateAssignmentSyntax`, `ScreenTemplateReferenceSyntax` | `replace` the `blueprint`, `name` or `version` |
+| A sample data pack and the pack the profile selects | `SampleDataPackSyntax`, `SampleDataSelectionSyntax` | `replace` a row value or the `active` pack; `remove` a pack - see [Sample data](../sample-data.md) |
+
+A member that holds nothing is left out of the node JSON (a module without `navigation`, a toolbar without `buttons`, an
+item without `children`). Adding the first child still works: `add` accepts any member the node kind declares, so
+`add` with `member: "navigation"` on a module that has no region yet creates the first one.
+
+### Switch a module's navigation mode
+
+A module region is `inherits`, `extends` or `overrides` the application's items ([Navigation regions](../navigation.md)).
+The edit is a typed `replace` of the region (or an `add` when the module has none):
+
+- **inherit to extend** - `mode: "Extend"` and the module's own items; the first `+` on an inheriting region does exactly this.
+- **extend to override** - `mode: "Override"`; the application's items stop applying, so copy any you still want.
+- **inherit to override** - `mode: "Override"` and a copy of the application's items. A module's own items may only target
+  that module (`PLAY0750`), so retarget each copied item to one of the module's features; a copy that still targets another
+  module is refused with `PLAY0750` and nothing is written.
+- **override or extend to inherit** - `mode: "Inherit"` and no items (`PLAY0745` when items remain).
+
+Extending modules must not reuse an application item id (`PLAY0747`); a copied item keeps its id under `override`, where
+only the module's own ids count.
+
+### Toolbar buttons
+
+A button invokes a State Change slice. `replace` the `slice` with a dotted slice path (or an unambiguous suffix). A State
+View, Automation or Translate slice is refused with `PLAY0762`, an unknown slice with `PLAY0761`, an ambiguous suffix with
+`PLAY0764`; a button without a slice is accepted and carries the warning `PLAY0763`.
+
+### Template references
+
+A reference names a blueprint and an optional semver range. Edit `version` to a `*`, an exact version or a `^`, `~`, `>=`,
+`>`, `<=` or `<` range (`PLAY0721` otherwise). A blueprint no `ui profile` lists under `packages` is refused with `PLAY0722`;
+add the package to the profile in the same proposal.
+
+### Sample data
+
+The active pack is chosen once, in the `ui profile` (`SampleDataSelectionSyntax.active`), never per screen. An `active` pack
+the document does not declare is refused with `PLAY0714`; a row field that is not a property of the read model with
+`PLAY0710`. Sample data never reaches the executable model or a production build.
+
+The canonical shell vector (`screen-shell-navigation-positive` in the screen composition corpus) is the document these
+transcripts run on, and `when_authoring_the_screen_shell` and `when_authoring_sample_data` are the executed proof.
+
 ## Move across logical parents
 
 Use `propose-move` rather than a manual AST move when moving a slice to another

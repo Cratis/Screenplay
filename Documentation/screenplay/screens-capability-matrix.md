@@ -68,6 +68,12 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Authoring separate from executable readiness (536.5) | UI constructs are authored and validated; the ESM reports them as `PLAY0269` deferred |
 | MCP remove and move (537.1) | `when_moving_and_removing_screen_nodes` |
 | MCP missing package (537.3) | `when_moving_and_removing_screen_nodes`: removing a package a component still uses is refused with `PLAY0632` |
+| MCP navigation regions (765) | `when_authoring_the_screen_shell`: add, switch mode with copy, extend an inheriting region, add and remove sub-items; a copy that targets another module is refused with `PLAY0750`, a missing target with `PLAY0748`; stale revision refused |
+| MCP toolbar buttons (765) | `when_authoring_the_screen_shell`: add a button, point it at a State Change slice, remove it; a State View slice is refused with `PLAY0762`; stale revision refused |
+| MCP template references (765) | `when_authoring_the_screen_shell`: change the version range of a module and a screen reference; an unreadable range is `PLAY0721`, an unlisted blueprint `PLAY0722`; stale revision refused |
+| MCP sample data (762, 765) | `when_authoring_sample_data`: replace a row value, change the active pack the `ui profile` selects, remove a pack; an undeclared pack is `PLAY0714` |
+| Typed edit of a member that is empty and omitted from the node JSON (765) | `when_adding_to_a_member_that_is_omitted_while_empty`: the first region, button or sub-item can be added |
+| Canonical shell vector (765) | `screen-shell-navigation-positive` and seven rejection vectors in `ScreenCompositionCorpus.V1`, held by `when_compiling_the_screen_shell_vectors` and `when_compiling_the_v1_screen_composition_vectors`; the TypeScript compiler accepts the same document in `Conformance/diagnostics.json` |
 
 The TypeScript compiler parses and preserves every construct above. The reference checks (owners, instances, cycles,
 outlets, destinations, scopes, contribution points, packages) run in the C# compiler; the language service shows them

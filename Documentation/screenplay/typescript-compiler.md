@@ -131,7 +131,7 @@ Systems and operations remain syntax-only and unadmitted. Event sources, streams
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
-- reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, module navigation regions, behaviors and screen templates
+- reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, module navigation regions, module and feature template assignments (`template <Name>`, `template blueprint <Blueprint> <Name>`), behaviors and screen templates
 - the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
 - authentication, themes, UI profiles and sample data packs
 - command handler execution; handler implementation intent retains its typed hints and selected file/code

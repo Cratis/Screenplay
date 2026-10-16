@@ -13,6 +13,8 @@ public class when_loading_the_v1_screen_corpus : Specification
     CanonicalScreenCorpusVector _corpus = null!;
     Diagnostic[] _diagnostics = [];
 
+    CanonicalTypedScreenSourceCase ReleaseCase => _corpus.TypedSourceCases.Single(sourceCase => sourceCase.Name == "screen-release-ui-positive");
+
     void Because()
     {
         _corpus = ScreenCompositionCorpus.V1;
@@ -28,9 +30,9 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_relocate_every_document_in_the_relocated_form() => _corpus.SourceForms[3].Documents.All(document => document.DisplayPath.StartsWith("Archive/", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_parse_every_source_document_without_authoring_diagnostics() => _corpus.SourceForms.SelectMany(form => form.Documents).All(document => Parse(document.Text).Success).ShouldBeTrue();
     [Fact] void should_pin_the_screen_behavior_probes() => _corpus.BehaviorProbes.Select(probe => probe.Name).ShouldEqual("master-detail-selection", "guarded-gesture", "query-rebind", "auto-manual-command-forms", "recursive-nested-hierarchy", "toolbar-dialog-url-surfaces", "package-icon-style-contract");
-    [Fact] void should_publish_the_positive_typed_source_case() => _corpus.TypedSourceCases.Select(sourceCase => sourceCase.Name).ShouldEqual("screen-release-ui-positive");
+    [Fact] void should_publish_the_positive_typed_source_case() => _corpus.TypedSourceCases.Select(sourceCase => sourceCase.Name).ShouldEqual("screen-release-ui-positive", "screen-shell-navigation-positive");
     [Fact] void should_publish_real_behavior_expectations() => _corpus.BehaviorExpectations.Select(expectation => expectation.Name).ShouldEqual("selection-details", "query-rebind-clear", "native-form-validation-submit", "dialog-outlet-deep-link", "package-rendering", "browser-control-behavior", "protected-business-semantics");
-    [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit");
+    [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit", "mcp-edit-navigation-region-mode", "mcp-edit-navigation-item", "mcp-edit-toolbar-button", "mcp-edit-template-reference", "mcp-edit-sample-data");
     [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
     [Fact] void should_publish_working_branch_harness_entry_points() => _corpus.WorkingBranchHarnesses.Select(harness => harness.Name).ShouldEqual("stage-pr260-screen-plan", "studio-pr1615-transport", "studio-pr1617-native-play", "scene-form-geometry", "browser-native-controls", "mcp-revision-edit-transcript");
     [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.2-4.49.2", "cratis-run-stage-4.49.1", "browser-native-controls-runtime", "browser-native-controls-runtime-3.40.3-4.49.5", "browser-native-controls-runtime-3.40.4-4.49.7", "browser-native-controls-runtime-3.40.7-4.51.1", "browser-native-controls-runtime-3.41.0-4.51.3", "browser-native-controls-runtime-3.43.0-4.52.0", "mcp-released-typed-transcript", "studio-0.136.6-production-play");
@@ -67,7 +69,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_keep_the_positive_source_grounded_in_the_typed_screen_contract()
     {
-        var source = _corpus.TypedSourceCases.Single();
+        var source = ReleaseCase;
         source.PendingReason.ShouldBeNull();
         source.Requires.ShouldEqual("Screenplay v4.96.0 typed screen authoring syntax");
         source.Document.Text.Contains("component scene.web.DataGrid workItems", StringComparison.Ordinal).ShouldBeTrue();
@@ -82,7 +84,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_choose_the_active_sample_data_pack_once_in_the_ui_profile()
     {
-        var application = Parse(_corpus.TypedSourceCases.Single().Document.Text).Value!;
+        var application = Parse(ReleaseCase.Document.Text).Value!;
         var selection = application.UiProfiles!.Single().SampleData!;
         selection.Active!.Name.ShouldEqual("WorkspaceDemo");
         selection.Mappings.Single().ReadModel.ShouldEqual("WorkItemSummary");
@@ -105,7 +107,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     {
         foreach (var expectation in _corpus.McpEditExpectations)
         {
-            ((string[])["screen-release-ui-positive", "screen-composition/v1/source/folder"]).ShouldContain(expectation.SourceCase);
+            ((string[])["screen-release-ui-positive", "screen-shell-navigation-positive", "screen-composition/v1/source/folder"]).ShouldContain(expectation.SourceCase);
             expectation.Assertions.ShouldNotBeEmpty();
         }
     }
@@ -219,7 +221,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_parse_the_positive_typed_screen_source_without_authoring_diagnostics()
     {
-        var sourceCase = _corpus.TypedSourceCases.Single();
+        var sourceCase = ReleaseCase;
         sourceCase.PendingReason.ShouldBeNull();
         var parsed = Parse(sourceCase.Document.Text);
         var syntaxKinds = SyntaxKinds(parsed.Value!);
@@ -232,7 +234,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_admit_the_positive_typed_screen_source_shape()
     {
-        var application = Parse(_corpus.TypedSourceCases.Single().Document.Text).Value!;
+        var application = Parse(ReleaseCase.Document.Text).Value!;
         var module = application.Modules.Single();
         var feature = module.Features.Single();
         var listSlice = feature.Slices.Single(slice => slice.Name == "WorkItemList");

@@ -15,7 +15,7 @@ public class when_compiling_the_v1_screen_composition_vectors : Specification
     void Because()
     {
         _corpus = ScreenCompositionCorpus.V1;
-        _positive = new ScreenplayCompiler().Compile(_corpus.TypedSourceCases.Single().Document.Text);
+        _positive = new ScreenplayCompiler().Compile(_corpus.TypedSourceCases.Single(sourceCase => sourceCase.Name == "screen-release-ui-positive").Document.Text);
         _rejections = _corpus.RejectionVectors.ToDictionary(
             vector => vector.Name,
             vector => new ScreenplayCompiler().Compile(vector.SourceForm.Documents.Single().Text).Diagnostics
@@ -32,7 +32,7 @@ public class when_compiling_the_v1_screen_composition_vectors : Specification
     [Fact] void should_carry_template_content() => _positive.Value!.Modules.Single().ScreenTemplates.Single().Content.Single().Slot.ShouldEqual("header");
     [Fact] void should_carry_dialog_template_content() => _positive.Value!.Modules.Single().DialogTemplates!.Single().Content.Single().Slot.ShouldEqual("actions");
     [Fact] void should_carry_grid_dimensions() => Grid(_positive.Value!).Columns.ShouldEqual(2);
-    [Fact] void should_cover_every_compatibility_and_reference_rejection() => _corpus.RejectionVectors.Length.ShouldEqual(9);
+    [Fact] void should_cover_every_compatibility_and_reference_rejection() => _corpus.RejectionVectors.Length.ShouldEqual(16);
     [Fact] void should_carry_navigation_item_metadata() => NavigationItems(_positive.Value!).First().ShouldEqual(("nav:work-items", "folder", "primary", "Tracking", ContributionDestinationKind.Outlet, "details"));
     [Fact] void should_carry_dialog_destinations() => NavigationItems(_positive.Value!).Skip(1).First().Kind.ShouldEqual(ContributionDestinationKind.Dialog);
     [Fact] void should_carry_external_destinations() => NavigationItems(_positive.Value!).Last().Target.ShouldEqual("https://cratis.io/help");
