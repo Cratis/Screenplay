@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons" || name == "crm-sample" || name == "ticketing-sample" || name == "inventory-sample" || name == "hr-sample" || name == "projects-sample" || name == "administration-sample" || name == "approvals-sample" || name == "orders-sample") continue;
+            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "reaction-event-source" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons" || name == "crm-sample" || name == "ticketing-sample" || name == "inventory-sample" || name == "hr-sample" || name == "projects-sample" || name == "administration-sample" || name == "approvals-sample" || name == "orders-sample") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -45,6 +45,9 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 legacy = legacy with { Concepts = legacy.Concepts.Select(concept => concept with { ValueNumbers = null }) };
             }
+
+            // Library now declares atomic reaction batches (#771); that member has its own conformance vector.
+            if (name == "library-sample") legacy = legacy with { ReactionProductionMode = null };
 
             if (name == "invoicing-sample" || name == "invoicing-editor-sample")
             {
@@ -77,7 +80,11 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal)
+                .Replace("\"appearance\":null,", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"newScreenTemplate\":null", string.Empty, StringComparison.Ordinal)
+                .Replace("],\"root\":null,\"theme\"", "],\"theme\"", StringComparison.Ordinal)
+                .Replace("],\"root\":null}", "]}", StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -325,7 +332,10 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
         SampleDataPacks = [],
-        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null }),
+
+        // The root template, appearance and new screen default have their own parser, printer and compiler specs;
+        // the frozen bytes predate them and spell the shell the legacy way, as a layout.
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null, Layout = profile.Layout ?? profile.Root?.Name, Root = null, Appearance = null, NewScreenTemplate = null }),
         Exposures = [],
         InstanceContributions = [],
 

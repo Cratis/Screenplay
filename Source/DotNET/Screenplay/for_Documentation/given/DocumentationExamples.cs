@@ -153,7 +153,9 @@ public static partial class DocumentationExamples
             return (Wrap("module Doc", body), "template in a module");
         }
 
-        if (_topLevel.Contains(keyword))
+        // Application-root preambles ('reaction batches atomic', 'command reads protected') start a document,
+        // although their first keyword also opens a slice member.
+        if (_topLevel.Contains(keyword) || first.StartsWith("reaction batches ", StringComparison.Ordinal) || first.StartsWith("command reads ", StringComparison.Ordinal))
         {
             return (Dedent(body), "document");
         }

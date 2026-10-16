@@ -11,6 +11,16 @@ ui profile <Name>
   layout <LayoutName>
   theme <ThemeName>
 
+  root template [blueprint <Blueprint>] <TemplateName> [version "<range>"]
+    option <name> <value>
+    ...
+
+  appearance
+    color scheme light|dark|system
+    accent "<#hex>"
+
+  new screens use template [blueprint <Blueprint>] <TemplateName> [version "<range>"]
+
   packages
     <Package>
     ...
@@ -32,7 +42,11 @@ ui profile <Name>
 - `icons` - the icon sets or packages this profile makes available to `icon <name>` references on components, toolbar items and actions. The compiler preserves the list; Stage checks whether the selected packages can resolve each icon.
 - `theme` - the visual theme this profile applies. Optional, at most one per profile. A theme is only meaningful relative to a specific set of packages - see [Theme](theme.md) for how that compatibility is declared and checked.
 - `sample data` - which sample data the whole application previews with: the active pack, chosen **once here** and inherited by every screen, slice and component, plus the rare shape-to-read-model mappings and per-read-model bindings. Optional, at most one per profile. It is design and preview time only and never part of a production build. See [Sample data](sample-data.md).
-- `layout` - the application's base navigational shell this profile renders inside. Optional, at most one per profile. This is where an application states which shell it uses; naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
+- `root template` - the template the whole application is drawn in: every screen's template chain is placed in its primary outlet. The reference is the one a `template` assignment uses - an own layout or application-scope screen template by name, or a template a blueprint ships, `blueprint <Blueprint> <Name>`, with an optional `version "<range>"` pin (a version range only applies to a blueprint template; `PLAY0788` otherwise). Optional, at most one per profile (`PLAY0798`). See [Layouts and templates](templates.md#own-and-blueprint-templates).
+  - `option <name> <value>` - one of the shell's own configurable items, for example `option navigationMode slim`. The value is a bare word, a quoted string, a number, `true` or `false`, kept as written. Each name is set once. The grammar only reads the line; which options a shell exposes, and which values suit them, is decided against the shell's descriptor by the validator, not by the parser.
+- `appearance` - how the application looks regardless of the shell: `color scheme` (`light`, `dark` or `system`) and `accent "<#hex>"`. Optional, at most one block per profile, each line at most once (`PLAY0789`).
+- `new screens use template` - the template a new screen starts from when it is created in a designer. It is an authoring default; it changes no existing screen. Optional, at most one per profile (`PLAY0788`).
+- `layout` - the application's base navigational shell this profile renders inside. This is the older way to name the shell and stays accepted beside `root template`; prefer `root template`. Optional, at most one per profile. Naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
 
 ## Example
 
@@ -50,8 +64,14 @@ theme Aurora
 ui profile Desktop
   target platform web
   target size expanded
-  layout AppShell
   theme Aurora
+
+  root template AppShell
+    option navigationMode slim
+
+  appearance
+    color scheme dark
+    accent "#4f46e5"
 
   packages
     core

@@ -5,6 +5,8 @@
 A small lending library in one file, the place to start if you have never read a `.play` document. It has eight
 slices across three features, and two people who use it.
 
+The root declares `reaction batches atomic`: each trigger occurrence's direct productions and each selected refusal branch form separate all-or-none batches; invoked commands remain separate transactions (ESM v22).
+
 ```text
 Library/
   library.play   concepts, two policies and personas, one module with three features

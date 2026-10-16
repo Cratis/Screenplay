@@ -181,6 +181,25 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.Root is { } root)
+        {
+            VisitNode(root);
+            foreach (var option in root.Options)
+            {
+                VisitNode(option);
+            }
+        }
+
+        if (syntax.Appearance is { } appearance)
+        {
+            VisitNode(appearance);
+        }
+
+        if (syntax.NewScreenTemplate is { } newScreenTemplate)
+        {
+            VisitNode(newScreenTemplate);
+        }
+
         if (syntax.SampleData is { } selection)
         {
             VisitSampleDataSelection(selection);

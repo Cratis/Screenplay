@@ -29,6 +29,12 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     if (text === '$refusal' || text.startsWith('$refusal.')) {
         return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
     }
+    if (text === '$eventSourceId') {
+        return { kind: 'EventSourceIdExpressionSyntax', location };
+    }
+    if (text === '$eventContext.eventSourceId') {
+        return { kind: 'EventContextExpressionSyntax', path: 'eventSourceId', location };
+    }
     if (text === '$identity' || text === '$identity.') {
         context?.error(DiagnosticCodes.InvalidExpression, `Invalid expression '${text}'`, location);
         return { kind: 'RawExpressionSyntax', text, location };

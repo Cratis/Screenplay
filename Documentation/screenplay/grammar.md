@@ -319,7 +319,8 @@ CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
                    { TargetPlatformDecl | TargetSizeDecl | PackagesBlock
-                   | ProfileLayoutDecl | ProfileThemeDecl | ProfileSampleDataDecl },
+                   | ProfileLayoutDecl | ProfileThemeDecl | ProfileRootDecl | ProfileAppearanceDecl
+                   | NewScreensDecl | ProfileSampleDataDecl },
                  DEDENT ;
 
 TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
@@ -337,6 +338,22 @@ ProfileLayoutDecl = "layout", Ident, NL ;
 
 ProfileThemeDecl = "theme", Ident, NL ;
 
+ProfileRootDecl = "root", "template", TemplateRefName, NL,
+                 [ INDENT, { ShellOptionDecl }, DEDENT ] ;
+
+ShellOptionDecl = "option", Ident, ShellOptionValue, NL ;
+
+ShellOptionValue = Ident | StringLiteral | Number | "true" | "false" ;
+
+ProfileAppearanceDecl = "appearance", NL,
+                 INDENT, { ColorSchemeDecl | AccentDecl }, DEDENT ;
+
+ColorSchemeDecl = "color", "scheme", ( "light" | "dark" | "system" ), NL ;
+
+AccentDecl     = "accent", StringLiteral, NL ;
+
+NewScreensDecl = "new", "screens", "use", "template", TemplateRefName, NL ;
+
 PackageName    = Ident, { ".", Ident } ;
 
 ProfileSampleDataDecl = "sample", "data", NL,
@@ -352,14 +369,20 @@ SamplePackRef  = Ident | "blueprint", BlueprintPackId ;
 
 BlueprintPackId = Lower, { Lower | Digit | ".", "_", "-" } ;
 
-(* Each of the six is optional and may appear at most once, in any order - the
+(* Each of the nine is optional and may appear at most once, in any order - the
    body is read line by line rather than positionally. The size class names a
    class rather than a pixel breakpoint, because a narrow browser window and a
    compact phone are the same class and a breakpoint means nothing natively.
    A profile's "theme" and "layout" each select one declared elsewhere in the
    document - the layout being the navigational shell the build renders inside.
    The width x height matrix an arrangement resolves against is a separate
-   concern. The "sample data" block is where the whole application's active
+   concern. The "root template" is the same reference a "template" assignment
+   uses (an own template by name, or "blueprint <Blueprint> <Name> [version
+   <range>]"), naming the shell the whole application is drawn in; its
+   "option" lines set what that shell exposes, each name once. "layout" stays
+   readable beside it. "appearance" holds at most one "color scheme" and one
+   "accent"; "new screens use template" is the template a new screen starts
+   from. The "sample data" block is where the whole application's active
    sample data pack is chosen, once; "active" and "shape ... maps to ..." may
    each appear as often as it is distinct, "active" at most once.            *)
 

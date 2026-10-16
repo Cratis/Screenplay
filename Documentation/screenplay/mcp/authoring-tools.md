@@ -19,6 +19,12 @@ Call `open-workspace`. Supply an `applicationName` for a new model; existing
 identity state provides its saved name and identities. A root can contain one or
 many `.play` files, or be empty when you are starting a new model.
 
+For a new model, declare `reaction batches atomic` in its root document to use
+[atomic production batches](../reactions.md#atomic-production-batches). Per-fact
+production is legacy behavior retained only for existing models; never rewrite
+those models automatically. The declaration selects ESM v22 or later even before
+the model has a reaction; targets must admit that version.
+
 Retain the returned `revision` and `catalogRevision`. They describe the exact
 snapshot you are editing. Do not reuse them after applying changes.
 
@@ -51,7 +57,7 @@ valid source-only model without building typed JSON:
     "operation": "create-document",
     "stableKey": "application",
     "path": "application.play",
-    "source": "concept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n"
+    "source": "reaction batches atomic\n\nconcept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n"
   }
 ]
 ```

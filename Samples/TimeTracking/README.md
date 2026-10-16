@@ -4,6 +4,8 @@ A consultancy's time tracking, written in Screenplay. Engagement managers open c
 
 The foundation enums pin their current zero-based member numbers, preserving executable bytes while making stored identities visible. Specifications use member names. Never renumber or reuse a published number.
 
+The root declares `reaction batches atomic` for local and imported reactions: each trigger occurrence's direct productions and each selected refusal branch form separate all-or-none batches; invoked commands remain separate transactions (ESM v22).
+
 ## Monthly lookup keys
 
 `Timesheets/Reporting/CheckingEngagementMonths.play` declares a monthly row keyed by engagement and reporting month. Its single-instance query supplies both parts in a `by` block. `ClosingAnEngagementMonth.play` supplies the same parts in a command reads block. Screens use a collection query because scalar screen lookups cannot supply composite keys.
