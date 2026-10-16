@@ -177,7 +177,7 @@ export const keywordDocs: Record<string, string> = {
     StateView: 'Slice type — a query + projection + screen; something that reads the system.',
     Automation: 'Slice type — a reaction or reducer; something that runs when something happens.',
     Translate: 'Slice type — a capture; converts external data into events.',
-    Uuid: 'Primitive type — a universally unique identifier.',
+    Uuid: 'Primitive type — a universally unique identifier. ESM v28 admits == and != between Uuid values (or concepts over Uuid) in command require and produces when; two concepts must be the same concept, and a literal must be canonical lowercase hyphenated. Ordering, optional operands, validation rules, concept rules and reaction where stay refused.',
     String: 'Primitive type — a string of characters.',
     Int: 'Primitive type — an integer number.',
     Decimal: 'Primitive type — a decimal number.',

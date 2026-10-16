@@ -138,6 +138,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V26 = new(26, 0);
 
     /// <summary>
+    /// Gets command Uuid equality language version 27.0.
+    /// </summary>
+    public static readonly LanguageVersion V27 = new(27, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -296,6 +301,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets chronological command date comparison semantic version 26.0.
     /// </summary>
     public static readonly SemanticVersion V26 = new(26, 0);
+
+    /// <summary>
+    /// Gets command Uuid equality semantic version 27.0.
+    /// </summary>
+    public static readonly SemanticVersion V27 = new(27, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1116,7 +1126,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV26Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV27Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1129,7 +1139,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV26Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV27Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

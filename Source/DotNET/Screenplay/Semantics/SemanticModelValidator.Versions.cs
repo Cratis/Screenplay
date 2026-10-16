@@ -10,6 +10,43 @@ internal static partial class SemanticModelValidator
     internal static bool UsesDateComparisons(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Any());
 
+    internal static bool UsesUuidComparisons(SemanticApplication application)
+    {
+        var readModels = SlicesOf(application).SelectMany(slice => slice.ReadModels).ToDictionary(view => view.Id);
+        var concepts = application.Concepts.ToDictionary(concept => concept.Id, concept => concept.Primitive);
+        return SlicesOf(application).SelectMany(slice => slice.Commands).Any(command =>
+            command.Requirements.Select(requirement => requirement.Condition).Concat(command.Produces.Select(production => production.When).OfType<SemanticCondition>())
+                .SelectMany(Comparisons).Any(comparison => IsUuid(command, comparison.Left) || IsUuid(command, comparison.Right)));
+
+        bool IsUuid(SemanticCommand command, SemanticConditionOperand operand)
+        {
+            SemanticTypeReference? type = null;
+            if (operand.Read is { } read)
+            {
+                var view = command.Reads.FirstOrDefault(value => value.Name == read) is { } declared && readModels.TryGetValue(declared.ReadModel, out var model) ? model : null;
+                type = view?.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type;
+            }
+            else if (operand.Property.IsSet)
+            {
+                type = command.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type;
+            }
+
+            return type switch
+            {
+                { Kind: SemanticTypeReferenceKind.Primitive } => type.Primitive == SemanticPrimitiveType.Uuid,
+                { Kind: SemanticTypeReferenceKind.Concept } => concepts.GetValueOrDefault(type.Target) == SemanticPrimitiveType.Uuid,
+                _ => false
+            };
+        }
+    }
+
+    static IEnumerable<SemanticComparison> Comparisons(SemanticCondition condition) => condition switch
+    {
+        SemanticComparison comparison => [comparison],
+        SemanticLogicalCondition logical => Comparisons(logical.Left).Concat(Comparisons(logical.Right)),
+        _ => []
+    };
+
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
@@ -25,6 +62,14 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V26,
             "An ESM v26 model must use a Date or DateTime command comparison.",
             "Chronological command date comparisons require ESM v26.");
+
+    static void ValidateUuidComparisonVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesUuidComparisons(application),
+            version,
+            SemanticVersion.V27,
+            "An ESM v27 model must use a Uuid command comparison.",
+            "Uuid command comparisons require ESM v27.");
 
     static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
