@@ -12,6 +12,9 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class GenerationParser
 {
+    // Preserve the legacy contract vocabulary: uuid was historically dispatched indirectly.
+    const string UuidStrategy = "uuid";
+
     internal static GenerationSyntax? Parse(ParserContext context, SourceLine line, string primitive)
     {
         var tokens = TokenRegex().Matches(line.Content).Select(match => match.Value).Skip(1).ToArray();
@@ -36,7 +39,7 @@ internal static partial class GenerationParser
         }
 
         var result = Modifiers(context, line, primitive, generation, tokens, next);
-        GenerationStrategyCatalog.ValidateValues(primitive, result, (diagnostic, _) => context.Error(diagnostic.Code, diagnostic.Message, line.Location));
+        GenerationStrategyCatalog.ValidateValues(primitive, result, (diagnostic, _) => context.Add(diagnostic with { Location = line.Location }));
         return ParseBody(context, line, result);
     }
 
@@ -46,15 +49,17 @@ internal static partial class GenerationParser
         var literal = argument is null ? null : Literal(argument);
         var number = argument is null ? null : Integer(argument);
         var encoding = tokens.ElementAtOrDefault(2);
+        var encodings = GenerationStrategyCatalog.OptionFor("bytes", "encoding").Choices;
         return source.Strategy switch
         {
             "typeid" => (source with { Prefix = literal }, 2, literal is not null),
             "pattern" => (source with { Pattern = literal }, 2, literal is not null),
             "nanoid" when number is not null => (source with { Size = number }, 2, true),
-            "bytes" => (source with { Count = number, Encoding = encoding }, 3, number is not null && encoding is not null && GenerationStrategyCatalog.OptionFor("bytes", "encoding").Choices.Contains(encoding, StringComparer.Ordinal)),
+            "bytes" => (source with { Count = number, Encoding = encoding }, 3, number is not null && encoding is not null && encodings.Contains(encoding, StringComparer.Ordinal)),
             "random" => (source with { Range = argument }, 2, argument is not null && RangeRegex().IsMatch(argument) && ValidRange(argument)),
             "rule" => (source with { Rule = argument }, 2, argument is not null && NameRegex().IsMatch(argument)),
-            _ => (source, 1, true)
+            UuidStrategy or "uuidv7" or "ulid" or "sequence" or "nanoid" => (source, 1, true),
+            _ => (source, 1, false)
         };
     }
 
