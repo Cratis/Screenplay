@@ -117,7 +117,9 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['module M', '  feature F', '    slice StateView S', '      screen Home', '        template blueprint Crm Page version "latest"']));
         issues.push(...validateLines(['exposure Shell', 'instance']));
         issues.push(...validateLines(['module M'], { compilerDiagnostics: nativeOnly.map(code => ({ code, severity: 'warning', message: 'C# finding', location: { line: 1, column: 1 } })) }));
-        const routes = ['PLAY0660', 'PLAY0662', 'PLAY0663', 'PLAY0664', 'PLAY0665', 'PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
+        // A code can occur during parsing or later validation; retain every source instead of
+        // assuming the first conformance case exercises the editor's parser-only diagnostics.
+        const routes = ['PLAY0660', 'PLAY0662', 'PLAY0663', 'PLAY0664', 'PLAY0665', 'PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].flatMap(code => vectors.cases.filter(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@'))).map(vector => vector.source));
         issues.push(...routes.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
         const authorizationRefusal = [
             'policy Access',
