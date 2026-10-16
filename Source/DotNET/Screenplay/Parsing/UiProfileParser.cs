@@ -34,6 +34,9 @@ internal static partial class UiProfileParser
         var hasTheme = false;
         var hasLayout = false;
         SampleDataSelectionSyntax? sampleData = null;
+        RootTemplateSyntax? root = null;
+        ProfileAppearanceSyntax? appearance = null;
+        NewScreenTemplateSyntax? newScreenTemplate = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -112,6 +115,36 @@ internal static partial class UiProfileParser
                     layout = layoutMatch.Groups[1].Value;
                     directiveLocations["layout"] = line.Location;
                     break;
+                case "root":
+                    ParseRoot(context, line, ref root, directiveLocations);
+                    break;
+                case "appearance":
+                    var parsedAppearance = ProfileShellParser.ParseAppearance(context, line);
+                    if (appearance is not null)
+                    {
+                        context.Error(DiagnosticCodes.InvalidProfileAppearance, "This ui profile already declares an appearance block - a profile can have at most one", line.Location);
+                        break;
+                    }
+
+                    appearance = parsedAppearance;
+                    directiveLocations["appearance"] = line.Location;
+                    break;
+                case "new":
+                    var parsedNewScreenTemplate = ProfileShellParser.ParseNewScreenTemplate(context, line);
+                    if (parsedNewScreenTemplate is null)
+                    {
+                        break;
+                    }
+
+                    if (newScreenTemplate is not null)
+                    {
+                        context.Error(DiagnosticCodes.InvalidProfileRootTemplate, "This ui profile already declares 'new screens use template' - a profile can have at most one", line.Location);
+                        break;
+                    }
+
+                    newScreenTemplate = parsedNewScreenTemplate;
+                    directiveLocations["new screens use template"] = line.Location;
+                    break;
                 case "sample":
                     var selection = SampleDataSelectionParser.Parse(context, line);
                     if (sampleData is not null)
@@ -124,13 +157,38 @@ internal static partial class UiProfileParser
                     directiveLocations["sample data"] = line.Location;
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, icons, theme, layout or sample data", line.Location);
+                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, icons, theme, layout, root template, appearance, new screens use template or sample data", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons, SampleData = sampleData };
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons, SampleData = sampleData, Root = root, Appearance = appearance, NewScreenTemplate = newScreenTemplate };
+    }
+
+    static void ParseRoot(ParserContext context, SourceLine line, ref RootTemplateSyntax? root, Dictionary<string, SourceLocation> directiveLocations)
+    {
+        if (!line.Content.StartsWith("root template", StringComparison.Ordinal) || (line.Content.Length > "root template".Length && !char.IsWhiteSpace(line.Content["root template".Length])))
+        {
+            context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected 'root template'", line.Location);
+            context.SkipBlock(line.Indent);
+            return;
+        }
+
+        var parsed = ProfileShellParser.ParseRoot(context, line);
+        if (parsed is null)
+        {
+            return;
+        }
+
+        if (root is not null)
+        {
+            context.Error(DiagnosticCodes.DuplicateProfileRootTemplate, "This ui profile already declares a root template - a profile can have at most one", line.Location);
+            return;
+        }
+
+        root = parsed;
+        directiveLocations["root template"] = line.Location;
     }
 
     static void ParseTarget(ParserContext context, SourceLine line, List<string> platforms, ref bool hasTargetPlatform, ref bool hasTargetSize, ref string? defaultSizeClass)

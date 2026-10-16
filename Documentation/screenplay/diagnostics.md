@@ -716,6 +716,16 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 
 Sample data is design and preview time only: it has no repair, and binding reports it as deferred (`PLAY0269`) rather than executable. See [Sample data](sample-data.md).
 
+### Application shell
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0788` | Error | A `root template` or `new screens use template` line is not `[blueprint <Blueprint>] <Name> [version "<range>"]` (a version range on an own template is reported here), has a block under a `new screens use template`, a line under `root template` is not `option <name> <value>`, an option is set twice, or a profile declares `new screens use template` more than once. |
+| `PLAY0789` | Error | A line in a `ui profile` `appearance` block is not `color scheme <word>` or `accent "<colour>"`, a line is repeated, or a profile declares more than one `appearance` block. |
+| `PLAY0798` | Error | A `ui profile` declares more than one `root template`. |
+
+A `version` range that is not one Scene understands is `PLAY0721`, as for any template reference. Whether the root template, its options and its values exist is checked against the shell, not by the parser.
+
 ### Arrangement
 
 | Code | Severity | Reported when |

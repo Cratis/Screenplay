@@ -77,7 +77,11 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal)
+                .Replace("\"appearance\":null,", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"newScreenTemplate\":null", string.Empty, StringComparison.Ordinal)
+                .Replace("],\"root\":null,\"theme\"", "],\"theme\"", StringComparison.Ordinal)
+                .Replace("],\"root\":null}", "]}", StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -325,7 +329,10 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
         SampleDataPacks = [],
-        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null }),
+
+        // The root template, appearance and new screen default have their own parser, printer and compiler specs;
+        // the frozen bytes predate them and spell the shell the legacy way, as a layout.
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null, Layout = profile.Layout ?? profile.Root?.Name, Root = null, Appearance = null, NewScreenTemplate = null }),
         Exposures = [],
         InstanceContributions = [],
 

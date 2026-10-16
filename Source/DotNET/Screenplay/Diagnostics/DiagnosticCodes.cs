@@ -3491,4 +3491,19 @@ public static class DiagnosticCodes
     /// A shape ... maps to ... or bind ... to ... line names a read model the document does not declare.
     /// </summary>
     public const string UnknownSampleDataReadModel = "PLAY0715";
+
+    /// <summary>
+    /// A ui profile root template, shell option or new screens use template line is malformed, an option is repeated, or new screens use template is repeated.
+    /// </summary>
+    public const string InvalidProfileRootTemplate = "PLAY0788";
+
+    /// <summary>
+    /// A ui profile appearance block is malformed: a line in it is not color scheme &lt;word&gt; or accent "&lt;colour&gt;", a line is repeated, or the profile declares the block more than once.
+    /// </summary>
+    public const string InvalidProfileAppearance = "PLAY0789";
+
+    /// <summary>
+    /// A ui profile declares more than one root template.
+    /// </summary>
+    public const string DuplicateProfileRootTemplate = "PLAY0798";
 }

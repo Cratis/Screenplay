@@ -112,6 +112,10 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.themeItems;
         case 'ui':
             return scope.uiProfileItems;
+        case 'root':
+            return chain.includes('ui') ? scope.profileRootTemplateItems : [];
+        case 'appearance':
+            return chain.includes('ui') ? scope.profileAppearanceItems : [];
         case 'sample':
             return chain.includes('ui') ? scope.profileSampleDataItems : scope.sampleDataItems;
         case 'shape':
