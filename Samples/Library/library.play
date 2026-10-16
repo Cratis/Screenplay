@@ -10,6 +10,8 @@
 // Verify it with:  screenplay --warnaserror Samples/Library
 // ============================================================
 
+reaction batches atomic
+
 concept BookId     : Uuid
 concept MemberId   : Uuid
 concept Isbn       : String

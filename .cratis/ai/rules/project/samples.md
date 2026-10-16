@@ -62,6 +62,7 @@ Preview list. Exact numeric mode is checked separately because it is a document 
 
 ### The conventions every sample keeps
 
+- A sample with a reaction declares `reaction batches atomic` at its root, so a model copied from it starts with the semantics Chronicle and Arc execute (decision 0078).
 - Every `StateChange` and `StateView` slice has a `screen`, and what gates it — module, feature and the slice's
   command or query `authorize` — is satisfied by the policies a `persona` holds, so the event model board draws
   the screen for that persona.
