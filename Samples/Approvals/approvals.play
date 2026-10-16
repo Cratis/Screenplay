@@ -84,7 +84,7 @@ ui profile Desktop
     Cratis.Components
     Cratis.Blueprint.Default
     Cratis.Blueprint.Approvals
-  layout AppShell
+  root template AppShell
 
   // The blueprint ships the demo data; the application chooses which pack previews, once, here.
   sample data

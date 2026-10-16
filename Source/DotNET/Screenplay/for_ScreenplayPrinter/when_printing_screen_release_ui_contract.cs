@@ -26,7 +26,7 @@ public class when_printing_screen_release_ui_contract : given.a_printer
           icons
             scene.icons
 
-          layout ApplicationShell
+          root template ApplicationShell
 
         template ApplicationShell
 

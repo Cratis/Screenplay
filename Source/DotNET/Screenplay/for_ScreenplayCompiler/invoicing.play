@@ -174,7 +174,7 @@ ui profile Desktop
   target size regular
   packages
     Cratis.Components
-  layout AppShell
+  root template AppShell
   theme Nordic
 
 module Invoicing
