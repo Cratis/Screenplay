@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Cratis.Screenplay.Semantics.for_GenerationStrategyCatalog;
@@ -17,7 +19,13 @@ public class when_exporting_the_strategy_contract : Specification
 
     void Because()
     {
-        _actual = JsonSerializer.Serialize(new { identifierMinimumBits = GenerationStrategyCatalog.IdentifierMinimumBits, strategies = GenerationStrategyCatalog.All }, _options);
+        var vector = JsonSerializer.SerializeToNode(new { identifierMinimumBits = GenerationStrategyCatalog.IdentifierMinimumBits, strategies = GenerationStrategyCatalog.All }, _options)!;
+        foreach (var option in vector["strategies"]!.AsArray().SelectMany(strategy => strategy!["options"]!.AsArray()).Where(option => option!["kind"]!.GetValue<string>() == nameof(GenerationOptionKind.Int64Range)))
+        {
+            option!["minimum"] = option["minimum"]!.GetValue<long>().ToString(CultureInfo.InvariantCulture);
+            option["maximum"] = option["maximum"]!.GetValue<long>().ToString(CultureInfo.InvariantCulture);
+        }
+        _actual = vector.ToJsonString(_options);
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_GENERATION_CATALOG") == "1")
         {
             File.WriteAllText(VectorPath(), _actual + "\n");
