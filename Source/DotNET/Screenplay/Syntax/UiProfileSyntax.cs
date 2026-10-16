@@ -36,6 +36,21 @@ public record UiProfileSyntax(
     public IEnumerable<string> Icons { get; init; } = [];
 
     /// <summary>
+    /// Gets the <c>root template</c> the whole application is drawn in, or <c>null</c> when the profile declares none (the legacy <see cref="Layout"/> may still name one).
+    /// </summary>
+    public RootTemplateSyntax? Root { get; init; }
+
+    /// <summary>
+    /// Gets the <c>appearance</c> block (colour scheme and accent), or <c>null</c> for none.
+    /// </summary>
+    public ProfileAppearanceSyntax? Appearance { get; init; }
+
+    /// <summary>
+    /// Gets the <c>new screens use template</c> default, or <c>null</c> for none.
+    /// </summary>
+    public NewScreenTemplateSyntax? NewScreenTemplate { get; init; }
+
+    /// <summary>
     /// Gets the <c>sample data</c> block: which sample data the whole application previews with, chosen once here, or <c>null</c> for none.
     /// </summary>
     public SampleDataSelectionSyntax? SampleData { get; init; }

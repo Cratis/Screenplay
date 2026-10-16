@@ -452,6 +452,17 @@
                     }
                 },
                 {
+                    "match": "^\\s*(root\\s+template|new\\s+screens\\s+use\\s+template|appearance|accent|option)(?=\\s|$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(color\\s+scheme)\\s+(light|dark|system)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "constant.language.screenplay" }
+                    }
+                },
+                {
                     "match": "\\brow-click\\b",
                     "name": "keyword.other.screenplay"
                 },
