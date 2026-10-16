@@ -51,6 +51,7 @@ public static partial class GenerationStrategyCatalog
                 Error(DiagnosticCodes.InvalidGenerationArgument, $"Missing or invalid argument for generation strategy '{generation.Strategy}'.", "range");
             }
         }
+
         // Keep independent value findings, but never assess a pattern with invalid choices or arguments.
         var assessable = findings.Count == 0 ? generation : generation with { Pattern = null };
         ValidateValues(primitive, assessable, (diagnostic, option) => findings.Add(new(diagnostic.Code, diagnostic.Severity, diagnostic.Message, option is null ? SemanticConceptFindingTarget.Generation : SemanticConceptFindingTarget.Option, option)));
