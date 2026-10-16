@@ -11,6 +11,7 @@ living reference for the language, so they must say what the language says today
 | --- | --- |
 | `Samples/Library` | The smallest useful application in one file - where a newcomer starts. |
 | `Samples/Invoicing` | Every single-document, warning-free construct, with its `.strings` files - except the preview constructs listed below. |
+| `Samples/Crm` | An application built from a domain blueprint: `template blueprint` screens, navigation regions and `active blueprint` sample data. |
 | `Samples/Commerce` | Focused files composed with explicit imports at every level: a root that reads like a table of contents, a file per module and feature that imports its own folder, and one file per slice with nothing above it. |
 | `Samples/TimeTracking` | Focused files composed from one root glob: module files declare their features inline and import each feature's step files, one slice per file. |
 
