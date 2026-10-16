@@ -161,7 +161,7 @@ Studio fail in the CLI and in Stage. The dialect itself stays as it is. These it
 11. **`$` is the strict end of input.** Item 1 already says this; it is now a guarantee that other tools may rely on.
     That is why desugaring equals, not equals and ends with changes no verdict.
 12. **Public admission check.** Both compilers expose the dialect check as a public, data-only API:
-    `PortableMatchPattern.Check(pattern)` in C# and `checkMatchPattern(pattern)` in TypeScript. The result carries the
+    `PortableMatchPattern.Check(pattern)` in C# and `checkPortableMatchPattern(pattern)` in TypeScript. The result carries the
     status (admitted, deprecated, refused, invalid), the diagnostic code, the construct, its UTF-16 offset, the suggestion
     and, for a deprecated Studio shape, the first-class replacement. Studio and Stage call it instead of copying the
     dialect.

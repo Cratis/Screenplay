@@ -66,7 +66,11 @@ public class when_recognizing_studio_text_rules
     void should_refuse_near_misses_and_leave_admitted_nonlookaround_patterns_alone()
     {
         using var document = PortableMatchVectors.Read("legacy-text-rule-shapes.json");
-        foreach (var pattern in document.RootElement.GetProperty("refused").EnumerateArray()) PortableMatchPattern.Check(pattern.GetString()!).Code.ShouldEqual("PLAY0699");
+        foreach (var pattern in document.RootElement.GetProperty("refused").EnumerateArray())
+        {
+            LegacyTextRulePatterns.Recognize(pattern.GetString()!).ShouldBeNull();
+            PortableMatchPattern.Check(pattern.GetString()!).Code.ShouldEqual("PLAY0699");
+        }
         foreach (var pattern in document.RootElement.GetProperty("unchanged").EnumerateArray()) PortableMatchPattern.Check(pattern.GetString()!).Status.ShouldEqual(PortableMatchStatus.Admitted);
     }
 }

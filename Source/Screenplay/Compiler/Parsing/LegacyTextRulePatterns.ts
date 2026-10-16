@@ -9,18 +9,18 @@ const v1Escaped = '\\*+?|{[()^$.# ';
 
 /** Recognizes only losslessly re-escaped Studio shapes, never arbitrary lookaround. */
 export function recognizeLegacyTextRule(pattern: string): PortableMatchReplacement | undefined {
-    if (pattern.startsWith('^(?![\\s\\S]*') && pattern.endsWith(')')) {
+    if (pattern.length >= 11 + 1 && pattern.startsWith('^(?![\\s\\S]*') && pattern.endsWith(')')) {
         const literal = pattern.slice(11, -1);
         const value = decode(literal, false) ?? decode(literal, true);
         return value === undefined ? undefined : { kind: 'NotContains', value };
     }
     if (pattern.startsWith('^(?!')) {
-        if (pattern.endsWith(strictEnd + ')')) return replacement('NotEqual', pattern.slice(4, -(strictEnd.length + 1)), false);
-        if (pattern.endsWith('$)')) return replacement('NotEqual', pattern.slice(4, -2), true);
+        if (pattern.length >= 4 + strictEnd.length + 1 && pattern.endsWith(strictEnd + ')')) return replacement('NotEqual', pattern.slice(4, -(strictEnd.length + 1)), false);
+        if (pattern.length >= 4 + 2 && pattern.endsWith('$)')) return replacement('NotEqual', pattern.slice(4, -2), true);
     }
-    if (!pattern.endsWith(strictEnd)) return undefined;
-    const body = pattern.slice(0, -strictEnd.length);
-    return body.startsWith('^') ? replacement('Equal', body.slice(1), false) : replacement('EndsWith', body, false);
+    if (pattern.length < strictEnd.length || !pattern.endsWith(strictEnd)) return undefined;
+    if (pattern.length >= 1 + strictEnd.length && pattern.startsWith('^')) return replacement('Equal', pattern.slice(1, -strictEnd.length), false);
+    return replacement('EndsWith', pattern.slice(0, -strictEnd.length), false);
 }
 
 export function escapeLegacyTextRule(value: string, v1: boolean): string {
