@@ -70,7 +70,8 @@ public static partial class SemanticConceptCheck
             if (concept.Validations[index] is not { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue text }) continue;
             var pattern = PortableMatchPattern.Check(text.Value);
             if (pattern.Status == PortableMatchStatus.Admitted) continue;
-            findings.Add(new(pattern.Code!, pattern.Status == PortableMatchStatus.Deprecated ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, pattern.Description, SemanticConceptFindingTarget.Rule, RuleIndex: index, Pattern: pattern));
+            var message = pattern.Status == PortableMatchStatus.Deprecated ? pattern.Description : $"Match pattern on concept '{concept.Name}': {pattern.Description}";
+            findings.Add(new(pattern.Code!, pattern.Status == PortableMatchStatus.Deprecated ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error, message, SemanticConceptFindingTarget.Rule, RuleIndex: index, Pattern: pattern));
         }
 
         return Complete(concept, year, generates, findings, true);
@@ -103,11 +104,12 @@ public static partial class SemanticConceptCheck
     static SemanticConceptFinding? ProofFinding(SemanticConcept concept, RuleConsistencyResult proof, int index)
     {
         var strategy = concept.Generation?.Kind ?? "uuid";
+        var pattern = concept.Validations[index] is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue text } ? PortableMatchPattern.Check(text.Value) : null;
 
         return proof.Status switch
         {
-            RuleConsistencyStatus.Refuted => new(DiagnosticCodes.RefutedGeneratedConceptRule, DiagnosticSeverity.Error, $"Generation strategy '{strategy}' for concept '{concept.Name}' violates this rule; witness {System.Text.Json.JsonSerializer.Serialize(proof.Witness)}.", SemanticConceptFindingTarget.Rule, RuleIndex: index),
-            RuleConsistencyStatus.Unproven => new(DiagnosticCodes.UnprovenGeneratedConceptRule, DiagnosticSeverity.Warning, $"Generation strategy '{strategy}' for concept '{concept.Name}' has an unproven rule: {proof.Reason}.", SemanticConceptFindingTarget.Rule, RuleIndex: index),
+            RuleConsistencyStatus.Refuted => new(DiagnosticCodes.RefutedGeneratedConceptRule, DiagnosticSeverity.Error, $"Generation strategy '{strategy}' for concept '{concept.Name}' violates this rule; witness {System.Text.Json.JsonSerializer.Serialize(proof.Witness)}.", SemanticConceptFindingTarget.Rule, RuleIndex: index, Pattern: pattern),
+            RuleConsistencyStatus.Unproven => new(DiagnosticCodes.UnprovenGeneratedConceptRule, DiagnosticSeverity.Warning, $"Generation strategy '{strategy}' for concept '{concept.Name}' has an unproven rule: {proof.Reason}.", SemanticConceptFindingTarget.Rule, RuleIndex: index, Pattern: pattern),
             _ => null
         };
     }
