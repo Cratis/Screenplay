@@ -1,0 +1,15 @@
+module Sales
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        title String
+
+      screen OrderList
+        template blueprint Hr Workspace version "latest"
+          body
+            title "Orders"
+
+ui profile Desktop
+  target platform web
+  packages
+    Crm
