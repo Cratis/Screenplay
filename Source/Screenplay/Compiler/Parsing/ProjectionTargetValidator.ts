@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthoringProductionKind, AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
@@ -64,7 +65,7 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
             const key = JSON.stringify([location.path, location.line, location.column]);
             if (resolved.missing && !reported.has(key)) {
                 reported.add(key);
-                context.warning(DiagnosticCodes.UnknownReadModelProperty, `Projection target '${path}' is not a declared ${element ? 'element' : 'read-model'} property`, location);
+                context.warning(DiagnosticCodes.UnknownReadModelProperty, `Projection target '${path}' is not a declared ${element ? 'element' : 'read-model'} property`, location, diagnosticText('property', path));
             }
             return resolved.value;
         };

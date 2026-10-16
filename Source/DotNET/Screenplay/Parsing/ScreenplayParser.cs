@@ -42,6 +42,8 @@ internal static partial class ScreenplayParser
         IdentitySyntax? identity = null;
         ReactionProductionMode? reactionProductionMode = null;
         var sawReactionBatches = false;
+        CommandReadMode? commandReadMode = null;
+        var sawCommandReads = false;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var types = new List<TypeSyntax>();
@@ -68,6 +70,17 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "command" when CommandReadsParser.IsDeclaration(line.Content):
+                    if (sawCommandReads || !placement.IsDocument || !CommandReadsParser.IsProtected(line.Content))
+                    {
+                        context.Error(DiagnosticCodes.InvalidCommandReadsDeclaration, "Declare 'command reads protected' once at the application root.", line.Location);
+                    }
+                    else
+                    {
+                        commandReadMode = CommandReadMode.Protected;
+                    }
+                    sawCommandReads = true;
+                    break;
                 case "reaction":
                     if (sawReactionBatches || !placement.IsDocument || !ReactionBatchesParser.IsAtomic(line.Content))
                     {
@@ -223,6 +236,7 @@ internal static partial class ScreenplayParser
         {
             Identity = identity,
             ReactionProductionMode = reactionProductionMode,
+            CommandReadMode = commandReadMode,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             Examples = examples,

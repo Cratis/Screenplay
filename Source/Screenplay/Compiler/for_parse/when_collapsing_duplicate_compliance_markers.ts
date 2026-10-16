@@ -40,7 +40,7 @@ for (const [markers, wire, canonical, alias] of [
         });
         it('should report one warning on the concept header', () => {
             result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0653').should.deep.equal([{
-                code: 'PLAY0653', severity: 'warning',
+                code: 'PLAY0653', severity: 'warning', arguments: {},
                 message: `Concept 'Value' repeats the '${canonical}' marker${alias ? ` - '${alias}' is the same marker as '${canonical}'` : ''} - remove the duplicate`,
                 location: result.value.concepts[0].location,
             }]);

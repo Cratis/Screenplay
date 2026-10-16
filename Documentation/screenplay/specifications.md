@@ -1,5 +1,9 @@
 # Specifications
 
+With application-root `command reads protected` (ESM v25), missing required read-model state rejects with `Validation` and message `<ReadModel> '<key value>' does not exist.` Authorization and property rules precede this check; derive/provide, requirements and mappings follow it. Use `then error` to assert the absence rejection. `ProtectedCommandReadsCorpus.V25` pins empty/non-empty logs, removal/recreation, absence before requirements/generation, read-path mappings and reactions invoking commands whose reads are missing. A rejected invoked command leaves its already accepted triggering fact in the world.
+
+There is no specification construct for an intervening write. C# evaluator vectors explicitly separate Decide from Commit, append competing facts, and assert `Conflict` / `DecisionStateChanged`, zero command facts and preservation of irrelevant intervening state. A rejected command never commits; a no-fact command still checks its dependencies. Ordinary Given/When/Then scenarios do not prove race handling.
+
 With application-root `reaction batches atomic` (ESM v22), a failed direct or refusal-branch production batch contributes no facts or projection changes. `then error` asserts rejection, not rollback; evaluator world/read-model assertions and the `AtomicReactionBatchesCorpus` world counts pin rollback separately. `then no events` still means accepted zero outcomes and cannot accompany an error. Use it for acknowledgement or a filtered trigger. Redelivery validates a new batch against the existing world without reappending the given fact; it adds no deduplication guarantee.
 
 Run scenarios with [`screenplay test`](tool.md#run-the-models-specifications) or the read-only MCP [`run-specifications`](mcp/reference.md#execute-specifications) tool. Both use the in-memory reference evaluator; binding alone does not tell you whether a scenario passes.

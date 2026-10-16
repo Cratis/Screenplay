@@ -12,6 +12,16 @@ and [Edit a model](edit.md) for prompts.
 
 Application source and AST proposals preserve the optional `ApplicationSyntax.reactionProductionMode` enum (`Atomic`). Application-root `reaction batches atomic` selects ESM v22; absence preserves legacy per-fact semantics even in newer versions. `describe-application` summary exposes `reactionProductionMode` and `reactionProductionReadiness`; construct readiness is separate from target realization. Direct productions and each selected refusal branch form separate atomic batches. Invoked commands remain independent. Direct routes and closing constraints are still unadmitted (#770). A target must explicitly admit v22 or refuse it.
 
+## Protected command read admission
+
+Application-root `command reads protected` sets the optional `ApplicationSyntax.commandReadMode` enum (`Protected`) and executable `commandReadMode: "protected"` (ESM v25). `describe-application` summary exposes `commandReadMode` and `commandReadReadiness`. Absence of the preamble retains legacy command-read refusals, even at later versions. A target must separately admit the version; authoring readiness does not prove target realization.
+
+`SemanticCommand.reads` records `name` (alias or view name), `readModel`, `key` (input property or declared identifier when `by` is omitted), and `presence: "required"`. Admission requires a finite, non-empty event-log projection keyed by event-source identity, with removal handlers, and a required scalar non-generated string, string-concept or GUID input key. Refused shapes report `PLAY0781` with a reason; missing identifiers, reads with concurrency, unknown paths and ambiguous paths report `PLAY0782`–`PLAY0785`. `ReadsSyntax.byParts` remains unadmitted for protected command reads.
+
+Single-level `Read.property` or `alias.property` paths bind in `validate` → `require` operands and produces mapping sources only. Missing required state rejects with `Validation` before derive/provide, requirements and mappings. Matching intervening facts return `Conflict` / `DecisionStateChanged` with no facts; irrelevant facts remain in the committed world. Reaction reads are unchanged.
+
+`PLAY0786` offers one reviewed opt-in repair at the first legacy command read. Discover it with `read-workspace view=repairs`, then use `propose-repair` with canonical formatting consent and the current workspace/catalog revisions. The repair adds the preamble to the domain document, or the sole document; ambiguous multi-document roots are refused. Every read must pass executable admission. A refused proposal lists compiler reasons, including `PLAY0781`; no partial plan is returned. Review with `read-proposal` before explicit `apply`. The action changes absence and conflict behavior, is not eligible for fix-all, and does not support pinned attachment evidence. Discovery and proposal never write files.
+
 ## Key and route admission
 
 Typed source and AST proposals retain read-model key marks, named query/read key parts, production routes and observer filters. Composite read-model keys remain authoring-only (`PLAY0268`, #599). Production route overrides and observer filters select ESM v10. Source inventories include production route references. Declaration details retain the authored lookup parts and filters.

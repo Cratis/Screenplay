@@ -21,22 +21,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return ExecuteReadOnly(plan, world, request);
         }
 
-        if (!plan.Commands.TryGetValue(request.Command, out var command))
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan.");
-        }
-
-        if (plan.UnadmittedArtifacts.Contains(command.Id))
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation.");
-        }
-
-        if (request.Queries.IsDefault)
-        {
-            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
-        }
-
-        return new SemanticCommandExecution(plan, world, command, request).Run();
+        return Decide(plan, world, request).Commit(world);
     }
 
     /// <summary>
@@ -189,6 +174,26 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             ? command.Properties.Single(property => property.Id == resolved.Target).Type
             : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
+
+    internal SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    {
+        if (!plan.Commands.TryGetValue(request.Command, out var command))
+        {
+            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan."));
+        }
+
+        if (plan.UnadmittedArtifacts.Contains(command.Id))
+        {
+            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation."));
+        }
+
+        if (request.Queries.IsDefault)
+        {
+            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
+        }
+
+        return new SemanticCommandExecution(plan, world, command, request).Decide();
+    }
 
     static SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
     {

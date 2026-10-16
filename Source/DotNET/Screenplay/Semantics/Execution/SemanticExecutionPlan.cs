@@ -48,7 +48,12 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A slice selection contains an identity that is not a slice in the model.
     /// </summary>
-    InvalidSliceSelection = 6
+    InvalidSliceSelection = 6,
+
+    /// <summary>
+    /// Reserved legacy issue kind (no longer emitted; protected decision reads are evaluated).
+    /// </summary>
+    UnsupportedDecisionReads = 7
 }
 
 /// <summary>
@@ -261,7 +266,8 @@ public sealed class SemanticExecutionPlan
                 [.. slices.SelectMany(_ => _.Reactions).OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)],
                 slices.SelectMany(_ => _.Captures).ToImmutableDictionary(_ => _.Id),
                 [.. unselected.Select(issue => issue.Artifact)]),
-            []) { UnselectedIssues = unselected };
+            [])
+        { UnselectedIssues = unselected };
     }
 
     internal bool IsUnadmittedReadModel(SemanticId readModel) =>

@@ -75,7 +75,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            ValidateSpecificationCompleteness(specification, command);
+            ValidateSpecificationCompleteness(slice, specification, command, origin!);
 
             var acted = HasSpecificationAction(specification);
             var deniedQuery = specification.ThenDenied is not null && !acted &&
@@ -157,13 +157,13 @@ public sealed partial class SemanticModelBinder
             };
         }
 
-        void ValidateSpecificationCompleteness(SpecificationSyntax specification, SemanticCommand? command)
+        void ValidateSpecificationCompleteness(SemanticAddress slice, SpecificationSyntax specification, SemanticCommand? command, EffectiveSpecification expanded)
         {
             foreach (var step in specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []))
             {
                 if (_events.TryGetValue(ShortName(step.EventType), out var declaration))
                 {
-                    ValidateCompleteStep(step, step.EventType, step.Values, declaration.Properties.Values);
+                    ValidateCompleteStep(slice, expanded, step, step.EventType, step.Values, declaration.Properties.Values);
                 }
             }
 
@@ -171,25 +171,35 @@ public sealed partial class SemanticModelBinder
             {
                 if (_readModels.TryGetValue(ShortName(step.Name), out var declaration))
                 {
-                    ValidateCompleteStep(step, step.Name, step.Properties, declaration.Properties.Values);
+                    ValidateCompleteStep(slice, expanded, step, step.Name, step.Properties, declaration.Properties.Values);
                 }
             }
 
             if (specification.When is { } when && command is not null)
             {
-                ValidateCompleteStep(when, when.CommandType, when.Values, command.Properties.Where(property => !property.IsGenerated));
+                ValidateCompleteStep(slice, expanded, when, when.CommandType, when.Values, command.Properties.Where(property => !property.IsGenerated));
             }
         }
 
-        void ValidateCompleteStep(SyntaxNode step, string type, IEnumerable<PropertyMappingSyntax> values, IEnumerable<SemanticProperty> properties)
+        void ValidateCompleteStep(SemanticAddress slice, EffectiveSpecification expanded, SyntaxNode step, string type, IEnumerable<PropertyMappingSyntax> values, IEnumerable<SemanticProperty> properties)
         {
             var supplied = values.Select(value => value.Property).ToHashSet(StringComparer.Ordinal);
             var missing = properties.Where(property => !supplied.Contains(property.Name)).ToArray();
             var origin = steps.GetValueOrDefault(step);
             var example = origin?.Example is { } declaration ? $" using example '{declaration.Name}'" : string.Empty;
+            if (missing.Length == 0) return;
+            var authored = expanded.Authored;
+            var path = slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key).Append(authored.Name);
+            var arguments = new DiagnosticArguments.Builder()
+                .Add("specification", DiagnosticArgument.Declaration("specification", path))
+                .Add("step", DiagnosticArgument.Keyword(origin!.Role))
+                .Add("stepIndex", DiagnosticArgument.Index(SpecificationStepPositions.IndexOf(authored, origin.Authored.Location)))
+                .Add("type", DiagnosticArgument.Text(type)).Build();
+            if (origin.Example is { } used) arguments = arguments.With("example", DiagnosticArgument.Text(used.Name));
+            if (expanded.Case is { } row) arguments = arguments.With("case", DiagnosticArgument.Text(row.Name));
             foreach (var property in missing)
             {
-                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{origin?.Role ?? "step"}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location);
+                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{origin.Role}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location, arguments.With("property", DiagnosticArgument.Text(property.Name)));
             }
         }
 
@@ -326,7 +336,7 @@ public sealed partial class SemanticModelBinder
             var key = bound.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value ?? inferredKey;
             if (key is null)
             {
-                Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{readModel.Model.Name}' must state its identifier property '{identifier.Name}' in this block.", location);
+                Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{readModel.Model.Name}' must state its identifier property '{identifier.Name}' in this block.", location, DiagnosticArguments.Empty.With("readmodel", DiagnosticArgument.Text(readModel.Model.Name)).With("property", DiagnosticArgument.Text(identifier.Name)));
                 return null;
             }
 
@@ -361,7 +371,7 @@ public sealed partial class SemanticModelBinder
             {
                 if (!parameters.TryGetValue(argument.Property, out var parameter) || arguments.ContainsKey(argument.Property))
                 {
-                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' argument '{argument.Property}' is unknown or repeated.", argument.Location);
+                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' argument '{argument.Property}' is unknown or repeated.", argument.Location, DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(value.Query)).With("argument", DiagnosticArgument.Text(argument.Property)));
                     return null;
                 }
                 if (BindConcreteValue(argument.Source, parameter.Type, "specification query argument", false) is not { } concrete) return null;
@@ -372,7 +382,7 @@ public sealed partial class SemanticModelBinder
             {
                 if (!arguments.ContainsKey(parameter.Name))
                 {
-                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' required argument '{parameter.Name}' is missing.", value.Location);
+                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' required argument '{parameter.Name}' is missing.", value.Location, DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(value.Query)).With("argument", DiagnosticArgument.Text(parameter.Name)));
                     return null;
                 }
             }

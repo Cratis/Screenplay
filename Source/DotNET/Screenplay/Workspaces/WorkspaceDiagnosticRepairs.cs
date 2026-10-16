@@ -113,8 +113,12 @@ public static class WorkspaceDiagnosticRepairs
         var matches = ForSubject(index, workspace.Revision, diagnosticCode, subject).ToArray();
         if (matches.Length != 1)
         {
-            var reason = diagnosticCode == DiagnosticCodes.RefutedGeneratedConceptRule
-                ? WorkspaceGenerationRuleRepairs.UnavailableReason(index, subject) : null;
+            var reason = diagnosticCode switch
+            {
+                DiagnosticCodes.RefutedGeneratedConceptRule => WorkspaceGenerationRuleRepairs.UnavailableReason(index, subject),
+                DiagnosticCodes.LegacyCommandReadsRepairAvailable => WorkspaceCommandReadsRepairs.UnavailableReason(index, subject),
+                _ => null
+            };
 
             return Refuse(WorkspaceConflictKind.UnknownRepair, reason ?? "The diagnostic repair does not match the original workspace subject.");
         }
@@ -179,6 +183,11 @@ public static class WorkspaceDiagnosticRepairs
         if (!index.RepairableDiagnosticSet.Contains(diagnostic))
         {
             return [];
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable || WorkspaceCommandReadsRepairs.IsLegacyReadDiagnostic(index, diagnostic))
+        {
+            return WorkspaceCommandReadsRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
@@ -304,6 +313,15 @@ public static class WorkspaceDiagnosticRepairs
         if (WorkspaceGenerationRepairs.ForSubject(index, code, subject, diagnostic => Find(index, revision, diagnostic, false)) is { } generationRepairs)
         {
             return generationRepairs;
+        }
+
+        // An unrelated PLAY0273 can suppress the binder's model-wide PLAY0786 hint. The first
+        // legacy read still supplies an original diagnostic and subject for a read-only admission probe.
+        if (code == DiagnosticCodes.LegacyCommandReadsRepairAvailable &&
+            !index.RepairableDiagnostics.Any(diagnostic => diagnostic.Code == code))
+        {
+            return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Location == entry.Location && WorkspaceCommandReadsRepairs.IsLegacyReadDiagnostic(index, diagnostic))
+                .SelectMany(diagnostic => Find(index, revision, diagnostic, false)).Where(repair => repair.Subject == subject);
         }
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on

@@ -123,6 +123,11 @@ public sealed record SemanticApplication(
     /// Gets the explicit reaction production mode; absence retains legacy per-fact semantics.
     /// </summary>
     public SemanticReactionProductionMode? ReactionProductionMode { get; init; }
+
+    /// <summary>
+    /// Gets the explicit protected command reads mode; absence preserves legacy refusals.
+    /// </summary>
+    public SemanticCommandReadMode? CommandReadMode { get; init; }
 }
 
 /// <summary>

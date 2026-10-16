@@ -28,6 +28,7 @@ public class and_a_read_model_block_omits_the_identifier : given.a_semantic_bind
 
     void Because() => _result = Bind(Source);
 
+    [Fact] void should_identify_the_read_model_and_missing_property() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationReadModelIdentifier).All(diagnostic => diagnostic.Arguments.Equals(DiagnosticArguments.Empty.With("readmodel", DiagnosticArgument.Text("InvoiceSummary")).With("property", DiagnosticArgument.Text("invoiceId")))).ShouldBeTrue();
     [Fact] void should_report_each_block_at_its_own_location() =>
         _result.Diagnostics.Where(_ => _.Code == DiagnosticCodes.MissingSpecificationReadModelIdentifier)
             .Select(_ => _.Location.Line).ShouldEqual(10, 12);

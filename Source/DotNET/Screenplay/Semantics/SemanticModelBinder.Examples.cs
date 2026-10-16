@@ -35,7 +35,7 @@ public sealed partial class SemanticModelBinder
                         }
                         catch (InvalidSemanticContract failure)
                         {
-                            Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' cannot be admitted: {failure.Message}", assignment.Source.Location);
+                            Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' cannot be admitted: {failure.Message}", assignment.Source.Location, DiagnosticArguments.Empty.With("case", DiagnosticArgument.Text(row.Name)).With("parameter", DiagnosticArgument.Text(parameter.Name)).With("type", DiagnosticArgument.Text(parameter.Type.Name)));
                         }
                     }
                 }
@@ -84,7 +84,7 @@ public sealed partial class SemanticModelBinder
 
                 if (destinationType is null or { IsCollection: true } or { IsOptional: true })
                 {
-                    Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' requires one unambiguous required scalar destination type for 'for'.", destination.Location);
+                    Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' requires one unambiguous required scalar destination type for 'for'.", destination.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
                     continue;
                 }
 
@@ -101,7 +101,7 @@ public sealed partial class SemanticModelBinder
             }
             catch (InvalidSemanticContract failure)
             {
-                Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' value cannot be admitted: {failure.Message}", expression.Location);
+                Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' value cannot be admitted: {failure.Message}", expression.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
             }
         }
 
@@ -118,7 +118,7 @@ public sealed partial class SemanticModelBinder
             }
             catch (InvalidSemanticContract failure)
             {
-                Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' value cannot be admitted: {failure.Message}", expression.Location);
+                Error(DiagnosticCodes.UnadmittedSpecificationExampleValue, $"Example '{example.Name}' value cannot be admitted: {failure.Message}", expression.Location, DiagnosticArguments.Empty.With("example", DiagnosticArgument.Text(example.Name)));
             }
         }
     }

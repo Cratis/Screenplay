@@ -258,6 +258,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A mapping line is not <c>&lt;property&gt; = &lt;source&gt;</c>.
     /// </summary>
+    [DiagnosticArgumentDefinitions("text:text;The authored mapping line that could not be read.")]
     public const string InvalidPropertyMapping = "PLAY0044";
 
     /// <summary>
@@ -417,6 +418,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A mapping line in a projection is not one the language can read.
     /// </summary>
+    [DiagnosticArgumentDefinitions("text:text;The authored projection mapping line that could not be read.")]
     public const string InvalidProjectionMapping = "PLAY0075";
 
     // Captures.
@@ -551,6 +553,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A value a specification step states is not <c>&lt;property&gt; = &lt;value&gt;</c>.
     /// </summary>
+    [DiagnosticArgumentDefinitions("text:text;The authored mapping line or concrete value that could not be read.")]
     public const string InvalidSpecificationValue = "PLAY0101";
 
     // Screens.
@@ -1854,6 +1857,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A read model state does not state its identifier property.
     /// </summary>
+    [DiagnosticArgumentDefinitions("readmodel:text;The read model named by the fixture.", "property:text;The missing identifier or key-part property.")]
     public const string MissingSpecificationReadModelIdentifier = "PLAY0351";
 
     /// <summary>
@@ -2140,6 +2144,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A specification query argument is unknown or repeated, or a required by or filter argument is missing.
     /// </summary>
+    [DiagnosticArgumentDefinitions("query:text?;The query reference when known at the reporting site.", "argument:text;The unknown, repeated or missing argument name.")]
     public const string UnknownSpecificationQueryArgument = "PLAY0468";
 
     /// <summary>
@@ -2355,46 +2360,55 @@ public static class DiagnosticCodes
     /// <summary>
     /// A typed specification example declaration is malformed.
     /// </summary>
+    [DiagnosticArgumentDefinitions("text:text;The authored example declaration line.")]
     public const string InvalidSpecificationExample = "PLAY0518";
 
     /// <summary>
     /// A specification fixture assigns the same property more than once.
     /// </summary>
+    [DiagnosticArgumentDefinitions("property:text;The property assigned more than once.")]
     public const string DuplicateSpecificationAssignment = "PLAY0519";
 
     /// <summary>
     /// A specification example type or reference is unknown, ambiguous, or unsupported.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The example declaration name or authored example reference.", "type:text?;The example's authored type reference when resolving its declaration.", "kind:keyword?=event|command|readmodel|concept|type|example;The resolved but unsupported declaration kind.")]
     public const string UnresolvedSpecificationExampleType = "PLAY0520";
 
     /// <summary>
     /// A specification example name collides with a type or another example in its scope.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The colliding example name.")]
     public const string SpecificationExampleNameCollision = "PLAY0521";
 
     /// <summary>
     /// A specification step uses an example of another kind.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The authored example reference.", "kind:keyword=event|command|readmodel;The example's actual declaration kind.", "expectedKind:keyword=event|command|readmodel;The declaration kind required by the step.")]
     public const string SpecificationExampleKindMismatch = "PLAY0522";
 
     /// <summary>
     /// A specification example supplies a value not allowed by its current type.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The example declaration name.", "type:text;The example's authored type reference.", "property:text?;The invalid property when the failure concerns a property.")]
     public const string InvalidSpecificationExampleValue = "PLAY0523";
 
     /// <summary>
     /// An exact-shape specification step omits a required property after example expansion.
     /// </summary>
+    [DiagnosticArgumentDefinitions("specification:declaration;The authored specification declaration, before case expansion.", "step:keyword=given|given readmodel|when|when append|then;The step's language keyword spelling.", "stepIndex:index;The zero-based position among all authored step clauses in source order.", "property:text;The required property missing from the effective fixture.", "type:text;The effective step's type reference.", "example:text?;The example used by the step.", "case:text?;The named case supplying this expanded specification.", "parameter:text?;The case parameter supplying the failing value when known.")]
     public const string MissingSpecificationProperty = "PLAY0524";
 
     /// <summary>
     /// A stated example value or destination cannot be admitted by its semantic type, even if unused.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The example whose value or destination cannot be admitted.")]
     public const string UnadmittedSpecificationExampleValue = "PLAY0525";
 
     /// <summary>
     /// A command or read-model example declares a route; only event examples carry routes.
     /// </summary>
+    [DiagnosticArgumentDefinitions("example:text;The non-event example declaring a route.")]
     public const string InvalidSpecificationExampleBody = "PLAY0526";
 
     /// <summary>
@@ -2438,6 +2452,7 @@ public static class DiagnosticCodes
     public const string RedundantSourceStreamId = "PLAY0507";
 
     /// <summary>A projection maps to a property absent from the declared read-model shape.</summary>
+    [DiagnosticArgumentDefinitions("property:text;The authored projection target path.")]
     public const string UnknownReadModelProperty = "PLAY0514";
 
     /// <summary>
@@ -2628,6 +2643,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A case value is not concrete or cannot be normalized to its parameter type.
     /// </summary>
+    [DiagnosticArgumentDefinitions("case:text?;The named case when known at the reporting site.", "parameter:text?;The parameter assigned by the case when known.", "type:text?;The declared parameter type when available.", "text:text?;The authored value or nested line that could not be read.")]
     public const string InvalidSpecificationCaseValue = "PLAY0583";
 
     /// <summary>
@@ -3225,6 +3241,41 @@ public static class DiagnosticCodes
     /// A reaction batches declaration is repeated, conflicting or outside the application root.
     /// </summary>
     public const string InvalidReactionBatchesDeclaration = "PLAY0693";
+
+    /// <summary>
+    /// A command reads declaration is repeated, conflicting or outside the application root.
+    /// </summary>
+    public const string InvalidCommandReadsDeclaration = "PLAY0780";
+
+    /// <summary>
+    /// A command decision read cannot be protected, with a closed refusal reason describing its shape or key.
+    /// </summary>
+    public const string UnprotectableDecisionRead = "PLAY0781";
+
+    /// <summary>
+    /// A protected command read omits its lookup property and the command has no declared identifier.
+    /// </summary>
+    public const string DecisionReadWithoutIdentifier = "PLAY0782";
+
+    /// <summary>
+    /// A command declares both protected reads and concurrency, making its consistency boundary ambiguous.
+    /// </summary>
+    public const string DecisionReadsWithConcurrency = "PLAY0783";
+
+    /// <summary>
+    /// A read path does not name a declared command read or alias.
+    /// </summary>
+    public const string UnknownReadPath = "PLAY0784";
+
+    /// <summary>
+    /// A read path names a view read more than once instead of a distinguishing alias.
+    /// </summary>
+    public const string AmbiguousReadPath = "PLAY0785";
+
+    /// <summary>
+    /// A legacy command read has a typed repair offering the explicit protected-read preamble.
+    /// </summary>
+    public const string LegacyCommandReadsRepairAvailable = "PLAY0786";
 
     /// <summary>
     /// A directionless Translate slice reacts to an event its own capture appends.

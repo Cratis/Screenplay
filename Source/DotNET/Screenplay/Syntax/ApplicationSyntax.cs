@@ -57,6 +57,12 @@ public record ApplicationSyntax(
     public ReactionProductionMode? ReactionProductionMode { get; init; }
 
     /// <summary>
+    /// Gets the explicit command decision-read mode, inherited by the composed application.
+    /// Absence preserves legacy command-read refusals.
+    /// </summary>
+    public CommandReadMode? CommandReadMode { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];

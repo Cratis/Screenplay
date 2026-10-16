@@ -35,6 +35,7 @@ static class McpIntroducedErrors
             {
                 code = diagnostic.Code,
                 message = diagnostic.Message,
+                arguments = diagnostic.Arguments,
                 path = diagnostic.Location.Path,
                 line = diagnostic.Location.Line,
                 column = diagnostic.Location.Column

@@ -94,6 +94,7 @@ export const diagnosticCodes = {
     generationSupportBudgetExceeded: 'PLAY0691',
     emptyGenerationSupport: 'PLAY0692',
     invalidReactionBatchesDeclaration: 'PLAY0693',
+    invalidCommandReadsDeclaration: 'PLAY0780',
     invalidDescription: 'PLAY0145',
     emptyDescription: 'PLAY0146',
     duplicateDescription: 'PLAY0147',

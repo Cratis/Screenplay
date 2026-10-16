@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { CommandReadMode } from '../Syntax/CommandReadMode';
 import { ReactionProductionMode } from '../Syntax/ReactionProductionMode';
 import { EnumerationMembers } from './EnumerationMembers';
 import { GenerationSyntax } from '../Syntax/GenerationSyntax';
@@ -75,6 +76,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     let identity: IdentitySyntax | null = null;
     let reactionProductionMode: ReactionProductionMode | null = null;
     let sawReactionBatches = false;
+    let commandReadMode: CommandReadMode | null = null;
+    let sawCommandReads = false;
     let domain: DomainSyntax | null = null;
     const imports: ImportSyntax[] = [];
     const fileImports: FileImportSyntax[] = [];
@@ -95,6 +98,15 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
         const keyword = firstWord(line.content);
+        if (keyword === 'command' && /^command\s+reads(?:\s|$)/.test(line.content)) {
+            if (sawCommandReads || !isDocumentPlacement(placement) || !/^command\s+reads\s+protected$/.test(line.content)) {
+                context.error(DiagnosticCodes.InvalidCommandReadsDeclaration, "Declare 'command reads protected' once at the application root.", locationOf(line));
+            } else {
+                commandReadMode = CommandReadMode.Protected;
+            }
+            sawCommandReads = true;
+            continue;
+        }
         if (keyword === 'reaction') {
             if (sawReactionBatches || !isDocumentPlacement(placement) || !/^reaction\s+batches\s+atomic$/.test(line.content)) {
                 context.error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", locationOf(line));
@@ -184,7 +196,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

@@ -1,6 +1,20 @@
 {
     "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        { "name": "Structured arguments on malformed example headers", "source": ["example invalid"], "diagnostics": ["PLAY0518@1"], "arguments": [{"text":{"kind":"text","value":"example invalid"}}] },
+        { "name": "Structured arguments on repeated fixture properties", "source": ["example X : E", "  amount = 1", "  amount = 2"], "diagnostics": ["PLAY0519@3"], "arguments": [{"property":{"kind":"text","value":"amount"}}] },
+        { "name": "Structured arguments on unresolved example types", "validate": true, "source": ["example X : Missing"], "diagnostics": ["PLAY0520@1"], "arguments": [{"example":{"kind":"text","value":"X"},"type":{"kind":"text","value":"Missing"}}] },
+        { "name": "Structured keyword arguments on unsupported example types", "validate": true, "source": ["concept C : String", "example X : C"], "diagnostics": ["PLAY0520@2"], "arguments": [{"example":{"kind":"text","value":"X"},"type":{"kind":"text","value":"C"},"kind":{"kind":"keyword","value":"concept"}}] },
+        { "name": "Structured arguments on invalid example bodies", "validate": true, "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "      example Input : C", "        no stream"], "diagnostics": ["PLAY0526@6"], "arguments": [{"example":{"kind":"text","value":"Input"}}] },
+        { "name": "Structured arguments on malformed specification values", "source": ["example X : E", "  wrong"], "diagnostics": ["PLAY0101@2"], "arguments": [{"text":{"kind":"text","value":"wrong"}}] },
+        { "name": "Structured arguments on malformed production mappings", "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces E", "          wrong"], "diagnostics": ["PLAY0044@6"], "arguments": [{"text":{"kind":"text","value":"wrong"}}] },
+        { "name": "Structured arguments on malformed projection mappings", "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      projection View", "        from E", "          wrong"], "diagnostics": ["PLAY0075@7"], "arguments": [{"text":{"kind":"text","value":"wrong"}}] },
+        { "name": "Structured arguments on repeated query arguments", "source": ["module M", "  feature F", "    slice StateView S", "      specification Check", "        when query Find", "          status = \"open\"", "          status = \"closed\"", "        then no result"], "diagnostics": ["PLAY0468@7"], "arguments": [{"argument":{"kind":"text","value":"status"}}] },
+        { "name": "Structured arguments on nonconcrete case values", "source": ["module M", "  feature F", "    slice StateChange S", "      specification X", "        parameter amount Int", "        case Small amount = case.amount", "        when Record amount = case.amount"], "diagnostics": ["PLAY0583@6", "PLAY0582@6"], "arguments": [{"text":{"kind":"text","value":"case.amount"}},{}] },
+        { "name": "Command reads declaration cannot repeat", "source": ["command reads protected", "command reads protected"], "diagnostics": ["PLAY0780@2"] },
+        { "name": "Command reads declaration cannot conflict", "source": ["command reads protected", "command reads legacy"], "diagnostics": ["PLAY0780@2"] },
+        { "name": "Command reads mode is closed", "source": ["command reads unknown"], "diagnostics": ["PLAY0780@1"] },
+        { "name": "Command reads mode cannot have extra words", "source": ["command reads protected extra"], "diagnostics": ["PLAY0780@1"] },
         { "name": "Reaction batches declaration cannot repeat", "source": ["reaction batches atomic", "reaction batches atomic"], "diagnostics": ["PLAY0693@2"] },
         { "name": "Reaction batches declaration cannot conflict", "source": ["reaction batches atomic", "reaction batches legacy"], "diagnostics": ["PLAY0693@2"] },
         { "name": "Reaction batches mode is closed", "source": ["reaction batches unknown"], "diagnostics": ["PLAY0693@1"] },
@@ -1372,7 +1386,8 @@
             "name": "Variant entering events make every mappings executable targets",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      readmodel V", "        value String", "      projection P", "        variant V", "          enters on E", "          every", "            missing = \"recorded\""],
-            "diagnostics": ["PLAY0514@11"]
+            "diagnostics": ["PLAY0514@11"],
+            "arguments": [{"property":{"kind":"text","value":"missing"}}]
         },
         {
             "name": "Variant entering events accept declared every targets",

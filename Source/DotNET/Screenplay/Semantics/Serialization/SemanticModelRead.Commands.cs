@@ -33,10 +33,12 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader)
+    internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader) => Mapping(ref reader, 0);
+
+    internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "mapping");
-        var state = new MappingState();
+        var state = new MappingState(schemaVersion);
         MappingState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -56,12 +58,13 @@ internal static partial class SemanticModelRead
             .Add("validations", (ref Utf8JsonReader reader, CommandState state, string property) => state.Validations = Array(ref reader, Validation, property))
             .Add("codeValidations", (ref Utf8JsonReader reader, CommandState state, string property) => state.CodeValidations = Array(ref reader, CodeValidation, property))
             .Add("produces", (ref Utf8JsonReader reader, CommandState state, string property) => state.Produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, state.SchemaVersion, false), property))
-            .Add("requirements", (ref Utf8JsonReader reader, CommandState state, string property) => state.Requirements = Array(ref reader, Requirement, property))
+            .Add("requirements", (ref Utf8JsonReader reader, CommandState state, string property) => state.Requirements = Array(ref reader, (ref Utf8JsonReader item) => Requirement(ref item, state.SchemaVersion), property))
             .Add("authorization", (ref Utf8JsonReader reader, CommandState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property))
             .Add("destination", (ref Utf8JsonReader reader, CommandState state, string property) => state.Destination = Nested(ref reader, StateChangeDestination, property))
             .Add("response", 7, (ref Utf8JsonReader reader, CommandState state, string property) => state.Response = Nested(ref reader, SemanticModelRead.Response, property))
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
-            .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, CommandHandler, property));
+            .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, CommandHandler, property))
+            .Add("reads", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
 
@@ -79,6 +82,8 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandResponse? Response { get; set; }
 
+        public ImmutableArray<SemanticDecisionRead> Reads { get; set; } = [];
+
         public SemanticCommandRoute? Route { get; set; }
 
         public SemanticCommandHandler? Handler { get; set; }
@@ -94,7 +99,8 @@ internal static partial class SemanticModelRead
                 Authorization = Authorization,
                 Response = Response,
                 Route = Route,
-                Handler = Handler
+                Handler = Handler,
+                Reads = Reads
             };
         }
     }
@@ -136,7 +142,7 @@ internal static partial class SemanticModelRead
             .Add("eventContract", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.EventContract = Identifier(ref reader, property))
             .Add("condition", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.ReadCondition(ref reader, property))
             .Add("destination", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.ReadDestination(ref reader, property))
-            .Add("mappings", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Mappings = Array(ref reader, Mapping, property))
+            .Add("mappings", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Mappings = Array(ref reader, (ref Utf8JsonReader item) => Mapping(ref item, state.SchemaVersion), property))
             .Add("when", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.When = Nested(ref reader, Condition, property))
             .Add("tags", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Tags = StringArray(ref reader, property))
             .Add("destinationType", 6, (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.DestinationType = Nested(ref reader, TypeReference, property), state => state.Reaction)
@@ -183,11 +189,11 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class MappingState() : ReadState(0)
+    sealed class MappingState(uint schemaVersion) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<MappingState> Fields = new FieldTable<MappingState>("mapping")
             .Add("targetProperty", (ref Utf8JsonReader reader, MappingState state, string property) => state.Target = Identifier(ref reader, property))
-            .Add("source", (ref Utf8JsonReader reader, MappingState state, string property) => state.Source = Nested(ref reader, Expression, property));
+            .Add("source", (ref Utf8JsonReader reader, MappingState state, string property) => state.Source = Nested(ref reader, (ref Utf8JsonReader item) => Expression(ref item, state.SchemaVersion), property));
 
         public SemanticId Target { get; set; }
 

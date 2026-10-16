@@ -196,6 +196,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
         if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
         if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
         if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
@@ -341,6 +342,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
+            if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
@@ -355,20 +357,26 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Policies = policies,
                 Triggers = triggers,
                 EventSources = eventSources,
-                ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic
+                ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
+                CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
             application = BindRoutedFixtureSources(application);
             UsesEventRoutes = SemanticEventRouting.Uses(application);
+            ReportLegacyDecisionReads();
 
             return application;
         }
 
-        internal void Error(string code, string message, SourceLocation location)
+        internal void Error(string code, string message, SourceLocation location, DiagnosticArguments? arguments = null)
         {
             var caseValue = expansion.Specifications.Where(specification => specification.Case is not null).SelectMany(specification => specification.Case!.Values.Select(value => (specification.Case.Name, Value: value))).FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
             if (caseValue.Value is not null && !message.StartsWith("Case '", StringComparison.Ordinal)) message = $"Case '{caseValue.Name}' parameter '{caseValue.Value.Property}': {message}";
-            _diagnostics.Add(Diagnostic.Error(code, message, location));
+            if (caseValue.Value is not null && (code == DiagnosticCodes.MissingSpecificationProperty || code == DiagnosticCodes.InvalidSpecificationCaseValue))
+            {
+                arguments = (arguments ?? DiagnosticArguments.Empty).With("case", DiagnosticArgument.Text(caseValue.Name)).With("parameter", DiagnosticArgument.Text(caseValue.Value.Property));
+            }
+            _diagnostics.Add(Diagnostic.Error(code, message, location, arguments ?? DiagnosticArguments.Empty));
         }
 
         static SemanticModule PromoteV2Destinations(SemanticModule module) =>

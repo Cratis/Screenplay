@@ -597,7 +597,7 @@ internal static partial class ProjectionParser
             // the property back, so the guard costs nothing.
             if (keyword.Groups[1].Value == "clear" && target == "with")
             {
-                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'", line.Location);
+                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
                 return null;
             }
 
@@ -635,7 +635,7 @@ internal static partial class ProjectionParser
             return new SetMappingSyntax(Unescape(assignment.Groups[1].Value), source, line.Location);
         }
 
-        context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}'", line.Location);
+        context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
         return null;
     }
 

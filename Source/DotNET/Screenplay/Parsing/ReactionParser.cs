@@ -296,7 +296,7 @@ internal static partial class ReactionParser
             var mapping = MappingRegex().Match(child.Content);
             if (!mapping.Success)
             {
-                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
                 continue;
             }
 
