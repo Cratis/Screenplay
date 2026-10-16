@@ -25,5 +25,5 @@ ui profile Web
   target size regular
   packages
     Cratis.Components
-  layout Storefront
+  root template Storefront
   theme Harbor

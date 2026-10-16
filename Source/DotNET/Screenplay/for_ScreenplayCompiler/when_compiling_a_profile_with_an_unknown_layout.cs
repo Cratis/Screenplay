@@ -19,6 +19,7 @@ public class when_compiling_a_profile_with_an_unknown_layout : given.a_compiler
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_succeed_with_a_warning() => _result.Success.ShouldBeTrue();
-    [Fact] void should_report_the_unknown_layout() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnknownLayout);
-    [Fact] void should_report_it_as_a_warning() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
+    [Fact] void should_report_the_unknown_layout() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContain(DiagnosticCodes.UnknownLayout);
+    [Fact] void should_report_the_legacy_layout_form() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContain(DiagnosticCodes.LegacyProfileLayout);
+    [Fact] void should_report_only_warnings() => _result.Diagnostics.ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
 }

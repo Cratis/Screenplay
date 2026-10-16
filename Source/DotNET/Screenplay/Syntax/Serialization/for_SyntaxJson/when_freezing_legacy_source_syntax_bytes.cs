@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
@@ -94,6 +95,9 @@ public class when_freezing_legacy_source_syntax_bytes
                     // project it back to the $context.identity node it means so the pre-root bytes stay frozen.
                     .Replace("{\"kind\":\"IdentityExpressionSyntax\",\"path\":\"userName\"}", "{\"kind\":\"ContextExpressionSyntax\",\"path\":\"identity.userName\"}", StringComparison.Ordinal);
             }
+
+            // The samples name their shell with root template; the frozen bytes predate it and carry the same name as the legacy layout.
+            text = Regex.Replace(text, "\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", "\"layout\":\"$2\",$1");
 
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");

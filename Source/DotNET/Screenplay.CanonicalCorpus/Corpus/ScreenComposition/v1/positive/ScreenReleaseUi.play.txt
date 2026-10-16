@@ -15,7 +15,7 @@ ui profile Web
   target platform web
   target size expanded
   theme WorkspaceTheme
-  layout ApplicationShell
+  root template ApplicationShell
 
   packages
     core

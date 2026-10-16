@@ -3506,4 +3506,58 @@ public static class DiagnosticCodes
     /// A ui profile declares more than one root template.
     /// </summary>
     public const string DuplicateProfileRootTemplate = "PLAY0798";
+
+    /// <summary>
+    /// A ui profile's root template, or its new screens use template default, names an own template the document does not declare.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the template.", "template:text;The template name that nothing declares, or the blueprint does not ship.", "blueprint:text?;The blueprint a template was expected from.")]
+    public const string UnknownRootTemplate = "PLAY0790";
+
+    /// <summary>
+    /// A ui profile selects its shell with the legacy layout line instead of root template.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that uses the legacy `layout` line.", "template:text;The layout name the line selects.")]
+    public const string LegacyProfileLayout = "PLAY0791";
+
+    /// <summary>
+    /// A ui profile's root template, or its new screens use template default, comes from a blueprint the profile does not list in its packages, or one the host's installed catalog does not contain.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the blueprint.", "template:text;The template that was taken from the blueprint.", "blueprint:text;The blueprint the profile does not list or the host has not installed.")]
+    public const string UnknownRootBlueprint = "PLAY0792";
+
+    /// <summary>
+    /// A ui profile's root template pins a blueprint version range the installed blueprint does not satisfy.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the root template.", "template:text;The root template.", "blueprint:text;The blueprint whose installed version does not satisfy the pin.", "version:text;The version range that is pinned, or the default `^` pin of the installed version.")]
+    public const string RootTemplateVersionNotSatisfied = "PLAY0793";
+
+    /// <summary>
+    /// A ui profile's root template cannot be the application's shell: it is not a layout or an application-scope root screen template.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the root template.", "template:text;The template that cannot be the application's shell.", "blueprint:text?;The blueprint the template comes from.")]
+    public const string RootTemplateNotApplicable = "PLAY0794";
+
+    /// <summary>
+    /// A ui profile's root template has no outlet for the screens' content.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the root template.", "template:text;The root template that has no content outlet.", "blueprint:text?;The blueprint the template comes from.", "outlet:text;The outlet the screens' content is placed in.")]
+    public const string RootTemplateWithoutContentOutlet = "PLAY0795";
+
+    /// <summary>
+    /// A ui profile sets a shell option the root template does not expose.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that sets the option.", "template:text;The root template that does not expose the option.", "blueprint:text?;The blueprint the template comes from.", "option:text;The option name.")]
+    public const string UnknownShellOption = "PLAY0796";
+
+    /// <summary>
+    /// A ui profile appearance block has a color scheme that is not light, dark or system, or an accent that is not a hex colour.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile whose appearance is invalid.", "value:text;The color scheme or accent as authored.")]
+    public const string InvalidAppearanceValue = "PLAY0797";
+
+    /// <summary>
+    /// A ui profile's new screens use template default names a template that cannot start a screen in a feature.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the template.", "template:text;The template that cannot start a screen in a feature.", "blueprint:text?;The blueprint the template comes from.")]
+    public const string NewScreenTemplateNotApplicable = "PLAY0799";
 }

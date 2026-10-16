@@ -459,7 +459,7 @@ ui profile Mobile
     Cratis.Components
   icons
     Cratis.Icons
-  layout PortalShell
+  root template PortalShell
   theme NordicDark
 
   // A pack a blueprint ships is named with 'blueprint'; the build resolves it against its packages.

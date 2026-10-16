@@ -123,6 +123,34 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 | `PLAY0583` | `parameter` | text | yes | The parameter assigned by the case when known. | — |
 | `PLAY0583` | `type` | text | yes | The declared parameter type when available. | — |
 | `PLAY0583` | `text` | text | yes | The authored value or nested line that could not be read. | — |
+| `PLAY0790` | `profile` | text | no | The ui profile that names the template. | — |
+| `PLAY0790` | `template` | text | no | The template name that nothing declares, or the blueprint does not ship. | — |
+| `PLAY0790` | `blueprint` | text | yes | The blueprint a template was expected from. | — |
+| `PLAY0791` | `profile` | text | no | The ui profile that uses the legacy `layout` line. | — |
+| `PLAY0791` | `template` | text | no | The layout name the line selects. | — |
+| `PLAY0792` | `profile` | text | no | The ui profile that names the blueprint. | — |
+| `PLAY0792` | `template` | text | no | The template that was taken from the blueprint. | — |
+| `PLAY0792` | `blueprint` | text | no | The blueprint the profile does not list or the host has not installed. | — |
+| `PLAY0793` | `profile` | text | no | The ui profile that names the root template. | — |
+| `PLAY0793` | `template` | text | no | The root template. | — |
+| `PLAY0793` | `blueprint` | text | no | The blueprint whose installed version does not satisfy the pin. | — |
+| `PLAY0793` | `version` | text | no | The version range that is pinned, or the default `^` pin of the installed version. | — |
+| `PLAY0794` | `profile` | text | no | The ui profile that names the root template. | — |
+| `PLAY0794` | `template` | text | no | The template that cannot be the application's shell. | — |
+| `PLAY0794` | `blueprint` | text | yes | The blueprint the template comes from. | — |
+| `PLAY0795` | `profile` | text | no | The ui profile that names the root template. | — |
+| `PLAY0795` | `template` | text | no | The root template that has no content outlet. | — |
+| `PLAY0795` | `blueprint` | text | yes | The blueprint the template comes from. | — |
+| `PLAY0795` | `outlet` | text | no | The outlet the screens' content is placed in. | — |
+| `PLAY0796` | `profile` | text | no | The ui profile that sets the option. | — |
+| `PLAY0796` | `template` | text | no | The root template that does not expose the option. | — |
+| `PLAY0796` | `blueprint` | text | yes | The blueprint the template comes from. | — |
+| `PLAY0796` | `option` | text | no | The option name. | — |
+| `PLAY0797` | `profile` | text | no | The ui profile whose appearance is invalid. | — |
+| `PLAY0797` | `value` | text | no | The color scheme or accent as authored. | — |
+| `PLAY0799` | `profile` | text | no | The ui profile that names the template. | — |
+| `PLAY0799` | `template` | text | no | The template that cannot start a screen in a feature. | — |
+| `PLAY0799` | `blueprint` | text | yes | The blueprint the template comes from. | — |
 
 ## The catalogue
 
@@ -723,8 +751,17 @@ Sample data is design and preview time only: it has no repair, and binding repor
 | `PLAY0788` | Error | A `root template` or `new screens use template` line is not `[blueprint <Blueprint>] <Name> [version "<range>"]` (a version range on an own template is reported here), has a block under a `new screens use template`, a line under `root template` is not `option <name> <value>`, an option is set twice, or a profile declares `new screens use template` more than once. |
 | `PLAY0789` | Error | A line in a `ui profile` `appearance` block is not `color scheme <word>` or `accent "<colour>"`, a line is repeated, or a profile declares more than one `appearance` block. |
 | `PLAY0798` | Error | A `ui profile` declares more than one `root template`. |
+| `PLAY0790` | Error | A `ui profile`'s `root template` or `new screens use template` names an own template the document does not declare - or, checked against the installed catalog, a template its blueprint does not ship. |
+| `PLAY0791` | Warning | A `ui profile` selects its shell with the legacy `layout <Name>` line. Write `root template <Name>`; the quick fix rewrites it. When a `root template` is also present the `layout` line is ignored. |
+| `PLAY0792` | Error | The root template (or the new screens default) comes from a blueprint the profile does not list in `packages` - or, checked against the installed catalog, one that is not installed. |
+| `PLAY0793` | Warning | The `version` range the root template pins is not satisfied by the installed blueprint. Reported only against the installed catalog. |
+| `PLAY0794` | Error | The root template cannot be the application's shell: it is a dialog template, a screen template that does not declare `scopes application`, a screen template that fits a slot, a layout whose `scopes` leave out `application`, or a layout of a content `type`. |
+| `PLAY0795` | Error | The root template declares no `content` slot, so no screen can be placed in it. |
+| `PLAY0796` | Warning | A `root template` sets an `option` the shell does not expose. An own shell exposes the properties of its `exposure for <Shell>`; a shell that exposes nothing has no options. A blueprint's options are checked against the installed catalog. |
+| `PLAY0797` | Error | The `appearance` `color scheme` is not `light`, `dark` or `system`, or the `accent` is not a `#RGB`, `#RRGGBB` or `#RRGGBBAA` colour. |
+| `PLAY0799` | Error | The `new screens use template` default cannot start a screen in a feature: it is a layout, a dialog template, an application-scope root template, or a template whose `scopes` leave out `feature`. |
 
-A `version` range that is not one Scene understands is `PLAY0721`, as for any template reference. Whether the root template, its options and its values exist is checked against the shell, not by the parser.
+A `version` range that is not one Scene understands is `PLAY0721`, as for any template reference. Whether the root template exists, can be the shell and exposes its options is checked by the validator (`PLAY0790` to `PLAY0799`); what a blueprint ships is checked by `UiProfileShellBinder.Bind` against the host's installed catalog.
 
 ### Arrangement
 

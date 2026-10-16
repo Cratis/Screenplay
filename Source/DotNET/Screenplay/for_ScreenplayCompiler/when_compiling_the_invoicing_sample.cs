@@ -54,7 +54,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_application_layout() => _result.Value!.Layouts!.Single().Name.ShouldEqual("AppShell");
     [Fact] void should_have_the_application_layout_slots() => _result.Value!.Layouts!.Single().Slots.Select(_ => _.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
     [Fact] void should_have_the_navigation_contribution_point_on_the_layout() => _result.Value!.Layouts!.Single().Slots.Single(_ => _.Name == "navigation").Contributes.ShouldEqual("Navigation");
-    [Fact] void should_have_the_profile_selecting_the_layout() => _result.Value!.UiProfiles!.Single().Layout.ShouldEqual("AppShell");
+    [Fact] void should_have_the_profile_selecting_the_root_template() => _result.Value!.UiProfiles!.Single().Root!.Name.ShouldEqual("AppShell");
     [Fact] void should_have_all_slices() => _result.Value!.Modules.Single().Features.SelectMany(_ => _.Slices).Count().ShouldEqual(17);
     [Fact] void should_declare_the_payment_dependency() => _result.Value!.Modules.Single().Features.Single(_ => _.Name == "Payments").DependsOn.Single().Target.ShouldEqual("InvoiceManagement");
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
