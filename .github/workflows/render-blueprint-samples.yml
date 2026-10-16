@@ -1,0 +1,48 @@
+name: Render Blueprint Samples
+
+# Every domain blueprint sample has to render exactly as authored with the published CLI and the published blueprint packages. A sample that
+# needs simplifying to render is a defect of the sample or of the renderer; this finds it before a user does (Cratis/Stage#457).
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *"
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "Samples/**"
+      - "Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.*"
+      - ".github/workflows/render-blueprint-samples.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render-blueprint-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+
+      - name: Install the published CLI
+        run: dotnet tool install --global Cratis.Cli
+
+      - name: Render every domain blueprint sample
+        run: Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.sh "$RUNNER_TEMP/render-blueprint-samples"
