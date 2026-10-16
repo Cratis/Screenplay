@@ -23,7 +23,7 @@ Preserve concept attributes and their typed `scope`, `specialCategory` and `crim
 
 `ProducesSyntax.stream` is nullable `CommandStreamSyntax`. It replaces the whole command route for that production. `ReactionSyntax.from` and `ReducerSyntax.from` are nullable `ObserverFilterSyntax` nodes with `eventSource`, optional `stream` and `location`. Preserve these members during replacements. Source and stream rename includes production overrides and filters.
 
-Explicit single read-model keys preserve ESM bytes. Composite keys and by-block queries are refused at binding with `PLAY0268` (#599). Production routes and observer filters select ESM v10. `PLAY0661` repairs command reads only; queries and trigger reads are not repaired. Read-model property rename remains unsupported. See [Read-model keys](readmodels.md#keys) and [Event sources](event-sources.md).
+Explicit single read-model keys preserve ESM bytes. Flat composite keys and complete caller-supplied query `byParts` for optional single results select ESM v27. Root projection keys are untyped blocks; `RemoveWithSyntax.partsKey` preserves the same block on removal, beside its existing scalar `key`. Collection `byParts`, context-sourced parts and non-optional single returns remain refused with `PLAY0268`; protected command reads by parts remain `PLAY0781` / `ByParts`. Production routes and observer filters select ESM v10. `PLAY0661` repairs command reads only; queries and trigger reads are not repaired. Read-model property rename remains unsupported. See [Read-model keys](readmodels.md#keys) and [Event sources](event-sources.md).
 
 ## Validation contracts
 

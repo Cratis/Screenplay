@@ -912,7 +912,7 @@ None of these has an automatic repair: each is a composition decision for the au
 | `PLAY0661` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. On a composite-key read model, a `from` or `remove with` without a complete untyped key block also reports this code; scalar keys and parent keys cannot supply its parts. |
 | `PLAY0662` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. A composite projection key block also reports this code for unknown, repeated or ill-typed parts, a typed key block, or a non-simple part expression. Projection-key checks run in C# only. No automatic repair is offered. |
 
-An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
+An explicit single `key` binds byte-identically to an inferred identifier. Flat composite keys, complete caller-supplied `by` blocks on optional single-instance queries, and root projection/removal parts keys are admitted from ESM v27. Collection `by` blocks, non-optional single-instance returns and context-sourced parts remain `PLAY0268`. Protected command reads by parts remain `PLAY0781` / `ByParts`.
 
 ### Triggers
 
