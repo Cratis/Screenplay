@@ -1,6 +1,10 @@
 {
     "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        { "name": "Command reads declaration cannot repeat", "source": ["command reads protected", "command reads protected"], "diagnostics": ["PLAY0780@2"] },
+        { "name": "Command reads declaration cannot conflict", "source": ["command reads protected", "command reads legacy"], "diagnostics": ["PLAY0780@2"] },
+        { "name": "Command reads mode is closed", "source": ["command reads unknown"], "diagnostics": ["PLAY0780@1"] },
+        { "name": "Command reads mode cannot have extra words", "source": ["command reads protected extra"], "diagnostics": ["PLAY0780@1"] },
         { "name": "Reaction batches declaration cannot repeat", "source": ["reaction batches atomic", "reaction batches atomic"], "diagnostics": ["PLAY0693@2"] },
         { "name": "Reaction batches declaration cannot conflict", "source": ["reaction batches atomic", "reaction batches legacy"], "diagnostics": ["PLAY0693@2"] },
         { "name": "Reaction batches mode is closed", "source": ["reaction batches unknown"], "diagnostics": ["PLAY0693@1"] },

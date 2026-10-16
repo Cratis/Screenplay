@@ -15,7 +15,7 @@ describe('when authoring protected command reads', () => {
     it('should offer the explicit root mode and explain conditional admission', () => {
         const item = topLevelItems.find(entry => entry.label === 'command reads protected')!;
         item.insertText.should.equal('command reads protected');
-        item.documentation.should.contain('working ESM v24');
+        item.documentation.should.contain('ESM v25');
         hoverContent(['command reads protected'], 0, 'protected', 14, 23)!.should.contain('Conflict/DecisionStateChanged');
     });
 

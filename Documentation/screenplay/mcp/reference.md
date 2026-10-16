@@ -14,7 +14,7 @@ Application source and AST proposals preserve the optional `ApplicationSyntax.re
 
 ## Protected command read admission
 
-Application-root `command reads protected` sets the optional `ApplicationSyntax.commandReadMode` enum (`Protected`) and executable `commandReadMode: "protected"` (working ESM v24). `describe-application` summary exposes `commandReadMode` and `commandReadReadiness`. Absence of the preamble retains legacy command-read refusals, even at later versions. A target must separately admit the version; authoring readiness does not prove target realization.
+Application-root `command reads protected` sets the optional `ApplicationSyntax.commandReadMode` enum (`Protected`) and executable `commandReadMode: "protected"` (ESM v25). `describe-application` summary exposes `commandReadMode` and `commandReadReadiness`. Absence of the preamble retains legacy command-read refusals, even at later versions. A target must separately admit the version; authoring readiness does not prove target realization.
 
 `SemanticCommand.reads` records `name` (alias or view name), `readModel`, `key` (input property or declared identifier when `by` is omitted), and `presence: "required"`. Admission requires a finite, non-empty event-log projection keyed by event-source identity, with removal handlers, and a required scalar non-generated string, string-concept or GUID input key. Refused shapes report `PLAY0781` with a reason; missing identifiers, reads with concurrency, unknown paths and ambiguous paths report `PLAY0782`–`PLAY0785`. `ReadsSyntax.byParts` remains unadmitted for protected command reads.
 

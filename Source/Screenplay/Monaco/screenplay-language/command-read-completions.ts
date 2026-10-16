@@ -34,7 +34,7 @@ export function commandReadCompletions(lines: string[], line: number, before: st
         return models[0].model.properties.filter(property => `${name}.${property.name}`.startsWith(prefix)).map(property => ({
             label: `${name}.${property.name}`,
             insertText: prefix.includes('.') ? property.name : `${name}.${property.name}`,
-            documentation: 'Protected read property in require or produces mappings (working ESM v24). Required absence rejects before requirements; matching intervening facts conflict at commit. Admission depends on the view and key shape.',
+            documentation: 'Protected read property in require or produces mappings (ESM v25). Required absence rejects before requirements; matching intervening facts conflict at commit. Admission depends on the view and key shape.',
         }));
     });
 }

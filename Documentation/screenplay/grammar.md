@@ -42,7 +42,7 @@ ReactionBatchesPreamble = "reaction", "batches", "atomic", NL ;
 
 CommandReadsPreamble = "command", "reads", "protected", NL ;
 (* Application root only, once across composed documents (PLAY0780).
-   Imported commands inherit the mode; presence selects working ESM v24.
+   Imported commands inherit the mode; presence selects ESM v25.
    The two behavioral preambles may appear in either order. This is not a
    command declaration. Without it, legacy command reads remain refused. *)
 

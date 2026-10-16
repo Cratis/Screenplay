@@ -39,7 +39,7 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
 }
 
 export const topLevelItems: CompletionEntry[] = [
-    { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (working ESM v24). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
+    { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
     { label: 'reaction batches atomic', insertText: 'reaction batches atomic', documentation: 'Opts the composed application into atomic direct and refusal-branch reaction batches (ESM v22). Omit only to retain legacy per-fact behavior.' },
     { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },

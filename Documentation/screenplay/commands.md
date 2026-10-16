@@ -198,7 +198,7 @@ These paths bind under the application-root `command reads protected` preamble w
 
 ### What `reads` guarantees
 
-Application-root `command reads protected` opts the composed application into protected command reads (working ESM v24), under [decision 0085](https://github.com/Cratis/Screenplay/blob/main/decisions/0085-admit-protected-command-reads-through-an-explicit-preamble.md), amending 0017. Declare it once, in the root document; imported commands inherit it. Duplicate, conflicting or non-root declarations report `PLAY0780`. Without it, legacy command reads retain `PLAY0271`, read paths retain `PLAY0268`, and unchanged models keep their bytes and version. A later version alone does not opt a model in.
+Application-root `command reads protected` opts the composed application into protected command reads (ESM v25), under [decision 0085](https://github.com/Cratis/Screenplay/blob/main/decisions/0085-admit-protected-command-reads-through-an-explicit-preamble.md), amending 0017. Declare it once, in the root document; imported commands inherit it. Duplicate, conflicting or non-root declarations report `PLAY0780`. Without it, legacy command reads retain `PLAY0271`, read paths retain `PLAY0268`, and unchanged models keep their bytes and version. A later version alone does not opt a model in.
 
 A protected read must meet all of these conditions:
 
