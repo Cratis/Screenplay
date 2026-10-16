@@ -90,7 +90,17 @@ A child event whose parent does not yet exist stays pending in the reference wor
 
 When a flat root and child both handle the same event type, the evaluator uses the root handler's resolved key as the child's parent, matching Chronicle's current-event fallback. It does not implement the earlier-child-creation branch of `FindParentEvent` (`Source/Kernel/Core/Projections/Engine/KeyResolvers.cs:389-415` in Chronicle). For a shared event that updates a child created by a different event type, Chronicle can resolve that child's existing location through `TryResolveViaCreationEventSource`; the evaluator still uses the current parent handler's key. Do not use the evaluator as a conformance oracle for that self-referential shared-event shape.
 
-This is **reference semantics**, not Chronicle replay. Chronicle's lowering, validation and engine decide runtime meaning (decision 0001); use Chronicle when rebuilding runtime state. This operation does not append facts to an existing world or execute reactions.
+This is **reference semantics**, not Chronicle replay. Chronicle's lowering, validation and engine decide runtime meaning (decision 0001); use Chronicle when rebuilding runtime state. This operation builds a world from the whole history. It does not execute reactions. To add facts to a world you already hold, use `ExtendWorld`.
+
+## Extending a world with facts from outside
+
+`new SemanticEvaluator().ExtendWorld(plan, world, facts)` adds facts that already hold in the log, such as facts another writer appended between a decision and its commit. It validates the new facts exactly as `EstablishWorld` does, then projects only those facts onto the world's read models and pending children, taking the world's facts as the prior history. It checks no constraint and publishes nothing, because the facts are already in the log. A fact that reaches a reducer returns `SemanticUnsupported`, as it does in `EstablishWorld`.
+
+For a successfully established prefix `a` on the same plan, the world of `ExtendWorld(Establish(a), b)` equals the world of `Establish(a + b)`: the same facts, read models and pending children. The accepted result is not equal as a whole, because its `Facts` hold only `b`. A default array, an unknown event, a malformed occurrence or payload returns `SemanticRejected` with category `Contract`. Any failure returns the input world unchanged.
+
+The extension facts are validated as public replay, so each must carry a typed event-source identity matching its event's declared producer type. Facts of a locally published public event have no producer type and are refused until that rule changes; extend with the facts of private events and imported public events.
+
+The host loop that uses it, with the commit and the guarded write, is in [Append a settled command in a live host](../reactions.md#append-a-settled-command-in-a-live-host).
 
 ## Routed facts
 

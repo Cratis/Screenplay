@@ -358,7 +358,9 @@ specification runner's reaction semantics, including `from`, `where`, append ord
 The limit counts the observed input facts as well as reaction effects, not established history.
 
 Pass the accepted command result's `World` and `Facts`. That world already contains the command's facts and
-any projection changes from them. Appending facts outside a command has no public path today.
+any projection changes from them. Facts that other writers appended outside a command enter the world through
+[`ExtendWorld`](projections/semantic-model.md#extending-a-world-with-facts-from-outside), before the command is
+committed; see the host loop below.
 
 An accepted settlement contains the settled world and **only the additional reaction facts**, in append
 order, with no queries or response. Append the command's facts followed by the settlement's facts together
@@ -390,6 +392,35 @@ unsupported or conflict result as failure, not as an empty successful append.
 
 This API does not fire clock, startup, shutdown or application triggers, and it does not execute captures.
 A reached opaque reaction body returns `SemanticUnsupported`; it is still the target provider's to run.
+
+### Append a settled command in a live host
+
+A host that writes to a store runs the command in five steps, ending in a guarded batch write
+([decision 0089](https://github.com/Cratis/Screenplay/blob/main/decisions/0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md)):
+
+1. **Decide.** Call `SemanticEvaluator.Decide` on the world you read.
+2. **Extend.** Read the log up to its current tail and call `SemanticEvaluator.ExtendWorld` with every fact after the decided world.
+3. **Commit.** Call `SemanticDecision.Commit` with the extended world. Only a fact that matches the decision's dependencies conflicts; irrelevant facts are settled against.
+4. **Settle.** Run `SemanticReactionSettlement.Settle` on the accepted result.
+5. **Write.** Persist the command's facts and the settlement's facts as one batch, guarded on the log holding exactly the extended world's facts.
+
+Two windows can lose a race, and each has its own rule:
+
+| Window | What can happen | Rule |
+| --- | --- | --- |
+| Decide to commit | Another writer appends before you commit. | Extend with everything up to the tail you read just before persisting, then commit against that world. A matching fact conflicts; an irrelevant one settles against the later world. |
+| Settle to write | Another writer appends after you settled. | Write the whole batch atomically, guarded on the **durable pre-batch world**: the extended world you passed to `Commit`, before any tentative root or cascade facts. The log must hold exactly those facts. A successful command with no facts makes the same guarded write, because it still validates its dependencies. |
+
+Commands that settlement invokes decide and commit at one world through `Execute`, so they have no first window.
+
+When the guarded write is definitively not written because the log moved:
+
+- **Settlement invoked no commands.** You may go back to step 2 with the same `SemanticDecision`. This is sound because `Commit` is pure and the values the decision generated were fixed when `Decide` ran.
+- **Settlement invoked a command.** The operation fails as `Conflict` / `DecisionStateChanged`. Do not retry it automatically: re-running would decide the invoked commands again against a new world.
+- **The write outcome is unknown.** Neither retry nor report success. Read the log to find out what was written.
+
+The guarded write, the retry bound and the unknown-outcome handling are the host's own; the corpus does not cover
+them. The [race vectors](interoperability.md#protected-command-read-race-vectors) cover steps 1 to 3.
 
 ## Examples
 

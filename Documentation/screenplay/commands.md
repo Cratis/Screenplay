@@ -210,7 +210,37 @@ A protected read must meet all of these conditions:
 
 Execution orders authorization → property rules → required reads → derive/provide → requirements → productions/responses. Missing required state rejects with `Validation` and message `<ReadModel> '<key value>' does not exist.` before any requirement or mapping is evaluated. A property-rule rejection therefore takes precedence over absence. Optional view properties follow the existing optional comparison and mapping rules.
 
-Decide records the unfiltered fact-log boundary and each read's key plus the view's handled event types; reads of the same key merge. A matching fact after the boundary makes commit return `Conflict` / `DecisionStateChanged`, with no facts from the command. Every intervening fact is considered, including publications. An irrelevant fact does not conflict: commit uses the latest world for constraints, projections and publications and preserves intervening state. Even a command producing no facts is checked. Race cases are evaluator vectors, not a new specification construct.
+Decide records the unfiltered fact-log boundary and each read's key plus the view's handled event types; reads of the same key merge. A matching fact after the boundary makes commit return `Conflict` / `DecisionStateChanged`, with no facts from the command. Every intervening fact is considered, including publications. An irrelevant fact does not conflict: commit uses the latest world for constraints, projections and publications and preserves intervening state. Even a command producing no facts is checked. Race cases are [published vectors](interoperability.md#protected-command-read-race-vectors) run through the public host API, not a new specification construct.
+
+### Deciding and committing from a host
+
+`SemanticEvaluator.Execute` decides and commits at one world. A host that appends to a real store has a window between the two, in which another writer can append, so it calls the two halves itself, under [decision 0089](https://github.com/Cratis/Screenplay/blob/main/decisions/0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md):
+
+```csharp
+using System.Collections.Immutable;
+using Cratis.Screenplay.Semantics.Execution;
+
+static SemanticExecutionResult DecideAndCommit(
+    SemanticEvaluator evaluator,
+    SemanticExecutionPlan plan,
+    SemanticWorld decidedWorld,
+    SemanticExecutionRequest request,
+    ImmutableArray<SemanticFact> factsAppendedMeanwhile)
+{
+    var decision = evaluator.Decide(plan, decidedWorld, request);
+    var extended = evaluator.ExtendWorld(plan, decidedWorld, factsAppendedMeanwhile);
+
+    return extended is SemanticAccepted ? decision.Commit(extended.World) : extended;
+}
+```
+
+- `Decide` returns a `SemanticDecision`. Its `Boundary` is the count of facts in the decided world and its `Dependencies` list, per protected key, the event contracts that change the views behind it (`Entries[].Key` and `Entries[].EventContracts`). `Dependencies.Matches(fact)` applies the conflict rule to one fact. A command that reads nothing, or whose decision was refused, has `Dependencies.Empty`. A read-only request is refused with a `Contract` rejection; run it through `Execute`.
+- `Commit(world)` takes a world that holds the decided facts as its prefix and settles the decision against it: `Conflict` / `DecisionStateChanged` with no facts when a later fact matches a dependency, otherwise constraints, projections and publications run against that world. A world that is shorter than, or rewrites, the decided history is a `Contract` rejection.
+- `Commit` is pure. It changes neither the decision nor the world, so the same decision can be committed against several worlds in turn: accepted against one, in conflict against a longer one.
+- [`ExtendWorld`](projections/semantic-model.md#extending-a-world-with-facts-from-outside) turns the facts another writer appended into the later world. It is how a host reaches `Commit` without reconstructing history.
+- `ISemanticEvaluator` has no `Decide`. Reactions and cascades keep calling `Execute`: inside settlement the decide and commit worlds are the same, so no window exists.
+
+The [host loop](reactions.md#append-a-settled-command-in-a-live-host) covers settlement, the guarded write and when a lost guard may be retried.
 
 A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) for hand-written code.
 
