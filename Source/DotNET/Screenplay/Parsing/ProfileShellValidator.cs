@@ -17,8 +17,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </remarks>
 internal static partial class ProfileShellValidator
 {
-    const string ApplicationScope = "application";
-    const string FeatureScope = "feature";
+    internal const string ApplicationScope = "application";
+    internal const string FeatureScope = "feature";
     static readonly string[] _colorSchemes = ["light", "dark", "system"];
     static readonly string[] _contentTypes = ["Workspace", "List", "Detail", "Form"];
 
@@ -250,7 +250,7 @@ internal static partial class ProfileShellValidator
     /// <summary>
     /// The facts <c>TemplateApplicability.ValidateLayout</c>, <c>ValidateScreenTemplate</c> and <c>ValidateDialogTemplate</c> decide by.
     /// </summary>
-    static List<string> Applicability(TemplateDescriptor template, string scope, bool asShell)
+    internal static List<string> Applicability(TemplateDescriptor template, string scope, bool asShell)
     {
         var problems = new List<string>();
         var kind = template.Kind switch
@@ -296,7 +296,7 @@ internal static partial class ProfileShellValidator
         return problems;
     }
 
-    static IEnumerable<TemplateDescriptor> Own(ApplicationSyntax application)
+    internal static IEnumerable<TemplateDescriptor> Own(ApplicationSyntax application)
     {
         var exposures = application.Exposures.ToList();
         IReadOnlyList<string>? OptionsOf(string owner)

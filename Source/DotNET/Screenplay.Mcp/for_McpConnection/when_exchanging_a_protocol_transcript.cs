@@ -37,7 +37,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     [Fact]
     void should_list_all_public_tools() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["run-specifications", "repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
-        "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
+        "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "ui-profiles", "recommend-layout", "syntax-schema",
         "open-workspace", "list-release-baseline", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
     [Theory]
