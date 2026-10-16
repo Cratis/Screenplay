@@ -125,6 +125,8 @@
   href: model-comparison.md
 - name: Value rule checks
   href: value-rule-checks.md
+- name: Check a concept declaration
+  href: concept-checks.md
 - name: Visitors and traversal
   href: visitors.md
 - name: Syntax tree compatibility

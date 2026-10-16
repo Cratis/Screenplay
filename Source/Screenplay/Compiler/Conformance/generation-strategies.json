@@ -1,0 +1,531 @@
+{
+  "identifierMinimumBits": 64,
+  "strategies": [
+    {
+      "name": "uuid",
+      "esmKind": "uuid",
+      "primitives": [
+        "Uuid",
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": 122,
+      "options": [
+        {
+          "name": "prefix",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 0,
+          "maximum": 32,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0678"
+        },
+        {
+          "name": "case",
+          "placement": "Modifier",
+          "kind": "Choice",
+          "required": false,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "lower",
+            "upper"
+          ],
+          "default": "lower",
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "uuidv7",
+      "esmKind": "uuidv7",
+      "primitives": [
+        "Uuid",
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": 74,
+      "options": [
+        {
+          "name": "prefix",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 0,
+          "maximum": 32,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0678"
+        },
+        {
+          "name": "case",
+          "placement": "Modifier",
+          "kind": "Choice",
+          "required": false,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "lower",
+            "upper"
+          ],
+          "default": "lower",
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "ulid",
+      "esmKind": "ulid",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": 80,
+      "options": [
+        {
+          "name": "prefix",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 0,
+          "maximum": 32,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0678"
+        },
+        {
+          "name": "case",
+          "placement": "Modifier",
+          "kind": "Choice",
+          "required": false,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "lower",
+            "upper"
+          ],
+          "default": "upper",
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "typeid",
+      "esmKind": "typeid",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": 74,
+      "options": [
+        {
+          "name": "prefix",
+          "placement": "Argument",
+          "kind": "Text",
+          "required": true,
+          "minimum": 0,
+          "maximum": 63,
+          "choices": [],
+          "default": null,
+          "charset": "lowercaseAsciiLettersAndUnderscores",
+          "distinct": false,
+          "matchPattern": "^([a-z]([a-z_]{0,61}[a-z])?)?$",
+          "conditions": [],
+          "diagnosticCode": "PLAY0680"
+        }
+      ]
+    },
+    {
+      "name": "nanoid",
+      "esmKind": "nanoid",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": null,
+      "options": [
+        {
+          "name": "size",
+          "placement": "Argument",
+          "kind": "WholeNumber",
+          "required": false,
+          "minimum": 1,
+          "maximum": 256,
+          "choices": [],
+          "default": "21",
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0681"
+        },
+        {
+          "name": "alphabet",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 2,
+          "maximum": 256,
+          "choices": [],
+          "default": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-",
+          "charset": "printableAscii",
+          "distinct": true,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0679"
+        },
+        {
+          "name": "prefix",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 0,
+          "maximum": 32,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0678"
+        }
+      ]
+    },
+    {
+      "name": "bytes",
+      "esmKind": "bytes",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 15,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": null,
+      "options": [
+        {
+          "name": "count",
+          "placement": "Argument",
+          "kind": "WholeNumber",
+          "required": true,
+          "minimum": 1,
+          "maximum": 512,
+          "choices": [],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0681"
+        },
+        {
+          "name": "encoding",
+          "placement": "Argument",
+          "kind": "Choice",
+          "required": true,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "base64url",
+            "hex",
+            "base32"
+          ],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        },
+        {
+          "name": "prefix",
+          "placement": "Modifier",
+          "kind": "Text",
+          "required": false,
+          "minimum": 0,
+          "maximum": 32,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "PrimitiveIs",
+              "option": null,
+              "values": [
+                "String"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0678"
+        },
+        {
+          "name": "case",
+          "placement": "Modifier",
+          "kind": "Choice",
+          "required": false,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "lower",
+            "upper"
+          ],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [
+            {
+              "kind": "OptionIn",
+              "option": "encoding",
+              "values": [
+                "hex",
+                "base32"
+              ]
+            }
+          ],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "pattern",
+      "esmKind": "pattern",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 21,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": null,
+      "options": [
+        {
+          "name": "pattern",
+          "placement": "Argument",
+          "kind": "Pattern",
+          "required": true,
+          "minimum": 1,
+          "maximum": 256,
+          "choices": [],
+          "default": null,
+          "charset": "printableAscii",
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        },
+        {
+          "name": "checksum",
+          "placement": "Modifier",
+          "kind": "Choice",
+          "required": false,
+          "minimum": null,
+          "maximum": null,
+          "choices": [
+            "luhn",
+            "mod11",
+            "mod97"
+          ],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "random",
+      "esmKind": "random",
+      "primitives": [
+        "Int"
+      ],
+      "introducedIn": {
+        "major": 21,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "Reference",
+      "fixedBits": null,
+      "options": [
+        {
+          "name": "range",
+          "placement": "Argument",
+          "kind": "Int64Range",
+          "required": true,
+          "minimum": "-9223372036854775808",
+          "maximum": "9223372036854775807",
+          "choices": [],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        }
+      ]
+    },
+    {
+      "name": "rule",
+      "esmKind": "implementation",
+      "primitives": [
+        "String"
+      ],
+      "introducedIn": {
+        "major": 21,
+        "minor": 0
+      },
+      "status": "Admitted",
+      "executability": "RequiresImplementation",
+      "fixedBits": null,
+      "options": [
+        {
+          "name": "rule",
+          "placement": "Argument",
+          "kind": "Name",
+          "required": true,
+          "minimum": null,
+          "maximum": null,
+          "choices": [],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "conditions": [],
+          "diagnosticCode": "PLAY0673"
+        },
+        {
+          "name": "implementation",
+          "placement": "Body",
+          "kind": "Implementation",
+          "required": true,
+          "minimum": null,
+          "maximum": null,
+          "choices": [],
+          "default": null,
+          "charset": null,
+          "distinct": false,
+          "matchPattern": null,
+          "conditions": [],
+          "diagnosticCode": "PLAY0268"
+        }
+      ]
+    },
+    {
+      "name": "sequence",
+      "esmKind": null,
+      "primitives": [],
+      "introducedIn": null,
+      "status": "AwaitingAdmission",
+      "executability": "None",
+      "fixedBits": null,
+      "options": []
+    }
+  ]
+}

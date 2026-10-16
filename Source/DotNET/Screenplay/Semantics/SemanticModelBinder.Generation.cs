@@ -112,8 +112,8 @@ public sealed partial class SemanticModelBinder
 
         void ValidateGenerationRule(ConceptSyntax concept, SemanticGeneration? generation, SemanticValidationRule rule, SourceLocation location)
         {
-            if (generation is null && (!UsesImplicitUuid(concept) || !AllSlices().SelectMany(entry => entry.Slice.Commands)
-                .SelectMany(command => command.Properties).Any(property => property.IsGenerated && string.Equals(property.Type.Name, concept.Name, StringComparison.Ordinal))))
+            if (generation is null && (!UsesImplicitUuid(concept) || (!_assumeConceptGenerated && !AllSlices().SelectMany(entry => entry.Slice.Commands)
+                .SelectMany(command => command.Properties).Any(property => property.IsGenerated && string.Equals(property.Type.Name, concept.Name, StringComparison.Ordinal)))))
             {
                 return;
             }
@@ -134,7 +134,7 @@ public sealed partial class SemanticModelBinder
             var generation = concept.Generation;
             if ((generation?.Strategy == "pattern" || generation?.Strategy == "random") && HasErrors) return;
             var count = GenerationEntropy.ExactSupportCount(generation, utcAssessmentYear);
-            if (count is null || GenerationEntropy.HasAtLeastBits(count.Value, 64)) return;
+            if (count is null || GenerationEntropy.HasAtLeastBits(count.Value, GenerationStrategyCatalog.IdentifierMinimumBits)) return;
             var bits = GenerationEntropy.SupportBits(count.Value);
             var countAtOnePercent = GenerationEntropy.ValuesAtOnePercentCollision(bits);
             var message = string.Create(CultureInfo.InvariantCulture, $"Generated property '{property.Name}' of '{command.Name}' has {bits:0.##} random bits; 1% collision probability after about {countAtOnePercent:G4} values.");
