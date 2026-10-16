@@ -133,6 +133,42 @@ character positions only, which let nested nullable repeats such as `((a*)*)…`
 thousands of states within a 1,500-position budget. The budget now counts choice points as well, with the limit at
 3,000 nodes, so it bounds the matcher's real size.
 
+## Amendment (2026-10-16): first-class text rules and Studio pattern shapes (#810)
+
+Studio writes its text rules as `matches` patterns, and some of them use lookarounds. Since this decision was released,
+Screenplay refuses two of those shapes with PLAY0699 (not contains, and the newer ends with), so models authored in
+Studio fail in the CLI and in Stage. The dialect itself stays as it is. These items are added:
+
+8. **First-class text rules.** A rule on a scalar text value can be `contains "x"`, `not contains "x"`,
+   `starts with "x"` or `ends with "x"`. They compare UTF-16 code units ordinally, with no culture or case folding, the
+   same way `==` and `!=` already compare text. An absent value passes, as for every other rule. An empty operand is
+   admitted and keeps the meaning the equivalent pattern had: `contains ""` always holds and `not contains ""` never does.
+   Equals and not equals stay `==` and `!=`; no word aliases are added. The ESM records the rule kind and the operand
+   text in ESM v24; a model that uses none of these rules serializes byte-for-byte as before.
+9. **Studio shapes are desugared, not refused.** Both compilers recognise exactly the shapes Studio has emitted:
+   - v1 (2026-10-01): `^L$`, `^(?!L$)`, `L`, `^(?![\s\S]*L)`, `^L` and `L$`, where `L` is the operand escaped by .NET
+     `Regex.Escape`;
+   - v2 (2026-10-12): the same rules with `(?![\s\S])` in place of `$`, where `L` escapes exactly
+     ``\ ^ $ . | ? * + ( ) [ ] { } /``.
+   A shape is recognised only when re-escaping the decoded operand gives back exactly the authored text, so every near
+   miss keeps PLAY0699. A recognised lookaround shape binds as the first-class rule and reports warning **PLAY0787**
+   (`DeprecatedStudioTextRulePattern`) with a quick fix that writes the first-class form. The syntax tree keeps the
+   authored `matches` text, so printing round-trips. Shapes that use no lookaround are admitted by the dialect already
+   and are left alone. PLAY0787 becomes an error only in a later major release.
+10. **Older documents.** A deserialized ESM `matches` rule whose pattern is a recognised Studio shape evaluates, and is
+    checked in generation, as the desugared rule. The bytes do not change and no outcome kind is added. Item 5 still
+    applies to every other pattern outside the dialect.
+11. **`$` is the strict end of input.** Item 1 already says this; it is now a guarantee that other tools may rely on.
+    That is why desugaring equals, not equals and ends with changes no verdict.
+12. **Public admission check.** Both compilers expose the dialect check as a public, data-only API:
+    `PortableMatchPattern.Check(pattern)` in C# and `checkMatchPattern(pattern)` in TypeScript. The result carries the
+    status (admitted, deprecated, refused, invalid), the diagnostic code, the construct, its UTF-16 offset, the suggestion
+    and, for a deprecated Studio shape, the first-class replacement. Studio and Stage call it instead of copying the
+    dialect.
+
+The survey behind item 1 now also counts generated patterns from known producers (Studio), not only authored ones.
+Accepted by the L0 coordinator on behalf of Sindre Alstad Wilting (L0 decision 2026-10-16 on #810).
+
 ## Related
 
-#800, #796; decisions 0004 (outcome kinds), 0054 (generation), 0071; Cratis/Stage (renderer), Cratis/Arc (client validators).
+#800, #796, #810; decisions 0004 (outcome kinds), 0054 (generation), 0071; Cratis/Stage (renderer), Cratis/Arc (client validators).
