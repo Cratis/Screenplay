@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticKeyword, diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ParserContext } from './ParserContext';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
@@ -78,9 +79,9 @@ export function specificationExamples(application: ApplicationSyntax) {
                 if (type === undefined) {
                     const imported = application.imports.filter(imported => imported.qualifiedName === example.type || imported.qualifiedName.split('.').at(-1) === example.type);
                     if (deferImportedTypes && matches.length === 0 && imported.length === 1 && resolveCandidates(imported[0].qualifiedName, entry.scope).length === 0) continue;
-                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' type '${example.type}' is unknown or ambiguous; qualify a declared event, command, or read model.`, example.location);
+                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' type '${example.type}' is unknown or ambiguous; qualify a declared event, command, or read model.`, example.location, { ...diagnosticText('example', example.name), ...diagnosticText('type', example.type) });
                 } else if (type.kind !== 'event' && type.kind !== 'command' && type.kind !== 'readmodel') {
-                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' must name an event, command, or read model, not a ${type.kind ?? 'example'}; example inheritance is not supported.`, example.location);
+                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' must name an event, command, or read model, not a ${type.kind ?? 'example'}; example inheritance is not supported.`, example.location, { ...diagnosticText('example', example.name), ...diagnosticText('type', example.type), ...diagnosticKeyword('kind', type.kind ?? 'example') });
                 }
             }
         },

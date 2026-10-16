@@ -2530,6 +2530,297 @@
               "type": "StateView"
             }
           ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Every project on a schedule, by owner",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Timeline",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Each project as a bar in a lane for its owner, with its progress",
+              "events": [],
+              "name": "ProjectTimeline",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ProjectRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "projectId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lane"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "progress"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "end"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ProjectTimelineItemsProjection",
+                  "readModel": "ProjectTimelineItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsTeamMember"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllProjectTimelineItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "ProjectTimelineItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "ProjectTimelineItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "projectId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "lane",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "progress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Percent"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "end",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.ProjectTracker",
+                      "name": "ProjectTimeline",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Timeline"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ProjectRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Website relaunch"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "owner",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Amelia Hart"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "progress",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 72
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-13"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "onTrack"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "TeamMember"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "PlacingTheProjectOnTheSchedule",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "ProjectTimelineItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "projectId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Website relaunch"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "lane",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Amelia Hart"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
         }
       ],
       "fileImports": [],

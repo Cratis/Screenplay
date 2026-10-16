@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
@@ -21,13 +22,14 @@ const quotedValue = pattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`
 export function parseConcrete(context: ParserContext, text: string, location: SourceLocation, code: string): ExpressionSyntax | null {
     if (text.startsWith('case.')) return parseSpecificationValue(text, location, context);
     if (containsCaseReference(text)) context.error(DiagnosticCodes.InvalidSpecificationCaseReference, 'A case reference fills a whole value position; it cannot occur inside a structured value or expression.', location);
+    const subjects = code === DiagnosticCodes.InvalidSpecificationValue || code === DiagnosticCodes.InvalidSpecificationCaseValue ? diagnosticText('text', text) : {};
     if ((text.startsWith('"') || text.startsWith("'")) && !quotedValue.test(text)) {
-        context.error(code, 'Expected exactly one concrete value.', location);
+        context.error(code, 'Expected exactly one concrete value.', location, subjects);
         return null;
     }
     const expression = parseMappingSource(text, location, context);
     if (!['LiteralExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || (expression.kind === 'LiteralExpressionSyntax' && typeof expression.value === 'number' && !Number.isFinite(expression.value))) {
-        context.error(code, 'Expected exactly one concrete literal or structured value, not an expression.', location);
+        context.error(code, 'Expected exactly one concrete literal or structured value, not an expression.', location, subjects);
         return null;
     }
     return expression;

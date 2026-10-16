@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax, PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
@@ -41,7 +42,7 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
                 if (standaloneSpecifications === undefined && !knownType(parameter.type.name)) context.error(DiagnosticCodes.IncompatibleSpecificationParameterType, `Parameter '${parameter.name}' has unknown type '${parameter.type.name}'.`, parameter.type.location);
                 for (const row of specification.cases ?? []) {
                     for (const assignment of row.values.filter(value => value.property === parameter.name)) {
-                        if (!compatibleValue(assignment.source, parameter.type, declarations.concepts, composites)) context.error(DiagnosticCodes.InvalidSpecificationCaseValue, `Case '${row.name}' parameter '${parameter.name}' requires a concrete value of type '${parameter.type.name}'.`, assignment.source.location);
+                        if (!compatibleValue(assignment.source, parameter.type, declarations.concepts, composites)) context.error(DiagnosticCodes.InvalidSpecificationCaseValue, `Case '${row.name}' parameter '${parameter.name}' requires a concrete value of type '${parameter.type.name}'.`, assignment.source.location, { ...diagnosticText('case', row.name), ...diagnosticText('parameter', parameter.name), ...diagnosticText('type', parameter.type.name) });
                     }
                 }
             }

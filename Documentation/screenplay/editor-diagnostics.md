@@ -17,7 +17,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 | PLAY0647–PLAY0649 | Reaction `runs as` syntax, gated invocations without identity and unused identity. Both editors forward the TypeScript checks; declared identity suppresses PLAY0557. PLAY0650–PLAY0651 are C# bound-gate analyses, and PLAY0652 is the opt-in `privilege` completeness finding. Supplied C# findings are preserved. |
 | PLAY0633–PLAY0646 | Identity declaration, source, duplicate-name, built-in-name and keyed-query/type/authorization checks. Both editors forward these checks from the assembled TypeScript model; caller detail paths are completed and validated alongside token built-ins. Executable detail reads still require the C# binder's PLAY0268 verdict (#600). |
 | PLAY0514, PLAY0515 | Projection target and personal identifier checks. Both editors preserve compiler diagnostics. |
-| PLAY0518, PLAY0519 | Typed-example syntax and duplicate assignments. Both editors preserve compiler diagnostics. Example type resolution and semantic values remain C# checks. |
+| PLAY0518, PLAY0519, PLAY0520, PLAY0526 | Typed-example syntax, duplicate assignments, type resolution and non-event example routes. The TypeScript compiler emits the same declared arguments as C# for these checks. Example kind mismatches and semantic example values remain C# checks. |
 | PLAY0341–PLAY0344 | Guarded-action syntax. Both editors preserve compiler diagnostics. |
 | PLAY0345–PLAY0348 | Scoped guarded-action validation: nearest data subject, nested field paths, command argument properties and collection cardinality, and provable shadowing with a 64-disjunct expansion cap. Unknown or ambiguous shapes remain undecided. Monaco forwards these checks for buffers; VS Code also resolves declarations across workspace files compiled together. |
 | PLAY0391 | A unique constraint names a missing direct event field. Checks declared events across all generations, including inline events and merged files. Unknown/imported events, dotted paths and removed-generation fields remain undecided here. |
@@ -29,6 +29,8 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 | PLAY0621, PLAY0625 | Malformed `exposure` and `instance` declarations. Both compilers report them. |
 | PLAY0622–PLAY0624, PLAY0626–PLAY0632, PLAY0654–PLAY0656 | Screen-composition references on the assembled model: exposure owners, re-exposures, instances, exposed values, template content slots and nesting cycles, screen contribution points, navigation outlets and destinations, template scopes and component packages. C# only; the TypeScript compiler parses the syntax but does not resolve these references. |
 
+Compiler diagnostics expose the [declared argument contract](diagnostics.md#for-tool-authors). The Monaco marker API and VS Code diagnostic API have no general diagnostic `data` field; their displayed message and code stay unchanged.
+
 Shared invalid-source cases live in `Source/Screenplay/Compiler/Conformance/diagnostics.json`; both compilers are checked against their codes, lines and order.
 
 ## C#-only checks
@@ -37,6 +39,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 
 | Codes | Why the C# tool is required |
 |---|---|
+| PLAY0521–PLAY0525, PLAY0351 | Example name collisions, kind mismatches, value admission, complete step fixtures and missing read-model identifiers. PLAY0524 includes the authored specification path, step keyword, authored step index, missing property and effective type, plus example and case names when applicable. These arguments are available through C# and MCP, not ordinary local editor validation. |
 | PLAY0666 | Warns when a reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins remain unknown. |
 | PLAY0690 | Compares known nominal producer destinations with reducer-backed instance queries, or warns about several identity domains in one reducer. Unknown provenance suppresses the comparison. Both editors preserve supplied native warnings; local TypeScript validation does not compute them. |
 | PLAY0661, PLAY0662 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |

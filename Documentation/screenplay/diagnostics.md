@@ -73,6 +73,57 @@ rules that no compiler run reports - a capture must include a `source` block, an
 this catalogue describe two different tools, which is the thing the `PLAY` prefix was chosen to avoid. Those
 conditions are reported without a code until the compiler checks them too.
 
+## For tool authors
+
+Use the code and its **declared arguments**, never message text, to identify a diagnostic's subjects. Messages are for people and may be reworded. The C# API exposes `Diagnostic.Arguments`; MCP diagnostic views and this repository's Screenplay tool JSON output serialize it as `arguments`. Text output is unchanged.
+
+Each argument is `{ "kind": "text", "value": "amount" }`, keyed by its declared name. The kinds are `text` (verbatim authored text), `keyword` (stable, never-localized language spelling), `index` (zero-based number), and `declaration` (`{ "kind": "specification", "path": ["Billing", "Invoices", "SendReminder", "Overdue"] }`). A declaration path contains the module if present, features outermost first, the slice if present, then the declaration name. A slice's own name is not repeated. Specification paths use authored names; a separate `case` argument identifies an expanded case.
+
+Published argument names, kinds, meanings and optionality are permanent. Additions are optional arguments or new keyword values; tolerate unknown names and keyword values. Old diagnostics without the field remain readable; diagnostics without subjects use an empty object, `{}`.
+
+### Argument declarations
+
+Codes not listed in this table currently declare no arguments, including `PLAY0198`. Optional arguments are omitted when the reporting site has no such subject. Keyword values below are the closed set the compiler emits, not localized labels.
+
+For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` clause once, in source order, across all forms. Nested lines are part of their step. Synthesized callers and defaults do not count; example and case expansion retain the authored position.
+
+| Code | Argument | Kind | Optional | Meaning | Keyword values |
+|---|---|---|---|---|---|
+| `PLAY0044` | `text` | text | no | The authored mapping line that could not be read. | — |
+| `PLAY0075` | `text` | text | no | The authored projection mapping line that could not be read. | — |
+| `PLAY0101` | `text` | text | no | The authored mapping line or concrete value that could not be read. | — |
+| `PLAY0351` | `readmodel` | text | no | The read model named by the fixture. | — |
+| `PLAY0351` | `property` | text | no | The missing identifier or key-part property. | — |
+| `PLAY0468` | `query` | text | yes | The query reference when known at the reporting site. | — |
+| `PLAY0468` | `argument` | text | no | The unknown, repeated or missing argument name. | — |
+| `PLAY0514` | `property` | text | no | The authored projection target path. | — |
+| `PLAY0518` | `text` | text | no | The authored example declaration line. | — |
+| `PLAY0519` | `property` | text | no | The property assigned more than once. | — |
+| `PLAY0520` | `example` | text | no | The example declaration name or authored example reference. | — |
+| `PLAY0520` | `type` | text | yes | The example's authored type reference when resolving its declaration. | — |
+| `PLAY0520` | `kind` | keyword | yes | The resolved but unsupported declaration kind. | event, command, readmodel, concept, type, example |
+| `PLAY0521` | `example` | text | no | The colliding example name. | — |
+| `PLAY0522` | `example` | text | no | The authored example reference. | — |
+| `PLAY0522` | `kind` | keyword | no | The example's actual declaration kind. | event, command, readmodel |
+| `PLAY0522` | `expectedKind` | keyword | no | The declaration kind required by the step. | event, command, readmodel |
+| `PLAY0523` | `example` | text | no | The example declaration name. | — |
+| `PLAY0523` | `type` | text | no | The example's authored type reference. | — |
+| `PLAY0523` | `property` | text | yes | The invalid property when the failure concerns a property. | — |
+| `PLAY0524` | `specification` | declaration | no | The authored specification declaration, before case expansion. | — |
+| `PLAY0524` | `step` | keyword | no | The step's language keyword spelling. | given, given readmodel, when, when append, then |
+| `PLAY0524` | `stepIndex` | index | no | The zero-based position among all authored step clauses in source order. | — |
+| `PLAY0524` | `property` | text | no | The required property missing from the effective fixture. | — |
+| `PLAY0524` | `type` | text | no | The effective step's type reference. | — |
+| `PLAY0524` | `example` | text | yes | The example used by the step. | — |
+| `PLAY0524` | `case` | text | yes | The named case supplying this expanded specification. | — |
+| `PLAY0524` | `parameter` | text | yes | The case parameter supplying the failing value when known. | — |
+| `PLAY0525` | `example` | text | no | The example whose value or destination cannot be admitted. | — |
+| `PLAY0526` | `example` | text | no | The non-event example declaring a route. | — |
+| `PLAY0583` | `case` | text | yes | The named case when known at the reporting site. | — |
+| `PLAY0583` | `parameter` | text | yes | The parameter assigned by the case when known. | — |
+| `PLAY0583` | `type` | text | yes | The declared parameter type when available. | — |
+| `PLAY0583` | `text` | text | yes | The authored value or nested line that could not be read. | — |
+
 ## The catalogue
 
 ### The document and its top level

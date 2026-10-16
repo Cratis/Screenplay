@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiagnosticArgument } from '../Diagnostics/DiagnosticArgument';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { CommandStreamCandidates } from './CommandStreamCandidates';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
@@ -62,16 +63,16 @@ export class ParserContext {
         this.nestedNumericDirectives.delete(line.number);
     }
 
-    information(code: string, message: string, location: SourceLocation): void {
-        this.#diagnostics.push({ severity: 'information', code, message, location });
+    information(code: string, message: string, location: SourceLocation, arguments_: Readonly<Record<string, DiagnosticArgument>> = {}): void {
+        this.#diagnostics.push({ severity: 'information', code, message, location, arguments: arguments_ });
     }
 
-    error(code: string, message: string, location: SourceLocation): void {
-        this.#diagnostics.push({ severity: 'error', code, message, location });
+    error(code: string, message: string, location: SourceLocation, arguments_: Readonly<Record<string, DiagnosticArgument>> = {}): void {
+        this.#diagnostics.push({ severity: 'error', code, message, location, arguments: arguments_ });
     }
 
-    warning(code: string, message: string, location: SourceLocation): void {
-        this.#diagnostics.push({ severity: 'warning', code, message, location });
+    warning(code: string, message: string, location: SourceLocation, arguments_: Readonly<Record<string, DiagnosticArgument>> = {}): void {
+        this.#diagnostics.push({ severity: 'warning', code, message, location, arguments: arguments_ });
     }
 
     // The next significant line when it is indented deeper than its parent - that is, when it belongs to

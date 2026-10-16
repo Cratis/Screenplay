@@ -1427,6 +1427,328 @@
             {
               "kind": "FeatureSyntax",
               "authorize": null,
+              "description": "Who is away and when, on a calendar",
+              "features": [],
+              "fileImports": [],
+              "isPlacement": false,
+              "name": "Calendar",
+              "slices": [
+                {
+                  "kind": "SliceSyntax",
+                  "captures": [],
+                  "commands": [],
+                  "constraints": [],
+                  "description": "Every approved or pending request as an event across the days it asks for",
+                  "events": [],
+                  "name": "TeamCalendar",
+                  "operations": [],
+                  "projections": [
+                    {
+                      "kind": "ProjectionSyntax",
+                      "autoMap": "Inherit",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "TimeOffRequestRegistered"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "requestId"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "person"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "leaveType"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "fromDate"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "toDate"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "status"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "TimeOffDecided"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "status"
+                            }
+                          ]
+                        }
+                      ],
+                      "name": "TeamCalendarEventsProjection",
+                      "readModel": "TeamCalendarEvents",
+                      "sequence": null
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "kind": "QuerySyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "IsHrManager"
+                        }
+                      },
+                      "by": null,
+                      "description": null,
+                      "filters": [],
+                      "isObservable": true,
+                      "name": "AllTeamCalendarEvents",
+                      "returnType": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "TeamCalendarEvents"
+                      },
+                      "scope": null
+                    }
+                  ],
+                  "reactions": [],
+                  "readModels": [
+                    {
+                      "kind": "ReadModelSyntax",
+                      "description": null,
+                      "name": "TeamCalendarEvents",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "requestId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "TimeOffRequestId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "person",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "PersonName"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "leaveType",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "LeaveType"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "fromDate",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Date"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "toDate",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Date"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "status",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "RequestStatus"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "screens": [
+                    {
+                      "kind": "ScreenSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTemplateReferenceSyntax",
+                          "blueprint": "Cratis.Blueprint.Hr",
+                          "name": "HrTeamCalendar",
+                          "slots": [],
+                          "version": "^1.0"
+                        }
+                      ],
+                      "name": "TeamCalendar"
+                    }
+                  ],
+                  "specifications": [
+                    {
+                      "kind": "SpecificationSyntax",
+                      "given": [
+                        {
+                          "kind": "SpecificationEventSyntax",
+                          "eventType": "TimeOffRequestRegistered",
+                          "for": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                          },
+                          "values": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "employee",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Silje Andersen"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "leaveType",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "vacation"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "fromDate",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "2026-10-26"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "toDate",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "2026-10-30"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "days",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 5
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "status",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "pending"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [],
+                        "roles": [
+                          "HrManager"
+                        ]
+                      },
+                      "givenCaptures": [],
+                      "givenClock": null,
+                      "givenOperationFailures": [],
+                      "givenReadModels": [],
+                      "name": "ShowingARequestOnTheCalendar",
+                      "thenCompensated": [],
+                      "thenDenied": null,
+                      "thenErrors": [],
+                      "thenEvents": [],
+                      "thenEventsInAnyOrder": false,
+                      "thenNoResult": null,
+                      "thenOperations": [],
+                      "thenReadModels": [
+                        {
+                          "kind": "SpecificationReadModelSyntax",
+                          "exactly": false,
+                          "name": "TeamCalendarEvents",
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "requestId",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0002"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "person",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Silje Andersen"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "thenResults": [],
+                      "thenReturns": null,
+                      "when": null,
+                      "whenAppended": null,
+                      "whenCapture": null,
+                      "whenClock": null,
+                      "whenQuery": null,
+                      "whenTrigger": null
+                    }
+                  ],
+                  "type": "StateView"
+                }
+              ]
+            },
+            {
+              "kind": "FeatureSyntax",
+              "authorize": null,
               "description": "What each person has taken and has left",
               "features": [],
               "fileImports": [],

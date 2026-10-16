@@ -26,7 +26,7 @@ public static partial class SpecificationExamples
                 {
                     foreach (var assignment in row.Values.Where(value => value.Property == parameter.Name && !values.Compatible(value.Source, parameter.Type)))
                     {
-                        _context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' requires a concrete value of type '{parameter.Type.Name}'.", assignment.Source.Location);
+                        _context.Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' requires a concrete value of type '{parameter.Type.Name}'.", assignment.Source.Location, DiagnosticArguments.Empty.With("case", DiagnosticArgument.Text(row.Name)).With("parameter", DiagnosticArgument.Text(parameter.Name)).With("type", DiagnosticArgument.Text(parameter.Type.Name)));
                     }
                 }
             }

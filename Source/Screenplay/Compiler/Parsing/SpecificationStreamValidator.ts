@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { CommandSyntax } from '../Syntax/Commands';
@@ -35,10 +36,10 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
         if (distinct.has(key)) continue;
         distinct.add(key);
         const row = diagnostic.code === DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.find(row => row.values.some(value => value.source.location.line === diagnostic.location.line && value.source.location.column === diagnostic.location.column && value.source.location.path === diagnostic.location.path)) : undefined;
-        if (row === undefined) context.error(diagnostic.code, diagnostic.message, diagnostic.location);
+        if (row === undefined) context.error(diagnostic.code, diagnostic.message, diagnostic.location, diagnostic.arguments);
         else {
             const key = JSON.stringify(diagnostic.location);
-            if (!reported.has(key)) context.error(diagnostic.code, `Case '${row.name}': ${diagnostic.message}`, diagnostic.location);
+            if (!reported.has(key)) context.error(diagnostic.code, `Case '${row.name}': ${diagnostic.message}`, diagnostic.location, diagnostic.arguments);
             reported.add(key);
         }
     }
@@ -53,7 +54,7 @@ function validateRoutes(application: ApplicationSyntax, context: ParserContext):
     const exampleSpecifications = examples.flatMap(entry => {
         if (entry.kind !== 'event') {
             if ((entry.kind === 'command' || entry.kind === 'readmodel') && (entry.example.stream != null || entry.example.noStream != null))
-                context.error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", (entry.example.stream ?? entry.example.noStream)!.location);
+                context.error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", (entry.example.stream ?? entry.example.noStream)!.location, diagnosticText('example', entry.example.name));
             return [];
         }
         const node: SpecificationEventSyntax = { kind: 'SpecificationEventSyntax', eventType: entry.name, values: entry.example.values, for: entry.example.for, stream: entry.example.stream, noStream: entry.example.noStream, location: entry.example.location };

@@ -3,4 +3,6 @@
 
 export * from './SourceLocation';
 export * from './Diagnostic';
+export * from './DiagnosticArgument';
+export * from './DiagnosticArgumentKind';
 export * from './DiagnosticCodes';
