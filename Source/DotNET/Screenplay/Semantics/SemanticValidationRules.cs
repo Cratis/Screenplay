@@ -3,20 +3,21 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Semantics.Generation;
 
-namespace Cratis.Screenplay.Semantics.Execution;
+namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
 /// Defines the reference meaning of every declarative validation rule the evaluator executes.
 /// </summary>
 /// <remarks>
 /// Chronicle has no comparison, length or pattern rule algebra; these rules are an application-layer concern
-/// whose meaning ESM owns. Every rule except not-empty is satisfied by an absent (null) value, so presence is
+/// whose meaning ESM owns. Every evaluable rule except not-empty is satisfied by an absent (null) value, so presence is
 /// stated only by not-empty. A bound on text constrains its length in UTF-16 code units - the length both
 /// .NET and JavaScript report - and a bound on a number constrains its value.
 /// </remarks>
-static class SemanticValidationRules
+public static partial class SemanticValidationRules
 {
     /// <summary>
     /// Gets whether the reference evaluator executes a rule kind. Any other kind blocks plan creation.
@@ -107,8 +108,8 @@ static class SemanticValidationRules
     };
 
     internal static string? UnsupportedPattern(SemanticValidationRule rule) =>
-        rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && LegacyTextRulePatterns.Recognize(pattern.Value) is null && SemanticMatchPattern.Parse(pattern.Value) is { Accepted: false } parsed
-            ? $"outside the portable match dialect: {parsed.Construct}"
+        rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && PortableMatchPattern.Check(pattern.Value) is { Status: PortableMatchStatus.Refused or PortableMatchStatus.Invalid } check
+            ? $"outside the portable match dialect: {check.Construct}"
             : null;
 
     static bool Checksum(SemanticValue value, SemanticValue? operand) =>

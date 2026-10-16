@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
-using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Semantics.for_SemanticMatchPattern;
 
 namespace Cratis.Screenplay.Semantics.for_PortableMatchPattern;

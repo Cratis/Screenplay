@@ -59,7 +59,7 @@ internal sealed partial class SemanticCommandExecution
                 return Contract($"Generated fixture for '{property.Name}' does not match its generation strategy shape.");
             }
 
-            if (concept.Validations.Any(rule => !SemanticValidationRules.Satisfies(rule, fixture.Value)))
+            if (SemanticValidationRules.Check(concept, fixture.Value).Any(check => check.Status != SemanticRuleStatus.Satisfied))
             {
                 return Contract($"Generated fixture '{property.Name}' fails concept '{concept.Name}' rules");
             }
