@@ -13,7 +13,7 @@ internal static class LegacyTextRulePatterns
 
     internal static PortableMatchReplacement? Recognize(string pattern)
     {
-        if (pattern.StartsWith(@"^(?![\s\S]*", StringComparison.Ordinal) && pattern.EndsWith(')'))
+        if (pattern.Length >= 11 + 1 && pattern.StartsWith(@"^(?![\s\S]*", StringComparison.Ordinal) && pattern.EndsWith(')'))
         {
             var literal = pattern[11..^1];
             var value = Decode(literal, false) ?? Decode(literal, true);
@@ -23,16 +23,14 @@ internal static class LegacyTextRulePatterns
 
         if (pattern.StartsWith("^(?!", StringComparison.Ordinal))
         {
-            if (pattern.EndsWith(StrictEnd + ")", StringComparison.Ordinal)) return Replacement(SemanticValidationRuleKind.NotEqual, pattern[4..^(StrictEnd.Length + 1)], false);
-            if (pattern.EndsWith("$)", StringComparison.Ordinal)) return Replacement(SemanticValidationRuleKind.NotEqual, pattern[4..^2], true);
+            if (pattern.Length >= 4 + StrictEnd.Length + 1 && pattern.EndsWith(StrictEnd + ")", StringComparison.Ordinal)) return Replacement(SemanticValidationRuleKind.NotEqual, pattern[4..^(StrictEnd.Length + 1)], false);
+            if (pattern.Length >= 4 + 2 && pattern.EndsWith("$)", StringComparison.Ordinal)) return Replacement(SemanticValidationRuleKind.NotEqual, pattern[4..^2], true);
         }
 
-        if (!pattern.EndsWith(StrictEnd, StringComparison.Ordinal)) return null;
-        var body = pattern[..^StrictEnd.Length];
+        if (pattern.Length < StrictEnd.Length || !pattern.EndsWith(StrictEnd, StringComparison.Ordinal)) return null;
+        if (pattern.Length >= 1 + StrictEnd.Length && pattern.StartsWith('^')) return Replacement(SemanticValidationRuleKind.Equal, pattern[1..^StrictEnd.Length], false);
 
-        return body.StartsWith('^')
-            ? Replacement(SemanticValidationRuleKind.Equal, body[1..], false)
-            : Replacement(SemanticValidationRuleKind.EndsWith, body, false);
+        return Replacement(SemanticValidationRuleKind.EndsWith, pattern[..^StrictEnd.Length], false);
     }
 
     internal static SemanticValidationRule Normalize(SemanticValidationRule rule) =>
