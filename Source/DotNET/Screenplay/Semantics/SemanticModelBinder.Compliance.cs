@@ -32,7 +32,7 @@ public sealed partial class SemanticModelBinder
             }
         }
 
-        return [.. context.Diagnostics.Select(diagnostic => diagnostic with { Code = DiagnosticCodes.UnsupportedSemanticSyntax })];
+        return [.. context.Diagnostics.Select(diagnostic => diagnostic with { Code = DiagnosticCodes.UnsupportedSemanticSyntax, Arguments = DiagnosticArguments.Empty })];
 
         bool RequiresDefaultSubject(string name, HashSet<string> visited)
         {

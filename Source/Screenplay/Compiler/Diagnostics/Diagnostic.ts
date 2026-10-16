@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiagnosticArgument } from './DiagnosticArgument';
 import { SourceLocation } from './SourceLocation';
 
 export type DiagnosticSeverity = 'error' | 'warning' | 'information';
@@ -12,4 +13,5 @@ export interface Diagnostic {
     readonly code: string;
     readonly message: string;
     readonly location: SourceLocation;
+    readonly arguments?: Readonly<Record<string, DiagnosticArgument>>;
 }

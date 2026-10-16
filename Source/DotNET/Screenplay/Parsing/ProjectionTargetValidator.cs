@@ -76,7 +76,7 @@ internal static class ProjectionTargetValidator
             var property = declarations.Property(properties, path, out var missing);
             if (missing && reported.Add(location))
             {
-                context.Warning(DiagnosticCodes.UnknownReadModelProperty, $"Projection target '{path}' is not a declared {(element ? "element" : "read-model")} property", location);
+                context.Warning(DiagnosticCodes.UnknownReadModelProperty, $"Projection target '{path}' is not a declared {(element ? "element" : "read-model")} property", location, DiagnosticArguments.Empty.With("property", DiagnosticArgument.Text(path)));
             }
 
             return property;

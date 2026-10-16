@@ -25,6 +25,7 @@ Projects hold tasks and tasks move from to do to done. Every screen fills one of
 - **One set of events, three views.** Moving a task (`MoveTask`) updates the board's cards and the lanes' cards from the same `TaskMoved` event; the *By status* and *By person* entries of the sidebar target `Projects.Board` and `Projects.Board.ByPerson`.
 - **A side sheet as a screen.** `TaskSheet` fills the `ProjectTaskSheet` template - a drawer from the side that shows one task - from the task list's view.
 - **Cards with a progress bar.** The `ProjectList` view feeds the projects' cards; the progress is a number the template draws as a bar.
+- **A schedule from the same projects.** `ProjectTimelineItems` is a read model projected from `ProjectRegistered` (the owner is the lane, the due date the end of the bar), and the `Timeline` feature's screen fills the `ProjectTimeline` template.
 
 ## Verify
 

@@ -17,6 +17,7 @@ screenplay --warnaserror Samples/<Sample>
 | [Inventory](Inventory) | 1 file, 11 slices | An application built from the Inventory and Assets blueprint: a warehouse's items, locations, movements and suppliers. |
 | [Hr](Hr) | 1 file, 10 slices | An application built from the HR blueprint: a directory, an org chart, time off and onboarding, with the blueprint's Norwegian pack. |
 | [Projects](Projects) | 1 file, 7 slices | An application built from the Project and Task Tracker blueprint: projects, my tasks and a board by status and by person. |
+| [Orders](Orders) | 1 file, 5 slices | An application built from the Orders blueprint: orders, a fulfilment board and a delivery calendar. |
 | [Administration](Administration) | 1 file, 9 slices | An application built from the Administration blueprint: users, roles and permissions, settings and an audit log. |
 | [Commerce](Commerce) | many small files | An application composed with [imports](../Documentation/screenplay/imports.md) at every level: a root file that reads like a table of contents, a file per module and per feature that imports its own folder, and one file per slice that holds only the slice. |
 | [TimeTracking](TimeTracking) | many small files | An application composed from one root glob. Module files declare their features inline and import each feature's folder, and each step of the story is a file of its own. |

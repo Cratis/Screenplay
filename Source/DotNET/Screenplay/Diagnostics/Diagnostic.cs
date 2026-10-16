@@ -17,6 +17,33 @@ namespace Cratis.Screenplay.Diagnostics;
 public record Diagnostic(DiagnosticSeverity Severity, string Code, string Message, SourceLocation Location)
 {
     /// <summary>
+    /// Gets the named, typed subjects declared by this diagnostic's code.
+    /// </summary>
+    public DiagnosticArguments Arguments { get; init; } = DiagnosticArguments.Empty;
+
+    /// <summary>
+    /// Creates an error with declared subjects.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="message">The human-readable message.</param>
+    /// <param name="location">The source location.</param>
+    /// <param name="arguments">The declared subjects.</param>
+    /// <returns>The diagnostic.</returns>
+    public static Diagnostic Error(string code, string message, SourceLocation location, DiagnosticArguments arguments) =>
+        new(DiagnosticSeverity.Error, code, message, location) { Arguments = arguments };
+
+    /// <summary>
+    /// Creates a warning with declared subjects.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="message">The human-readable message.</param>
+    /// <param name="location">The source location.</param>
+    /// <param name="arguments">The declared subjects.</param>
+    /// <returns>The diagnostic.</returns>
+    public static Diagnostic Warning(string code, string message, SourceLocation location, DiagnosticArguments arguments) =>
+        new(DiagnosticSeverity.Warning, code, message, location) { Arguments = arguments };
+
+    /// <summary>
     /// Creates an error diagnostic.
     /// </summary>
     /// <param name="code">The <see cref="DiagnosticCodes">code</see> identifying the kind of diagnostic.</param>

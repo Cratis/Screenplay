@@ -85,7 +85,7 @@ internal static class ReadModelKeyValidator
                     if (key.Length < 2 && !key.Any(property => property.IsKey)) continue;
                     foreach (var missing in key.Where(part => !state.Properties.Any(value => value.Property == part.Name)))
                     {
-                        context.Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{state.Name}' must state key part '{missing.Name}' in this block.", state.Location);
+                        context.Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{state.Name}' must state key part '{missing.Name}' in this block.", state.Location, DiagnosticArguments.Empty.With("readmodel", DiagnosticArgument.Text(state.Name)).With("property", DiagnosticArgument.Text(missing.Name)));
                     }
                 }
                 foreach (var absent in specification.ThenAbsentReadModels)

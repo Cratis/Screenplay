@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CommandStreamSyntax } from '../Syntax/CommandStreamSyntax';
 import { sourceStreamPattern } from '../Text/SourceStreamNames';
@@ -149,7 +150,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             }
             mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], { ...location, column: line.indent + line.content.length - match[2].length + 1 }, context), location });
         } else if (inline === null || !metadata.tryParse(context, line)) {
-            context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid ${inline === null ? '' : 'inline '}property mapping '${line.content}' - expected '<property>${inline === null ? '' : ' <Type>'} = <source>'`, location);
+            context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid ${inline === null ? '' : 'inline '}property mapping '${line.content}' - expected '<property>${inline === null ? '' : ' <Type>'} = <source>'`, location, diagnosticText('text', line.content));
         }
     }
     if (parent !== header) context.skipBlock(header.indent);

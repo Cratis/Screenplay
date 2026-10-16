@@ -25591,7 +25591,15 @@
       ],
       "title": "A mapping line is not \u003Cproperty\u003E = \u003Csource\u003E.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "text",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored mapping line that could not be read."
+        }
+      ]
     },
     {
       "code": "PLAY0045",
@@ -25932,7 +25940,15 @@
       ],
       "title": "A mapping line in a projection is not one the language can read.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "text",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored projection mapping line that could not be read."
+        }
+      ]
     },
     {
       "code": "PLAY0076",
@@ -26218,7 +26234,15 @@
       ],
       "title": "A value a specification step states is not \u003Cproperty\u003E = \u003Cvalue\u003E.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "text",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored mapping line or concrete value that could not be read."
+        }
+      ]
     },
     {
       "code": "PLAY0102",
@@ -28926,7 +28950,21 @@
       ],
       "title": "A read model state does not state its identifier property.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "readmodel",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The read model named by the fixture."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The missing identifier or key-part property."
+        }
+      ]
     },
     {
       "code": "PLAY0352",
@@ -29674,7 +29712,21 @@
       ],
       "title": "A specification query argument is unknown or repeated, or a required by or filter argument is missing.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "query",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The query reference when known at the reporting site."
+        },
+        {
+          "name": "argument",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The unknown, repeated or missing argument name."
+        }
+      ]
     },
     {
       "code": "PLAY0469",
@@ -30181,7 +30233,15 @@
       ],
       "title": "A projection maps to a property absent from the declared read-model shape.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored projection target path."
+        }
+      ]
     },
     {
       "code": "PLAY0515",
@@ -30225,7 +30285,15 @@
       ],
       "title": "A typed specification example declaration is malformed.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "text",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored example declaration line."
+        }
+      ]
     },
     {
       "code": "PLAY0519",
@@ -30236,7 +30304,15 @@
       ],
       "title": "A specification fixture assigns the same property more than once.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The property assigned more than once."
+        }
+      ]
     },
     {
       "code": "PLAY0520",
@@ -30247,7 +30323,35 @@
       ],
       "title": "A specification example type or reference is unknown, ambiguous, or unsupported.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The example declaration name or authored example reference."
+        },
+        {
+          "name": "type",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The example\u0027s authored type reference when resolving its declaration."
+        },
+        {
+          "name": "kind",
+          "kind": "keyword",
+          "optional": true,
+          "meaning": "The resolved but unsupported declaration kind.",
+          "values": [
+            "event",
+            "command",
+            "readmodel",
+            "concept",
+            "type",
+            "example"
+          ]
+        }
+      ]
     },
     {
       "code": "PLAY0521",
@@ -30258,7 +30362,15 @@
       ],
       "title": "A specification example name collides with a type or another example in its scope.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The colliding example name."
+        }
+      ]
     },
     {
       "code": "PLAY0522",
@@ -30269,7 +30381,37 @@
       ],
       "title": "A specification step uses an example of another kind.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The authored example reference."
+        },
+        {
+          "name": "kind",
+          "kind": "keyword",
+          "optional": false,
+          "meaning": "The example\u0027s actual declaration kind.",
+          "values": [
+            "event",
+            "command",
+            "readmodel"
+          ]
+        },
+        {
+          "name": "expectedKind",
+          "kind": "keyword",
+          "optional": false,
+          "meaning": "The declaration kind required by the step.",
+          "values": [
+            "event",
+            "command",
+            "readmodel"
+          ]
+        }
+      ]
     },
     {
       "code": "PLAY0523",
@@ -30280,7 +30422,27 @@
       ],
       "title": "A specification example supplies a value not allowed by its current type.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The example declaration name."
+        },
+        {
+          "name": "type",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The example\u0027s authored type reference."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The invalid property when the failure concerns a property."
+        }
+      ]
     },
     {
       "code": "PLAY0524",
@@ -30291,7 +30453,64 @@
       ],
       "title": "An exact-shape specification step omits a required property after example expansion.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "specification",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The authored specification declaration, before case expansion."
+        },
+        {
+          "name": "step",
+          "kind": "keyword",
+          "optional": false,
+          "meaning": "The step\u0027s language keyword spelling.",
+          "values": [
+            "given",
+            "given readmodel",
+            "when",
+            "when append",
+            "then"
+          ]
+        },
+        {
+          "name": "stepIndex",
+          "kind": "index",
+          "optional": false,
+          "meaning": "The zero-based position among all authored step clauses in source order."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The required property missing from the effective fixture."
+        },
+        {
+          "name": "type",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The effective step\u0027s type reference."
+        },
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The example used by the step."
+        },
+        {
+          "name": "case",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The named case supplying this expanded specification."
+        },
+        {
+          "name": "parameter",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The case parameter supplying the failing value when known."
+        }
+      ]
     },
     {
       "code": "PLAY0525",
@@ -30302,7 +30521,15 @@
       ],
       "title": "A stated example value or destination cannot be admitted by its semantic type, even if unused.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The example whose value or destination cannot be admitted."
+        }
+      ]
     },
     {
       "code": "PLAY0526",
@@ -30313,7 +30540,15 @@
       ],
       "title": "A command or read-model example declares a route; only event examples carry routes.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "example",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The non-event example declaring a route."
+        }
+      ]
     },
     {
       "code": "PLAY0530",
@@ -30908,7 +31143,33 @@
       ],
       "title": "A case value is not concrete or cannot be normalized to its parameter type.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "case",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The named case when known at the reporting site."
+        },
+        {
+          "name": "parameter",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The parameter assigned by the case when known."
+        },
+        {
+          "name": "type",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The declared parameter type when available."
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The authored value or nested line that could not be read."
+        }
+      ]
     },
     {
       "code": "PLAY0584",

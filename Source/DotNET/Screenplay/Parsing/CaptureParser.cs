@@ -425,7 +425,7 @@ internal static partial class CaptureParser
             }
             else if (!TryParseMapping(context, child, mappings))
             {
-                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
             }
         }
     }

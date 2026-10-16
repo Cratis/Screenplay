@@ -16,7 +16,7 @@ internal static class ContractDiagnostics
         {
             if (string.IsNullOrWhiteSpace(fact.Title) || fact.Severities.Count == 0) throw new InvalidScreenplayContract($"{fact.Code} lacks a catalog title or severity.");
             var names = fact.Severities.OrderDescending().Select(severity => severity.ToString().ToLowerInvariant()).ToArray();
-            result.Add(new JsonObject
+            var diagnostic = new JsonObject
             {
                 ["code"] = fact.Code,
                 ["name"] = fact.Name,
@@ -25,7 +25,17 @@ internal static class ContractDiagnostics
                 ["title"] = fact.Title,
                 ["reserved"] = fact.Reserved,
                 ["retired"] = fact.Retired
-            });
+            };
+            if (fact.Arguments.Count > 0)
+            {
+                diagnostic["arguments"] = new JsonArray([.. fact.Arguments.Select(argument =>
+                {
+                    var definition = new JsonObject { ["name"] = argument.Name, ["kind"] = argument.Kind, ["optional"] = argument.Optional, ["meaning"] = argument.Meaning };
+                    if (argument.Kind == "keyword") definition["values"] = new JsonArray([.. argument.Values.Select(value => (JsonNode?)JsonValue.Create(value))]);
+                    return (JsonNode?)definition;
+                })]);
+            }
+            result.Add(diagnostic);
         }
 
         return result;

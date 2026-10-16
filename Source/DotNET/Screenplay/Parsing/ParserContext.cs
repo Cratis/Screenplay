@@ -91,12 +91,30 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public void Error(string code, string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Error(code, message, location));
 
     /// <summary>
+    /// Reports an error with declared subjects.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="message">The message.</param>
+    /// <param name="location">The source location.</param>
+    /// <param name="arguments">The declared subjects.</param>
+    public void Error(string code, string message, SourceLocation location, DiagnosticArguments arguments) => _diagnostics.Add(Diagnostic.Error(code, message, location, arguments));
+
+    /// <summary>
     /// Reports a warning diagnostic.
     /// </summary>
     /// <param name="code">The <see cref="DiagnosticCodes">code</see> identifying the kind of diagnostic.</param>
     /// <param name="message">The message of the diagnostic.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the diagnostic.</param>
     public void Warning(string code, string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Warning(code, message, location));
+
+    /// <summary>
+    /// Reports a warning with declared subjects.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="message">The message.</param>
+    /// <param name="location">The source location.</param>
+    /// <param name="arguments">The declared subjects.</param>
+    public void Warning(string code, string message, SourceLocation location, DiagnosticArguments arguments) => _diagnostics.Add(Diagnostic.Warning(code, message, location, arguments));
 
     /// <summary>
     /// Adds a diagnostic that was produced outside the parsers.

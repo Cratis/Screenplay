@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
@@ -154,7 +155,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                     }
                     const mapped = mappingPattern.exec(value.content);
                     if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
-                    else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value));
+                    else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value), diagnosticText('text', value.content));
                 }
                 invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, onRefused, location: locationOf(child) });
             }
