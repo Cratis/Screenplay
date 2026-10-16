@@ -5,7 +5,7 @@ description: Check semantic values against concept rules without creating an exe
 
 Use `SemanticValidationRules.Check` from the `Cratis.Screenplay` .NET library when you already have semantic model objects and need the same value-rule meaning as the reference evaluator. You do not need a command, query or execution plan. This API checks rules only: it does not validate an application's structure, authorize a caller, allocate generated values or execute opaque code.
 
-To check the declaration itself—its generation options, generation-rule proofs and required ESM version—use [Check a concept declaration](concept-checks.md).
+To check the declaration itself—its generation options, generation-rule proofs and required ESM version—use [Check a concept declaration](concept-checks.md). For chronological comparisons on command `Date` and `DateTime` properties, use [Check command date comparisons](date-comparison-checks.md).
 
 ## Overloads
 
