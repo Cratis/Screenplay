@@ -16,6 +16,8 @@ public static class ScreenCompositionCorpus
     const string TypedScreenSourceCase = "screen-release-ui-positive";
     const string ShellSourceCase = "screen-shell-navigation-positive";
     const string ShellRunnableSourceCase = "screen-shell-navigation-runnable";
+    const string UiProfileRootSourceCase = "ui-profile-root-positive";
+    const string UiProfileRootLegacySourceCase = "ui-profile-root-legacy-layout";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -169,6 +171,35 @@ public static class ScreenCompositionCorpus
                         "SampleDataSelectionSyntax",
                         "SampleDataPackReferenceSyntax"
                     ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = UiProfileRootSourceCase,
+                    Document = Document("ui-profile-root-positive", "positive/UiProfileRoot.play", $"{Prefix}.positive.UiProfileRoot.play.txt"),
+                    Requires = "Screenplay v4.197.0 ui profile root template (own layout, own application-scope screen template and blueprint template with a version pin), shell options, appearance and the new screens use template default",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "UiProfileSyntax",
+                        "RootTemplateSyntax",
+                        "ShellOptionSyntax",
+                        "ProfileAppearanceSyntax",
+                        "NewScreenTemplateSyntax",
+                        "ExposureSyntax",
+                        "ExposedPropertySyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = UiProfileRootLegacySourceCase,
+                    Document = Document("ui-profile-root-legacy-layout", "positive/UiProfileRootLegacyLayout.play", $"{Prefix}.positive.UiProfileRootLegacyLayout.play.txt"),
+                    Requires = "Screenplay v4.197.0 reads the legacy ui profile layout line; v4.200.0 reports it as PLAY0791 with a root template fix-it",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "UiProfileSyntax",
+                        "RootTemplateSyntax"
+                    ]
                 }
             ],
             DesignTimeOutputs =
@@ -269,6 +300,27 @@ public static class ScreenCompositionCorpus
                     "TemplateBlueprintNotListed",
                     Diagnostic("PLAY0721", "The template version range 'latest' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\""),
                     Diagnostic("PLAY0722", "The template 'Workspace' comes from blueprint 'Hr', which no ui profile declares - add it to a profile's 'packages'")),
+                Rejection(
+                    "ui-profile-root-unknown",
+                    "UiProfileRootUnknown",
+                    Diagnostic("PLAY0790", "Unknown root template 'Ghost' in ui profile 'Ghosts' - declare it with 'layout Ghost' or 'screen template Ghost', or take it from a blueprint with 'root template blueprint <Blueprint> Ghost'"),
+                    Diagnostic("PLAY0798", "This ui profile already declares a root template - a profile can have at most one"),
+                    Diagnostic("PLAY0790", "Unknown new screens use template 'Phantom' in ui profile 'Ghosts' - declare it with 'layout Phantom' or 'screen template Phantom', or take it from a blueprint with 'new screens use template blueprint <Blueprint> Phantom'"),
+                    Diagnostic("PLAY0792", "The root template 'Frame' comes from blueprint 'Cratis.Blueprint.Default', which ui profile 'Unlisted' does not list - add it to the profile's 'packages'")),
+                Rejection(
+                    "ui-profile-root-not-a-shell",
+                    "UiProfileRootNotAShell",
+                    Diagnostic("PLAY0794", "The root template 'Sheet' of ui profile 'Sheet' cannot be the application's shell: it is a screen template, and only a layout or an application-scope screen template can be the shell; it does not declare scope 'application'"),
+                    Diagnostic("PLAY0794", "The root template 'Confirm' of ui profile 'Dialog' cannot be the application's shell: it is a dialog template, and only a layout or an application-scope screen template can be the shell"),
+                    Diagnostic("PLAY0795", "The root template 'Bare' has no 'content' outlet, so no screen can be placed in it - add a line 'content' to it"),
+                    Diagnostic("PLAY0799", "The new screens use template 'AppShell' of ui profile 'Layout' cannot start a screen in a feature: it is a layout, and a layout or an application-scope screen template can only be the shell"),
+                    Diagnostic("PLAY0799", "The new screens use template 'Docked' of ui profile 'Application' cannot start a screen in a feature: it is a screen template with the root role, and a layout or an application-scope screen template can only be the shell; it does not declare scope 'feature'")),
+                Rejection(
+                    "ui-profile-root-invalid",
+                    "UiProfileRootInvalid",
+                    Diagnostic("PLAY0796", "The root template 'AppShell' of ui profile 'Desktop' has no option 'sparkle' - it exposes 'showFooter', 'topbar.showFooter', 'Footer'"),
+                    Diagnostic("PLAY0797", "The color scheme 'sepia' of ui profile 'Desktop' is not one of light, dark or system"),
+                    Diagnostic("PLAY0797", "The accent 'indigo' of ui profile 'Desktop' is not a hex colour - write \"#RGB\", \"#RRGGBB\" or \"#RRGGBBAA\"")),
                 Rejection(
                     "sample-data-unknown-pack",
                     "SampleDataUnknownPack",

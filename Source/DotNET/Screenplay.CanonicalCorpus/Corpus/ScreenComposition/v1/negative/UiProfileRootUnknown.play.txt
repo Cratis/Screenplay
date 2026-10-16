@@ -1,0 +1,16 @@
+layout AppShell
+  category Shell
+  topbar
+  content
+
+ui profile Ghosts
+  packages
+    Cratis.Components
+
+  root template Ghost
+  root template AppShell
+
+  new screens use template Phantom
+
+ui profile Unlisted
+  root template blueprint Cratis.Blueprint.Default Frame

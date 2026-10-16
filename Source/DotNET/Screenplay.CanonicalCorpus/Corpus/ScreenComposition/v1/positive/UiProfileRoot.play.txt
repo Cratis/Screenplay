@@ -1,0 +1,51 @@
+layout AppShell
+  category Shell
+  topbar
+  side
+  content
+
+exposure for AppShell
+  property topbar.showFooter label "Footer"
+
+module Workspaces
+  screen template Docked
+    category Shell
+    scopes application
+    content
+
+  screen template Sheet
+    category Page
+    scopes feature
+    content
+
+ui profile Desktop
+  target platform web
+
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+
+  root template AppShell
+    option showFooter true
+
+  appearance
+    color scheme dark
+    accent "#4F46E5"
+
+  new screens use template Sheet
+
+ui profile Docked
+  root template Docked
+
+ui profile FromBlueprint
+  packages
+    Cratis.Blueprint.Default
+
+  root template blueprint Cratis.Blueprint.Default Frame version "^4.5"
+    option density "compact"
+
+  appearance
+    color scheme system
+    accent "#4F46E5CC"
+
+  new screens use template blueprint Cratis.Blueprint.Default Sheet
