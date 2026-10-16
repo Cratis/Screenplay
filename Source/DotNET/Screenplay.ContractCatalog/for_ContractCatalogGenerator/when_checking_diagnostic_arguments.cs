@@ -98,10 +98,65 @@ public class when_checking_diagnostic_arguments
         Assert.Empty(Generate(emission, fixture).Diagnostics);
     }
 
-    static GeneratorDriverRunResult Generate(string emission, SyntaxTree? fixture = null)
+    [Theory]
+    [InlineData("subject:unknown;The subject.", "unknown argument kind 'unknown'")]
+    [InlineData(":text;The subject.", "nonempty identifier")]
+    [InlineData("subject", "expected name:kind")]
+    [InlineData("subject;text", "expected a name")]
+    [InlineData("subject:text??;The subject.", "unknown argument kind")]
+    [InlineData("subject:keyword;The subject.", "nonempty set of values")]
+    [InlineData("subject:keyword=given|;The subject.", "nonempty set of values")]
+    [InlineData("subject:keyword=given|given;The subject.", "unique")]
+    [InlineData("subject:text=given;The subject.", "only keyword")]
+    [InlineData("subject:text;", "meaning must not be empty")]
+    public void should_report_a_clear_error_for_a_malformed_declaration(string declaration, string reason)
+    {
+        var result = GenerateWithDefinitions(declaration);
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Equal("SPCON004", diagnostic.Id);
+        Assert.Equal(DiagnosticSeverity.Error, diagnostic.Severity);
+        Assert.Contains("Structured", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains(declaration, diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains(reason, diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("Structured", diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void should_reject_duplicate_argument_names()
+    {
+        var diagnostic = Assert.Single(GenerateWithDefinitions("subject:text;First.", "subject:index;Second.").Diagnostics);
+        Assert.Equal("SPCON004", diagnostic.Id);
+        Assert.Contains("duplicate argument name 'subject'", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("A meaning; with another clause.")]
+    [InlineData("A meaning = the authored value.")]
+    [InlineData("A meaning; with a = value.")]
+    public void should_preserve_delimiters_in_the_meaning(string meaning)
+    {
+        var result = GenerateWithDefinitions($"subject:text;{meaning}");
+        Assert.Empty(result.Diagnostics);
+        Assert.Contains($"new(\"subject\",\"text\",false,{SymbolDisplay.FormatLiteral(meaning, true)}, new string[] {{}})", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void should_accept_language_keywords_as_names_and_multiword_keyword_values()
+    {
+        var result = GenerateWithDefinitions("case:keyword?=given readmodel|when append;The step.");
+        Assert.Empty(result.Diagnostics);
+        Assert.Contains("new(\"case\",\"keyword\",true,\"The step.\", new string[] {\"given readmodel\",\"when append\"})", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
+    }
+
+    static GeneratorDriverRunResult GenerateWithDefinitions(params string[] definitions) => Generate(
+        "Cratis.Screenplay.Diagnostics.Diagnostic.Error(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Structured, \"message\", null, new object())", definitions: definitions);
+
+    static GeneratorDriverRunResult Generate(string emission, SyntaxTree? fixture = null, string[]? definitions = null)
     {
         var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator).Select(path => MetadataReference.CreateFromFile(path));
-        var source = CSharpSyntaxTree.ParseText(Catalog.Replace("EMISSION", emission, StringComparison.Ordinal));
+        var catalog = Catalog.Replace("EMISSION", emission, StringComparison.Ordinal);
+        if (definitions is not null) catalog = catalog.Replace("\"subject:text;The authored subject.\", \"role:keyword?=given|when;The step role.\"", string.Join(", ", definitions.Select(definition => SymbolDisplay.FormatLiteral(definition, true))), StringComparison.Ordinal);
+        var source = CSharpSyntaxTree.ParseText(catalog);
         var compilation = CSharpCompilation.Create("ArgumentProbe", fixture is null ? [source] : [source, fixture], references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         Assert.Empty(compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(new ContractCatalogGenerator());
