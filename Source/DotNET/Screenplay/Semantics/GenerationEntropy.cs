@@ -94,14 +94,15 @@ public static class GenerationEntropy
 
     internal static double? Bits(string? strategy, int? size, string? alphabet, int? count)
     {
+        strategy ??= "uuid";
         alphabet ??= SemanticGenerationContract.DefaultAlphabet;
         var length = size ?? int.Parse(GenerationStrategyCatalog.OptionFor("nanoid", "size").Default!, CultureInfo.InvariantCulture);
-        double? bits = GenerationStrategyCatalog.Find(strategy ?? "uuid")?.FixedBits ?? (strategy switch
+        var bits = strategy switch
         {
             "nanoid" when length > 0 && alphabet.Length >= 2 && alphabet.Distinct().Count() == alphabet.Length => length * Math.Log2(alphabet.Length),
             "bytes" when count is > 0 => 8d * count.Value,
-            _ => (double?)null
-        });
+            _ => (double?)GenerationStrategyCatalog.Find(strategy)?.FixedBits
+        };
 
         return bits is { } known && double.IsFinite(known) && known >= 0 ? known : null;
     }

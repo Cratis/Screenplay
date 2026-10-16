@@ -59,7 +59,7 @@ internal static partial class SemanticGenerationContract
         }
 
         if (kind == "typeid" && generation.Prefix is null) throw new InvalidSemanticContract("TypeID requires its prefix argument (which may be empty).");
-        if (kind == "nanoid" && ((generation.Size is not { } size || !GenerationStrategyCatalog.InRange(GenerationStrategyCatalog.OptionFor("nanoid", "size"), size)) ||
+        if (kind == "nanoid" && (generation.Size is not { } size || !GenerationStrategyCatalog.InRange(GenerationStrategyCatalog.OptionFor("nanoid", "size"), size) ||
             (generation.Alphabet is { } alphabet && (alphabet == DefaultAlphabet || !GenerationStrategyCatalog.ValidText(GenerationStrategyCatalog.OptionFor("nanoid", "alphabet"), alphabet)))))
         {
             throw new InvalidSemanticContract("NanoID requires a size of 1..256 and a non-default distinct printable ASCII alphabet when supplied.");
