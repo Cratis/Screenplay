@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -11,16 +12,18 @@ internal static class GenerationText
 {
     internal static string Format(GenerationSyntax generation)
     {
-        var valid = generation.Strategy switch
-        {
-            "uuid" or "uuidv7" or "ulid" or "nanoid" or "sequence" => true,
-            "typeid" => generation.Prefix is not null,
-            "bytes" => generation.Count is not null && generation.Encoding is not null,
-            "pattern" => generation.Pattern is not null,
-            "random" => generation.Range is not null,
-            "rule" => generation.Rule is not null,
-            _ => false
-        };
+        var descriptor = GenerationStrategyCatalog.Find(generation.Strategy);
+        var valid = descriptor?.Options.Where(option => option.Placement == GenerationOptionPlacement.Argument && option.Required)
+            .All(option => option.Name switch
+            {
+                "prefix" => generation.Prefix is not null,
+                "count" => generation.Count is not null,
+                "encoding" => generation.Encoding is not null,
+                "pattern" => generation.Pattern is not null,
+                "range" => generation.Range is not null,
+                "rule" => generation.Rule is not null,
+                _ => false
+            }) == true;
         if (!valid) throw new UnsupportedSyntaxForPrinting("generation strategy", generation.Strategy);
         var parts = new List<string> { "generate", generation.Strategy };
         switch (generation.Strategy)

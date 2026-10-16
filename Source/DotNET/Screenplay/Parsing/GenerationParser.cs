@@ -4,7 +4,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
-using Cratis.Screenplay.Semantics.Generation;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -12,7 +12,6 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class GenerationParser
 {
-    const string ExpandedLengthReason = "expanded length";
     internal static GenerationSyntax? Parse(ParserContext context, SourceLine line, string primitive)
     {
         var tokens = TokenRegex().Matches(line.Content).Select(match => match.Value).Skip(1).ToArray();
@@ -23,7 +22,7 @@ internal static partial class GenerationParser
         }
 
         var strategy = tokens[0];
-        if (!OneOf(strategy, "uuid", "uuidv7", "ulid", "typeid", "nanoid", "bytes", "pattern", "random", "rule", "sequence"))
+        if (GenerationStrategyCatalog.Find(strategy) is null)
         {
             context.Error(DiagnosticCodes.UnknownGenerationStrategy, $"Unknown generation strategy '{strategy}'.", line.Location);
             return null;
@@ -37,7 +36,7 @@ internal static partial class GenerationParser
         }
 
         var result = Modifiers(context, line, primitive, generation, tokens, next);
-        Validate(context, line, primitive, result);
+        GenerationStrategyCatalog.ValidateValues(primitive, result, (diagnostic, _) => context.Error(diagnostic.Code, diagnostic.Message, line.Location));
         return ParseBody(context, line, result);
     }
 
@@ -52,7 +51,7 @@ internal static partial class GenerationParser
             "typeid" => (source with { Prefix = literal }, 2, literal is not null),
             "pattern" => (source with { Pattern = literal }, 2, literal is not null),
             "nanoid" when number is not null => (source with { Size = number }, 2, true),
-            "bytes" => (source with { Count = number, Encoding = encoding }, 3, number is not null && OneOf(encoding, "base64url", "hex", "base32")),
+            "bytes" => (source with { Count = number, Encoding = encoding }, 3, number is not null && encoding is not null && GenerationStrategyCatalog.OptionFor("bytes", "encoding").Choices.Contains(encoding, StringComparer.Ordinal)),
             "random" => (source with { Range = argument }, 2, argument is not null && RangeRegex().IsMatch(argument) && ValidRange(argument)),
             "rule" => (source with { Rule = argument }, 2, argument is not null && NameRegex().IsMatch(argument)),
             _ => (source, 1, true)
@@ -68,19 +67,15 @@ internal static partial class GenerationParser
             var modifier = tokens[index++];
             var value = index < tokens.Length ? tokens[index++] : null;
             if (!seen.Add(modifier)) context.Error(DiagnosticCodes.DuplicateGenerationModifier, $"Generation modifier '{modifier}' is repeated.", line.Location);
-            if (!Allows(strategy, primitive, result.Encoding, modifier))
+            if (!GenerationStrategyCatalog.AllowsModifier(strategy, primitive, result.Encoding, modifier))
             {
                 context.Error(DiagnosticCodes.InvalidGenerationModifier, $"Generation modifier '{modifier}' is not allowed for '{strategy}' on '{primitive}'.", line.Location);
                 continue;
             }
 
             var text = value is null ? null : Literal(value);
-            var validValue = modifier switch
-            {
-                "prefix" or "alphabet" => text is not null,
-                "case" => OneOf(value, "lower", "upper"),
-                _ => OneOf(value, "luhn", "mod11", "mod97")
-            };
+            var option = GenerationStrategyCatalog.OptionFor(strategy, modifier);
+            var validValue = option.Kind == GenerationOptionKind.Text ? text is not null : value is not null && option.Choices.Contains(value, StringComparer.Ordinal);
             if (!validValue)
             {
                 context.Error(DiagnosticCodes.InvalidGenerationArgument, $"Missing or invalid value for generation modifier '{modifier}'.", line.Location);
@@ -99,64 +94,6 @@ internal static partial class GenerationParser
         return result;
     }
 
-    static void Validate(ParserContext context, SourceLine line, string primitive, GenerationSyntax generation)
-    {
-        var strategy = generation.Strategy;
-        if (strategy == "pattern" && generation.Pattern is { } pattern)
-        {
-            try
-            {
-                _ = GenerationPattern.Parse(pattern, generation.Checksum);
-            }
-            catch (InvalidGenerationPattern error)
-            {
-                var code = error.Message.Contains(ExpandedLengthReason, StringComparison.Ordinal) ? DiagnosticCodes.GenerationSizeOutsideRange : DiagnosticCodes.InvalidGenerationArgument;
-                context.Error(code, error.Message, line.Location);
-            }
-        }
-        var allowed = strategy == "sequence" || primitive switch
-        {
-            "Uuid" => OneOf(strategy, "uuid", "uuidv7"),
-            "String" => strategy != "random",
-            "Int" => strategy == "random",
-            _ => false
-        };
-        if (!allowed) context.Error(DiagnosticCodes.InvalidGenerationPrimitive, $"Generation strategy '{strategy}' is not allowed on '{primitive}'.", line.Location);
-        if (generation.Prefix is { } prefix)
-        {
-            if (strategy == "typeid")
-            {
-                if (!TypeIdPrefixRegex().IsMatch(prefix)) context.Error(DiagnosticCodes.InvalidTypeIdPrefix, "TypeID prefix must be empty or 1..63 lowercase letters and underscores, starting and ending with a letter.", line.Location);
-            }
-            else if (prefix.Length > 32 || !Printable(prefix))
-            {
-                context.Error(DiagnosticCodes.InvalidGenerationPrefix, "Generation prefix must contain at most 32 printable ASCII characters.", line.Location);
-            }
-        }
-
-        if (generation.Alphabet is { } alphabet && (alphabet.Length is < 2 or > 256 || !Printable(alphabet) || alphabet.Distinct().Count() != alphabet.Length))
-        {
-            context.Error(DiagnosticCodes.InvalidGenerationAlphabet, "NanoID alphabet must contain 2..256 distinct printable ASCII characters.", line.Location);
-        }
-
-        if (generation.Size is < 1 or > 256 || generation.Count is < 1 or > 512)
-        {
-            context.Error(DiagnosticCodes.GenerationSizeOutsideRange, "NanoID size must be 1..256 and bytes count must be 1..512.", line.Location);
-        }
-    }
-
-    static bool Allows(string strategy, string primitive, string? encoding, string modifier) => modifier switch
-    {
-        "prefix" => primitive == "String" && OneOf(strategy, "uuid", "uuidv7", "ulid", "nanoid", "bytes"),
-        "alphabet" => strategy == "nanoid",
-        "case" => strategy == "ulid" || (primitive == "String" && OneOf(strategy, "uuid", "uuidv7")) || (strategy == "bytes" && OneOf(encoding, "hex", "base32")),
-        "checksum" => strategy == "pattern",
-        _ => false
-    };
-
-    static bool OneOf(string? value, params string[] choices) => choices.Contains(value, StringComparer.Ordinal);
-
-    static bool Printable(string text) => text.All(character => character is >= ' ' and <= '~');
     static int? Integer(string text) => !text.StartsWith('+') && int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value) ? value : null;
     static string? Literal(string text) => text.Length >= 2 && text[0] == '"' && text[^1] == '"' ? StringLiteral.Unescape(text[1..^1]) : null;
     static bool ValidRange(string text)
@@ -174,7 +111,4 @@ internal static partial class GenerationParser
 
     [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_]*\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
-
-    [GeneratedRegex(@"^([a-z]([a-z_]{0,61}[a-z])?)?\z", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
-    private static partial Regex TypeIdPrefixRegex();
 }
