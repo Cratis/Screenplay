@@ -96,5 +96,6 @@ An item's `target` names a module or feature. Renaming or moving a module or fea
 ## See also
 
 - [Layouts and templates](templates.md) for the shell and its slots.
+- [UI profile](ui-profile.md) for the `root template` that selects the shell the navigation regions live in.
 - [Contributions](contributions.md) for the many-to-one `contribute to`.
 - [Screens capability matrix](screens-capability-matrix.md).

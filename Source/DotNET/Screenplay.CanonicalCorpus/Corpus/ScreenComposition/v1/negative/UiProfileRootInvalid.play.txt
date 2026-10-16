@@ -1,0 +1,16 @@
+layout AppShell
+  category Shell
+  topbar
+  content
+
+exposure for AppShell
+  property topbar.showFooter label "Footer"
+
+ui profile Desktop
+  root template AppShell
+    option showFooter true
+    option sparkle 1
+
+  appearance
+    color scheme sepia
+    accent "indigo"

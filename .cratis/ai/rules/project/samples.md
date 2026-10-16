@@ -18,6 +18,12 @@ living reference for the language, so they must say what the language says today
 | `Samples/Commerce` | Focused files composed with explicit imports at every level: a root that reads like a table of contents, a file per module and feature that imports its own folder, and one file per slice with nothing above it. |
 | `Samples/TimeTracking` | Focused files composed from one root glob: module files declare their features inline and import each feature's step files, one slice per file. |
 
+### They render as authored
+
+The domain blueprint samples (`Crm`, `Ticketing`, `Approvals`, `Inventory`, `Hr`, `Projects`, `Administration`, `Orders`) are rendered by the published
+`cratis` with the approved package set of their blueprint's published npm package: `Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.sh <folder>`.
+A sample that only renders once it has been simplified is a defect of the sample or of the renderer - fix the one that is wrong, never remove a feature to pass.
+
 ### Keep them current with the language
 
 Any change to the language — grammar, a construct, a keyword, a diagnostic that starts firing, a deprecation, a

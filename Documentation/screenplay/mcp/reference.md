@@ -273,6 +273,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
+| `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
 | `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |

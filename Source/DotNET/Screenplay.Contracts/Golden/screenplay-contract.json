@@ -41844,6 +41844,23 @@
       }
     },
     {
+      "name": "ui-profiles",
+      "requiredParameters": [],
+      "optionalParameters": [
+        "name"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "visualize-model",
       "requiredParameters": [],
       "optionalParameters": [

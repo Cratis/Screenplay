@@ -27,7 +27,7 @@ Crm/
   No pack is declared in the document: the blueprint ships them, and the build resolves the reference against its packages.
 - **A read model for each thing a list shows.** `Leads`, `Contacts`, `Companies`, `Deals` and `Activities` are named after the shapes
   the blueprint's pack supplies, so the same rows reach the screen in a preview and in a running application. `DealRows` is a second
-  view of the deals for the grouped list, and `SalesFigures` is one row, keyed `global`, that adds up the pipeline as deals are registered.
+  view of the deals for the grouped list, and `SalesFigures` is one row, keyed `global`, that adds up the pipeline as deals are registered; `CurrentFigures` reads it as an observable list of that one row, so the dashboard stays live.
 - **A quick-create dialog and a full form for one command.** `RegisterLead` has two screens: `NewLead` (the page) and `QuickNewLead`
   (the dialog opened from the list's header).
 
@@ -39,5 +39,5 @@ screenplay --warnaserror Samples/Crm
 dotnet run --project Source/DotNET/Tool -- --warnaserror Samples/Crm
 ```
 
-The blueprint itself - its eighteen screen templates, five dialogs, two sample-data packs and its navigation - is documented in
+The blueprint itself - its twenty screen templates, five dialogs, two sample-data packs and its navigation - is documented in
 [Scene's blueprint documentation](https://github.com/Cratis/Scene/blob/main/Documentation/blueprints/crm-blueprint.md).

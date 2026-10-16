@@ -1,0 +1,38 @@
+layout AppShell
+  category Shell
+  topbar
+  content
+
+layout Bare
+  category Shell
+  topbar
+
+module Workspaces
+  screen template Sheet
+    category Page
+    scopes feature
+    content
+
+  screen template Docked
+    category Shell
+    scopes application
+    content
+
+  dialog template Confirm
+    category Dialog
+    content
+
+ui profile Sheet
+  root template Sheet
+
+ui profile Dialog
+  root template Confirm
+
+ui profile NoContent
+  root template Bare
+
+ui profile Layout
+  new screens use template AppShell
+
+ui profile Application
+  new screens use template Docked
