@@ -92,15 +92,6 @@ public sealed partial class SemanticEvaluator
         return failures.ToImmutable();
     }
 
-    static void AddConceptFailures(
-        SemanticApplication application,
-        SemanticTypeReference type,
-        SemanticValue value,
-        ImmutableArray<SemanticValidationFailure>.Builder failures) =>
-        failures.AddRange(SemanticValidationRules.Check(application, type, value)
-            .Where(check => check.Status == SemanticRuleStatus.Failed)
-            .Select(check => new SemanticValidationFailure(check.Message!, check.Rule.Severity)));
-
     internal static string? ValidateQueryKey(
         SemanticExecutionPlan plan,
         SemanticKeyedQuery query,
@@ -156,6 +147,15 @@ public sealed partial class SemanticEvaluator
 
         return failures.ToImmutable();
     }
+
+    static void AddConceptFailures(
+        SemanticApplication application,
+        SemanticTypeReference type,
+        SemanticValue value,
+        ImmutableArray<SemanticValidationFailure>.Builder failures) =>
+        failures.AddRange(SemanticValidationRules.Check(application, type, value)
+            .Where(check => check.Status == SemanticRuleStatus.Failed)
+            .Select(check => new SemanticValidationFailure(check.Message!, check.Rule.Severity)));
 
     static IEnumerable<(SemanticTypeReference Type, SemanticValue Value)> QueryConceptArguments(
         SemanticKeyedQuery query,
