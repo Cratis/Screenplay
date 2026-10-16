@@ -73,18 +73,12 @@ public sealed partial class SemanticEvaluator
         ImmutableArray<SemanticPropertyValue> values)
     {
         var valuesByTarget = values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
+        var dateTypes = SemanticDateComparisons.Participants(plan.Model.Application, command);
         var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            var property = command.Properties.Single(property => property.Id == validation.Property);
-            var primitive = SemanticCommandDateComparisons.Primitive(plan.Model.Application, property.Type);
-            var check = SemanticDateComparison.IsDate(primitive) && SemanticDateComparison.IsComparison(validation.Kind)
-                ? new SemanticRuleCheck(
-                    SemanticDateComparison.Satisfies(validation, value, primitive) ? SemanticRuleStatus.Satisfied : SemanticRuleStatus.Failed,
-                    validation,
-                    validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."))
-                : SemanticValidationRules.Check(validation, value);
+            var check = SemanticDateComparisons.Check(validation, value, dateTypes.GetValueOrDefault(validation.Property));
             if (check.Status == SemanticRuleStatus.Failed)
             {
                 failures.Add(new(check.Message, validation.Severity));

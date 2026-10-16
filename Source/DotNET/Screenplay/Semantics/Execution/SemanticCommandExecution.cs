@@ -22,8 +22,7 @@ internal sealed partial class SemanticCommandExecution(
 
     readonly ImmutableArray<SemanticFact>.Builder _facts = ImmutableArray.CreateBuilder<SemanticFact>();
     readonly Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>> _reads = new(StringComparer.Ordinal);
-    readonly Dictionary<SemanticId, SemanticPrimitiveType> _dateTypes = SemanticCommandDateComparisons.Properties(plan.Model.Application, command)
-        .ToDictionary(property => property.Id, property => SemanticCommandDateComparisons.Primitive(plan.Model.Application, property.Type));
+    readonly IReadOnlyDictionary<SemanticId, SemanticPrimitiveType> _dateTypes = SemanticDateComparisons.Participants(plan.Model.Application, command);
     Dictionary<SemanticId, SemanticValue> _commandValues = [];
     Dictionary<SemanticCommandRoute, SemanticEventRoute> _routes = new(ReferenceEqualityComparer.Instance);
     SemanticStateChangeDestination? _defaultDestination;
@@ -125,16 +124,9 @@ internal sealed partial class SemanticCommandExecution(
     SemanticRejected? RefuseInvalidDateTimeInput()
     {
         if (request.Values.IsDefault) return null;
-        foreach (var property in command.Properties.Where(property => _dateTypes.GetValueOrDefault(property.Id) == SemanticPrimitiveType.DateTime))
-        {
-            if (request.Values.FirstOrDefault(value => value?.TargetProperty == property.Id)?.Value is SemanticTextValue text && !SemanticDateComparison.TryInstant(text.Value, out _))
-            {
-                var failure = new SemanticValidationFailure($"DateTime command property '{property.Name}' requires an explicit offset or Z.", SemanticValidationSeverity.Error);
-                return new SemanticRejected(world, SemanticRejectionCategory.Validation, null, failure.Message) { ValidationFailures = [failure] };
-            }
-        }
-
-        return null;
+        return SemanticDateComparisons.CheckInputs(plan.Model.Application, command, request.Values) is { } failure
+            ? new SemanticRejected(world, SemanticRejectionCategory.Validation, null, failure.Message) { ValidationFailures = [failure] }
+            : null;
     }
 
     SemanticRejected? RefuseInvalidRequest() =>
@@ -179,7 +171,7 @@ internal sealed partial class SemanticCommandExecution(
     {
         foreach (var requirement in command.Requirements)
         {
-            if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, _commandValues, _reads, _dateTypes))
+            if (!SemanticConditionEvaluator.Evaluate(requirement.Condition, _commandValues, _dateTypes, _reads))
             {
                 failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
             }
@@ -225,7 +217,7 @@ internal sealed partial class SemanticCommandExecution(
             : SemanticEvaluator.Evaluate(expression, SemanticExpressionRootKind.Command, _commandValues, occurrence);
 
     bool IsSkipped(SemanticProducedEvent produced) =>
-        (produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
+        (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
         (produced.Condition is not null && Evaluate(produced.Condition) is SemanticBooleanValue { Value: false });
 
     SemanticExecutionResult? Produce(SemanticProducedEvent produced)
