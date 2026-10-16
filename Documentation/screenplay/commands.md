@@ -176,7 +176,7 @@ This is the read-model-to-command arrow of Event Modeling — one of the four th
 - `<ReadModel>` names a read model some [projection](projections/index.md) produces. Reading something no projection produces is a warning — the document says it depends on state nothing in it explains.
 - A `reads` declaration may have one child `by` header with at least two named `part = source` mappings. It cannot combine with inline `by`. Every part must name a key property, and every source must be a required, noncollection property path of its compatible nominal type. Literals are refused. Other children remain errors.
 - A single-instance read supplies every declared key part exactly once. Missing parts use `PLAY0661`. Its typed repair covers command reads only when every missing part has one same-named compatible input. Queries and trigger reads are not repaired. See [Read-model keys](readmodels.md#keys).
-- `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier. The name starts with a lower-case letter or underscore, followed by letters, digits or underscores.
+- `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Under `command reads protected`, leaving it out uses the command's declared identifier. Singleton/unkeyed views remain authoring-only and are refused by protected admission. The name starts with a lower-case letter or underscore, followed by letters, digits or underscores.
 - `as <alias>` distinguishes instances of the same view. If a command reads a view more than once, **every** instance needs an alias. Aliases start with a lower-case letter or underscore, followed by letters, digits or underscores; `as`, `by` and `reads` are reserved. Aliases must be unique in the command and must not match any of its property names. A single read may also be named by an alias.
 
 For example, a transfer can name both accounts without conflating their state:
@@ -192,20 +192,29 @@ command TransferFunds
       message "Source account must have funds"
 ```
 
-The view name still qualifies a `require` path when only one instance of that view is read. An alias qualifies the path when present; with repeated reads, use the alias instead of the ambiguous view name. With the read model in scope, its properties are also addressable in produces mappings, as above.
+An unaliased single read uses its view name in a `require` path. If you declare an alias, use that alias instead; repeated reads must use their aliases, never the ambiguous view name. The same single-level paths are addressable in produced-event mappings, as above.
 
-The executable semantic model does not yet bind command `reads` or read-model paths in requirements ([#129](https://github.com/Cratis/Screenplay/issues/129)).
+These paths bind under the application-root `command reads protected` preamble when every referenced read is admitted. `PLAY0784` names an unknown read/property path; `PLAY0785` requires an alias for an ambiguous view name. With an alias, use that alias as the read name.
 
 ### What `reads` guarantees
 
-Today `reads` is a declaration. It documents what the command depends on and feeds the mappings above, but nothing guards it at runtime. Nothing generated from it guards the read today, and code that reads a plain read model, by hand or otherwise, does not detect that the state changed before the events were appended. Two commands that both read "no such invoice" can both succeed.
+Application-root `command reads protected` opts the composed application into protected command reads (working ESM v24), under [decision 0085](https://github.com/Cratis/Screenplay/blob/main/decisions/0085-admit-protected-command-reads-through-an-explicit-preamble.md), amending 0017. Declare it once, in the root document; imported commands inherit it. Duplicate, conflicting or non-root declarations report `PLAY0780`. Without it, legacy command reads retain `PLAY0271`, read paths retain `PLAY0268`, and unchanged models keep their bytes and version. A later version alone does not opt a model in.
 
-[Decision 0017](https://github.com/Cratis/Screenplay/blob/main/decisions/0017-map-declared-decision-reads-to-chronicle-decision-reads.md) plans to map each `reads` to a protected decision read, so a stale read rejects the command with a `concurrencyViolation`. This is accepted but not implemented. It applies only under a future language version you opt into, so existing documents keep their meaning. It admits only views keyed on the event source whose handled event types are a finite list. Other shapes will fail binding with a reason; there is no unguarded fallback.
+A protected read must meet all of these conditions:
 
-Until then, make a rule hold explicitly:
+- Its view is built from a finite, non-empty set of event-log event types, with removal handling, keyed only by event-source identity.
+- Its lookup is a required, scalar, non-generated command input of type String, a String concept or canonical GUID. Omitted `by` uses the command's declared identifier; no identifier reports `PLAY0782`.
+- Repeated reads use distinct aliases. A command cannot combine reads and `concurrency` (`PLAY0783`).
 
-- For uniqueness, declare a `unique` [constraint](constraints.md) in the model.
-- For a rule over state, write the application code as a protected decision, a stream decision or an aggregate. See [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) and [choosing a consistency tool in Chronicle](/chronicle/dynamic-consistency-boundary/choosing/).
+`PLAY0781` refuses reducers, joins and removal joins, children/nested scopes, open subscriptions (`every`/`all`), payload keys, composite keys (`ByParts`), missing removal handlers, empty handled event sets, named sources/streams, singleton views and unsupported, generated, optional or collection keys. The diagnostic carries the closed reason; see [protected-read diagnostics](diagnostics.md#protected-command-reads). `optional`, `advisory` and `via query` remain refused. There is no unguarded fallback. Aliases qualify single-level `read.property` paths in requirements and produced-event mappings only; deeper paths and other positions remain `PLAY0268`.
+
+Execution orders authorization → property rules → required reads → derive/provide → requirements → productions/responses. Missing required state rejects with `Validation` and message `<ReadModel> '<key value>' does not exist.` before any requirement or mapping is evaluated. A property-rule rejection therefore takes precedence over absence. Optional view properties follow the existing optional comparison and mapping rules.
+
+Decide records the unfiltered fact-log boundary and each read's key plus the view's handled event types; reads of the same key merge. A matching fact after the boundary makes commit return `Conflict` / `DecisionStateChanged`, with no facts from the command. Every intervening fact is considered, including publications. An irrelevant fact does not conflict: commit uses the latest world for constraints, projections and publications and preserves intervening state. Even a command producing no facts is checked. Race cases are evaluator vectors, not a new specification construct.
+
+A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) for hand-written code.
+
+Eligible legacy models receive informational `PLAY0786` at the first command read. The typed workspace/MCP repair previews the preamble insertion, checks workspace/catalog revisions, preserves comments and requires individual review before explicit apply. Refused reads list their compiler reasons; the repair never silently upgrades a model.
 
 ## Validation rules
 
@@ -428,13 +437,13 @@ Still rejected, and why:
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
-| `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available ([#129](https://github.com/Cratis/Screenplay/issues/129)). |
+| `require` over a read-model path without `command reads protected` | Protected-read admission requires explicit opt-in; with it, admitted single-level paths are executable. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
 A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Fenced `validate` blocks on commands and concepts also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
 
-Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. Both property operands must be command properties with compatible types. Requirements run after property validation and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
+Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. Both property operands must have compatible types. Under `command reads protected`, either operand may instead be a declared read's single-level property path. Requirements run after property validation and required-read presence checks and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
 
 ## Authorization
 
@@ -465,6 +474,8 @@ Policies are declared at the top of the file — see [Policies](policies.md). De
 ## The `produces` block
 
 Declares what events a command emits. Supports single, multiple, and conditional forms. For a fully imperative implementation, use a [handler](#the-handler-block) instead.
+
+With application-root `command reads protected`, a produced-event mapping may source a single-level property from an admitted read, such as `amount = balance.outstanding`. Without the preamble, read-path mappings retain `PLAY0268` and point to the opt-in. This does not admit read paths in `produces when`, response fields, `for`, stream routes or derive/provide expressions.
 
 ### Single event with property mapping
 
@@ -653,4 +664,4 @@ command RegisterInvoice
 | `streamId <Name>` | Scope the check to an event stream id |
 | `events <EventType>[, ...]` | Scope the check to the listed event types |
 
-All dimensions are optional and each appears at most once, but the block must declare at least one — an empty `concurrency` block is a compile error. A command without a `concurrency` block does not append unchecked: Chronicle's default optimistic concurrency strategy applies to every append, narrowed by the append's routing metadata. It skips only the first append into a scope, unless `CheckFirstAppendIntoAScope` is turned on or the append uses `ExpectingNoMatchingEvent()`. The executable model does not bind the `concurrency` block yet. See [Chronicle concurrency](https://github.com/Cratis/Chronicle/blob/main/Documentation/events/concurrency.mdx).
+All dimensions are optional and each appears at most once, but the block must declare at least one — an empty `concurrency` block is a compile error. A command without a `concurrency` block does not append unchecked: Chronicle's default optimistic concurrency strategy applies to every append, narrowed by the append's routing metadata. It skips only the first append into a scope, unless `CheckFirstAppendIntoAScope` is turned on or the append uses `ExpectingNoMatchingEvent()`. The executable model does not bind the `concurrency` block yet. Under `command reads protected`, combining it with command `reads` reports blocking `PLAY0783`; the compiler never guesses which consistency boundary you meant. See [Chronicle concurrency](https://github.com/Cratis/Chronicle/blob/main/Documentation/events/concurrency.mdx).

@@ -146,7 +146,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
-| 24.0 | Explicit protected command reads preamble; binding only, reference execution not yet admitted | 24 | [0085](https://github.com/Cratis/Screenplay/blob/main/decisions/0085-admit-protected-command-reads-through-an-explicit-preamble.md) | `full-esm-v24.json` | Source-backed corpus not yet available |
+| 24.0 | Explicit protected command reads, read paths, required absence and decide/commit conflicts (working number) | 24 | [0085](https://github.com/Cratis/Screenplay/blob/main/decisions/0085-admit-protected-command-reads-through-an-explicit-preamble.md) | `full-esm-v24.json` | `ProtectedCommandReadsCorpus.V24` / `protected-command-reads/v24`, with an identical-source legacy refusal control |
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.
 

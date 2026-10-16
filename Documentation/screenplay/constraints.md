@@ -125,7 +125,7 @@ Chronicle can enforce more than the language can declare. The language cannot ye
 
 A `file <Path>` constraint names a hand-written Chronicle `IConstraint` class, not a general C# predicate. The Chronicle builder can only declare unique property or unique event-type constraints. Keep existing files parseable, but new declarations should use `unique` so they are portable (`PLAY0396`). The executable semantic model rejects `file` constraints (`PLAY0268`) rather than silently treating them as enforceable rules.
 
-A state-transition rule is not uniqueness. Express it with command validation or a `require` condition over command properties. Conditions over read-model state need decision-consistent reads, which are deferred until [#129](https://github.com/Cratis/Screenplay/issues/129); do not use a `file` constraint as a substitute.
+A state-transition rule is not uniqueness. Express it with command validation or a `require` condition over command properties. Conditions over read-model state require application-root `command reads protected` and an admitted view/key shape; see [protected command reads](commands.md#what-reads-guarantees). A `file` constraint is not a substitute for a protected read.
 
 ## Guidance
 

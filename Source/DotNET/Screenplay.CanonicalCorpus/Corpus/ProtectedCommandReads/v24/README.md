@@ -3,10 +3,10 @@
 The corpus has single-file, folder, reordered, and relocated forms. They share
 one application identity and produce identical canonical ESM bytes and revisions.
 
-Twelve specifications cover required-read absence in empty and populated logs,
+Thirteen specifications cover required-read absence in empty and populated logs,
 removal and recreation, precedence over requirements and generation, read paths
 in requirements and produced mappings, cross-source reads, and reaction-invoked
-protected commands. Successful presence cases prove that the guarded requirement
+protected commands, including missing read state that leaves the accepted triggering fact intact. Successful presence cases prove that the guarded requirement
 and generation phases are reached when the read exists.
 
 Derive/provide have no executable nodes in this ESM, so this corpus does not claim coverage for them.

@@ -19,7 +19,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
@@ -39,6 +39,12 @@ ReactionBatchesPreamble = "reaction", "batches", "atomic", NL ;
 (* Application root only, at most once across composed documents (PLAY0693).
    Imported reactions inherit the mode. Absence keeps legacy per-fact behavior;
    explicit presence selects ESM v22. It is not a reaction declaration. *)
+
+CommandReadsPreamble = "command", "reads", "protected", NL ;
+(* Application root only, once across composed documents (PLAY0780).
+   Imported commands inherit the mode; presence selects working ESM v24.
+   The two behavioral preambles may appear in either order. This is not a
+   command declaration. Without it, legacy command reads remain refused. *)
 
 NumericPreamble = "numbers", "exact", NL ;
 
@@ -828,7 +834,9 @@ ReadsKeyPart   = LowerIdent, "=", Path, NL ;
    looked up by a key. An alias is required for every instance when the same
    read model is read twice by one command. Aliases must be unique in that
    command and must not match a command property or the keywords "as", "by",
-   or "reads". An unambiguous view name and an alias may qualify paths in a
+   or "reads". Under command reads protected, omitted by uses the command
+   identifier; a by block remains authoring-only (PLAY0781 ByParts).
+   An unambiguous view name and an alias may qualify paths in a
    require condition.                                                       *)
 
 ConcurrencyDecl = "concurrency", NL,

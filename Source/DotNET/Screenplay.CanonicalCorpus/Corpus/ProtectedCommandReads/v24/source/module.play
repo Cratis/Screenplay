@@ -170,6 +170,12 @@ module Storage
         then Taken
           for "target"
           value = "original"
+      specification ReactionInvokesProtectedReadOfMissing
+        when RequestWork
+          id = "request"
+          targetId = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."
     slice StateView State
       readmodel Current
         id String key

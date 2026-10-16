@@ -31,6 +31,12 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 `ApplicationSyntax.ReactionProductionMode` is a nullable init-only `ReactionProductionMode` enum. The only admitted value is `Atomic`, authored as application-root `reaction batches atomic`; absence preserves legacy behavior and is omitted from syntax JSON. The scalar is visible to `VisitApplication`, not a new child node. Folder layout keeps it only in the root document, and imported reactions inherit it. Strict transport readers reject unknown values. ESM v22 writes the distinct optional final application member `reactionProductionMode: "atomic"`; consumers must preserve the choice during source recovery or refuse it.
 
+## Protected command read mode
+
+`ApplicationSyntax.CommandReadMode` is a nullable init-only `CommandReadMode` enum, with the sole value `Protected`. Application-root `command reads protected` selects it; syntax JSON writes `commandReadMode: "Protected"` only when present. The scalar is visible to `VisitApplication`, not a child node, and duplicates or conflicting/non-root declarations report `PLAY0780`. Folder layout keeps it in the application root; imported commands inherit it. Preserve it during rewrites and source recovery.
+
+Working ESM v24 writes the distinct optional final application member `commandReadMode: "protected"`, plus each command's admitted `reads` entries (`name`, `readModel`, `key`, `presence: "required"`). Read-path expressions record `kind: "readPath"`, `read` and the view `property` id; condition property operands carry the read name. Earlier ESM readers and programmatic validators reject these members instead of silently losing protection. Omission preserves earlier bytes, version and legacy refusals. Consumers must explicitly admit the version or refuse it; reference execution and target realization are separate verdicts.
+
 ## Generation rule bodies and checksum validation
 
 `GenerationSyntax.File` and `.Code` are nullable init-only members; old omissions remain absent in transport. They belong to `generate rule Name`, independently of a concept's provenance file. Preserve and walk them when rewriting concepts. Exactly one direct source is required for executable admission. `ValidationRuleKind.Checksum` and the semantic counterpart are appended enum members; earlier numeric values are unchanged. Checksum uses the existing rule operand and severity/message envelope.

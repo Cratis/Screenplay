@@ -113,7 +113,8 @@ public static class ProtectedCommandReadsCorpus
             ("GenerationAfterPresence", null, 1),
             ("ReadPathRequirementRejectsEmpty", "The stored value must not be empty.", 1),
             ("ReadPathMappingAcrossSources", null, 2),
-            ("ReactionInvokesProtectedRead", null, 3)
+            ("ReactionInvokesProtectedRead", null, 3),
+            ("ReactionInvokesProtectedReadOfMissing", "Current 'missing' does not exist.", 1)
         ];
         return [.. cases.Select(value => new CanonicalCorpusSpecificationExpectation
         {

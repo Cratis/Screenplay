@@ -70,7 +70,9 @@ public sealed partial class SemanticModelBinder
 
         SemanticExpression? UnsupportedExpression(ExpressionSyntax expression, string description)
         {
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} expression '{expression.GetType().Name}' is not admitted by ESM v1.", expression.Location);
+            var hint = expression is PathExpressionSyntax && description == "produced event mapping" && syntax.CommandReadMode is null
+                ? " Read-model paths require the 'command reads protected' preamble (#129)." : string.Empty;
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} expression '{expression.GetType().Name}' is not admitted by ESM v1.{hint}", expression.Location);
             return null;
         }
     }
