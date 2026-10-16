@@ -62,6 +62,7 @@
         { "name": "hr-sample", "path": "Samples/Hr/hr.play" },
         { "name": "projects-sample", "path": "Samples/Projects/projects.play" },
         { "name": "administration-sample", "path": "Samples/Administration/administration.play" },
+        { "name": "orders-sample", "path": "Samples/Orders/orders.play" },
         { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
         { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" }
     ]
