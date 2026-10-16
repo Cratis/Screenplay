@@ -4004,24 +4004,15 @@
                       "name": "IsWarehouseClerk"
                     }
                   },
-                  "by": {
-                    "kind": "QueryParameterSyntax",
-                    "name": "summaryId",
-                    "type": {
-                      "kind": "TypeRefSyntax",
-                      "isCollection": false,
-                      "isOptional": false,
-                      "name": "String"
-                    }
-                  },
+                  "by": null,
                   "description": null,
                   "filters": [],
                   "isObservable": true,
                   "name": "CurrentFigures",
                   "returnType": {
                     "kind": "TypeRefSyntax",
-                    "isCollection": false,
-                    "isOptional": true,
+                    "isCollection": true,
+                    "isOptional": false,
                     "name": "InventoryFigures"
                   },
                   "scope": null
