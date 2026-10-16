@@ -45,7 +45,7 @@ ui profile <Name>
 - `root template` - the template the whole application is drawn in: every screen's template chain is placed in its primary outlet. The reference is the one a `template` assignment uses - an own layout or application-scope screen template by name, or a template a blueprint ships, `blueprint <Blueprint> <Name>`, with an optional `version "<range>"` pin (a version range only applies to a blueprint template; `PLAY0788` otherwise). Optional, at most one per profile (`PLAY0798`). The template has to exist (`PLAY0790`), be usable as the shell - a layout, or a screen template that declares `scopes application` and fits no slot (`PLAY0794`) - and have a `content` slot (`PLAY0795`); a blueprint it comes from has to be in the profile's `packages` (`PLAY0792`). See [Layouts and templates](templates.md#own-and-blueprint-templates).
   - `option <name> <value>` - one of the shell's own configurable items, for example `option navigationMode slim`. The value is a bare word, a quoted string, a number, `true` or `false`, kept as written. Each name is set once. The grammar only reads the line. The validator then checks the name: an own shell exposes the properties of its `exposure for <Shell>` (and a shell that exposes nothing has no options), and an option it does not expose is `PLAY0796`. A blueprint shell's options are checked against the installed catalog (see below).
 - `appearance` - how the application looks regardless of the shell: `color scheme` (`light`, `dark` or `system`) and `accent "<#hex>"` (`#RGB`, `#RRGGBB` or `#RRGGBBAA`; anything else is `PLAY0797`). Optional, at most one block per profile, each line at most once (`PLAY0789`).
-- `new screens use template` - the template a new screen starts from when it is created in a designer. It is an authoring default; it changes no existing screen. Optional, at most one per profile (`PLAY0788`). It has to name a screen template that can start a screen in a feature - not a layout, a dialog template or an application-scope root (`PLAY0799`).
+- `new screens use template` - the template a new screen starts from when it is created in a designer. It is an authoring default; it changes no existing screen. Optional, at most one per profile (`PLAY0788`). It has to name a template that can start a screen in a feature - not a layout or an application-scope root, and one whose `scopes` leave out `feature` is refused too (`PLAY0799`).
 - `layout` - the application's base navigational shell this profile renders inside. This is the older way to name the shell and stays accepted; it is reported as `PLAY0791` (a warning) with a quick fix that rewrites it to `root template <Name>`. When a `root template` is present as well, the `layout` line is ignored. Optional, at most one per profile. Naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
 
 ## Example
@@ -106,3 +106,19 @@ blueprint does not ship, `PLAY0792` for a blueprint that is not installed, `PLAY
 satisfy, `PLAY0794` and `PLAY0795` for a template that cannot be the shell or has no `content` outlet, `PLAY0796` for an option the
 shell does not expose, and `PLAY0799` for a `new screens use template` that cannot start a screen in a feature. The rules are the same
 ones the compiler runs - there is no second rule set - and they restate Scene's `ShellResolver` and `TemplateApplicability`.
+
+## Conversion and conformance corpus
+
+A `ui profile` is a `UiProfileSyntax` in the syntax tree and in syntax JSON (`root`, `options`, `appearance` and `newScreenTemplate` are all modelled, so a profile round trips through print, parse and JSON without loss). It is deferred from the backend semantic model (`PLAY0269`): hosts that turn a document into a running application read the profile from the syntax tree. The mapping to Scene's `UiProfile` lives in Stage's `UiProfileConverter`, not here: `root template` becomes `root` (a template reference with its options and version pin), `appearance` becomes `appearance`, `new screens use template` becomes `defaults.newScreenTemplate`, and a legacy `layout` line converts to `root` when the layout resolves.
+
+The canonical `screen-composition/v1` corpus pins the contract in `Cratis.Screenplay.CanonicalCorpus`:
+
+| Vector | What it holds |
+| --- | --- |
+| `ui-profile-root-positive` | An own layout, an own application-scope screen template and a blueprint template with a version pin as the root template, shell options, appearance and the new screens default. |
+| `ui-profile-root-legacy-layout` | The legacy `layout` line, alone and beside a `root template` (`PLAY0791`, a warning). |
+| `ui-profile-root-unknown` | `PLAY0790`, `PLAY0792` and `PLAY0798`. |
+| `ui-profile-root-not-a-shell` | `PLAY0794`, `PLAY0795` and `PLAY0799`. |
+| `ui-profile-root-invalid` | `PLAY0796` and `PLAY0797`. |
+
+The same shell rules are held to Scene's shared `effective-shell-fixtures.json` and `template-applicability-fixtures.json` vectors; the TypeScript compiler reports the legacy `layout` line (`PLAY0791`) with the same code and line as the C# compiler (`Conformance/diagnostics.json`) and offers the quick fix.

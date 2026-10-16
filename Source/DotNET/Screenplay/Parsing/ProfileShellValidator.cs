@@ -17,8 +17,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </remarks>
 internal static partial class ProfileShellValidator
 {
-    const string ApplicationScope = "application";
-    const string FeatureScope = "feature";
+    internal const string ApplicationScope = "application";
+    internal const string FeatureScope = "feature";
     static readonly string[] _colorSchemes = ["light", "dark", "system"];
     static readonly string[] _contentTypes = ["Workspace", "List", "Detail", "Form"];
 
@@ -49,6 +49,105 @@ internal static partial class ProfileShellValidator
                 ValidateReference(profile, application, catalog, context, newScreens.Name, newScreens.Blueprint, newScreens.Version, newScreens.Location, isRoot: false, null);
             }
         }
+    }
+
+    internal static IEnumerable<TemplateDescriptor> Own(ApplicationSyntax application)
+    {
+        var exposures = application.Exposures.ToList();
+        IReadOnlyList<string>? OptionsOf(string owner)
+        {
+            var own = exposures.Where(exposure => exposure.Owner == owner).ToList();
+            return own.Count == 0
+                ? null
+                : [.. own.SelectMany(exposure => exposure.Properties)
+                    .SelectMany(property => new[] { property.Path, $"{property.Component}.{property.Path}", property.Label ?? property.Path })
+                    .Distinct(StringComparer.Ordinal)];
+        }
+
+        foreach (var layout in application.Layouts ?? [])
+        {
+            yield return new TemplateDescriptor(layout.Name, TemplateDescriptorKind.Layout)
+            {
+                Scopes = layout.RestrictsScopes ? [.. layout.Scopes] : null,
+                Type = layout.TemplateType,
+                Slots = [.. layout.Slots.Select(slot => slot.Name)],
+                Options = OptionsOf(layout.Name)
+            };
+        }
+
+        foreach (var template in application.Modules.SelectMany(module => module.ScreenTemplates))
+        {
+            // An own screen template is a shell when it declares the application scope: that is how a root screen template is written.
+            var scopes = template.RestrictsScopes ? template.Scopes.ToList() : null;
+            yield return new TemplateDescriptor(template.Name, TemplateDescriptorKind.ScreenTemplate)
+            {
+                IsRoot = scopes?.Contains(ApplicationScope, StringComparer.Ordinal) == true,
+                Scopes = scopes,
+                Type = template.TemplateType,
+                FitsSlot = template.FitsSlot is not null,
+                Slots = [.. template.Slots.Select(slot => slot.Name)],
+                Options = OptionsOf(template.Name)
+            };
+        }
+
+        foreach (var template in application.Modules.SelectMany(module => module.DialogTemplates ?? []))
+        {
+            yield return new TemplateDescriptor(template.Name, TemplateDescriptorKind.DialogTemplate)
+            {
+                Scopes = template.RestrictsScopes ? [.. template.Scopes] : null,
+                Type = template.TemplateType,
+                Slots = [.. template.Slots.Select(slot => slot.Name)]
+            };
+        }
+    }
+
+    /// <summary>
+    /// The facts <c>TemplateApplicability.ValidateLayout</c>, <c>ValidateScreenTemplate</c> and <c>ValidateDialogTemplate</c> decide by.
+    /// </summary>
+    internal static List<string> Applicability(TemplateDescriptor template, string scope, bool asShell)
+    {
+        var problems = new List<string>();
+        var kind = template.Kind switch
+        {
+            TemplateDescriptorKind.Layout => "layout",
+            TemplateDescriptorKind.ScreenTemplate => "screen template",
+            _ => "dialog template"
+        };
+        var isRoot = template.Kind == TemplateDescriptorKind.ScreenTemplate && template.IsRoot;
+        if ((template.Kind == TemplateDescriptorKind.Layout || isRoot) != (scope == ApplicationScope))
+        {
+            var detail = asShell
+                ? "only a layout or an application-scope screen template can be the shell"
+                : "a layout or an application-scope screen template can only be the shell";
+            problems.Add($"it is a {kind}{(isRoot ? " with the root role" : string.Empty)}, and {detail}");
+        }
+
+        if (template.Type == "ApplicationShell" && template.Kind != TemplateDescriptorKind.Layout)
+        {
+            problems.Add("its type 'ApplicationShell' must be a layout");
+        }
+
+        if (template.Type == "Dialog" && template.Kind != TemplateDescriptorKind.DialogTemplate)
+        {
+            problems.Add("its type 'Dialog' must be a dialog template");
+        }
+
+        if (template.Kind == TemplateDescriptorKind.Layout && template.Type is not null && _contentTypes.Contains(template.Type, StringComparer.Ordinal))
+        {
+            problems.Add($"its type '{template.Type}' is for content, not for a layout");
+        }
+
+        if (template.Scopes is { } scopes && !scopes.Contains(scope, StringComparer.Ordinal))
+        {
+            problems.Add($"it does not declare scope '{scope}'");
+        }
+
+        if (isRoot && template.FitsSlot)
+        {
+            problems.Add("it fits a slot, and nothing contains the application shell");
+        }
+
+        return problems;
     }
 
     static void ValidateLegacyLayout(UiProfileSyntax profile, ApplicationSyntax application, ParserContext context)
@@ -244,105 +343,6 @@ internal static partial class ProfileShellValidator
                 $"The root template '{root.Name}' of ui profile '{profile.Name}' has no option '{option.Name}' - it {known}",
                 option.Location,
                 TemplateArguments(profile, root.Name, root.Blueprint).With("option", DiagnosticArgument.Text(option.Name)));
-        }
-    }
-
-    /// <summary>
-    /// The facts <c>TemplateApplicability.ValidateLayout</c>, <c>ValidateScreenTemplate</c> and <c>ValidateDialogTemplate</c> decide by.
-    /// </summary>
-    static List<string> Applicability(TemplateDescriptor template, string scope, bool asShell)
-    {
-        var problems = new List<string>();
-        var kind = template.Kind switch
-        {
-            TemplateDescriptorKind.Layout => "layout",
-            TemplateDescriptorKind.ScreenTemplate => "screen template",
-            _ => "dialog template"
-        };
-        var isRoot = template.Kind == TemplateDescriptorKind.ScreenTemplate && template.IsRoot;
-        if ((template.Kind == TemplateDescriptorKind.Layout || isRoot) != (scope == ApplicationScope))
-        {
-            var detail = asShell
-                ? "only a layout or an application-scope screen template can be the shell"
-                : "a layout or an application-scope screen template can only be the shell";
-            problems.Add($"it is a {kind}{(isRoot ? " with the root role" : string.Empty)}, and {detail}");
-        }
-
-        if (template.Type == "ApplicationShell" && template.Kind != TemplateDescriptorKind.Layout)
-        {
-            problems.Add("its type 'ApplicationShell' must be a layout");
-        }
-
-        if (template.Type == "Dialog" && template.Kind != TemplateDescriptorKind.DialogTemplate)
-        {
-            problems.Add("its type 'Dialog' must be a dialog template");
-        }
-
-        if (template.Kind == TemplateDescriptorKind.Layout && template.Type is not null && _contentTypes.Contains(template.Type, StringComparer.Ordinal))
-        {
-            problems.Add($"its type '{template.Type}' is for content, not for a layout");
-        }
-
-        if (template.Scopes is { } scopes && !scopes.Contains(scope, StringComparer.Ordinal))
-        {
-            problems.Add($"it does not declare scope '{scope}'");
-        }
-
-        if (isRoot && template.FitsSlot)
-        {
-            problems.Add("it fits a slot, and nothing contains the application shell");
-        }
-
-        return problems;
-    }
-
-    static IEnumerable<TemplateDescriptor> Own(ApplicationSyntax application)
-    {
-        var exposures = application.Exposures.ToList();
-        IReadOnlyList<string>? OptionsOf(string owner)
-        {
-            var own = exposures.Where(exposure => exposure.Owner == owner).ToList();
-            return own.Count == 0
-                ? null
-                : [.. own.SelectMany(exposure => exposure.Properties)
-                    .SelectMany(property => new[] { property.Path, $"{property.Component}.{property.Path}", property.Label ?? property.Path })
-                    .Distinct(StringComparer.Ordinal)];
-        }
-
-        foreach (var layout in application.Layouts ?? [])
-        {
-            yield return new TemplateDescriptor(layout.Name, TemplateDescriptorKind.Layout)
-            {
-                Scopes = layout.RestrictsScopes ? [.. layout.Scopes] : null,
-                Type = layout.TemplateType,
-                Slots = [.. layout.Slots.Select(slot => slot.Name)],
-                Options = OptionsOf(layout.Name)
-            };
-        }
-
-        foreach (var template in application.Modules.SelectMany(module => module.ScreenTemplates))
-        {
-            // An own screen template is a shell when it declares the application scope: that is how a root screen template is written.
-            var scopes = template.RestrictsScopes ? template.Scopes.ToList() : null;
-            yield return new TemplateDescriptor(template.Name, TemplateDescriptorKind.ScreenTemplate)
-            {
-                IsRoot = scopes?.Contains(ApplicationScope, StringComparer.Ordinal) == true,
-                Scopes = scopes,
-                Type = template.TemplateType,
-                FitsSlot = template.FitsSlot is not null,
-                Slots = [.. template.Slots.Select(slot => slot.Name)],
-                Options = OptionsOf(template.Name)
-            };
-        }
-
-        foreach (var template in application.Modules.SelectMany(module => module.DialogTemplates ?? []))
-        {
-            yield return new TemplateDescriptor(template.Name, TemplateDescriptorKind.DialogTemplate)
-            {
-                Scopes = template.RestrictsScopes ? [.. template.Scopes] : null,
-                Type = template.TemplateType,
-                Slots = [.. template.Slots.Select(slot => slot.Name)]
-            };
         }
     }
 

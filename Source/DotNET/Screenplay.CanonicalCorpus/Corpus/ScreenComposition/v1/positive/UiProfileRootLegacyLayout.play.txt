@@ -1,0 +1,12 @@
+layout AppShell
+  category Shell
+  topbar
+  content
+
+ui profile Desktop
+  target platform web
+  layout AppShell
+
+ui profile Both
+  layout AppShell
+  root template AppShell
