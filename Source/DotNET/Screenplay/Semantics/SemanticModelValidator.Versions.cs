@@ -10,6 +10,9 @@ internal static partial class SemanticModelValidator
     internal static bool UsesCompositeReadModelKeys(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.ReadModels).Any(model => model.Properties.Count(property => property.IsIdentifier) > 1);
 
+    internal static bool UsesDateComparisons(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticCommandDateComparisons.Properties(application, command).Any());
+
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
@@ -25,6 +28,14 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V27,
             "A composite read-model key ESM must contain a read model with several identifier parts.",
             "Flat composite read-model keys require their admitting ESM version.");
+
+    static void ValidateDateComparisonVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesDateComparisons(application),
+            version,
+            SemanticVersion.V26,
+            "An ESM v26 model must use a Date or DateTime command comparison.",
+            "Chronological command date comparisons require ESM v26.");
 
     static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

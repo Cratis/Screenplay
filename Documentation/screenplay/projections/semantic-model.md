@@ -2,6 +2,8 @@
 
 A projection is written once, in the Projection Declaration Language, and read by two consumers. Cratis Chronicle compiles it with the Screenplay compiler and runs it. The Screenplay semantic binder turns it into the executable semantic model (ESM) that Stage, rendered applications and the reference evaluator share. This page explains how the two stay in agreement and where the semantic model deliberately stops.
 
+Date values in projection state and keys remain text with ordinal equality. ESM v26's chronological Date/DateTime comparisons apply only to command conditions and command/property rules; they do not change projection key matching or specification `then` equality. DateTime command comparisons use UTC ticks rather than text ordering. Read paths and reaction `where` remain refused for date comparisons. See [command date comparisons](../commands.md#chronological-command-date-comparisons) and the [version contract](../interoperability.md#executable-semantic-model-versions).
+
 ## Chronicle is the semantic reference
 
 The grammar belongs to Screenplay, and Chronicle uses the Screenplay parser as it is. What a projection *means* - which instance an event affects, what a join may create, what a removal removes - is decided by Chronicle's lowering (`ProjectionDefinitionSyntaxVisitor`), its validation (`ProjectionValidator`) and its engine. The semantic binder mirrors those rather than defining meaning of its own. Where these pages and Chronicle disagree, Chronicle is right and the page is wrong.

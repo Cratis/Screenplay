@@ -73,6 +73,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `CompositeReadModelKeysCorpus.V27` pins Double-mode source forms, including reordered key declarations and query parts. Its same-source exact-mode control remains refused with `PLAY0268` naming #285. Regenerate its expected bytes and revision with `SCREENPLAY_REGENERATE_COMPOSITE_READ_MODEL_KEYS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug --filter FullyQualifiedName~when_loading_composite_read_model_keys`. The run deliberately fails; review, rebuild and rerun without the variable. Neither switch permits editing an existing golden by hand.
 
+`full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=26`; regenerate the source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`. Both fail deliberately; review, rebuild and rerun strictly without them.
+
 ## Regenerating
 
 When a deliberate contract change alters the canonical bytes, change the source model first, then run:

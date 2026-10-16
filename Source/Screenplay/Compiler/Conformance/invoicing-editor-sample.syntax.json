@@ -2945,6 +2945,17 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "message": "Due date must not predate the invoicing ledger",
+                          "property": "dueDate",
+                          "rule": "GreaterThanOrEqual",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2020-01-01"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
                           "message": "Due date must be in the future",
                           "property": "dueDate",
                           "rule": "GreaterThan",

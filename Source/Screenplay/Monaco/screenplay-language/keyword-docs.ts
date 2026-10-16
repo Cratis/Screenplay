@@ -182,8 +182,8 @@ export const keywordDocs: Record<string, string> = {
     Int: 'Primitive type — an integer number.',
     Decimal: 'Primitive type — a decimal number.',
     Bool: 'Primitive type — true or false.',
-    Date: 'Primitive type — a date without time.',
-    DateTime: 'Primitive type — a date and time.',
+    Date: 'Primitive type — a calendar date without a time zone. ESM v26 admits all six comparisons in command require, produces when and command/property rules. Conditions use required same-primitive command properties or a literal; rules use literals only. Canonical literals use yyyy-MM-dd. Concept rules, reaction where, read paths, context and today stay refused.',
+    DateTime: 'Primitive type — a date and time. ESM v26 command comparisons order UTC instants at tick precision, including equality across offsets. Compared input requires an explicit offset or Z before any rule runs; literals canonicalize to UTC with seven fractional digits and Z. Targets without tick precision refuse comparisons; client validators omit date ordering. Other equality stays ordinal.',
     Enum: 'An enumeration concept with named members. Members may all declare unique int32 numbers (draft = 1) or all omit them (zero-based positions). Never renumber or reuse a published number. Non-positional numbers select executable model (ESM) v12; consumers must explicitly admit v12. Specifications still name members.',
 };
 

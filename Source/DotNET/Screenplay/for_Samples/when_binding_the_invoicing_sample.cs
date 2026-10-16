@@ -83,5 +83,21 @@ public class when_binding_the_invoicing_sample : Specification
     void should_not_refuse_literal_text_rules() => _diagnostics.Any(diagnostic => diagnostic.Message.Contains("text comparison requires", StringComparison.Ordinal) || diagnostic.Code == DiagnosticCodes.DeprecatedStudioTextRulePattern).ShouldBeFalse();
 
     [Fact]
+    void should_show_the_admitted_date_literal_rule() => SyntaxNodes.Under(_application).OfType<ValidationRuleSyntax>().Any(rule =>
+        rule.Property == "dueDate" && rule.Rule == ValidationRuleKind.GreaterThanOrEqual && rule.Value is LiteralExpressionSyntax literal && literal.Value is string text && text == "2020-01-01").ShouldBeTrue();
+
+    [Fact]
+    void should_not_refuse_the_date_literal_rule()
+    {
+        var rule = SyntaxNodes.Under(_application).OfType<ValidationRuleSyntax>().Single(rule =>
+            rule.Property == "dueDate" && rule.Rule == ValidationRuleKind.GreaterThanOrEqual && rule.Value is LiteralExpressionSyntax literal && literal.Value is string text && text == "2020-01-01");
+        _diagnostics.Any(diagnostic => diagnostic.Location.Line == rule.Location.Line && (diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding)).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_keep_today_refused() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax &&
+        diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal) && diagnostic.Message.Contains("date", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
     void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(3);
 }

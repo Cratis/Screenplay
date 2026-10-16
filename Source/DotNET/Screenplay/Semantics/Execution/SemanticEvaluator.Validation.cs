@@ -77,7 +77,14 @@ public sealed partial class SemanticEvaluator
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            var check = SemanticValidationRules.Check(validation, value);
+            var property = command.Properties.Single(property => property.Id == validation.Property);
+            var primitive = SemanticCommandDateComparisons.Primitive(plan.Model.Application, property.Type);
+            var check = SemanticDateComparison.IsDate(primitive) && SemanticDateComparison.IsComparison(validation.Kind)
+                ? new SemanticRuleCheck(
+                    SemanticDateComparison.Satisfies(validation, value, primitive) ? SemanticRuleStatus.Satisfied : SemanticRuleStatus.Failed,
+                    validation,
+                    validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."))
+                : SemanticValidationRules.Check(validation, value);
             if (check.Status == SemanticRuleStatus.Failed)
             {
                 failures.Add(new(check.Message, validation.Severity));

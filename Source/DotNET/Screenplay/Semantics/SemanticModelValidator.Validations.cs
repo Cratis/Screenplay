@@ -125,6 +125,12 @@ internal static partial class SemanticModelValidator
             }
 
             var primitive = UnderlyingPrimitive(propertyType);
+            if (SemanticDateComparison.IsDate(primitive) && !isConcept && !propertyType.IsCollection &&
+                _semanticVersion.IsAtLeast(SemanticVersion.V26) && SemanticDateComparison.IsComparison(validation.Kind))
+            {
+                SemanticDateComparison.ValidateConstant(validation.Operand, primitive);
+                return;
+            }
             var shape = new ValidatedShape(
                 primitive,
                 !propertyType.IsCollection,

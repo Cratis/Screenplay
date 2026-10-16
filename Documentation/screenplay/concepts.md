@@ -187,6 +187,8 @@ Never renumber a published member or reuse its number for another meaning. To pi
 
 ## Validation
 
+Date and DateTime concept rules remain authoring-only (`PLAY0268`): they also reach query arguments and clients, whose date-comparison contract is not admitted. ESM v26 instead admits date comparisons on command properties, including properties typed by a date concept. Date compares calendar dates; DateTime compares UTC instants at seven-digit tick precision. Only these command comparisons use instant equality; keys, constraints and specification expectations remain ordinal. See [chronological command date comparisons](commands.md#chronological-command-date-comparisons).
+
 For .NET consumers of the executable semantic model, [check values against validation rules](value-rule-checks.md) with `SemanticValidationRules.Check` instead of copying the evaluator.
 
 A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.

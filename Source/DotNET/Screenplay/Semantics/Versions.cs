@@ -133,6 +133,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V25 = new(25, 0);
 
     /// <summary>
+    /// Gets chronological command date comparison language version 26.0.
+    /// </summary>
+    public static readonly LanguageVersion V26 = new(26, 0);
+
+    /// <summary>
     /// Gets the language version admitting flat composite read-model keys.
     /// </summary>
     public static readonly LanguageVersion V27 = new(CompositeReadModelKeyVersion.Major, 0);
@@ -291,6 +296,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets protected command reads semantic version 25.0.
     /// </summary>
     public static readonly SemanticVersion V25 = new(25, 0);
+
+    /// <summary>
+    /// Gets chronological command date comparison semantic version 26.0.
+    /// </summary>
+    public static readonly SemanticVersion V26 = new(26, 0);
 
     /// <summary>
     /// Gets the semantic version admitting flat composite read-model keys.

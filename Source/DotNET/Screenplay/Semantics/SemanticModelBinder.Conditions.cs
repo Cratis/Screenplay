@@ -26,6 +26,12 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            if (comparison.Left.StartsWith('$'))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Context, identity and environment operands are not admitted as a command comparison subject.", comparison.Location);
+                return null;
+            }
+
             SemanticConditionOperand leftOperand;
             if (!properties.TryGetValue(comparison.Left, out var property))
             {
@@ -47,6 +53,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var subject = CommandValidationSubject(property.Name, property.Type);
+            if (subject.IsDate) return BindDateCondition(comparison, property, leftOperand, properties, position);
             var right = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => new(default, BindLiteral(literal)),

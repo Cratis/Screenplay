@@ -47,6 +47,25 @@ static class ContractAdmission
                     second = second
         """;
 
+    internal const string CommandDateComparisons = """
+        module M
+          feature F
+            slice StateChange S
+              command Record
+                id String identifier
+                start DateTime
+                end DateTime
+                day Date
+                validate
+                  require end >= start
+                  end >= "2026-01-01T01:00:00+01:00"
+                  day >= "2026-01-01"
+                produces when day > "2026-01-01"
+                  Recorded
+                    for id
+              event Recorded
+        """;
+
     internal const string ProtectedReads = """
         command reads protected
         module M
@@ -126,7 +145,9 @@ static class ContractAdmission
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id generated\n",
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
                 "eventsource Account\n  identifier String\n  stream Archive\n" + Slice + "      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.Archive\n",
-                "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n      command Run\n        produces External\n"
+                "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n      command Run\n        produces External\n",
+                CommandDateComparisons,
+                CommandDateComparisons.Replace("end >= start", "end >= today", StringComparison.Ordinal)
             ]),
         new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
         new(

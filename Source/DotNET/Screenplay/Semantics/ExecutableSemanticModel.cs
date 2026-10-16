@@ -119,6 +119,7 @@ internal static partial class SemanticModelValidator
 
         ValidateCompositeReadModelKeyVersion(application, semanticVersion);
         ValidateDecisionReadVersion(application, semanticVersion);
+        ValidateDateComparisonVersion(application, semanticVersion);
         ValidateDescribedHandlerVersion(application, semanticVersion);
         ValidateTextRuleVersion(application, semanticVersion);
         ValidateQueryRejectionVersion(application, semanticVersion);

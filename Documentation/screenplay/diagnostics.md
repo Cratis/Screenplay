@@ -1033,6 +1033,8 @@ Concept compliance markers, qualifiers and secret scopes are admitted by ESM v13
 
 Caller-supplied equality filters on collection queries are admitted by ESM v14. `PLAY0268` names the query, filter and reason for a refused filter: it has a `from` source, returns a single result, lacks a same-named scalar primitive/concept/enum property, differs in nominal type (ignoring optionality), repeats a name or duplicates `by`. Explicit scope, performer and context-sourced `by` each have their own refusal. The strict reader and evaluator reject unknown/repeated filter values, missing required filters, null and type mismatches. `PLAY0468` applies to unknown/repeated/missing required specification arguments in both query spellings. See [Queries](queries.md).
 
+ESM v26 admits chronological Date/DateTime comparisons only in command `require`, `produces when` and command/property validation rules. `PLAY0268` refuses mixed primitives, optional condition operands, concept rules, reaction `where`, protected read paths, `$context` and `today`; a refused whole comparison reports only this code, without checking literals. In an admitted position, an invalid date literal or a DateTime literal without an explicit offset or Z reports `PLAY0273`. Runtime offset-less DateTime inputs on participating properties reject with Validation before rules, even for skipped comparisons. See [command date comparisons](commands.md#chronological-command-date-comparisons).
+
 For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
 ### AST authoring
