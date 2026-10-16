@@ -83,3 +83,4 @@
 | [0084](0084-define-matches-patterns-as-a-portable-linear-dialect.md) | Define matches patterns as a portable linear dialect and evaluate them without a timeout | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
 | [0085](0085-admit-protected-command-reads-through-an-explicit-preamble.md) | Admit protected command reads in the next ESM version through an explicit preamble | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
 | [0086](0086-give-diagnostics-named-typed-arguments-declared-per-code.md) | Give diagnostics named, typed arguments declared per code | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0087](0087-admit-chronological-date-and-datetime-ordering-in-command-conditions.md) | Admit chronological Date and DateTime ordering in command conditions and record the receipt clock rule | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |

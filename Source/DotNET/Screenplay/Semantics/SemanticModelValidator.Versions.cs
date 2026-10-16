@@ -7,6 +7,9 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesDateComparisons(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticCommandDateComparisons.Properties(application, command).Any());
+
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
@@ -14,6 +17,14 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static void ValidateDateComparisonVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesDateComparisons(application),
+            version,
+            SemanticVersion.V26,
+            "An ESM v26 model must use a Date or DateTime command comparison.",
+            "Chronological command date comparisons require ESM v26.");
 
     static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

@@ -377,7 +377,22 @@ public class when_freezing_legacy_source_syntax_bytes
                     {
                         // The living sample's continuation response has a current shared syntax vector.
                         // Keep the pre-response sample bytes frozen rather than rewriting its baseline.
-                        Commands = slice.Commands.Select(command => command.Name == "RegisterInvoice" ? command with { Response = null } : command),
+                        Commands = slice.Commands.Select(command => command.Name == "RegisterInvoice" ? command with
+                        {
+                            Response = null,
+                            // Chronological date rules have current shared vectors. Omit only the new ledger
+                            // rule from frozen bytes; retain the existing dueDate > today rule unchanged.
+                            Validations = command.Validations.Select(validation => validation is DeclarativeValidateSyntax block ? block with
+                            {
+                                Rules = block.Rules.Where(rule => rule is not
+                                {
+                                    Property: "dueDate",
+                                    Rule: ValidationRuleKind.GreaterThanOrEqual,
+                                    Value: LiteralExpressionSyntax { Value: "2020-01-01" },
+                                    Message: "Due date must not predate the invoicing ledger"
+                                })
+                            } : validation)
+                        } : command),
                         Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAServiceRegisteringAnInvoice")
                     },
                     _ => slice

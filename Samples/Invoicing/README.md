@@ -48,6 +48,10 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 `PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line selects released ESM v10; the reference authenticates the system identity with that role, while claim conditions remain unknown and a final unknown denies. It does not supply audit identity. Source compilation remains warning-free.
 
+## Date comparisons
+
+`RegisterInvoice` keeps due dates on or after the invoicing ledger's opening date with `dueDate >= "2020-01-01"`. This command rule is admitted by ESM v26: Date orders by calendar date, and DateTime command comparisons use UTC ticks, including equality across offsets. The existing `dueDate > today` and `olderThan < today` remain authoring-only and pinned as `PLAY0268`; `today` is not admitted here. DateTime literals and compared inputs require an explicit offset or Z. Other sample refusals still prevent whole-model executable binding.
+
 ## Query validation rejections
 
 `RejectingAnIncompleteCurrencyCode` asks for the rate for `"EU"` and asserts `then error`: CurrencyCode requires three characters. Query arguments obey concept rules after authorization in every ESM version; this new rejection specification selects ESM v18. `NotFindingAnUnpublishedCurrency` still uses `then no result` for the valid but absent `"XAU"`. Performer-backed queries remain outside reference executable admission in this showcase.

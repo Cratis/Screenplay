@@ -9,21 +9,26 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
-        void ValidateCondition(SemanticCondition condition, Dictionary<SemanticId, SemanticProperty> properties, int depth = 0)
+        void ValidateCondition(SemanticCondition condition, Dictionary<SemanticId, SemanticProperty> properties, int depth = 0, bool allowDateComparisons = false)
         {
             if (depth > 32) throw new InvalidSemanticContract("Condition nesting exceeds the portable limit of 32.");
             switch (condition)
             {
                 case SemanticLogicalCondition logical:
                     if (!Enum.IsDefined(logical.Operator)) throw new InvalidSemanticContract("Unknown logical condition operator.");
-                    ValidateCondition(logical.Left, properties, depth + 1);
-                    ValidateCondition(logical.Right, properties, depth + 1);
+                    ValidateCondition(logical.Left, properties, depth + 1, allowDateComparisons);
+                    ValidateCondition(logical.Right, properties, depth + 1, allowDateComparisons);
                     break;
                 case SemanticComparison comparison:
                     if (!Enum.IsDefined(comparison.Operator)) throw new InvalidSemanticContract("Unknown comparison operator.");
                     var left = ConditionOperandType(comparison.Left, properties);
                     var right = ConditionOperandType(comparison.Right, properties);
                     var leftPrimitive = UnderlyingPrimitive(left);
+                    if (SemanticDateComparison.IsDate(leftPrimitive) && _semanticVersion.IsAtLeast(SemanticVersion.V26))
+                    {
+                        ValidateDateCondition(comparison, left, right, leftPrimitive, allowDateComparisons);
+                        break;
+                    }
                     var rightPrimitive = UnderlyingPrimitive(right);
                     if (left.IsCollection || right.IsCollection || left.IsOptional || right.IsOptional ||
                         (leftPrimitive != rightPrimitive && !(leftPrimitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber && rightPrimitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber)) ||
@@ -37,6 +42,18 @@ internal static partial class SemanticModelValidator
                     break;
                 default: throw new InvalidSemanticContract("Unknown condition node.");
             }
+        }
+
+        void ValidateDateCondition(SemanticComparison comparison, SemanticTypeReference left, SemanticTypeReference right, SemanticPrimitiveType primitive, bool allowed)
+        {
+            if (!allowed || !comparison.Left.Property.IsSet || comparison.Left.Read is not null || comparison.Right.Read is not null ||
+                left.IsCollection || left.IsOptional || right.IsCollection || right.IsOptional)
+            {
+                throw new InvalidSemanticContract("Date conditions require required scalar command properties in require or produces when.");
+            }
+            if (comparison.Right.Value is { } value) SemanticDateComparison.ValidateConstant(value, primitive);
+            else if (UnderlyingPrimitive(right) != primitive)
+                throw new InvalidSemanticContract("Date condition properties must have the same primitive.");
         }
 
         SemanticTypeReference ConditionOperandType(SemanticConditionOperand operand, Dictionary<SemanticId, SemanticProperty> properties)
