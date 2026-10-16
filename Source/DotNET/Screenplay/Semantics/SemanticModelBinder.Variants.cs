@@ -26,6 +26,12 @@ public sealed partial class SemanticModelBinder
                 yield break;
             }
 
+            if (_readModels.TryGetValue(ShortName(projection.ReadModel ?? projection.Name), out var compositeTarget) && compositeTarget.Model.Properties.Count(property => property.IsIdentifier) > 1)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection variants are not admitted on composite-key read model '{compositeTarget.Model.Name}'.", projection.Location);
+                yield break;
+            }
+
             if (projection.Sequence is not null)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' sequence is not portable ESM v1 behavior.", projection.Location);
@@ -41,6 +47,11 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
+                if (readModel.Model.Properties.Count(property => property.IsIdentifier) > 1)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Variant '{variant.Name}' over a composite-key read model is not admitted.", variant.Location);
+                    continue;
+                }
                 var identifier = readModel.Model.Properties.FirstOrDefault(property => property.IsIdentifier);
                 if (identifier is null)
                 {

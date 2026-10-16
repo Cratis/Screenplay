@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Defines the command Uuid equality version pairs (ESM v27).
+/// Defines the flat composite read-model key version pairs.
 /// </summary>
 public static class EsmSchemaV27Support
 {
@@ -38,6 +38,9 @@ public static class EsmSchemaV27Support
     /// <exception cref="InvalidSemanticContract">The version pair is unsupported.</exception>
     public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
     {
-        if (!Supports(languageVersion, semanticVersion)) throw new InvalidSemanticContract($"The ESM schema-v27 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The composite read-model key contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
     }
 }

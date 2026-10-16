@@ -277,6 +277,7 @@ internal static partial class SemanticModelRead
             .Add("readModel", (ref Utf8JsonReader reader, QueryState state, string property) => state.ReadModel = Identifier(ref reader, property))
             .Add("argument", (ref Utf8JsonReader reader, QueryState state, string property) => state.Argument = Nested(ref reader, QueryArgument, property))
             .Add("keyProperty", (ref Utf8JsonReader reader, QueryState state, string property) => state.KeyProperty = Identifier(ref reader, property))
+            .Add("keyParts", CompositeReadModelKeyVersion.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.KeyParts = Array(ref reader, QueryKeyPart, property))
             .Add("filters", LanguageVersion.V14.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.Filters = Array(ref reader, QueryFilter, property))
             .Add("cardinality", (ref Utf8JsonReader reader, QueryState state, string property) => state.Cardinality = ParseQueryCardinality(String(ref reader, property)))
             .Add("delivery", (ref Utf8JsonReader reader, QueryState state, string property) => state.Delivery = ParseQueryDelivery(String(ref reader, property)))
@@ -290,6 +291,8 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticQueryFilter> Filters { get; set; } = [];
 
+        public ImmutableArray<SemanticQueryKeyPart> KeyParts { get; set; } = [];
+
         public SemanticQueryCardinality? Cardinality { get; set; }
 
         public SemanticQueryDelivery? Delivery { get; set; }
@@ -300,7 +303,7 @@ internal static partial class SemanticModelRead
         {
             Required(HasIdentity && ReadModel.IsSet && Cardinality is not null && Delivery is not null, "query");
             Required((Argument is null) == (KeyProperty is null), "query");
-            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization, Filters = Filters };
+            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization, Filters = Filters, KeyParts = KeyParts };
         }
     }
 

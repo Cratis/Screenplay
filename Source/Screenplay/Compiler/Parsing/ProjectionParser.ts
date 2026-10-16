@@ -4,7 +4,7 @@
 import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
-    AutoMapMode, ChildrenSyntax, ClearWithSyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
+    AutoMapMode, ChildrenSyntax, ClearWithSyntax, CompositeKeySyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
     KeyPartSyntax, KeySyntax, ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
 } from '../Syntax/Projections';
 import { ExpressionSyntax } from '../Syntax/Expressions';
@@ -251,16 +251,23 @@ function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockS
         context.skipBlock(line.indent);
         return undefined;
     }
+    let key = match[2] === undefined ? null : parseProjectionExpression(match[2], locationOf(line), context);
+    let partsKey: CompositeKeySyntax | null = null;
     let parentKey: ExpressionSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (firstWord(child.content) === 'parent') {
             parentKey = parseProjectionExpression(child.content.substring('parent'.length), locationOf(child), context);
+        } else if (firstWord(child.content) === 'key') {
+            if (key !== null || partsKey !== null) context.error(DiagnosticCodes.InvalidReadModelKeyLookup, 'A removal can only declare one key.', locationOf(child));
+            const parsed = parseKey(context, child);
+            if (parsed.kind === 'CompositeKeySyntax') partsKey = parsed;
+            else key = parsed.expression;
         } else {
-            context.error(DiagnosticCodes.UnknownRemoveDirective, `Unexpected '${child.content}' in remove block - only 'parent' is allowed`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownRemoveDirective, `Unexpected '${child.content}' in remove block - only 'parent' or 'key' is allowed`, locationOf(child));
         }
     }
-    return { kind: 'RemoveWithSyntax', event: unescapeIdentifier(match[1]), key: match[2] === undefined ? null : parseProjectionExpression(match[2], locationOf(line), context), parentKey, location: locationOf(line) };
+    return { kind: 'RemoveWithSyntax', event: unescapeIdentifier(match[1]), key, ...(partsKey === null ? {} : { partsKey }), parentKey, location: locationOf(line) };
 }
 
 function parseClearWith(context: ParserContext, line: SourceLine): ClearWithSyntax {
@@ -327,7 +334,7 @@ function parseKey(context: ParserContext, line: SourceLine): KeySyntax {
             continue;
         }
         const expression = parseProjectionExpression(match[2], locationOf(child), context);
-        if (context.sourceOptions.numericMode === 'exact' && expression.kind === 'TemplateExpressionSyntax') context.error(DiagnosticCodes.TemplateInCompositeKey, 'Template expressions are not allowed in composite keys', locationOf(child));
+        if (context.sourceOptions.numericMode === 'exact' && text.replace(/\{$/, '').trim().length > 0 && expression.kind === 'TemplateExpressionSyntax') context.error(DiagnosticCodes.TemplateInCompositeKey, 'Template expressions are not allowed in composite keys', locationOf(child));
         parts.push({ kind: 'KeyPartSyntax', property: unescapeIdentifier(match[1]), expression, location: locationOf(child) });
     }
     const closing = context.reader.peekSignificant();

@@ -37,6 +37,11 @@ public sealed partial class SemanticModelBinder
             var joinEvents = new HashSet<string>(StringComparer.Ordinal);
             foreach (var block in blocks)
             {
+                if (HasKeyParts(level) && block is not (FromSyntax or RemoveWithSyntax))
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection block '{block.GetType().Name}' is not admitted on a composite-key read model.", block.Location);
+                    continue;
+                }
                 switch (block)
                 {
                     case FromSyntax value:
@@ -65,7 +70,8 @@ public sealed partial class SemanticModelBinder
                         nested.Add(bound);
                         break;
                     case RemoveWithSyntax value when LevelEvent(value.Event, value.Location, levelEvents) is { } @event:
-                        removals.Add(new(@event.Contract.Id, BindKeyExpression(value.Key, @event, "removal key"), BindParentKey(value.ParentKey, @event, level)));
+                        var removalKey = BindRemovalKey(value, @event, level);
+                        removals.Add(new(@event.Contract.Id, removalKey, HasKeyParts(level) ? null : BindParentKey(value.ParentKey, @event, level)));
                         break;
                     case RemoveViaJoinSyntax value when LevelEvent(value.Event, value.Location, levelEvents) is { } @event:
                         joinRemovals.Add(new(@event.Contract.Id, BindKeyExpression(value.Key, @event, "join removal key")));
@@ -102,8 +108,8 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                var key = spec.Key is not null ? BindKeyExpression(spec.Key, @event, "transition key") : BindKey(from.Key, @event);
-                var parentKey = BindParentKey(from.ParentKey, @event, level);
+                var key = BindFromKey(from, spec.Key, @event, level);
+                var parentKey = HasKeyParts(level) ? null : BindParentKey(from.ParentKey, @event, level);
                 yield return new(@event.Contract.Id, key, parentKey, BindMappings(from.Mappings, level, @event, level.AutoMap, false));
             }
         }

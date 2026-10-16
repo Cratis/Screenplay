@@ -29,7 +29,7 @@ internal static partial class SemanticModelValidator
                         ValidateDateCondition(comparison, left, right, leftPrimitive, allowCommandComparisons);
                         break;
                     }
-                    if (leftPrimitive == SemanticPrimitiveType.Uuid && _semanticVersion.IsAtLeast(SemanticVersion.V27))
+                    if (leftPrimitive == SemanticPrimitiveType.Uuid && _semanticVersion.IsAtLeast(SemanticVersion.V28))
                     {
                         ValidateUuidCondition(comparison, left, right, allowCommandComparisons);
                         break;

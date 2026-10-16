@@ -166,7 +166,7 @@ internal static class SemanticTypedContextCatalog
                         matches.Add(Policy(
                             requirement,
                             query.Id,
-                            query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
+                            SemanticQueryArguments.KeyProperties(query),
                             query.Argument is null
                                 ? new SemanticContextSource(SemanticContextSourceKinds.Unavailable, null, string.Empty)
                                 : new SemanticContextSource(SemanticContextSourceKinds.QueryKey, query.Argument.Id, query.Argument.Name)));

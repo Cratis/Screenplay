@@ -19,7 +19,8 @@ public class when_validating_uuid_comparisons : for_SemanticModelBinder.when_bin
     }
 
     [Fact] void should_accept_the_bound_model_at_the_selected_version() => Create(_application, _bound.LanguageVersion, _bound.SemanticVersion).ShouldNotBeNull();
-    [Fact] void should_reject_the_shape_at_the_previous_version() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V26, SemanticVersion.V26, _application)).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_the_shape_at_the_previous_version() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V27, SemanticVersion.V27, _application)).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_the_shape_at_the_date_comparison_version() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V26, SemanticVersion.V26, _application)).ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_non_canonical_constant() => Refuse(Replace(_command, comparison => comparison.Right.Value is null ? comparison : comparison with { Right = new(default, SemanticValue.Text(Canonical.ToUpperInvariant())) }));
     [Fact] void should_reject_a_non_text_constant() => Refuse(Replace(_command, comparison => comparison.Right.Value is null ? comparison : comparison with { Right = new(default, SemanticValue.Number(5)) }));
     [Fact] void should_reject_ordering() => Refuse(Replace(_command, comparison => comparison with { Operator = SemanticComparisonOperator.GreaterThan }));

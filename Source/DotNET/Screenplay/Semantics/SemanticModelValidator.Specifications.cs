@@ -195,7 +195,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification absent read model '{absentState.ReadModel}' is unresolved.");
             }
 
-            ValidateValue(absentState.Key, IdentifierProperty(readModel).Type, "specification absent read model key");
+            ValidateReadModelKeyValue(readModel, absentState.Key, "specification absent read model key");
             if (AssertsPresence(specification, absentState))
             {
                 throw new InvalidSemanticContract("A specification cannot assert both presence and absence for the same read model and key.");

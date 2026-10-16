@@ -136,7 +136,7 @@ ChildEveryBlock = "every", NL,
 
 RemoveWithBlock = "remove", "with", TypeRef, [ KeyInline ], NL,
                   [ INDENT,
-                      [ ParentDecl ],
+                      [ CompositeKeyDecl | KeyDecl ], [ ParentDecl ],
                     DEDENT ] ;
 
 RemoveWithJoinBlock
@@ -145,7 +145,7 @@ RemoveWithJoinBlock
 KeyDecl         = "key", Expr, NL ;
 
 CompositeKeyDecl
-               = "key", TypeRef, [ "{" ], NL,
+               = "key", [ TypeRef ], [ "{" ], NL,
                   INDENT,
                     KeyPart, { NL, KeyPart }, NL?,
                   DEDENT,
@@ -380,7 +380,7 @@ Remove instances based on events:
 ```ebnf
 RemoveWithBlock = "remove", "with", TypeRef, [ KeyInline ], NL,
                   [ INDENT,
-                      [ ParentDecl ],
+                      [ CompositeKeyDecl | KeyDecl ], [ ParentDecl ],
                     DEDENT ] ;
 
 RemoveWithJoinBlock = "remove", "via", "join", "on", TypeRef, [ KeyInline ], NL ;
@@ -409,7 +409,7 @@ Define instance keys:
 ```ebnf
 KeyDecl = "key", Expr, NL ;
 
-CompositeKeyDecl = "key", TypeRef, [ "{" ], NL,
+CompositeKeyDecl = "key", [ TypeRef ], [ "{" ], NL,
                    INDENT,
                      KeyPart, { NL, KeyPart }, NL?,
                    DEDENT,

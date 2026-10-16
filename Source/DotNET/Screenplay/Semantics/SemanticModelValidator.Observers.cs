@@ -75,6 +75,10 @@ internal static partial class SemanticModelValidator
         void ValidateReducer(SemanticReducer reducer)
         {
             ValidateObserverFilter(reducer.From);
+            if (_readModels.TryGetValue(reducer.ReadModel, out var keyedModel) && keyedModel.Properties.Count(property => property.IsIdentifier) > 1)
+            {
+                throw new InvalidSemanticContract("A reducer over a composite-key read model is not admitted.");
+            }
             var targetsEvent = reducer.Target == SemanticProjectionTargetKind.Event;
             if (reducer.Target is not (SemanticProjectionTargetKind.ReadModel or SemanticProjectionTargetKind.Event))
             {
@@ -120,6 +124,11 @@ internal static partial class SemanticModelValidator
 
             ValidateEnum(query.Cardinality, SemanticQueryCardinality.Unknown, "query cardinality");
             ValidateEnum(query.Delivery, SemanticQueryDelivery.Unknown, "query delivery");
+            if (!query.KeyParts.IsEmpty)
+            {
+                ValidateQueryKeyParts(query, readModel);
+                return;
+            }
             if ((query.Argument is null) != (query.KeyProperty is null))
             {
                 throw new InvalidSemanticContract("A keyed query must declare both an argument and a key property; an unkeyed query declares neither.");
@@ -159,7 +168,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A query argument and key property must have the same scalar type and optionality.");
             }
 
-            if (query.Cardinality == SemanticQueryCardinality.ZeroOrOne && !keyProperty.IsIdentifier)
+            if (query.Cardinality == SemanticQueryCardinality.ZeroOrOne && (!keyProperty.IsIdentifier || ReadModelKeyProperties(readModel).Length != 1))
             {
                 throw new InvalidSemanticContract("An optional lookup query key property must identify one read-model instance.");
             }

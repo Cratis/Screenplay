@@ -18,5 +18,5 @@ export function readModelKeyCompletions(lines: string[], line: number, before: s
     const models = analysis.readModels.filter(({ model, scope }) => model.name === name || [...scope, model.name].join('.') === name);
     if (models.length !== 1) return [];
     const parts = models[0].model.properties.filter(property => property.isKey);
-    return parts.map(part => ({ label: part.name, insertText: read ? `${part.name} = \${1:${part.name}}` : `${part.name} ${part.type.name}`, documentation: 'Supply this read-model key part by name. Composite keys are authoring-only (PLAY0268, #599).' }));
+    return parts.map(part => ({ label: part.name, insertText: read ? `${part.name} = \${1:${part.name}}` : `${part.name} ${part.type.name}`, documentation: read ? 'Supply this key part by name. Composite protected command reads remain refused (PLAY0781 ByParts).' : 'Supply every read-model key part by name for an optional single-instance query. Collection queries use equality filters instead of a by block.' }));
 }

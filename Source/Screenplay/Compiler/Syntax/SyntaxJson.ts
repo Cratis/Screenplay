@@ -104,6 +104,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     SliceSyntax: ['direction'],
     ReactionSyntax: ['from'],
     ReducerSyntax: ['from'],
+    RemoveWithSyntax: ['partsKey'],
     ProducesSyntax: ['stream'],
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],

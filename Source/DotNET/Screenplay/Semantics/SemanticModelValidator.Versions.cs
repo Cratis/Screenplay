@@ -7,6 +7,9 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesCompositeReadModelKeys(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.ReadModels).Any(model => model.Properties.Count(property => property.IsIdentifier) > 1);
+
     internal static bool UsesDateComparisons(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Any());
 
@@ -40,13 +43,6 @@ internal static partial class SemanticModelValidator
         }
     }
 
-    static IEnumerable<SemanticComparison> Comparisons(SemanticCondition condition) => condition switch
-    {
-        SemanticComparison comparison => [comparison],
-        SemanticLogicalCondition logical => Comparisons(logical.Left).Concat(Comparisons(logical.Right)),
-        _ => []
-    };
-
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
@@ -54,6 +50,21 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static IEnumerable<SemanticComparison> Comparisons(SemanticCondition condition) => condition switch
+    {
+        SemanticComparison comparison => [comparison],
+        SemanticLogicalCondition logical => Comparisons(logical.Left).Concat(Comparisons(logical.Right)),
+        _ => []
+    };
+
+    static void ValidateCompositeReadModelKeyVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesCompositeReadModelKeys(application),
+            version,
+            SemanticVersion.V27,
+            "A composite read-model key ESM must contain a read model with several identifier parts.",
+            "Flat composite read-model keys require their admitting ESM version.");
 
     static void ValidateDateComparisonVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
@@ -67,9 +78,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesUuidComparisons(application),
             version,
-            SemanticVersion.V27,
-            "An ESM v27 model must use a Uuid command comparison.",
-            "Uuid command comparisons require ESM v27.");
+            SemanticVersion.V28,
+            "An ESM v28 model must use a Uuid command comparison.",
+            "Uuid command comparisons require ESM v28.");
 
     static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

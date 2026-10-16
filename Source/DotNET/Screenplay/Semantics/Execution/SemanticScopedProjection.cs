@@ -176,6 +176,7 @@ internal sealed partial class SemanticScopedProjection(
     // inside children for joins on the identity.
     void BackfillJoins(Dictionary<SemanticId, SemanticValue> target, SemanticProjectionFrom from, SemanticProjectionScope scope, Level level)
     {
+        if (scope.Joins.IsEmpty) return;
         var identifier = level.Address.IsEmpty ? _readModel.Properties.Single(_ => _.IsIdentifier).Id : level.Address[^1].IdentifiedBy;
         foreach (var join in scope.Joins.Where(join => join.On == identifier || (level.Address.IsEmpty && from.Mappings.Any(_ => _.Target.Length == 1 && _.Target[0] == join.On))))
         {
@@ -300,7 +301,15 @@ internal sealed partial class SemanticScopedProjection(
             // The instance key is the read model's identifier, as the document key is in Chronicle.
             // Collections start empty (Chronicle ProjectionFactory.CreateInitialState, ProjectionFactory.cs:329-340).
             var state = Seed(_readModel.Properties);
-            state[_readModel.Properties.Single(_ => _.IsIdentifier).Id] = key;
+            var identifiers = _readModel.Properties.Where(property => property.IsIdentifier).ToArray();
+            if (identifiers.Length == 1)
+            {
+                state[identifiers[0].Id] = key;
+            }
+            else
+            {
+                foreach (var part in SemanticKeyPartValues.Require(key, identifiers.Select(property => property.Id))) state[part.TargetProperty] = part.Value;
+            }
             document = new(key, state);
             _documents.Add(document);
         }

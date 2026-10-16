@@ -17,6 +17,11 @@ public sealed partial class SemanticModelBinder
             var reducers = ImmutableArray.CreateBuilder<SemanticReducer>();
             foreach (var reducer in slice.Reducers ?? [])
             {
+                if (_readModels.TryGetValue(ShortName(reducer.ReadModel), out var keyedModel) && keyedModel.Model.Properties.Count(property => property.IsIdentifier) > 1)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reducer '{reducer.Name}' over a composite-key read model is not admitted.", reducer.Location);
+                    continue;
+                }
                 var rules = reducer.Rules.ToArray();
                 var seenEvents = new HashSet<SemanticId>();
                 var resolvedRules = new List<(ReducerRuleSyntax Rule, SemanticId EventId)>();

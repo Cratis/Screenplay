@@ -18,6 +18,7 @@ internal static class ReadModelKeyValidator
         var owners = new KeyOwners(allowed, context);
         owners.VisitApplication(application);
         if (!owners.RequiresLookups) return;
+        ReadModelProjectionKeys.Validate(application, declarations, context);
         foreach (var model in models)
         {
             var keys = model.Properties.Where(property => property.IsKey).ToArray();

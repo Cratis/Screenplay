@@ -318,12 +318,12 @@ public sealed partial class SemanticModelBinder
             SourceLocation location,
             SemanticValue? inferredKey)
         {
-            if (readModel.Syntax.Properties.Count(property => property.IsKey) > 1)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification read model '{readModel.Model.Name}' uses a composite key. See https://github.com/Cratis/Screenplay/issues/599.", location);
-                return null;
-            }
             var bound = BindPropertyValues(values, readModel.Properties, "specification read model");
+            if (readModel.Model.Properties.Count(property => property.IsIdentifier) > 1)
+            {
+                var parts = BindReadModelStateKey(readModel, bound, location, inferredKey);
+                return parts is null ? null : new(readModel.Model.Id, parts, bound);
+            }
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
 
             // A read model without an identifier has already been reported where it, or its keyed query, is declared.
@@ -351,10 +351,10 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (readModel.Syntax.Properties.Count(property => property.IsKey) > 1)
+            if (readModel.Model.Properties.Count(property => property.IsIdentifier) > 1)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification read model '{value.Name}' uses a composite key. See https://github.com/Cratis/Screenplay/issues/599.", value.Location);
-                return null;
+                var parts = BindAbsentReadModelKey(readModel, value.Key, value.Location);
+                return parts is null ? null : new(readModel.Model.Id, parts);
             }
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
             if (identifier is null) return null; // The declaration has already reported an ambiguous or missing identifier.
@@ -365,7 +365,9 @@ public sealed partial class SemanticModelBinder
         SemanticSpecificationQueryResult? BindSpecificationQuery(SpecificationQuerySyntax value, SemanticKeyedQuery query)
         {
             var parameters = query.Filters.Select(filter => new SemanticReadModelQueryArgument(filter.Id, filter.Name, filter.Type))
-                .Concat(query.Argument is null ? [] : new[] { query.Argument }).ToDictionary(argument => argument.Name, StringComparer.Ordinal);
+                .Concat(query.Argument is null ? [] : new[] { query.Argument })
+                .Concat(query.KeyParts.Select(part => new SemanticReadModelQueryArgument(part.Id, part.Name, part.Type)))
+                .ToDictionary(argument => argument.Name, StringComparer.Ordinal);
             var arguments = new Dictionary<string, SemanticValue>(StringComparer.Ordinal);
             foreach (var argument in value.Arguments)
             {
@@ -388,12 +390,16 @@ public sealed partial class SemanticModelBinder
             }
 
             var key = query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
+            if (!query.KeyParts.IsEmpty)
+            {
+                key = SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, arguments[part.Name]))]);
+            }
             var filters = query.Filters.Where(filter => arguments.ContainsKey(filter.Name))
                 .Select(filter => new SemanticQueryFilterValue(filter.Id, arguments[filter.Name])).ToImmutableArray();
 
             var readModel = _readModels.Values.Single(_ => _.Model.Id == query.ReadModel);
-            var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
-            var inferredResultKey = identifier is not null && query.KeyProperty == identifier.Id ? key : null;
+            var identifiers = readModel.Model.Properties.Where(property => property.IsIdentifier).ToArray();
+            var inferredResultKey = !query.KeyParts.IsEmpty || (identifiers.Length == 1 && query.KeyProperty == identifiers[0].Id) ? key : null;
             var results = value.Results
                 .Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
                 .Where(_ => _ is not null)

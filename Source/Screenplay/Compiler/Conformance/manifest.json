@@ -8,6 +8,7 @@
         { "name": "generation-checksum-validation", "path": "Source/Screenplay/Compiler/Conformance/generation-checksum-validation.play" },
         { "name": "enum-member-numbers", "path": "Source/Screenplay/Compiler/Conformance/enum-member-numbers.play" },
         { "name": "read-model-keys", "path": "Source/Screenplay/Compiler/Conformance/read-model-keys.play" },
+        { "name": "removal-key-parts", "path": "Source/Screenplay/Compiler/Conformance/removal-key-parts.play" },
         { "name": "reaction-identity", "path": "Source/Screenplay/Compiler/Conformance/reaction-identity.play" },
         { "name": "reaction-event-source", "path": "Source/Screenplay/Compiler/Conformance/reaction-event-source.play" },
         { "name": "identity", "path": "Source/Screenplay/Compiler/Conformance/identity.play" },

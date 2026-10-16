@@ -36,7 +36,7 @@ public class with_admitted_operands : given.a_uuid_comparison
 
     [Fact] void should_cover_every_operand_form_and_both_positions() => _results.Count.ShouldEqual(30);
     [Fact] void should_bind_every_comparison() => Assert.True(_results.TrueForAll(result => result.Success), string.Join('\n', _results.SelectMany(result => result.Diagnostics).Select(diagnostic => diagnostic.Message)));
-    [Fact] void should_select_the_uuid_comparison_version() => _results.Where(result => result.Success).All(result => result.Value!.Model.SemanticVersion == SemanticVersion.V27 && result.Value.Model.LanguageVersion == LanguageVersion.V27).ShouldBeTrue();
+    [Fact] void should_select_the_uuid_comparison_version() => _results.Where(result => result.Success).All(result => result.Value!.Model.SemanticVersion == SemanticVersion.V28 && result.Value.Model.LanguageVersion == LanguageVersion.V28).ShouldBeTrue();
     [Fact] void should_keep_the_literal_as_text() => ((SemanticComparison)Condition(_results[4])).Right.Value.ShouldEqual(SemanticValue.Text(Canonical));
     [Fact] void should_bind_the_read_path_operand() => ((SemanticComparison)Condition(_results[6])).Left.Read.ShouldEqual("View");
 

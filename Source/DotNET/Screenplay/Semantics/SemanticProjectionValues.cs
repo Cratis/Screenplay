@@ -55,7 +55,12 @@ public enum SemanticProjectionKeyKind
     /// <summary>
     /// A composite key assembled from named parts.
     /// </summary>
-    Composite = 1
+    Composite = 1,
+
+    /// <summary>
+    /// A key assembled from the read model's flat, named identifier parts.
+    /// </summary>
+    Parts = 2
 }
 
 /// <summary>

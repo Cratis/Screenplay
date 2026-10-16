@@ -197,14 +197,17 @@ public partial class ScreenplayPrinter
             ? $"remove with {remove.Event}"
             : $"remove with {remove.Event} key {writer.Expression(remove.Key)}");
 
-        if (remove.ParentKey is null)
-        {
-            return;
-        }
-
         using (writer.Indent())
         {
-            writer.Line($"parent {writer.Expression(remove.ParentKey)}", remove.ParentKey);
+            if (remove.PartsKey is not null)
+            {
+                WriteKey(writer, remove.PartsKey);
+            }
+
+            if (remove.ParentKey is not null)
+            {
+                writer.Line($"parent {writer.Expression(remove.ParentKey)}", remove.ParentKey);
+            }
         }
     }
 
@@ -217,7 +220,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"key {writer.Expression(expression.Expression)}");
                 break;
             case CompositeKeySyntax composite:
-                writer.Line($"key {composite.Type}");
+                writer.Line(string.IsNullOrEmpty(composite.Type) ? "key" : $"key {composite.Type}");
                 using (writer.Indent())
                 {
                     foreach (var part in composite.Parts)

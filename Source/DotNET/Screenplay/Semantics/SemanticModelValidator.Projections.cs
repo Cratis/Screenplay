@@ -27,6 +27,11 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Projection '{projection.Name}' carries both flat transitions and a scope.");
             }
 
+            if (ReadModelKeyProperties(readModel).Length > 1)
+            {
+                ValidatePartsProjectionScope(projection, readModel);
+                return;
+            }
             var identifier = IdentifierProperty(readModel);
             var level = new ProjectionLevel(Properties(readModel.Properties), identifier.Type, null, ProjectionLevelKind.Root, identifier.Name);
             ValidateScope(projection.Scope!, level);

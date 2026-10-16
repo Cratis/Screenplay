@@ -20,6 +20,11 @@ export const pdl: SubLanguageDefinition = {
             documentation: 'Declares which property identifies the read model instance.',
         },
         {
+            label: 'key parts',
+            insertText: 'key\n  ${1:part} = ${2:source}\n  ${3:part} = ${4:source}',
+            documentation: 'Names every flat read-model key part in a from or remove with block. Part order does not affect identity.',
+        },
+        {
             label: 'from',
             insertText: 'from ${1:EventType}',
             documentation: 'Maps properties from an event onto the read model.',
@@ -37,7 +42,7 @@ export const pdl: SubLanguageDefinition = {
         {
             label: 'remove with',
             insertText: 'remove with ${1:EventType}',
-            documentation: 'Removes the read model instance when the event occurs.',
+            documentation: 'Removes the read model instance when the event occurs. A child key block names composite read-model key parts.',
         },
         {
             label: 'parent',
@@ -67,7 +72,7 @@ export const pdl: SubLanguageDefinition = {
         join: 'PDL — joins related state onto the read model by a key property.',
         children: 'PDL — projects events into a child collection on the read model.',
         identified: 'PDL — introduces the identifying key of a child collection.',
-        key: 'PDL — declares which property identifies the read model instance.',
+        key: 'PDL — identifies the read-model instance. An untyped child block maps every flat key part by name in from and remove with; a typed block constructs a composite value.',
         parent: 'PDL — declares the property that identifies the parent of a child.',
         remove: 'PDL — removes the read model instance when an event occurs.',
         clear: 'PDL — clear <property> removes the value a property holds; clear with <EventType> nulls a nested object.',
