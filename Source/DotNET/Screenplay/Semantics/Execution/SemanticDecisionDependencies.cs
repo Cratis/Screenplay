@@ -9,6 +9,11 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <summary>
 /// Describes the protected read-model state a command decision depended on, as keys paired with the event contracts that change them.
 /// </summary>
+/// <remarks>
+/// Two instances are equal when their <see cref="Entries"/> are equal pairwise in order. Capture builds the entries in the order the
+/// command first reads each distinct key, so the order is canonical for one command and one request. Entries compare their keys with the
+/// ordinal semantic value rules and their event contracts as sets.
+/// </remarks>
 public sealed record SemanticDecisionDependencies
 {
     internal SemanticDecisionDependencies(ImmutableArray<Entry> entries) => Entries = entries;
@@ -22,6 +27,17 @@ public sealed record SemanticDecisionDependencies
     /// Gets one entry per distinct protected key, merged across every read of that key.
     /// </summary>
     public ImmutableArray<Entry> Entries { get; }
+
+    /// <summary>
+    /// Determines whether another instance holds equal entries in the same order.
+    /// </summary>
+    /// <param name="other">The instance to compare with.</param>
+    /// <returns><see langword="true"/> when the entries are equal in order.</returns>
+    public bool Equals(SemanticDecisionDependencies? other) =>
+        other is not null && (ReferenceEquals(this, other) || Entries.SequenceEqual(other.Entries));
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => Entries.Aggregate(0, (hash, entry) => HashCode.Combine(hash, entry));
 
     /// <summary>
     /// Determines whether a later fact changes state this decision depended on.
@@ -59,8 +75,32 @@ public sealed record SemanticDecisionDependencies
     /// <summary>
     /// Represents one protected key and the event contracts that change the read models behind it.
     /// </summary>
+    /// <remarks>
+    /// Entries are equal when their keys are equal by the ordinal semantic value rules and their event contracts are equal as sets.
+    /// </remarks>
     /// <param name="Key">The key value the command read by.</param>
     /// <param name="EventContracts">The event contracts the reading views handle or remove with, merged per key.</param>
     [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Entry is only meaningful as an element of its dependencies (decision 0089).")]
-    public sealed record Entry(SemanticValue Key, ImmutableHashSet<SemanticId> EventContracts);
+    public sealed record Entry(SemanticValue Key, ImmutableHashSet<SemanticId> EventContracts)
+    {
+        /// <summary>
+        /// Determines whether another entry has an equal key and the same event contracts.
+        /// </summary>
+        /// <param name="other">The entry to compare with.</param>
+        /// <returns><see langword="true"/> when the entries are equal.</returns>
+        public bool Equals(Entry? other) =>
+            other is not null && (ReferenceEquals(this, other) ||
+                (SemanticValueRules.AreEqual(Key, other.Key) && EventContracts.SetEquals(other.EventContracts)));
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => HashCode.Combine(
+            Key switch
+            {
+                SemanticTextValue text => text.Value.GetHashCode(StringComparison.Ordinal),
+                SemanticNumberValue number => number.Value.GetHashCode(),
+                SemanticBooleanValue boolean => boolean.Value.GetHashCode(),
+                _ => (int)Key.Kind
+            },
+            EventContracts.Aggregate(0, (hash, contract) => hash ^ contract.GetHashCode()));
+    }
 }

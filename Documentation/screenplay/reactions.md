@@ -415,7 +415,7 @@ Commands that settlement invokes decide and commit at one world through `Execute
 
 When the guarded write is definitively not written because the log moved:
 
-- **Settlement invoked no commands.** You may go back to step 2 with the same `SemanticDecision`. This is sound because `Commit` is pure and the values the decision generated were fixed when `Decide` ran.
+- **Settlement invoked no commands.** Retry from step 2 with the same `SemanticDecision`. Extend the **extended world you passed to `Commit`** (not the tentative result, which holds root and cascade facts that were never written) with only the facts the log holds after that world's facts, in log order, then commit the same decision against the result. `ExtendWorld` assumes the log still begins with the world's facts and does not check it; if it may not, rebuild the world with `EstablishWorld` from the log instead. This is sound because `Commit` is pure and the values the decision generated were fixed when `Decide` ran.
 - **Settlement invoked a command.** The operation fails as `Conflict` / `DecisionStateChanged`. Do not retry it automatically: re-running would decide the invoked commands again against a new world.
 - **The write outcome is unknown.** Neither retry nor report success. Read the log to find out what was written.
 

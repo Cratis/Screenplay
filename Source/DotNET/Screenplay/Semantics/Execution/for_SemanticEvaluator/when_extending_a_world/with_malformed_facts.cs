@@ -21,7 +21,9 @@ public class with_malformed_facts : for_SemanticEvaluator.when_committing_protec
     {
         var result = _evaluator.ExtendWorld(_plan, _world, [Fact("Recorded", "read", "valid"), Fact("Recorded", "read") with { Values = [] }]);
         AssertRejected(result);
-        _world.Facts.Length.ShouldEqual(1);
+        result.World.Facts.ShouldEqual(_world.Facts);
+        given.world_comparison.AreEqual(result.World, _world).ShouldBeTrue();
+        result.World.ReadModels.ShouldEqual(_world.ReadModels);
     }
 
     void AssertRejected(SemanticExecutionResult result)
