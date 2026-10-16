@@ -6,6 +6,8 @@ The sample shows how to compose an application from small, focused files with [f
 
 The order, carrier and shipment enums explicitly pin each member's current zero-based number. This preserves executable bytes and keeps stored identity stable when source order later changes. Specifications still name members; published numbers must not be renumbered or reused.
 
+The root declares `reaction batches atomic` for local and imported reactions: each trigger occurrence's direct productions and each selected refusal branch form separate all-or-none batches; invoked commands remain separate transactions (ESM v22).
+
 ## How placement works
 
 `import "<path or glob>"` brings in `.play` files. The path is relative to the importing file. The position of the import decides where the imported files belong:

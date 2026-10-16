@@ -18,4 +18,6 @@
 
 domain Consultancy.TimeTracking
 
+reaction batches atomic
+
 import "**/*.play"

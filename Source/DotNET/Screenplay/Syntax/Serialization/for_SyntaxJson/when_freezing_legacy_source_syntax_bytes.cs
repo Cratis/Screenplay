@@ -46,6 +46,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 legacy = legacy with { Concepts = legacy.Concepts.Select(concept => concept with { ValueNumbers = null }) };
             }
 
+            // Library now declares atomic reaction batches (#771); that member has its own conformance vector.
+            if (name == "library-sample") legacy = legacy with { ReactionProductionMode = null };
+
             if (name == "invoicing-sample" || name == "invoicing-editor-sample")
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
