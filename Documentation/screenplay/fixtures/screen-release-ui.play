@@ -15,7 +15,7 @@ ui profile Web
   icons
     scene.icons
 
-  layout ApplicationShell
+  root template ApplicationShell
 
 template ApplicationShell
 

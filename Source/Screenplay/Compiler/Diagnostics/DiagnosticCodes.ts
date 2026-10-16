@@ -71,6 +71,7 @@ export const DiagnosticCodes = {
     TemplateNestingCycle: 'PLAY0656',
     TemplateCategoryMissing: 'PLAY0720', // C# only: template declarations are not modeled by this compiler.
     InvalidTemplateVersionRange: 'PLAY0721',
+    LegacyProfileLayout: 'PLAY0791', // The other ui profile root template rules (PLAY0790, PLAY0792-PLAY0799) are C# only: this compiler does not model a ui profile.
     UnknownTemplateBlueprint: 'PLAY0722', // C# only: ui profile packages are not modeled by this compiler.
     DuplicateComplianceMarker: 'PLAY0653',
     LegacyComplianceMarker: 'PLAY0565',

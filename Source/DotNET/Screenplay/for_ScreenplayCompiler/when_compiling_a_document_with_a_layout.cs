@@ -26,7 +26,7 @@ public class when_compiling_a_document_with_a_layout : given.a_compiler
 
         ui profile Desktop
           target platform web
-          layout AppShell
+          root template AppShell
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -49,5 +49,5 @@ public class when_compiling_a_document_with_a_layout : given.a_compiler
     [Fact] void should_arrange_by_flow() => _layout.Arrangement!.Mode.ShouldEqual(ArrangementMode.Flow);
     [Fact] void should_nest_the_tree_directly_under_the_arrangement() => _column.Kind.ShouldEqual(ArrangementContainerKind.Column);
     [Fact] void should_parse_the_topbar_height() => ((ArrangementSlotSyntax)_column.Children.First()).Height.ShouldEqual(56);
-    [Fact] void should_have_the_profile_select_the_layout() => _result.Value!.UiProfiles!.Single().Layout.ShouldEqual("AppShell");
+    [Fact] void should_have_the_profile_select_the_layout() => _result.Value!.UiProfiles!.Single().Root!.Name.ShouldEqual("AppShell");
 }
