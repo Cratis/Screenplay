@@ -34,7 +34,7 @@ public class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed)))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))))),
                 "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
@@ -187,6 +187,29 @@ public class when_freezing_legacy_source_syntax_bytes
             })
         })
     };
+
+    // Only the living Invoicing samples reach this projection. Dedicated text-rule specs protect
+    // their new rules; every prior rule, requirement, message and severity stays frozen here.
+    static ApplicationSyntax WithoutSampleTextRules(ApplicationSyntax application) => application with
+    {
+        Concepts = application.Concepts.Select(concept => concept with
+        {
+            Validations = concept.Validations?.SelectMany(WithoutNewTextRuleBlock)
+        })
+    };
+
+    static IEnumerable<ValidateSyntax> WithoutNewTextRuleBlock(ValidateSyntax validation)
+    {
+        if (validation is not DeclarativeValidateSyntax block || !block.Rules.Any(rule => IsTextRule(rule.Rule))) return [validation];
+        var retained = block.Rules.Where(rule => !IsTextRule(rule.Rule)).ToArray();
+
+        return retained.Length == 0 && !(block.Requirements ?? []).Any()
+            ? []
+            : [block with { Rules = retained }];
+    }
+
+    static bool IsTextRule(ValidationRuleKind kind) => kind is
+        ValidationRuleKind.Contains or ValidationRuleKind.NotContains or ValidationRuleKind.StartsWith or ValidationRuleKind.EndsWith;
 
     static ApplicationSyntax WithoutSampleExamples(ApplicationSyntax application)
     {
