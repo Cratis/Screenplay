@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "reaction-event-source" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons" || name == "crm-sample" || name == "ticketing-sample" || name == "inventory-sample" || name == "hr-sample" || name == "projects-sample" || name == "administration-sample" || name == "approvals-sample" || name == "orders-sample") continue;
+            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "reaction-event-source" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "removal-key-parts" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons" || name == "crm-sample" || name == "ticketing-sample" || name == "inventory-sample" || name == "hr-sample" || name == "projects-sample" || name == "administration-sample" || name == "approvals-sample" || name == "orders-sample") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -281,6 +281,9 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 ReadModels = slice.ReadModels.Where(model => model.Name is not ("InvoicePaymentMethodTotals" or "PaymentAuditReadModel")),
                 Reducers = slice.Reducers.Where(reducer => reducer.Name != "PaymentAudit"),
+
+                // Flat-key projection admission has current shared vectors; preserve the pre-feature sample.
+                Projections = slice.Projections.Where(projection => projection.Name != "InvoicePaymentMethodTotals"),
                 Queries = slice.Queries.Where(query => query.Name != "ListInvoicePaymentMethodTotals"),
                 Commands = slice.Commands.Select(command => command.Name == "RecordPayment" ? command with
                 {
@@ -288,7 +291,7 @@ public class when_freezing_legacy_source_syntax_bytes
                     Reads = command.Reads.Where(read => read.ReadModel != "InvoicePaymentMethodTotals"),
                     Produces = command.Produces.Select(production => production.Event == "CashPaymentRecorded" ? production with { Stream = null } : production)
                 } : command),
-                Specifications = slice.Specifications.Where(specification => specification.Name != "AuditingACashPayment")
+                Specifications = slice.Specifications.Where(specification => specification.Name is not ("AuditingACashPayment" or "KeepingPaymentMethodsSeparate"))
                     .Select(specification => specification.Name == "RecordingACardPayment" ? specification with
                     {
                         ThenEvents = specification.ThenEvents.Select(@event => @event.EventType == "PaymentRecorded" ? @event with { Stream = null } : @event)

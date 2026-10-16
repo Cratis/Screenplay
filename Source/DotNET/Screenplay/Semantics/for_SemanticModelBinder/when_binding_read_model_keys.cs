@@ -9,6 +9,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 public class when_binding_read_model_keys : given.a_semantic_binder
 {
     const string Source = "module M\n  feature F\n    slice StateView S\n      readmodel Row\n        rowId String\n        period Int\n      query Find => Row optional\n        by rowId String\n";
+    const string FlatKeySource = "module M\n  feature F\n    slice StateView S\n      readmodel Row\n        rowId String key\n        period Int key\n      query Find => Row optional\n        by\n          rowId String\n          period Int\n";
 
     [Fact]
     void should_bind_an_explicit_single_key_with_inferred_bytes()
@@ -30,28 +31,44 @@ public class when_binding_read_model_keys : given.a_semantic_binder
     }
 
     [Fact]
-    void should_refuse_a_composite_key_with_the_admission_issue()
+    void should_bind_a_composite_key_with_a_single_by_line_on_a_collection()
     {
-        var source = Source.Replace("        rowId String\n", "        rowId String key\n", StringComparison.Ordinal).Replace("period Int\n", "period Int key\n", StringComparison.Ordinal);
+        var source = FlatKeySource.Replace("Row optional", "Row[]", StringComparison.Ordinal)
+            .Replace("        by\n          rowId String\n          period Int", "        by rowId String", StringComparison.Ordinal);
         var result = Bind(source);
-        result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("/599", StringComparison.Ordinal)).ShouldBeTrue();
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(diagnostic => diagnostic.Message)));
     }
 
     [Fact]
-    void should_refuse_each_fixture_using_a_composite_view()
+    void should_bind_complete_fixtures_using_a_composite_view()
     {
-        var source = Source.Replace("        rowId String\n", "        rowId String key\n", StringComparison.Ordinal).Replace("period Int\n", "period Int key\n", StringComparison.Ordinal) +
+        const string source = FlatKeySource +
             "      specification Missing\n        given readmodel Row\n          rowId = \"r\"\n          period = 1\n        then no readmodel Row for {\"rowId\":\"r\",\"period\":1}\n";
         var result = Bind(source);
-        result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Specification read model", StringComparison.Ordinal) && diagnostic.Message.Contains("/599", StringComparison.Ordinal)).ShouldEqual(2);
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(diagnostic => diagnostic.Message)));
     }
 
     [Fact]
-    void should_refuse_a_by_block_query_with_the_admission_issue()
+    void should_refuse_a_collection_query_with_a_by_block()
     {
-        var result = Bind(Source.Replace("        by rowId String", "        by\n          rowId String\n          period Int", StringComparison.Ordinal));
+        var result = Bind(FlatKeySource.Replace("Row optional", "Row[]", StringComparison.Ordinal));
         result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Query 'Find'", StringComparison.Ordinal) && diagnostic.Message.Contains("/599", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Query 'Find' by block requires", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_refuse_a_non_optional_query_with_a_by_block()
+    {
+        var result = Bind(FlatKeySource.Replace("Row optional", "Row", StringComparison.Ordinal));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Query 'Find' by block requires", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_refuse_a_context_sourced_query_with_a_by_block()
+    {
+        var result = Bind(FlatKeySource.Replace("          rowId String", "          rowId String from $context.tenant", StringComparison.Ordinal));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Query 'Find' by block requires", StringComparison.Ordinal)).ShouldBeTrue();
     }
 }
