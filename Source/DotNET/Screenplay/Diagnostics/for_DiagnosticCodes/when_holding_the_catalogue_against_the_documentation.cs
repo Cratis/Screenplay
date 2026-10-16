@@ -47,7 +47,11 @@ public partial class when_holding_the_catalogue_against_the_documentation : Spec
         var rows = CompilerContractCatalog.Diagnostics.SelectMany(fact => fact.Arguments.Select(argument =>
             $"| `{fact.Code}` | `{argument.Name}` | {argument.Kind} | {(argument.Optional ? "yes" : "no")} | {argument.Meaning} | {(argument.Values.Count == 0 ? "—" : string.Join(", ", argument.Values))} |"));
         foreach (var row in rows) _catalogue.ShouldContain(row);
-        _catalogue.Split('\n').Count(line => line.StartsWith("| `PLAY", StringComparison.Ordinal) && line.Split('|').Length == 8).ShouldEqual(rows.Count());
+        _catalogue.Split('\n')
+            .SkipWhile(line => line != "| Code | Argument | Kind | Optional | Meaning | Keyword values |")
+            .Skip(2)
+            .TakeWhile(line => line.StartsWith('|'))
+            .Count().ShouldEqual(rows.Count());
     }
 
     static string Report(string what, IEnumerable<string> codes)
