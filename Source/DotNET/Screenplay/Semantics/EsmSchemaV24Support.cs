@@ -8,17 +8,17 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>
 /// Defines the version pairs admitted by first-class ordinal text rules.
 /// </summary>
-public static class EsmSchemaV25Support
+public static class EsmSchemaV24Support
 {
     /// <summary>
     /// Gets the supported language versions.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV23Support.LanguageVersions, LanguageVersion.V25];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV23Support.LanguageVersions, LanguageVersion.V24];
 
     /// <summary>
     /// Gets the supported semantic versions.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV23Support.SemanticVersions, SemanticVersion.V25];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV23Support.SemanticVersions, SemanticVersion.V24];
 
     /// <summary>
     /// Determines whether the exact version pair has defined meaning.
@@ -28,7 +28,7 @@ public static class EsmSchemaV25Support
     /// <returns>Whether the pair is supported.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
         EsmSchemaV23Support.Supports(languageVersion, semanticVersion) ||
-        (languageVersion == LanguageVersion.V25 && semanticVersion == SemanticVersion.V25);
+        (languageVersion == LanguageVersion.V24 && semanticVersion == SemanticVersion.V24);
 
     /// <summary>
     /// Rejects unsupported version pairs.

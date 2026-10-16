@@ -13,7 +13,7 @@ public class when_binding_first_class_text_rules : given.a_semantic_binder
     void Because() => _result = Bind("concept Label : String\n  validate\n    contains \"A\"\n    not contains \"B\"\n    starts with \"A\"\n    ends with \"A\"\n");
 
     [Fact] void should_bind() => Assert.True(_result.Success, string.Join('\n', _result.Diagnostics.Select(value => value.Message)));
-    [Fact] void should_select_the_text_rule_version() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
+    [Fact] void should_select_the_text_rule_version() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V24);
     [Fact] void should_preserve_the_four_distinct_kinds() => _result.Value!.Model.Application.Concepts.Single().Validations.Select(rule => rule.Kind).ShouldEqual([SemanticValidationRuleKind.Contains, SemanticValidationRuleKind.NotContains, SemanticValidationRuleKind.StartsWith, SemanticValidationRuleKind.EndsWith]);
     [Fact] void should_round_trip_canonical_bytes() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(_result.Value!.Model))).ShouldEqual(SemanticModelSerializer.Serialize(_result.Value!.Model));
     [Fact] void should_reject_a_numeric_subject() => Bind("concept Label : Integer\n  validate\n    contains \"A\"\n").Success.ShouldBeFalse();

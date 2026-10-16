@@ -11,7 +11,7 @@ public static class TextRuleVersion
     /// <summary>
     /// The first language and semantic major version admitting ordinal text rules.
     /// </summary>
-    public const uint Major = 25;
+    public const uint Major = 24;
 
     internal static bool IsTextRule(SemanticValidationRuleKind kind) => kind is
         SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or

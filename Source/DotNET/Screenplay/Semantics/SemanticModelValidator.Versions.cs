@@ -19,7 +19,7 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesTextRules(application),
             version,
-            SemanticVersion.V25,
+            SemanticVersion.V24,
             "A text-rule ESM must contain a first-class text rule.",
             $"First-class text rules require ESM v{TextRuleVersion.Major} or later.");
 

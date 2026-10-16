@@ -5,7 +5,7 @@ import { GenerationValidationRuleKind as Kind } from './GenerationValidationRule
 import { RegexExpression } from './RegexExpression';
 
 /** ESM allocation; the TypeScript compiler exposes syntax and pure proofs, not an ESM binder. */
-export const textRuleVersion = 25;
+export const textRuleVersion = 24;
 
 export function isTextRule(kind: Kind): boolean {
     return kind === Kind.Contains || kind === Kind.NotContains || kind === Kind.StartsWith || kind === Kind.EndsWith;

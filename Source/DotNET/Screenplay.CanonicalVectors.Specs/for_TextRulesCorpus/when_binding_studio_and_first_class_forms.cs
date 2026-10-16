@@ -15,7 +15,7 @@ public class when_binding_studio_and_first_class_forms : Specification
     void Because() => _forms = [.. TextRulesCorpus.SourceForms.Select(Compile)];
 
     [Fact] void should_examine_both_source_forms() => _forms.Length.ShouldEqual(2);
-    [Fact] void should_select_the_same_text_rule_version() => _forms.ShouldEachConformTo(form => form.Model.SemanticVersion == SemanticVersion.V25);
+    [Fact] void should_select_the_same_text_rule_version() => _forms.ShouldEachConformTo(form => form.Model.SemanticVersion == SemanticVersion.V24);
     [Fact] void should_produce_identical_bytes() => SemanticModelSerializer.Serialize(_forms[0].Model).ShouldEqual(SemanticModelSerializer.Serialize(_forms[1].Model));
     [Fact]
     void should_execute_the_same_accepted_and_refused_specifications()

@@ -45,7 +45,7 @@ public static class golden_vector_regeneration
         ["21"] = canonical_serialization_golden_vectors.CreateSemanticModelV21,
         ["22"] = canonical_serialization_golden_vectors.CreateSemanticModelV22,
         ["23"] = canonical_serialization_golden_vectors.CreateSemanticModelV23,
-        [TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV25
+        [TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV24
     };
 
     /// <summary>
