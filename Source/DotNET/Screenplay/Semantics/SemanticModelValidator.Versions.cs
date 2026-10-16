@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Semantics;
 internal static partial class SemanticModelValidator
 {
     internal static bool UsesDateComparisons(SemanticApplication application) =>
-        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticCommandDateComparisons.Properties(application, command).Any());
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Any());
 
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)

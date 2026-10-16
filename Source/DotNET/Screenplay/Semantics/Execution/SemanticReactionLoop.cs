@@ -174,7 +174,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         SemanticFact? cause,
         DateTimeOffset? occurred)
     {
-        if (trigger.Where is not null && !SemanticConditionEvaluation.Evaluate(trigger.Where, values))
+        if (trigger.Where is not null && !SemanticConditionEvaluator.Evaluate(trigger.Where, values))
         {
             return null;
         }
