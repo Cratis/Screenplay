@@ -73,7 +73,7 @@ public sealed partial class SemanticModelBinder
                 right = new(default, SemanticValue.Text(text));
             }
 
-            return new SemanticComparison(left, DateOperator(comparison.Operator), right);
+            return new SemanticComparison(left, ConditionOperator(comparison.Operator), right);
         }
     }
 }
