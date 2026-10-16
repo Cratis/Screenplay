@@ -55,6 +55,7 @@
         { "name": "invoicing-sample", "path": "Samples/Invoicing/invoicing.play" },
         { "name": "crm-sample", "path": "Samples/Crm/crm.play" },
         { "name": "ticketing-sample", "path": "Samples/Ticketing/ticketing.play" },
+        { "name": "approvals-sample", "path": "Samples/Approvals/approvals.play" },
         { "name": "inventory-sample", "path": "Samples/Inventory/inventory.play" },
         { "name": "hr-sample", "path": "Samples/Hr/hr.play" },
         { "name": "projects-sample", "path": "Samples/Projects/projects.play" },
