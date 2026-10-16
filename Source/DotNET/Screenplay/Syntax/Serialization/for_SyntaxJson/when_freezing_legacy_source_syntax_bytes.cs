@@ -383,6 +383,7 @@ public class when_freezing_legacy_source_syntax_bytes
                         Commands = slice.Commands.Select(command => command.Name == "RegisterInvoice" ? command with
                         {
                             Response = null,
+
                             // Chronological date rules have current shared vectors. Omit only the new ledger
                             // rule from frozen bytes; retain the existing dueDate > today rule unchanged.
                             Validations = command.Validations.Select(validation => validation is DeclarativeValidateSyntax block ? block with
