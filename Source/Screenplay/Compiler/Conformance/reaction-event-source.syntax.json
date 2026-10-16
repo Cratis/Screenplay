@@ -1,0 +1,168 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "OrderId",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Fulfilment",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "StartPicking",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PickingStarted",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "orderId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OrderId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PickingStarted",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "StartPicking",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderPlaced",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "Picking",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "PickOnPlacement",
+                  "runsAs": null,
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "StartPicking"
+                        },
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "StartPicking"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "OrderPlaced"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Automation"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Orders"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

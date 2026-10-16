@@ -6,6 +6,7 @@ using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -390,6 +391,17 @@ public sealed partial class SemanticModelBinder
             return new SemanticRefusalExpression(refusal.Member, text);
         }
 
+        SemanticEventContextExpression? BindReactionEventSource(ExpressionSyntax source, SemanticTypeReference target, SemanticExpressionRootKind root)
+        {
+            if (root != SemanticExpressionRootKind.Event || target.IsCollection || target.IsOptional || target.Kind == SemanticTypeReferenceKind.CompositeType)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "$eventSourceId requires an event-triggered reaction and a required scalar mapping target.", source.Location);
+                return null;
+            }
+
+            return new(SemanticEventContextValueKind.EventSourceIdentity, target);
+        }
+
         SemanticExpression? BindOccurrenceSource(
             ExpressionSyntax source,
             SemanticTypeReference target,
@@ -398,6 +410,7 @@ public sealed partial class SemanticModelBinder
             string description,
             bool routeInput = false) => source switch
             {
+                EventSourceIdExpressionSyntax or EventContextExpressionSyntax { Path: "eventSourceId" } => BindReactionEventSource(source, target, root),
                 RefusalExpressionSyntax refusal => BindRefusalValue(refusal, target),
                 ContextExpressionSyntax context => BindOccurrence(context, target),
                 IdentityExpressionSyntax identity => BindOccurrence(identity, target),

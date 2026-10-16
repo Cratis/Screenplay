@@ -122,6 +122,11 @@ internal static partial class ExpressionParser
             return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
         }
 
+        if (text == "$eventSourceId" || text == "$eventContext.eventSourceId")
+        {
+            return ParseProjectionExpression(context, text, location);
+        }
+
         if (text == "$identity" || text == "$identity.")
         {
             context.Error(DiagnosticCodes.InvalidExpression, $"Invalid expression '{text}'", location);
