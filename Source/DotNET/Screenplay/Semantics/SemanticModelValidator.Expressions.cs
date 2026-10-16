@@ -100,16 +100,19 @@ internal static partial class SemanticModelValidator
         bool IsAdmittedOccurrenceContext(SemanticEventContextExpression context, SemanticExpressionRootKind expectedRoot) =>
             _semanticVersion != SemanticVersion.V1 &&
             (expectedRoot == SemanticExpressionRootKind.Command || _occurrenceRoots) &&
-            IsOccurrenceField(context.Value) && IsRequiredScalar(context.Type);
+            (IsOccurrenceField(context.Value) ||
+                (context.Value == SemanticEventContextValueKind.EventSourceIdentity && _occurrenceRoots && expectedRoot == SemanticExpressionRootKind.Event && context.Type.Kind != SemanticTypeReferenceKind.CompositeType)) &&
+            IsRequiredScalar(context.Type);
 
         bool IsOccurrenceField(SemanticEventContextValueKind value) =>
             value is SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
                 SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName;
 
         bool IsCompatibleOccurrencePrimitive(SemanticEventContextValueKind value, SemanticPrimitiveType primitive) =>
-            value == SemanticEventContextValueKind.Occurred
+            value == SemanticEventContextValueKind.EventSourceIdentity ||
+            (value == SemanticEventContextValueKind.Occurred
                 ? primitive == SemanticPrimitiveType.DateTime
-                : primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid;
+                : primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid);
 
         SemanticTypeReference ResolveResolvedExpression(
             SemanticResolvedExpression resolved,

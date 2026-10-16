@@ -236,7 +236,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             return unsupported;
         }
 
-        if (occurrence is null && produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
+        if (occurrence is null && produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.EventSourceIdentity }))
         {
             return new SemanticRejected(World, SemanticRejectionCategory.Contract, null, $"Reaction '{reaction.Name}' uses $context, which needs the scenario's 'given clock'.");
         }
@@ -244,7 +244,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var eventContract = plan.Events[produced.EventContract];
         var mapped = produced.Mappings
             .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, mapping.Source is SemanticRefusalExpression expression && refusal is not null
-                ? refusal.ValueOf(expression.Member) : SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence)))
+                ? refusal.ValueOf(expression.Member) : SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence, cause)))
             .ToImmutableArray();
         var properties = eventContract.Properties.ToDictionary(property => property.Id);
         foreach (var value in mapped)
@@ -297,7 +297,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             .Where(property => !property.IsGenerated)
             .Select(property => new SemanticPropertyValue(
                 property.Id,
-                mappings.TryGetValue(property.Id, out var mapping) ? SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence) : SemanticValue.Null))
+                mappings.TryGetValue(property.Id, out var mapping) ? SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence, cause) : SemanticValue.Null))
             .ToImmutableArray();
         var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
@@ -327,7 +327,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     }
 
     SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>
-        mappings.Any(mapping => mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred })
+        mappings.Any(mapping => mapping.Source is SemanticEventContextExpression { Value: SemanticEventContextValueKind.CausedBySubject or SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName })
             ? new(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has no caller audit identity for $context.causedBy.")
             : null;
 }
