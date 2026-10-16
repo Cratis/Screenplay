@@ -6,9 +6,26 @@ using Cratis.Screenplay.CanonicalCorpus;
 
 // Writes the folder source form of the published screens corpus to the destination folder and prints the package
 // version it came from. Exit 2 when the destination is missing or the form has no documents.
+if (args.Length == 3 && args[0] == "--case")
+{
+    // A typed source case written as `application.play` into the destination folder (the shell CLI vector).
+    var typed = ScreenCompositionCorpus.V1.TypedSourceCases.SingleOrDefault(candidate => candidate.Name == args[1]);
+    if (typed is null)
+    {
+        Console.Error.WriteLine($"the published corpus has no typed source case '{args[1]}'");
+        return 2;
+    }
+
+    Directory.CreateDirectory(args[2]);
+    File.WriteAllText(Path.Combine(args[2], "application.play"), typed.Document.Text);
+    var caseVersion = typeof(ScreenCompositionCorpus).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
+    Console.WriteLine($"1 document from Cratis.Screenplay.CanonicalCorpus {caseVersion.Split('+')[0]}");
+    return 0;
+}
+
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("usage: PublishedCorpus <destination>");
+    Console.Error.WriteLine("usage: PublishedCorpus <destination> | PublishedCorpus --case <name> <destination>");
     return 2;
 }
 
