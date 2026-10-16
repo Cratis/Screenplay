@@ -71,6 +71,10 @@ The customer and invitation rules above are Proven: every value those exact shap
 
 Rules select V20 even when an implicit-UUID concept serializes no strategy. No proof status is serialized: consumers derive it with `RuleConsistency.Check(concept)` on concepts used by generated properties, including implicit UUID. This avoids stale status after a package or UTC-year change. Renderers that support unpinned generation can use it when every rule is Proven; Unproven rules require pinned fixtures. Changing generation never adds or changes validation automatically, so stored values keep their authored rules. The [strategy reference](generated-values/strategies.md#rule-consistency) describes fragment R and proof limits.
 
+## Check a concept through the .NET library
+
+An editor can discover strategies and their options through `GenerationStrategyCatalog`, then inspect one declaration with `SemanticConceptCheck.Check`. The result identifies generation, option and rule findings without source-location scraping, and includes proofs, exact support and the minimum required ESM version. See [Check a concept declaration](concept-checks.md). This does not replace whole-model binding or property-scoped entropy checks.
+
 ## Work with strategies through MCP
 
 You can inspect and change the concept's strategy without editing generated values on each command. `declaration-details` with `kind: "Concept"` and `view: "summary"` shows the authored strategy, modifiers and `arguments`, random bits, the count at 1% collision probability, and compiler refusal codes. Pattern and random strategies include an exact JSON integer `supportCount` and its base-two logarithm as `entropyBits`; checksums add no entropy, and date tokens use the minimum conditioned support across the compiler's 100-year UTC assessment horizon. Preserve large counts without floating-point rounding. A `rule` argument names the generation rule; find its ValueGeneration requirement with `read-workspace` and `view: "implementation-requirements"`. Its entropy is unknown because the implementation is opaque. An implicit UUID default has no authored `generation` block.

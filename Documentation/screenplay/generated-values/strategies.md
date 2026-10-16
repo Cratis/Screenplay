@@ -5,6 +5,29 @@ description: Look up generation syntax, exact encodings, random bits, and collis
 
 Each concept has at most one `generate` line. Modifiers may occur in any order, once each; canonical printing orders strategy arguments, `alphabet`, `prefix`, `case`, then `checksum`. Every random choice uses a cryptographically secure source. The reference evaluator checks pinned fixtures rather than generating values.
 
+## Public strategy catalog
+
+The .NET library publishes `GenerationStrategyCatalog.All` and `Find(string name)` in `Cratis.Screenplay.Semantics`. `Find` uses exact, case-sensitive source spelling and returns null for unknown names. Use this data to populate an editor instead of maintaining another option matrix. For a particular declaration, use [the single-concept check](../concept-checks.md).
+
+| Strategy | Source primitives | First ESM version | Fixed random bits | Option names |
+| --- | --- | --- | --- | --- |
+| `uuid` | Uuid, String | 15.0 | 122 | prefix, case |
+| `uuidv7` | Uuid, String | 15.0 | 74 | prefix, case |
+| `ulid` | String | 15.0 | 80 | prefix, case |
+| `typeid` | String | 15.0 | 74 | prefix |
+| `nanoid` | String | 15.0 | - | size, alphabet, prefix |
+| `bytes` | String | 15.0 | - | count, encoding, prefix, case |
+| `pattern` | String | 21.0 | - | pattern, checksum |
+| `random` | Int | 21.0 | - | range |
+| `rule` | String | 21.0 | - | rule, implementation |
+| `sequence` | - | reserved | - | - |
+
+The table is checked against the catalog. Every descriptor gives the source `Name`, serialized `EsmKind`, source `Primitives`, nullable `IntroducedIn`, `Status`, `Executability`, nullable `FixedBits` and ordered `Options`. All listed strategies are `Admitted` except `sequence`, whose status is `AwaitingAdmission` and whose version and ESM kind are null. Source `rule` serializes as `implementation`; it requires a target implementation, while built-ins have reference fixture checking. Listing a strategy does not execute it or admit an invalid declaration. Enum defaults are non-admitting.
+
+Each option describes its `Placement` (positional Argument, keyword Modifier or Body), `Kind`, `Required`, inclusive `Minimum`/`Maximum`, `Choices`, decoded `Default`, `Charset`, `Distinct`, optional portable `MatchPattern`, `Conditions` and value-constraint `DiagnosticCode`. Bounds apply to numbers or text lengths; a Pattern's bound is its final emitted length, not the source pattern's length. An Int64Range's bounds constrain both endpoints, which must be ordered. A null default means no single unconditional default: byte `case`, for example, defaults differently for hex and base32 as described below.
+
+All option conditions must hold. `PrimitiveIs` names compatible source primitives; `OptionIn` constrains another option. For example, UUID `prefix` and `case` require String, while bytes `case` requires `encoding` in hex/base32. A Body means exactly one file or tagged inline body. Pattern grammar and bounded support assessment still require the compiler; metadata alone is not a validator. Check a TypeID prefix's portable `MatchPattern` with [value-rule checks](../value-rule-checks.md), not a platform-specific regular expression. `IdentifierMinimumBits` publishes the current 64-bit property threshold; exact support and collision data are computed per declaration.
+
 ## Entropy and collision bounds
 
 For `b` random bits, the approximate number of draws at 1% collision probability is `sqrt(2 × 2^b × ln(1/0.99))`. Time and literal prefixes add no randomness.
