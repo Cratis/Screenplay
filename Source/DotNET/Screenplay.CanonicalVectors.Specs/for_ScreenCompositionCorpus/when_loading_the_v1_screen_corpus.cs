@@ -13,6 +13,8 @@ public class when_loading_the_v1_screen_corpus : Specification
     CanonicalScreenCorpusVector _corpus = null!;
     Diagnostic[] _diagnostics = [];
 
+    CanonicalStagePlanExpectation ReleaseStagePlan => _corpus.StagePlans.Single(plan => plan.Profile == "Web");
+
     CanonicalTypedScreenSourceCase ReleaseCase => _corpus.TypedSourceCases.Single(sourceCase => sourceCase.Name == "screen-release-ui-positive");
 
     void Because()
@@ -36,7 +38,10 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
     [Fact] void should_publish_working_branch_harness_entry_points() => _corpus.WorkingBranchHarnesses.Select(harness => harness.Name).ShouldEqual("stage-pr260-screen-plan", "studio-pr1615-transport", "studio-pr1617-native-play", "scene-form-geometry", "browser-native-controls", "mcp-revision-edit-transcript");
     [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.2-4.49.2", "cratis-run-stage-4.49.1", "browser-native-controls-runtime", "browser-native-controls-runtime-3.40.3-4.49.5", "browser-native-controls-runtime-3.40.4-4.49.7", "browser-native-controls-runtime-3.40.7-4.51.1", "browser-native-controls-runtime-3.41.0-4.51.3", "browser-native-controls-runtime-3.43.0-4.52.0", "mcp-released-typed-transcript", "studio-0.136.6-production-play");
-    [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
+    [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => ReleaseStagePlan.PendingReason.ShouldNotBeNull();
+    [Fact] void should_publish_the_shell_stage_plan() => _corpus.StagePlans.Select(plan => plan.Profile).ShouldEqual("Web", "Desktop");
+    [Fact] void should_pin_the_shell_stage_plan_to_the_shell_source() => _corpus.StagePlans.Single(plan => plan.Profile == "Desktop").Assertions.Single(assertion => assertion.Path == "source.case").Value.ShouldEqual("screen-shell-navigation-positive");
+    [Fact] void should_not_claim_cli_or_studio_plan_parity_before_they_render_the_shell() => _corpus.StagePlans.Single(plan => plan.Profile == "Desktop").PendingReason!.ShouldContain("Cratis/cli#374");
 
     [Fact]
     void should_fail_backend_esm_admission_with_the_expected_diagnostics()
@@ -178,7 +183,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_keep_stage_plan_pending_but_assertable()
     {
-        var plan = _corpus.StagePlans.Single();
+        var plan = ReleaseStagePlan;
         plan.PlanDigest.StartsWith("released:scene-sha256:", StringComparison.Ordinal).ShouldBeTrue();
         plan.Artifacts.ShouldBeEmpty();
         plan.ObservedRefusalCodes.ShouldEqual("PLAY0269", "STAGE-SCENE-ACTION-001", "STAGE-SCENE-INTERACTION-001");
@@ -191,7 +196,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_record_the_released_vector_stage_pending_warnings_in_the_pending_reason()
     {
-        var plan = _corpus.StagePlans.Single();
+        var plan = ReleaseStagePlan;
         plan.PendingReason!.ShouldContain("CLI 3.40.2");
         plan.PendingReason.ShouldContain("Stage 4.49.2");
         plan.PendingReason.ShouldContain("authored Scene composition");

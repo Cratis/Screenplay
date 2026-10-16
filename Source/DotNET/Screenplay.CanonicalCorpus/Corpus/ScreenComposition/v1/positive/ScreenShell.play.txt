@@ -76,9 +76,9 @@ module Sales
         template blueprint Crm CustomerDetail version "~1.4.2"
           body
             title "Orders"
-        toolbar actions
-          button place title "New order" slice Sales.Orders.PlaceOrder emphasis primary icon plus
-          button cancel title "Cancel order" slice CancelOrder emphasis quiet
+            toolbar actions
+              button place title "New order" slice Sales.Orders.PlaceOrder emphasis primary icon plus
+              button cancel title "Cancel order" slice CancelOrder emphasis quiet
 
   feature Customers
     slice StateView CustomerList

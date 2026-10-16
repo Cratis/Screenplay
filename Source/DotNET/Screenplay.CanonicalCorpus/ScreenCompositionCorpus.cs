@@ -1023,6 +1023,38 @@ public static class ScreenCompositionCorpus
                         Assertion("plan.packageFallbacks", "equals", "0"),
                         Assertion("plan.missingIconFallbacks", "equals", "0")
                     ]
+                },
+                new CanonicalStagePlanExpectation
+                {
+                    Target = "scene-web",
+                    Profile = "Desktop",
+                    PlanDigest = "released:scene-sha256:53e2a74364dadadc6baa42b5446e874cf446493452bb4b25058b0922bda3609e",
+                    RequiredVersionVector = "Stage 4.119.1 (cratis/stage:4.119.1 run on the shell document) + Screenplay 4.180.1 + Scene 4.30.0",
+                    PendingReason = "Executed on the published Stage image cratis/stage:4.119.1: its /stage/scene for screen-shell-navigation-positive hashes to the digest above, byte-identical across two loads, and carries the application and module navigation, the toolbar buttons as core:toolbarItem with their slices and the blueprint template references; sample data packs are not served (SD6). The public CLI render and the Studio plan of the same document wait for the CLI that bundles this Stage (Cratis/cli#374), so CLI and Studio plan parity is not yet asserted.",
+                    Artifacts = [],
+                    ObservedRefusalCodes = [],
+                    Assertions =
+                    [
+                        Assertion("source.case", "equals", ShellSourceCase),
+                        Assertion("plan.profile", "equals", "Desktop"),
+                        Assertion("plan.layout", "contains", "AppShell"),
+                        Assertion("plan.navigation.application.logo.title", "equals", "Acme"),
+                        Assertion("plan.navigation.application.topbar.items", "equals", "sales,support"),
+                        Assertion("plan.navigation.application.sidebar.items", "equals", "sales,support"),
+                        Assertion("plan.navigation.application.sidebar.sales.children", "equals", "orders,returns"),
+                        Assertion("plan.navigation.application.sidebar.returns.slot", "equals", "side"),
+                        Assertion("plan.navigation.modules.Sales.sidebar.mode", "equals", "extend"),
+                        Assertion("plan.navigation.modules.Sales.topbar.mode", "equals", "inherit"),
+                        Assertion("plan.navigation.modules.Support.sidebar.mode", "equals", "override"),
+                        Assertion("plan.navigation.modules.Reports", "absent", "inherits both regions"),
+                        Assertion("plan.toolbar.OrderList.place.slice", "equals", "Sales.Orders.PlaceOrder"),
+                        Assertion("plan.toolbar.OrderList.place.emphasis", "equals", "primary"),
+                        Assertion("plan.toolbar.OrderList.cancel.slice", "equals", "Sales.Orders.CancelOrder"),
+                        Assertion("plan.templateReferences.Sales", "equals", "Crm/Workspace@^1.4"),
+                        Assertion("plan.templateReferences.Sales.Orders.OrderList.OrderList", "equals", "Crm/CustomerDetail@~1.4.2"),
+                        Assertion("plan.structure.Sales.Orders.PlaceOrder", "equals", "StateChange"),
+                        Assertion("plan.sampleData.served", "equals", "none")
+                    ]
                 }
             ]
         };

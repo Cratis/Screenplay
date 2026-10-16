@@ -35,6 +35,7 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
     string _moduleTemplateRange = string.Empty;
     string _screenTemplateRange = string.Empty;
     string _reopened = string.Empty;
+    readonly Dictionary<string, string[]> _schemaMembers = [];
 
     void Establish()
     {
@@ -48,6 +49,11 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
         var shell = ScreenCompositionCorpus.V1.TypedSourceCases.Single(sourceCase => sourceCase.Name == "screen-shell-navigation-positive").Document.Text;
         Apply(empty, Result("propose-source", Arguments(empty, new { operation = "create-document", path = "application.play", stableKey = "application", source = shell })));
         var created = empty.GetProperty("revision").GetString()!;
+
+        foreach (var kind in new[] { "NavigationRegionSyntax", "NavigationItemSyntax", "NavigationTargetSyntax", "NavigationLogoSyntax", "ToolbarButtonSyntax", "TemplateAssignmentSyntax", "ScreenTemplateReferenceSyntax", "SampleDataPackSyntax", "SampleDataSelectionSyntax" })
+        {
+            _schemaMembers[kind] = [.. Result("syntax-schema", new { kind }).GetProperty("properties").EnumerateObject().Select(property => property.Name)];
+        }
 
         // Navigation regions.
         var opened = Open();
@@ -109,6 +115,15 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
         _reopened = File.ReadAllText(Path.Combine(RootPath, "application.play"));
     }
 
+    [Fact] void should_describe_a_navigation_region_in_the_json_schema() => Missing("NavigationRegionSyntax", "mode", "region", "items", "logo").ShouldBeEmpty();
+    [Fact] void should_describe_a_navigation_item_in_the_json_schema() => Missing("NavigationItemSyntax", "id", "title", "icon", "target", "slot", "children").ShouldBeEmpty();
+    [Fact] void should_describe_a_navigation_target_in_the_json_schema() => Missing("NavigationTargetSyntax", "module", "feature").ShouldBeEmpty();
+    [Fact] void should_describe_the_logo_in_the_json_schema() => Missing("NavigationLogoSyntax", "image", "title").ShouldBeEmpty();
+    [Fact] void should_describe_a_toolbar_button_in_the_json_schema() => Missing("ToolbarButtonSyntax", "id", "title", "slice", "emphasis", "icon").ShouldBeEmpty();
+    [Fact] void should_describe_a_template_assignment_in_the_json_schema() => Missing("TemplateAssignmentSyntax", "name", "blueprint", "version").ShouldBeEmpty();
+    [Fact] void should_describe_a_screen_template_reference_in_the_json_schema() => Missing("ScreenTemplateReferenceSyntax", "name", "blueprint", "version").ShouldBeEmpty();
+    [Fact] void should_describe_a_sample_data_pack_in_the_json_schema() => Missing("SampleDataPackSyntax", "name", "locale", "sets").ShouldBeEmpty();
+    [Fact] void should_describe_the_sample_data_selection_in_the_json_schema() => Missing("SampleDataSelectionSyntax", "active", "mappings", "bindings").ShouldBeEmpty();
     [Fact] void should_refuse_a_stale_navigation_revision() => _staleNavigation.GetRawText().ShouldContain("StaleRevision");
     [Fact] void should_refuse_a_stale_toolbar_revision() => _staleToolbar.GetRawText().ShouldContain("StaleRevision");
     [Fact] void should_refuse_a_stale_template_revision() => _staleTemplate.GetRawText().ShouldContain("StaleRevision");
@@ -130,6 +145,8 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
     [Fact] void should_change_the_version_range_of_a_screen_template() => _screenTemplateRange.ShouldContain("template blueprint Crm CustomerDetail version \"~1.5.0\"");
     [Fact] void should_keep_every_applied_edit_after_reopening() => new[] { "navigation sidebar overrides", "navigation sidebar extends", "item sales-reports", "version \"^2.0\"", "version \"~1.5.0\"" }.Where(text => !_reopened.Contains(text, StringComparison.Ordinal)).ShouldBeEmpty();
     [Fact] void should_keep_the_sample_data_the_ui_profile_selects() => _reopened.ShouldContain("sample data\n    active NordicDemo");
+
+    string[] Missing(string kind, params string[] members) => [.. members.Where(member => !_schemaMembers[kind].Contains(member))];
 
     static string Id(JsonElement node) => node.GetProperty("node").GetProperty("id").GetString()!;
 

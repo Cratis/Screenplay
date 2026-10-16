@@ -65,11 +65,31 @@ public class when_compiling_the_screen_shell_vectors : Specification
 
     ModuleSyntax Module(string name) => _shell.Value!.Modules.Single(module => module.Name == name);
 
-    IEnumerable<ToolbarButtonSyntax> Buttons => _shell.Value!.Modules.SelectMany(module => module.Features).SelectMany(feature => feature.Slices).SelectMany(slice => slice.Screens)
-        .SelectMany(screen => screen.Directives.OfType<ScreenToolbarSyntax>()).SelectMany(toolbar => toolbar.Buttons);
+    IEnumerable<ToolbarButtonSyntax> Buttons
+    {
+        get
+        {
+            var collector = new ButtonCollector();
+            collector.VisitApplication(_shell.Value!);
+            return collector.Buttons;
+        }
+    }
 
     ScreenTemplateReferenceSyntax ScreenReference => _shell.Value!.Modules.SelectMany(module => module.Features).SelectMany(feature => feature.Slices).SelectMany(slice => slice.Screens)
         .SelectMany(screen => screen.Directives.OfType<ScreenTemplateReferenceSyntax>()).Single();
+
+    sealed class ButtonCollector : ScreenplaySyntaxWalker
+    {
+        public List<ToolbarButtonSyntax> Buttons { get; } = [];
+
+        public override void VisitNode(SyntaxNode node)
+        {
+            if (node is ToolbarButtonSyntax button)
+            {
+                Buttons.Add(button);
+            }
+        }
+    }
 
     sealed class KindCollector : ScreenplaySyntaxWalker
     {

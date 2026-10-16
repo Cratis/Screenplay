@@ -73,7 +73,7 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | MCP template references (765) | `when_authoring_the_screen_shell`: change the version range of a module and a screen reference; an unreadable range is `PLAY0721`, an unlisted blueprint `PLAY0722`; stale revision refused |
 | MCP sample data (762, 765) | `when_authoring_sample_data`: replace a row value, change the active pack the `ui profile` selects, remove a pack; an undeclared pack is `PLAY0714` |
 | Typed edit of a member that is empty and omitted from the node JSON (765) | `when_adding_to_a_member_that_is_omitted_while_empty`: the first region, button or sub-item can be added |
-| Canonical shell vector (765) | `screen-shell-navigation-positive` and seven rejection vectors in `ScreenCompositionCorpus.V1`, held by `when_compiling_the_screen_shell_vectors` and `when_compiling_the_v1_screen_composition_vectors`; the TypeScript compiler accepts the same document in `Conformance/diagnostics.json` |
+| Canonical shell vector (765) | `screen-shell-navigation-positive`, seven rejection vectors and a `Desktop` Stage plan in `ScreenCompositionCorpus.V1`, held by `when_compiling_the_screen_shell_vectors` and `when_compiling_the_v1_screen_composition_vectors`; the TypeScript compiler accepts the same document in `Conformance/diagnostics.json` |
 
 The TypeScript compiler parses and preserves every construct above. The reference checks (owners, instances, cycles,
 outlets, destinations, scopes, contribution points, packages) run in the C# compiler; the language service shows them
