@@ -104,6 +104,14 @@ public sealed partial class SemanticEvaluator
                 plan.Model.Application.Concepts.ToDictionary(_ => _.Id),
                 plan.Model.Application.Types.ToDictionary(_ => _.Id));
             if (query.Argument is not null) validator.Validate(key, query.Argument.Type, $"query '{query.Name}' key");
+            if (!query.KeyParts.IsEmpty)
+            {
+                var values = SemanticKeyPartValues.Require(key, query.KeyParts.Select(part => part.KeyProperty));
+                foreach (var part in query.KeyParts)
+                {
+                    validator.Validate(values.Single(value => value.TargetProperty == part.KeyProperty).Value, part.Type, $"query '{query.Name}' key part '{part.Name}'");
+                }
+            }
             return null;
         }
         catch (InvalidSemanticContract exception)
@@ -164,6 +172,10 @@ public sealed partial class SemanticEvaluator
         ImmutableArray<SemanticQueryFilterValue> filters)
     {
         if (query.Argument is { } argument) yield return (argument.Type, key);
+        foreach (var part in query.KeyParts)
+        {
+            yield return (part.Type, (key as SemanticCompositeValue)?.Properties.FirstOrDefault(value => value.TargetProperty == part.KeyProperty)?.Value ?? SemanticValue.Null);
+        }
         foreach (var filter in query.Filters.Where(filter => filters.Any(value => value.Filter == filter.Id)))
         {
             yield return (filter.Type, filters.Single(value => value.Filter == filter.Id).Value);

@@ -307,7 +307,7 @@ export function planCompletions(
     const afterSubjectType = subjectModifier !== null && subjectTarget && 'subject'.startsWith(subjectModifier[2]);
     const keyModifier = chain[0] === 'readmodel' ? textBefore.match(/^\s*@?[a-z_]\w*\s+[\w.]+\s+(\w*)$/) : null;
     const modifierEntries = [
-        ...(keyModifier && 'key'.startsWith(keyModifier[1]) ? [{ label: 'key', insertText: 'key', documentation: 'Declares a required read-model key part. Explicit keys replace inference. Composite keys are authoring-only (#599).' }] : []),
+        ...(keyModifier && 'key'.startsWith(keyModifier[1]) ? [{ label: 'key', insertText: 'key', documentation: 'Declares a required scalar read-model key part. Explicit keys replace inference. Supply every part by name when looking up one instance.' }] : []),
         ...((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore) ? items.optionalTypeItems : []),
         ...(afterSubjectType ? [{ label: 'subject', insertText: 'subject', documentation: 'One required scalar event data-subject identity; not pii or secret. Report-only lineage metadata (PLAY0270), no ESM or provider output yet.' }] : []),
     ];

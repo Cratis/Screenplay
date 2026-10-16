@@ -473,6 +473,7 @@ export abstract class ScreenplaySyntaxWalker {
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'RemoveWithSyntax':
+                if (syntax.partsKey != null) this.visitKey(syntax.partsKey);
                 if (syntax.parentKey != null) this.visitExpression(syntax.parentKey);
                 if (syntax.key != null) this.visitExpression(syntax.key);
                 break;

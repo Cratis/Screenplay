@@ -68,9 +68,11 @@ A single-instance lookup supplies every part exactly once. Collection queries ma
 
 `PLAY0660` rejects invalid key declarations. `PLAY0661` names missing parts. `PLAY0662` rejects invalid lookup shapes or values. The typed `PLAY0661` repair covers command reads only. Queries and trigger reads are not repaired.
 
-An explicit single key binds byte-identically to the equivalent inferred identifier. Composite keys, by-block queries and their fixtures remain authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
+An explicit single key binds byte-identically to the equivalent inferred identifier. Several scalar key properties form a flat composite identity: each part keeps its property name and type, and equality compares every part without regard to declaration order. No separator encoding or synthetic type is introduced. Only models with at least two key parts select the composite-key executable contract.
 
-`given readmodel` and `then readmodel` state every key part. Missing parts produce `PLAY0351`. Query results may omit them when arguments already select the instance. See [Specifications](specifications.md#read-model-state).
+An optional single-instance query uses a `by` block naming every part, with caller-supplied values. A collection query uses equality filters, or one ordinary `by <part> Type` line; a collection `by` block remains refused with `PLAY0268`. Context-sourced parts and non-optional single-instance returns also remain refused. Concept rules run on each supplied query part at execution; fixture state is checked for type, shape and enum membership, not concept rules.
+
+`given readmodel` and `then readmodel` state every key part. Missing parts produce `PLAY0351`. Single-instance query results may omit parts supplied by the query arguments; collection rows must state every part. A stated part that differs from an argument makes the expected row fail to match at execution, rather than failing binding. See [Specifications](specifications.md#read-model-state).
 
 ## The arrow always points the same way
 

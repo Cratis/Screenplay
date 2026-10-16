@@ -113,9 +113,9 @@ From ESM v18, use one actionless query and `then error` to [specify a Validation
 
 ## Composite lookups
 
-A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. A single-instance query supplies every part with its required compatible nominal type. A collection query may name a subset. See the complete example in [Read-model keys](readmodels.md#keys).
+A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. From ESM v27, an optional single-instance query supplies every flat key part with its required compatible nominal type and caller-supplied value. Collection queries use equality filters or one scalar `by name Type` line, not a `by` block. See the complete example in [Read-model keys](readmodels.md#keys).
 
-Composite read-model keys and by-block queries are authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599). Missing parts use `PLAY0661`; invalid shapes and parts use `PLAY0662`. Queries have no key-completion repair.
+Collection `by` blocks, context-sourced parts and non-optional single-instance returns remain refused with `PLAY0268`. Missing parts use `PLAY0661`; invalid shapes and parts use `PLAY0662`. Queries have no key-completion repair.
 
 ## Parameters
 

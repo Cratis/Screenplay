@@ -147,6 +147,10 @@ public static partial class SemanticModelCanonicalJson
                 break;
 
             // Part order carries no meaning (Chronicle CompositeKeyExpressionResolver.cs:46-61), so parts are written by property identity.
+            case SemanticProjectionPartsKey parts when key.Kind == SemanticProjectionKeyKind.Parts:
+                writer.WriteString("kind", "parts");
+                WriteArray(writer, "parts", Require(parts.Parts).OrderBy(part => part.Property.ToString(), StringComparer.Ordinal), WriteKeyPart);
+                break;
             case SemanticProjectionCompositeKey composite when key.Kind == SemanticProjectionKeyKind.Composite:
                 writer.WriteString("kind", "composite");
                 writer.WriteString("type", composite.Type.ToString());

@@ -61,7 +61,9 @@ ESM v21 generation has only authored pattern/checksum, exact Int64 min/max, or i
 
 A pending `HandlerSyntax.Implementation` may coexist with unconditional `CommandSyntax.Produces`. This selects ESM v23 without a new syntax node: the command's final optional `handler` member carries `requirementId` and `resultVersion: 1`, while ordered hints and Pending attachment state stay in the sidecar. Required event payload properties may be unmapped because `produces` is the result contract, not its implementation. Older ESM readers must refuse v23 rather than discard the described body. File/inline handlers remain unadmitted; commands without a described handler retain their prior bytes. See [Handler intent edits](ast-authoring.md#handler-intent-edits).
 
-`ObserverFilterSyntax` carries an event source name, optional stream name and location. Routes and filters select ESM v10. Explicit single read-model keys preserve ESM bytes; composite read-model keys remain refused with `PLAY0268` (#599). See [AST authoring](ast-authoring.md#keys-production-routes-and-observer-filters).
+`ObserverFilterSyntax` carries an event source name, optional stream name and location. Routes and filters select ESM v10. Explicit single read-model keys preserve ESM bytes. Flat composite read-model identities mark several properties as identifiers, use `keyParts` for single-instance query arguments and `kind: "parts"` for projection keys, and select their own executable contract. Earlier readers reject these shapes. See [AST authoring](ast-authoring.md#keys-production-routes-and-observer-filters).
+
+`RemoveWithSyntax.PartsKey` is a nullable init-only `CompositeKeySyntax`, beside the existing scalar `Key`. It holds the untyped `key` child block, defaults to null and is omitted from syntax JSON when absent. The walker visits its parts and expressions. Preserve it during source recovery; an earlier transport reader rejects the new member. A removal with both scalar and parts keys is invalid.
 
 ## Reaction command identity member
 

@@ -55,7 +55,22 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification read model '{state.ReadModel}' is unresolved.");
             }
 
-            var identifier = IdentifierProperty(readModel);
+            var keys = ReadModelKeyProperties(readModel);
+            if (keys.Length > 1)
+            {
+                ValidateReadModelKeyValue(readModel, state.Key, "specification read model key");
+                ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
+                foreach (var part in SemanticKeyPartValues.Require(state.Key, keys.Select(property => property.Id)))
+                {
+                    var value = state.Values.SingleOrDefault(value => value.TargetProperty == part.TargetProperty)?.Value;
+                    if (IsInconsistentIdentifier(part.Value, value, requireIdentifier))
+                    {
+                        throw new InvalidSemanticContract("A specification read model key must equal its identifier property value.");
+                    }
+                }
+                return;
+            }
+            var identifier = keys[0];
             ValidateValue(state.Key, identifier.Type, "specification read model key");
             ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
             var identifierValue = state.Values.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value;
@@ -75,6 +90,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification query '{result.Query}' is unresolved.");
             }
 
+            if (!query.KeyParts.IsEmpty) ValidateReadModelKeyValue(_readModels[query.ReadModel], result.Key, "specification query key");
             if (query.Argument is not null) ValidateValue(result.Key, query.Argument.Type, "specification query key");
             SemanticQueryFilterRules.ValidateValues(query, result.Filters, (value, type, description) => ValidateValue(value, type, description));
             RequireObjects(result.Results, nameof(result.Results), "specification query result state");
@@ -122,7 +138,7 @@ internal static partial class SemanticModelValidator
             var queryKeyValue = state.Values.SingleOrDefault(_ => _.TargetProperty == keyProperty.Id)?.Value;
             if (queryKeyValue is null && keyProperty.IsIdentifier)
             {
-                queryKeyValue = state.Key;
+                queryKeyValue = QueryResultIdentifierValue(state, keyProperty);
             }
 
             if (!MatchesQueryKey(state, keyProperty, queryKeyValue, result.Key))
@@ -133,7 +149,16 @@ internal static partial class SemanticModelValidator
 
         bool MatchesQueryKey(SemanticSpecificationReadModel state, SemanticProperty keyProperty, SemanticValue? queryKeyValue, SemanticValue resultKey) =>
             queryKeyValue is not null && SemanticValueRules.AreEqual(queryKeyValue, resultKey) &&
-            (!keyProperty.IsIdentifier || SemanticValueRules.AreEqual(state.Key, resultKey));
+            (!keyProperty.IsIdentifier || SemanticValueRules.AreEqual(QueryResultIdentifierValue(state, keyProperty), resultKey));
+
+        SemanticValue QueryResultIdentifierValue(SemanticSpecificationReadModel state, SemanticProperty property)
+        {
+            var keys = ReadModelKeyProperties(_readModels[state.ReadModel]);
+
+            return keys.Length == 1
+                ? state.Key
+                : SemanticKeyPartValues.Require(state.Key, keys.Select(key => key.Id)).Single(part => part.TargetProperty == property.Id).Value;
+        }
 
         void ValidateSpecificationError(SemanticSpecificationError error)
         {

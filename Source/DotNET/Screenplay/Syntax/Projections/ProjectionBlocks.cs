@@ -130,7 +130,13 @@ public record RemoveWithSyntax(
     string Event,
     ExpressionSyntax? Key,
     ExpressionSyntax? ParentKey,
-    SourceLocation Location) : ProjectionBlockSyntax(Location);
+    SourceLocation Location) : ProjectionBlockSyntax(Location)
+{
+    /// <summary>
+    /// Gets the named key parts supplied by an untyped <c>key</c> child block.
+    /// </summary>
+    public CompositeKeySyntax? PartsKey { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>remove via join</c> block removing the instance through a join key.

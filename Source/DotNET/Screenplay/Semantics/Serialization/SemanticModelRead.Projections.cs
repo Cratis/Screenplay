@@ -226,7 +226,8 @@ internal static partial class SemanticModelRead
         {
             "value" when value is not null && !typeRead && parts.IsDefault => new SemanticProjectionValueKey(value),
             "composite" when value is null && typeRead && type.IsSet && !parts.IsDefault => new SemanticProjectionCompositeKey(type, parts),
-            not null and not ("value" or "composite") => throw DiscriminatorError(kind, "projection key kind"),
+            "parts" when value is null && !typeRead && !parts.IsDefault => new SemanticProjectionPartsKey(parts),
+            not null and not ("value" or "composite" or "parts") => throw DiscriminatorError(kind, "projection key kind"),
             _ => throw Malformed("projection key", "one exact key variant")
         };
     }

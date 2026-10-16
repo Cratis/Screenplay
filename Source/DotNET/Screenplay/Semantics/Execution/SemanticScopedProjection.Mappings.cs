@@ -82,6 +82,9 @@ internal sealed partial class SemanticScopedProjection
                 return EventSource();
             case SemanticProjectionValueKey value when Evaluate(value.Value, _fact) is { } resolved and not SemanticNullValue:
                 return resolved;
+            case SemanticProjectionPartsKey flat:
+                var values = flat.Parts.Select(part => new SemanticPropertyValue(part.Property, Evaluate(part.Value, _fact) ?? SemanticValue.Null)).ToImmutableArray();
+                return _failure is null ? SemanticValue.Composite(values) : null;
             case SemanticProjectionCompositeKey composite:
                 var parts = composite.Parts.Select(_ => new SemanticPropertyValue(_.Property, Evaluate(_.Value, _fact) ?? SemanticValue.Null)).ToImmutableArray();
                 return _failure is null ? SemanticValue.Composite(parts) : null;

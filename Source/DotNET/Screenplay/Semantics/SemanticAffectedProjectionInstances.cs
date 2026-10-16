@@ -119,7 +119,8 @@ public static class SemanticAffectedProjectionInstances
         }
         else
         {
-            var identifierName = readModel?.Properties.Single(_ => _.IsIdentifier).Name;
+            var identifiers = readModel?.Properties.Where(property => property.IsIdentifier).ToArray();
+            var identifierName = identifiers is { Length: 1 } ? identifiers[0].Name : null;
             Collect(projection.Scope, [], null, false, result, application, readModel?.Properties, identifierName);
         }
 

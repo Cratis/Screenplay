@@ -101,6 +101,8 @@ internal static partial class SemanticModelValidator
                     Register(query.Argument.Id, query.Argument.Name, "query argument");
                 }
 
+                RequireObjects(query.KeyParts, nameof(query.KeyParts), "query key part");
+                foreach (var part in query.KeyParts) Register(part.Id, part.Name, "query key part");
                 RequireObjects(query.Filters, nameof(query.Filters), "query filter");
                 foreach (var filter in query.Filters) Register(filter.Id, filter.Name, "query filter");
                 _queries.Add(query.Id, query);

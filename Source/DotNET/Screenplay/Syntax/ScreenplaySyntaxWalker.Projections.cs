@@ -228,6 +228,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.PartsKey is not null)
+        {
+            VisitKey(syntax.PartsKey);
+        }
+
         if (syntax.Key is not null)
         {
             VisitExpression(syntax.Key);

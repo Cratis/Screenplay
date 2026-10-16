@@ -7,6 +7,9 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesCompositeReadModelKeys(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.ReadModels).Any(model => model.Properties.Count(property => property.IsIdentifier) > 1);
+
     internal static bool UsesDateComparisons(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Any());
 
@@ -17,6 +20,14 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static void ValidateCompositeReadModelKeyVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesCompositeReadModelKeys(application),
+            version,
+            SemanticVersion.V27,
+            "A composite read-model key ESM must contain a read model with several identifier parts.",
+            "Flat composite read-model keys require their admitting ESM version.");
 
     static void ValidateDateComparisonVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

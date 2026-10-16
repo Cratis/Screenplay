@@ -1,0 +1,29 @@
+numbers exact
+
+module Billing
+  feature Payments
+    slice StateView Totals
+      event PaymentAdded
+        invoice String
+        method String
+        amount Int
+      event PaymentRemoved
+        invoice String
+        method String
+      readmodel Totals
+        invoiceId String key
+        method String key
+        total Int
+      query TotalsForInvoice => Totals[]
+        filter invoiceId String
+      projection Totals => Totals
+        from PaymentAdded
+          key {
+            invoiceId = invoice
+            method = method
+          }
+          total = amount
+        remove with PaymentRemoved
+          key
+            method = method
+            invoiceId = invoice

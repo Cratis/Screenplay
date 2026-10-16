@@ -151,7 +151,7 @@ export const keywordDocs: Record<string, string> = {
     clock: 'The instant a specification happens at - `given clock "2026-10-05T08:00:00Z"` fixes when everything occurs, including every generated pattern date segment at that same UTC instant. Without given clock, generation fixtures check date digit widths only, never the wall clock. `when clock "<instant>"` is the clock reaching it, as the action.',
     exactly: 'Requires every property to match, rather than only the ones asserted - on `then readmodel`, `then query` and `then result`.',
     file: 'Delegates the implementation to an external file; the Screenplay contract stays visible.',
-    key: 'Trailing modifier on a required top-level read-model property. Explicit keys replace inference. Composite keys remain authoring-only (PLAY0268, #599).',
+    key: 'Trailing modifier on a required top-level read-model property. Explicit keys replace inference. Several scalar key properties identify one instance by named parts. Supply every part in a single-instance query by block and in projection key blocks; list queries can use equality filters.',
     stream: 'On a command event production, replaces the whole command route for that event. Other productions keep the command route. Admitted by ESM v10.',
     by: 'Introduces one identifying parameter or a block of at least two named key parts. Reads use part = source; queries use part Type.',
     via: 'Connects screen data to the query that supplies it.',

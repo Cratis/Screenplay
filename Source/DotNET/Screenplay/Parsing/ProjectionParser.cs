@@ -400,6 +400,7 @@ internal static partial class ProjectionParser
             ? ExpressionParser.ParseProjectionExpression(context, match.Groups[2].Value, line.Location)
             : null;
 
+        CompositeKeySyntax? partsKey = null;
         ExpressionSyntax? parentKey = null;
         SourceLocation? parentLocation = null;
         while (context.TryPeekChild(line.Indent, out var child))
@@ -410,14 +411,32 @@ internal static partial class ProjectionParser
                 parentKey = ExpressionParser.ParseProjectionExpression(context, child.Content["parent".Length..], child.Location);
                 parentLocation = child.Location;
             }
+            else if (FirstWord(child.Content) == "key")
+            {
+                if (key is not null || partsKey is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidReadModelKeyLookup, "A removal can only declare one key.", child.Location);
+                }
+
+                switch (ParseKey(context, child))
+                {
+                    case CompositeKeySyntax composite:
+                        partsKey = composite;
+                        break;
+                    case ExpressionKeySyntax expression:
+                        key = expression.Expression;
+                        break;
+                }
+            }
             else
             {
-                context.Error(DiagnosticCodes.UnknownRemoveDirective, $"Unexpected '{child.Content}' in remove block - only 'parent' is allowed", child.Location);
+                context.Error(DiagnosticCodes.UnknownRemoveDirective, $"Unexpected '{child.Content}' in remove block - only 'parent' or 'key' is allowed", child.Location);
             }
         }
 
         return new RemoveWithSyntax(Unescape(match.Groups[1].Value), key, parentKey, line.Location)
         {
+            PartsKey = partsKey,
             DirectiveLocations = parentLocation is null ? [] : new Dictionary<string, SourceLocation> { ["parent"] = parentLocation }
         };
     }
@@ -527,7 +546,7 @@ internal static partial class ProjectionParser
                 }
 
                 var expression = ExpressionParser.ParseProjectionExpression(context, partMatch.Groups[2].Value, child.Location);
-                if (expression is TemplateExpressionSyntax)
+                if (type.Length > 0 && expression is TemplateExpressionSyntax)
                 {
                     context.Error(DiagnosticCodes.TemplateInCompositeKey, "Template expressions are not allowed in composite keys", child.Location);
                 }

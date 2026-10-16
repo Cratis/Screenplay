@@ -19,6 +19,34 @@ static class ContractAdmission
     internal const string Projection = "      projection View => View\n        from Recorded\n          value = value\n";
     internal const string PersonaCallerContext = "policy Member\n  require authenticated and role \"member\"\npersona Accountant\n  policy Member\n" + Slice + Event + "      command Record\n        value String\n        authorize Member\n        produces Recorded\n          value = value\n";
 
+    internal const string CompositeReadModelKeys = """
+        module M
+          feature F
+            slice StateView S
+              event Recorded
+                first String
+                second String
+              event Removed
+                first String
+                second String
+              readmodel Row
+                first String key
+                second String key
+              query Find => Row optional
+                by
+                  first String
+                  second String
+              projection Rows => Row
+                from Recorded
+                  key
+                    first = first
+                    second = second
+                remove with Removed
+                  key
+                    first = first
+                    second = second
+        """;
+
     internal const string CommandDateComparisons = """
         module M
           feature F
@@ -130,18 +158,19 @@ static class ContractAdmission
                 Slice + "      event Recorded generation 1\n        value String\n      event Recorded generation 2\n        value String\n" + Command + "      specification Historical\n        given Recorded\n          value = \"previous\"\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n"
             ]),
         new("operation", "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n"),
-        new("projection", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + Event + ReadModel + Projection.Replace("      projection View => View\n", "      projection View => View\n        description \"Projection intent\"\n", StringComparison.Ordinal) + KeyedQuery]),
+        new("projection", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + Event + ReadModel + Projection.Replace("      projection View => View\n", "      projection View => View\n        description \"Projection intent\"\n", StringComparison.Ordinal) + KeyedQuery, CompositeReadModelKeys]),
         new(
             "query",
             Slice + Event + ReadModel + Projection + KeyedQuery,
             [
+                CompositeReadModelKeys,
                 Slice + ReadModel + "      query All => View[]\n",
                 Slice + "      readmodel FilteredView\n        itemId String\n        status String\n        category String optional\n      query Filtered => FilteredView[]\n        filter status String\n        filter category String optional\n"
             ]),
         new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n", ["reaction batches atomic\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          produces Recorded\n            value = \"test\"\n", "eventsource Account\n  identifier String\n  stream Archive\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        from Account.Archive\n        when Recorded\n",
                 Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      event Refused\n        reason String\n      reaction FollowUp\n        when Recorded\n          invokes C\n            on refused\n              produces Refused\n                reason = $refusal.reason\n"]),
         new("runs", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      reaction FollowUp\n        runs as system\n        when Recorded\n          invokes C\n"),
-        new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),
+        new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel, CompositeReadModelKeys]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),
         new("screen", Slice + "      screen Screen\n", [Slice + "      screen Screen\n        description \"Screen intent\"\n"]),
         new(

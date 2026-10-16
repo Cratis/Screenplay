@@ -35,6 +35,19 @@ projection User => UserReadModel
   remove with UserDeleted key userId
 ```
 
+### With named key parts
+
+For a read model with several top-level `key` properties, a removal can name the parts in an untyped child block, using the same names as the `from` key:
+
+```pdl
+remove with PaymentRemoved
+  key
+    invoiceId = invoiceId
+    method = method
+```
+
+The parser preserves this block as `RemoveWithSyntax.PartsKey`. All parts must match to remove an instance; another instance with the same invoice but a different method remains. A later `from` event with the removed key creates it again. Missing parts report `PLAY0661`; unknown, repeated or ill-typed parts report `PLAY0662`. This root form has no scalar or parent key. A target must explicitly admit the composite-key executable contract before realizing it.
+
 ### In Children
 
 Remove individual children:
