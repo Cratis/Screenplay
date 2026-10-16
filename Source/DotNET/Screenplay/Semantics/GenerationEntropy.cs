@@ -31,15 +31,13 @@ public static class GenerationEntropy
     public static BigInteger? ExactSupportCount(GenerationSyntax? generation, int utcAssessmentYear)
     {
         var alphabet = generation?.Alphabet ?? SemanticGenerationContract.DefaultAlphabet;
-        var size = generation?.Size ?? 21;
+        var size = generation?.Size ?? int.Parse(GenerationStrategyCatalog.OptionFor("nanoid", "size").Default!, CultureInfo.InvariantCulture);
+        if (GenerationStrategyCatalog.Find(generation?.Strategy ?? "uuid")?.FixedBits is { } fixedBits) return BigInteger.One << fixedBits;
 
         return generation?.Strategy switch
         {
-            null or "uuid" => BigInteger.One << 122,
-            "uuidv7" or "typeid" => BigInteger.One << 74,
-            "ulid" => BigInteger.One << 80,
-            "nanoid" when size is >= 1 and <= 256 && alphabet.Length >= 2 && alphabet.All(character => character is >= ' ' and <= '~') && alphabet.Distinct().Count() == alphabet.Length => BigInteger.Pow(alphabet.Length, size),
-            "bytes" when generation.Count is >= 1 and <= 512 => BigInteger.One << (8 * generation.Count.Value),
+            "nanoid" when GenerationStrategyCatalog.InRange(GenerationStrategyCatalog.OptionFor("nanoid", "size"), size) && alphabet.Length >= 2 && alphabet.All(character => character is >= ' ' and <= '~') && alphabet.Distinct().Count() == alphabet.Length => BigInteger.Pow(alphabet.Length, size),
+            "bytes" when generation.Count is { } count && GenerationStrategyCatalog.InRange(GenerationStrategyCatalog.OptionFor("bytes", "count"), count) => BigInteger.One << (8 * generation.Count.Value),
             "pattern" when generation.Pattern is { } pattern => GenerationPatternAssessment.CachedMinimumCount(pattern, generation.Checksum, utcAssessmentYear),
             "random" when generation.Range is { } range => GenerationIntegerRange.Parse(range).Count,
             _ => null
@@ -96,16 +94,14 @@ public static class GenerationEntropy
 
     internal static double? Bits(string? strategy, int? size, string? alphabet, int? count)
     {
+        strategy ??= "uuid";
         alphabet ??= SemanticGenerationContract.DefaultAlphabet;
-        var length = size ?? 21;
-        double? bits = strategy switch
+        var length = size ?? int.Parse(GenerationStrategyCatalog.OptionFor("nanoid", "size").Default!, CultureInfo.InvariantCulture);
+        var bits = strategy switch
         {
-            null or "uuid" => 122,
-            "uuidv7" or "typeid" => 74,
-            "ulid" => 80,
             "nanoid" when length > 0 && alphabet.Length >= 2 && alphabet.Distinct().Count() == alphabet.Length => length * Math.Log2(alphabet.Length),
             "bytes" when count is > 0 => 8d * count.Value,
-            _ => null
+            _ => (double?)GenerationStrategyCatalog.Find(strategy)?.FixedBits
         };
 
         return bits is { } known && double.IsFinite(known) && known >= 0 ? known : null;

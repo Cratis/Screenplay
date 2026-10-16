@@ -25,7 +25,7 @@ internal static partial class SemanticGenerationContract
 
     // Unknown implementation entropy is not a fabricated zero or a known below-threshold count.
     internal static bool HasIdentifierSupport(SemanticGeneration? generation, int utcYear) =>
-        SupportCount(generation, utcYear) is not { } count || GenerationEntropy.HasAtLeastBits(count, 64);
+        SupportCount(generation, utcYear) is not { } count || GenerationEntropy.HasAtLeastBits(count, GenerationStrategyCatalog.IdentifierMinimumBits);
 
     internal static void ValidatePhase3Members(SemanticGeneration generation, int utcYear)
     {

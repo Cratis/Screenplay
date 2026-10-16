@@ -4,6 +4,8 @@ Concepts are formalized value types that wrap a primitive. They give every domai
 
 Concepts declare `generate <strategy>` for server-created values; command properties declare `generated`. High-entropy strategies select ESM v15, except explicit unmodified `generate uuid` on Uuid, which is identical to the implicit default. See [Generated values](generated-values.md). Rules on generated concepts select ESM V20: Proven rules bind silently, Refuted rules fail with `PLAY0688` and a witness, and Unproven rules warn with `PLAY0689` and a reason. Runtime fixtures must satisfy both shape and rules. Explicit generation with compliance markers remains refused. Finite `pattern`, inclusive Int64 `random`, attached `rule` generation and String-concept `validate checksum luhn|mod11|mod97` select ESM v21. Checksum validation may be inline or nested under `validate`; it checks exact trailing digits on supplied and stored values independently of generation. Pattern dates use a pinned UTC fixture clock when present; see [patterns and checksums](generated-values/patterns.md).
 
+Editors can [check a concept declaration](concept-checks.md) and discover generation options through the public .NET catalog without compiling a whole application. To check an actual value instead, use [value-rule checks](value-rule-checks.md).
+
 A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
 
 ## Syntax
