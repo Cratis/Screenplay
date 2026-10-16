@@ -19,6 +19,7 @@ internal static class FiniteGenerationRules
 
     internal static RuleConsistencyResult Check(GenerationPattern pattern, SemanticValidationRule rule, DateOnly? assessmentDate = null)
     {
+        rule = LegacyTextRulePatterns.Normalize(rule);
         if (rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) return RuleConsistencyResult.Unproven("opaque");
         var approximate = pattern.HasDates || pattern.Checksum is not null;
         return (rule.Kind, rule.Operand) switch
@@ -31,6 +32,8 @@ internal static class FiniteGenerationRules
             (SemanticValidationRuleKind.Equal, SemanticTextValue text) when !approximate => FinitePatternContainment.Check(pattern, Literal(text.Value)),
             (SemanticValidationRuleKind.NotEqual, SemanticTextValue text) when !approximate => FinitePatternContainment.Check(pattern, Literal(text.Value), complement: true),
             (SemanticValidationRuleKind.Matches, SemanticTextValue text) => Match(pattern, text.Value, assessmentDate),
+            (var kind, SemanticTextValue text) when TextRuleVersion.IsTextRule(kind) && !approximate =>
+                FinitePatternContainment.Check(pattern, TextRuleExpression.Create(kind, text.Value, pattern.Tokens.Select(token => token.Characters)), kind == SemanticValidationRuleKind.NotContains),
             (SemanticValidationRuleKind.Checksum, SemanticTextValue algorithm) => CheckChecksum(pattern, algorithm.Value),
             _ => RuleConsistencyResult.Unproven(approximate ? ApproximateReason : "unsupported rule")
         };

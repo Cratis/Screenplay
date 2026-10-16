@@ -84,7 +84,27 @@ public enum ValidationRuleKind
     /// <summary>
     /// The text value must end in the exact check digits for the declared checksum algorithm.
     /// </summary>
-    Checksum = 14
+    Checksum = 14,
+
+    /// <summary>
+    /// The text must contain the literal operand, compared ordinally.
+    /// </summary>
+    Contains = 15,
+
+    /// <summary>
+    /// The text must not contain the literal operand, compared ordinally.
+    /// </summary>
+    NotContains = 16,
+
+    /// <summary>
+    /// The text must start with the literal operand, compared ordinally.
+    /// </summary>
+    StartsWith = 17,
+
+    /// <summary>
+    /// The text must end with the literal operand, compared ordinally.
+    /// </summary>
+    EndsWith = 18
 }
 
 /// <summary>

@@ -22,6 +22,10 @@ const ruleTypes: Partial<Record<ValidationRuleSyntax['rule'], string>> = {
     LessThan: 'LessThan',
     LessThanOrEqual: 'LessThanOrEqual',
     Matches: 'Matches',
+    Contains: 'Contains',
+    NotContains: 'NotContains',
+    StartsWith: 'StartsWith',
+    EndsWith: 'EndsWith',
 };
 
 export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: SchemaSynthesizer, owners?: EventOwners): CommandItemDocument {

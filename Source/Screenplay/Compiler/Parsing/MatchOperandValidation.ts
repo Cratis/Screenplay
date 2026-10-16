@@ -5,6 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { ParserContext } from './ParserContext';
+import { checkPortableMatchPattern } from './checkPortableMatchPattern';
 import { emailMatchPattern, validateMatchPattern } from './PortableMatchPattern';
 
 export function validateMatchOperand(context: ParserContext, value: ExpressionSyntax, location: SourceLocation, raw: string): void {
@@ -14,6 +15,11 @@ export function validateMatchOperand(context: ParserContext, value: ExpressionSy
     }
     const pattern = value.kind === 'LiteralExpressionSyntax' && typeof value.value === 'string' ? value.value : value.kind === 'PathExpressionSyntax' ? emailMatchPattern : undefined;
     if (pattern === undefined) return;
+    const check = checkPortableMatchPattern(pattern);
+    if (check.replacement !== undefined) {
+        context.warning(DiagnosticCodes.DeprecatedStudioTextRulePattern, check.description, location);
+        return;
+    }
     const issue = validateMatchPattern(pattern);
     if (issue === undefined) return;
     const description = `${issue.construct} at offset ${issue.offset}. ${issue.suggestion ?? ''}`.trimEnd();

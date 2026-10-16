@@ -7,8 +7,21 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesTextRules(SemanticApplication application) =>
+        application.Concepts.SelectMany(concept => concept.Validations)
+            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
+            .Any(rule => TextRuleVersion.IsTextRule(rule.Kind));
+
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static void ValidateTextRuleVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesTextRules(application),
+            version,
+            SemanticVersion.V24,
+            "A text-rule ESM must contain a first-class text rule.",
+            $"First-class text rules require ESM v{TextRuleVersion.Major} or later.");
 
     static IEnumerable<SemanticSlice> SlicesOf(SemanticApplication application) =>
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
