@@ -23,7 +23,7 @@
 #                                    project it deletes again. Without it the harness records blocked-missing-studio-checkout.
 #
 # Harnesses: browser (native controls), render-audit (determinism, portable artifacts, profile rejection,
-# render-then-recover), mcp (stdio transcript) and studio (production Play).
+# render-then-recover), shell-cli (the application shell vector rendered by the CLI), mcp (stdio transcript) and studio (production Play).
 #   SCREENPLAY_ACCEPTANCE_PORT       browser port (default 19180); the workbench uses this plus 16000
 #
 # Exit codes: 0 every harness passed, 1 a harness ran and found defects or blockers, 2 the run could not start.
@@ -105,6 +105,10 @@ run_step browser env \
 run_step render-audit env \
     SCREENPLAY_RENDER_AUDIT_RESULT="${results}/render-audit.json" \
     node "${harness}/screen-composition-render-audit.cjs"
+
+# The application shell vector through the CLI: renders the screen-shell-navigation-runnable case and checks the navigation,
+# the toolbar slice and that no sample data ships. Needs the CLI that bundles the shell Stage (3.67.0 or later).
+run_step shell-cli "${harness}/screen-shell-cli-render.sh" "${results}/shell-cli" ${corpus_version:+"$corpus_version"}
 
 if [[ -n "${SCREENPLAY_AI_VERIFICATION:-}" ]]; then
     run_step mcp bash -c "cd \"\$1\" && yarn tsx screenplay-mcp-transcript.ts --corpus \"\$2\" --scratch \"\$3\"" _ \
