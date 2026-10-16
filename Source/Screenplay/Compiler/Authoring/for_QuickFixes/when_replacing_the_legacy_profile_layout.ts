@@ -37,4 +37,15 @@ describe('when replacing the legacy profile layout', () => {
         const source = shell + 'ui profile A\n  layout AppShell\n\nui profile B\n  layout AppShell\n';
         expect(applyQuickFixEdits(source, findQuickFixes(source, { line: 9 })[0].edits)).toBe(shell + 'ui profile A\n  layout AppShell\n\nui profile B\n  root template AppShell\n');
     });
+
+    it('should offer no fix when the layout line carries a comment it cannot safely rewrite', () => {
+        const source = shell + 'ui profile Desktop\n  layout AppShell // legacy\n';
+        expect(compiler.parse(source).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0791']);
+        expect(findQuickFixes(source, { line: 6 })).toEqual([]);
+    });
+
+    it('should skip a ui profile whose declaration is invalid and one that holds a fenced body', () => {
+        expect(compiler.parse('ui profile\n  layout AppShell\n').diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0791')).toEqual([]);
+        expect(compiler.parse(shell + 'ui profile Desktop\n  notes\n    ```\n    layout Inside\n    ```\n  root template AppShell\n').diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0791')).toEqual([]);
+    });
 });
