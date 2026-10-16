@@ -2,7 +2,7 @@
 id: 0085
 title: Admit protected command reads in the next ESM version through an explicit preamble
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-15
 decider: Sindre Alstad Wilting
 class: contract
