@@ -42,6 +42,26 @@ public class a_protected_command : for_SemanticSpecificationRunner.given.a_v6_sc
                 lookup String
                 reads View as first by lookup
                 reads OtherView as second by lookup
+              command Record
+                id String identifier
+                value String
+                produces Recorded
+                  for id
+                  value = value
+              command Remove
+                id String identifier
+                produces Removed
+                  for id
+              command RecordOther
+                id String identifier
+                value String
+                produces OtherRecorded
+                  for id
+                  value = value
+              command RemoveOther
+                id String identifier
+                produces OtherRemoved
+                  for id
             slice StateView Lookup
               readmodel View
                 id String key
@@ -94,12 +114,26 @@ public class a_protected_command : for_SemanticSpecificationRunner.given.a_v6_sc
 
     protected SemanticWorld World(params SemanticFact[] facts)
     {
+        var result = _evaluator.EstablishWorld(_plan, [.. facts]);
+        Assert.True(result is SemanticAccepted, result.ToString());
+        return result.World;
+    }
+
+    protected SemanticWorld Append(SemanticWorld world, params SemanticFact[] facts)
+    {
+        var result = _evaluator.ExtendWorld(_plan, world, [.. facts]);
+        Assert.True(result is SemanticAccepted, result.ToString());
+        return result.World;
+    }
+
+    protected SemanticWorld InternalWorld(params SemanticFact[] facts)
+    {
         var projected = SemanticEvaluator.Establish(_plan, [], [.. facts], out var readModels, out var failure);
         Assert.True(projected, failure);
         return SemanticWorld.Create([.. facts], readModels);
     }
 
-    protected SemanticWorld Append(SemanticWorld world, SemanticFact fact)
+    protected SemanticWorld InternalAppend(SemanticWorld world, SemanticFact fact)
     {
         var result = SemanticEvaluator.Append(_plan, world, fact, [], null);
         Assert.True(result is SemanticAccepted, result.ToString());

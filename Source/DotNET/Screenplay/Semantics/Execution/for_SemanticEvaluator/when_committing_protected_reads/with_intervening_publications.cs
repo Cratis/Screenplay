@@ -3,6 +3,8 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_committing_protected_reads;
 
+// These specs stay on the internal seam: a locally published event has no declared producer, so the public replay
+// path cannot type its event source and refuses publication facts (reported on Screenplay#833).
 public class with_intervening_publications : given.a_protected_command
 {
     const string Publisher = """
@@ -19,9 +21,9 @@ public class with_intervening_publications : given.a_protected_command
     void should_conflict_on_a_publication_matching_the_dependency_set()
     {
         Compile(Source.Replace("from Recorded", "from Published", StringComparison.Ordinal) + "\n" + Publisher);
-        var world = World(Fact("Published", "read", "original"));
+        var world = InternalWorld(Fact("Published", "read", "original"));
         var decision = _evaluator.Decide(_plan, world, Request());
-        var latest = Append(world, Fact("Saved", "read", "changed"));
+        var latest = InternalAppend(world, Fact("Saved", "read", "changed"));
         latest.Facts.Length.ShouldEqual(3);
         latest.Facts[^1].EventContract.ShouldEqual(_plan.Events.Values.Single(value => value.Name == "Published").Id);
         ((SemanticConflict)decision.Commit(latest)).Category.ShouldEqual(SemanticConflictCategory.DecisionStateChanged);
@@ -31,9 +33,9 @@ public class with_intervening_publications : given.a_protected_command
     void should_prepare_publication_against_the_commit_world_without_republishing_unchanged_state()
     {
         Compile(Source + "\n" + Publisher);
-        var world = World(Fact("Recorded", "read", "original"));
+        var world = InternalWorld(Fact("Recorded", "read", "original"));
         var decision = _evaluator.Decide(_plan, world, Request());
-        var latest = Append(world, Fact("Saved", "write", "original"));
+        var latest = InternalAppend(world, Fact("Saved", "write", "original"));
         var result = (SemanticAccepted)decision.Commit(latest);
         result.Facts.Length.ShouldEqual(1);
         result.World.Facts.Length.ShouldEqual(4);
