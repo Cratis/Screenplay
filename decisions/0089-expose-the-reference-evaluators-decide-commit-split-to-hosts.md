@@ -97,8 +97,8 @@ cannot run them, so the rule has no shared proof.
    `present-state-race-recorded`, `present-state-race-removal`, `same-event-other-key`, `other-view-same-key`,
    `merged-keys`, `no-fact-command-conflict`, `no-fact-command-accept`, `irrelevant-fact-preserved`,
    `absent-then-created`, `rejected-decision`, `late-uniqueness-claim`, `no-later-facts`, `repeat-commit-accept-then-conflict`,
-   `repeat-commit-late-constraint`, `repeat-commit-stale-generated-source`,
-   `reconstructed-nonprefix-history` and the remaining cases above. Each gives the decided facts, the request, the expected dependencies, the later facts and the
+   `repeat-commit-late-constraint`, `repeat-commit-stale-generated-source` and
+   `reconstructed-nonprefix-history`. Each gives the decided facts, the request, the expected dependencies, the later facts and the
    expected outcome. The specs run them only through the public `EstablishWorld` → `Decide` → `ExtendWorld` → `Commit`, with an explicit second `Commit` step for the repeat-commit cases,
    and pin the bytes by SHA-256. Non-canonical UUID key casing is not a vector; the public path rejects it.
    Publication races (an intervening publication, a publication matching the dependency set, and suppression of an
