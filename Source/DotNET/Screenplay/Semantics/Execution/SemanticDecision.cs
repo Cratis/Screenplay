@@ -16,8 +16,8 @@ internal sealed class SemanticDecision(
 
     internal SemanticDecisionDependencies Dependencies => dependencies;
 
-    internal static SemanticDecision Refused(SemanticExecutionResult result, SemanticDecisionDependencies? dependencies = null) =>
-        new(result.World, dependencies ?? SemanticDecisionDependencies.Empty, world => result with { World = world }, refused: true);
+    internal static SemanticDecision Refused(SemanticExecutionResult result) =>
+        new(result.World, SemanticDecisionDependencies.Empty, world => result with { World = world }, refused: true);
 
     internal SemanticExecutionResult Commit(SemanticWorld world)
     {
@@ -27,7 +27,7 @@ internal sealed class SemanticDecision(
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "The commit world is not a prefix-extension of the decide world.");
         }
 
-        // A refused decision performs no settlement, even when its recorded dependencies have changed.
+        // A refused decision performs no settlement or conflict checking.
         if (!refused && world.Facts.Skip(Boundary).Any(dependencies.Matches))
         {
             return new SemanticConflict(world, SemanticConflictCategory.DecisionStateChanged, "Protected decision state changed after it was read.");

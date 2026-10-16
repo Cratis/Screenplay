@@ -130,7 +130,7 @@ public sealed partial class SemanticModelBinder
             {
                 _ = probe.BindApplication();
                 var locations = DecisionReadLocations();
-                if (!probe.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && locations.Contains(diagnostic.Location)))
+                if (!probe.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && (diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding || locations.Contains(diagnostic.Location))))
                     Information(DiagnosticCodes.LegacyCommandReadsRepairAvailable, "All command reads are admissible under an explicit 'command reads protected' preamble; use a reviewed workspace proposal to opt in.", first.Location);
             }
             catch (InvalidSemanticContract)

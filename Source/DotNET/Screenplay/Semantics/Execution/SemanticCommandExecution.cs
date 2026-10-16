@@ -36,7 +36,7 @@ internal sealed partial class SemanticCommandExecution(
 
         if (Validate() is { } validation)
         {
-            return SemanticDecision.Refused(validation, _dependencies);
+            return SemanticDecision.Refused(validation);
         }
 
         if (PrepareProduction() is { } preparation)
@@ -129,7 +129,7 @@ internal sealed partial class SemanticCommandExecution(
         request.AllocatedEventSourceType is { } suppliedType &&
         command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType;
 
-    SemanticRejected? Validate()
+    SemanticExecutionResult? Validate()
     {
         var failures = SemanticEvaluator.ValidateRules(plan, command, request.Values).ToBuilder();
         _commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
@@ -139,7 +139,7 @@ internal sealed partial class SemanticCommandExecution(
         {
             if (failures.Count > 0) return ValidationFailure(failures);
             _dependencies = SemanticDecisionDependencies.Capture(plan, command, _commandValues);
-            if (ReadRequired() is { } absent) return absent;
+            if (ReadRequired() is { } readRefusal) return readRefusal;
         }
 
         AddUnmetRequirements(failures);

@@ -18,10 +18,10 @@ public class with_absent_state : given.a_protected_command
     }
 
     [Fact]
-    void should_capture_absent_dependencies_without_committing_a_later_recreation()
+    void should_drop_unused_dependencies_without_committing_a_later_recreation()
     {
         var decision = _evaluator.Decide(_plan, SemanticWorld.Empty, Request());
-        decision.Dependencies.Entries.Single().Key.ShouldEqual(SemanticValue.Text("read"));
+        decision.Dependencies.Entries.ShouldBeEmpty();
         var latest = Append(SemanticWorld.Empty, Fact("Recorded", "read", "now present"));
         var result = (SemanticRejected)decision.Commit(latest);
         result.Details.ShouldEqual("View 'read' does not exist.");

@@ -31,6 +31,7 @@ internal sealed record SemanticDecisionDependencies(ImmutableArray<SemanticDecis
         return new([.. entries]);
     }
 
+    // Keep key comparison ordinal, matching projection instance keying, including UUID text.
     internal bool Matches(SemanticFact fact) => Entries.Any(entry =>
         entry.Handled.Contains(fact.EventContract) && SemanticValueRules.AreEqual(entry.Key, fact.Destination));
 
