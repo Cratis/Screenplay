@@ -81,3 +81,4 @@
 | [0082](0082-admit-a-described-command-handler-as-a-pending-implementation-requirement.md) | Admit a described command handler as a pending implementation requirement with a fixed result contract | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
 | [0083](0083-bind-the-generation-context-per-language-target.md) | Bind the version-1 generation context to each language target's native type | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
 | [0084](0084-define-matches-patterns-as-a-portable-linear-dialect.md) | Define matches patterns as a portable linear dialect and evaluate them without a timeout | accepted | none | 2026-10-15 | Sindre Alstad Wilting |
+| [0086](0086-give-diagnostics-named-typed-arguments-declared-per-code.md) | Give diagnostics named, typed arguments declared per code | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
