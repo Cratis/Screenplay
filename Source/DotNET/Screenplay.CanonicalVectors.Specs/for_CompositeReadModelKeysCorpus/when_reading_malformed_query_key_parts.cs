@@ -47,7 +47,7 @@ public class when_reading_malformed_query_key_parts : given.a_flat_key_model
             .Replace("\"27.0\"", "\"25.0\"", StringComparison.Ordinal);
         var error = Catch.Exception(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(json)));
         error.ShouldBeOfExactType<InvalidSemanticContract>();
-        error.Message.Contains("identifier", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+        error.Message.ShouldEqual("Flat composite read-model keys require their admitting ESM version.");
         error.Message.Contains("revision", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
     }
 }

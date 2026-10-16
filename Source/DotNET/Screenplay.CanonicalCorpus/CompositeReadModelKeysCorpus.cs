@@ -76,7 +76,12 @@ public static class CompositeReadModelKeysCorpus
             Outcome = name.StartsWith("Invalid", StringComparison.Ordinal) ? SemanticExecutionOutcomeKind.Rejected : SemanticExecutionOutcomeKind.Accepted,
             RejectionCategory = name.StartsWith("Invalid", StringComparison.Ordinal) ? SemanticRejectionCategory.Validation : null,
             RejectionMessage = name.StartsWith("Invalid", StringComparison.Ordinal) ? "Invoice id is too short" : null,
-            WorldFactCount = name == "RecreateRemovedParts" ? 3 : name == "RemoveOnlyMatchingParts" ? 1 : 0
+            WorldFactCount = name switch
+            {
+                "RecreateRemovedParts" => 3,
+                "RemoveOnlyMatchingParts" => 1,
+                _ => 0
+            }
         })];
     }
 

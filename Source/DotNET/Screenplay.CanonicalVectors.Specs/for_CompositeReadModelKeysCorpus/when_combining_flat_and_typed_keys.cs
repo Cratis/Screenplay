@@ -13,7 +13,7 @@ public class when_combining_flat_and_typed_keys : given.a_flat_key_model
 
     void Because()
     {
-        var source = "type Identity\n  first String\n  second String\n" + Declarations + "\n" + """
+        const string source = "type Identity\n  first String\n  second String\n" + Declarations + "\n" + """
                   readmodel TypedRow
                     identity Identity key
                     quantity Int
