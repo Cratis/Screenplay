@@ -1,0 +1,197 @@
+module Storage
+  feature Decisions
+    slice StateChange Use
+      event Stored
+        value String
+      event Removed
+      event Taken
+        value String
+      event Requested
+        destination String
+        sourceId String
+      command Store
+        id String identifier
+        value String
+        produces Stored
+          for id
+          value = value
+      command Remove
+        id String identifier
+        produces Removed
+          for id
+      command Consume
+        id String identifier
+        sourceId String
+        reads Current by sourceId
+        validate
+          require Current.value != ""
+            message "The stored value must not be empty."
+        produces Taken
+          for id
+          value = Current.value
+      command RequireApproval
+        id String identifier
+        sourceId String
+        approved Bool
+        reads Current by sourceId
+        validate
+          require approved == true
+            message "Approval required."
+      command AllocateReceipt
+        id String identifier
+        sourceId String
+        receipt Receipt generated
+        reads Current by sourceId
+        returns receipt
+      command RequestWork
+        id String identifier
+        targetId String
+        sourceId String
+        produces Requested
+          for id
+          destination = targetId
+          sourceId = sourceId
+      specification MissingFromEmpty
+        when Consume
+          id = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."
+      specification MissingFromNonEmpty
+        given Stored
+          for "other"
+          value = "unrelated"
+        when Consume
+          id = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."
+      specification MissingAfterRemoval
+        given Stored
+          for "reference"
+          value = "old"
+        given Removed
+          for "reference"
+        when Consume
+          id = "target"
+          sourceId = "reference"
+        then error "Current 'reference' does not exist."
+      specification MissingAfterOtherRecreation
+        given Stored
+          for "reference"
+          value = "old"
+        given Removed
+          for "reference"
+        given Stored
+          for "other"
+          value = "recreated elsewhere"
+        when Consume
+          id = "target"
+          sourceId = "reference"
+        then error "Current 'reference' does not exist."
+      specification ReadRecreatedState
+        given Stored
+          for "reference"
+          value = "old"
+        given Removed
+          for "reference"
+        given Stored
+          for "reference"
+          value = "new"
+        when Consume
+          id = "target"
+          sourceId = "reference"
+        then Taken
+          for "target"
+          value = "new"
+        then readmodel Current
+          id = "reference"
+          value = "new"
+      specification AbsenceBeforeRequirement
+        when RequireApproval
+          id = "target"
+          sourceId = "missing"
+          approved = false
+        then error "Current 'missing' does not exist."
+      specification RequirementAfterPresence
+        given Stored
+          for "reference"
+          value = "present"
+        when RequireApproval
+          id = "target"
+          sourceId = "reference"
+          approved = false
+        then error "Approval required."
+      specification AbsenceBeforeGeneration
+        when AllocateReceipt
+          id = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."
+      specification GenerationAfterPresence
+        given Stored
+          for "reference"
+          value = "present"
+        when AllocateReceipt
+          id = "target"
+          sourceId = "reference"
+          generated receipt = "11111111-1111-1111-1111-111111111111"
+        then returns "11111111-1111-1111-1111-111111111111"
+      specification ReadPathRequirementRejectsEmpty
+        given Stored
+          for "reference"
+          value = ""
+        when Consume
+          id = "target"
+          sourceId = "reference"
+        then error "The stored value must not be empty."
+      specification ReadPathMappingAcrossSources
+        given Stored
+          for "reference"
+          value = "original"
+        when Consume
+          id = "target"
+          sourceId = "reference"
+        then Taken
+          for "target"
+          value = "original"
+        then readmodel Current
+          id = "reference"
+          value = "original"
+      specification ReactionInvokesProtectedRead
+        given Stored
+          for "reference"
+          value = "original"
+        when RequestWork
+          id = "request"
+          targetId = "target"
+          sourceId = "reference"
+        then Requested
+          for "request"
+          destination = "target"
+          sourceId = "reference"
+        then Taken
+          for "target"
+          value = "original"
+      specification ReactionInvokesProtectedReadOfMissing
+        when RequestWork
+          id = "request"
+          targetId = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."
+    slice StateView State
+      readmodel Current
+        id String key
+        value String
+      projection Build => Current
+        from Stored
+          id = $eventSourceId
+          value = value
+        remove with Removed
+      query CurrentById => Current optional
+        by id String
+    slice Automation Workflow
+      reaction ProcessRequest
+        when Requested
+          destination
+          sourceId
+          invokes Consume
+            id = destination
+            sourceId = sourceId

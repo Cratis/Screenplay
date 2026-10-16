@@ -19,6 +19,35 @@ static class ContractAdmission
     internal const string Projection = "      projection View => View\n        from Recorded\n          value = value\n";
     internal const string PersonaCallerContext = "policy Member\n  require authenticated and role \"member\"\npersona Accountant\n  policy Member\n" + Slice + Event + "      command Record\n        value String\n        authorize Member\n        produces Recorded\n          value = value\n";
 
+    internal const string ProtectedReads = """
+        command reads protected
+        module M
+          feature F
+            slice StateChange Write
+              event Recorded
+                value String
+              event Removed
+              command Update
+                id String identifier
+                reads View by id
+                validate
+                  require View.value != ""
+                produces Recorded
+                  for id
+                  value = View.value
+            slice StateView Lookup
+              readmodel View
+                id String key
+                value String
+              projection Build => View
+                from Recorded
+                  id = $eventSourceId
+                  value = value
+                remove with Removed
+              query Get => View optional
+                by id String
+        """;
+
     // Sources describe observable grammar forms, never expected admission, diagnostic or version facts.
     // Every published condition is a binding result for one of these sources, not a prose promise.
     internal static readonly Probe[] Probes =
@@ -59,6 +88,8 @@ static class ContractAdmission
             "command",
             Slice + Event + Command,
             [
+                "command reads protected\n",
+                ProtectedReads,
                 Slice + Event + Command.Replace("value String", "value String\n        validate\n          value rule BeUnique", StringComparison.Ordinal),
                 Slice + Event + Command + "        handler\n          implementation\n            hint \"Choose the payload\"\n",
                 Slice + "      command Record\n        value String\n        returns value\n        handler\n          implementation\n",

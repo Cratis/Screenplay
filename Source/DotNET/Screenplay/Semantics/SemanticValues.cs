@@ -146,7 +146,12 @@ public enum SemanticExpressionKind
     /// <summary>
     /// A String value supplied by a refused invocation inside a refusal branch mapping.
     /// </summary>
-    Refusal = 3
+    Refusal = 3,
+
+    /// <summary>
+    /// A property of a declared protected command read.
+    /// </summary>
+    ReadPath = 4
 }
 
 /// <summary>

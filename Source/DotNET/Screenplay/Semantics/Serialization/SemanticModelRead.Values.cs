@@ -9,9 +9,11 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 #pragma warning disable IDE0350 // Explicit ref reader parameters keep version-aware parsing delegates clear.
 internal static partial class SemanticModelRead
 {
-    internal static SemanticExpression Expression(ref Utf8JsonReader reader)
+    internal static SemanticExpression Expression(ref Utf8JsonReader reader) => Expression(ref reader, 0);
+
+    internal static SemanticExpression Expression(ref Utf8JsonReader reader, uint schemaVersion)
     {
-        var state = new ExpressionState();
+        var state = new ExpressionState(schemaVersion);
         ExpressionState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -35,17 +37,19 @@ internal static partial class SemanticModelRead
     internal static SemanticValue? NullableValue(ref Utf8JsonReader reader, string name) =>
         NullableObject(ref reader, name, Value);
 
-    sealed class ExpressionState() : ReadState(0)
+    sealed class ExpressionState(uint schemaVersion) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<ExpressionState> Fields = new FieldTable<ExpressionState>("expression")
-            .Add("kind", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Kind = ParseExpressionKind(String(ref reader, property)))
+            .Add("kind", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadKind(String(ref reader, property)))
             .Add("value", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadValue(ref reader, property))
             .Add("root", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Root = ParseExpressionRoot(String(ref reader, property)))
             .Add("source", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Source = ParseExpressionSource(String(ref reader, property)))
             .Add("target", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadTarget(ref reader, property))
             .Add("contextValue", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ContextValue = ParseContextValue(String(ref reader, property)))
             .Add("type", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Type = Nested(ref reader, TypeReference, property))
-            .Add("member", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Member = String(ref reader, property));
+            .Add("member", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Member = String(ref reader, property))
+            .Add("read", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.Read = String(ref reader, property))
+            .Add("property", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadProperty = Identifier(ref reader, property));
 
         public SemanticExpressionKind? Kind { get; set; }
 
@@ -67,11 +71,24 @@ internal static partial class SemanticModelRead
 
         public string? Member { get; set; }
 
+        public string? Read { get; set; }
+
+        public SemanticId ReadProperty { get; set; }
+
+        bool HasNoReadPath => Read is null && !ReadProperty.IsSet;
+
         bool IsValueShape => ContentRead && Content is not null && Root is null && Source is null && !TargetRead && Member is null;
 
         bool IsResolvedShape => !ContentRead && Root is not null && Source is not null && TargetRead && Target.IsSet && Type is null && ContextValue is null && Member is null;
 
         bool IsEventContextShape => !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is not null && Type is not null && Member is null;
+
+        public void ReadKind(string value)
+        {
+            Kind = ParseExpressionKind(value);
+            if (Kind == SemanticExpressionKind.ReadPath && SchemaVersion < LanguageVersion.V25.Major)
+                throw Malformed("expression kind", "readPath requires schema v25");
+        }
 
         public void ReadValue(ref Utf8JsonReader reader, string property)
         {
@@ -87,10 +104,11 @@ internal static partial class SemanticModelRead
 
         public SemanticExpression Build() => Kind switch
         {
-            SemanticExpressionKind.Value when IsValueShape => new SemanticValueExpression(Content!),
-            SemanticExpressionKind.Resolved when IsResolvedShape => new SemanticResolvedExpression(Root!.Value, Source!.Value, Target),
-            SemanticExpressionKind.EventContext when IsEventContextShape => new SemanticEventContextExpression(ContextValue!.Value, Type!),
-            SemanticExpressionKind.Refusal when !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is not null && Member is not null => new SemanticRefusalExpression(Member, Type),
+            SemanticExpressionKind.Value when IsValueShape && HasNoReadPath => new SemanticValueExpression(Content!),
+            SemanticExpressionKind.Resolved when IsResolvedShape && HasNoReadPath => new SemanticResolvedExpression(Root!.Value, Source!.Value, Target),
+            SemanticExpressionKind.EventContext when IsEventContextShape && HasNoReadPath => new SemanticEventContextExpression(ContextValue!.Value, Type!),
+            SemanticExpressionKind.Refusal when HasNoReadPath && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is not null && Member is not null => new SemanticRefusalExpression(Member, Type),
+            SemanticExpressionKind.ReadPath when Read is not null && ReadProperty.IsSet && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is null && Member is null => new SemanticReadPathExpression(Read, ReadProperty),
             _ => throw Malformed("expression", "one exact expression variant")
         };
     }

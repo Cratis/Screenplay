@@ -60,7 +60,8 @@ internal static partial class SemanticModelRead
         ["value"] = SemanticExpressionKind.Value,
         ["resolved"] = SemanticExpressionKind.Resolved,
         ["eventContext"] = SemanticExpressionKind.EventContext,
-        ["refusal"] = SemanticExpressionKind.Refusal
+        ["refusal"] = SemanticExpressionKind.Refusal,
+        ["readPath"] = SemanticExpressionKind.ReadPath
     });
 
     static readonly DiscriminatorTable<SemanticExpressionRootKind> _expressionRoots = new("expression root", new()

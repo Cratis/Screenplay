@@ -56,7 +56,7 @@ public enum SemanticLogicalOperator
 }
 
 /// <summary>
-/// A portable Boolean condition evaluated against command input.
+/// A portable Boolean condition evaluated against command input and admitted protected reads.
 /// </summary>
 public abstract record SemanticCondition;
 
@@ -77,11 +77,17 @@ public sealed record SemanticComparison(SemanticConditionOperand Left, SemanticC
 public sealed record SemanticLogicalCondition(SemanticCondition Left, SemanticLogicalOperator Operator, SemanticCondition Right) : SemanticCondition;
 
 /// <summary>
-/// An operand referencing a command property or a constant (exactly one is set).
+/// An operand referencing a command or protected view property, or a constant (exactly one is set).
 /// </summary>
-/// <param name="Property">The command property identity, or default for a constant.</param>
+/// <param name="Property">The command or view property identity, or default for a constant.</param>
 /// <param name="Value">The constant, or null for a property reference.</param>
-public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue? Value);
+public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue? Value)
+{
+    /// <summary>
+    /// Gets the protected read name when the property belongs to its view rather than the command.
+    /// </summary>
+    public string? Read { get; init; }
+}
 
 /// <summary>
 /// A command-wide guard and its rejection message.

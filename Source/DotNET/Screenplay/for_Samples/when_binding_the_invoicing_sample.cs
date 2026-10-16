@@ -44,8 +44,26 @@ public class when_binding_the_invoicing_sample : Specification
         diagnostic.Message.Contains("Read model 'InvoiceListReadModel' must have one unambiguous keyed query", StringComparison.Ordinal)).ShouldBeFalse();
 
     [Fact]
-    void should_pin_command_reads_as_a_separate_disposition() => _diagnostics.Any(diagnostic =>
-        diagnostic.Code == DiagnosticCodes.PreservedLegacySemanticSyntax && diagnostic.Message.Contains("reads 'InvoicePaymentMethodTotals'", StringComparison.Ordinal)).ShouldBeTrue();
+    void should_pin_the_payload_key_read_refusal() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.UnprotectableDecisionRead && diagnostic.Message.Contains("InvoiceBalanceReadModel", StringComparison.Ordinal) &&
+        diagnostic.Message.Contains("PayloadKey", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
+    void should_pin_the_composite_read_refusal() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.UnprotectableDecisionRead && diagnostic.Message.Contains("InvoicePaymentMethodTotals", StringComparison.Ordinal) &&
+        diagnostic.Message.Contains("ByParts", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
+    void should_pin_the_path_of_the_refused_read() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.UnknownReadPath && diagnostic.Message.Contains("balance.outstanding", StringComparison.Ordinal)).ShouldBeTrue();
+
+    [Fact]
+    void should_not_treat_opted_in_command_reads_as_legacy() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.PreservedLegacySemanticSyntax && diagnostic.Message.StartsWith("Command '", StringComparison.Ordinal) &&
+        diagnostic.Message.Contains("reads", StringComparison.Ordinal)).ShouldBeFalse();
+
+    [Fact]
+    void should_select_the_protected_read_mode() => _application.CommandReadMode.ShouldEqual(CommandReadMode.Protected);
 
     [Fact]
     void should_not_refuse_the_new_route_or_filter_constructs() => _diagnostics.Where(diagnostic => diagnostic.Code is

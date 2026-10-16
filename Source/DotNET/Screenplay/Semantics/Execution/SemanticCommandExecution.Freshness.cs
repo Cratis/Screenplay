@@ -14,7 +14,7 @@ internal sealed partial class SemanticCommandExecution
 
     // An unrouted prior fact (null destination) belongs to no event source this invocation can prove it shares,
     // so it never makes a generated source stale; only routed facts on the same canonical source do.
-    SemanticRejected? RejectReusedGeneratedSource()
+    SemanticRejected? RejectReusedGeneratedSource(SemanticWorld world)
     {
         if (!SemanticModelValidator.UsesConceptGeneration(plan.Model.Application)) return null;
         foreach (var property in command.Properties.Where(property => property.IsGenerated))

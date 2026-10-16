@@ -156,6 +156,13 @@ public sealed partial class ScreenplayPrinter :
             writer.Blank();
         }
 
+        if (application.CommandReadMode is { } readMode)
+        {
+            if (readMode != CommandReadMode.Protected) throw new UnsupportedSyntaxForPrinting("command reads", readMode.ToString());
+            writer.Line("command reads protected");
+            writer.Blank();
+        }
+
         WriteFileImports(writer, application.FileImports);
     }
 

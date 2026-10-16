@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { CommandReadMode } from './CommandReadMode';
 import { ReactionProductionMode } from './ReactionProductionMode';
 import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
@@ -100,6 +101,7 @@ export interface ModuleSyntax extends SyntaxNode {
 
 export interface ApplicationSyntax extends SyntaxNode {
     readonly reactionProductionMode?: ReactionProductionMode | null;
+    readonly commandReadMode?: CommandReadMode | null;
     readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';

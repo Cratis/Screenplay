@@ -43,6 +43,11 @@ internal static partial class SemanticModelValidator
         {
             if (operand is null || operand.Property.IsSet == (operand.Value is not null))
                 throw new InvalidSemanticContract("A condition operand must set exactly one property or constant.");
+            if (operand.Read is { } read)
+            {
+                if (!operand.Property.IsSet) throw new InvalidSemanticContract("A read condition operand must reference a view property.");
+                return ResolveDecisionReadProperty(read, operand.Property);
+            }
             if (operand.Property.IsSet)
             {
                 if (!properties.TryGetValue(operand.Property, out var property)) throw new InvalidSemanticContract("Condition property is not a command property.");
