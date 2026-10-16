@@ -75,7 +75,7 @@ internal static class ReadModelProjectionKeys
                 var resolved = EventContextCatalog.Resolve(eventContext.Path);
                 if (!resolved.IsKnown) return false;
                 if (resolved.Members[0].Name == "eventSourceId") return true;
-                var member = resolved.Members.Last();
+                var member = resolved.Members[^1];
                 var underlying = EventContextCatalog.MembersOf(member);
                 var type = underlying.Count == 1 && underlying[0].Name == "value" ? underlying[0].Type : member.Type;
                 return Category(type) == Category(Primitive(target));

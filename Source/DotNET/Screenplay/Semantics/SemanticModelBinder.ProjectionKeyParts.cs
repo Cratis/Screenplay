@@ -21,7 +21,27 @@ public sealed partial class SemanticModelBinder
             return SemanticProjectionKey.EventSourceIdentity;
         }
 
-        SemanticProjectionKey BindPartsKey(KeySyntax? key, bool scalarOrParent, BoundEvent @event, ProjectionLevel level, SourceLocation location)
+        SemanticProjectionKey BindRemovalKey(RemoveWithSyntax removal, BoundEvent @event, ProjectionLevel level)
+        {
+            if (HasKeyParts(level))
+            {
+                return BindPartsKey(removal.PartsKey, removal.Key is not null || removal.ParentKey is not null, @event, level, removal.Location);
+            }
+
+            return removal.PartsKey is not null ? RefusePartsRemoval(removal) : BindKeyExpression(removal.Key, @event, "removal key");
+        }
+
+        SemanticProjectionKey BindFromKey(FromSyntax from, ExpressionSyntax? eventKey, BoundEvent @event, ProjectionLevel level)
+        {
+            if (HasKeyParts(level))
+            {
+                return BindPartsKey(from.Key, eventKey is not null || from.ParentKey is not null, @event, level, from.Location);
+            }
+
+            return eventKey is not null ? BindKeyExpression(eventKey, @event, "transition key") : BindKey(from.Key, @event);
+        }
+
+        SemanticProjectionPartsKey BindPartsKey(KeySyntax? key, bool scalarOrParent, BoundEvent @event, ProjectionLevel level, SourceLocation location)
         {
             var keys = level.Targets.Values.Where(property => property.IsIdentifier).ToArray();
             if (scalarOrParent || key is not CompositeKeySyntax composite)
@@ -50,7 +70,10 @@ public sealed partial class SemanticModelBinder
                         parts.Add(new(property.Id, SemanticProjectionValue.Literal(concrete)));
                     }
                 }
-                else if (BindProjectionValue(part.Expression, @event, "key part") is { } value) parts.Add(new(property.Id, value));
+                else if (BindProjectionValue(part.Expression, @event, "key part") is { } value)
+                {
+                    parts.Add(new(property.Id, value));
+                }
             }
             var missing = keys.Where(property => !seen.Contains(property.Name)).Select(property => property.Name).ToArray();
             if (missing.Length > 0)

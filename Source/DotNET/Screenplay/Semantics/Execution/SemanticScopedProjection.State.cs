@@ -179,9 +179,9 @@ internal sealed partial class SemanticScopedProjection
                 }
             }
 
-            var keyParts = identifiers.Length == 1
-                ? new[] { new SemanticPropertyValue(identifiers[0].Id, document.Key) }
-                : SemanticKeyPartValues.Require(document.Key, identifiers.Select(property => property.Id)).ToArray();
+            SemanticPropertyValue[] keyParts = identifiers.Length == 1
+                ? [new(identifiers[0].Id, document.Key)]
+                : [.. SemanticKeyPartValues.Require(document.Key, identifiers.Select(property => property.Id))];
             foreach (var part in keyParts)
             {
                 if (!SemanticValueRules.AreEqual(document.State[part.TargetProperty], part.Value))

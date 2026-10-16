@@ -302,7 +302,10 @@ internal sealed partial class SemanticScopedProjection(
             // Collections start empty (Chronicle ProjectionFactory.CreateInitialState, ProjectionFactory.cs:329-340).
             var state = Seed(_readModel.Properties);
             var identifiers = _readModel.Properties.Where(property => property.IsIdentifier).ToArray();
-            if (identifiers.Length == 1) state[identifiers[0].Id] = key;
+            if (identifiers.Length == 1)
+            {
+                state[identifiers[0].Id] = key;
+            }
             else
             {
                 foreach (var part in SemanticKeyPartValues.Require(key, identifiers.Select(property => property.Id))) state[part.TargetProperty] = part.Value;

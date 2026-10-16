@@ -58,6 +58,13 @@ sealed class WorkspaceAbsenceKeyBindings
 
     static string ReferenceKey(WorkspaceSyntaxEntry entry, string member) => $"{entry.Handle.Document}:{entry.Handle.Path}/{member}";
 
+    static string TypeName(SyntaxNode node) => node switch
+    {
+        ReadModelSyntax model => model.Name,
+        TypeSyntax type => type.Name,
+        _ => string.Empty
+    };
+
     IEnumerable<WorkspaceAbsenceKeyObligation> Bind(WorkspaceSyntaxEntry assertion)
     {
         var dependencies = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
@@ -211,13 +218,6 @@ sealed class WorkspaceAbsenceKeyBindings
         };
         return matches.Length == 1 ? matches[0] : null;
     }
-
-    static string TypeName(SyntaxNode node) => node switch
-    {
-        ReadModelSyntax model => model.Name,
-        TypeSyntax type => type.Name,
-        _ => string.Empty
-    };
 
     IEnumerable<WorkspaceSyntaxEntry> Children(WorkspaceSyntaxEntry entry, string member) =>
         _children[entry.Handle].Where(child => child.Member == member);

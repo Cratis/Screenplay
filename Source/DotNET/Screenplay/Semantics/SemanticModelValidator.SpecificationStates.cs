@@ -60,8 +60,7 @@ internal static partial class SemanticModelValidator
             {
                 ValidateReadModelKeyValue(readModel, state.Key, "specification read model key");
                 ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
-                var parts = SemanticKeyPartValues.Require(state.Key, keys.Select(property => property.Id));
-                foreach (var part in parts)
+                foreach (var part in SemanticKeyPartValues.Require(state.Key, keys.Select(property => property.Id)))
                 {
                     var value = state.Values.SingleOrDefault(value => value.TargetProperty == part.TargetProperty)?.Value;
                     if (IsInconsistentIdentifier(part.Value, value, requireIdentifier))

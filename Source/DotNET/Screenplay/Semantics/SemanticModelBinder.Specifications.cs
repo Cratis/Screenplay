@@ -389,9 +389,11 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            var key = !query.KeyParts.IsEmpty
-                ? SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, arguments[part.Name]))])
-                : query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
+            var key = query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
+            if (!query.KeyParts.IsEmpty)
+            {
+                key = SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, arguments[part.Name]))]);
+            }
             var filters = query.Filters.Where(filter => arguments.ContainsKey(filter.Name))
                 .Select(filter => new SemanticQueryFilterValue(filter.Id, arguments[filter.Name])).ToImmutableArray();
 

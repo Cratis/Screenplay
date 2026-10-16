@@ -70,9 +70,7 @@ public sealed partial class SemanticModelBinder
                         nested.Add(bound);
                         break;
                     case RemoveWithSyntax value when LevelEvent(value.Event, value.Location, levelEvents) is { } @event:
-                        var removalKey = HasKeyParts(level)
-                            ? BindPartsKey(value.PartsKey, value.Key is not null || value.ParentKey is not null, @event, level, value.Location)
-                            : value.PartsKey is not null ? RefusePartsRemoval(value) : BindKeyExpression(value.Key, @event, "removal key");
+                        var removalKey = BindRemovalKey(value, @event, level);
                         removals.Add(new(@event.Contract.Id, removalKey, HasKeyParts(level) ? null : BindParentKey(value.ParentKey, @event, level)));
                         break;
                     case RemoveViaJoinSyntax value when LevelEvent(value.Event, value.Location, levelEvents) is { } @event:
@@ -110,9 +108,7 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                var key = HasKeyParts(level)
-                    ? BindPartsKey(from.Key, spec.Key is not null || from.ParentKey is not null, @event, level, from.Location)
-                    : spec.Key is not null ? BindKeyExpression(spec.Key, @event, "transition key") : BindKey(from.Key, @event);
+                var key = BindFromKey(from, spec.Key, @event, level);
                 var parentKey = HasKeyParts(level) ? null : BindParentKey(from.ParentKey, @event, level);
                 yield return new(@event.Contract.Id, key, parentKey, BindMappings(from.Mappings, level, @event, level.AutoMap, false));
             }

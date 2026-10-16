@@ -21,8 +21,10 @@ public sealed partial class SemanticModelBinder
                     inferred.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value;
                 if (value is null)
                 {
-                    Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier,
-                        $"Specification read model '{readModel.Model.Name}' must state key part '{property.Name}' in this block.", location,
+                    Error(
+                        DiagnosticCodes.MissingSpecificationReadModelIdentifier,
+                        $"Specification read model '{readModel.Model.Name}' must state key part '{property.Name}' in this block.",
+                        location,
                         DiagnosticArguments.Empty.With("readmodel", DiagnosticArgument.Text(readModel.Model.Name)).With("property", DiagnosticArgument.Text(property.Name)));
                     return null;
                 }
