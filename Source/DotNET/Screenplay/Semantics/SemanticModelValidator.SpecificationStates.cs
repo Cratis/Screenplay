@@ -138,7 +138,7 @@ internal static partial class SemanticModelValidator
             var queryKeyValue = state.Values.SingleOrDefault(_ => _.TargetProperty == keyProperty.Id)?.Value;
             if (queryKeyValue is null && keyProperty.IsIdentifier)
             {
-                queryKeyValue = state.Key;
+                queryKeyValue = QueryResultIdentifierValue(state, keyProperty);
             }
 
             if (!MatchesQueryKey(state, keyProperty, queryKeyValue, result.Key))
@@ -149,7 +149,16 @@ internal static partial class SemanticModelValidator
 
         bool MatchesQueryKey(SemanticSpecificationReadModel state, SemanticProperty keyProperty, SemanticValue? queryKeyValue, SemanticValue resultKey) =>
             queryKeyValue is not null && SemanticValueRules.AreEqual(queryKeyValue, resultKey) &&
-            (!keyProperty.IsIdentifier || SemanticValueRules.AreEqual(state.Key, resultKey));
+            (!keyProperty.IsIdentifier || SemanticValueRules.AreEqual(QueryResultIdentifierValue(state, keyProperty), resultKey));
+
+        SemanticValue QueryResultIdentifierValue(SemanticSpecificationReadModel state, SemanticProperty property)
+        {
+            var keys = ReadModelKeyProperties(_readModels[state.ReadModel]);
+
+            return keys.Length == 1
+                ? state.Key
+                : SemanticKeyPartValues.Require(state.Key, keys.Select(key => key.Id)).Single(part => part.TargetProperty == property.Id).Value;
+        }
 
         void ValidateSpecificationError(SemanticSpecificationError error)
         {
