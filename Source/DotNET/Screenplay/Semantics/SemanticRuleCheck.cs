@@ -14,6 +14,6 @@ namespace Cratis.Screenplay.Semantics;
 public sealed record SemanticRuleCheck(
     SemanticRuleStatus Status,
     SemanticValidationRule Rule,
-    string? Message,
+    string Message,
     SemanticId? Concept = null,
     PortableMatchCheck? Pattern = null);

@@ -80,7 +80,7 @@ public sealed partial class SemanticEvaluator
             var check = SemanticValidationRules.Check(validation, value);
             if (check.Status == SemanticRuleStatus.Failed)
             {
-                failures.Add(new(check.Message!, validation.Severity));
+                failures.Add(new(check.Message, validation.Severity));
             }
         }
 
@@ -155,7 +155,7 @@ public sealed partial class SemanticEvaluator
         ImmutableArray<SemanticValidationFailure>.Builder failures) =>
         failures.AddRange(SemanticValidationRules.Check(application, type, value)
             .Where(check => check.Status == SemanticRuleStatus.Failed)
-            .Select(check => new SemanticValidationFailure(check.Message!, check.Rule.Severity)));
+            .Select(check => new SemanticValidationFailure(check.Message, check.Rule.Severity)));
 
     static IEnumerable<(SemanticTypeReference Type, SemanticValue Value)> QueryConceptArguments(
         SemanticKeyedQuery query,

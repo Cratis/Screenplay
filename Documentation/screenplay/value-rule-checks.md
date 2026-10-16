@@ -45,9 +45,9 @@ An invoice number must start with INV-.
 
 | Member | Meaning |
 | --- | --- |
-| `Status` | `Satisfied`, `Failed` or `NotEvaluable`. Never treat `NotEvaluable` as a pass. |
+| `Status` | `NotEvaluable = 0` (also the default), `Satisfied` or `Failed`. Never treat `NotEvaluable` as a pass. |
 | `Rule` | The original rule, including operand, severity, authored message and requirement identity. |
-| `Message` | The authored message or the default rejection text, including on satisfied results. For `NotEvaluable`, the reason the rule cannot run. |
+| `Message` | A non-nullable `string`: the authored message or the default rejection text, including on satisfied results. For `NotEvaluable`, the reason the rule cannot run. |
 | `Concept` | The concept identity for a concept check or application walk; otherwise null. |
 | `Pattern` | The `PortableMatchCheck` for a `Matches` rule with a text operand; otherwise null. |
 
@@ -74,7 +74,7 @@ Use `SemanticValue.Null` for absence. Every **evaluable** rule except `NotEmpty`
 
 Text comparisons use UTF-16 code units, without culture-dependent casing or Unicode normalization. Length counts code units too: a supplementary character represented by a surrogate pair has length two. Numeric values and operands use exact .NET `decimal`, not binary floating point. Empty text operands are valid: `Contains`, `StartsWith` and `EndsWith` pass for present text, while `NotContains` fails.
 
-A value or operand incompatible with a rule's required kind throws `InvalidSemanticContract`, rather than returning `Failed`. For example, `Length` requires text and a numeric operand. This is not a general type-validation API; validate the input contract before checking rules.
+A value or operand incompatible with a rule's required kind throws `InvalidSemanticContract`, rather than returning `Failed`. For example, `Length` requires text and a numeric operand. Ordering requires numbers, not text lengths; quantified comparisons require every element to be numeric, even after an earlier comparison fails. Equality requires matching scalar text, number or boolean kinds, or a null operand. Operand kinds are checked even for absent values and empty collections. This is not a general type-validation API; validate the input contract before checking rules.
 
 ## Patterns and older models
 

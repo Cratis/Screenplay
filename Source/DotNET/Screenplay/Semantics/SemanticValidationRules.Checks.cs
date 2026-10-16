@@ -29,10 +29,7 @@ public static partial class SemanticValidationRules
 
     static SemanticRuleCheck Check(SemanticValidationRule rule, SemanticValue value, string empty)
     {
-        if (rule.Kind == SemanticValidationRuleKind.Matches && value is not (SemanticNullValue or SemanticTextValue))
-        {
-            throw SemanticValueRules.Malformed();
-        }
+        ValidateKinds(rule, value);
 
         var pattern = rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue text }
             ? PortableMatchPattern.Check(text.Value)

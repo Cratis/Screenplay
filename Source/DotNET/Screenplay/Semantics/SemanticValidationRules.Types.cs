@@ -17,6 +17,11 @@ public static partial class SemanticValidationRules
     /// <exception cref="InvalidSemanticContract">A value or operand is incompatible with a rule.</exception>
     public static ImmutableArray<SemanticRuleCheck> Check(SemanticApplication application, SemanticTypeReference type, SemanticValue value)
     {
+        if (type.Kind == SemanticTypeReferenceKind.Primitive)
+        {
+            return [];
+        }
+
         var results = ImmutableArray.CreateBuilder<SemanticRuleCheck>();
         Check(application.Concepts.ToDictionary(concept => concept.Id), application.Types.ToDictionary(composite => composite.Id), type, value, results);
 

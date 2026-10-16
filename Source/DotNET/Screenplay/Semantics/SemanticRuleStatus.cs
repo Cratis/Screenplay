@@ -9,6 +9,11 @@ namespace Cratis.Screenplay.Semantics;
 public enum SemanticRuleStatus
 {
     /// <summary>
+    /// The rule has not been evaluated or cannot be evaluated by the reference implementation. This is the default status, not a pass.
+    /// </summary>
+    NotEvaluable = 0,
+
+    /// <summary>
     /// The value satisfies the rule.
     /// </summary>
     Satisfied,
@@ -16,10 +21,5 @@ public enum SemanticRuleStatus
     /// <summary>
     /// The value violates the rule.
     /// </summary>
-    Failed,
-
-    /// <summary>
-    /// The rule cannot be evaluated by the reference implementation.
-    /// </summary>
-    NotEvaluable
+    Failed
 }
