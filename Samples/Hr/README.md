@@ -13,7 +13,7 @@ Hr/
 | --- | --- | --- |
 | `HrManager` | `IsHrManager` | every screen |
 
-Employees sit in an org chart, ask for time off and are onboarded when they join. Every screen fills one of the blueprint's seven screen templates or two dialogs: the directory of cards, the employee page, the org chart, the time-off requests and balances, and the onboarding list and checklist. The demo data is the blueprint's own Norwegian pack.
+Employees sit in an org chart, ask for time off and are onboarded when they join. Every screen fills one of the blueprint's eight screen templates or two dialogs: the directory of cards, the employee page, the org chart, the time-off requests, the team calendar and balances, and the onboarding list and checklist. The demo data is the blueprint's own Norwegian pack.
 
 ## What to read it for
 
@@ -24,6 +24,7 @@ Employees sit in an org chart, ask for time off and are onboarded when they join
   build resolves the reference against its packages. Each read model is named after the shape the pack supplies, so the same rows reach the screen in a preview and in a running application.
 - **An org chart from a view.** `ReportingLines` is a read model of who reports to whom, and the screen fills the `HrOrgChart` template; the tree is built from the rows.
 - **Time off in two places.** `TimeOff` holds the requests and the `Balances` feature nested under it holds the leave balances, so the sidebar can show *Requests* and *Balances* beneath *Time off*.
+- **A calendar from the same events.** `TeamCalendarEvents` is a read model projected from `TimeOffRequestRegistered`, nested under `TimeOff` as the `Calendar` feature, and its screen fills the `HrTeamCalendar` template, so the sidebar shows *Team calendar* beneath *Time off*.
 - **A command from a list.** `DecideTimeOff` approves or declines a request; its screen fills the time-off list template and runs the command from the list's toolbar.
 
 ## Verify
