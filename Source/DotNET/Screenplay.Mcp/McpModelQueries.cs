@@ -22,6 +22,8 @@ static class McpModelQueries
                 fileCount,
                 reactionProductionMode = snapshot.Compilation.Value?.ReactionProductionMode?.ToString(),
                 reactionProductionReadiness = "Explicit Atomic mode is admitted by ESM v22; absence retains legacy per-fact semantics. Target realization requires separate v22 admission.",
+                commandReadMode = snapshot.Compilation.Value?.CommandReadMode?.ToString(),
+                commandReadReadiness = "Explicit Protected mode admits eligible command reads and read paths in require and produces mappings (working ESM v24). Absence rejects with Validation; matching intervening facts return Conflict/DecisionStateChanged. Without the preamble legacy refusals remain. Target realization requires separate version admission.",
                 syntaxOnly = snapshot.Index.Readiness.ModelSyntaxOnly,
                 executionReadiness = snapshot.Index.Readiness.ModelExecutionReadiness,
                 declarationCount = declarations.Length,

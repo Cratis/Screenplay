@@ -124,6 +124,13 @@ internal static class WorkspaceRepairVerification
             Operations = repair.Operations,
             RetiredSemanticAddresses = request.RetiredSemanticAddresses.IsDefault ? default : [.. request.RetiredSemanticAddresses, .. repair.RetiredSemanticAddresses]
         }));
+        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.LegacyCommandReadsRepairAvailable && !result.ExecutableReady)
+        {
+            var reasons = result.Workspace!.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                .Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}");
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, $"Cannot prove every command read admissible: {string.Join("; ", reasons)}");
+        }
+
         if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.EventSourceIdInPayload &&
             (WorkspaceEventRepairs.HasConsumers(index, repair) || !result.ExecutableReady ||
                 !WorkspaceProductionRepairs.KeepsDestinations(index, index.Find(index.Find(repair.Subject)!.Parent!)!, result, true, true)))

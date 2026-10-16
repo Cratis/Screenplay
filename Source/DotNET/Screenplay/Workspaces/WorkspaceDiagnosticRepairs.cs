@@ -113,8 +113,12 @@ public static class WorkspaceDiagnosticRepairs
         var matches = ForSubject(index, workspace.Revision, diagnosticCode, subject).ToArray();
         if (matches.Length != 1)
         {
-            var reason = diagnosticCode == DiagnosticCodes.RefutedGeneratedConceptRule
-                ? WorkspaceGenerationRuleRepairs.UnavailableReason(index, subject) : null;
+            var reason = diagnosticCode switch
+            {
+                DiagnosticCodes.RefutedGeneratedConceptRule => WorkspaceGenerationRuleRepairs.UnavailableReason(index, subject),
+                DiagnosticCodes.LegacyCommandReadsRepairAvailable => WorkspaceCommandReadsRepairs.UnavailableReason(index, subject),
+                _ => null
+            };
 
             return Refuse(WorkspaceConflictKind.UnknownRepair, reason ?? "The diagnostic repair does not match the original workspace subject.");
         }
@@ -179,6 +183,11 @@ public static class WorkspaceDiagnosticRepairs
         if (!index.RepairableDiagnosticSet.Contains(diagnostic))
         {
             return [];
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable)
+        {
+            return WorkspaceCommandReadsRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
