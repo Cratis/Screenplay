@@ -44,6 +44,7 @@ public sealed partial class SemanticModelBinder
 
         string? NegatedSubjectRisk(Dictionary<string, SemanticProperty> properties, string? commandName)
         {
+            if (commandName is null && properties.Count > 1) return "is not a scalar text type";
             var subject = commandName is null ? properties.Values.SingleOrDefault() : properties.Values.SingleOrDefault(property => property.IsIdentifier);
 
             return subject is null ? "is unavailable because the command has no identifier" : NegatedTypeRisk(subject.Type, subject.Type.IsOptional);

@@ -35,9 +35,11 @@ public class when_binding_the_invoicing_sample : Specification
         diagnostic.Message.Contains("ApplyLateFee", StringComparison.Ordinal)).ShouldBeTrue();
 
     [Fact]
-    void should_admit_the_composite_key_shape() => _diagnostics.Any(diagnostic =>
-        diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("InvoicePaymentMethodTotals", StringComparison.Ordinal) &&
-        diagnostic.Message.Contains("issues/599", StringComparison.Ordinal)).ShouldBeFalse();
+    void should_admit_the_composite_key_shape()
+    {
+        var readModel = SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Single(model => model.Name == "InvoicePaymentMethodTotals");
+        _diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Location.Line == readModel.Location.Line).ShouldBeEmpty();
+    }
 
     [Fact]
     void should_keep_the_explicit_single_key_out_of_identity_ambiguity_dispositions() => _diagnostics.Any(diagnostic =>

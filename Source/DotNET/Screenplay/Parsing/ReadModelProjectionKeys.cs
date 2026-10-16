@@ -11,6 +11,7 @@ internal static class ReadModelProjectionKeys
 {
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
+        var reported = new HashSet<(string Code, string Message, SourceLocation Location)>();
         foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var projection in slice.Projections)
@@ -34,7 +35,7 @@ internal static class ReadModelProjectionKeys
                 {
                     if (scalarOrParent || key is not CompositeKeySyntax composite)
                     {
-                        context.Error(DiagnosticCodes.IncompleteReadModelKey, "A composite read-model projection requires an untyped block naming every key part.", location);
+                        Report(DiagnosticCodes.IncompleteReadModelKey, "A composite read-model projection requires an untyped block naming every key part.", location);
                         return;
                     }
                     if (!string.IsNullOrEmpty(composite.Type)) Invalid("Flat read-model key parts have no authored composite type.", composite.Location);
@@ -42,14 +43,17 @@ internal static class ReadModelProjectionKeys
                     var sources = declarations.Event(eventName, scope)?.Properties ?? [];
                     foreach (var part in composite.Parts)
                     {
-                        var target = keys.SingleOrDefault(property => property.Name == part.Property);
-                        if (!seen.Add(part.Property) || target is null || !Compatible(part.Expression, target.Type, sources))
+                        var repeated = !seen.Add(part.Property);
+                        var targets = keys.Where(property => property.Name == part.Property).ToArray();
+                        if (targets.Length > 1) continue;
+                        var target = targets.FirstOrDefault();
+                        if (repeated || target is null || !Compatible(part.Expression, target.Type, sources))
                         {
                             Invalid($"Projection key part '{part.Property}' must name one key property exactly once and use a compatible simple expression.", part.Location);
                         }
                     }
                     var missing = keys.Where(property => !seen.Contains(property.Name)).Select(property => property.Name).ToArray();
-                    if (missing.Length > 0) context.Error(DiagnosticCodes.IncompleteReadModelKey, $"Projection key is missing parts: {string.Join(", ", missing)}.", composite.Location);
+                    if (missing.Length > 0) Report(DiagnosticCodes.IncompleteReadModelKey, $"Projection key is missing parts: {string.Join(", ", missing)}.", composite.Location);
                 }
             }
         }
@@ -100,7 +104,11 @@ internal static class ReadModelProjectionKeys
 
             return concept?.IsEnum == true ? "String" : concept?.Type ?? type.Name;
         }
-        void Invalid(string message, SourceLocation location) => context.Error(DiagnosticCodes.InvalidReadModelKeyLookup, message, location);
+        void Report(string code, string message, SourceLocation location)
+        {
+            if (reported.Add((code, message, location))) context.Error(code, message, location);
+        }
+        void Invalid(string message, SourceLocation location) => Report(DiagnosticCodes.InvalidReadModelKeyLookup, message, location);
     }
 
     static string Category(string type) => type.ToLowerInvariant() switch
