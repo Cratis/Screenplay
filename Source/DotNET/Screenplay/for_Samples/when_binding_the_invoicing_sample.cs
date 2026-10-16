@@ -95,6 +95,18 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
+    void should_show_the_admitted_uuid_requirement() => SyntaxNodes.Under(_application).OfType<RequirementSyntax>().Any(requirement =>
+        requirement.Condition is ComparisonConditionSyntax { Left: "customerId", Operator: ComparisonOperator.NotEqual, Right: LiteralExpressionSyntax { Value: "00000000-0000-0000-0000-000000000000" } }).ShouldBeTrue();
+
+    [Fact]
+    void should_not_refuse_the_uuid_requirement()
+    {
+        var requirement = SyntaxNodes.Under(_application).OfType<RequirementSyntax>().Single(requirement =>
+            requirement.Condition is ComparisonConditionSyntax { Left: "customerId", Right: LiteralExpressionSyntax { Value: "00000000-0000-0000-0000-000000000000" } });
+        _diagnostics.Any(diagnostic => diagnostic.Location.Line == requirement.Location.Line && (diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding)).ShouldBeFalse();
+    }
+
+    [Fact]
     void should_keep_today_refused() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax &&
         diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal) && diagnostic.Message.Contains("date", StringComparison.Ordinal)).ShouldBeTrue();
 

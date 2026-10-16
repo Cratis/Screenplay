@@ -394,7 +394,10 @@ public class when_freezing_legacy_source_syntax_bytes
                                     Rule: ValidationRuleKind.GreaterThanOrEqual,
                                     Value: LiteralExpressionSyntax { Value: "2020-01-01" },
                                     Message: "Due date must not predate the invoicing ledger"
-                                })
+                                }),
+
+                                // Uuid equality has current shared vectors. Omit only the new nil-customer requirement.
+                                Requirements = block.Requirements?.Where(requirement => requirement.Message != "A customer is required")
                             } : validation)
                         } : command),
                         Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAServiceRegisteringAnInvoice")

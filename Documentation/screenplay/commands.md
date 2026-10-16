@@ -459,6 +459,7 @@ Every rule above parses, prints and round-trips. The executable semantic model (
 | `>`, `>=`, `<`, `<=` | a whole or decimal number | a number of the property's type |
 | `==`, `!=` | text, an enum member, a whole or decimal number, or a boolean | a literal of the property's type, or a bare member name of an enum concept |
 | `==`, `!=`, `>`, `>=`, `<`, `<=` (ESM v26) | a scalar Date or DateTime command property | a date literal of the same primitive; DateTime needs an offset or Z |
+| `==`, `!=` in `require` and `produces when` only (ESM v28) | a required scalar Uuid command property or protected read path | see [Uuid equality](#uuid-equality-in-command-conditions); not admitted as a validation rule |
 | `length ==` | text that is not an enum | a non-negative whole number |
 | `all >`, `all >=` | a collection of whole or decimal numbers | a number of the element type |
 
@@ -492,6 +493,7 @@ Still rejected, and why:
 | Rule | Why |
 | --- | --- |
 | date comparisons in concept rules, reaction `where`, or with read paths, `$context` or `today` | These positions and operands are not admitted by date-comparison ESM v26. |
+| Uuid comparisons in validation rules, concept rules or reaction `where`, ordering on Uuid, and two different Uuid concepts | ESM v28 admits only `==` and `!=` in command `require` and `produces when`; concept rules also run on query arguments and in client validators. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid pattern syntax reports `PLAY0367`; constructs outside the portable dialect report `PLAY0699` with a suggested replacement where one exists. |
 | `require` over a read-model path without `command reads protected` | Protected-read admission requires explicit opt-in; with it, admitted single-level paths are executable. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
@@ -516,7 +518,23 @@ command KeepWindow
 
 Every DateTime input property used by a comparison must carry an offset or `Z`. Input validation rejects a missing offset with a Validation outcome before any rule runs, even when a condition short-circuits or a production is skipped. Targets apply this before deserialization can attach a local offset. A target that cannot preserve tick precision refuses the comparison; JavaScript `Date` alone is insufficient. Client validators omit date ordering rules. Specification `then` matching, read-model keys, constraints and freshness keep ordinal equality. `$context`, protected read paths, `today`, mixed Date/DateTime operands and reaction `where` remain refused.
 
-Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. ESM v26 adds the date comparisons above. Both property operands must have compatible types. Under `command reads protected`, either operand may instead be a declared read's single-level property path. Requirements run after property validation and required-read presence checks and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
+### Uuid equality in command conditions
+
+ESM v28 admits `==` and `!=` between Uuid values (the Uuid primitive, or a concept or identity over it) in command `require` and `produces when`. A `require` may also use a protected read path on either side; `produces when` uses command properties and literals. Both operands must be required scalars. When both sides are concepts they must be the same concept, a bare Uuid compares with any Uuid concept, and a literal takes the type of the other side. A literal must be canonical (lowercase, hyphenated, 36 characters); any other spelling reports `PLAY0273`. A refused whole comparison reports only `PLAY0268`: ordering, optional or collection operands, two different concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules or concept rules.
+
+```screenplay
+command RegisterInvoice
+  customerId CustomerId
+  approvedBy UserId
+  submittedBy UserId
+  validate
+    require customerId != "00000000-0000-0000-0000-000000000000"
+    require approvedBy != submittedBy
+```
+
+The comparison is ordinal equality of the canonical spelling. Every Uuid reaching a condition is already canonical, so this is value equality; specification `then` matching, read-model keys, constraints and freshness are unchanged. When a protected read finds no instance, [protected read absence](#what-the-executable-model-admits) applies unchanged. Commands invoked by a reaction evaluate these conditions the same way.
+
+Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. ESM v26 adds the date comparisons above and ESM v28 adds the Uuid equality above. Both property operands must have compatible types. Under `command reads protected`, either operand may instead be a declared read's single-level property path. Requirements run after property validation and required-read presence checks and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
 
 ## Authorization
 
