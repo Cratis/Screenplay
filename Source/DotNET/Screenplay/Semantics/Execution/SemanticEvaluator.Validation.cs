@@ -77,67 +77,29 @@ public sealed partial class SemanticEvaluator
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            if (!SemanticValidationRules.Satisfies(validation, value))
+            var check = SemanticValidationRules.Check(validation, value);
+            if (check.Status == SemanticRuleStatus.Failed)
             {
-                failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."), validation.Severity));
+                failures.Add(new(check.Message!, validation.Severity));
             }
         }
 
-        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
-        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         foreach (var property in command.Properties.Where(property => !property.IsGenerated))
         {
-            ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id], failures);
+            AddConceptFailures(plan.Model.Application, property.Type, valuesByTarget[property.Id], failures);
         }
 
         return failures.ToImmutable();
     }
 
-    // A concept's rules constrain every value of the concept - directly, as each element of a collection and
-    // inside composite values - so they are applied wherever a command or query carries one.
-    internal static void ValidateConceptValues(
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
+    static void AddConceptFailures(
+        SemanticApplication application,
         SemanticTypeReference type,
         SemanticValue value,
-        ImmutableArray<SemanticValidationFailure>.Builder failures)
-    {
-        if (type.IsCollection)
-        {
-            if (value is SemanticArrayValue array)
-            {
-                var elementType = type with { IsCollection = false, IsOptional = false };
-                foreach (var element in array.Values)
-                {
-                    ValidateConceptValues(concepts, types, elementType, element, failures);
-                }
-            }
-
-            return;
-        }
-
-        switch (type.Kind)
-        {
-            case SemanticTypeReferenceKind.Concept:
-                foreach (var validation in concepts[type.Target].Validations)
-                {
-                    if (!SemanticValidationRules.Satisfies(validation, value))
-                    {
-                        failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required concept value is empty."), validation.Severity));
-                    }
-                }
-
-                break;
-            case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
-                var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
-                foreach (var property in composite.Properties)
-                {
-                    ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value, failures);
-                }
-
-                break;
-        }
-    }
+        ImmutableArray<SemanticValidationFailure>.Builder failures) =>
+        failures.AddRange(SemanticValidationRules.Check(application, type, value)
+            .Where(check => check.Status == SemanticRuleStatus.Failed)
+            .Select(check => new SemanticValidationFailure(check.Message!, check.Rule.Severity)));
 
     internal static string? ValidateQueryKey(
         SemanticExecutionPlan plan,
@@ -186,12 +148,10 @@ public sealed partial class SemanticEvaluator
         SemanticValue key,
         ImmutableArray<SemanticQueryFilterValue> filters)
     {
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
         var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
         foreach (var argument in QueryConceptArguments(query, key, filters))
         {
-            ValidateConceptValues(concepts, types, argument.Type, argument.Value, failures);
+            AddConceptFailures(plan.Model.Application, argument.Type, argument.Value, failures);
         }
 
         return failures.ToImmutable();
