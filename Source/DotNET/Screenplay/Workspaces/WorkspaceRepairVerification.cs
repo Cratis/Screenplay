@@ -124,11 +124,14 @@ internal static class WorkspaceRepairVerification
             Operations = repair.Operations,
             RetiredSemanticAddresses = request.RetiredSemanticAddresses.IsDefault ? default : [.. request.RetiredSemanticAddresses, .. repair.RetiredSemanticAddresses]
         }));
-        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.LegacyCommandReadsRepairAvailable && !result.ExecutableReady)
+        if (repair.DiagnosticCode == DiagnosticCodes.LegacyCommandReadsRepairAvailable)
         {
-            var reasons = result.Workspace!.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-                .Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}");
-            return Refuse(result, WorkspaceConflictKind.InvalidOperation, $"Cannot prove every command read admissible: {string.Join("; ", reasons)}");
+            var reasons = result.ExecutableDiagnostics.Where(WorkspaceCommandReadsRepairs.IsReadRefusal)
+                .Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ToArray();
+            if (reasons.Length > 0)
+                return Refuse(result, WorkspaceConflictKind.InvalidOperation, $"Cannot prove every command read admissible: {string.Join("; ", reasons)}");
+            if (!result.Accepted && result.ExecutableDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+                return Refuse(result, WorkspaceConflictKind.CompilationFailed, WorkspaceCommandReadsRepairs.UnrelatedExecutableBlockers);
         }
 
         if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.EventSourceIdInPayload &&

@@ -60,7 +60,49 @@ public class when_protecting_command_reads : given.an_authoring_connection
         var summary = Result("describe-application");
         summary.GetProperty("commandReadMode").GetString().ShouldEqual("Protected");
         summary.GetProperty("commandReadReadiness").GetString().ShouldContain("Conflict/DecisionStateChanged");
+        summary.GetProperty("commandReadReadiness").GetString().ShouldContain("Missing required read-model state rejects with Validation");
         summary.GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_preview_with_an_unrelated_unadmitted_query()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source + "\n      query External => View[]\n        performer\n          file External.cs\n");
+        Initialize();
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString();
+        var repair = Page("repairs", revision).EnumerateArray().Single(item => item.GetProperty("diagnosticCode").GetString() == "PLAY0786");
+        var proposal = Result("propose-repair", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            diagnosticCode = "PLAY0786",
+            subject = repair.GetProperty("subject"),
+            formatting = "CanonicalizeTouchedDocuments"
+        });
+        var candidate = Candidate(proposal);
+        candidate.Compilation.Success.ShouldBeFalse();
+        candidate.Documents.Single().Text.ShouldContain("command reads protected");
+        candidate.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("performer", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_keep_read_admission_reasons_in_protocol_refusals()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source.Replace("        remove with Removed", string.Empty, StringComparison.Ordinal));
+        Initialize();
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString();
+        var response = Call("propose-repair", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            diagnosticCode = "PLAY0786",
+            subject = Node("ReadsSyntax", revision).GetProperty("handle"),
+            formatting = "CanonicalizeTouchedDocuments"
+        });
+        response.GetRawText().ShouldContain("PLAY0781");
+        response.GetRawText().ShouldContain("NoRemoval");
     }
 
     [Fact]

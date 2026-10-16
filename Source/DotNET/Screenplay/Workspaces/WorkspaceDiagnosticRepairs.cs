@@ -185,7 +185,7 @@ public static class WorkspaceDiagnosticRepairs
             return [];
         }
 
-        if (diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable)
+        if (diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable || WorkspaceCommandReadsRepairs.IsLegacyReadDiagnostic(index, diagnostic))
         {
             return WorkspaceCommandReadsRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
@@ -308,6 +308,15 @@ public static class WorkspaceDiagnosticRepairs
         if (WorkspaceGenerationRepairs.ForSubject(index, code, subject, diagnostic => Find(index, revision, diagnostic, false)) is { } generationRepairs)
         {
             return generationRepairs;
+        }
+
+        // An unrelated PLAY0273 can suppress the binder's model-wide PLAY0786 hint. The first
+        // legacy read still supplies an original diagnostic and subject for a read-only admission probe.
+        if (code == DiagnosticCodes.LegacyCommandReadsRepairAvailable &&
+            !index.RepairableDiagnostics.Any(diagnostic => diagnostic.Code == code))
+        {
+            return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Location == entry.Location && WorkspaceCommandReadsRepairs.IsLegacyReadDiagnostic(index, diagnostic))
+                .SelectMany(diagnostic => Find(index, revision, diagnostic, false)).Where(repair => repair.Subject == subject);
         }
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on

@@ -8,10 +8,37 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Workspaces;
 
 /// <summary>
-/// Opts the composed application into protected reads only after executable admission proves every read safe.
+/// Opts the composed application into protected reads after read-specific admission, independently of unrelated executable blockers.
 /// </summary>
 internal static class WorkspaceCommandReadsRepairs
 {
+    internal const string UnrelatedExecutableBlockers = "The model is not executable-ready for reasons unrelated to command reads";
+
+    static readonly HashSet<string> _readRefusalCodes = new(StringComparer.Ordinal)
+    {
+        DiagnosticCodes.UnprotectableDecisionRead,
+        DiagnosticCodes.DecisionReadWithoutIdentifier,
+        DiagnosticCodes.DecisionReadsWithConcurrency,
+        DiagnosticCodes.UnknownReadPath,
+        DiagnosticCodes.AmbiguousReadPath
+    };
+
+    // These closed diagnostics belong to command reads and their paths, including the reads/concurrency ambiguity.
+    internal static bool IsReadRefusal(Diagnostic diagnostic) => diagnostic.Severity == DiagnosticSeverity.Error && _readRefusalCodes.Contains(diagnostic.Code);
+
+    internal static bool IsLegacyReadDiagnostic(WorkspaceSyntaxIndex index, Diagnostic diagnostic)
+    {
+        if (diagnostic.Code != DiagnosticCodes.PreservedLegacySemanticSyntax ||
+            index.RepairableDiagnostics.Any(value => value.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable))
+        {
+            return false;
+        }
+        var first = index.RepairableDiagnostics.FirstOrDefault(value => value.Code == DiagnosticCodes.PreservedLegacySemanticSyntax &&
+            index.Entries.Any(entry => entry.Node is ReadsSyntax && entry.Location == value.Location));
+
+        return diagnostic == first;
+    }
+
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
     {
         var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Location == diagnostic.Location && entry.Node is ReadsSyntax).ToArray();
@@ -33,10 +60,12 @@ internal static class WorkspaceCommandReadsRepairs
             Formatting = repair.RequiredFormatting,
             Operations = repair.Operations
         });
-        var reasons = result.Workspace?.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-            .Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ToArray() ?? [];
+        var reasons = result.ExecutableDiagnostics.Where(IsReadRefusal).Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ToArray();
+        if (reasons.Length > 0) return string.Join("; ", reasons);
+        if (result.ExecutableDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) return UnrelatedExecutableBlockers;
+        var conflicts = result.Conflicts.Select(conflict => conflict.Message).ToArray();
 
-        return reasons.Length > 0 ? string.Join("; ", reasons) : string.Join("; ", result.Conflicts.Select(conflict => conflict.Message));
+        return conflicts.Length > 0 ? string.Join("; ", conflicts) : null;
     }
 
     static WorkspaceDiagnosticRepair? Recipe(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject)
