@@ -26,7 +26,10 @@ static class QueryKeyCompleteness
                 if (query.By is { } by && !Tenant(by))
                 {
                     var identity = Identity(model, declarations).ToArray();
-                    if (identity.Length > 0 && identity.All(type => declarations.Compatible(by.Type, type) == false))
+                    var type = by.Type with { IsOptional = false };
+                    var held = query.ReturnType.IsCollection && model.Properties.Concat(parts)
+                        .Any(property => property.Name == by.Name && declarations.Compatible(type, property.Type) != false);
+                    if (!held && identity.Length > 0 && identity.All(identityType => declarations.Compatible(type, identityType) == false))
                     {
                         yield return Finding(query, by, model.Name);
                     }
@@ -52,10 +55,10 @@ static class QueryKeyCompleteness
             return [.. declared.Select(property => property.Type).Concat(declared.Length == 1 ? declarations.TypeProperties(declared[0].Type.Name)?.Select(property => property.Type) ?? [] : [])];
         }
 
-        // The binder identifies a property by the single distinct 'by' name of queries in the owning slice.
+        // The binder identifies a property by the single distinct 'by' name of single-result queries in the owning slice.
         // The parameter's declared type is not evidence of the view's identity type.
         var owner = declarations.Slices.Single(entry => (entry.Slice.ReadModels ?? []).Any(candidate => ReferenceEquals(candidate, model)));
-        var names = owner.Slice.Queries.Where(query => query.ReturnType.Name.Split('.')[^1] == model.Name && query.By is not null)
+        var names = owner.Slice.Queries.Where(query => query.ReturnType.Name.Split('.')[^1] == model.Name && query.By is not null && !query.ReturnType.IsCollection)
             .Select(query => query.By!.Name).Distinct(StringComparer.Ordinal).ToArray();
         if (names is [var name] && model.Properties.Where(property => property.Name == name).ToArray() is [var identity])
         {
