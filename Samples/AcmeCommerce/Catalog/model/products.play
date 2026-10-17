@@ -1,0 +1,268 @@
+// ============================================================
+// Catalog / Merchandising / Products - drafting, describing and browsing the catalogue
+// ============================================================
+
+module Merchandising
+  description "Draft, describe, price, approve and withdraw products"
+  authorize CanCurateCatalog
+
+  feature Products
+    description "The catalogue of everything we sell"
+
+    slice StateChange DraftProduct
+      description "A merchandiser starts a new product with its SKU, name and category"
+      command DraftProduct
+        productId   ProductId identifier
+        sku         Sku
+        name        ProductName
+        category    String
+        produces ProductDrafted
+          for productId
+          sku         = sku
+          name        = name
+          category    = category
+
+      event ProductDrafted
+        sku         Sku
+        name        ProductName
+        category    String
+
+      // A SKU, once drafted, is taken: no other product may be drafted with it
+      constraint UniqueSku
+        unique sku on ProductDrafted
+        message "That SKU is already in the catalogue"
+
+      example Mug : DraftProduct
+        productId   = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+        sku         = "ACM-1000"
+        name        = "Acme mug"
+        category    = "Kitchen"
+
+      specification DraftingAProduct
+        given caller
+          authenticated
+          role "Merchandiser"
+        when Mug
+        then ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+
+      specification RejectingASkuWithoutThePrefix
+        given caller
+          authenticated
+          role "Merchandiser"
+        when Mug sku = "XYZ-1000"
+        then error "A SKU starts with ACM-"
+
+      specification RejectingADuplicateSku
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+          sku         = "ACM-1000"
+          name        = "Acme plate"
+          category    = "Kitchen"
+        when Mug
+        then error "That SKU is already in the catalogue"
+
+      screen NewProduct
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action DraftProduct
+              navigate to ProductCatalog
+
+    slice StateChange DescribeProduct
+      description "Adds the selling text and the picture"
+      command DescribeProduct
+        productId ProductId identifier
+        details   String
+        imageUrl  String
+        produces ProductDescribed
+          for productId
+          details  = details
+          imageUrl = imageUrl
+
+      event ProductDescribed
+        details  String
+        imageUrl String
+
+      specification DescribingAProduct
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when DescribeProduct
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details   = "A sturdy mug for the morning"
+          imageUrl  = "/images/mug.png"
+        then ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for the morning"
+          imageUrl = "/images/mug.png"
+
+      screen DescribeProductForm
+        template blueprint Cratis.Blueprint.Default FormScreen version "^1"
+          actions
+            action DescribeProduct
+              navigate to ProductCatalog
+
+    slice StateView ProductCatalog
+      description "Every product with its status; the merchandiser's work list"
+
+      readmodel ProductRow
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        category  String
+        price     Money
+        status    ProductStatus
+
+      query AllProducts => observable ProductRow[]
+
+      projection ProductRowProjection => ProductRow
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          category  = category
+          price     = 0
+          status    = "draft"
+        from ProductPriceSet
+          price = price
+        from ProductApprovedForSale
+          status = "approved"
+        from ProductWithdrawn
+          status = "withdrawn"
+
+      screen ProductCatalog
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader productsHeader
+              property title = "Products"
+              property subtitle = "Everything we sell, with its status"
+          toolbar
+            toolbar actions
+              button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+          list
+            data ProductRow[] via query AllProducts
+            table ProductRow
+              column sku      label "SKU"
+              column name     label "Product"
+              column category label "Category"
+              column price    label "Price"
+              column status   label "Status"
+              on row-click navigate to ProductPage by productId
+
+      specification TheCatalogShowsADraft
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+        then readmodel ProductRow
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          status    = "draft"
+
+      specification ThePriceAppearsWhenSet
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+        given ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 49
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        then readmodel ProductRow
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price     = 49
+          status    = "draft"
+
+    slice StateView ProductDetails
+      description "One product with everything we know about it"
+
+      readmodel ProductDetail
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        category  String
+        details   String
+        imageUrl  String
+        price     Money
+        currency  CurrencyCode
+        status    ProductStatus
+
+      query ProductById => ProductDetail optional
+        by productId ProductId
+
+      projection ProductDetailProjection => ProductDetail
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          category  = category
+          details   = ""
+          imageUrl  = ""
+          price     = 0
+          currency  = "NOK"
+          status    = "draft"
+        from ProductDescribed
+          details  = details
+          imageUrl = imageUrl
+        from ProductPriceSet
+          price    = price
+          currency = currency
+        from ProductApprovedForSale
+          status = "approved"
+        from ProductWithdrawn
+          status = "withdrawn"
+
+      screen ProductPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader productHeader
+              property title = "Product"
+              property subtitle = "What we know about one product"
+          summary
+            data ProductDetail via query ProductById by productId
+            summary ProductDetail
+              field sku      label "SKU"
+              field name     label "Product"
+              field category label "Category"
+              field price    label "Price"
+              field status   label "Status"
+          main
+            data ProductDetail via query ProductById by productId
+            summary ProductDetail
+              field details  label "Description"
+              field imageUrl label "Picture"
+          // The custom package's card previews the product the way the shop will show it
+          aside
+            component Acme.Commerce.productCard card
+              property name from query ProductById.name
+              property sku from query ProductById.sku
+              property price from query ProductById.price
+
+      specification TheProductPageCollectsEverything
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+        given ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for the morning"
+          imageUrl = "/images/mug.png"
+        then readmodel ProductDetail
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details   = "A sturdy mug for the morning"
+          status    = "draft"

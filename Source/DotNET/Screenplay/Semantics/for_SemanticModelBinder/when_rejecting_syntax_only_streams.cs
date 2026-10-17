@@ -35,7 +35,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
         var result = Bind("eventsource Account\n  stream Transactions\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Transactions\n        handler\n          file Unknown.cs");
         result.Value.ShouldBeNull();
         result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("handler", StringComparison.OrdinalIgnoreCase)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment).ShouldBeTrue();
     }
 
     [Theory]

@@ -10,7 +10,7 @@ import { DocumentSymbols, symbolsForBuffer } from './symbols';
 import { responseAnalysis } from './response-analysis';
 import { typeReferenceText } from './TypeReferenceSymbol';
 
-export const eventSourceAvailability = 'Event sources, streams and declarative command routes are admitted in executable semantic model (ESM) v8. A route classifies events; it does not supply an identity destination. Property-path mappings and handler routes remain unadmitted (PLAY0268).';
+export const eventSourceAvailability = 'Event sources, streams and declarative command routes are admitted in executable semantic model (ESM) v8. A route classifies events; it does not supply an identity destination. Property-path mappings remain unadmitted (PLAY0268); command handlers require a constrained implementation attachment (PLAY0800).';
 
 export const specificationRouteAvailability = 'Specification event routes, including example routes, are admitted in executable semantic model (ESM) v8. Redelivery is executable from ESM v17, independently of its locator route.';
 

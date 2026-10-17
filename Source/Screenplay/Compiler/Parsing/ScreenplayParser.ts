@@ -320,7 +320,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
                     `'validate' in enumeration concept '${name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value`,
                     locationOf(child));
             }
-            const parsed = parseValidate(context, child, 'concept');
+            const parsed = parseValidate(context, child, 'concept', name);
             if (parsed !== undefined) validations.push(parsed);
         } else if (firstWord(child.content) === 'generate' && !(type === 'Enum' && child.content === 'generate')) {
             if (declaredGeneration) context.error(DiagnosticCodes.DuplicateGeneration, `Concept '${name}' declares generation more than once.`, locationOf(child));

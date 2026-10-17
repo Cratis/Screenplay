@@ -1449,6 +1449,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Source syntax carries portable behavior that ESM v1 cannot represent.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration?;The innermost declaration that contains the refused construct; absent for document-level refusals.", "issue:text?;The tracking issue named by the refusal, such as Cratis/Screenplay#600, when it cites one.", AttachedByBinder = true)]
     public const string UnsupportedSemanticSyntax = "PLAY0268";
 
     /// <summary>
@@ -1904,16 +1905,19 @@ public static class DiagnosticCodes
     /// <summary>
     /// A quoted match pattern is not a valid ECMAScript regular expression.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.", "offset:index;The zero-based UTF-16 offset in the pattern where the problem starts.")]
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
     /// A match pattern uses a construct outside the portable linear dialect.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.", "offset:index;The zero-based UTF-16 offset in the pattern where the problem starts.")]
     public const string PatternOutsidePortableMatchDialect = "PLAY0699";
 
     /// <summary>
     /// A Studio text-rule pattern has an equivalent first-class ordinal rule.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.")]
     public const string DeprecatedStudioTextRulePattern = "PLAY0787";
 
     /// <summary>
@@ -3250,26 +3254,31 @@ public static class DiagnosticCodes
     /// <summary>
     /// A command decision read cannot be protected, with a closed refusal reason describing its shape or key.
     /// </summary>
+    [DiagnosticArgumentDefinitions("command:declaration;The command declaring the read.", "read:text;The read model name or alias as the command reads it.", "readModel:declaration;The read model declaration that cannot be protected.", "reason:keyword=reducer|join|children|open-subscription|payload-key|by-parts|no-removal|empty-handled-set|named-source-or-stream|singleton|key-type|generated-key|optional-key|collection-key;The closed refusal reason, the name of the decision-read refusal.")]
     public const string UnprotectableDecisionRead = "PLAY0781";
 
     /// <summary>
     /// A protected command read omits its lookup property and the command has no declared identifier.
     /// </summary>
+    [DiagnosticArgumentDefinitions("command:declaration;The command declaring the read.", "read:text;The read model name or alias as the command reads it.")]
     public const string DecisionReadWithoutIdentifier = "PLAY0782";
 
     /// <summary>
     /// A command declares both protected reads and concurrency, making its consistency boundary ambiguous.
     /// </summary>
+    [DiagnosticArgumentDefinitions("command:declaration;The command declaring both reads and concurrency.")]
     public const string DecisionReadsWithConcurrency = "PLAY0783";
 
     /// <summary>
     /// A read path does not name a declared command read or alias.
     /// </summary>
+    [DiagnosticArgumentDefinitions("path:text;The authored read path that resolves to no declared read and view property.", "read:text;The first path segment, the read name or alias that resolves to no declared read.", "command:declaration;The command whose read path is unknown.")]
     public const string UnknownReadPath = "PLAY0784";
 
     /// <summary>
     /// A read path names a view read more than once instead of a distinguishing alias.
     /// </summary>
+    [DiagnosticArgumentDefinitions("path:text;The authored read path that names a repeated read model.", "read:text;The read model name read more than once.", "command:declaration;The command whose read path is ambiguous.")]
     public const string AmbiguousReadPath = "PLAY0785";
 
     /// <summary>
@@ -3286,6 +3295,12 @@ public static class DiagnosticCodes
     /// A pending command handler intent coexists with another handler occurrence.
     /// </summary>
     public const string PendingIntentWithOtherHandler = "PLAY0698";
+
+    /// <summary>
+    /// A command handler requires a constrained implementation attachment.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command whose handler requires a constrained implementation attachment.")]
+    public const string CommandHandlerRequiresAttachment = "PLAY0800";
 
     /// <summary>A described command requires a target implementation.</summary>
     public const string DescribedCommandNotImplemented = "PLAY0695";

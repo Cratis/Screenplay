@@ -1,0 +1,96 @@
+// ============================================================
+// Catalog / Merchandising / Pricing - the price list and the board that shows products by status
+// ============================================================
+
+module Merchandising
+  feature Pricing
+    description "What each product costs"
+
+    slice StateChange SetProductPrice
+      description "Sets the selling price of a product; a price below zero is refused by the Money concept"
+      command SetProductPrice
+        productId ProductId identifier
+        price     Money
+        currency  CurrencyCode
+        effectiveFrom Date
+        produces ProductPriceSet
+          for productId
+          price    = price
+          currency = currency
+          effectiveFrom = effectiveFrom
+
+      event ProductPriceSet
+        price    Money
+        currency CurrencyCode
+        effectiveFrom Date
+
+      // The accepted path is specified in PublishPriceChange, where its public consequence is: a command specification cannot list the
+      // cascaded public event and an exact fact count would fail.
+
+      specification APriceBelowZeroIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        when SetProductPrice
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price     = -1
+          currency  = "NOK"
+          effectiveFrom = "2026-03-01"
+        then error "An amount cannot be negative"
+
+      screen SetPrice
+        template blueprint Cratis.Blueprint.Default FormScreen version "^1"
+          actions
+            action SetProductPrice
+              navigate to PricingBoard
+
+    slice StateView PricingBoard
+      description "Products as cards in columns by status"
+
+      readmodel PricedProduct
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        price     Money
+        status    ProductStatus
+
+      query AllPricedProducts => observable PricedProduct[]
+
+      projection PricedProductProjection => PricedProduct
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          price     = 0
+          status    = "draft"
+        from ProductPriceSet
+          price = price
+        from ProductApprovedForSale
+          status = "approved"
+        from ProductWithdrawn
+          status = "withdrawn"
+
+      screen PricingBoard
+        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pricingHeader
+              property title = "Pricing"
+              property subtitle = "Products by status - set a price to make one ready"
+          toolbar
+            toolbar actions
+              button setprice title "Set price" slice Merchandising.Pricing.SetProductPrice emphasis primary icon tag
+          board
+            data PricedProduct[] via query AllPricedProducts
+
+      specification TheBoardFollowsTheStatus
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+        given ProductWithdrawn
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku = "ACM-1000"
+        then readmodel PricedProduct
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          status    = "withdrawn"

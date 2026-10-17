@@ -87,13 +87,21 @@ Codes not listed in this table currently declare no arguments, including `PLAY01
 
 For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` clause once, in source order, across all forms. Nested lines are part of their step. Synthesized callers and defaults do not count; example and case expansion retain the authored position.
 
+For `PLAY0268`, `subject` is attached by the binder after it finishes, from source position, so a reporting site does not need to know its enclosing declaration. It is the innermost declaration whose node sits at the diagnostic's exact location, else one on the same line of the same file; a refusal with neither, such as a document-level one, carries no `subject`. A value a reporting site already passed is kept. The declaration kinds are `module`, `feature`, `slice`, `command`, `query`, `operation`, `system`, `eventsource`, `event`, `readmodel`, `screen`, `concept`, `type`, `policy`, `persona`, `trigger`, `reaction`, `projection`, `reducer`, `capture`, `specification` and `example`; the path follows the declaration-path rule above. `PLAY0367` and `PLAY0699` name a `command` or `concept` subject, and `PLAY0787` follows them.
+
 | Code | Argument | Kind | Optional | Meaning | Keyword values |
 |---|---|---|---|---|---|
 | `PLAY0044` | `text` | text | no | The authored mapping line that could not be read. | — |
 | `PLAY0075` | `text` | text | no | The authored projection mapping line that could not be read. | — |
 | `PLAY0101` | `text` | text | no | The authored mapping line or concrete value that could not be read. | — |
+| `PLAY0268` | `subject` | declaration | yes | The innermost declaration that contains the refused construct; absent for document-level refusals. | — |
+| `PLAY0268` | `issue` | text | yes | The tracking issue named by the refusal, such as Cratis/Screenplay#600, when it cites one. | — |
 | `PLAY0351` | `readmodel` | text | no | The read model named by the fixture. | — |
 | `PLAY0351` | `property` | text | no | The missing identifier or key-part property. | — |
+| `PLAY0367` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0367` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0367` | `pattern` | text | no | The decoded match pattern. | — |
+| `PLAY0367` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
 | `PLAY0468` | `query` | text | yes | The query reference when known at the reporting site. | — |
 | `PLAY0468` | `argument` | text | no | The unknown, repeated or missing argument name. | — |
 | `PLAY0514` | `property` | text | no | The authored projection target path. | — |
@@ -123,6 +131,26 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 | `PLAY0583` | `parameter` | text | yes | The parameter assigned by the case when known. | — |
 | `PLAY0583` | `type` | text | yes | The declared parameter type when available. | — |
 | `PLAY0583` | `text` | text | yes | The authored value or nested line that could not be read. | — |
+| `PLAY0699` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0699` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0699` | `pattern` | text | no | The decoded match pattern. | — |
+| `PLAY0699` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
+| `PLAY0781` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0781` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0781` | `readModel` | declaration | no | The read model declaration that cannot be protected. | — |
+| `PLAY0781` | `reason` | keyword | no | The closed refusal reason, the name of the decision-read refusal. | reducer, join, children, open-subscription, payload-key, by-parts, no-removal, empty-handled-set, named-source-or-stream, singleton, key-type, generated-key, optional-key, collection-key |
+| `PLAY0782` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0782` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0783` | `command` | declaration | no | The command declaring both reads and concurrency. | — |
+| `PLAY0784` | `path` | text | no | The authored read path that resolves to no declared read and view property. | — |
+| `PLAY0784` | `read` | text | no | The first path segment, the read name or alias that resolves to no declared read. | — |
+| `PLAY0784` | `command` | declaration | no | The command whose read path is unknown. | — |
+| `PLAY0785` | `path` | text | no | The authored read path that names a repeated read model. | — |
+| `PLAY0785` | `read` | text | no | The read model name read more than once. | — |
+| `PLAY0785` | `command` | declaration | no | The command whose read path is ambiguous. | — |
+| `PLAY0787` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0787` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0787` | `pattern` | text | no | The decoded match pattern. | — |
 | `PLAY0790` | `profile` | text | no | The ui profile that names the template. | — |
 | `PLAY0790` | `template` | text | no | The template name that nothing declares, or the blueprint does not ship. | — |
 | `PLAY0790` | `blueprint` | text | yes | The blueprint a template was expected from. | — |
@@ -151,6 +179,7 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 | `PLAY0799` | `profile` | text | no | The ui profile that names the template. | — |
 | `PLAY0799` | `template` | text | no | The template that cannot start a screen in a feature. | — |
 | `PLAY0799` | `blueprint` | text | yes | The blueprint the template comes from. | — |
+| `PLAY0800` | `subject` | declaration | no | The command whose handler requires a constrained implementation attachment. | — |
 
 ## The catalogue
 
@@ -168,7 +197,7 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 ### Event sources and command streams
 
 Event-source declarations and command stream routes are admitted by ESM v8.
-Property-path mappings and file/inline handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
+Property-path mappings remain refused with `PLAY0268`; file/inline handler commands require a constrained implementation attachment (`PLAY0800`). Binding reports `PLAY0273`
 for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
 `Default`, the reserved stored stream name `All` (including `id "All"`), or a routed fixture whose source identifier type cannot be resolved. Reserved-name checks are binding-only; authoring validation still accepts the declarations. For `All`, [rename the stream without retaining that stored-name pin](event-sources.md#rename-a-source-or-stream).
 A stream reference selects a classification, never the identity destination supplied by `for`.
@@ -298,6 +327,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
 | `PLAY0035` | Error | A command declares both `produces` and a file or code `handler`. A pending implementation intent may coexist with `produces`. |
+| `PLAY0800` | Error | A file/inline command handler requires a constrained implementation attachment. The `subject` argument identifies the command. This is a permanent limitation, not a construct awaiting ESM admission; hosts switch on this code rather than matching message text. |
 | `PLAY0695` | Information | A described command is admitted in ESM v23 but its pending payload implementation needs a target. The message names the command and RequirementId. |
 | `PLAY0696` | Error | A pending command handler has no productions, including response-only commands. Source remains valid; executable binding requires at least one production. |
 | `PLAY0697` | Error | A pending command handler has conditional productions (`produces when`). Result contract v1 requires unconditional productions. |
@@ -608,7 +638,26 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0785` | Error | The binder finds a read path naming a view read more than once instead of a distinguishing alias. |
 | `PLAY0786` | Information | The binder identifies an eligible legacy model at its first command `reads`; the typed repair adds the preamble to the application root (domain document) or sole document after preview, revision checks and explicit acceptance. It requires individual review, not fix-all. |
 
-`PLAY0781` reasons are `Reducer`, `Join` (including removal joins), `Children` (including nested scopes), `OpenSubscription`, `PayloadKey`, `ByParts`, `NoRemoval`, `EmptyHandledSet`, `NamedSourceOrStream`, `Singleton`, `KeyType`, `GeneratedKey`, `OptionalKey` and `CollectionKey`. Both `every` and `all` map to `OpenSubscription`. There is no derivative construct or reserved derivative reason. `reads … via query` retains its parser refusal, `PLAY0175`; it has no binder refusal enum value.
+`PLAY0781` reasons are `reducer`, `join` (including removal joins), `children` (including nested scopes), `open-subscription`, `payload-key`, `by-parts`, `no-removal`, `empty-handled-set`, `named-source-or-stream`, `singleton`, `key-type`, `generated-key`, `optional-key` and `collection-key`. Both `every` and `all` map to `open-subscription`. There is no derivative construct or reserved derivative reason. `reads … via query` retains its parser refusal, `PLAY0175`; it has no binder refusal enum value.
+
+Hosts read the refusal from the `PLAY0781` `reason` argument instead of the message text. Its values are the lowercase, hyphenated keywords above, which are published and never change; they are not the names of the C# `SemanticDecisionReadRefusal` enum. A host must tolerate values it does not know. `PLAY0784` and `PLAY0785` always carry the `command` that declares the read path. The `read` argument is the alias when the command gives one, otherwise the read model name.
+
+| Reason | Meaning | How to fix |
+|---|---|---|
+| `reducer` | A reducer builds the view. | Build the view with a projection, or read a different view. |
+| `join` | The projection joins, including a removal join. | Fill the view from the events of its own instance only; remove `join` and `remove via join`. |
+| `children` | The projection has children or nested scopes. | Read a flat view; keep the nested shape in a separate read model. |
+| `open-subscription` | The projection declares `every` or `all`. | Replace it with explicit `from <Event>` subscriptions. |
+| `payload-key` | An instance is routed by event payload instead of event-source identity. | Key the view by `$eventSourceId`. |
+| `by-parts` | The lookup or projection uses composite key parts. | Use one single-part key. |
+| `no-removal` | No removal event is declared for the view. | Add `remove with <Event>`. |
+| `empty-handled-set` | The view handles no finite, nonempty set of events. | Declare at least one `from <Event>`. |
+| `named-source-or-stream` | The projection or a handled event is routed through a named source, stream or sequence, or the reading command declares its own `stream` route. | Remove the routing, and the command's own `stream` route, so events reach the view by event-source identity. |
+| `singleton` | The view has no event-source instance key. | Give the view a `key` property. |
+| `key-type` | The lookup key is not text or a canonical UUID identity, does not match the command input, or the view's own key is optional or a collection. | Use a `String`, a String concept or a canonical `Uuid` key of a compatible type. |
+| `generated-key` | The key is generated after reads must run. | Take the key as a caller-supplied input, not a `generated` one. |
+| `optional-key` | The lookup key is optional. | Make the key required. |
+| `collection-key` | The lookup key is a collection. | Use a scalar key. |
 
 ### Rules about the whole artifact
 
@@ -1004,7 +1053,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including file/inline command handlers, query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes and performers, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
@@ -1074,7 +1123,9 @@ ESM v26 admits chronological Date/DateTime comparisons only in command `require`
 
 ESM v28 admits Uuid `==` and `!=` only in command `require` and `produces when`. `PLAY0268` refuses ordering, optional or collection operands, two different Uuid concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules and concept rules; a refused whole comparison reports only this code, without checking its literal. In an admitted comparison, a literal that is not a lowercase hyphenated 36-character Uuid reports `PLAY0273`. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
 
-For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
+A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet.
+
+For executable-model dispositions, see `PLAY0268`–`PLAY0271` above and `PLAY0800` under [commands](#commands), [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
 ### AST authoring
 
@@ -1453,7 +1504,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` reports that exact numeric mode is not admitted by any supported executable model (ESM) version yet, and unmarked documents keep their existing numeric behavior.
 
-These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. Attached file/inline handlers remain unsupported independently. Pending command handlers with unconditional productions bind in ESM v23 with `PLAY0695`; production-less and conditional forms report `PLAY0696` and `PLAY0697`. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. Attached file/inline handlers independently require a constrained implementation attachment (`PLAY0800`). Pending command handlers with unconditional productions bind in ESM v23 with `PLAY0695`; production-less and conditional forms report `PLAY0696` and `PLAY0697`. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
 ### Timeline order
 
@@ -1491,7 +1542,7 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
-Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths and attached file/inline handler commands still fail with `PLAY0268`. Pending command handlers with unconditional productions select ESM v23 (`PLAY0695`); no productions and conditional productions are binding errors `PLAY0696` and `PLAY0697`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths still fail with `PLAY0268`, and attached file/inline handler commands require a constrained implementation attachment (`PLAY0800`). Pending command handlers with unconditional productions select ESM v23 (`PLAY0695`); no productions and conditional productions are binding errors `PLAY0696` and `PLAY0697`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ### Negated claim targets
 

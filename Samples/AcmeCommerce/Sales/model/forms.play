@@ -1,0 +1,10 @@
+module Orders
+  // The decision dialog's input surfaces: approve needs only the order, reject also needs a reason
+  form ApproveOrderForm for ApproveOrder
+    field orderId label "Order"
+    on submit navigate to ApprovalInbox
+
+  form RejectOrderForm for RejectOrder
+    field orderId label "Order"
+    field reason label "Why is it rejected?"
+    on submit navigate to ApprovalInbox

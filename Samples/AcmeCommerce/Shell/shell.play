@@ -1,0 +1,27 @@
+// ============================================================
+// The application's shell: ONE root template (a blueprint AppShell), theme, packages and the sample-data pack
+//
+// Every domain's screens are drawn inside this shell. The custom package Acme.Commerce (@acme/scene.commerce)
+// ships acme:productCard, acme:stockBadge and acme:orderTimeline - rendering it needs `cratis render --package-set`
+// (see ../README.md).
+// ============================================================
+
+ui profile Web
+  target platform web
+  target size regular
+  theme Acme
+
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+    Acme.Commerce
+
+  root template blueprint Cratis.Blueprint.Default AppShell version "^1"
+
+  appearance
+    color scheme light
+    accent "#0D9488"
+
+  // The one place the active pack is chosen: demo data spans all five domains
+  sample data
+    active AcmeNordic

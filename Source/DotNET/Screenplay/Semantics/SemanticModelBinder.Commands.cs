@@ -45,7 +45,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var address = SemanticAddress.ForCommand(slice, command.Name);
-            var handler = BindCommandHandler(address, command);
+            var handler = BindCommandHandler(address, command, scope);
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier, commandProperty: true) with { IsGenerated = property.IsGenerated }).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
@@ -168,7 +168,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    var subject = CommandValidationSubject(rule.Property, property.Type);
+                    var subject = CommandValidationSubject(rule.Property, property.Type, address);
                     if (rule.Rule is not (ValidationRuleKind.Rule or ValidationRuleKind.Matches) &&
                         rule.Value is PathExpressionSyntax path && !subject.Values.Contains(path.Path, StringComparer.Ordinal) &&
                         properties.GetValueOrDefault(path.Path.Split('.')[0]) is { IsGenerated: true } operand)

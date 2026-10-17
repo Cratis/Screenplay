@@ -43,7 +43,8 @@ internal static class DiagnosticArgumentContracts
                 if (model.GetSymbolInfo(invocation).Symbol is not IMethodSymbol method || method.Name is not ("Error" or "Warning" or "Information")) continue;
                 var arguments = invocation.ArgumentList.Arguments;
                 if (arguments.Count == 0 || model.GetSymbolInfo(arguments[0].Expression).Symbol is not IFieldSymbol field || field.ContainingType.ToDisplayString() != "Cratis.Screenplay.Diagnostics.DiagnosticCodes") continue;
-                if (!field.GetAttributes().Any(attribute => attribute.AttributeClass?.Name == "DiagnosticArgumentDefinitionsAttribute")) continue;
+                var declared = field.GetAttributes().SingleOrDefault(attribute => attribute.AttributeClass?.Name == "DiagnosticArgumentDefinitionsAttribute");
+                if (declared?.NamedArguments.Any(pair => pair.Key == "AttachedByBinder" && pair.Value.Value is true) != false) continue;
                 if (arguments.Count >= 4) continue;
                 context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("SPCON003", "Diagnostic arguments missing", "Diagnostic {0} declares arguments; pass its subjects to the reporting sink", "Contract", DiagnosticSeverity.Error, true), invocation.GetLocation(), field.Name));
             }

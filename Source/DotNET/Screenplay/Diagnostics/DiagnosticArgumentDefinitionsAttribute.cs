@@ -14,4 +14,9 @@ public sealed class DiagnosticArgumentDefinitionsAttribute(params string[] defin
     /// Gets the argument declarations in source order.
     /// </summary>
     public IReadOnlyList<string> Definitions { get; } = definitions;
+
+    /// <summary>
+    /// Gets a value indicating whether the binder attaches the arguments after reporting, so reporting sites may pass none.
+    /// </summary>
+    public bool AttachedByBinder { get; init; }
 }

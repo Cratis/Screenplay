@@ -43,7 +43,8 @@ public sealed partial class SemanticModelBinder
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     "A public or foreign import has no local shape to execute. Declare the foreign public event with its own fields as 'event <Name> from \"<store>\"' instead (#481).",
-                    node.Location));
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#481")));
             }
 
             if (node is SliceSyntax { Direction: not null })
@@ -61,7 +62,8 @@ public sealed partial class SemanticModelBinder
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     "Specification event routes are not admitted by any supported executable model (ESM) version yet (#457).",
-                    node.Location));
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#457")));
             }
             if (!CompositeStreamIdsJoin && ((node is EventStreamSyntax declaration && declaration.StreamIdParts.Any()) ||
                 (node is CommandStreamSyntax route && route.StreamIdParts.Any()) ||
@@ -70,14 +72,16 @@ public sealed partial class SemanticModelBinder
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     "Composite stream ids are not admitted by any supported executable model (ESM) version yet (#462).",
-                    node.Location));
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#462")));
             }
             if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     "Operations and systems are not admitted by any supported executable model (ESM) version yet (#301).",
-                    node.Location));
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
             }
         }
 

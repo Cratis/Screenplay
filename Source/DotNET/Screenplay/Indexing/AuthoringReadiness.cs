@@ -34,8 +34,17 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
 
     internal bool SyntaxOnly(SyntaxNode node) => UnadmittedFeatures(node).Length > 0;
 
-    internal string? ExecutionReadiness(SyntaxNode node, string? suffix = "use Authoring validation.") =>
-        UnadmittedFeatures(node) is var features && features.Length > 0 ? $"Not admitted by any supported executable model (ESM) version yet (PLAY0268): {string.Join(", ", features)}{(suffix is null ? "." : $"; {suffix}")}" : null;
+    internal string? ExecutionReadiness(SyntaxNode node, string? suffix = "use Authoring validation.")
+    {
+        var features = UnadmittedFeatures(node);
+        if (features.Length == 0) return null;
+        var awaitingAdmission = features.Where(feature => feature != "command handlers (PLAY0800)").ToArray();
+        var reasons = new List<string>();
+        if (awaitingAdmission.Length > 0) reasons.Add($"Not admitted by any supported executable model (ESM) version yet (PLAY0268): {string.Join(", ", awaitingAdmission)}");
+        if (features.Contains("command handlers (PLAY0800)")) reasons.Add("command handlers require a constrained implementation attachment (PLAY0800)");
+
+        return $"{string.Join("; ", reasons)}{(suffix is null ? "." : $"; {suffix}")}";
+    }
 
     internal IEnumerable<string> ProducedEvents(CommandSyntax command) => command.Produces
         .Where(production => _owners.TryGetValue(command, out var slice) && _productions.IsEventProduction(production, slice))
@@ -110,7 +119,8 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             SpecificationExampleSyntax example => FixtureFeatures(example.Stream, example.NoStream),
             CommandSyntax command =>
                 (command.Stream is { } route ? RouteFeatures(route) : [])
-                .Concat(Feature(command.Handler is not null && !(DescribedCommandAdmission.IsDescribed(command) && DescribedCommandAdmission.Refusal(command) is null), "command handlers")),
+                .Concat(Feature(command.Handler is not null && !DescribedCommandAdmission.IsDescribed(command), "command handlers (PLAY0800)"))
+                .Concat(Feature(DescribedCommandAdmission.IsDescribed(command) && DescribedCommandAdmission.Refusal(command) is not null, "command handlers")),
             SpecificationSyntax specification =>
                 specification.Given.Concat(specification.ThenEvents)
                     .Concat(specification.WhenAppended is { } appended ? [appended] : [])

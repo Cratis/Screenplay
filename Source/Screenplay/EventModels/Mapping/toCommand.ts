@@ -79,7 +79,7 @@ function routeDetails(command: CommandSyntax): string {
     if (!route) return escape(overrides.join('\n'));
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
         route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : route.streamIdParts.length > 0 ? `Stream id: ${route.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : '',
-        command.handler ? 'Command handlers remain unadmitted (PLAY0268).' :
+        command.handler ? 'Command handlers require a constrained implementation attachment (PLAY0800).' :
             [route.streamId?.source, ...route.streamIdParts.map(part => part.source)].some(source => source?.kind === 'PathExpressionSyntax' && source.path.includes('.')) ?
                 'Property paths remain unadmitted (PLAY0268).' :
                 'Admitted by ESM v8: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',

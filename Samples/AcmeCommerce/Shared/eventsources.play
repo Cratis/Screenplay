@@ -1,0 +1,64 @@
+// ============================================================
+// Event sources - the things events happen to, one per aggregate across all five contexts
+//
+// Declared once here because a source is a name every context may refer to (Order is appended to by Sales and
+// read by the others through public events). A domain that needs another stream declares it with the stream
+// of its own event source.
+// ============================================================
+
+// ---- Catalog -------------------------------------------------------------------------------------------------
+eventsource Product
+  description "One product in the catalogue"
+  identifier ProductId
+
+// ---- Storefront ----------------------------------------------------------------------------------------------
+eventsource Customer
+  description "A registered shopper"
+  identifier CustomerId
+  stream Lifecycle
+    description "Registration and profile of one customer"
+
+eventsource Basket
+  description "A shopper's basket before checkout"
+  identifier BasketId
+  stream Contents
+    description "What is added to and removed from one basket"
+
+// ---- Sales ---------------------------------------------------------------------------------------------------
+eventsource Order
+  description "One customer order"
+  identifier OrderId
+  stream Lifecycle
+    description "Intake, approval, confirmation and status of one order"
+
+// ---- Purchasing ----------------------------------------------------------------------------------------------
+eventsource Supplier
+  description "A company we buy from"
+  identifier SupplierId
+  stream Lifecycle
+    description "Registration and offers of one supplier"
+
+eventsource PurchaseOrder
+  description "One purchase order to a supplier"
+  identifier PurchaseOrderId
+  stream Lifecycle
+    description "Creation, submission and receipt of one purchase order"
+
+// ---- Warehouse -----------------------------------------------------------------------------------------------
+eventsource StockItem
+  description "The physical stock of one SKU"
+  identifier Sku
+  stream Movements
+    description "Every movement of one SKU: registration, reservation, receipt, adjustment"
+
+eventsource Shipment
+  description "The parcel that leaves for one order"
+  identifier OrderId
+  stream Handling
+    description "Picking, packing and dispatch of one order"
+
+eventsource Location
+  description "A shelf or bin in the warehouse"
+  identifier LocationCode
+  stream Lifecycle
+    description "Everything that happens to one location"

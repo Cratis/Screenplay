@@ -1,0 +1,100 @@
+// RENDER VARIANT ONLY (Storefront). Stage cannot render Translate slices or public events (STAGE-ESM-024/032/033), so the rendered shop is
+// fed the way a single event store can feed it: a command per inbound private event (a private event declared in a view slice gets no
+// generated [EventType], so it is declared HERE in the StateChange slice that produces it) and reactions that invoke those commands.
+module Shop
+  feature Browse
+    slice StateChange ListProduct
+      description "Render bridge for the inbound translation ListProduct"
+      command ListProduct
+        sku              Sku identifier
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+        produces ProductListed
+          for sku
+          productId        = productId
+          title            = title
+          shortDescription = shortDescription
+          slug             = slug
+          category         = category
+          displayPrice     = displayPrice
+          currency         = currency
+          imageUrl         = imageUrl
+          available        = available
+      event ProductListed
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+
+    slice StateChange ChangeDisplayPrice
+      description "Render bridge for UpdateDisplayPrice"
+      command ChangeDisplayPrice
+        sku           Sku identifier
+        displayPrice  Money
+        currency      CurrencyCode
+        effectiveFrom Date
+        produces DisplayPriceChanged
+          for sku
+          displayPrice  = displayPrice
+          currency      = currency
+          effectiveFrom = effectiveFrom
+      event DisplayPriceChanged
+        displayPrice  Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+    slice StateChange DelistListedProduct
+      description "Render bridge for DelistProduct"
+      command DelistListedProduct
+        sku       Sku identifier
+        productId ProductId
+        produces ProductDelisted
+          for sku
+          productId = productId
+      event ProductDelisted
+        productId ProductId
+
+    slice StateChange ChangeAvailability
+      description "Render bridge for UpdateAvailability"
+      command ChangeAvailability
+        sku       Sku identifier
+        available StockQuantity
+        produces AvailabilityChanged
+          for sku
+          available = available
+      event AvailabilityChanged
+        available StockQuantity
+
+  feature MyOrders
+    slice StateChange UpdateMyOrder
+      description "Render bridge for TrackOrderStatus"
+      command UpdateMyOrder
+        orderId OrderId identifier
+        status  OrderStatus
+        produces MyOrderUpdated
+          for orderId
+          status = status
+      event MyOrderUpdated
+        status OrderStatus
+
+    // Sales' status events reach the shop through reactions (what the public OrderStatusChanged does in the source model)
+    slice Automation TrackApprovedOrders
+      reaction TrackApproval
+        runs as system role "Shopper"
+        when OrderApproved
+          orderId
+          invokes UpdateMyOrder
+            orderId = orderId
+            status  = "approved"

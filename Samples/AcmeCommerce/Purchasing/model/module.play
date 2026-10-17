@@ -1,0 +1,11 @@
+// Purchasing: buying from suppliers. Module skeleton (features are filled by the Purchasing slices).
+// Inherits the application's navigation.
+module Buying
+  description "Suppliers, replenishment and purchase orders"
+  authorize CanBuy
+
+  feature Suppliers
+  feature Replenishment
+  feature PurchaseOrders
+  feature Demand
+  feature Overview

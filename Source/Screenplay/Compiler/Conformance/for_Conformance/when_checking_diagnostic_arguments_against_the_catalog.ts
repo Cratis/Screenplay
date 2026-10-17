@@ -18,7 +18,7 @@ describe('when checking diagnostic arguments against the catalog', () => {
     it('should check a nonempty catalog and vector population', () => {
         catalog.diagnostics.length.should.be.greaterThan(100);
         vectors.cases.length.should.be.greaterThan(100);
-        catalog.diagnostics.filter(fact => (fact.arguments?.length ?? 0) > 0).length.should.equal(25);
+        catalog.diagnostics.filter(fact => (fact.arguments?.length ?? 0) > 0).length.should.equal(35);
     });
 
     for (const vector of vectors.cases) {
