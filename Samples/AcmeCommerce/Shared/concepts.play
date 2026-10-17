@@ -1,0 +1,147 @@
+// ============================================================
+// The shared kernel - concepts, enums and composite values
+//
+// Every domain uses these names with the same meaning. Validation lives on the concept, so the rule travels with
+// the value into every command, event and read model (and into every generated client).
+// ============================================================
+
+// ---- identities --------------------------------------------------------------------------------------------
+concept ProductId       : Uuid
+concept OrderId         : Uuid
+concept CustomerId      : Uuid
+concept BasketId        : Uuid
+concept SupplierId      : Uuid
+concept PurchaseOrderId : Uuid
+concept ShipmentId      : Uuid
+
+concept LocationCode : String
+  validate
+    not empty  message "A location needs a code"
+    max 16     message "A location code has at most 16 characters"
+
+// A SKU is the key every context knows a product by: ACM-1000
+concept Sku : String
+  validate
+    not empty            message "A SKU is required"
+    min 7                message "A SKU has at least 7 characters"
+    max 24               message "A SKU has at most 24 characters"
+    starts with "ACM-"   message "A SKU starts with ACM-"
+    not contains " "     message "A SKU has no spaces"
+
+concept PurchaseOrderNumber : String
+  validate
+    not empty            message "A purchase order needs a number"
+    starts with "PO-"    message "A purchase order number starts with PO-"
+    not contains " "     message "A purchase order number has no spaces"
+
+concept TrackingNumber : String
+  validate
+    not empty  message "A tracking number is required"
+
+concept SupplierTaxId : String
+  validate
+    not empty  message "A supplier needs a tax id"
+
+// ---- names and text ----------------------------------------------------------------------------------------
+concept ProductName : String
+  validate
+    not empty  message "A product needs a name"
+    max 120    message "A product name has at most 120 characters"
+
+concept PersonName : String
+  validate
+    not empty  message "A name is required"
+
+concept EmailAddress : String pii
+  pii reason "Contact address of a customer; lawful basis: contract."
+  validate
+    contains "@"  message "An email address contains @"
+
+// ---- amounts and quantities --------------------------------------------------------------------------------
+concept Money : Decimal
+  validate
+    >= 0  message "An amount cannot be negative"
+
+concept CurrencyCode : String
+  validate
+    length == 3  message "A currency code has three letters"
+
+// How many of something is ordered, picked or received: at least one
+concept Quantity : Int
+  validate
+    > 0  message "A quantity is at least one"
+
+// How many of something is on the shelf: may be zero
+concept StockQuantity : Int
+  validate
+    >= 0  message "Stock cannot be negative"
+
+concept LeadTimeDays : Int
+  validate
+    >= 0  message "A lead time cannot be negative"
+
+concept DiscountPercent : Decimal
+  validate
+    >= 0    message "A discount cannot be negative"
+    <= 100  message "A discount cannot exceed 100%"
+
+// ---- enums: pinned numbers, so the stored identity survives reordering --------------------------------------
+concept ProductStatus : Enum
+  draft = 0
+  approved = 1
+  published = 2
+  withdrawn = 3
+
+concept OrderStatus : Enum
+  received = 0
+  approved = 1
+  rejected = 2
+  onHold = 3
+  confirmed = 4
+  shipped = 5
+  fulfilled = 6
+  cancelled = 7
+
+concept PurchaseOrderStatus : Enum
+  draft = 0
+  submitted = 1
+  partiallyReceived = 2
+  received = 3
+  cancelled = 4
+
+concept ShipmentStatus : Enum
+  toPick = 0
+  picking = 1
+  packed = 2
+  dispatched = 3
+
+concept Carrier : Enum
+  posten = 0
+  dhl = 1
+  ups = 2
+
+concept StockAdjustmentReason : Enum
+  count = 0
+  damaged = 1
+  found = 2
+  returned = 3
+  correction = 4
+
+// ---- composite values --------------------------------------------------------------------------------------
+type PostalAddress
+  description "Where an order is delivered"
+  street     String
+  city       String
+  postalCode String
+  country    String
+
+// A line on an order as the shop and sales know it: what, how many, at what price
+type OrderLine
+  sku       Sku
+  quantity  Quantity
+  unitPrice Money
+
+// A line on an order as warehouse and purchasing know it: what and how many (no price)
+type StockLine
+  sku      Sku
+  quantity Quantity
