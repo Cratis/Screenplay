@@ -70,7 +70,11 @@ sealed class WorkspaceAuthoringTransaction(
         {
             return Failure(WorkspaceConflictKind.InvalidIdentityMigration, exception.Message, exception.IdentityMigrationIssues);
         }
-        catch (Exception exception) when (exception is InvalidWorkspaceAuthoring or InvalidScreenplayWorkspace or InvalidWorkspaceDocument or InvalidPortablePlayPath or JsonException or ArgumentException or InvalidOperationException ||
+        catch (InvalidWorkspaceAuthoring exception)
+        {
+            return Failure(WorkspaceConflictKind.InvalidOperation, exception.Message, document: exception.Document, path: exception.Path);
+        }
+        catch (Exception exception) when (exception is InvalidScreenplayWorkspace or InvalidWorkspaceDocument or InvalidPortablePlayPath or JsonException or ArgumentException or InvalidOperationException ||
             exception.GetType().Namespace == "Cratis.Screenplay.Syntax.Serialization")
         {
             return Failure(WorkspaceConflictKind.InvalidOperation, exception.Message);
@@ -434,9 +438,9 @@ sealed class WorkspaceAuthoringTransaction(
         }
     }
 
-    WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message, ImmutableArray<IdentityMigrationIssue> identityMigrationIssues = default) => new()
+    WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message, ImmutableArray<IdentityMigrationIssue> identityMigrationIssues = default, DocumentId? document = null, PortablePlayPath? path = null) => new()
     {
-        Conflicts = [new WorkspaceConflict { Kind = kind, Message = message, IdentityMigrationIssues = identityMigrationIssues.IsDefault ? [] : identityMigrationIssues }],
+        Conflicts = [new WorkspaceConflict { Kind = kind, Message = message, Document = document, Path = path, IdentityMigrationIssues = identityMigrationIssues.IsDefault ? [] : identityMigrationIssues }],
         AuthoringDiagnostics = _diagnostics.ToImmutable()
     };
 }

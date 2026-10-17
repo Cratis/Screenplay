@@ -46,7 +46,7 @@ static class WorkspaceAuthoringReferences
             previous.TryGetValue(key, out var matches);
             if (matches is { Length: > 1 })
             {
-                throw new InvalidWorkspaceAuthoring($"Reference correspondence is not unique at '{binding.Reference.Key}'.");
+                throw Refusal($"Reference correspondence is not unique at '{binding.Reference.Key}'.", (binding.Reference, currentIndex, "current"));
             }
 
             var original = matches?.SingleOrDefault();
@@ -63,13 +63,13 @@ static class WorkspaceAuthoringReferences
             {
                 if (binding.Target is null || (original.Reference.Text == binding.Reference.Text && !SameTarget(resolved, binding.Target, targetMigrations)))
                 {
-                    throw new InvalidWorkspaceAuthoring($"Existing reference '{binding.Reference.Key}' would lose its resolved target or silently rebind unchanged reference text. Edit the reference explicitly to a valid target, or supply a semantic migration for a genuine identity rename.");
+                    throw Refusal($"Existing reference '{binding.Reference.Key}' would lose its resolved target or silently rebind unchanged reference text. Edit the reference explicitly to a valid target, or supply a semantic migration for a genuine identity rename.", (binding.Reference, currentIndex, "current"));
                 }
             }
             else if (original is not null && binding.Target is not null && original.Reference.Text == binding.Reference.Text &&
                 !IsCreatedDeclaration(binding.Target, previousIndex, currentIndex, migrations))
             {
-                throw new InvalidWorkspaceAuthoring($"Existing reference binding debt at '{binding.Reference.Key}' would become resolved; its intended target cannot be inferred safely.");
+                throw Refusal($"Existing reference binding debt at '{binding.Reference.Key}' would become resolved; its intended target cannot be inferred safely.", (binding.Reference, currentIndex, "current"));
             }
             else if (binding.Target is null)
             {
@@ -77,7 +77,7 @@ static class WorkspaceAuthoringReferences
                     SyntaxJson.StructurallyEqual(original.Reference.Entry.Node, binding.Reference.Entry.Node);
                 if (!unchanged && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Safe)
                 {
-                    throw new InvalidWorkspaceAuthoring($"New {binding.Outcome} {binding.Reference.Domain} reference '{binding.Reference.Text}' at '{binding.Reference.Key}'. Use Draft to retain deliberate reference debt.");
+                    throw Refusal($"New {binding.Outcome} {binding.Reference.Domain} reference '{binding.Reference.Text}' at '{binding.Reference.Key}'. Use Draft to retain deliberate reference debt.", (binding.Reference, currentIndex, original is null ? "introduced" : "current"));
                 }
 
                 ReportDebt(binding, diagnostics);
@@ -86,16 +86,27 @@ static class WorkspaceAuthoringReferences
 
         var disappeared = previousBindings.Where(binding => !matched.Contains(binding.Reference.Key) && !routeSelections.Removed.Contains(binding.Reference.Key)).ToList();
         PairRelocated(introduced, disappeared, previousIndex, currentIndex, new(migrations, targetMigrations));
-        if ((introduced.Count > 0 && disappeared.Count > 0) || (routeSelections.Removed.Count > 0 && disappeared.Count > 0))
+        var ambiguous = disappeared.Select(binding => binding.Reference.Text).Intersect(introduced.Select(binding => binding.Reference.Text), StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
+        if (ambiguous.Count > 0)
         {
-            throw new InvalidWorkspaceAuthoring("Reference occurrence correspondence cannot be proven for simultaneous removal/reordering and insertion. Split explicit removals and additions, or preserve the existing occurrence owners with semantic migrations.");
+            throw Refusal(
+                "A reference with the same text was both removed and added, so its occurrence correspondence is ambiguous. Use propose-move or semantic migrations to preserve identity, or split the proposal into removals and additions.",
+                [.. disappeared.Where(binding => ambiguous.Contains(binding.Reference.Text)).Select(binding => (binding.Reference, previousIndex, "disappeared")),
+                 .. introduced.Where(binding => ambiguous.Contains(binding.Reference.Text)).Select(binding => (binding.Reference, currentIndex, "introduced"))]);
+        }
+        if (routeSelections.Removed.Count > 0 && disappeared.Count > 0)
+        {
+            throw Refusal(
+                "Explicit stream candidate selection cannot account for other removed references. Split the proposal into route selection and reference removals.",
+                [.. disappeared.Select(binding => (binding.Reference, previousIndex, "disappeared")),
+                 .. previousBindings.Where(binding => routeSelections.Removed.Contains(binding.Reference.Key)).Select(binding => (binding.Reference, previousIndex, "disappeared"))]);
         }
     }
 
     // Removing or reordering a sibling shifts the collection index in every later reference path, so an
     // unchanged reference looks like one that disappeared plus one that was introduced. Pair them only when
     // they are the same reference: same owner, same member, same text and the same resolved target. Anything
-    // left unpaired still fails the correspondence check, so no reference is silently rebound.
+    // left unpaired is an independent edit unless the same text disappeared and appeared elsewhere.
     static void PairRelocated(
         List<WorkspaceReferenceBinding> introduced,
         List<WorkspaceReferenceBinding> disappeared,
@@ -182,41 +193,59 @@ static class WorkspaceAuthoringReferences
         foreach (var operation in request.Operations.OfType<ReplaceWorkspaceNode>())
         {
             var entry = before.Find(operation.Target);
-            if (entry?.Node is not CommandSyntax { Stream: null } command || entry.Address is null ||
+            if (entry?.Node is not CommandSyntax { Stream: null } command ||
                 operation.Node is not CommandSyntax { Stream: { PropertyCandidate: null } route } replacement)
             {
                 continue;
             }
-            var candidates = command.StreamCandidates.Where(candidate => candidate.PropertyCandidate is not null &&
-                candidate.EventSource == route.EventSource && candidate.Stream == route.Stream && RetainedRouteSpan(before.Workspace, entry, candidate)).Take(2).ToArray();
-            if (candidates is not [var selected]) continue;
+            var retained = command.StreamCandidates.Where(candidate => candidate.PropertyCandidate is not null).ToArray();
+            if (retained.Length == 0) continue;
+            var candidates = retained.Where(candidate => candidate.EventSource == route.EventSource && candidate.Stream == route.Stream &&
+                RetainedRouteSpan(before.Workspace, entry, candidate)).Take(2).ToArray();
+            if (candidates is not [var selected] || entry.Address is null)
+            {
+                throw UnprovenRouteSelection(before, entry, retained[0]);
+            }
             var intended = command with
             {
                 Stream = selected with { PropertyCandidate = null, StreamId = route.StreamId, StreamIdParts = route.StreamIdParts },
                 StreamCandidates = [.. command.StreamCandidates.Where(candidate => !ReferenceEquals(candidate, selected))]
             };
-            if (!SyntaxJson.StructurallyEqual(intended, replacement)) continue;
+            if (!SyntaxJson.StructurallyEqual(intended, replacement)) throw UnprovenRouteSelection(before, entry, selected);
             var owners = after.Entries.Where(value => value.Handle.Document == entry.Handle.Document && entry.Address.Equals(value.Address) && value.Node is CommandSyntax).Take(2).ToArray();
             if (owners is not [var owner] || owner.Node is not CommandSyntax { Stream: { } current } ||
                 !SyntaxJson.StructurallyEqual(current, route))
             {
-                continue;
+                throw UnprovenRouteSelection(before, entry, selected);
             }
             previousFacts ??= WorkspacePhysicalReadView.Create(before.Workspace);
             currentFacts ??= WorkspacePhysicalReadView.Create(after.Workspace);
             if (!previousFacts.IsComplete || !currentFacts.IsComplete || !SamePhysicalRoute(previousFacts, currentFacts, route))
             {
-                throw new InvalidWorkspaceAuthoring("Cannot prove explicit stream candidate selection: the source and stream must have unchanged, unique physical declarations in resolved, complete source.");
+                var occurrence = before.Entries.FirstOrDefault(value => ReferenceEquals(value.Node, selected.PropertyCandidate!.Type)) ?? entry;
+                throw Refusal(
+                    "Cannot prove explicit stream candidate selection: the source and stream must have unchanged, unique physical declarations in resolved, complete source.",
+                    (new WorkspaceReferenceMember(occurrence, "name", null, selected.PropertyCandidate!.Type.Name, WorkspaceReferenceDomain.Type), before, "disappeared"));
             }
             var candidateTypes = before.Entries.Where(value => ReferenceEquals(value.Node, selected.PropertyCandidate!.Type)).Take(2).ToArray();
             var routeEntries = after.Entries.Where(value => ReferenceEquals(value.Node, current)).Take(2).ToArray();
-            if (candidateTypes is not [var candidateType] || routeEntries is not [var routeEntry]) continue;
+            if (candidateTypes is not [var candidateType] || routeEntries is not [var routeEntry]) throw UnprovenRouteSelection(before, entry, selected);
             removed.Add(new WorkspaceReferenceMember(candidateType, "name", null, selected.PropertyCandidate!.Type.Name, WorkspaceReferenceDomain.Type).Key);
             introduced.Add(new WorkspaceReferenceMember(routeEntry, "eventSource", null, route.EventSource, WorkspaceReferenceDomain.EventSource).Key);
             introduced.Add(new WorkspaceReferenceMember(routeEntry, "stream", null, route.Stream, WorkspaceReferenceDomain.EventStream, route.EventSource).Key);
         }
 
         return (removed, introduced);
+    }
+
+    static InvalidWorkspaceAuthoring UnprovenRouteSelection(WorkspaceSyntaxIndex before, WorkspaceSyntaxEntry command, CommandStreamSyntax candidate)
+    {
+        var type = candidate.PropertyCandidate!.Type;
+        var occurrence = before.Entries.FirstOrDefault(entry => ReferenceEquals(entry.Node, type)) ?? command;
+
+        return Refusal(
+            "Cannot prove explicit stream candidate selection: select exactly one retained candidate without changing other command structure or its owner.",
+            (new WorkspaceReferenceMember(occurrence, "name", null, type.Name, WorkspaceReferenceDomain.Type), before, "disappeared"));
     }
 
     static bool RetainedRouteSpan(ScreenplayWorkspace workspace, WorkspaceSyntaxEntry command, CommandStreamSyntax candidate)
@@ -247,6 +276,21 @@ static class WorkspaceAuthoringReferences
         var streams = before.Entries.Where(entry => entry.Parent == original.Handle && entry.Node is EventStreamSyntax stream && stream.Name == route.Stream).Take(2).ToArray();
 
         return streams.Length == 1;
+    }
+
+    static InvalidWorkspaceAuthoring Refusal(string message, params (WorkspaceReferenceMember Reference, WorkspaceSyntaxIndex Index, string Change)[] occurrences)
+    {
+        var first = occurrences[0];
+        var document = first.Index.Workspace.Documents.Single(document => document.Id == first.Reference.Entry.Handle.Document);
+        var details = occurrences.Take(10).Select(occurrence =>
+        {
+            var reference = occurrence.Reference;
+            var path = occurrence.Index.Workspace.Documents.Single(document => document.Id == reference.Entry.Handle.Document).Path;
+            return $"{occurrence.Change}: '{reference.Text}' ({reference.Member}, {reference.Domain}) in '{path}' at {reference.Entry.Location.Line}:{reference.Entry.Location.Column} ({reference.Path})";
+        });
+        var remaining = occurrences.Length > 10 ? $"; and {occurrences.Length - 10} more" : string.Empty;
+
+        return new($"{message} Occurrences: {string.Join("; ", details)}{remaining}.", document.Id, document.Path);
     }
 
     static void ReportDebt(WorkspaceReferenceBinding binding, ImmutableArray<Diagnostic>.Builder diagnostics) => diagnostics.Add(Diagnostic.Warning(
