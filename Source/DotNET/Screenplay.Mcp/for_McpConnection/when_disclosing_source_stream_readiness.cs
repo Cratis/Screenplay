@@ -114,7 +114,7 @@ public class when_disclosing_source_stream_readiness
         var source = "numbers exact\nsystem Mailer\n" + Sources + "module M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n" + string.Concat(reverse ? commands.Reverse() : commands);
         var snapshot = new McpSnapshot([Document("model.play", source)]);
         snapshot.Compilation.Success.ShouldBeTrue();
-        const string expected = "Not admitted by any supported executable model (ESM) version yet (PLAY0268): exact numbers (#285), operations and systems (#301), command handlers; use Authoring validation.";
+        const string expected = "Not admitted by any supported executable model (ESM) version yet (PLAY0268): exact numbers (#285), operations and systems (#301); command handlers require a constrained implementation attachment (PLAY0800); use Authoring validation.";
         snapshot.Index.Readiness.ModelExecutionReadiness.ShouldEqual(expected);
         Details(snapshot, "M.F.S", "Slice", "summary").GetProperty("executionReadiness").GetString().ShouldEqual(expected);
     }
@@ -218,7 +218,16 @@ public class when_disclosing_source_stream_readiness
     {
         details.GetProperty("syntaxOnly").GetBoolean().ShouldEqual(feature is not null);
         if (feature is null) details.GetProperty("executionReadiness").ValueKind.ShouldEqual(JsonValueKind.Null);
-        else details.GetProperty("executionReadiness").GetString().ShouldContain(feature);
+        else
+        {
+            var readiness = details.GetProperty("executionReadiness").GetString();
+            readiness.ShouldContain(feature);
+            if (feature == "command handlers")
+            {
+                readiness.ShouldContain("PLAY0800");
+                readiness.ShouldNotContain("PLAY0268");
+            }
+        }
     }
 
     static JsonElement Details(McpSnapshot snapshot, string address, string kind, string view) => Json(McpDeclarationDetails.Read(snapshot, Json(new { address, kind, view }))).GetProperty("details");

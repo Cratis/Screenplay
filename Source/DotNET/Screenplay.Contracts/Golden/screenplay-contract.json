@@ -37819,6 +37819,25 @@
           "meaning": "The blueprint the template comes from."
         }
       ]
+    },
+    {
+      "code": "PLAY0800",
+      "name": "CommandHandlerRequiresAttachment",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command handler requires a constrained implementation attachment.",
+      "reserved": false,
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The command whose handler requires a constrained implementation attachment."
+        }
+      ]
     }
   ],
   "mcpTools": [

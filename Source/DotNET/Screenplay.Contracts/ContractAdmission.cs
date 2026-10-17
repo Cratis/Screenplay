@@ -282,7 +282,7 @@ static class ContractAdmission
         return ScreenplayWorkspace.Create("Contract", [.. documents], catalog).Compilation;
     }
 
-    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration || diagnostic.Code == DiagnosticCodes.DescribedCommandWithoutProductions || diagnostic.Code == DiagnosticCodes.DescribedCommandCardinalityNotAdmitted;
+    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.ReservedSequenceGeneration || diagnostic.Code == DiagnosticCodes.DescribedCommandWithoutProductions || diagnostic.Code == DiagnosticCodes.DescribedCommandCardinalityNotAdmitted;
 
     static void EnsureValidProbe(string probe, CompilationResult<SemanticCompilation> compilation)
     {

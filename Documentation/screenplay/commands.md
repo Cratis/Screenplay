@@ -771,7 +771,7 @@ Neither renderers nor reference execution evaluate these event-property mappings
 
 Reference execution evaluates authorization, validation, routing and generated values in their ordinary order, then returns **Unsupported (`ImplementationBody`)** when it reaches the body, directly or through an invoking reaction. The reason names the command and RequirementId; no production mapping runs or event is emitted. Earlier denial/validation specifications still execute; unsupported specifications are counted separately and an all-unsupported run is never green. Historical `given` events remain ordinary facts.
 
-**Realization is deferred.** The pending sidecar requirement carries ordered hints, flags and a CommandHandler typed-context descriptor with context/result versions 1. An admitting target supplies the body, not Screenplay. Moving to a file keeps the RequirementId, but attached handlers cannot keep `produces` today and remain refused with `PLAY0268`. Screenplay defines no filled-body reuse across renders until a later decision defines the attached result contract and body ABI.
+**Realization is deferred.** The pending sidecar requirement carries ordered hints, flags and a CommandHandler typed-context descriptor with context/result versions 1. An admitting target supplies the body, not Screenplay. Moving to a file keeps the RequirementId, but attached handlers cannot keep `produces` today and require a constrained implementation attachment (`PLAY0800`). Screenplay defines no filled-body reuse across renders until a later decision defines the attached result contract and body ABI.
 
 | Owner | `implementation` wrapper |
 | --- | --- |
@@ -780,7 +780,7 @@ Reference execution evaluates authorization, validation, routing and generated v
 | Operation execute/compensate phases | New syntax-only authoring wrapper; not admitted by any supported executable model (ESM) version yet |
 | Provisioning | Deferred |
 
-`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. File/inline handlers still fail executable admission with `PLAY0268`; described command admission requires consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
+`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. File/inline handlers require a constrained implementation attachment (`PLAY0800`); described command admission requires consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 
 ## Concurrency
 

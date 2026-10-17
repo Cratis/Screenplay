@@ -31,8 +31,8 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShippingCleared' not found"),
 
         // Code attachments (#139).
-        (Unsupported, "Command 'ProcessInvoiceBatch' handler"),
-        (Unsupported, "Command 'ArchiveOldInvoices' handler"),
+        (DiagnosticCodes.CommandHandlerRequiresAttachment, "Command 'ProcessInvoiceBatch' handler"),
+        (DiagnosticCodes.CommandHandlerRequiresAttachment, "Command 'ArchiveOldInvoices' handler"),
         (Unsupported, "Constraint 'InvoiceStatusTransition' file implementation"),
 
         // Command details the executable model does not carry.

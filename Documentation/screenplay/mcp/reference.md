@@ -249,7 +249,7 @@ not unrelated global declarations. A plain command can therefore have
 `syntaxOnly: false` while its application is syntax-only; neither that field nor a
 null member readiness message proves the whole model executable.
 Event sources, streams and direct-property/literal command routes are admitted by the
-executable semantic model **v8**. Property paths and file/inline handler commands remain unadmitted (`PLAY0268`); generated route sources fail binding with `PLAY0273`. `EventSource` declarations have application addresses;
+executable semantic model **v8**. Property paths remain unadmitted (`PLAY0268`), and file/inline handler commands require a constrained implementation attachment (`PLAY0800`); generated route sources fail binding with `PLAY0273`. `EventSource` declarations have application addresses;
 `EventStream` addresses include their physical source owner (for example,
 `Account.Transactions`). Command, specification and slice readiness lists every unadmitted feature when
 property-path routes, operations ([#301](https://github.com/Cratis/Screenplay/issues/301)), unadmitted handlers, exact numbers ([#285](https://github.com/Cratis/Screenplay/issues/285)) or generated properties on concepts with validation rules coexist,
