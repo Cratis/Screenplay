@@ -168,7 +168,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    var subject = CommandValidationSubject(rule.Property, property.Type);
+                    var subject = CommandValidationSubject(rule.Property, property.Type, address);
                     if (rule.Rule is not (ValidationRuleKind.Rule or ValidationRuleKind.Matches) &&
                         rule.Value is PathExpressionSyntax path && !subject.Values.Contains(path.Path, StringComparer.Ordinal) &&
                         properties.GetValueOrDefault(path.Path.Split('.')[0]) is { IsGenerated: true } operand)

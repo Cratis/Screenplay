@@ -48,7 +48,7 @@ public sealed partial class SemanticModelBinder
 
             if (concept.Attributes.Any())
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generated concepts with compliance markers are not admitted until #616 phase 4.", source.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generated concepts with compliance markers are not admitted until #616 phase 4.", source.Location, DiagnosticArguments.ForIssue("Cratis/Screenplay#616"));
                 return null;
             }
 
@@ -98,7 +98,7 @@ public sealed partial class SemanticModelBinder
         {
             if (concept.Type != "String" || concept.Attributes.Any())
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generation rules require an unmarked String concept; generated compliance markers await #616 phase 4.", source.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Generation rules require an unmarked String concept; generated compliance markers await #616 phase 4.", source.Location, DiagnosticArguments.ForIssue("Cratis/Screenplay#616"));
                 return null;
             }
             if (string.IsNullOrEmpty(source.Rule) || (source.File is null && source.Code is null))
