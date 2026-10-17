@@ -137,6 +137,8 @@
   href: folders.md
 - name: Imports
   href: imports.md
+- name: "Acme Commerce: a walkthrough"
+  href: acme-commerce-walkthrough.md
 - name: Glossary
   href: glossary.md
 - name: Frequently asked questions

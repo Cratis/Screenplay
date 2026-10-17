@@ -592,12 +592,15 @@ Statuses are `ok`, `absent` and `unreadable`; reason is null when readable, revi
 and count are null when unreadable. The absent revision is `nrev1:absent`.
 Unreadable notes never block model opening or source edits.
 
+`open-workspace` also returns `applicationIdentity`, the canonical `app1:…` text
+needed by the Application part of a typed address; the domain name is not an identity.
+
 `list-model-notes` requires an open workspace and returns `notesRevision`, `view`
 and `page` (`revision`, `totalCount`, `offset`, `items`, `nextOffset`). Filters are:
 
 | Argument | Values and default |
 | --- | --- |
-| `anchor` | `{ semanticId }` (including an orphan's ID) or `{ address, kind }` with a dotted declaration address |
+| `anchor` | `{ semanticId }` (including an orphan's ID), `{ application: true }`, a dotted `{ address, kind }`, a typed `{ kind, parts }` address or a current source handle |
 | `scope` | Optional dotted module/feature/slice; descendants and ancestor notes |
 | `kind` | `question`, `task`, `note`; omitted selects all kinds |
 | `state` | `open` (default), `resolved`, `orphaned`, `all` |
@@ -629,9 +632,34 @@ orphaned unresolved questions in a findings query.
 
 Anchors are `{ semanticId }` or `{ application: true }`. A target can also be an
 address (`{ address, kind }` or the typed address used by move) or a current
-`{ revision, documentId, path }` source handle. Syntax-only targets fall back to
-their nearest identified slice/feature/module/application. Substitutions report
-the original target, resolved anchor/address and reason. Document and authoring-key
+`{ revision, documentId, path }` source handle. Dotted Module, Feature and Slice
+addresses select logical declarations across imported files. Module and Feature
+headers repeated at the same address merge into one declaration, whether written
+explicitly or supplied by import placement. Other declarations are not collapsed;
+genuinely ambiguous dotted addresses refuse.
+
+Discover a typed address from `read-ast`'s `address` or `read-workspace view=semantics`.
+You can also build it from names and the `applicationIdentity` returned by `open-workspace`. For example, a Module target has this shape
+(replace the Application key with that response's exact value):
+
+```json
+{
+  "kind": "Module",
+  "parts": [
+    { "kind": "Application", "key": "<applicationIdentity from open-workspace>" },
+    { "kind": "Module", "key": "Orders" }
+  ]
+}
+```
+
+A typed address requires a current catalog identity. When it has none, it refuses;
+use its current source handle to select the nearest identified owner instead.
+Targets without a semantic identity fall back to their nearest identified owning
+slice/feature/module/application. On an unbound model, even a Slice may have no
+identity and fall back to Application. Both `add` and `reanchor` report **every**
+such substitution in `substitutions`, including when reanchor leaves the note
+unchanged. Each entry carries the original `target`, resolved `anchor`, resolved
+`address` and `reason`; review it before applying. Document and authoring-key
 anchors refuse. References use `{ id, url? }`; URLs must be absolute HTTP(S) and
 are never fetched. Text and author are nonempty, trimmed and at most 16384
 characters. Each note has at most 100 references. The sidecar permits at most

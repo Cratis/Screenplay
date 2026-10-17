@@ -4,6 +4,11 @@ A mid-size shop in five bounded contexts - **Catalog, Storefront, Sales, Purchas
 application. The contexts never share a database. They talk only through *public events*, and every context translates
 what it receives into its own language (anti-corruption), so a change in one language never leaks into another.
 
+The full story - how it was built, domain by domain, and what each Studio feature shows - is in the
+[walkthrough](../../Documentation/screenplay/acme-commerce-walkthrough.md). The Studio project is the permanent keeper project
+**Acme Commerce** (application **Acme Commerce Shop**) in the Cratis tenant of Cratis Studio, filled by the loader in
+`scripts/samples/acme-commerce` of the `Cratis/Studio` repository.
+
 It is the epic sample for Studio, Screenplay, Scene and Stage: everything the language says about concepts, constraints,
 personas, policies, event sources, public events, screens from blueprint templates, a UI profile and sample data is said
 here, in text. Nothing lives only in Studio (rule REN2).
@@ -55,8 +60,8 @@ OpsAdmin sees administration and dashboards in every domain.
 
 P1 `ProductPublished`, P2 `ProductPriceChanged`, P3 `ProductRetired` (Catalog); P4 `OrderPlaced` (Storefront); P5
 `OrderConfirmed`, P6 `OrderStatusChanged` (Sales); P7 `StockReserved`, P8 `StockReservationFailed`, P9 `StockLevelChanged`,
-P10 `StockBelowReorderPoint`, P12 `ShipmentDispatched` (Warehouse); P11 `PurchaseOrderReceived` (Purchasing). The design
-contract is `spec/ecommerce-sample.md` of the Screens release; the flows are catalogue (F-A), order to cash to dock (F-B),
+P10 `StockBelowReorderPoint`, P12 `ShipmentDispatched` (Warehouse); P11 `PurchaseOrderReceived` (Purchasing). With who
+consumes what, they are tabulated in the walkthrough. The flows are catalogue (F-A), order to cash to dock (F-B),
 replenishment (F-C) and change of price (F-D).
 
 ## Tooling
