@@ -176,6 +176,39 @@ module Storage
           targetId = "target"
           sourceId = "missing"
         then error "Current 'missing' does not exist."
+      specification RefusedEmptyKey
+        when Consume
+          id = "target"
+          sourceId = ""
+        then error "Current '' does not exist."
+      specification RefusedWhitespaceKey
+        when Consume
+          id = "target"
+          sourceId = "   "
+        then error "Current '   ' does not exist."
+      specification RefusedStarKey
+        when Consume
+          id = "target"
+          sourceId = "*"
+        then error "Current '*' does not exist."
+      specification RefusedHashKey
+        when Consume
+          id = "target"
+          sourceId = "a#b"
+        then error "Current 'a#b' does not exist."
+      specification RefusedPaddedKey
+        when Consume
+          id = "target"
+          sourceId = " padded "
+        then error "Current ' padded ' does not exist."
+      specification RefusedStarKeyWithStoredInstance
+        given Stored
+          for "*"
+          value = "present"
+        when Consume
+          id = "target"
+          sourceId = "*"
+        then error "Current '*' does not exist."
     slice StateView State
       readmodel Current
         id String key
