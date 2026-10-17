@@ -3,9 +3,6 @@ module Buying
   description "Suppliers, replenishment and purchase orders"
   authorize CanWorkPurchasing
 
-  navigation sidebar extends
-    item suppliers title "Suppliers" icon truck target Buying.Suppliers
-
   feature Suppliers
     description "The suppliers we buy from and what they offer"
 
@@ -150,45 +147,6 @@ module Buying
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
             action OfferSupplierProduct
-
-    slice StateChange ChoosePreferredSupplier
-      description "Pins the supplier replenishment orders go to for one SKU (the Buyer picks the cheapest offer)"
-
-      command ChoosePreferredSupplier
-        sku       Sku identifier
-        supplierId SupplierId
-        unitPrice Money
-        currency  CurrencyCode
-        produces PreferredSupplierChosen
-          for sku
-          supplierId = supplierId
-          unitPrice  = unitPrice
-          currency   = currency
-
-      event PreferredSupplierChosen
-        supplierId SupplierId
-        unitPrice  Money
-        currency   CurrencyCode
-
-      specification ChoosingTheCheapestOffer
-        given caller
-          authenticated
-          role "Buyer"
-        when ChoosePreferredSupplier
-          sku        = "ACM-1000"
-          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          unitPrice  = 62
-          currency   = "NOK"
-        then PreferredSupplierChosen
-          for "ACM-1000"
-          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          unitPrice  = 62
-          currency   = "NOK"
-
-      screen ChooseSupplier
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ChoosePreferredSupplier
 
     slice StateView Suppliers
       description "Every supplier with the products it offers"

@@ -1,0 +1,433 @@
+// Purchasing / Replenishment + Demand + Overview: what has to be bought, from whom, and how the department is doing.
+module Buying
+  feature Replenishment
+    description "Low-stock requests from the warehouse and the purchase orders they turn into"
+
+    slice StateChange ChoosePreferredSupplier
+      description "Pins the supplier replenishment orders go to for one SKU (the Buyer picks the cheapest offer)"
+
+      command ChoosePreferredSupplier
+        sku        Sku identifier
+        supplierId SupplierId
+        unitPrice  Money
+        currency   CurrencyCode
+        produces PreferredSupplierChosen
+          for sku
+          supplierId = supplierId
+          unitPrice  = unitPrice
+          currency   = currency
+
+      event PreferredSupplierChosen
+        supplierId SupplierId
+        unitPrice  Money
+        currency   CurrencyCode
+
+      specification ChoosingTheCheapestOffer
+        given caller
+          authenticated
+          role "Buyer"
+        when ChoosePreferredSupplier
+          sku        = "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        then PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+
+      screen ChooseSupplier
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChoosePreferredSupplier
+
+    slice StateChange ClearPreferredSupplier
+      description "Forgets the preferred supplier of a SKU; replenishment is blocked until a new one is chosen"
+
+      command ClearPreferredSupplier
+        sku Sku identifier
+        produces PreferredSupplierCleared
+          for sku
+
+      event PreferredSupplierCleared
+
+    slice StateView PreferredSuppliers
+      description "Which supplier replenishment orders go to, per SKU"
+
+      readmodel SkuSourcing
+        sku        Sku key
+        supplierId SupplierId
+        unitPrice  Money
+        currency   CurrencyCode
+
+      query AllSkuSourcing => observable SkuSourcing[]
+
+      projection SkuSourcingProjection => SkuSourcing
+        from PreferredSupplierChosen
+          sku        = $eventSourceId
+          supplierId = supplierId
+          unitPrice  = unitPrice
+          currency   = currency
+        remove with PreferredSupplierCleared
+
+      screen PreferredSuppliers
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button choose title "Choose supplier" slice Buying.Replenishment.ChoosePreferredSupplier emphasis quiet icon star
+          list
+            data SkuSourcing[] via query AllSkuSourcing
+            table SkuSourcing
+              column sku       label "SKU"
+              column unitPrice label "Unit price"
+              column currency  label "Currency"
+
+      specification APreferredSupplierAppears
+        given PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        then readmodel SkuSourcing
+          sku       = "ACM-1000"
+          unitPrice = 62
+
+    // The automation's command. The "skip when an open PO already covers the SKU" rule is the constraint below: while a
+    // replenishment order for the SKU is open, a second one is refused and the reaction acknowledges the refusal.
+    slice StateChange CreateReplenishmentPurchaseOrder
+      description "Drafts a one-line purchase order for a SKU from its preferred supplier; one open replenishment order per SKU"
+
+      command CreateReplenishmentPurchaseOrder
+        purchaseOrderId PurchaseOrderId identifier
+        sku             Sku
+        quantity        Quantity
+        reads SkuSourcing as sourcing by sku
+
+        produces PurchaseOrderCreated
+          for purchaseOrderId
+          purchaseOrderId = purchaseOrderId
+          supplierId      = sourcing.supplierId
+        produces PurchaseOrderLineAdded
+          for purchaseOrderId
+          sku       = sku
+          quantity  = quantity
+          unitPrice = sourcing.unitPrice
+        produces ReplenishmentOrderPlaced
+          for purchaseOrderId
+          sku = sku
+
+      event ReplenishmentOrderPlaced
+        sku Sku
+
+      constraint OneOpenReplenishmentOrderPerSku
+        unique sku on ReplenishmentOrderPlaced
+        released by PurchaseOrderGoodsReceived
+        released by PurchaseOrderCancelled
+        message "An open purchase order already covers that SKU"
+
+    slice Automation DraftReplenishmentOrder
+      description "A low-stock request becomes a draft purchase order with the preferred supplier"
+
+      reaction AutoReplenish
+        description "Skips when an open purchase order already covers the SKU; reports a block when no supplier is preferred"
+        runs as system role "Buyer"
+        when ReplenishmentRequested
+          purchaseOrderId
+          sku
+          quantity
+          invokes CreateReplenishmentPurchaseOrder
+            purchaseOrderId = purchaseOrderId
+            sku             = sku
+            quantity        = quantity
+            on refused by constraint OneOpenReplenishmentOrderPerSku
+              acknowledge
+            on refused by validation
+              produces ReplenishmentBlocked
+                reason = $refusal.message
+
+      event ReplenishmentBlocked
+        reason String
+
+      specification AutoReplenishDraftsAnOrderForThePreferredSupplier
+        given SupplierRegistered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          name         = "Nordic Ceramics AS"
+          taxId        = "NO 912 345 678"
+          contactEmail = "orders@nordic-ceramics.example"
+          country      = "NO"
+        given PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        when append ReplenishmentRequested
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          sku          = "ACM-1000"
+          quantity     = 40
+          onHand       = 4
+          reorderPoint = 10
+        then PurchaseOrderCreated
+          for "c0ffee00-0000-4000-8000-000000000001"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        then PurchaseOrderLineAdded
+          for "c0ffee00-0000-4000-8000-000000000001"
+          sku       = "ACM-1000"
+          quantity  = 40
+          unitPrice = 62
+        then ReplenishmentOrderPlaced
+          for "c0ffee00-0000-4000-8000-000000000001"
+          sku = "ACM-1000"
+
+      specification AutoReplenishSkipsWhenAnOpenOrderCoversTheSku
+        given SupplierRegistered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          name         = "Nordic Ceramics AS"
+          taxId        = "NO 912 345 678"
+          contactEmail = "orders@nordic-ceramics.example"
+          country      = "NO"
+        given PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        given PurchaseOrderCreated
+          for "c0ffee00-0000-4000-8000-000000000001"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        given ReplenishmentOrderPlaced
+          for "c0ffee00-0000-4000-8000-000000000001"
+          sku = "ACM-1000"
+        when append ReplenishmentRequested
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000003"
+          sku          = "ACM-1000"
+          quantity     = 40
+          onHand       = 3
+          reorderPoint = 10
+        then no events
+
+      specification AutoReplenishReportsAMissingPreferredSupplier
+        when append ReplenishmentRequested
+          for "ACM-1001"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000002"
+          sku          = "ACM-1001"
+          quantity     = 24
+          onHand       = 2
+          reorderPoint = 8
+        then ReplenishmentBlocked
+          for "ACM-1001"
+          reason = "SkuSourcing 'ACM-1001' does not exist."
+
+    slice StateView ReplenishmentQueue
+      description "Open replenishment requests, per SKU, and what became of them"
+
+      readmodel ReplenishmentRow
+        sku          Sku
+        quantity     Quantity
+        onHand       StockQuantity
+        reorderPoint StockQuantity
+        status       RequestStatus
+
+      query AllReplenishmentRequests => observable ReplenishmentRow[]
+      query ReplenishmentBySku => ReplenishmentRow optional
+        by sku Sku
+
+      projection ReplenishmentRowProjection => ReplenishmentRow
+        from ReplenishmentRequested
+          sku          = $eventSourceId
+          quantity     = quantity
+          onHand       = onHand
+          reorderPoint = reorderPoint
+          status       = "requested"
+        from ReplenishmentBlocked
+          add quantity by 0
+          add onHand by 0
+          add reorderPoint by 0
+          status = "blocked"
+        from ReplenishmentOrderPlaced key sku
+          add quantity by 0
+          add onHand by 0
+          add reorderPoint by 0
+          status = "ordered"
+
+      screen ReplenishmentQueue
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          list
+            data ReplenishmentRow[] via query AllReplenishmentRequests
+            table ReplenishmentRow
+              column sku          label "SKU"
+              column quantity     label "Suggested"
+              column onHand       label "On hand"
+              column reorderPoint label "Reorder point"
+              column status       label "Status"
+
+      specification ARequestWaitsInTheQueue
+        given ReplenishmentRequested
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          sku          = "ACM-1000"
+          quantity     = 40
+          onHand       = 4
+          reorderPoint = 10
+        then readmodel ReplenishmentRow
+          sku      = "ACM-1000"
+          quantity = 40
+          status   = "requested"
+
+  feature Demand
+    description "What confirmed orders ask for, per SKU, and how much is still to be bought"
+
+    slice StateChange RecordManualDemand
+      description "Notes demand that did not come through an order (a phone call, a counter sale)"
+
+      command RecordManualDemand
+        sku      Sku identifier
+        orderId  OrderId
+        quantity Quantity
+        produces DemandRecorded
+          for sku
+          orderId  = orderId
+          sku      = sku
+          quantity = quantity
+
+      event DemandRecorded
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      specification RecordingDemand
+        given caller
+          authenticated
+          role "Buyer"
+        when RecordManualDemand
+          sku      = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+        then DemandRecorded
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+
+      screen RecordDemand
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RecordManualDemand
+
+    slice StateView OpenDemand
+      description "Units ordered by customers per SKU, less what suppliers have delivered"
+
+      readmodel DemandRow
+        sku       Sku key
+        demanded  Int
+        delivered Int
+
+      query AllOpenDemand => observable DemandRow[]
+
+      projection DemandRowProjection => DemandRow
+        from DemandRecorded
+          sku       = $eventSourceId
+          add demanded by quantity
+          add delivered by 0
+        from PurchaseOrderGoodsReceived key sku
+          add demanded by 0
+          add delivered by quantity
+
+      screen OpenDemand
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          list
+            data DemandRow[] via query AllOpenDemand
+            table DemandRow
+              column sku       label "SKU"
+              column demanded  label "Demanded"
+              column delivered label "Delivered"
+
+      specification DemandAccumulatesPerSku
+        given DemandRecorded
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given DemandRecorded
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          sku      = "ACM-1000"
+          quantity = 2
+        then readmodel DemandRow
+          sku       = "ACM-1000"
+          demanded  = 5
+          delivered = 0
+
+  feature Overview
+    description "How purchasing is doing"
+
+    slice StateView PurchasingDashboard
+      description "Open purchase orders, units on order and suppliers"
+
+      readmodel PurchasingFigures
+        summaryId     String
+        orders        Int
+        suppliers     Int
+        unitsOrdered  Int
+        unitsReceived Int
+
+      query CurrentPurchasingFigures => observable PurchasingFigures[]
+
+      // Every `from` states every counter (`add ... by 0` keeps what is there): any event may be the first one a row sees
+      projection PurchasingFiguresProjection => PurchasingFigures
+        from PurchaseOrderCreated
+          key "global"
+          summaryId = "global"
+          increment orders
+          add suppliers by 0
+          add unitsOrdered by 0
+          add unitsReceived by 0
+        from SupplierRegistered
+          key "global"
+          summaryId = "global"
+          add orders by 0
+          increment suppliers
+          add unitsOrdered by 0
+          add unitsReceived by 0
+        from PurchaseOrderLineAdded
+          key "global"
+          summaryId = "global"
+          add orders by 0
+          add suppliers by 0
+          add unitsOrdered by quantity
+          add unitsReceived by 0
+        from PurchaseOrderGoodsReceived
+          key "global"
+          summaryId = "global"
+          add orders by 0
+          add suppliers by 0
+          add unitsOrdered by 0
+          add unitsReceived by quantity
+
+      screen PurchasingDashboard
+        template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          kpis
+            data PurchasingFigures[] via query CurrentPurchasingFigures
+            table PurchasingFigures
+              column orders        label "Purchase orders"
+              column suppliers     label "Suppliers"
+              column unitsOrdered  label "Units ordered"
+              column unitsReceived label "Units received"
+
+      specification CountingWhatIsOnOrder
+        given PurchaseOrderCreated
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        given PurchaseOrderLineAdded
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          sku       = "ACM-1000"
+          quantity  = 40
+          unitPrice = 62
+        then readmodel PurchasingFigures
+          summaryId    = "global"
+          orders       = 1
+          unitsOrdered = 40
