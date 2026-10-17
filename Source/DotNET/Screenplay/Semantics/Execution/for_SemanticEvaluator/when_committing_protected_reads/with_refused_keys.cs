@@ -27,6 +27,8 @@ public class with_refused_keys : given.a_protected_command
     [InlineData("   ")]
     [InlineData("*")]
     [InlineData("a#b")]
+    [InlineData(" padded")]
+    [InlineData("padded ")]
     void should_reject_the_key_in_an_empty_world(string key)
     {
         var result = (SemanticRejected)_evaluator.Execute(_plan, SemanticWorld.Empty, Request(lookup: key));
