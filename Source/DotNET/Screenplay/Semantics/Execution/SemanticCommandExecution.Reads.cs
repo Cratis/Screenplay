@@ -15,6 +15,8 @@ internal sealed partial class SemanticCommandExecution
             }
 
             var key = _commandValues[read.Key];
+            if (RefusedReadKeys.IsRefused(key)) return MissingRead(read, key);
+
             var instance = world.ReadModels.FirstOrDefault(instance => instance.ReadModel == read.ReadModel && SemanticValueRules.AreEqual(instance.Key, key));
             if (instance is null) return MissingRead(read, key);
 
@@ -26,10 +28,12 @@ internal sealed partial class SemanticCommandExecution
 
     SemanticRejected MissingRead(SemanticDecisionRead read, SemanticValue key)
     {
-        var message = $"{plan.ReadModels[read.ReadModel].Name} '{((SemanticTextValue)key).Value}' does not exist.";
+        var message = $"{plan.ReadModels[read.ReadModel].Name} '{KeyText(key)}' does not exist.";
         return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with
         {
             ValidationFailures = [new(message, SemanticValidationSeverity.Error)]
         };
     }
+
+    static string KeyText(SemanticValue key) => key is SemanticTextValue text ? text.Value : string.Empty;
 }
