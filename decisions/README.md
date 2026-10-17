@@ -87,3 +87,4 @@
 | [0088](0088-admit-composite-read-model-keys-into-the-executable-model.md) | Admit composite read-model keys into the executable model as flat key parts | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0089](0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md) | Expose the reference evaluator's decide/commit split to hosts and publish protected-read race vectors | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0090](0090-admit-uuid-equality-in-command-conditions.md) | Admit Uuid equality in command conditions | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0091](0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md) | Protected reads treat keys the event store refuses as missing | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
