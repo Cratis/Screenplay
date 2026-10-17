@@ -91,7 +91,14 @@ public sealed record ModelNotesRead(string Status, string? Revision, ModelNotesD
 /// <param name="Address">The resolved address, or null for an orphan.</param>
 /// <param name="State">open, resolved or orphaned.</param>
 /// <param name="OrphanReason">unknown for an identity absent from the catalog.</param>
-public sealed record ModelNotesItem(ModelNote Note, ModelNotesAddress? Address, string State, string? OrphanReason);
+public sealed record ModelNotesItem(ModelNote Note, ModelNotesAddress? Address, string State, string? OrphanReason)
+{
+    /// <summary>
+    /// Gets whether the retained anchor has ambiguous source ownership. It remains resolved, not orphaned.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Ambiguous { get; init; }
+}
 
 /// <summary>
 /// A host-only finding, never a compiler diagnostic.

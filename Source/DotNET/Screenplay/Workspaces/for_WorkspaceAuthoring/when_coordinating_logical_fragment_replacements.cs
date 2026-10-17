@@ -54,6 +54,15 @@ public class when_coordinating_logical_fragment_replacements
             request = request with { Documents = [replacement, new ReplaceWorkspaceSyntaxDocument(second.Id, new ScreenplayCompiler().Parse(secondSource.Replace(header, secondHeader, StringComparison.Ordinal)).Value!)] };
         }
 
+        // Decision 0093 item 10: manual AST header renames explicitly migrate every assigned descendant.
+        var previous = feature ? SemanticAddress.ForFeature(workspace.IdentityCatalog.Application, "App", "Shared") : SemanticAddress.ForModule(workspace.IdentityCatalog.Application, "App");
+        var current = feature ? SemanticAddress.ForFeature(workspace.IdentityCatalog.Application, "App", "Renamed") : SemanticAddress.ForModule(workspace.IdentityCatalog.Application, "Renamed");
+        request = request with
+        {
+            SemanticRenames = [.. workspace.IdentityCatalog.Semantics
+                .Where(assignment => assignment.Address.Parts.Take(previous.Parts.Length).SequenceEqual(previous.Parts))
+                .Select(assignment => new SemanticIdentityRename(assignment.Address, SemanticAddress.FromCanonical(assignment.Address.Kind, [.. current.Parts, .. assignment.Address.Parts.Skip(previous.Parts.Length)])))]
+        };
         var result = workspace.ProposeAuthoring(request);
         Assert.Equal(consistent, result.Accepted);
         if (consistent)

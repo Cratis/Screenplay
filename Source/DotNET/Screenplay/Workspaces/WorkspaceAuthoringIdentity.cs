@@ -40,8 +40,8 @@ static class WorkspaceAuthoringIdentity
         }
         else
         {
-            // Source correspondence proves continuity without pretending the ESM backend supports new source
-            // declarations. No new semantic/event identities are invented while binding is unavailable.
+            // Source correspondence retains bound assignments. Only name-based containers can gain
+            // deterministic identities before binding; event contracts still require the bound generations.
             var retained = workspace.IdentityCatalog.Semantics.Select(assignment => assignment.Address)
                 .Concat(request.SemanticRenames.Select(rename => rename.CurrentAddress)).ToHashSet();
             var retainedEvents = workspace.IdentityCatalog.EventContracts.Select(assignment => assignment.Address)
@@ -75,6 +75,12 @@ static class WorkspaceAuthoringIdentity
             retiredDocuments,
             request.RetiredSemanticAddresses,
             request.RetiredEventAddresses).Catalog;
+        if (!provisional.Success && !documents.IsEmpty)
+        {
+            var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, documents, catalog, provisional);
+            catalog = new WorkspaceContainerIdentities(WorkspaceSyntaxIndex.Create(candidate)).Materialize(catalog);
+        }
+
         var advancements = newGenerations.AddRange(request.EventRevisionAdvancements);
         return advancements.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
             catalog, catalog.Revision, keys, addresses, events, advancements).Catalog;

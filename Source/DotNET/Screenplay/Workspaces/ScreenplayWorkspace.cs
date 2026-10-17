@@ -445,6 +445,11 @@ public sealed class ScreenplayWorkspace
                 identityCatalog = MaterializeCatalog(ordered, identityCatalog, compilation.Value!);
                 compilation = Compile(normalizedName, ordered, identityCatalog, attachmentContents, attachmentDiagnostics);
             }
+            else
+            {
+                var source = CreateValidated(normalizedName, ordered, identityCatalog, compilation, attachmentContents, attachmentDiagnostics);
+                identityCatalog = new WorkspaceContainerIdentities(WorkspaceSyntaxIndex.Create(source)).Materialize(identityCatalog);
+            }
 
             return CreateValidated(normalizedName, ordered, identityCatalog, compilation, attachmentContents, attachmentDiagnostics);
         }

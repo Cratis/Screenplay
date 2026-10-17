@@ -245,6 +245,8 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring("The expected name must match exactly and the new name must be one unqualified identifier (letters, digits, underscore).");
         }
 
+        // A known hierarchy collision is already a conclusive refusal, even with incomplete source elsewhere.
+        RejectHierarchyCollision(index, target, request.NewName);
         if (index.Entries.Count(entry => entry.Parent is null) != workspace.Documents.Length)
         {
             throw new InvalidWorkspaceAuthoring("Every document must parse before references can be proven safe.");
@@ -288,7 +290,6 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
 
         bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
 
-        RejectHierarchyCollision(index, target, request.NewName);
         if (target.Node is not (SpecificationParameterSyntax or SpecificationCaseSyntax)) RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();

@@ -23,14 +23,14 @@ public class when_listing_notes_on_unbound_split_containers : given.a_split_note
     {
         foreach (var kind in new[] { SemanticKind.Module, SemanticKind.Feature, SemanticKind.Slice })
         {
-            foreach (var target in Targets(kind, typed: false))
+            foreach (var target in Targets(kind))
             {
                 _items.Add(Result(Workspaces.ListNotes(Arguments(new { anchor = target }))).GetProperty("page").GetProperty("items"));
             }
         }
     }
 
-    [Fact] void should_list_all_notes_stored_under_the_substituted_anchor() => _items.TrueForAll(items => items.GetArrayLength() == 3).ShouldBeTrue();
-    [Fact] void should_include_notes_added_for_every_container() => _items.TrueForAll(items => items.EnumerateArray().Select(item => item.GetProperty("note").GetProperty("text").GetString()).Order().SequenceEqual(["Feature", "Module", "Slice"])).ShouldBeTrue();
-    [Fact] void should_resolve_dotted_and_handle_filters_identically() => _items.Select(items => string.Join(',', items.EnumerateArray().Select(item => item.GetProperty("note").GetProperty("id").GetString()).Order())).Distinct().Count().ShouldEqual(1);
+    [Fact] void should_list_only_the_selected_containers_note() => _items.TrueForAll(items => items.GetArrayLength() == 1).ShouldBeTrue();
+    [Fact] void should_include_each_container_in_all_three_forms() => _items.Select(items => items[0].GetProperty("note").GetProperty("text").GetString()).GroupBy(text => text).All(group => group.Count() == 3).ShouldBeTrue();
+    [Fact] void should_resolve_each_note_to_its_own_container() => _items.TrueForAll(items => items[0].GetProperty("address").GetProperty("kind").GetString() == items[0].GetProperty("note").GetProperty("text").GetString()).ShouldBeTrue();
 }

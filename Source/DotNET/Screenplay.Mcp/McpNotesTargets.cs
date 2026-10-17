@@ -16,7 +16,14 @@ static class McpNotesTargets
 
         if (value.TryGetProperty("revision", out _))
         {
-            return ModelNotesAnchors.ForHandle(McpWorkspaceAnalysis.For(workspace).Syntax, McpAstHandles.Read(value));
+            try
+            {
+                return ModelNotesAnchors.ForHandle(McpWorkspaceAnalysis.For(workspace).Syntax, McpAstHandles.Read(value));
+            }
+            catch (InvalidModelNotes exception)
+            {
+                throw new McpFailure(exception.Message, -32602);
+            }
         }
 
         if (!value.TryGetProperty("parts", out _)) return ReadAddress(value, workspace);
@@ -49,16 +56,21 @@ static class McpNotesTargets
         var anchor = value.Deserialize<ModelNotesAnchor>(ModelNotesStore.Options) ?? throw new McpFailure("Invalid anchor.", -32602);
         ModelNotesValidation.Anchor(anchor);
         if (allowOrphan) return anchor;
-        if (ModelNotesAnchors.Resolve(anchor, workspace.IdentityCatalog) is null) throw new McpFailure("Unknown note anchor.", -32602);
+        var address = ModelNotesAnchors.Resolve(anchor, workspace.IdentityCatalog) ?? throw new McpFailure("Unknown note anchor.", -32602);
+        RequireTarget(workspace, address);
         return anchor;
     }
 
     static ModelNotesAnchor ReadTypedAddress(JsonElement value, ScreenplayWorkspace workspace)
     {
         var address = McpSemanticAddresses.Read(value);
-        var assignment = workspace.IdentityCatalog.Semantics.SingleOrDefault(assignment => assignment.Address.Equals(address))
+        RequireTarget(workspace, address);
+        var assignment = workspace.IdentityCatalog.Semantics.SingleOrDefault(assignment => assignment.Address.Equals(address));
+        if (assignment is not null) return address.Kind == SemanticKind.Application ? new(Application: true) : new(assignment.Id.ToString());
+        var index = McpWorkspaceAnalysis.For(workspace).Syntax;
+        var entry = index.Entries.FirstOrDefault(entry => entry.Address?.Equals(address) == true)
             ?? throw new McpFailure("The address has no current semantic identity; use its source handle to select its owning container.", -32602);
-        return address.Kind == SemanticKind.Application ? new(Application: true) : new(assignment.Id.ToString());
+        return ModelNotesAnchors.ForHandle(index, entry.Handle);
     }
 
     static ModelNotesAnchor ReadAddress(JsonElement value, ScreenplayWorkspace workspace)
@@ -67,12 +79,29 @@ static class McpNotesTargets
         var text = McpJson.RequiredString(value, "address");
         var kind = McpJson.RequiredString(value, "kind");
         var matches = workspace.IdentityCatalog.Semantics.Where(assignment => assignment.Address.Kind.ToString() == kind && Text(assignment.Address) == text).ToArray();
-        if (matches.Length == 1) return new(matches[0].Id.ToString());
+        if (matches.Length == 1)
+        {
+            RequireTarget(workspace, matches[0].Address);
+            return new(matches[0].Id.ToString());
+        }
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
         var syntax = index.Entries.Where(entry => (entry.Kind == kind || entry.Kind == $"{kind}Syntax") && SyntaxAddress(entry, index) == text).ToArray();
+        foreach (var entry in syntax.Where(entry => entry.Address is not null)) RequireTarget(workspace, entry.Address!);
         var occurrences = LogicalOccurrences(syntax).ToArray();
         if (occurrences.Length == 1) return ModelNotesAnchors.ForHandle(index, occurrences[0].Handle);
         throw new McpFailure("Unknown or ambiguous note address.", -32602);
+    }
+
+    static void RequireTarget(ScreenplayWorkspace workspace, SemanticAddress address)
+    {
+        try
+        {
+            ModelNotesAnchors.RequireTarget(McpWorkspaceAnalysis.For(workspace).Syntax, address);
+        }
+        catch (InvalidModelNotes exception)
+        {
+            throw new McpFailure(exception.Message, -32602);
+        }
     }
 
     static IEnumerable<WorkspaceSyntaxEntry> LogicalOccurrences(WorkspaceSyntaxEntry[] entries)

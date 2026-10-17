@@ -95,7 +95,8 @@ internal sealed partial class McpWorkspaces
         var candidate = serialized is null
             ? state?.Open(Root) ?? OpenFromDisk(Root, name)
             : McpAttachmentContents.Refresh(Root, McpWorkspaceTransport.Restore(serialized));
-        if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
+        if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)) &&
+            (serialized is not null || !McpState.MatchesMaterialization(persisted, candidate)))
         {
             throw new McpFailure("IdentityImportConflict: workspaceJson cannot replace a different persisted identity catalog or document mapping.");
         }

@@ -20,7 +20,7 @@ public class when_resolving_an_unbound_slice_target : for_ScreenplayWorkspace.gi
 
     void Because() => _anchor = ModelNotesAnchors.ForHandle(_index, _slice.Handle);
 
-    [Fact] void should_have_no_slice_identity() => _slice.SemanticId.ShouldBeNull();
-    [Fact] void should_preserve_the_application_fallback() => _anchor.Application.ShouldEqual(true);
-    [Fact] void should_resolve_to_the_application_address() => ModelNotesAnchors.Resolve(_anchor, Workspace.IdentityCatalog).ShouldEqual(SemanticAddress.ForApplication(Workspace.IdentityCatalog.Application));
+    [Fact] void should_have_a_deterministic_slice_identity() => _slice.SemanticId.ShouldEqual(SemanticId.Create(_slice.Address!));
+    [Fact] void should_anchor_to_the_slice_identity() => _anchor.SemanticId.ShouldEqual(_slice.SemanticId!.Value.ToString());
+    [Fact] void should_resolve_to_the_slice_address() => ModelNotesAnchors.Resolve(_anchor, Workspace.IdentityCatalog).ShouldEqual(_slice.Address);
 }
