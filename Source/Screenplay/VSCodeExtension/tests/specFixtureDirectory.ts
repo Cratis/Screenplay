@@ -11,3 +11,11 @@ export function specFixtureDirectory(prefix: string): string {
     fs.mkdirSync(parent, { recursive: true });
     return fs.realpathSync.native(fs.mkdtempSync(path.join(parent, prefix)));
 }
+
+/**
+ * Remove a fixture directory. Retries briefly, because a subprocess that used it as its working directory may still be
+ * exiting (Windows refuses to delete it with EBUSY/EPERM until then).
+ */
+export function removeSpecFixtureDirectory(directory: string): void {
+    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+}

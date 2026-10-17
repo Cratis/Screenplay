@@ -4,7 +4,7 @@
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { specFixtureDirectory } from '../tests/specFixtureDirectory';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 
 const host = vi.hoisted(() => ({ trusted: true, uiKind: 1, folders: [] as { uri: { scheme: string; fsPath: string } }[], documents: [] as { uri: { scheme: string; fsPath: string; toString(): string; with?(change: { scheme: string }): { fsPath: string } }; version: number; isDirty: boolean; getText?(): string }[], settings: new Map<string, Record<string, unknown>>() }));
 vi.mock('vscode', () => ({
@@ -23,8 +23,8 @@ beforeEach(() => {
     ]);
 });
 afterEach(() => {
-    fs.rmSync(root + '-alias.play', { recursive: true, force: true });
-    fs.rmSync(root, { recursive: true, force: true });
+    removeSpecFixtureDirectory(root + '-alias.play');
+    removeSpecFixtureDirectory(root);
 });
 it('requires explicit User opt-in and a user-installed absolute executable', () => {
     expect(checkRepairEnvironment(userRepairConfiguration())).toEqual({});

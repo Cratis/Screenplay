@@ -5,7 +5,7 @@ import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairFailure } from '../RepairClient';
-import { specFixtureDirectory } from '../tests/specFixtureDirectory';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import type * as vscode from 'vscode';
 import type { RepairLaunch } from '../RepairLaunch';
 import type { RepairEnvironment } from '../RepairEnvironment';
@@ -104,7 +104,7 @@ afterEach(() => {
     try { subscriptions.forEach(resource => resource.dispose()); }
     finally {
         vi.restoreAllMocks(); vi.useRealTimers();
-        fs.rmSync(host.root, { recursive: true, force: true });
+        removeSpecFixtureDirectory(host.root);
     }
 });
 it('registers one watcher before discovery and retains it through review; late disposed callbacks cannot clear a new review', async () => {

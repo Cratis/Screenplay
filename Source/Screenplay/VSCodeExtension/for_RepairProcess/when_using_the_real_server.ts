@@ -6,7 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
 import { RepairClient } from '../RepairClient';
-import { specFixtureDirectory } from '../tests/specFixtureDirectory';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import { privateMetadataDirectory, privateMetadataDirectoryTimeout } from '../tests/privateMetadataDirectory';
 import { serverExecutable, serverAvailable, repairSource, missingEventSource, refusedEventSource } from '../tests/repairFixture';
 
@@ -29,7 +29,7 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
     });
     afterEach(() => {
         try { session?.dispose(); }
-        finally { fs.rmSync(root, { recursive: true, force: true }); }
+        finally { removeSpecFixtureDirectory(root); }
     });
 
     for (const code of ['PLAY0478', 'PLAY0166']) it(`installs only the exact complete pinned ${code} review and persists identities across restart`, async () => {

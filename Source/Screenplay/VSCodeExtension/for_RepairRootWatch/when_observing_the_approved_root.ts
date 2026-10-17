@@ -4,7 +4,7 @@
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { specFixtureDirectory } from '../tests/specFixtureDirectory';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 vi.mock('node:fs', async importOriginal => ({ ...await importOriginal<typeof fs>(), watch: vi.fn() }));
 import { RepairRootWatch, nativeRootIdentityAvailable, assertRootIdentity } from '../RepairRootWatch';
 
@@ -24,8 +24,8 @@ beforeEach(() => {
 });
 afterEach(() => {
     vi.restoreAllMocks(); vi.unstubAllGlobals();
-    fs.rmSync(root, { recursive: true, force: true });
-    fs.rmSync(root + '-original', { recursive: true, force: true });
+    removeSpecFixtureDirectory(root);
+    removeSpecFixtureDirectory(root + '-original');
 });
 it('expires every notification synchronously without names, deduplication or self-write suppression, retaining a healthy root', () => {
     const watch = new RepairRootWatch(root, changed, invalidated);
