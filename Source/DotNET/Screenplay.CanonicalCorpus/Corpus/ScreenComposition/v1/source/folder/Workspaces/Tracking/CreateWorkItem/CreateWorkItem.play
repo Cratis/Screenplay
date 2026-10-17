@@ -4,6 +4,7 @@ module Workspaces
       command CreateWorkItem
         workItemId WorkItemId identifier
         title String
+        notes String
         produces WorkItemCreated
           for workItemId
           title = title
@@ -17,6 +18,7 @@ module Workspaces
         when CreateWorkItem
           workItemId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           title = "Design master detail"
+          notes = "Two column form"
         then WorkItemCreated
           for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           title = "Design master detail"
