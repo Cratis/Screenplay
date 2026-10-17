@@ -123,6 +123,19 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 | `PLAY0583` | `parameter` | text | yes | The parameter assigned by the case when known. | — |
 | `PLAY0583` | `type` | text | yes | The declared parameter type when available. | — |
 | `PLAY0583` | `text` | text | yes | The authored value or nested line that could not be read. | — |
+| `PLAY0781` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0781` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0781` | `readModel` | declaration | no | The read model declaration that cannot be protected. | — |
+| `PLAY0781` | `reason` | keyword | no | The closed refusal reason, the name of the decision-read refusal. | Reducer, Join, Children, OpenSubscription, PayloadKey, ByParts, NoRemoval, EmptyHandledSet, NamedSourceOrStream, Singleton, KeyType, GeneratedKey, OptionalKey, CollectionKey |
+| `PLAY0782` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0782` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0783` | `command` | declaration | no | The command declaring both reads and concurrency. | — |
+| `PLAY0784` | `path` | text | no | The authored read path that resolves to no declared read and view property. | — |
+| `PLAY0784` | `read` | text | no | The first path segment, the read name or alias that resolves to no declared read. | — |
+| `PLAY0784` | `command` | declaration | yes | The command whose read path is unknown. | — |
+| `PLAY0785` | `path` | text | no | The authored read path that names a repeated read model. | — |
+| `PLAY0785` | `read` | text | no | The read model name read more than once. | — |
+| `PLAY0785` | `command` | declaration | yes | The command whose read path is ambiguous. | — |
 | `PLAY0790` | `profile` | text | no | The ui profile that names the template. | — |
 | `PLAY0790` | `template` | text | no | The template name that nothing declares, or the blueprint does not ship. | — |
 | `PLAY0790` | `blueprint` | text | yes | The blueprint a template was expected from. | — |
@@ -609,6 +622,25 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0786` | Information | The binder identifies an eligible legacy model at its first command `reads`; the typed repair adds the preamble to the application root (domain document) or sole document after preview, revision checks and explicit acceptance. It requires individual review, not fix-all. |
 
 `PLAY0781` reasons are `Reducer`, `Join` (including removal joins), `Children` (including nested scopes), `OpenSubscription`, `PayloadKey`, `ByParts`, `NoRemoval`, `EmptyHandledSet`, `NamedSourceOrStream`, `Singleton`, `KeyType`, `GeneratedKey`, `OptionalKey` and `CollectionKey`. Both `every` and `all` map to `OpenSubscription`. There is no derivative construct or reserved derivative reason. `reads … via query` retains its parser refusal, `PLAY0175`; it has no binder refusal enum value.
+
+Hosts read the refusal from the `PLAY0781` `reason` argument instead of the message text. Its values are the names of the public `SemanticDecisionReadRefusal` enum; a host must tolerate values it does not know. The `read` argument is the alias when the command gives one, otherwise the read model name.
+
+| Reason | Meaning | How to fix |
+|---|---|---|
+| `Reducer` | A reducer builds the view. | Build the view with a projection, or read a different view. |
+| `Join` | The projection joins, including a removal join. | Fill the view from the events of its own instance only; remove `join` and `remove via join`. |
+| `Children` | The projection has children or nested scopes. | Read a flat view; keep the nested shape in a separate read model. |
+| `OpenSubscription` | The projection declares `every` or `all`. | Replace it with explicit `from <Event>` subscriptions. |
+| `PayloadKey` | An instance is routed by event payload instead of event-source identity. | Key the view by `$eventSourceId`. |
+| `ByParts` | The lookup or projection uses composite key parts. | Use one single-part key. |
+| `NoRemoval` | No removal event is declared for the view. | Add `remove with <Event>`. |
+| `EmptyHandledSet` | The view handles no finite, nonempty set of events. | Declare at least one `from <Event>`. |
+| `NamedSourceOrStream` | The projection or a handled event is routed through a named source, stream or sequence. | Remove the routing so events reach the view by event-source identity. |
+| `Singleton` | The view has no event-source instance key. | Give the view a `key` property. |
+| `KeyType` | The lookup key is not text or a canonical UUID identity, or does not match the command input. | Use a `String`, a String concept or a canonical `Uuid` key of a compatible type. |
+| `GeneratedKey` | The key is generated after reads must run. | Take the key as a caller-supplied input, not a `generated` one. |
+| `OptionalKey` | The lookup key is optional. | Make the key required. |
+| `CollectionKey` | The lookup key is a collection. | Use a scalar key.
 
 ### Rules about the whole artifact
 
