@@ -23,7 +23,8 @@
 #                                    project it deletes again. Without it the harness records blocked-missing-studio-checkout.
 #
 # Harnesses: browser (native controls), render-audit (determinism, portable artifacts, profile rejection,
-# render-then-recover), shell-cli (the application shell vector rendered by the CLI), mcp (stdio transcript) and studio (production Play).
+# render-then-recover), shell-cli (the application shell vector rendered by the CLI), shell-conformance (spec 13.1: the shell vector on a live Stage
+# and, with a Studio URL and checkout, the same shell in production Studio's Preview), mcp (stdio transcript) and studio (production Play).
 #   SCREENPLAY_ACCEPTANCE_PORT       browser port (default 19180); the workbench uses this plus 16000
 #
 # Exit codes: 0 every harness passed, 1 a harness ran and found defects or blockers, 2 the run could not start.
@@ -51,7 +52,7 @@ if ! NODE_PATH="$node_path" node -e "require('playwright')" >/dev/null 2>&1; the
     exit 2
 fi
 
-for self_tested in screen-composition-browser-native-controls.cjs screen-composition-render-audit.cjs; do
+for self_tested in screen-composition-browser-native-controls.cjs screen-composition-render-audit.cjs screen-shell-conformance.cjs; do
     if ! node "${harness}/${self_tested}" --self-test; then
         echo "run-public-acceptance: the ${self_tested} self-test failed; its results cannot be trusted" >&2
         exit 2
@@ -109,6 +110,35 @@ run_step render-audit env \
 # The application shell vector through the CLI: renders the screen-shell-navigation-runnable case and checks the navigation,
 # the toolbar slice and that no sample data ships. Needs the CLI that bundles the shell Stage (3.67.0 or later).
 run_step shell-cli "${harness}/screen-shell-cli-render.sh" "${results}/shell-cli" ${corpus_version:+"$corpus_version"}
+
+# Spec 13.1 conformance: the shell vector on a live Stage (`cratis run`) - topbar and sidebar, inherit / extend / override, the toolbar slice dialog, deep links,
+# no sample data served - and the shell production Studio's Preview draws for the same vector, compared module by module.
+shell_vector="${results}/shell-vector"
+mkdir -p "$shell_vector"
+if [[ -n "$corpus_version" ]]; then
+    dotnet run --project "${harness}/PublishedCorpus" -p:CorpusPackageVersion="$corpus_version" -- --case screen-shell-navigation-runnable "$shell_vector" | tail -1
+else
+    cp "${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/positive/ScreenShellRunnable.play.txt" "$shell_vector/application.play"
+fi
+shell_studio_tree=""
+studio_url_for_shell="${SCREENPLAY_STUDIO_URL:-}"
+if [[ -z "$studio_url_for_shell" ]] && curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:5156/" 2>/dev/null; then studio_url_for_shell="http://127.0.0.1:5156"; fi
+if [[ -n "$studio_url_for_shell" && -n "${SCREENPLAY_STUDIO_CHECKOUT:-}" && -f "${SCREENPLAY_STUDIO_CHECKOUT}/scripts/screen-editor/check-studio-production-shell-preview.mjs" ]]; then
+    (cd "$shell_vector" && rm -f ../shell-vector.zip && zip -qr ../shell-vector.zip .)
+    run_step shell-studio-preview bash -c 'cd "$1" && STUDIO_URL="$2" STUDIO_IMPORT_ZIP="$3" STUDIO_EVIDENCE="$4" node scripts/screen-editor/check-studio-production-shell-preview.mjs' _ \
+        "$SCREENPLAY_STUDIO_CHECKOUT" "$studio_url_for_shell" "${root}/${results}/shell-vector.zip" "${root}/${results}/shell-studio-preview"
+    shell_studio_tree="${root}/${results}/shell-studio-preview/studio-tree.json"
+else
+    echo "  shell-studio-preview: not run (needs a Studio URL and SCREENPLAY_STUDIO_CHECKOUT)"
+    failures=$((failures + 1))
+fi
+run_step shell-conformance env \
+    NODE_PATH="$node_path" \
+    SCREENPLAY_SHELL_VECTOR="${root}/${shell_vector}" \
+    SCREENPLAY_SHELL_PORT="$((port + 300))" \
+    SCREENPLAY_SHELL_RESULT="${root}/${results}/shell-conformance/result.json" \
+    ${shell_studio_tree:+SCREENPLAY_STUDIO_TREE="$shell_studio_tree"} \
+    node "${harness}/screen-shell-conformance.cjs"
 
 if [[ -n "${SCREENPLAY_AI_VERIFICATION:-}" ]]; then
     run_step mcp bash -c "cd \"\$1\" && yarn tsx screenplay-mcp-transcript.ts --corpus \"\$2\" --scratch \"\$3\"" _ \
