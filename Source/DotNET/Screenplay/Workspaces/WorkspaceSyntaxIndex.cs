@@ -88,10 +88,11 @@ public sealed class WorkspaceSyntaxIndex
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
     readonly IReadOnlyDictionary<string, PlacedPlayDocument> _placements;
 
-    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements, CommandStreamCandidates candidates)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements, CommandStreamCandidates candidates, ImmutableArray<WorkspaceDocument> unparsedDocuments)
     {
         Workspace = workspace;
         _placements = placements;
+        UnparsedDocuments = unparsedDocuments;
         StreamCandidates = candidates;
         Entries = entries;
         Diagnostics = diagnostics;
@@ -122,6 +123,12 @@ public sealed class WorkspaceSyntaxIndex
         [.. Workspace.Documents.Where(document => !_placements[document.Path.Value].IsPlacementResolved)];
 
     /// <summary>
+    /// Gets documents that do not parse completely, including retained repair candidates.
+    /// No new container identities can be assigned until all documents parse and place.
+    /// </summary>
+    public ImmutableArray<WorkspaceDocument> UnparsedDocuments { get; }
+
+    /// <summary>
     /// Gets parser and compilation diagnostics for revision-bound repair discovery, preserving distinct messages.
     /// </summary>
     public ImmutableArray<Diagnostic> RepairableDiagnostics { get; }
@@ -143,6 +150,7 @@ public sealed class WorkspaceSyntaxIndex
     {
         var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+        var unparsed = ImmutableArray.CreateBuilder<WorkspaceDocument>();
         var semantics = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
         var events = workspace.IdentityCatalog.EventContracts.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
 
@@ -161,13 +169,14 @@ public sealed class WorkspaceSyntaxIndex
             if (!placement.IsPlacementResolved) continue;
             var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
             diagnostics.AddRange(parsed.Diagnostics);
+            if (!parsed.Success) unparsed.Add(document);
             if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative || diagnostic.Code == DiagnosticCodes.CaptureEventsRecordFixture)))
             {
                 Visit(parsed.Value, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, semantics, events, entries);
             }
         }
 
-        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements, candidates);
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements, candidates, unparsed.ToImmutable());
     }
 
     /// <summary>

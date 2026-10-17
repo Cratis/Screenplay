@@ -41,7 +41,24 @@ static class McpWorkspaceTransport
             },
             identityPersistence = "root-local-on-apply",
             identityStatePath = ".screenplay/identities.json",
+            containerIdentities = ContainerIdentities(workspace),
             readiness = Readiness(workspace, source?.Success ?? true, sourceDiagnosticCount, diagnostics.Length)
+        };
+    }
+
+    internal static object? ContainerIdentities(ScreenplayWorkspace workspace)
+    {
+        var index = McpWorkspaceAnalysis.For(workspace).Syntax;
+        var containers = new WorkspaceContainerIdentities(index);
+        var issues = containers.Issues;
+        if (containers.Complete && issues.IsEmpty) return null;
+        return new
+        {
+            complete = containers.Complete,
+            containers = issues.Select(issue => new { address = McpSemanticAddresses.Describe(issue.Address), issue.Reason, issue.Assigned }),
+            documents = index.UnparsedDocuments.Select(document => new { path = document.Path.Value, reason = "unparsed" })
+                .Concat(index.UnresolvedPlacementDocuments.Select(document => new { path = document.Path.Value, reason = "unplaced" })),
+            note = containers.Complete ? null : "No new identities are assigned until every document parses and places."
         };
     }
 

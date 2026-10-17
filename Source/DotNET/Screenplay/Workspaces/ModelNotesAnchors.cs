@@ -35,6 +35,36 @@ public static class ModelNotesAnchors
     })];
 
     /// <summary>
+    /// Computes note states with source ambiguity, preserving identified notes as resolved.
+    /// </summary>
+    /// <param name="document">The notes.</param>
+    /// <param name="workspace">The current source workspace.</param>
+    /// <returns>Current items, including ambiguity on retained anchors.</returns>
+    public static ImmutableArray<ModelNotesItem> Items(ModelNotesDocument document, ScreenplayWorkspace workspace)
+    {
+        var containers = new WorkspaceContainerIdentities(WorkspaceSyntaxIndex.Create(workspace));
+        return [.. Items(document, workspace.IdentityCatalog).Select(item => item with
+        {
+            Ambiguous = Resolve(item.Note.Anchor, workspace.IdentityCatalog) is { } address && containers.IsAmbiguous(address)
+        })];
+    }
+
+    /// <summary>
+    /// Refuses new targeting of an ambiguous or unavailable container and its descendants.
+    /// </summary>
+    /// <param name="index">The current source index.</param>
+    /// <param name="address">The selected declaration.</param>
+    /// <exception cref="InvalidModelNotes">The address cannot be newly targeted.</exception>
+    public static void RequireTarget(WorkspaceSyntaxIndex index, SemanticAddress address)
+    {
+        if (new WorkspaceContainerIdentities(index).Reason(address) is { } reason)
+        {
+            var guidance = reason == "incomplete" ? " No new identities are assigned until every document parses and places." : string.Empty;
+            throw new InvalidModelNotes($"{reason}: the note target or its owning container is unavailable.{guidance}");
+        }
+    }
+
+    /// <summary>
     /// Anchors an occurrence directly when identified, otherwise to its nearest owning container.
     /// Document-root and unresolved-placement occurrences refuse rather than guessing.
     /// </summary>
@@ -46,6 +76,11 @@ public static class ModelNotesAnchors
     {
         var entry = index.Find(handle) ?? throw new InvalidModelNotes("Unknown or stale note target.");
         if (entry.Parent is null) throw new InvalidModelNotes("Document anchors are not supported; select application explicitly.");
+        for (var current = entry; current is not null; current = current.Parent is { } parent ? index.Find(parent) : null)
+        {
+            if (current.Address is { } address) RequireTarget(index, address);
+        }
+
         if (entry.SemanticId is { } id) return new(id.ToString());
         for (var owner = entry.Parent; owner is not null; owner = index.Find(owner)?.Parent)
         {

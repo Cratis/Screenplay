@@ -24,6 +24,7 @@ public class when_listing_notes_on_repeated_split_headers : given.a_repeated_spl
         }
     }
 
-    [Fact] void should_select_both_notes_at_the_substituted_application_anchor() => _items.TrueForAll(items => items.GetArrayLength() == 2).ShouldBeTrue();
-    [Fact] void should_include_notes_added_for_both_container_addresses() => _items.TrueForAll(items => items.EnumerateArray().Select(item => item.GetProperty("note").GetProperty("text").GetString()).Order().SequenceEqual(["Feature", "Module"])).ShouldBeTrue();
+    // Decision 0093 items 1 and 8: each logical container owns its note; repeated headers are not application fallbacks.
+    [Fact] void should_select_only_the_logical_containers_note() => _items.TrueForAll(items => items.GetArrayLength() == 1).ShouldBeTrue();
+    [Fact] void should_keep_each_note_on_its_own_container() => _items.TrueForAll(items => items[0].GetProperty("note").GetProperty("text").GetString() == items[0].GetProperty("address").GetProperty("kind").GetString()).ShouldBeTrue();
 }

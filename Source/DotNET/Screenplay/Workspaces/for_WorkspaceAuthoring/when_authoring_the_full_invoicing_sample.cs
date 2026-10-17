@@ -39,7 +39,8 @@ public class when_authoring_the_full_invoicing_sample : Specification
     [Fact] void should_carry_no_reference_debt() => _result.AuthoringDiagnostics.Where(diagnostic => diagnostic.Message.StartsWith("Reference debt", StringComparison.Ordinal)).Select(diagnostic => diagnostic.Message).ShouldBeEmpty();
     [Fact] void should_keep_executable_readiness_distinct() => _result.ExecutableReady.ShouldBeFalse();
     [Fact] void should_preserve_every_structural_value() => SyntaxJson.StructurallyEqual(_syntax, WorkspaceSyntaxIndex.Create(_result.Workspace).Entries.Single(entry => entry.Parent is null).Node).ShouldBeTrue();
-    [Fact] void should_not_invent_semantic_identities_without_backend_support() => _result.Workspace.IdentityCatalog.Semantics.ShouldBeEmpty();
+    [Fact] void should_assign_only_containers_without_backend_support() => _result.Workspace.IdentityCatalog.Semantics.All(assignment => assignment.Address.Kind is SemanticKind.Module or SemanticKind.Feature or SemanticKind.Slice).ShouldBeTrue();
+    [Fact] void should_identify_the_authored_containers() => _result.Workspace.IdentityCatalog.Semantics.ShouldNotBeEmpty();
     [Fact] void should_not_invent_event_contracts_without_backend_support() => _result.Workspace.IdentityCatalog.EventContracts.ShouldBeEmpty();
     [Fact] void should_assign_the_exact_document_identity() => _result.Workspace.IdentityCatalog.Documents.Single().Id.ShouldEqual(_result.Workspace.Documents.Single().Id);
 }

@@ -40,6 +40,7 @@ internal sealed partial class McpWorkspaces
             stateRevision = McpStatePlan.Revision(persisted),
             byteCount = persisted?.Length ?? 0,
             identity = IdentityStatus(persisted),
+            containerIdentities = ContainerIdentityStatus(persisted),
             recovery = RecoveryStatus(),
             stateChange = proposal is null ? null : StatePlan(proposal).Describe()
         };
@@ -111,6 +112,19 @@ internal sealed partial class McpWorkspaces
         catch (Exception exception)
         {
             return new { status = "Conflict", conflict = exception.Message };
+        }
+    }
+
+    object? ContainerIdentityStatus(byte[]? persisted)
+    {
+        try
+        {
+            var workspace = persisted is null ? _workspace ?? OpenFromDisk(Root, Root.ApplicationName) : McpState.Deserialize(persisted).OpenForReleaseBaselineCheck(Root);
+            return McpWorkspaceTransport.ContainerIdentities(workspace);
+        }
+        catch (Exception exception) when (exception is McpFailure or IOException or UnauthorizedAccessException)
+        {
+            return new { unavailable = true, reason = exception.Message };
         }
     }
 

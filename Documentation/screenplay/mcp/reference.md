@@ -610,6 +610,9 @@ and `page` (`revision`, `totalCount`, `offset`, `items`, `nextOffset`). Filters 
 | `expectedNotesRevision` | Optional on the first page; required when offset is greater than zero |
 
 An item carries `note`, current `address`, `state` and nullable `orphanReason`.
+Identified notes on ambiguous containers or their descendants also carry
+`ambiguous: true`; they remain resolved. An unfiltered read, or an existing
+`semanticId` filter, can inspect them even though new targeting is refused.
 Orphans retain their durable note, return a null current address and reason
 `unknown` when the catalog lacks the identity. `findings` returns one finding per
 selected unresolved question: `noteId`, `severity: "info"`,
@@ -652,11 +655,11 @@ You can also build it from names and the `applicationIdentity` returned by `open
 }
 ```
 
-A typed address requires a current catalog identity. When it has none, it refuses;
-use its current source handle to select the nearest identified owner instead.
-Targets without a semantic identity fall back to their nearest identified owning
-slice/feature/module/application. On an unbound model, even a Slice may have no
-identity and fall back to Application. Both `add` and `reanchor` report **every**
+Modules, nested Features and Slices gain deterministic identities before binding
+when every document parses and places. Dotted, typed and handle targets anchor to
+those containers without substitution. In-slice declarations still need binding;
+unidentified declarations fall back to their nearest identified owning
+slice/feature/module/application. Both `add` and `reanchor` report **every**
 such substitution in `substitutions`, including when reanchor leaves the note
 unchanged. Each entry carries the original `target`, resolved `anchor`, resolved
 `address` and `reason`; review it before applying. Document and authoring-key
@@ -665,6 +668,16 @@ are never fetched. Text and author are nonempty, trimmed and at most 16384
 characters. Each note has at most 100 references. The sidecar permits at most
 10000 notes and 4 MiB UTF-8. Author is unverified free text; ID and timestamps are
 server-generated, not client inputs.
+
+`open-workspace` and `workspace-state` report `containerIdentities` when container
+identity targeting has problems. It contains `complete`, `containers` entries
+(`address`, `reason`, `assigned`) and `documents` entries (`path`, `reason`).
+Container reasons are `ambiguous`, `idCollision` or `incomplete`; document reasons
+are `unparsed` or `unplaced`. Incomplete source prevents all new assignments until
+every document parses and places. Existing assignments are retained. New targets
+on unavailable containers or descendants refuse with the same reason in every
+form, including semantic-ID anchors. Repeated Module/Feature fragments count as
+one logical declaration; duplicate Slices do not.
 
 The response includes `success`, `proposalId`, `notesRevision`,
 `afterNotesRevision`, `addedNotes` IDs, `substitutions`, `changeCount: 0`,

@@ -62,7 +62,9 @@ public class when_indexing_placed_handler_intent
         var renamed = workspace.ProposeRename(new()
         {
             ExpectedRevision = workspace.Revision,
-            ExpectedCatalogRevision = catalog.Revision,
+
+            // Decision 0093 item 5: Create materializes containers and moves the authoritative catalog revision.
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
             Target = command.Handle,
             ExpectedName = "C",
             NewName = "Renamed",

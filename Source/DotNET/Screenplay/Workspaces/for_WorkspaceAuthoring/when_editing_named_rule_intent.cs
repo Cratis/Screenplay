@@ -202,7 +202,9 @@ public class when_editing_named_rule_intent
         var renamed = workspace.ProposeRename(new()
         {
             ExpectedRevision = workspace.Revision,
-            ExpectedCatalogRevision = catalog.Revision,
+
+            // Decision 0093 item 5: use the catalog returned by Create, including new containers.
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
             Target = command.Handle,
             ExpectedName = "C",
             NewName = "Renamed",
