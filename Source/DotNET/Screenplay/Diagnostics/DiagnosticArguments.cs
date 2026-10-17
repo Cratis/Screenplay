@@ -42,13 +42,6 @@ public sealed class DiagnosticArguments(IEnumerable<KeyValuePair<string, Diagnos
     /// <returns>The new map.</returns>
     public DiagnosticArguments With(string name, DiagnosticArgument value) => new(_values.SetItem(name, value));
 
-    /// <summary>
-    /// Creates the map for a refusal that names the issue tracking its admission.
-    /// </summary>
-    /// <param name="issue">The issue, such as <c>Cratis/Screenplay#600</c>.</param>
-    /// <returns>The argument map.</returns>
-    internal static DiagnosticArguments ForIssue(string issue) => Empty.With("issue", DiagnosticArgument.Text(issue));
-
     /// <inheritdoc/>
     public bool ContainsKey(string key) => _values.ContainsKey(key);
 
@@ -73,6 +66,13 @@ public sealed class DiagnosticArguments(IEnumerable<KeyValuePair<string, Diagnos
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>
+    /// Creates the map for a refusal that names the issue tracking its admission.
+    /// </summary>
+    /// <param name="issue">The issue, such as <c>Cratis/Screenplay#600</c>.</param>
+    /// <returns>The argument map.</returns>
+    internal static DiagnosticArguments ForIssue(string issue) => Empty.With("issue", DiagnosticArgument.Text(issue));
 
     /// <summary>
     /// Builds one immutable map from named, typed subjects.
