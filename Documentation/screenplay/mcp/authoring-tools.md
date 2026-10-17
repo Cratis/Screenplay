@@ -136,7 +136,8 @@ reference identity. Explicit stream-candidate selection still requires its exact
 replacement proof and cannot excuse other removed references.
 
 Reference-validator refusals populate `conflicts[].document` and `path` with the
-first offending document's identity and portable path. The message names the reference
+first offending document's identity and portable path, both as strings (a conflict without a
+document reports `null`). The message names the reference
 text, member/role, document path and line:column; ambiguous batches list disappeared
 and introduced occurrences, capped at ten with a remaining count. `candidates` is
 reserved for property-planner evidence and stays empty for these refusals.
