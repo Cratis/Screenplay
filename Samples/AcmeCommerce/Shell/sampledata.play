@@ -1,0 +1,86 @@
+// ============================================================
+// The one sample-data pack. Design and preview time only - a production build never sees it.
+// Shapes name the read model they supply rows for. Each domain's author adds the shapes of its own read models
+// in its own marked section below (keep sections apart to avoid merge conflicts).
+// ============================================================
+
+sample data AcmeNordic
+  title "Acme Commerce - Nordic"
+  locale nb-NO
+
+  // ---- Catalog (ecommerce-author-core) ---------------------------------------------------------------------
+  shape ProductRow
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      price     = 149
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      price     = 89
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      price     = 349
+      status    = "approved"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      price     = 899
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      price     = 199
+      status    = "withdrawn"
+
+  shape PricedProduct
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      price     = 149
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      price     = 89
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      price     = 349
+      status    = "approved"
+  shape CatalogFigure
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      status    = "published"
+      price     = 149
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      status    = "withdrawn"
+      price     = 199
+
+  // ---- Storefront (ecommerce-author-sales) -----------------------------------------------------------------
+
+  // ---- Sales (ecommerce-author-sales) ----------------------------------------------------------------------
+
+  // ---- Purchasing (ecommerce-author-ops) -------------------------------------------------------------------
+
+  // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------

@@ -1,8 +1,5 @@
-// Sales: what a customer bought. The module EXTENDS the application's sidebar with its own child (Reports).
-//
-// Sales never reads Storefront's or Warehouse's data. An order arrives as the public OrderPlaced (translated into the private OrderReceived),
-// stock outcomes arrive as StockReserved / StockReservationFailed / ShipmentDispatched, price changes as ProductPriceChanged. What Sales says
-// about itself leaves as OrderConfirmed (P5) and OrderStatusChanged (P6).
+// Sales: what a customer bought. Module skeleton (features are filled by the Sales slices).
+// The module EXTENDS the application's sidebar with its own child.
 module Orders
   description "Order intake, approval, fulfilment and reporting"
   authorize CanWorkOrders
@@ -11,10 +8,6 @@ module Orders
     item reports title "Reports" icon chart target Orders.Reporting
 
   feature Intake
-    description "Orders arrive from the storefront; the price list follows the catalogue"
   feature Approval
-    description "Small orders approve themselves, the rest wait for a manager"
   feature Fulfilment
-    description "From confirmation through reservation to shipment"
   feature Reporting
-    description "Figures for the sales floor and the executive view"

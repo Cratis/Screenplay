@@ -1,0 +1,44 @@
+// Storefront's OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop (not copied from a blueprint).
+module Shop
+  // OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop.
+  // ProductGrid: header, filters and a grid of product cards (the grid is filled with the custom component acme:productCard).
+  screen template ProductGrid
+    category Shop
+    scopes slice stateview
+    fits slot content
+
+    header
+    filters
+    grid
+
+    arrangement flow
+      column gap 12
+        header
+        filters
+        grid grow
+
+  // SideSummary: the main region with a narrow summary beside it (the basket shows its lines left and the totals right).
+  screen template SideSummary
+    category Shop
+    scopes slice stateview
+    fits slot content
+
+    header
+    main
+    summary
+    actions
+
+    arrangement flow
+      column gap 16
+        header
+        row gap 24
+          main grow
+          summary width 320
+        actions
+
+      when width compact
+        column gap 12
+          header
+          main
+          summary
+          actions

@@ -1,0 +1,7 @@
+// The Acme theme: tokens only. The custom package Acme.Commerce (@acme/scene.commerce) must be named compatible
+// for a ui profile to list it.
+theme Acme
+  compatible with Cratis.Components
+  compatible with Cratis.Blueprint.Default
+  compatible with PrimeReact
+  compatible with Acme.Commerce

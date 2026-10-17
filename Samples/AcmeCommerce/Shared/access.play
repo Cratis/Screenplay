@@ -1,0 +1,92 @@
+// ============================================================
+// Who may do what: policies, then the personas that hold them
+//
+// A screen is gated by policies; the persona holding them is the row the event model board draws the screen in.
+// ============================================================
+
+policy IsAuthenticated
+  require authenticated
+
+policy IsShopper
+  require role "Shopper"
+
+policy IsMerchandiser
+  require role "Merchandiser"
+
+policy IsSalesRep
+  require role "SalesRep"
+
+policy IsSalesManager
+  require role "SalesManager"
+
+// What a module admits: the persona who works there, and the ops administrator who sees everywhere.
+// A sales manager may do what a rep may.
+policy CanCurateCatalog
+  require role "Merchandiser"
+    or role "OpsAdmin"
+
+policy CanWorkOrders
+  require role "SalesRep"
+    or role "SalesManager"
+    or role "OpsAdmin"
+
+policy IsBuyer
+  require role "Buyer"
+
+policy IsWarehouseClerk
+  require role "WarehouseClerk"
+
+policy CanBuy
+  require role "Buyer"
+    or role "OpsAdmin"
+
+policy CanWorkWarehouse
+  require role "WarehouseClerk"
+    or role "OpsAdmin"
+
+policy IsOpsAdmin
+  require role "OpsAdmin"
+
+persona Shopper
+  description "A signed-in customer who browses, fills a basket and checks out"
+  policy IsAuthenticated
+  policy IsShopper
+
+persona Merchandiser
+  description "Curates the catalogue: drafts, describes, prices and approves products"
+  policy IsAuthenticated
+  policy IsMerchandiser
+  policy CanCurateCatalog
+
+persona SalesRep
+  description "Works incoming orders"
+  policy IsAuthenticated
+  policy IsSalesRep
+  policy CanWorkOrders
+
+persona SalesManager
+  description "Approves what reps may not"
+  policy IsAuthenticated
+  policy IsSalesManager
+  policy CanWorkOrders
+
+persona Buyer
+  description "Buys from suppliers: replenishment and purchase orders"
+  policy IsAuthenticated
+  policy IsBuyer
+  policy CanBuy
+
+persona WarehouseClerk
+  description "Receives, picks, packs and dispatches"
+  policy IsAuthenticated
+  policy IsWarehouseClerk
+  policy CanWorkWarehouse
+
+persona OpsAdmin
+  description "Sees administration and dashboards in every domain"
+  policy IsAuthenticated
+  policy IsOpsAdmin
+  policy CanCurateCatalog
+  policy CanWorkOrders
+  policy CanBuy
+  policy CanWorkWarehouse

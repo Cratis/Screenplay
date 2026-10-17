@@ -1,0 +1,41 @@
+// ============================================================
+// Catalog / the command forms: multi-column input surfaces, declared once and found by their command
+// ============================================================
+
+module Merchandising
+  form DescribeProductForm for DescribeProduct
+    generation manual
+    field details label "Selling text"
+    field imageUrl label "Picture"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place details row 1 column 1 columnSpan 2
+      place imageUrl row 2 column 1 columnSpan 2
+
+  form SetProductPriceForm for SetProductPrice
+    generation manual
+    field price label "Price"
+    field currency label "Currency"
+    field effectiveFrom label "Effective from"
+    layout
+      column 1 width 2fr
+      column 2 width 1fr
+      columnGap 24px
+      place price row 1 column 1
+      place currency row 1 column 2
+      place effectiveFrom row 2 column 1 columnSpan 2
+
+  form DraftProductForm for DraftProduct
+    generation manual
+    field sku label "SKU"
+    field name label "Product"
+    field category label "Category"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku row 1 column 1
+      place name row 1 column 2
+      place category row 2 column 1 columnSpan 2
