@@ -32,10 +32,16 @@ module Buying
           purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
           supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
 
+      // Supplier -> lines -> review: one CommandForm per step (CreatePurchaseOrder, AddPurchaseOrderLine, SubmitPurchaseOrder)
       screen NewPurchaseOrder
+        description "Supplier, lines, review: one CommandForm per step"
         template blueprint Cratis.Blueprint.Default WizardScreen version "^1"
+          header
+            title "New purchase order"
           actions
             action CreatePurchaseOrder
+            action AddPurchaseOrderLine
+            action SubmitPurchaseOrder
               navigate to PurchaseOrders
 
     slice StateChange AddPurchaseOrderLine
@@ -328,6 +334,13 @@ module Buying
 
       screen PurchaseOrderPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            toolbar actions
+              button addline title "Add line" slice Buying.PurchaseOrders.AddPurchaseOrderLine emphasis quiet icon plus
+              button submit title "Submit" slice Buying.PurchaseOrders.SubmitPurchaseOrder emphasis primary icon send
+              button receive title "Receive goods" slice Buying.PurchaseOrders.ReceivePurchaseOrderGoods emphasis quiet icon download
+              button cancel title "Cancel order" slice Buying.PurchaseOrders.CancelPurchaseOrder emphasis quiet icon x
+              button archive title "Archive" slice Buying.PurchaseOrders.ArchivePurchaseOrder emphasis quiet icon archive
           summary
             data PurchaseOrderRow via query PurchaseOrderById by purchaseOrderId
             summary PurchaseOrderRow

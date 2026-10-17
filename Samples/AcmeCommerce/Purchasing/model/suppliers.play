@@ -186,6 +186,9 @@ module Buying
       screen Suppliers
         template blueprint Cratis.Blueprint.Default MasterDetailScreen version "^1"
           list
+            toolbar actions
+              button register title "Register supplier" slice Buying.Suppliers.RegisterSupplier emphasis primary icon plus
+              button offer title "Offer product" slice Buying.Suppliers.OfferSupplierProduct emphasis quiet icon tag
             data SupplierRow[] via query AllSuppliers
             table SupplierRow
               column name    label "Supplier"
