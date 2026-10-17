@@ -633,8 +633,10 @@ orphaned unresolved questions in a findings query.
 Anchors are `{ semanticId }` or `{ application: true }`. A target can also be an
 address (`{ address, kind }` or the typed address used by move) or a current
 `{ revision, documentId, path }` source handle. Dotted Module, Feature and Slice
-addresses select logical declarations across imported files; import placement
-wrappers do not make them ambiguous. Genuinely ambiguous dotted addresses refuse.
+addresses select logical declarations across imported files. Module and Feature
+headers repeated at the same address merge into one declaration, whether written
+explicitly or supplied by import placement. Other declarations are not collapsed;
+genuinely ambiguous dotted addresses refuse.
 
 Discover a typed address from `read-ast`'s `address` or `read-workspace view=semantics`.
 You can also build it from names and the `applicationIdentity` returned by `open-workspace`. For example, a Module target has this shape

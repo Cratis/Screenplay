@@ -13,7 +13,10 @@ public class when_listing_notes_on_unbound_split_containers : given.a_split_note
     void Establish()
     {
         OpenSplit(unbound: true);
-        Apply(ProposeNote(Targets(SemanticKind.Slice, typed: false)[0]));
+        Apply(ProposeNotes([.. new[] { SemanticKind.Module, SemanticKind.Feature, SemanticKind.Slice }.Select(kind => (object)new
+        {
+            operation = "add", kind = "question", text = kind.ToString(), author = "team", target = Targets(kind, typed: false)[0]
+        })]));
     }
 
     void Because()
@@ -27,6 +30,7 @@ public class when_listing_notes_on_unbound_split_containers : given.a_split_note
         }
     }
 
-    [Fact] void should_list_the_note_for_each_unidentified_container() => _items.TrueForAll(items => items.GetArrayLength() == 1).ShouldBeTrue();
-    [Fact] void should_resolve_dotted_and_handle_filters_identically() => _items.Select(items => items[0].GetProperty("note").GetProperty("id").GetString()).Distinct().Count().ShouldEqual(1);
+    [Fact] void should_list_all_notes_stored_under_the_substituted_anchor() => _items.TrueForAll(items => items.GetArrayLength() == 3).ShouldBeTrue();
+    [Fact] void should_include_notes_added_for_every_container() => _items.TrueForAll(items => items.EnumerateArray().Select(item => item.GetProperty("note").GetProperty("text").GetString()).Order().SequenceEqual(["Feature", "Module", "Slice"])).ShouldBeTrue();
+    [Fact] void should_resolve_dotted_and_handle_filters_identically() => _items.Select(items => string.Join(',', items.EnumerateArray().Select(item => item.GetProperty("note").GetProperty("id").GetString()).Order())).Distinct().Count().ShouldEqual(1);
 }

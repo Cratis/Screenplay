@@ -68,7 +68,6 @@ static class McpNotesTargets
         var kind = McpJson.RequiredString(value, "kind");
         var matches = workspace.IdentityCatalog.Semantics.Where(assignment => assignment.Address.Kind.ToString() == kind && Text(assignment.Address) == text).ToArray();
         if (matches.Length == 1) return new(matches[0].Id.ToString());
-        if (matches.Length > 1) throw new McpFailure("Unknown or ambiguous note address.", -32602);
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
         var syntax = index.Entries.Where(entry => (entry.Kind == kind || entry.Kind == $"{kind}Syntax") && SyntaxAddress(entry, index) == text).ToArray();
         var occurrences = LogicalOccurrences(syntax).ToArray();
@@ -80,8 +79,10 @@ static class McpNotesTargets
     {
         foreach (var group in entries.GroupBy(entry => (entry.Kind, entry.Address)))
         {
-            var declarations = group.Where(entry => entry.Node is not ModuleSyntax { IsPlacement: true } and not FeatureSyntax { IsPlacement: true }).ToArray();
-            foreach (var declaration in declarations.Length == 0 ? group.Take(1) : declarations)
+            var occurrences = group.First().Node is ModuleSyntax or FeatureSyntax
+                ? group.OrderBy(entry => entry.Node is ModuleSyntax { IsPlacement: true } or FeatureSyntax { IsPlacement: true }).Take(1)
+                : group;
+            foreach (var declaration in occurrences)
             {
                 yield return declaration;
             }
