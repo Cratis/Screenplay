@@ -80,7 +80,9 @@ A [variant group](variants.md) binds as one independent scoped projection per va
 
 A join never creates an instance. At the root, when a joined event arrives, every existing instance whose `on` property equals the joined event's source is updated. Inside `children`, the child's identity is compared to the join key instead of `on`. At the root, when a `from` event sets the `on` property (or the root key), the latest joined event is read again, so a customer registered before the order still names it. Inside `children`, that backfill happens only when `on` equals the child's identity. The identifier written directly after `join` is not part of the definition - Chronicle's lowering discards it.
 
-`every` mappings run with each `from` and `join` event of their level. `all` does the same and additionally reaches event types no block names, keyed by the event source. Only a projection's own level can subscribe to every event type: Chronicle drops that flag below it, so `all` inside `children` or `nested` binds as `every` and reports warning `PLAY0380`. The same warning reports an `automap` or `no automap` written on a joined event, which Chronicle replaces with the auto-map of the level the join sits in.
+`every` mappings run with each `from` and `join` event of their level. `all` does the same and additionally reaches event types no block names, keyed by the event source. Only a projection's own level can subscribe to every event type: Chronicle drops that flag below it, so `all` inside `children` or `nested` binds as `every` and reports warning `PLAY0380`.
+
+An `automap` or `no automap` written on a joined event decides auto-mapping for that event alone, as it does in Chronicle; without one, the joined event follows the auto-map of the level the join sits in.
 
 ## Establishing a reference world from facts
 

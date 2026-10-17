@@ -10,6 +10,7 @@ import {
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { pattern } from '../Text/patterns';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
+import { validateProjectionEventScopes } from './ProjectionEventScopeValidator';
 import { isFileDirective } from './FileReferences';
 import { parseDescription } from './DescriptionParser';
 import { firstWord, splitTopLevel, unescapeIdentifier } from './LineText';
@@ -80,6 +81,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
         }
     }
     reportVariantConflicts(context, blocks, name);
+    validateProjectionEventScopes(context, name, blocks);
     if (blocks.length === 0) {
         context.error(DiagnosticCodes.EmptyProjection, `Projection '${name}' must contain at least one directive`, locationOf(line));
     }

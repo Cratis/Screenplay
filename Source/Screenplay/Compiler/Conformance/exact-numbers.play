@@ -30,6 +30,10 @@ module Numbers
                 returns amount
             event Added
                 amount Decimal
+            event Removed
+                amount Decimal
+            event Unlinked
+                amount Decimal
             readmodel View
                 amount Decimal
             query ViewByAmount => View
@@ -53,9 +57,9 @@ module Numbers
                     enters on Added key 9223372036854775808
                     from Added
                         amount = `value ${9007199254740993}`
-                remove with Added key 9007199254740993
+                remove with Removed key 9007199254740993
                     parent 9007199254740994
-                remove via join on Added key 9223372036854775808
+                remove via join on Unlinked key 9223372036854775808
             capture ReadExternal
                 map
                     amount = 9007199254740993

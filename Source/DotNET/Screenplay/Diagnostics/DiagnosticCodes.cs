@@ -1932,8 +1932,7 @@ public static class DiagnosticCodes
 
     /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
-    /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
-    /// joined event is replaced by the level's.
+    /// <c>children</c> or <c>nested</c> block loses its subscription to every event type.
     /// </summary>
     public const string PartiallyLoweredProjectionSyntax = "PLAY0380";
 
@@ -3575,4 +3574,9 @@ public static class DiagnosticCodes
     /// </summary>
     [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the template.", "template:text;The template that cannot start a screen in a feature.", "blueprint:text?;The blueprint the template comes from.")]
     public const string NewScreenTemplateNotApplicable = "PLAY0799";
+
+    /// <summary>
+    /// An event is used more than once in one projection level's event or join set.
+    /// </summary>
+    public const string DuplicateEventInProjectionScope = "PLAY0801";
 }

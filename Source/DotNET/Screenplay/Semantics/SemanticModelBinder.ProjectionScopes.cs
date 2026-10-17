@@ -130,17 +130,16 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                // Chronicle's lowering keeps no per-joined-event auto-map (ProjectionDefinitionSyntaxVisitor.ProcessJoin, :147-156):
-                // the level's auto-map applies (ProjectionFactory.cs:680-684).
-                if (joinEvent.AutoMap != AutoMapMode.Inherit)
+                // Chronicle keeps a joined event's own auto-map on JoinDefinition.AutoMap and lets it override the level's
+                // (ProjectionFactory.GetMergedJoinProperties, Chronicle 19.10.0 and later); 'inherit' keeps the level's.
+                var autoMap = joinEvent.AutoMap switch
                 {
-                    Warning(
-                        DiagnosticCodes.PartiallyLoweredProjectionSyntax,
-                        $"Projection '{level.Projection}' sets auto-map on joined event '{joinEvent.Event}', which Chronicle's projection lowering drops - the level's auto-map applies.",
-                        joinEvent.Location);
-                }
+                    AutoMapMode.Enabled => true,
+                    AutoMapMode.Disabled => false,
+                    _ => level.AutoMap
+                };
 
-                yield return new(@event.Contract.Id, on.Id, BindMappings(joinEvent.Mappings, level, @event, level.AutoMap, true));
+                yield return new(@event.Contract.Id, on.Id, BindMappings(joinEvent.Mappings, level, @event, autoMap, true));
             }
         }
 
