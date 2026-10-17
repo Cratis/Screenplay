@@ -1,0 +1,50 @@
+// Purchasing language: buying from suppliers. Concepts that only Purchasing needs; shared kernel concepts live in Shared/.
+concept SupplierName : String
+  validate
+    not empty  message "A supplier needs a name"
+
+concept TaxId : String
+  validate
+    not empty  message "A tax id is required"
+    min 5      message "A tax id has at least 5 characters"
+    max 20     message "A tax id has at most 20 characters"
+
+concept LeadTimeDays : Int
+  validate
+    >= 0    message "Lead time cannot be negative"
+    <= 365  message "Lead time cannot exceed a year"
+
+concept RequestStatus : Enum
+  requested = 0
+  ordered = 1
+  blocked = 2
+
+// One line of goods that arrived against a purchase order (a receipt is one line: partial receipts are natural)
+type OrderedLine
+  description "What a purchase order line asks a supplier for"
+  sku        Sku
+  quantity   Quantity
+  unitPrice  Money
+
+// Gating shared by every Purchasing screen: the buyer, and OpsAdmin who watches all domains
+policy CanWorkPurchasing
+  require role "Buyer"
+    or role "OpsAdmin"
+
+eventsource Supplier
+  description "One supplier we buy from"
+  identifier SupplierId
+  stream Lifecycle
+    description "Registration and what the supplier offers"
+
+eventsource PurchaseOrder
+  description "One purchase order, from draft to goods received"
+  identifier PurchaseOrderId
+  stream Lifecycle
+    description "Everything that happens to one purchase order"
+
+eventsource SkuSourcing
+  description "How one SKU is sourced: demand, replenishment requests and the preferred supplier"
+  identifier Sku
+  stream Sourcing
+    description "Demand and replenishment for one SKU"
