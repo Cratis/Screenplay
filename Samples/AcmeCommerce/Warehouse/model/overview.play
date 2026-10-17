@@ -171,7 +171,43 @@ module Stock
           available = 9
 
     slice StateView WarehouseDashboard
-      description "What needs attention: SKUs below their reorder point, and the parcels in flight"
+      description "What needs attention: how much is on the shelves, what is promised, which SKUs run out and where the parcels are"
+
+      // One row for the whole warehouse: the same instance is updated by every stock movement (a literal key)
+      readmodel StockFigures
+        summaryId   String key
+        skuCount      Int optional
+        unitsOnHand   Int optional
+        unitsReserved Int optional
+        parcelsOpen   Int optional
+
+      query CurrentStockFigures => observable StockFigures[]
+
+      projection StockFiguresProjection => StockFigures
+        no automap
+        from SkuRegistered key "global"
+          summaryId = "global"
+          increment skuCount
+        from StockReceived key "global"
+          summaryId = "global"
+          add unitsOnHand by quantity
+        from StockIncreased key "global"
+          summaryId = "global"
+          add unitsOnHand by quantity
+        from StockDecreased key "global"
+          summaryId = "global"
+          subtract unitsOnHand by quantity
+        from ReservationMade key "global"
+          summaryId = "global"
+          add unitsReserved by quantity
+        from ShipmentPlanned key "global"
+          summaryId = "global"
+          increment parcelsOpen
+        from StockDispatched key "global"
+          summaryId = "global"
+          subtract unitsOnHand by quantity
+          subtract unitsReserved by quantity
+          decrement parcelsOpen
 
       readmodel StockAlert
         sku          Sku key
@@ -181,6 +217,7 @@ module Stock
       query AllStockAlerts => observable StockAlert[]
 
       projection StockAlertProjection => StockAlert
+        no automap
         from ReorderPointCrossed
           sku          = $eventSourceId
           onHand       = onHand
@@ -190,6 +227,13 @@ module Stock
 
       screen WarehouseDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          kpis
+            data StockFigures[] via query CurrentStockFigures
+            table StockFigures
+              column unitsOnHand   label "Units on hand"
+              column unitsReserved label "Units reserved"
+              column skuCount      label "SKUs"
+              column parcelsOpen   label "Parcels in flight"
           tables
             data StockAlert[] via query AllStockAlerts
             table StockAlert
@@ -197,6 +241,26 @@ module Stock
               column onHand       label "On hand"
               column reorderPoint label "Reorder at"
               on row-click navigate to ItemPage by sku
+
+      specification TheFiguresFollowTheShelves
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReservationMade
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then readmodel StockFigures
+          summaryId     = "global"
+          skuCount      = 1
+          unitsOnHand   = 40
+          unitsReserved = 3
 
       specification AnAlarmShowsOnTheDashboardUntilStockReturns
         given SkuRegistered

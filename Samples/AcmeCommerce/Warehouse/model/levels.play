@@ -41,6 +41,12 @@ module Stock
         when Mug
         then denied
 
+      screen RegisterSkuDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterSku
+              navigate to StockLevels
+
     slice StateChange BlockSku
       description "Stops receiving a SKU that the catalogue has retired"
       command BlockSku
@@ -49,6 +55,12 @@ module Stock
           for sku
 
       event SkuBlockedForReceiving
+
+      screen BlockSkuDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action BlockSku
+              navigate to StockLevels
 
       specification BlockingASku
         given caller
@@ -262,8 +274,12 @@ module Stock
             toolbar actions
               button adjust title "Adjust stock" slice Stock.Levels.AdjustStock emphasis quiet icon edit
               button count title "Count" slice Stock.Levels.CountStock emphasis quiet icon list
+              button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis quiet icon plus
           list
             data StockLevel[] via query AllStockLevels
+            // The custom package's badge (Acme.Commerce acme:stockBadge) marks SKUs at or below their reorder point
+            component Acme.Commerce.StockBadge stockBadge
+              context from query AllStockLevels
             table StockLevel
               column sku       label "SKU"
               column name      label "Product"

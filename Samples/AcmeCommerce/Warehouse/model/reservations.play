@@ -320,6 +320,12 @@ module Stock
 
       event ShipmentCancelled
 
+      screen CancelShipmentDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CancelShipment
+              navigate to PickingQueue
+
       specification CancellingAShipment
         given caller
           authenticated

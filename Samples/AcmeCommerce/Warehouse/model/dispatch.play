@@ -54,6 +54,30 @@ module Stock
         when Handover
         then error "The parcel is not packed"
 
+      // Defence in depth: even when two clerks race past the status check, the event itself can be appended once per shipment
+      specification AShipmentIsDispatchedOnce
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
+          carrier        = posten
+          trackingNumber = "RR123456789NO"
+          sku            = "ACM-1000"
+          quantity       = 3
+          dispatchedAt   = "2026-10-02T14:00:00Z"
+        when append ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6002"
+          carrier        = dhl
+          trackingNumber = "DHL-0001"
+          sku            = "ACM-1000"
+          quantity       = 3
+          dispatchedAt   = "2026-10-02T15:00:00Z"
+        then error "A shipment is dispatched once"
+
       specification ATrackingNumberIsRequired
         given caller
           authenticated
