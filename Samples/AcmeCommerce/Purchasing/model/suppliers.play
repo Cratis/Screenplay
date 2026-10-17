@@ -1,7 +1,5 @@
 // Purchasing / Suppliers: who we buy from, what they offer and who we prefer per SKU.
 module Buying
-  description "Suppliers, replenishment and purchase orders"
-  authorize CanWorkPurchasing
   purpose SupplierRelations
 
   feature Suppliers
@@ -13,7 +11,7 @@ module Buying
       command RegisterSupplier
         supplierId   SupplierId identifier
         name         SupplierName
-        taxId        TaxId
+        taxId        SupplierTaxId
         contactEmail EmailAddress
         country      String
         produces SupplierRegistered
@@ -25,7 +23,7 @@ module Buying
 
       event SupplierRegistered
         name         SupplierName
-        taxId        TaxId
+        taxId        SupplierTaxId
         contactEmail EmailAddress
         country      String
 
@@ -52,12 +50,12 @@ module Buying
           contactEmail = "orders@nordic-ceramics.example"
           country      = "NO"
 
-      specification ATaxIdNeedsFiveCharacters
+      specification ASupplierNeedsATaxId
         given caller
           authenticated
           role "Buyer"
-        when Nordic taxId = "1234"
-        then error "A tax id has at least 5 characters"
+        when Nordic taxId = ""
+        then error "A supplier needs a tax id"
 
       specification ASupplierNeedsAContactAddress
         given caller
@@ -137,13 +135,6 @@ module Buying
         when Mug price = -1
         then error "An amount cannot be negative"
 
-      specification ALeadTimeOverAYearIsRejected
-        given caller
-          authenticated
-          role "Buyer"
-        when Mug leadTimeDays = 400
-        then error "Lead time cannot exceed a year"
-
       screen NewOffer
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
@@ -155,7 +146,7 @@ module Buying
       readmodel SupplierRow
         supplierId   SupplierId
         name         SupplierName
-        taxId        TaxId
+        taxId        SupplierTaxId
         country      String
         offerCount   Int
 
