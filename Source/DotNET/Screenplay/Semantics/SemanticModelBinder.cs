@@ -39,6 +39,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        var result = BindCore(applicationName, syntax, documents);
+        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, result.Diagnostics) };
+    }
+
+    CompilationResult<SemanticCompilation> BindCore(
+        string applicationName,
+        ApplicationSyntax syntax,
+        SemanticDocumentSet documents)
+    {
         if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
@@ -51,7 +60,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
                 DiagnosticCodes.UnsupportedSemanticSyntax,
                 "Exact numeric source mode is not admitted by any supported executable model (ESM) version yet (#285); this source/syntax implementation does not execute exact documents.",
-                syntax.Location)]);
+                syntax.Location,
+                DiagnosticArguments.ForIssue("Cratis/Screenplay#285"))]);
         }
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
@@ -278,7 +288,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     $"Identity detail '{detail}' is not executable: the identity block is authoring metadata until admitted (#600).",
-                    syntax.Location));
+                    syntax.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#600")));
             }
         }
     }

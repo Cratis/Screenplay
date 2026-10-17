@@ -87,13 +87,21 @@ Codes not listed in this table currently declare no arguments, including `PLAY01
 
 For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` clause once, in source order, across all forms. Nested lines are part of their step. Synthesized callers and defaults do not count; example and case expansion retain the authored position.
 
+For `PLAY0268`, `subject` is attached by the binder after it finishes, from source position, so a reporting site does not need to know its enclosing declaration. It is the innermost declaration whose node sits at the diagnostic's exact location, else one on the same line of the same file; a refusal with neither, such as a document-level one, carries no `subject`. A value a reporting site already passed is kept. The declaration kinds are `module`, `feature`, `slice`, `command`, `query`, `operation`, `system`, `eventsource`, `event`, `readmodel`, `screen`, `concept`, `type`, `policy`, `persona`, `trigger`, `reaction`, `projection`, `reducer`, `capture`, `specification` and `example`; the path follows the declaration-path rule above. `PLAY0367` and `PLAY0699` name a `command` or `concept` subject, and `PLAY0787` follows them.
+
 | Code | Argument | Kind | Optional | Meaning | Keyword values |
 |---|---|---|---|---|---|
 | `PLAY0044` | `text` | text | no | The authored mapping line that could not be read. | — |
 | `PLAY0075` | `text` | text | no | The authored projection mapping line that could not be read. | — |
 | `PLAY0101` | `text` | text | no | The authored mapping line or concrete value that could not be read. | — |
+| `PLAY0268` | `subject` | declaration | yes | The innermost declaration that contains the refused construct; absent for document-level refusals. | — |
+| `PLAY0268` | `issue` | text | yes | The tracking issue named by the refusal, such as Cratis/Screenplay#600, when it cites one. | — |
 | `PLAY0351` | `readmodel` | text | no | The read model named by the fixture. | — |
 | `PLAY0351` | `property` | text | no | The missing identifier or key-part property. | — |
+| `PLAY0367` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0367` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0367` | `pattern` | text | no | The decoded match pattern. | — |
+| `PLAY0367` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
 | `PLAY0468` | `query` | text | yes | The query reference when known at the reporting site. | — |
 | `PLAY0468` | `argument` | text | no | The unknown, repeated or missing argument name. | — |
 | `PLAY0514` | `property` | text | no | The authored projection target path. | — |
@@ -123,6 +131,13 @@ For `PLAY0524`, `stepIndex` counts each authored `given`, `when` or `then` claus
 | `PLAY0583` | `parameter` | text | yes | The parameter assigned by the case when known. | — |
 | `PLAY0583` | `type` | text | yes | The declared parameter type when available. | — |
 | `PLAY0583` | `text` | text | yes | The authored value or nested line that could not be read. | — |
+| `PLAY0699` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0699` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0699` | `pattern` | text | no | The decoded match pattern. | — |
+| `PLAY0699` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
+| `PLAY0787` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0787` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0787` | `pattern` | text | no | The decoded match pattern. | — |
 | `PLAY0790` | `profile` | text | no | The ui profile that names the template. | — |
 | `PLAY0790` | `template` | text | no | The template name that nothing declares, or the blueprint does not ship. | — |
 | `PLAY0790` | `blueprint` | text | yes | The blueprint a template was expected from. | — |

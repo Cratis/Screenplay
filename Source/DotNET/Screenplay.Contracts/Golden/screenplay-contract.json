@@ -32472,7 +32472,21 @@
       ],
       "title": "Source syntax carries portable behavior that ESM v1 cannot represent.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": true,
+          "meaning": "The innermost declaration that contains the refused construct; absent for document-level refusals."
+        },
+        {
+          "name": "issue",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The tracking issue named by the refusal, such as Cratis/Screenplay#600, when it cites one."
+        }
+      ]
     },
     {
       "code": "PLAY0269",
@@ -33465,7 +33479,33 @@
       ],
       "title": "A quoted match pattern is not a valid ECMAScript regular expression.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The command or concept that owns the match rule."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The constrained command property; absent for a concept\u0027s own value."
+        },
+        {
+          "name": "pattern",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The decoded match pattern."
+        },
+        {
+          "name": "offset",
+          "kind": "index",
+          "optional": false,
+          "meaning": "The zero-based UTF-16 offset in the pattern where the problem starts."
+        }
+      ]
     },
     {
       "code": "PLAY0368",
@@ -36804,7 +36844,33 @@
       ],
       "title": "A match pattern uses a construct outside the portable linear dialect.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The command or concept that owns the match rule."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The constrained command property; absent for a concept\u0027s own value."
+        },
+        {
+          "name": "pattern",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The decoded match pattern."
+        },
+        {
+          "name": "offset",
+          "kind": "index",
+          "optional": false,
+          "meaning": "The zero-based UTF-16 offset in the pattern where the problem starts."
+        }
+      ]
     },
     {
       "code": "PLAY0700",
@@ -37310,7 +37376,27 @@
       ],
       "title": "A Studio text-rule pattern has an equivalent first-class ordinal rule.",
       "reserved": false,
-      "retired": false
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The command or concept that owns the match rule."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The constrained command property; absent for a concept\u0027s own value."
+        },
+        {
+          "name": "pattern",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The decoded match pattern."
+        }
+      ]
     },
     {
       "code": "PLAY0788",

@@ -209,7 +209,8 @@ public sealed partial class SemanticModelBinder
                     Error(
                         DiagnosticCodes.UnsupportedSemanticSyntax,
                         $"'$causedBy' has no runtime resolver in Chronicle (Cratis/Chronicle#4119); use '$eventContext.causedBy.{causedBy.Property ?? "subject"}' instead.",
-                        expression.Location);
+                        expression.Location,
+                        DiagnosticArguments.ForIssue("Cratis/Chronicle#4119"));
                     return null;
                 default:
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} expression '{expression.GetType().Name}' is not admitted by ESM v1.", expression.Location);
