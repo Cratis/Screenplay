@@ -334,7 +334,7 @@ declaration-reference coverage; property links do not add inferred slice edges.
 | `SPEC001` | Command success: a resolved `when` command, an outcome assertion, no error or denial |
 | `SPEC002` | Each `require`: a resolved command action and exact explicit rejection message |
 | `SPEC003` | Each command or concept validation rule: exact explicit rejection message; concept rules use commands accepting that concept |
-| `SPEC004` | Authorized command/query (including module/feature gates): its resolved action and `then denied` |
+| `SPEC004` | Authorized command/query (including module/feature gates): its resolved action and `then denied`; query actions use `when query` or one `then query` with no results and no other action |
 | `SPEC005` | Each value-unique constraint: prior claim event, equal literal composite key through production mappings, different known destinations, and rejection |
 | `SPEC006` | Read model: state/absence assertion or results asserted through a resolved query returning that view |
 | `SPEC007` | Each projection `remove with`: append its resolved event or execute a command producing it; root removals require absence of the affected view, while child/nested removals require an assertion of the affected collection/object path. Variant-local removals match only that variant's view |
