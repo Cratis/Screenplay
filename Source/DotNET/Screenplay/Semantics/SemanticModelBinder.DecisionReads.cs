@@ -71,7 +71,7 @@ public sealed partial class SemanticModelBinder
                         .With("command", commandArgument)
                         .With("read", DiagnosticArgument.Text(read.Alias ?? read.ReadModel))
                         .With("readModel", DiagnosticArgument.Declaration("readmodel", _readModelPaths[read.ReadModel]))
-                        .With("reason", DiagnosticArgument.Keyword(refusal.ToString())));
+                        .With("reason", DiagnosticArgument.Keyword(refusal.Keyword())));
                     continue;
                 }
                 var name = read.Alias ?? read.ReadModel;
@@ -130,7 +130,7 @@ public sealed partial class SemanticModelBinder
         DiagnosticArguments ReadPathArguments(string path)
         {
             var arguments = DiagnosticArguments.Empty.With("path", DiagnosticArgument.Text(path));
-            return _decisionReadCommand is { } command ? arguments.With("command", command) : arguments;
+            return arguments.With("command", _decisionReadCommand ?? throw new InvalidSemanticContract("A read path was bound outside a command."));
         }
 
         void ReportLegacyDecisionReads()

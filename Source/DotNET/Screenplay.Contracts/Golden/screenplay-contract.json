@@ -37270,20 +37270,20 @@
           "optional": false,
           "meaning": "The closed refusal reason, the name of the decision-read refusal.",
           "values": [
-            "Reducer",
-            "Join",
-            "Children",
-            "OpenSubscription",
-            "PayloadKey",
-            "ByParts",
-            "NoRemoval",
-            "EmptyHandledSet",
-            "NamedSourceOrStream",
-            "Singleton",
-            "KeyType",
-            "GeneratedKey",
-            "OptionalKey",
-            "CollectionKey"
+            "reducer",
+            "join",
+            "children",
+            "open-subscription",
+            "payload-key",
+            "by-parts",
+            "no-removal",
+            "empty-handled-set",
+            "named-source-or-stream",
+            "singleton",
+            "key-type",
+            "generated-key",
+            "optional-key",
+            "collection-key"
           ]
         }
       ]
@@ -37358,7 +37358,7 @@
         {
           "name": "command",
           "kind": "declaration",
-          "optional": true,
+          "optional": false,
           "meaning": "The command whose read path is unknown."
         }
       ]
@@ -37389,7 +37389,7 @@
         {
           "name": "command",
           "kind": "declaration",
-          "optional": true,
+          "optional": false,
           "meaning": "The command whose read path is ambiguous."
         }
       ]

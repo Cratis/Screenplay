@@ -3250,7 +3250,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A command decision read cannot be protected, with a closed refusal reason describing its shape or key.
     /// </summary>
-    [DiagnosticArgumentDefinitions("command:declaration;The command declaring the read.", "read:text;The read model name or alias as the command reads it.", "readModel:declaration;The read model declaration that cannot be protected.", "reason:keyword=Reducer|Join|Children|OpenSubscription|PayloadKey|ByParts|NoRemoval|EmptyHandledSet|NamedSourceOrStream|Singleton|KeyType|GeneratedKey|OptionalKey|CollectionKey;The closed refusal reason, the name of the decision-read refusal.")]
+    [DiagnosticArgumentDefinitions("command:declaration;The command declaring the read.", "read:text;The read model name or alias as the command reads it.", "readModel:declaration;The read model declaration that cannot be protected.", "reason:keyword=reducer|join|children|open-subscription|payload-key|by-parts|no-removal|empty-handled-set|named-source-or-stream|singleton|key-type|generated-key|optional-key|collection-key;The closed refusal reason, the name of the decision-read refusal.")]
     public const string UnprotectableDecisionRead = "PLAY0781";
 
     /// <summary>
@@ -3268,13 +3268,13 @@ public static class DiagnosticCodes
     /// <summary>
     /// A read path does not name a declared command read or alias.
     /// </summary>
-    [DiagnosticArgumentDefinitions("path:text;The authored read path that resolves to no declared read and view property.", "read:text;The first path segment, the read name or alias that resolves to no declared read.", "command:declaration?;The command whose read path is unknown.")]
+    [DiagnosticArgumentDefinitions("path:text;The authored read path that resolves to no declared read and view property.", "read:text;The first path segment, the read name or alias that resolves to no declared read.", "command:declaration;The command whose read path is unknown.")]
     public const string UnknownReadPath = "PLAY0784";
 
     /// <summary>
     /// A read path names a view read more than once instead of a distinguishing alias.
     /// </summary>
-    [DiagnosticArgumentDefinitions("path:text;The authored read path that names a repeated read model.", "read:text;The read model name read more than once.", "command:declaration?;The command whose read path is ambiguous.")]
+    [DiagnosticArgumentDefinitions("path:text;The authored read path that names a repeated read model.", "read:text;The read model name read more than once.", "command:declaration;The command whose read path is ambiguous.")]
     public const string AmbiguousReadPath = "PLAY0785";
 
     /// <summary>
