@@ -292,6 +292,11 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
+                if (!IsCompatibleMapping(mapping, values, target, $"event '{@event.Syntax.Name}'"))
+                {
+                    continue;
+                }
+
                 if (BindOccurrenceSource(mapping.Source, target.Type, root, values, "reaction mapping") is { } source)
                 {
                     mappings.Add(new(target.Id, source));
@@ -329,6 +334,11 @@ public sealed partial class SemanticModelBinder
                 if (target.IsGenerated)
                 {
                     Error(DiagnosticCodes.GeneratedPropertySuppliedAsInput, $"Reaction '{reaction.Name}' cannot map generated property '{target.Name}' of command '{command.Name}'; map request inputs only.", mapping.Location);
+                    continue;
+                }
+
+                if (!IsCompatibleMapping(mapping, values, target, $"command '{command.Name}'"))
+                {
                     continue;
                 }
 
