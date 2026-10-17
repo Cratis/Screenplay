@@ -7,7 +7,7 @@ public class when_counting_and_ordering_evidence : given.a_model
 {
     ImpliedDependency _edge;
 
-    void Establish() => _graph = Graph("module M\n  feature F\n    slice StateView V\n      projection P\n        from E\n        from E\n      command C\n        reads R\n    feature Sub\n      slice StateChange W\n        event E\n        projection R\n          from E\nmodule N\n  feature G\n    slice StateView Other\n      projection P\n        from E\n");
+    void Establish() => _graph = Graph("module M\n  feature F\n    slice StateView V\n      projection P\n        from E\n        children rows identified by id\n          from E\n      command C\n        reads R\n    feature Sub\n      slice StateChange W\n        event E\n        projection R\n          from E\nmodule N\n  feature G\n    slice StateView Other\n      projection P\n        from E\n");
     void Because() => _edge = _graph.Implied("slice", "slice", evidenceLimit: 1)[0];
 
     [Fact] void should_count_one_slice_pair() => _edge.SliceEdges.ShouldEqual(1);

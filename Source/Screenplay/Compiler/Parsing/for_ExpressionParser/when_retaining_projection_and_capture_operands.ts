@@ -50,9 +50,9 @@ module Numbers
                     enters on Added key 10
                     from Added
                         amount = 11
-                remove with Added key 12
+                remove with Removed key 12
                     parent 13
-                remove via join on Added key 14
+                remove via join on Unlinked key 14
             capture ReadExternal
                 map
                     amount = 15
