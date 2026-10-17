@@ -135,6 +135,19 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0699` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
 | `PLAY0699` | `pattern` | text | no | The decoded match pattern. | — |
 | `PLAY0699` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
+| `PLAY0781` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0781` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0781` | `readModel` | declaration | no | The read model declaration that cannot be protected. | — |
+| `PLAY0781` | `reason` | keyword | no | The closed refusal reason, the name of the decision-read refusal. | reducer, join, children, open-subscription, payload-key, by-parts, no-removal, empty-handled-set, named-source-or-stream, singleton, key-type, generated-key, optional-key, collection-key |
+| `PLAY0782` | `command` | declaration | no | The command declaring the read. | — |
+| `PLAY0782` | `read` | text | no | The read model name or alias as the command reads it. | — |
+| `PLAY0783` | `command` | declaration | no | The command declaring both reads and concurrency. | — |
+| `PLAY0784` | `path` | text | no | The authored read path that resolves to no declared read and view property. | — |
+| `PLAY0784` | `read` | text | no | The first path segment, the read name or alias that resolves to no declared read. | — |
+| `PLAY0784` | `command` | declaration | no | The command whose read path is unknown. | — |
+| `PLAY0785` | `path` | text | no | The authored read path that names a repeated read model. | — |
+| `PLAY0785` | `read` | text | no | The read model name read more than once. | — |
+| `PLAY0785` | `command` | declaration | no | The command whose read path is ambiguous. | — |
 | `PLAY0787` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
 | `PLAY0787` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
 | `PLAY0787` | `pattern` | text | no | The decoded match pattern. | — |
@@ -623,7 +636,26 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0785` | Error | The binder finds a read path naming a view read more than once instead of a distinguishing alias. |
 | `PLAY0786` | Information | The binder identifies an eligible legacy model at its first command `reads`; the typed repair adds the preamble to the application root (domain document) or sole document after preview, revision checks and explicit acceptance. It requires individual review, not fix-all. |
 
-`PLAY0781` reasons are `Reducer`, `Join` (including removal joins), `Children` (including nested scopes), `OpenSubscription`, `PayloadKey`, `ByParts`, `NoRemoval`, `EmptyHandledSet`, `NamedSourceOrStream`, `Singleton`, `KeyType`, `GeneratedKey`, `OptionalKey` and `CollectionKey`. Both `every` and `all` map to `OpenSubscription`. There is no derivative construct or reserved derivative reason. `reads … via query` retains its parser refusal, `PLAY0175`; it has no binder refusal enum value.
+`PLAY0781` reasons are `reducer`, `join` (including removal joins), `children` (including nested scopes), `open-subscription`, `payload-key`, `by-parts`, `no-removal`, `empty-handled-set`, `named-source-or-stream`, `singleton`, `key-type`, `generated-key`, `optional-key` and `collection-key`. Both `every` and `all` map to `open-subscription`. There is no derivative construct or reserved derivative reason. `reads … via query` retains its parser refusal, `PLAY0175`; it has no binder refusal enum value.
+
+Hosts read the refusal from the `PLAY0781` `reason` argument instead of the message text. Its values are the lowercase, hyphenated keywords above, which are published and never change; they are not the names of the C# `SemanticDecisionReadRefusal` enum. A host must tolerate values it does not know. `PLAY0784` and `PLAY0785` always carry the `command` that declares the read path. The `read` argument is the alias when the command gives one, otherwise the read model name.
+
+| Reason | Meaning | How to fix |
+|---|---|---|
+| `reducer` | A reducer builds the view. | Build the view with a projection, or read a different view. |
+| `join` | The projection joins, including a removal join. | Fill the view from the events of its own instance only; remove `join` and `remove via join`. |
+| `children` | The projection has children or nested scopes. | Read a flat view; keep the nested shape in a separate read model. |
+| `open-subscription` | The projection declares `every` or `all`. | Replace it with explicit `from <Event>` subscriptions. |
+| `payload-key` | An instance is routed by event payload instead of event-source identity. | Key the view by `$eventSourceId`. |
+| `by-parts` | The lookup or projection uses composite key parts. | Use one single-part key. |
+| `no-removal` | No removal event is declared for the view. | Add `remove with <Event>`. |
+| `empty-handled-set` | The view handles no finite, nonempty set of events. | Declare at least one `from <Event>`. |
+| `named-source-or-stream` | The projection or a handled event is routed through a named source, stream or sequence, or the reading command declares its own `stream` route. | Remove the routing, and the command's own `stream` route, so events reach the view by event-source identity. |
+| `singleton` | The view has no event-source instance key. | Give the view a `key` property. |
+| `key-type` | The lookup key is not text or a canonical UUID identity, does not match the command input, or the view's own key is optional or a collection. | Use a `String`, a String concept or a canonical `Uuid` key of a compatible type. |
+| `generated-key` | The key is generated after reads must run. | Take the key as a caller-supplied input, not a `generated` one. |
+| `optional-key` | The lookup key is optional. | Make the key required. |
+| `collection-key` | The lookup key is a collection. | Use a scalar key. |
 
 ### Rules about the whole artifact
 

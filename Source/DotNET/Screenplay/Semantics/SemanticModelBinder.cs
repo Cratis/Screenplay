@@ -305,6 +305,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
         readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
         readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
+        readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
 
@@ -532,6 +533,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 {
                     var bound = BindReadModel(sliceAddress, slice, readModel);
                     _readModelDeclarations.Add(readModel, bound);
+                    _readModelPaths.TryAdd(readModel.Name, [.. sliceAddress.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key), readModel.Name]);
                     if (!_readModels.TryAdd(readModel.Name, bound))
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read model reference '{readModel.Name}' is ambiguous across slices in the current ESM v1 binder.", readModel.Location);
