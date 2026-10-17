@@ -201,6 +201,37 @@ module Stock
         quantity   Quantity
         movementId MovementId
 
+      example Promise : ReserveStockUnits
+        sku        = "ACM-1000"
+        orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        quantity   = 3
+        movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      // Accepted path and its cascades: see ReserveStock and PublishReservation
+      specification ReservingMoreThanTheShelfHoldsIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when Promise
+        then error "The shelf holds less than that"
+
+      specification ASalesRepCannotReserve
+        given caller
+          authenticated
+          role "SalesRep"
+        when Promise
+        then denied
+
+      screen ReserveUnits
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ReserveStockUnits
+              navigate to PickingQueue
+
     // The reserved goods become something to pick
     slice Automation PlanShipmentWhenReserved
       reaction PlanShipmentWhenReserved
@@ -215,6 +246,41 @@ module Stock
             sku      = sku
             quantity = quantity
 
+      specification AReservationCreatesAShipmentToPick
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 37
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 37
+
     slice StateChange PlanShipment
       command PlanShipment
         orderId  OrderId identifier
@@ -228,6 +294,24 @@ module Stock
       event ShipmentPlanned
         sku      Sku
         quantity Quantity
+
+      example Plan : PlanShipment
+        orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        sku      = "ACM-1000"
+        quantity = 3
+
+      specification ASalesRepCannotPlanAShipment
+        given caller
+          authenticated
+          role "SalesRep"
+        when Plan
+        then denied
+
+      screen PlanShipmentDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action PlanShipment
+              navigate to PickingQueue
 
     slice StateChange PickOrder
       description "A picker starts collecting the order from the shelf"

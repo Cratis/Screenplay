@@ -22,6 +22,21 @@ module Stock
         onHand    StockQuantity
         available StockQuantity
 
+      example Publish : RecordStockLevel
+        sku = "ACM-1000"
+
+      specification ASalesRepCannotSnapshotAStockLevel
+        given caller
+          authenticated
+          role "SalesRep"
+        when Publish
+        then denied
+
+      screen PublishStockLevelDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action RecordStockLevel
+
     slice Automation SnapshotStockOnMovement
       reaction SnapshotStockOnMovement
         description "Every movement of stock leads to a fresh snapshot of the SKU's level"
@@ -51,6 +66,27 @@ module Stock
           invokes RecordStockLevel
             sku = sku
 
+      specification AMovementLeadsToASnapshot
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when append StockIncreased
+          for "ACM-1000"
+          sku          = "ACM-1000"
+          movementId   = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          quantity     = 5
+          reason       = found
+        then events in any order
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 5
+          available = 5
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 5
+          available = 5
+
     slice StateChange RaiseReorderAlarm
       description "Raises the reorder alarm when the SKU is below its reorder point and no alarm is open for it"
       command RaiseReorderAlarm
@@ -73,6 +109,40 @@ module Stock
         onHand            StockQuantity
         reorderPoint      StockQuantity
         suggestedQuantity Quantity
+
+      example Alarm : RaiseReorderAlarm
+        sku        = "ACM-1000"
+        crossingId = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+
+      // The accepted path and what it publishes: see WatchReorderPoint and PublishLowStock
+      specification AnOpenAlarmIsNotRaisedTwice
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          onHand            = 4
+          reorderPoint      = 10
+          suggestedQuantity = 60
+        when Alarm
+        then error "The SKU is not below its reorder point, or an alarm is already open"
+
+      specification ASalesRepCannotRaiseTheAlarm
+        given caller
+          authenticated
+          role "SalesRep"
+        when Alarm
+        then denied
+
+      screen RaiseAlarmDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action RaiseReorderAlarm
 
     slice Automation WatchReorderPoint
       reaction WatchReorderPoint
