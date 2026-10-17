@@ -1,0 +1,7 @@
+// ============================================================
+// Warehouse / domain-local language
+// ============================================================
+
+// One drop of a SKU's available stock below its reorder point. It is the identity of the public low-stock event, so a
+// consumer can tell the first crossing from the next one.
+concept CrossingId : Uuid

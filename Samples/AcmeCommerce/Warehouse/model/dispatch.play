@@ -1,0 +1,159 @@
+// ============================================================
+// Warehouse / Stock / Dispatch - the parcel leaves the building
+// ============================================================
+
+module Stock
+  feature Dispatch
+
+    slice StateChange DispatchShipment
+      description "Hands a packed parcel to the carrier. A shipment is dispatched once"
+      command DispatchShipment
+        orderId        OrderId identifier
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        shipmentId     ShipmentId generated
+        reads PickingCard by orderId
+        validate
+          require PickingCard.status == packed
+            message "The parcel is not packed"
+        produces ShipmentHandedToCarrier
+          for orderId
+          shipmentId     = shipmentId
+          carrier        = carrier
+          trackingNumber = trackingNumber
+          sku            = PickingCard.sku
+          quantity       = PickingCard.quantity
+          dispatchedAt   = $context.occurred
+
+      event ShipmentHandedToCarrier
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        sku            Sku
+        quantity       Quantity
+        dispatchedAt   DateTime
+
+      constraint OneDispatchPerShipment
+        unique event ShipmentHandedToCarrier
+        message "A shipment is dispatched once"
+
+      example Handover : DispatchShipment
+        orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        carrier        = posten
+        trackingNumber = "RR123456789NO"
+
+      // The accepted path (and the public dispatch it triggers) is specified in PublishDispatch
+      specification DispatchingBeforePackingIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Handover
+        then error "The parcel is not packed"
+
+      specification ATrackingNumberIsRequired
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Handover trackingNumber = ""
+        then error "A tracking number is required"
+
+      screen Dispatch
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action DispatchShipment
+              navigate to Shipments
+
+    // The stock leaves the shelf when the parcel is handed over
+    slice Automation TakeStockWhenDispatched
+      reaction TakeStockWhenDispatched
+        description "A dispatched parcel takes its units off the shelf and releases the reservation"
+        runs as system role "WarehouseClerk"
+        when ShipmentHandedToCarrier
+          sku
+          quantity
+          invokes TakeDispatchedStock
+            sku      = sku
+            orderId  = $eventSourceId
+            quantity = quantity
+
+    slice StateChange TakeDispatchedStock
+      command TakeDispatchedStock
+        sku      Sku identifier
+        orderId  OrderId
+        quantity Quantity
+        produces StockDispatched
+          for sku
+          orderId  = orderId
+          quantity = quantity
+
+      event StockDispatched
+        orderId  OrderId
+        quantity Quantity
+
+    slice StateView Shipments
+      description "Every parcel with its carrier and tracking number"
+
+      readmodel ShipmentRow
+        orderId        OrderId key
+        sku            Sku
+        quantity       Quantity
+        status         ShipmentStatus
+        carrier        Carrier optional
+        trackingNumber TrackingNumber optional
+        dispatchedAt   DateTime optional
+
+      query AllShipments => observable ShipmentRow[]
+
+      projection ShipmentRowProjection => ShipmentRow
+        from ShipmentPlanned
+          orderId  = $eventSourceId
+          sku      = sku
+          quantity = quantity
+          status   = "toPick"
+        from ShipmentPickingStarted
+          status = "picking"
+        from ShipmentPacked
+          status = "packed"
+        from ShipmentHandedToCarrier
+          status         = "dispatched"
+          carrier        = carrier
+          trackingNumber = trackingNumber
+          dispatchedAt   = dispatchedAt
+
+      screen Shipments
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button dispatch title "Dispatch" slice Stock.Dispatch.DispatchShipment emphasis primary icon truck
+          list
+            data ShipmentRow[] via query AllShipments
+            table ShipmentRow
+              column orderId        label "Order"
+              column sku            label "SKU"
+              column quantity       label "Qty"
+              column status         label "Status"
+              column carrier        label "Carrier"
+              column trackingNumber label "Tracking"
+
+      specification ADispatchedParcelCarriesItsTracking
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
+          carrier        = posten
+          trackingNumber = "RR123456789NO"
+          sku            = "ACM-1000"
+          quantity       = 3
+          dispatchedAt   = "2026-10-02T14:00:00Z"
+        then readmodel ShipmentRow
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status         = "dispatched"
+          carrier        = "posten"
+          trackingNumber = "RR123456789NO"

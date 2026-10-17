@@ -1,0 +1,126 @@
+// ============================================================
+// Warehouse / Stock / Overview - watching the shelves
+//
+// Two automations follow every stock movement: one publishes the new stock level, the other watches the reorder point and
+// raises the alarm ONCE per crossing (the alarm re-arms when stock comes back).
+// ============================================================
+
+module Stock
+  feature Overview
+
+    slice StateChange RecordStockLevel
+      description "Takes a snapshot of one SKU's stock, which is what gets published (P9)"
+      command RecordStockLevel
+        sku Sku identifier
+        reads StockLevel by sku
+        produces StockLevelSnapshotTaken
+          for sku
+          onHand    = StockLevel.onHand
+          available = StockLevel.available
+
+      event StockLevelSnapshotTaken
+        onHand    StockQuantity
+        available StockQuantity
+
+    slice Automation SnapshotStockOnMovement
+      reaction SnapshotStockOnMovement
+        description "Every movement of stock leads to a fresh snapshot of the SKU's level"
+        runs as system role "WarehouseClerk"
+        when SkuRegistered
+          invokes RecordStockLevel
+            sku = $eventSourceId
+        when StockReceived
+          invokes RecordStockLevel
+            sku = $eventSourceId
+        when StockIncreased
+          invokes RecordStockLevel
+            sku = $eventSourceId
+        when StockDecreased
+          invokes RecordStockLevel
+            sku = $eventSourceId
+        when ReservationMade
+          invokes RecordStockLevel
+            sku = $eventSourceId
+        when StockDispatched
+          invokes RecordStockLevel
+            sku = $eventSourceId
+
+    slice StateChange RaiseReorderAlarm
+      description "Raises the reorder alarm when the SKU is below its reorder point and no alarm is open for it"
+      command RaiseReorderAlarm
+        sku        Sku identifier
+        crossingId CrossingId generated
+        reads StockLevel by sku
+        validate
+          require StockLevel.available < StockLevel.reorderPoint and StockLevel.alertOpen == false
+            message "The SKU is not below its reorder point, or an alarm is already open"
+        produces ReorderPointCrossed
+          for sku
+          crossingId        = crossingId
+          onHand            = StockLevel.onHand
+          reorderPoint      = StockLevel.reorderPoint
+          suggestedQuantity = StockLevel.reorderQuantity
+
+      event ReorderPointCrossed
+        crossingId        CrossingId
+        onHand            StockQuantity
+        reorderPoint      StockQuantity
+        suggestedQuantity Quantity
+
+    slice Automation WatchReorderPoint
+      reaction WatchReorderPoint
+        description "Watches the shelf after every drop in available stock; one alarm per crossing"
+        runs as system role "WarehouseClerk"
+        when ReservationMade
+          invokes RaiseReorderAlarm
+            sku = $eventSourceId
+            on refused by validation
+              acknowledge
+        when StockDecreased
+          invokes RaiseReorderAlarm
+            sku = $eventSourceId
+            on refused by validation
+              acknowledge
+
+    slice StateView WarehouseDashboard
+      description "What needs attention: SKUs below their reorder point, and the parcels in flight"
+
+      readmodel StockAlert
+        sku          Sku key
+        onHand       StockQuantity
+        reorderPoint StockQuantity
+
+      query AllStockAlerts => observable StockAlert[]
+
+      projection StockAlertProjection => StockAlert
+        from ReorderPointCrossed
+          sku          = $eventSourceId
+          onHand       = onHand
+          reorderPoint = reorderPoint
+        remove with StockReceived
+        remove with StockIncreased
+
+      screen WarehouseDashboard
+        template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          tables
+            data StockAlert[] via query AllStockAlerts
+            table StockAlert
+              column sku          label "SKU running out"
+              column onHand       label "On hand"
+              column reorderPoint label "Reorder at"
+              on row-click navigate to ItemPage by sku
+
+      specification AnAlarmShowsOnTheDashboardUntilStockReturns
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          onHand            = 4
+          reorderPoint      = 10
+          suggestedQuantity = 60
+        then readmodel StockAlert
+          sku          = "ACM-1000"
+          onHand       = 4
+          reorderPoint = 10

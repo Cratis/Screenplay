@@ -1,0 +1,125 @@
+// ============================================================
+// Warehouse / inbound translation: what Catalog, Sales and Purchasing say, in the warehouse's own words (P1, P3, P5, P11)
+//
+// The foreign contract is declared locally with a consumer-local name (<Event>At<Consumer>: one application cannot hold two events
+// of one name, PLAY0472); `from "<Origin>"` keeps the lineage. The warehouse keeps only what it needs: it never sees a price,
+// a description or a customer. A capture cannot read a list, so line-carrying contracts are consumed one scalar line at a time.
+// ============================================================
+
+module Stock
+  feature Levels
+
+    // P1 ProductPublished (Catalog): a product the shop will sell is a SKU the warehouse must be able to hold
+    slice Translate RegisterSkuFromCatalog
+      description "Catalog published a product; the warehouse registers the SKU with the default reorder point"
+      direction inbound
+
+      event ProductPublishedAtWarehouse from "Catalog"
+        productId ProductId
+        sku       Sku
+        name      ProductName
+
+      capture CatalogProductFeed
+        source events
+          from ProductPublishedAtWarehouse
+        key sku
+        append SkuRegistered
+          when added
+            name = $.name
+
+      specification RegisteringAPublishedProduct
+        when append ProductPublishedAtWarehouse
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+        then events in any order
+        then SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 0
+          available = 0
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 0
+          available = 0
+
+    // P3 ProductRetired (Catalog): no more goods are received for a SKU the shop no longer sells
+    slice Translate BlockSkuFromCatalog
+      description "Catalog retired a product; the warehouse blocks the SKU for receiving"
+      direction inbound
+
+      event ProductRetiredAtWarehouse from "Catalog"
+        productId ProductId
+        sku       Sku
+
+      capture CatalogRetirementFeed
+        source events
+          from ProductRetiredAtWarehouse
+        key sku
+        append SkuBlockedForReceiving
+          when added
+
+      specification BlockingARetiredProduct
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        when append ProductRetiredAtWarehouse
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+        then SkuBlockedForReceiving
+          for "ACM-1000"
+
+  feature Reservations
+
+    // P5 OrderConfirmed (Sales): a confirmed order line is a reservation to make
+    slice Translate RequestReservationFromSales
+      description "Sales confirmed an order line; the warehouse is asked to reserve stock for it"
+      direction inbound
+
+      event OrderConfirmedAtWarehouse from "Sales"
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      capture SalesConfirmationFeed
+        source events
+          from OrderConfirmedAtWarehouse
+        key orderId
+        append ReservationRequested
+          when added
+            orderId  = $.orderId
+            sku      = $.sku
+            quantity = $.quantity
+
+  feature Receiving
+
+    // P11 PurchaseOrderReceived (Purchasing): delivered goods are stock to receive. The stock lands on the SKU, so the capture is
+    // keyed by SKU; a repeat delivery of the same SKU is told apart by its receipt.
+    slice Translate ReceiveStockFromPurchasing
+      description "Purchasing says goods arrived against a purchase order; the warehouse books them onto the shelf"
+      direction inbound
+
+      event PurchaseOrderReceivedAtWarehouse from "Purchasing"
+        purchaseOrderId PurchaseOrderId
+        supplierId      SupplierId
+        receiptId       Uuid
+        sku             Sku
+        quantity        Quantity
+        receivedAt      DateTime
+
+      capture PurchasingReceiptFeed
+        source events
+          from PurchaseOrderReceivedAtWarehouse
+        key sku
+        append StockReceived
+          when added
+            purchaseOrderId = $.purchaseOrderId
+            quantity        = $.quantity
+            receivedAt      = $.receivedAt
+        append StockReceived
+          when receiptId
+            purchaseOrderId = $.purchaseOrderId
+            quantity        = $.quantity
+            receivedAt      = $.receivedAt
