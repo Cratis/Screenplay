@@ -237,6 +237,11 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
+                if (!IsCompatibleMapping(mapping, commandProperties, target, $"event '{@event.Syntax.Name}'"))
+                {
+                    continue;
+                }
+
                 var source = mapping.Source switch
                 {
                     ContextExpressionSyntax context => BindOccurrence(context, target.Type),

@@ -74,13 +74,13 @@ internal static partial class SemanticModelValidator
         }
 
         bool IsCompatibleSource(SemanticTypeReference source, SemanticTypeReference target) =>
-            SameType(source, target) || (SameValueType(source, target) && !source.IsOptional && target.IsOptional);
+            SemanticTypeCompatibility.IsCompatibleSource(source, target);
 
         bool SameType(SemanticTypeReference left, SemanticTypeReference right) =>
-            SameValueType(left, right) && left.IsCollection == right.IsCollection && left.IsOptional == right.IsOptional;
+            SemanticTypeCompatibility.SameType(left, right);
 
         bool SameValueType(SemanticTypeReference left, SemanticTypeReference right) =>
-            left.Kind == right.Kind && left.Primitive == right.Primitive && left.Target == right.Target;
+            SemanticTypeCompatibility.SameValueType(left, right);
 
         SemanticPrimitiveType UnderlyingPrimitive(SemanticTypeReference type) => type.Kind switch
         {
