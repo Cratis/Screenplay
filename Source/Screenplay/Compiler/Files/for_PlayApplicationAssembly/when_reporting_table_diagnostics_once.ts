@@ -5,8 +5,8 @@ import { describe, it } from 'vitest';
 import { compileApplication } from '../PlayApplicationAssembly';
 
 const documents = new Map([
-    ['application.play', 'eventsource Account\n  identifier String\n  stream All\nimport "table.play"'],
-    ['table.play', 'module M\n  feature F\n    slice StateView S\n      event E\n      specification Appending\n        parameter unused Int\n        case One unused = 1\n        case Two unused = 2\n        case Three unused = 3\n        when append E\n          stream Account.All\n        then E'],
+    ['application.play', 'eventsource Account\n  identifier String\n  stream Main\nimport "table.play"'],
+    ['table.play', 'module M\n  feature F\n    slice StateView S\n      event E\n      specification Appending\n        parameter unused Int\n        case One unused = 1\n        case Two unused = 2\n        case Three unused = 3\n        when append E\n          stream Account.Main\n        then E'],
 ]);
 
 describe('when reporting table diagnostics once', () => {
