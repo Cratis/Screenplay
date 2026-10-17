@@ -17,6 +17,7 @@ public sealed partial class SemanticModelBinder
         readonly Dictionary<string, (SemanticDecisionRead Read, BoundReadModel View)> _commandReads = new(StringComparer.Ordinal);
         readonly HashSet<string> _ambiguousReadViews = new(StringComparer.Ordinal);
         Dictionary<SemanticId, SemanticConcept> _decisionReadConcepts = [];
+        DiagnosticArgument? _decisionReadCommand;
 
         bool ProtectedCommandReads => syntax.CommandReadMode is not null;
 
@@ -34,9 +35,11 @@ public sealed partial class SemanticModelBinder
         {
             _commandReads.Clear();
             _ambiguousReadViews.Clear();
+            var commandArgument = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
+            _decisionReadCommand = commandArgument;
             if (syntax.CommandReadMode is null) return [];
             if (command.Concurrency is not null && (command.Reads?.Any() ?? false))
-                Error(DiagnosticCodes.DecisionReadsWithConcurrency, $"Command '{command.Name}' cannot declare both protected reads and concurrency.", command.Concurrency.Location);
+                Error(DiagnosticCodes.DecisionReadsWithConcurrency, $"Command '{command.Name}' cannot declare both protected reads and concurrency.", command.Concurrency.Location, DiagnosticArguments.Empty.With("command", commandArgument));
             foreach (var group in (command.Reads ?? []).GroupBy(read => read.ReadModel, StringComparer.Ordinal).Where(group => group.Count() > 1))
             {
                 _ambiguousReadViews.Add(group.Key);
@@ -54,7 +57,7 @@ public sealed partial class SemanticModelBinder
                 var keyName = read.By ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Name;
                 if (keyName is null)
                 {
-                    Error(DiagnosticCodes.DecisionReadWithoutIdentifier, $"Read '{read.ReadModel}' omits 'by' and command '{command.Name}' has no declared identifier.", read.Location);
+                    Error(DiagnosticCodes.DecisionReadWithoutIdentifier, $"Read '{read.ReadModel}' omits 'by' and command '{command.Name}' has no declared identifier.", read.Location, DiagnosticArguments.Empty.With("command", commandArgument).With("read", DiagnosticArgument.Text(read.Alias ?? read.ReadModel)));
                     continue;
                 }
                 if (!properties.TryGetValue(keyName, out var key))
@@ -64,7 +67,11 @@ public sealed partial class SemanticModelBinder
                 }
                 if (DecisionReadRefusal(command, read, view, key, scope) is { } refusal)
                 {
-                    Error(DiagnosticCodes.UnprotectableDecisionRead, $"Read '{read.ReadModel}' cannot be protected: {refusal}.", read.Location);
+                    Error(DiagnosticCodes.UnprotectableDecisionRead, $"Read '{read.ReadModel}' cannot be protected: {refusal}.", read.Location, DiagnosticArguments.Empty
+                        .With("command", commandArgument)
+                        .With("read", DiagnosticArgument.Text(read.Alias ?? read.ReadModel))
+                        .With("readModel", DiagnosticArgument.Declaration("readmodel", _readModelPaths[read.ReadModel]))
+                        .With("reason", DiagnosticArgument.Keyword(refusal.Keyword())));
                     continue;
                 }
                 var name = read.Alias ?? read.ReadModel;
@@ -109,15 +116,21 @@ public sealed partial class SemanticModelBinder
             }
             if (_ambiguousReadViews.Contains(parts[0]))
             {
-                Error(DiagnosticCodes.AmbiguousReadPath, $"Read path '{path}' must use an alias because '{parts[0]}' is read more than once.", location);
+                Error(DiagnosticCodes.AmbiguousReadPath, $"Read path '{path}' must use an alias because '{parts[0]}' is read more than once.", location, ReadPathArguments(path).With("read", DiagnosticArgument.Text(parts[0])));
                 return null;
             }
             if (!_commandReads.TryGetValue(parts[0], out var read) || !read.View.Properties.TryGetValue(parts[1], out var property))
             {
-                Error(DiagnosticCodes.UnknownReadPath, $"Read path '{path}' does not resolve to a declared read and view property.", location);
+                Error(DiagnosticCodes.UnknownReadPath, $"Read path '{path}' does not resolve to a declared read and view property.", location, ReadPathArguments(path).With("read", DiagnosticArgument.Text(parts[0])));
                 return null;
             }
             return (property, read.Read.Name);
+        }
+
+        DiagnosticArguments ReadPathArguments(string path)
+        {
+            var arguments = DiagnosticArguments.Empty.With("path", DiagnosticArgument.Text(path));
+            return arguments.With("command", _decisionReadCommand ?? throw new InvalidSemanticContract("A read path was bound outside a command."));
         }
 
         void ReportLegacyDecisionReads()
