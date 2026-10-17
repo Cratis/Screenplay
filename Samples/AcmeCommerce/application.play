@@ -1,0 +1,23 @@
+// ============================================================
+// Acme Commerce (sample) - the root of the application
+//
+// Five bounded contexts in ONE application: Catalog, Storefront, Sales, Purchasing and Warehouse. They share no
+// database; they talk through public events, and every context translates what it receives into its own
+// language. This is the only `domain` line in the tree - the folders beneath carry no domain line.
+//
+//   Shared/        the shared kernel: concepts, enums, composite types, event sources, policies, personas, theme
+//   Shell/         the UI profile (blueprint AppShell root, theme, packages, the one sample-data pack) and the
+//                  application-level navigation (sidebar module -> feature, topbar)
+//   Application/   the application's own state screens (Forbidden, NotFound, Error) and client-error reporting
+//   <Domain>/model/        state changes, state views, automations, screens and specifications
+//   <Domain>/translation/  Translate slices: outbound publication and inbound anti-corruption
+//
+// Verify it with:  screenplay --warnaserror Samples/AcmeCommerce
+//                  screenplay test Samples/AcmeCommerce
+// See README.md for the layout, the naming rules and the tooling (domain-package.sh, render-variant.sh).
+// ============================================================
+
+domain AcmeCommerce
+
+reaction batches atomic
+command reads protected

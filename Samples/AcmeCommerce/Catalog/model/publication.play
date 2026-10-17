@@ -1,0 +1,269 @@
+// ============================================================
+// Catalog / Merchandising / Publication - approval for sale, withdrawal and the catalogue dashboard
+// ============================================================
+
+module Merchandising
+  feature Publication
+    description "Which products the shop may sell"
+
+    // The decision to approve is made against what we know about the product: it must be described and priced first.
+    slice StateView ReadyForApproval
+      description "Which products are described and priced, and so ready to be approved"
+
+      readmodel ProductReadiness
+        productId ProductId key
+        sku       Sku
+        name      ProductName
+        category  String
+        details   String
+        imageUrl  String
+        price     Money
+        currency  CurrencyCode
+        described Bool
+        priced    Bool
+        status    ProductStatus
+
+      query AllProductReadiness => observable ProductReadiness[]
+      query ReadinessOf => ProductReadiness optional
+        by productId ProductId
+
+      projection ProductReadinessProjection => ProductReadiness
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          category  = category
+          details   = ""
+          imageUrl  = ""
+          price     = 0
+          currency  = "NOK"
+          described = false
+          priced    = false
+          status    = "draft"
+        from ProductDescribed
+          details   = details
+          imageUrl  = imageUrl
+          described = true
+        from ProductPriceSet
+          price    = price
+          currency = currency
+          priced   = true
+        from ProductApprovedForSale
+          status = "approved"
+        remove with ProductWithdrawn
+
+      screen ReadyForApproval
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          list
+            data ProductReadiness[] via query AllProductReadiness
+            table ProductReadiness
+              column sku       label "SKU"
+              column name      label "Product"
+              column described label "Described"
+              column priced    label "Priced"
+              column status    label "Status"
+              on row-click navigate to ProductPage by productId
+
+      specification AProductIsReadyOnceDescribedAndPriced
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+        given ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 49
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        then readmodel ProductReadiness
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+          category  = "Kitchen"
+          details   = "A sturdy mug for everyday use"
+          imageUrl  = "/images/acm-1000.png"
+          price     = 49
+          currency  = "NOK"
+          described = true
+          priced    = true
+          status    = "draft"
+
+    slice StateChange ApproveProductForSale
+      description "A product that is described and priced is approved for sale - once, until it is withdrawn"
+      command ApproveProductForSale
+        productId ProductId identifier
+        reads ProductReadiness by productId
+        validate
+          require ProductReadiness.described == true
+            message "Describe the product before approving it"
+          require ProductReadiness.priced == true
+            message "Price the product before approving it"
+        // The approval carries a snapshot of what was approved: the one private fact the public ProductPublished is built from.
+        produces ProductApprovedForSale
+          for productId
+          sku      = ProductReadiness.sku
+          name     = ProductReadiness.name
+          category = ProductReadiness.category
+          details  = ProductReadiness.details
+          imageUrl = ProductReadiness.imageUrl
+          price    = ProductReadiness.price
+          currency = ProductReadiness.currency
+
+      event ProductApprovedForSale
+        sku      Sku
+        name     ProductName
+        category String
+        details  String
+        imageUrl String
+        price    Money
+        currency CurrencyCode
+
+      // The constraint lives in the slice whose command appends the event; `released by` names another slice's event
+      constraint OneApprovalPerProduct
+        unique event ProductApprovedForSale
+        released by ProductWithdrawn
+        message "A product is approved once until it is withdrawn"
+
+      example ApproveMug : ApproveProductForSale
+        productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+
+      // The accepted path is specified where its public consequence is: see PublishProduct (a command specification cannot list the
+      // cascaded public event, and an exact fact count would fail).
+      specification ApprovingAnUnpricedProductIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+        when ApproveMug
+        then error "Price the product before approving it"
+
+      specification ApprovingAnUndescribedProductIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 49
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        when ApproveMug
+        then error "Describe the product before approving it"
+
+      specification ApprovingTwiceIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+        given ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 49
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        given ProductApprovedForSale
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+          price    = 49
+          currency = "NOK"
+        when ApproveMug
+        then error "A product is approved once until it is withdrawn"
+
+      screen Approve
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApproveProductForSale
+              navigate to ReadyForApproval
+
+    slice StateChange WithdrawProduct
+      description "Takes a product off sale"
+      command WithdrawProduct
+        productId ProductId identifier
+        reads ProductReadiness by productId
+        produces ProductWithdrawn
+          for productId
+          sku = ProductReadiness.sku
+
+      event ProductWithdrawn
+        sku Sku
+
+      // The accepted path is specified in PublishRetirement for the same reason.
+      screen Withdraw
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action WithdrawProduct
+
+    slice StateView CatalogDashboard
+      description "Products by status, for the merchandiser and the ops administrator"
+
+      readmodel CatalogFigure
+        productId ProductId
+        sku       Sku
+        status    ProductStatus
+        price     Money
+
+      query AllCatalogFigures => observable CatalogFigure[]
+
+      projection CatalogFigureProjection => CatalogFigure
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          price     = 0
+          status    = "draft"
+        from ProductPriceSet
+          price = price
+        from ProductApprovedForSale
+          status = "approved"
+        from ProductWithdrawn
+          status = "withdrawn"
+
+      screen CatalogDashboard
+        template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          tables
+            data CatalogFigure[] via query AllCatalogFigures
+            table CatalogFigure
+              column sku    label "SKU"
+              column status label "Status"
+              column price  label "Price"
+
+      specification TheDashboardCountsAWithdrawnProduct
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductWithdrawn
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku = "ACM-1000"
+        then readmodel CatalogFigure
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          status    = "withdrawn"
+          price     = 0
