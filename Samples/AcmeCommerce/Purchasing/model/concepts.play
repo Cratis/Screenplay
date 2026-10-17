@@ -1,0 +1,25 @@
+// Purchasing language: buying from suppliers. Concepts that only Purchasing needs; shared kernel concepts live in Shared/.
+concept SupplierName : String
+  validate
+    not empty  message "A supplier needs a name"
+
+concept RequestStatus : Enum
+  requested = 0
+  ordered = 1
+  blocked = 2
+
+// What a goods receipt is called: one receipt is one line of one purchase order
+concept ReceiptId : Uuid
+
+// Purchasing's own event source on top of the shared Supplier and PurchaseOrder sources: how one SKU is sourced
+eventsource SkuSourcing
+  description "How one SKU is sourced: demand, replenishment requests and the preferred supplier"
+  identifier Sku
+  stream Sourcing
+    description "Demand and replenishment for one SKU"
+
+purpose SupplierRelations
+  description "Order from suppliers and reach their purchasing contact"
+  basis contract
+  subjects supplierContact
+  retention "For as long as we buy from the supplier"

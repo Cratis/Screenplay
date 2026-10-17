@@ -82,6 +82,234 @@ sample data AcmeNordic
   // ---- Sales (ecommerce-author-sales) ----------------------------------------------------------------------
 
   // ---- Purchasing (ecommerce-author-ops) -------------------------------------------------------------------
+  shape SupplierRow
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      name       = "Nordic Ceramics AS"
+      taxId      = "NO 912 345 678"
+      country    = "NO"
+      offerCount = 2
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      name       = "Fjord Glassverk"
+      taxId      = "NO 923 456 789"
+      country    = "NO"
+      offerCount = 3
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      name       = "Baltic Textiles SIA"
+      taxId      = "LV 40003012345"
+      country    = "LV"
+      offerCount = 1
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      name       = "Hanse Haushalt GmbH"
+      taxId      = "DE 811 234 567"
+      country    = "DE"
+      offerCount = 2
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      name       = "Kaffekompaniet AB"
+      taxId      = "SE 556677-8899"
+      country    = "SE"
+      offerCount = 3
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      name       = "Oresund Packaging ApS"
+      taxId      = "DK 12 34 56 78"
+      country    = "DK"
+      offerCount = 1
+  shape SupplierOffer
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      sku          = "ACM-1000"
+      price        = 62
+      currency     = "NOK"
+      leadTimeDays = 14
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      sku          = "ACM-1001"
+      price        = 41
+      currency     = "NOK"
+      leadTimeDays = 14
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      sku          = "ACM-1002"
+      price        = 33
+      currency     = "NOK"
+      leadTimeDays = 10
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      sku          = "ACM-1003"
+      price        = 118
+      currency     = "NOK"
+      leadTimeDays = 21
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      sku          = "ACM-1004"
+      price        = 75
+      currency     = "NOK"
+      leadTimeDays = 7
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      sku          = "ACM-1005"
+      price        = 54
+      currency     = "NOK"
+      leadTimeDays = 5
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      sku          = "ACM-1006"
+      price        = 12
+      currency     = "NOK"
+      leadTimeDays = 3
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      sku          = "ACM-1000"
+      price        = 66
+      currency     = "NOK"
+      leadTimeDays = 9
+  shape PurchaseOrderRow
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      status          = "draft"
+      lineCount       = 0
+      orderedQuantity = 0
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a02"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      status          = "draft"
+      lineCount       = 2
+      orderedQuantity = 60
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a03"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      purchaseOrderNumber = "PO-2026-000101"
+      status          = "submitted"
+      lineCount       = 1
+      orderedQuantity = 40
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a04"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      purchaseOrderNumber = "PO-2026-000102"
+      status          = "partiallyReceived"
+      lineCount       = 2
+      orderedQuantity = 80
+      receivedQuantity = 35
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a05"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      purchaseOrderNumber = "PO-2026-000103"
+      status          = "received"
+      lineCount       = 1
+      orderedQuantity = 24
+      receivedQuantity = 24
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a06"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      purchaseOrderNumber = "PO-2026-000104"
+      status          = "submitted"
+      lineCount       = 3
+      orderedQuantity = 150
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a07"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      purchaseOrderNumber = "PO-2026-000105"
+      status          = "cancelled"
+      lineCount       = 1
+      orderedQuantity = 10
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a08"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      purchaseOrderNumber = "PO-2026-000106"
+      status          = "partiallyReceived"
+      lineCount       = 1
+      orderedQuantity = 100
+      receivedQuantity = 40
+  shape ReplenishmentRow
+    row
+      sku          = "ACM-1000"
+      quantity     = 40
+      onHand       = 4
+      reorderPoint = 10
+      status       = "requested"
+    row
+      sku          = "ACM-1003"
+      quantity     = 24
+      onHand       = 2
+      reorderPoint = 8
+      status       = "blocked"
+    row
+      sku          = "ACM-1004"
+      quantity     = 60
+      onHand       = 9
+      reorderPoint = 15
+      status       = "ordered"
+    row
+      sku          = "ACM-1006"
+      quantity     = 200
+      onHand       = 18
+      reorderPoint = 50
+      status       = "requested"
+  shape DemandRow
+    row
+      sku       = "ACM-1000"
+      demanded  = 18
+      delivered = 10
+    row
+      sku       = "ACM-1001"
+      demanded  = 7
+      delivered = 7
+    row
+      sku       = "ACM-1002"
+      demanded  = 12
+      delivered = 0
+    row
+      sku       = "ACM-1004"
+      demanded  = 30
+      delivered = 15
+    row
+      sku       = "ACM-1006"
+      demanded  = 64
+      delivered = 0
+  shape SkuSourcing
+    row
+      sku        = "ACM-1000"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      unitPrice  = 62
+      currency   = "NOK"
+    row
+      sku        = "ACM-1001"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      unitPrice  = 41
+      currency   = "NOK"
+    row
+      sku        = "ACM-1002"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      unitPrice  = 33
+      currency   = "NOK"
+    row
+      sku        = "ACM-1004"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      unitPrice  = 75
+      currency   = "NOK"
+    row
+      sku        = "ACM-1006"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      unitPrice  = 12
+      currency   = "NOK"
+  shape PurchasingFigures
+    row
+      summaryId     = "global"
+      orders        = 8
+      suppliers     = 6
+      unitsOrdered  = 466
+      unitsReceived = 99
 
   // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------
   shape StockLevel
