@@ -1,0 +1,108 @@
+// ============================================================
+// Warehouse / Stock / Receiving - goods arrive
+// ============================================================
+
+module Stock
+  feature Receiving
+
+    slice StateChange ReceiveStock
+      description "Books delivered goods onto the shelf. Normally the purchasing public event does it (see ReceiveStockFromPurchasing); by hand for a delivery nobody announced"
+      command ReceiveStock
+        sku             Sku identifier
+        purchaseOrderId PurchaseOrderId
+        quantity        Quantity
+        reads StockLevel by sku
+        validate
+          require StockLevel.blocked == false
+            message "That SKU is blocked for receiving"
+        produces StockReceived
+          for sku
+          sku             = sku
+          purchaseOrderId = purchaseOrderId
+          quantity        = quantity
+          receivedAt      = $context.occurred
+
+      event StockReceived
+        sku             Sku
+        purchaseOrderId PurchaseOrderId
+        quantity        Quantity
+        receivedAt      DateTime
+
+      example Delivery : ReceiveStock
+        sku             = "ACM-1000"
+        purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+        quantity        = 40
+
+      // Cascades (the stock level goes public) are listed in PublishStockLevel; here the guard is specified
+      specification ReceivingIntoABlockedSkuIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given SkuBlockedForReceiving
+          for "ACM-1000"
+        when Delivery
+        then error "That SKU is blocked for receiving"
+
+      specification AQuantityOfZeroIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Delivery quantity = 0
+        then error "A quantity is at least one"
+
+      screen ReceiveGoods
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ReceiveStock
+              navigate to ReceivingLog
+
+    slice StateView ReceivingLog
+      description "Every delivery that reached the dock, per purchase order and SKU"
+
+      readmodel Receipt
+        purchaseOrderId PurchaseOrderId key
+        sku             Sku
+        received        Quantity
+        lastReceivedAt  DateTime
+
+      query AllReceipts => observable Receipt[]
+
+      projection ReceiptProjection => Receipt
+        from StockReceived key purchaseOrderId
+          purchaseOrderId = purchaseOrderId
+          sku             = $eventSourceId
+          received        = quantity
+          lastReceivedAt  = receivedAt
+
+      screen ReceivingLog
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button receive title "Receive goods" slice Stock.Receiving.ReceiveStock emphasis primary icon plus
+          list
+            data Receipt[] via query AllReceipts
+            table Receipt
+              column purchaseOrderId label "Purchase order"
+              column sku             label "SKU"
+              column received        label "Received"
+              column lastReceivedAt  label "When"
+
+      specification AReceiptAppearsOnTheLog
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        then readmodel Receipt
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          sku             = "ACM-1000"
+          received        = 40
