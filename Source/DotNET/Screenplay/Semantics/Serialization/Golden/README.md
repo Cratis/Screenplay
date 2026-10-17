@@ -11,7 +11,18 @@ The package links these ESM files as embedded resources in every build configura
 Adding a new `full-esm-v<N>.json` automatically includes it and exposes its version in the next package build.
 Expression, identity-catalog and typed-context sidecars are separate contracts and are not part of this API.
 
-The full vectors are built from these source models:
+Full goldens below the current ESM version are frozen: v1–v27 are checked-in contracts, not rebuilt
+from shared fixtures. Their version specs deserialize the frozen bytes, check the selected version and
+feature-specific assertions, and serialize back to identical bytes. Only v28 is compared with its builder.
+The historical fixture descriptions below explain what each vector covers; retained builders serve
+other specs, not regeneration of older full goldens.
+
+`given/frozen_esm_goldens.cs` records the SHA-256 of each frozen file's exact bytes.
+`when_checking_frozen_full_goldens` requires exactly v1 through v(current−1), checks that every file exists,
+and hashes the source files without JSON normalization. It reports 27 checked files at v28; even a
+one-byte edit fails. Restore changed frozen bytes rather than updating their hashes.
+
+These source models originally produced the full vectors:
 
 | File | Source model |
 | --- | --- |
@@ -38,10 +49,10 @@ The full vectors are built from these source models:
 
 `full-esm-v16.json` pins stored event type names under 0075. `canonical_serialization_golden_vectors.CreateSemanticModelV16()` adds one pinned contract to the full v15 model, retaining unpinned contracts. `StoredEventNamesCorpus.V16` pins a source-backed mixed pinned/unpinned rename and unchanged reference outcomes across equivalent forms. Existing v1–v15 golden bytes are unchanged. Only an event pin that differs from the display name selects v16; an equal-name pin omits `storedName` and preserves the earlier version and bytes.
 
-`full-esm-v17.json` pins explicit no-event assertions and recovery redelivery under 0074. `canonical_serialization_golden_vectors.CreateSemanticModelV17()` adds both specification members to the full v16 model, retaining stored event names and every earlier contract. `RecoverySpecificationsCorpus.V17` pins source-backed bytes, revisions and reference outcomes across equivalent forms. Existing v1–v16 golden bytes are unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=17`, then rebuild and rerun without the variable.
+`full-esm-v17.json` pins explicit no-event assertions and recovery redelivery under 0074. `canonical_serialization_golden_vectors.CreateSemanticModelV17()` adds both specification members to the full v16 model, retaining stored event names and every earlier contract. `RecoverySpecificationsCorpus.V17` pins source-backed bytes, revisions and reference outcomes across equivalent forms. Existing v1–v16 golden bytes are unchanged.
 
-`full-esm-v18.json` pins query validation rejection specifications under 0072. `canonical_serialization_golden_vectors.CreateSemanticModelV18()` adds actionless query requests with empty `results` and one `thenErrors` entry, both with and without a message, to the full v17 model. `QueryValidationCorpus.V18` pins key and filter rejections across equivalent source forms. Only this specification shape selects v18; concept validation of query arguments applies in every version without changing earlier bytes. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=18`, then rebuild and rerun without the variable. Released v1–v17 vectors remain unchanged.
-`full-esm-v19.json` pins invocation refusal branches and String refusal expressions under 0030. `canonical_serialization_golden_vectors.CreateSemanticModelV19()` adds ordered selectors, a named constraint, acknowledgement and all three refusal members to the full v17 model. `InvocationRefusalsCorpus.V19` pins source-backed bytes, revision, branch cascades and acknowledgement with redelivery/no-event assertions across equivalent source forms. Prior golden and corpus bytes stay unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=19`, then rebuild and rerun without the variable.
+`full-esm-v18.json` pins query validation rejection specifications under 0072. The frozen v18 model adds actionless query requests with empty `results` and one `thenErrors` entry, both with and without a message, to the full v17 model. `QueryValidationCorpus.V18` pins key and filter rejections across equivalent source forms. Only this specification shape selects v18; concept validation of query arguments applies in every version without changing earlier bytes. Released v1–v17 vectors remain unchanged.
+`full-esm-v19.json` pins invocation refusal branches and String refusal expressions under 0030. `canonical_serialization_golden_vectors.CreateSemanticModelV19()` adds ordered selectors, a named constraint, acknowledgement and all three refusal members to the full v17 model. `InvocationRefusalsCorpus.V19` pins source-backed bytes, revision, branch cascades and acknowledgement with redelivery/no-event assertions across equivalent source forms. Prior golden and corpus bytes stay unchanged.
 
 The other files pin separate serialization contracts, not ESM bytes:
 
@@ -62,32 +73,45 @@ and descriptor sidecars with these bytes.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 
-`full-esm-v22.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV22()` on the full v21 model, adding only the optional final application member `reactionProductionMode: "atomic"` under decision 0078. `AtomicReactionBatchesCorpus.V22` and its legacy control pin equivalent-source bytes and reference outcomes, including rejected-world counts, refusal branches, redelivery, application and clock triggers. Earlier golden/corpus bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=22`; regenerate the source corpus with `SCREENPLAY_REGENERATE_ATOMIC_REACTION_BATCHES_CORPUS=1`. Both selectors fail deliberately; rebuild embedded resources before strict reruns.
+`full-esm-v22.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV22()` on the full v21 model, adding only the optional final application member `reactionProductionMode: "atomic"` under decision 0078. `AtomicReactionBatchesCorpus.V22` and its legacy control pin equivalent-source bytes and reference outcomes, including rejected-world counts, refusal branches, redelivery, application and clock triggers. Earlier golden/corpus bytes remain unchanged. The full v22 golden is frozen. Regenerate the separate source corpus with `SCREENPLAY_REGENERATE_ATOMIC_REACTION_BATCHES_CORPUS=1`; it fails deliberately, so rebuild embedded resources before strict reruns.
 
-`full-esm-v25.json` pins the protected command reads contract under decision 0085. `canonical_serialization_golden_vectors.CreateSemanticModelV25()` binds a required read over a finite event-source-keyed projection with removal handling, a read-backed requirement and a produced-event read-path mapping. The final application member is `commandReadMode: "protected"`; each read writes `name`, `readModel`, `key` and `presence: "required"`. Read-path expressions write `kind: "readPath"`, `read` and `property`; condition property operands add `read` for a view property. `ProtectedCommandReadsCorpus.V25` pins equivalent single, folder, reordered and relocated source forms and their reference outcomes, including absence precedence, read paths, removals/recreation and invoked-command reads. Its identical-source legacy control removes only the preamble and pins refusal diagnostics rather than fabricating an executable model. Evaluator vectors separately cover decide/commit races and `Conflict` / `DecisionStateChanged`. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=25`; regenerate the source corpus and legacy diagnostics with `SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25=1`. Both selectors fail deliberately; review, rebuild embedded resources and rerun strictly without them. Released v1–v24 bytes remain unchanged.
-`full-esm-v23.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV23()` on the full v22 model, adding a described command with `handler: { requirementId, resultVersion }` and an unmapped required event property under decision 0082. Existing models without a described handler keep their version and bytes. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=23`; the run fails deliberately, then embedded resources must be rebuilt before a strict rerun.
+`full-esm-v25.json` pins the protected command reads contract under decision 0085. `canonical_serialization_golden_vectors.CreateSemanticModelV25()` binds a required read over a finite event-source-keyed projection with removal handling, a read-backed requirement and a produced-event read-path mapping. The final application member is `commandReadMode: "protected"`; each read writes `name`, `readModel`, `key` and `presence: "required"`. Read-path expressions write `kind: "readPath"`, `read` and `property`; condition property operands add `read` for a view property. `ProtectedCommandReadsCorpus.V25` pins equivalent single, folder, reordered and relocated source forms and their reference outcomes, including absence precedence, read paths, removals/recreation and invoked-command reads. Its identical-source legacy control removes only the preamble and pins refusal diagnostics rather than fabricating an executable model. Evaluator vectors separately cover decide/commit races and `Conflict` / `DecisionStateChanged`. The full v25 golden is frozen. Regenerate the separate source corpus and legacy diagnostics with `SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25=1`; it fails deliberately, so review, rebuild embedded resources and rerun strictly without it. Released v1–v24 bytes remain unchanged.
+`full-esm-v23.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV23()` on the full v22 model, adding a described command with `handler: { requirementId, resultVersion }` and an unmapped required event property under decision 0082. Existing models without a described handler keep their version and bytes. The full v23 golden is frozen.
 
-`full-esm-v24.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV24()` on the full v23 model, adding all four first-class ordinal text-rule discriminators. The allocation is held in `TextRuleVersion.Major`. `TextRulesCorpus.SourceForms` separately compares deprecated Studio lookaround source with first-class source, including identical canonical bytes and accepted/rejected reference specifications. Prior golden bytes remain unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=24`; rebuild and rerun without the switch after reviewing the intentional failure.
+`full-esm-v24.json` was built on the full v23 model, adding all four first-class ordinal text-rule discriminators. The allocation is held in `TextRuleVersion.Major`. `TextRulesCorpus.SourceForms` separately compares deprecated Studio lookaround source with first-class source, including identical canonical bytes and accepted/rejected reference specifications. Prior golden bytes remain unchanged. The full v24 golden is frozen.
 
 `full-esm-v28.json` pins command Uuid equality under decision 0090: `==` and `!=` between Uuid command properties, concept-typed properties and a protected read path in `require`, a canonical lowercase hyphenated literal that stays a text constant typed from the other operand, and a `produces when` comparison. `canonical_serialization_golden_vectors.CreateSemanticModelV28()` binds `a_uuid_comparison.GoldenSource`. `UuidComparisonsCorpus.V28` separately pins equivalent file/folder forms and the reference specification outcomes. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=28`, review the deliberate failure and diff, rebuild embedded resources and rerun strictly; the corpus expected bytes and revision are rewritten only by `SCREENPLAY_REGENERATE_UUID_COMPARISONS_CORPUS_V28=1` on `when_loading_v28_source`. v28 includes released v27 and is selected only when a model uses an admitted Uuid comparison; every earlier golden stays frozen.
 
-`full-esm-v27.json` pins flat composite read-model identity under decision 0088: several identifier properties, sorted query `keyParts`, untyped projection keys of kind `parts`, fixture identities and keyed absence. `canonical_serialization_golden_vectors.CreateSemanticModelV27()` binds a source fixture with lookup, removal and recreation specifications. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=27`, review the deliberate failure and diff, rebuild embedded resources and rerun strictly. The allocation is `CompositeReadModelKeyVersion.Major`; v27 includes released v26 and shipped in v4.204.0.
+`full-esm-v27.json` pins flat composite read-model identity under decision 0088: several identifier properties, sorted query `keyParts`, untyped projection keys of kind `parts`, fixture identities and keyed absence. The frozen v27 model comes from a source fixture with lookup, removal and recreation specifications. The full v27 golden is frozen. The allocation is `CompositeReadModelKeyVersion.Major`; v27 includes released v26 and shipped in v4.204.0.
 
-`CompositeReadModelKeysCorpus.V27` pins Double-mode source forms, including reordered key declarations and query parts. Its same-source exact-mode control remains refused with `PLAY0268` naming #285. Regenerate its expected bytes and revision with `SCREENPLAY_REGENERATE_COMPOSITE_READ_MODEL_KEYS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug --filter FullyQualifiedName~when_loading_composite_read_model_keys`. The run deliberately fails; review, rebuild and rerun without the variable. Neither switch permits editing an existing golden by hand.
+`CompositeReadModelKeysCorpus.V27` pins Double-mode source forms, including reordered key declarations and query parts. Its same-source exact-mode control remains refused with `PLAY0268` naming #285. Regenerate its expected bytes and revision with `SCREENPLAY_REGENERATE_COMPOSITE_READ_MODEL_KEYS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug --filter FullyQualifiedName~when_loading_composite_read_model_keys`. The run deliberately fails; review, rebuild and rerun without the variable. Corpus regeneration does not permit editing the frozen full v27 golden.
 
-`full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=26`; regenerate the source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`. Both fail deliberately; review, rebuild and rerun strictly without them.
+`full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. The full v26 golden is frozen. Regenerate the separate source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`; it fails deliberately, so review, rebuild and rerun strictly without it.
 
 ## Regenerating
 
-When a deliberate contract change alters the canonical bytes, change the source model first, then run:
+From a source checkout, update the current version's source model only for an intentional contract change, then run:
 
 ```bash
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-For a v3-, v4-, v5-, v6-, v7- or v8-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3`, `4`, `5`, `6`, `7` or `8` with the same command. Use `8` for v8 changes so the v1–v7 files remain untouched. The `1` setting rewrites all eleven files; all modes fail on purpose with
-`GoldenVectorsRegenerated`, so it can never pass silently in CI. Review the diff, then rebuild and rerun
-without the variable - the bytes are embedded at build time.
+`1` rewrites only the current full ESM golden (`full-esm-v28.json`) plus the four non-ESM sidecars:
+expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=28`
+to rewrite only the current full ESM golden. Older version selectors fail with a frozen-golden message
+before writing anything. The legacy `SCREENPLAY_REGENERATE_EVENT_ROUTES=1` switch also fails because v8 is frozen.
+Regeneration deliberately throws `GoldenVectorsRegenerated`; review the diff, rebuild embedded resources,
+and rerun without the variable. None of these switches rewrites the frozen SHA-256 table or source corpora.
+
+When a new ESM version is added:
+
+1. Preserve the previous current golden byte for byte and add its SHA-256 to `given/frozen_esm_goldens.cs`.
+   Never replace an existing pin to accept a changed file.
+2. Add the new full golden and current builder, and point regeneration at that builder. The helper derives
+   the current version from the declared `SemanticVersion` fields and refuses a builder selecting an older version.
+3. Switch the previous current spec to frozen-byte round trips, keep its feature assertions, and remove only
+   builders with no remaining consumers. The manifest check must cover exactly v1..v(new current−1).
+4. Run the compiler and canonical-vector specs. Keep all full goldens and published corpus bytes available.
 
 Regenerate the policy-negation extension independently of the original goldens and corpora:
 
@@ -97,45 +121,34 @@ SCREENPLAY_REGENERATE_POLICY_NEGATION=1 dotnet test Source/DotNET/Screenplay.Can
 
 This writes the extension golden and its corpus bytes/revision, then fails deliberately. Review, rebuild and rerun without the variable; existing fixtures must remain unchanged.
 
-Regenerate only the event routes golden, leaving released goldens and corpora untouched:
+The source-backed corpora have independent regeneration switches; they do not rewrite frozen full goldens.
+For the reaction identity corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_EVENT_ROUTES=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_round_tripping_the_event_routes_golden
-```
-
-This deliberately fails with `GoldenVectorsRegenerated`. Review the generated bytes, rebuild, and rerun without the variable. The v8 golden is embedded by the compiler's Debug build; the vectors project links it separately.
-
-Regenerate the shared v10 golden or the reaction identity corpus separately, preserving released vectors:
-
-```bash
-SCREENPLAY_REGENERATE_GOLDEN=10 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_REACTION_IDENTITY_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_ReactionIdentityCorpus
 ```
 
 Each command deliberately fails after rewriting its owned vectors. Review the bytes, rebuild, then rerun without the variables.
 
-Regenerate only the v11 golden or exact-number corpus, leaving released v1–v10 vectors untouched:
+For the exact-number corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_GOLDEN=11 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_NumberLiteralsCorpus
 ```
 
 Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
 
-Regenerate only the v12 golden or enum member numbers corpus, leaving released v1–v11 vectors untouched:
+For the enum member numbers corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_GOLDEN=12 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_ENUM_MEMBER_NUMBERS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_EnumMemberNumbersCorpus
 ```
 
 Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
 
-Regenerate only the v13 golden or concept compliance corpus, leaving released v1–v12 vectors untouched:
+For the concept compliance corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_GOLDEN=13 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_CONCEPT_COMPLIANCE_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug --filter FullyQualifiedName~for_ConceptComplianceCorpus
 ```
 
