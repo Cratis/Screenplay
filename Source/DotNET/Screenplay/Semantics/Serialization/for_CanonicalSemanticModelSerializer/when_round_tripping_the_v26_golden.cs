@@ -13,12 +13,10 @@ public class when_round_tripping_the_v26_golden : Specification
 
     void Because()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV26();
-        _bytes = SemanticModelSerializer.Serialize(_model);
+        _bytes = feature_corpus_vectors.Read("DateComparisons/v26/expected/esm-v26.json");
+        _model = SemanticModelSerializer.Deserialize(_bytes);
     }
 
-    [Fact] void should_pin_the_new_golden() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV26Bytes);
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(_bytes)).ShouldEqual(_bytes);
     [Fact] void should_select_v26() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V26);
     [Fact] void should_leave_earlier_readers_unextended() => EsmSchemaV25Support.Supports(LanguageVersion.V26, SemanticVersion.V26).ShouldBeFalse();

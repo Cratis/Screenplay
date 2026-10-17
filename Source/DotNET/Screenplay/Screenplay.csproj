@@ -21,5 +21,8 @@
         <!-- WithCulture=false keeps <base>.<locale>.strings samples in the main assembly instead of a satellite. -->
         <EmbeddedResource Include="**/*.strings" WithCulture="false" />
         <EmbeddedResource Include="Semantics/Serialization/Golden/*.json" WithCulture="false" />
+        <EmbeddedResource Include="../Screenplay.CanonicalCorpus/Corpus/**/expected/esm-v*.json"
+                          Link="FeatureCorpus/%(RecursiveDir)%(Filename)%(Extension)"
+                          WithCulture="false" />
     </ItemGroup>
 </Project>

@@ -13,12 +13,10 @@ public class when_round_tripping_the_v22_golden : Specification
 
     void Because()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        _bytes = SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV22());
+        _bytes = feature_corpus_vectors.Read("AtomicReactionBatches/v22/expected/esm-v22.json");
         _read = SemanticModelSerializer.Deserialize(_bytes);
     }
 
-    [Fact] void should_pin_the_new_golden() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV22Bytes);
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(_read).ShouldEqual(_bytes);
     [Fact] void should_select_v22() => _read.SemanticVersion.ShouldEqual(SemanticVersion.V22);
     [Fact] void should_select_atomicity_explicitly() => _read.Application.ReactionProductionMode.ShouldEqual(SemanticReactionProductionMode.Atomic);

@@ -8,8 +8,6 @@ namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 public static partial class canonical_serialization_golden_vectors
 {
-    public static byte[] EsmV25Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v25.json");
-
     public static ExecutableSemanticModel CreateSemanticModelV25()
     {
         const string source = a_protected_read_model.Source;

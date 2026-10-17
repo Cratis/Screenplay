@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Reflection;
+using Cratis.Screenplay.CanonicalCorpus;
+using Cratis.Screenplay.CanonicalVectors.Specs.given;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_RegisterProjectCorpus;
@@ -19,12 +20,14 @@ public class when_comparing_the_interoperability_version_table : Specification
         released.Length.ShouldEqual(27);
         claimed.Length.ShouldEqual(1);
         var rows = released.Concat(claimed).ToArray();
+        rows.Length.ShouldEqual(28);
+        esm_version_pins.AssertEveryDeclaredVersionIsPinned();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
         var semanticVersions = rows.Select(row => SemanticVersion.Parse(row[0])).ToArray();
         languageVersions.Distinct().Count().ShouldEqual(rows.Length);
         semanticVersions.Distinct().Count().ShouldEqual(rows.Length);
-        languageVersions.ShouldEqual(Declared<LanguageVersion>());
-        semanticVersions.ShouldEqual(Declared<SemanticVersion>());
+        languageVersions.ShouldEqual(esm_version_pins.Declared<LanguageVersion>());
+        semanticVersions.ShouldEqual(esm_version_pins.Declared<SemanticVersion>());
         languageVersions.ShouldEqual(EsmSchemaV28Support.LanguageVersions);
         semanticVersions.ShouldEqual(EsmSchemaV28Support.SemanticVersions);
         foreach (var row in rows)
@@ -34,11 +37,8 @@ public class when_comparing_the_interoperability_version_table : Specification
             var version = SemanticVersion.Parse(row[0]);
             row[2].ShouldEqual(version.Major.ToString(System.Globalization.CultureInfo.InvariantCulture));
             row[3].ShouldContain("https://github.com/Cratis/Screenplay/blob/main/decisions/");
-            row[4].ShouldEqual($"`full-esm-v{version.Major}.json`");
-            using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v{version.Major}.json")!;
-            using var memory = new MemoryStream();
-            golden.CopyTo(memory);
-            SemanticModelSerializer.Deserialize(memory.ToArray()).SemanticVersion.ShouldEqual(version);
+            row[4].ShouldEqual(EsmGoldenVectors.Versions.Contains((int)version.Major) ? $"`full-esm-v{version.Major}.json`" : "Feature corpus");
+            SemanticModelSerializer.Deserialize(esm_version_pins.Read(version)).SemanticVersion.ShouldEqual(version);
         }
     }
 
@@ -49,10 +49,4 @@ public class when_comparing_the_interoperability_version_table : Specification
 
         return [.. lines.Select(line => line.Split('|', StringSplitOptions.RemoveEmptyEntries).Select(cell => cell.Trim()).ToArray())];
     }
-
-    static T[] Declared<T>() => [.. typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
-        .Where(field => field.FieldType == typeof(T))
-        .Select(field => (T)field.GetValue(null)!)
-        .OrderBy(version => SemanticVersion.Parse(version!.ToString()!).Major)
-        .ThenBy(version => SemanticVersion.Parse(version!.ToString()!).Minor)];
 }

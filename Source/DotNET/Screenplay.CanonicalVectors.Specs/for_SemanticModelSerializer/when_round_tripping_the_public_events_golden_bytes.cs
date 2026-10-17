@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.CanonicalCorpus;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_SemanticModelSerializer;
@@ -10,10 +11,7 @@ public class when_round_tripping_the_public_events_golden_bytes : Specification
     [Fact]
     void should_preserve_the_exact_bytes_on_every_supported_runtime()
     {
-        using var stream = typeof(when_round_tripping_the_public_events_golden_bytes).Assembly.GetManifestResourceStream("Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v9.json")!;
-        using var bytes = new MemoryStream();
-        stream.CopyTo(bytes);
-        var expected = bytes.ToArray();
+        var expected = PublicEventsCorpus.V9.EsmBytes.ToArray();
         var model = SemanticModelSerializer.Deserialize(expected);
         model.LanguageVersion.ShouldEqual(LanguageVersion.V9);
         model.SemanticVersion.ShouldEqual(SemanticVersion.V9);

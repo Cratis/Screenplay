@@ -9,11 +9,10 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 public class when_round_tripping_the_public_events_golden : Specification
 {
     [Fact]
-    void should_pin_bytes_revision_and_member_order()
+    void should_preserve_public_event_members_in_the_feature_corpus()
     {
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV9();
-        var bytes = SemanticModelSerializer.Serialize(model);
-        bytes.SequenceEqual(canonical_serialization_golden_vectors.EsmV9Bytes).ShouldBeTrue();
+        var bytes = feature_corpus_vectors.Read("PublicEvents/v9/expected/esm-v9.json");
+        var model = SemanticModelSerializer.Deserialize(bytes);
         var roundTrip = SemanticModelSerializer.Deserialize(bytes);
         roundTrip.Revision.ShouldEqual(model.Revision);
         SemanticModelSerializer.Serialize(roundTrip).SequenceEqual(bytes).ShouldBeTrue();

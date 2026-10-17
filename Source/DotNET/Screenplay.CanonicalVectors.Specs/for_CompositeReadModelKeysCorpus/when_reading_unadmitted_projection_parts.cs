@@ -80,7 +80,7 @@ public class when_reading_unadmitted_projection_parts : given.a_flat_key_model
     [InlineData(25, "keyParts")]
     [InlineData(26, "keyParts")]
     [InlineData(1, "parts")]
-    [InlineData(25, "parts")]
+    [InlineData(24, "parts")]
     public void should_reject_new_members_even_without_several_identifiers(int version, string member)
     {
         if (member == "parts")

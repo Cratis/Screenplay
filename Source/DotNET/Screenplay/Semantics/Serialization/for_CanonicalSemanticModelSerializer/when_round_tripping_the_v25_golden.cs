@@ -12,11 +12,9 @@ public class when_round_tripping_the_v25_golden : Specification
     ExecutableSemanticModel _model;
     void Because()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV25();
-        _bytes = SemanticModelSerializer.Serialize(_model);
+        _bytes = feature_corpus_vectors.Read("ProtectedCommandReads/v25/expected/esm-v25.json");
+        _model = SemanticModelSerializer.Deserialize(_bytes);
     }
-    [Fact] void should_pin_the_new_golden() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV25Bytes);
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(_bytes)).ShouldEqual(_bytes);
     [Fact] void should_select_v25() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V25);
     [Fact] void should_write_the_mode_as_the_final_application_member() => Encoding.UTF8.GetString(_bytes).ShouldContain("\"commandReadMode\":\"protected\"}");

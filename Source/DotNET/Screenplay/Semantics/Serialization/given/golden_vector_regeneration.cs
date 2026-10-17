@@ -24,30 +24,13 @@ public static class golden_vector_regeneration
 
     static readonly IReadOnlyDictionary<string, Func<ExecutableSemanticModel>> _versionBuilders = new Dictionary<string, Func<ExecutableSemanticModel>>(StringComparer.Ordinal)
     {
+        ["2"] = canonical_serialization_golden_vectors.CreateSemanticModelV2,
         ["3"] = canonical_serialization_golden_vectors.CreateSemanticModelV3,
         ["4"] = canonical_serialization_golden_vectors.CreateSemanticModelV4,
         ["5"] = canonical_serialization_golden_vectors.CreateSemanticModelV5,
         ["6"] = canonical_serialization_golden_vectors.CreateSemanticModelV6,
         ["7"] = canonical_serialization_golden_vectors.CreateSemanticModelV7,
-        ["8"] = canonical_serialization_golden_vectors.CreateSemanticModelV8,
-        ["9"] = canonical_serialization_golden_vectors.CreateSemanticModelV9,
-        ["10"] = canonical_serialization_golden_vectors.CreateSemanticModelV10,
-        ["11"] = canonical_serialization_golden_vectors.CreateSemanticModelV11,
-        ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12,
-        ["13"] = canonical_serialization_golden_vectors.CreateSemanticModelV13,
-        ["14"] = canonical_serialization_golden_vectors.CreateSemanticModelV14,
-        ["15"] = canonical_serialization_golden_vectors.CreateSemanticModelV15,
-        ["16"] = canonical_serialization_golden_vectors.CreateSemanticModelV16,
-        ["17"] = canonical_serialization_golden_vectors.CreateSemanticModelV17,
-        ["18"] = canonical_serialization_golden_vectors.CreateSemanticModelV18,
-        ["19"] = canonical_serialization_golden_vectors.CreateSemanticModelV19,
-        ["20"] = canonical_serialization_golden_vectors.CreateSemanticModelV20,
-        ["21"] = canonical_serialization_golden_vectors.CreateSemanticModelV21,
-        ["22"] = canonical_serialization_golden_vectors.CreateSemanticModelV22,
-        ["23"] = canonical_serialization_golden_vectors.CreateSemanticModelV23,
         [TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV24,
-        ["25"] = canonical_serialization_golden_vectors.CreateSemanticModelV25,
-        ["26"] = canonical_serialization_golden_vectors.CreateSemanticModelV26,
         [CompositeReadModelKeyVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV27,
         ["28"] = canonical_serialization_golden_vectors.CreateSemanticModelV28
     };
@@ -55,7 +38,7 @@ public static class golden_vector_regeneration
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
-    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12" || Environment.GetEnvironmentVariable(Variable) == "13" || Environment.GetEnvironmentVariable(Variable) == "14" || Environment.GetEnvironmentVariable(Variable) == "15" || Environment.GetEnvironmentVariable(Variable) == "16" || Environment.GetEnvironmentVariable(Variable) == "17" || Environment.GetEnvironmentVariable(Variable) == "18" || Environment.GetEnvironmentVariable(Variable) == "19" || Environment.GetEnvironmentVariable(Variable) == "20" || Environment.GetEnvironmentVariable(Variable) == "21" || Environment.GetEnvironmentVariable(Variable) == "22" || Environment.GetEnvironmentVariable(Variable) == "23" || Environment.GetEnvironmentVariable(Variable) == TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) || Environment.GetEnvironmentVariable(Variable) == "25" || Environment.GetEnvironmentVariable(Variable) == "26" || Environment.GetEnvironmentVariable(Variable) == CompositeReadModelKeyVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) || Environment.GetEnvironmentVariable(Variable) == "28";
+    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "2" || VersionBuilder(Environment.GetEnvironmentVariable(Variable)) is not null;
 
     /// <summary>
     /// Rewrites every golden vector from its source model when regeneration was requested.
