@@ -3,8 +3,8 @@
 
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { EventEmitter } from 'node:events';
+import { specFixtureDirectory } from '../tests/specFixtureDirectory';
 vi.mock('node:fs', async importOriginal => ({ ...await importOriginal<typeof fs>(), watch: vi.fn() }));
 import { RepairRootWatch, nativeRootIdentityAvailable, assertRootIdentity } from '../RepairRootWatch';
 
@@ -13,8 +13,7 @@ let callback: (event: string, filename?: string | null) => void;
 let changed = vi.fn<() => void>(), invalidated = vi.fn<(failure: unknown, cause: string) => void>();
 let root: string;
 beforeEach(() => {
-    const tasks = path.resolve('../../../.ai-work'); fs.mkdirSync(tasks, { recursive: true });
-    root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'watch-root-')));
+    root = specFixtureDirectory('watch-root-');
     native = Object.assign(new EventEmitter(), { close: vi.fn() });
     changed = vi.fn(); invalidated = vi.fn();
     vi.mocked(fs.watch).mockReset().mockImplementation(((_root: string, options: fs.WatchOptions, listener: typeof callback) => {
@@ -23,7 +22,11 @@ beforeEach(() => {
         return native;
     }) as unknown as typeof fs.watch);
 });
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+    vi.restoreAllMocks(); vi.unstubAllGlobals();
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(root + '-original', { recursive: true, force: true });
+});
 it('expires every notification synchronously without names, deduplication or self-write suppression, retaining a healthy root', () => {
     const watch = new RepairRootWatch(root, changed, invalidated);
     callback('change', 'nested/Handler.cs'); callback('rename', null); callback('rename'); callback('change', 'nested/Handler.cs');

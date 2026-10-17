@@ -1,9 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { beforeEach, it, expect, vi } from 'vitest';
+import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { specFixtureDirectory } from '../tests/specFixtureDirectory';
 
 const host = vi.hoisted(() => ({ trusted: true, uiKind: 1, folders: [] as { uri: { scheme: string; fsPath: string } }[], documents: [] as { uri: { scheme: string; fsPath: string; toString(): string; with?(change: { scheme: string }): { fsPath: string } }; version: number; isDirty: boolean; getText?(): string }[], settings: new Map<string, Record<string, unknown>>() }));
 vi.mock('vscode', () => ({
@@ -13,14 +14,17 @@ vi.mock('vscode', () => ({
 import { checkRepairEnvironment, userRepairConfiguration, repairBuffersSynchronized } from '../RepairCodeActions';
 let root: string;
 beforeEach(() => {
-    const tasks = path.resolve('../../..', '.ai-work'); fs.mkdirSync(tasks, { recursive: true });
-    root = fs.mkdtempSync(path.join(tasks, 'repair-environment-'));
+    root = specFixtureDirectory('repair-environment-');
     host.trusted = true; host.uiKind = 1;
     host.folders = [{ uri: { scheme: 'file', fsPath: root } }]; host.documents = [];
     host.settings = new Map([
         ['enabled', { defaultValue: false, globalValue: true }], ['executable', { globalValue: process.execPath }],
         ['arguments', { globalValue: ['mcp'] }], ['modelRoot', { globalValue: root }],
     ]);
+});
+afterEach(() => {
+    fs.rmSync(root + '-alias.play', { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
 });
 it('requires explicit User opt-in and a user-installed absolute executable', () => {
     expect(checkRepairEnvironment(userRepairConfiguration())).toEqual({});

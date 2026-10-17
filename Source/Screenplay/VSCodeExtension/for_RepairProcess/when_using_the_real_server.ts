@@ -6,6 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
 import { RepairClient } from '../RepairClient';
+import { specFixtureDirectory } from '../tests/specFixtureDirectory';
 import { privateMetadataDirectory, privateMetadataDirectoryTimeout } from '../tests/privateMetadataDirectory';
 import { serverExecutable, serverAvailable, repairSource, missingEventSource, refusedEventSource } from '../tests/repairFixture';
 
@@ -16,9 +17,7 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
     let version: number;
     let dirty: boolean;
     beforeEach(async () => {
-        const tasks = path.resolve('../../..', '.ai-work');
-        fs.mkdirSync(tasks, { recursive: true });
-        root = fs.mkdtempSync(path.join(tasks, 'repair-process-'));
+        root = specFixtureDirectory('repair-process-');
         fs.writeFileSync(path.join(root, 'application.play'), repairSource);
         fs.writeFileSync(path.join(root, 'Handler.cs'), '// attachment\n');
         version = 1; dirty = false;
@@ -28,7 +27,10 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         } });
         await session.initialize();
     });
-    afterEach(() => { session.dispose(); }); // Evidence roots retained for inspection; no blanket deletion.
+    afterEach(() => {
+        try { session?.dispose(); }
+        finally { fs.rmSync(root, { recursive: true, force: true }); }
+    });
 
     for (const code of ['PLAY0478', 'PLAY0166']) it(`installs only the exact complete pinned ${code} review and persists identities across restart`, async () => {
         if (code === 'PLAY0166') fs.writeFileSync(path.join(root, 'application.play'), missingEventSource);
