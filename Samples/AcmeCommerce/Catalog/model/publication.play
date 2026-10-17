@@ -214,7 +214,14 @@ module Merchandising
       event ProductWithdrawn
         sku Sku
 
-      // The accepted path is specified in PublishRetirement for the same reason.
+      // The accepted path is specified in PublishRetirement for the same reason; here the denial is.
+      specification WithdrawingAnUnknownProductIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        when WithdrawProduct
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1099"
+        then error "ProductReadiness '6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1099' does not exist."
       screen Withdraw
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
