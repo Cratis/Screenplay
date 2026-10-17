@@ -78,9 +78,1162 @@ sample data AcmeNordic
       price     = 199
 
   // ---- Storefront (ecommerce-author-sales) -----------------------------------------------------------------
+  // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
+  shape ListedProduct
+    row
+      sku              = "ACM-1000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1000"
+      title            = "Acme krus"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1000"
+      category         = "Kjøkken"
+      displayPrice     = 149
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1000.png"
+      available        = 12
+    row
+      sku              = "ACM-1001"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      title            = "Acme tallerken"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1001"
+      category         = "Kjøkken"
+      displayPrice     = 89
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1001.png"
+      available        = 40
+    row
+      sku              = "ACM-1002"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      title            = "Acme kaffekanne"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1002"
+      category         = "Kjøkken"
+      displayPrice     = 349
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1002.png"
+      available        = 6
+    row
+      sku              = "ACM-1003"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      title            = "Acme kopp"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1003"
+      category         = "Kjøkken"
+      displayPrice     = 79
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1003.png"
+      available        = 0
+    row
+      sku              = "ACM-2000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      title            = "Acme ullteppe"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-2000"
+      category         = "Bolig"
+      displayPrice     = 899
+      currency         = "NOK"
+      imageUrl         = "/img/acm-2000.png"
+      available        = 4
+    row
+      sku              = "ACM-2002"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      title            = "Acme pute"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-2002"
+      category         = "Bolig"
+      displayPrice     = 249
+      currency         = "NOK"
+      imageUrl         = "/img/acm-2002.png"
+      available        = 18
+    row
+      sku              = "ACM-3000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
+      title            = "Acme kaffekvern"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-3000"
+      category         = "Kjøkken"
+      displayPrice     = 599
+      currency         = "NOK"
+      imageUrl         = "/img/acm-3000.png"
+      available        = 3
+    row
+      sku              = "ACM-3001"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
+      title            = "Acme termos"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-3001"
+      category         = "Friluft"
+      displayPrice     = 279
+      currency         = "NOK"
+      imageUrl         = "/img/acm-3001.png"
+      available        = 22
+  shape ProductPageEntry
+    row
+      sku              = "ACM-1000"
+      title            = "Acme krus"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 149
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1000.png"
+      available        = 12
+      priceChanges     = 0
+    row
+      sku              = "ACM-1001"
+      title            = "Acme tallerken"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 89
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1001.png"
+      available        = 40
+      priceChanges     = 1
+    row
+      sku              = "ACM-1002"
+      title            = "Acme kaffekanne"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 349
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1002.png"
+      available        = 6
+      priceChanges     = 2
+    row
+      sku              = "ACM-1003"
+      title            = "Acme kopp"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 79
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1003.png"
+      available        = 0
+      priceChanges     = 3
+  shape BasketSize
+    row
+      basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      lineCount = 2
+  shape CheckoutDraft
+    row
+      basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      method   = "express"
+  shape CustomerAccount
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      name       = "Ada Lovelace"
+      email      = "ada@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      name       = "Grace Hopper"
+      email      = "grace@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      name       = "Alan Turing"
+      email      = "alan@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      name       = "Edsger Dijkstra"
+      email      = "edsger@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      name       = "Barbara Liskov"
+      email      = "barbara@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      name       = "Donald Knuth"
+      email      = "donald@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      name       = "Margaret Hamilton"
+      email      = "margaret@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      name       = "Linus Torvalds"
+      email      = "linus@example.com"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      name       = "Ingrid Solberg"
+      email      = "ingrid@example.no"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      name       = "Magnus Haugen"
+      email      = "magnus@example.no"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      name       = "Silje Berg"
+      email      = "silje@example.no"
+    row
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      name       = "Ola Nordmann"
+      email      = "ola@example.no"
+  // The signed-in shopper (Ada) sees her own orders
+  shape MyOrder
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "received"
+      total      = 749
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "approved"
+      total      = 149
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "onHold"
+      total      = 98
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "shipped"
+      total      = 149
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "fulfilled"
+      total      = 447
 
   // ---- Sales (ecommerce-author-sales) ----------------------------------------------------------------------
-
+  // 30 orders over every status, 12 customers: the pipeline board, the dashboard and the approval inbox are drawn from them.
+  shape PipelineOrder
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      market      = "NO"
+      quotedTotal = 749
+      status      = "received"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      market      = "NO"
+      quotedTotal = 298
+      status      = "received"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      market      = "NO"
+      quotedTotal = 1290
+      status      = "received"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      market      = "NO"
+      quotedTotal = 98
+      status      = "received"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "received"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      market      = "NO"
+      quotedTotal = 2397
+      status      = "approved"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "approved"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      market      = "NO"
+      quotedTotal = 749
+      status      = "approved"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      market      = "NO"
+      quotedTotal = 3490
+      status      = "approved"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      market      = "NO"
+      quotedTotal = 98
+      status      = "rejected"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      market      = "NO"
+      quotedTotal = 2397
+      status      = "rejected"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      market      = "NO"
+      quotedTotal = 447
+      status      = "onHold"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      market      = "NO"
+      quotedTotal = 98
+      status      = "onHold"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "onHold"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      market      = "NO"
+      quotedTotal = 1290
+      status      = "confirmed"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      market      = "NO"
+      quotedTotal = 1290
+      status      = "confirmed"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "confirmed"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      market      = "NO"
+      quotedTotal = 447
+      status      = "confirmed"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "shipped"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      market      = "NO"
+      quotedTotal = 2397
+      status      = "shipped"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      market      = "NO"
+      quotedTotal = 1290
+      status      = "shipped"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      market      = "NO"
+      quotedTotal = 98
+      status      = "shipped"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      market      = "NO"
+      quotedTotal = 3490
+      status      = "shipped"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      market      = "NO"
+      quotedTotal = 149
+      status      = "fulfilled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      market      = "NO"
+      quotedTotal = 447
+      status      = "fulfilled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      market      = "NO"
+      quotedTotal = 3490
+      status      = "fulfilled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      market      = "NO"
+      quotedTotal = 98
+      status      = "fulfilled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      market      = "NO"
+      quotedTotal = 3490
+      status      = "fulfilled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      market      = "NO"
+      quotedTotal = 3490
+      status      = "cancelled"
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      market      = "NO"
+      quotedTotal = 1290
+      status      = "cancelled"
+  shape WaitingOrder
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      quotedTotal = 749
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      quotedTotal = 520
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      quotedTotal = 1290
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      quotedTotal = 520
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      quotedTotal = 520
+  shape OrderDetail
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email       = "ada@example.com"
+      status      = "received"
+      quotedTotal = 749
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email       = "grace@example.com"
+      status      = "received"
+      quotedTotal = 298
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email       = "alan@example.com"
+      status      = "received"
+      quotedTotal = 1290
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email       = "edsger@example.com"
+      status      = "received"
+      quotedTotal = 98
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email       = "barbara@example.com"
+      status      = "received"
+      quotedTotal = 149
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email       = "donald@example.com"
+      status      = "approved"
+      quotedTotal = 2397
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      email       = "margaret@example.com"
+      status      = "approved"
+      quotedTotal = 149
+    row
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      email       = "linus@example.com"
+      status      = "approved"
+      quotedTotal = 749
+  shape OrderTimeline
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      received  = true
+      approved  = false
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      received  = true
+      approved  = false
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      received  = true
+      approved  = false
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      received  = true
+      approved  = false
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      received  = true
+      approved  = false
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      received  = true
+      approved  = true
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      received  = true
+      approved  = true
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+    row
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      received  = true
+      approved  = true
+      rejected  = false
+      confirmed = false
+      reserved  = false
+      onHold    = false
+      shipped   = false
+      fulfilled = false
+      cancelled = false
+  shape PriceListEntry
+    row
+      sku           = "ACM-1000"
+      price         = 149
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-1001"
+      price         = 89
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-1002"
+      price         = 349
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-1003"
+      price         = 79
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-2000"
+      price         = 899
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-2002"
+      price         = 249
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-3000"
+      price         = 599
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+    row
+      sku           = "ACM-3001"
+      price         = 279
+      currency      = "NOK"
+      effectiveFrom = "2026-10-01"
+  // Revenue per order: ordered when received, confirmed when Sales confirmed it
+  shape OrderFigure
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      market         = "NO"
+      orderedRevenue = 749
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      market         = "NO"
+      orderedRevenue = 298
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      market         = "NO"
+      orderedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      market         = "NO"
+      orderedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      market         = "NO"
+      orderedRevenue = 749
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      market         = "NO"
+      orderedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      market         = "NO"
+      orderedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      market         = "NO"
+      orderedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      market         = "NO"
+      orderedRevenue = 447
+      confirmedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      market         = "NO"
+      orderedRevenue = 2397
+      confirmedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      market         = "NO"
+      orderedRevenue = 98
+      confirmedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      market         = "NO"
+      orderedRevenue = 447
+      confirmedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      market         = "NO"
+      orderedRevenue = 98
+      confirmedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      market         = "NO"
+      orderedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      market         = "NO"
+      orderedRevenue = 1290
   // ---- Purchasing (ecommerce-author-ops) -------------------------------------------------------------------
+  shape SupplierRow
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      name       = "Nordic Ceramics AS"
+      taxId      = "NO 912 345 678"
+      country    = "NO"
+      offerCount = 2
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      name       = "Fjord Glassverk"
+      taxId      = "NO 923 456 789"
+      country    = "NO"
+      offerCount = 3
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      name       = "Baltic Textiles SIA"
+      taxId      = "LV 40003012345"
+      country    = "LV"
+      offerCount = 1
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      name       = "Hanse Haushalt GmbH"
+      taxId      = "DE 811 234 567"
+      country    = "DE"
+      offerCount = 2
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      name       = "Kaffekompaniet AB"
+      taxId      = "SE 556677-8899"
+      country    = "SE"
+      offerCount = 3
+    row
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      name       = "Oresund Packaging ApS"
+      taxId      = "DK 12 34 56 78"
+      country    = "DK"
+      offerCount = 1
+  shape SupplierOffer
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      sku          = "ACM-1000"
+      price        = 62
+      currency     = "NOK"
+      leadTimeDays = 14
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      sku          = "ACM-1001"
+      price        = 41
+      currency     = "NOK"
+      leadTimeDays = 14
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      sku          = "ACM-1002"
+      price        = 33
+      currency     = "NOK"
+      leadTimeDays = 10
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      sku          = "ACM-1003"
+      price        = 118
+      currency     = "NOK"
+      leadTimeDays = 21
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      sku          = "ACM-1004"
+      price        = 75
+      currency     = "NOK"
+      leadTimeDays = 7
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      sku          = "ACM-1005"
+      price        = 54
+      currency     = "NOK"
+      leadTimeDays = 5
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      sku          = "ACM-1006"
+      price        = 12
+      currency     = "NOK"
+      leadTimeDays = 3
+    row
+      supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      sku          = "ACM-1000"
+      price        = 66
+      currency     = "NOK"
+      leadTimeDays = 9
+  shape PurchaseOrderRow
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      status          = "draft"
+      lineCount       = 0
+      orderedQuantity = 0
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a02"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      status          = "draft"
+      lineCount       = 2
+      orderedQuantity = 60
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a03"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      purchaseOrderNumber = "PO-2026-000101"
+      status          = "submitted"
+      lineCount       = 1
+      orderedQuantity = 40
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a04"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
+      purchaseOrderNumber = "PO-2026-000102"
+      status          = "partiallyReceived"
+      lineCount       = 2
+      orderedQuantity = 80
+      receivedQuantity = 35
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a05"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      purchaseOrderNumber = "PO-2026-000103"
+      status          = "received"
+      lineCount       = 1
+      orderedQuantity = 24
+      receivedQuantity = 24
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a06"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      purchaseOrderNumber = "PO-2026-000104"
+      status          = "submitted"
+      lineCount       = 3
+      orderedQuantity = 150
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a07"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      purchaseOrderNumber = "PO-2026-000105"
+      status          = "cancelled"
+      lineCount       = 1
+      orderedQuantity = 10
+      receivedQuantity = 0
+    row
+      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a08"
+      supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
+      purchaseOrderNumber = "PO-2026-000106"
+      status          = "partiallyReceived"
+      lineCount       = 1
+      orderedQuantity = 100
+      receivedQuantity = 40
+  shape ReplenishmentRow
+    row
+      sku          = "ACM-1000"
+      quantity     = 40
+      onHand       = 4
+      reorderPoint = 10
+      status       = "requested"
+    row
+      sku          = "ACM-1003"
+      quantity     = 24
+      onHand       = 2
+      reorderPoint = 8
+      status       = "blocked"
+    row
+      sku          = "ACM-1004"
+      quantity     = 60
+      onHand       = 9
+      reorderPoint = 15
+      status       = "ordered"
+    row
+      sku          = "ACM-1006"
+      quantity     = 200
+      onHand       = 18
+      reorderPoint = 50
+      status       = "requested"
+  shape DemandRow
+    row
+      sku       = "ACM-1000"
+      demanded  = 18
+      delivered = 10
+    row
+      sku       = "ACM-1001"
+      demanded  = 7
+      delivered = 7
+    row
+      sku       = "ACM-1002"
+      demanded  = 12
+      delivered = 0
+    row
+      sku       = "ACM-1004"
+      demanded  = 30
+      delivered = 15
+    row
+      sku       = "ACM-1006"
+      demanded  = 64
+      delivered = 0
+  shape SkuSourcing
+    row
+      sku        = "ACM-1000"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      unitPrice  = 62
+      currency   = "NOK"
+    row
+      sku        = "ACM-1001"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+      unitPrice  = 41
+      currency   = "NOK"
+    row
+      sku        = "ACM-1002"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
+      unitPrice  = 33
+      currency   = "NOK"
+    row
+      sku        = "ACM-1004"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
+      unitPrice  = 75
+      currency   = "NOK"
+    row
+      sku        = "ACM-1006"
+      supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
+      unitPrice  = 12
+      currency   = "NOK"
+  shape PurchasingFigures
+    row
+      summaryId     = "global"
+      orders        = 8
+      suppliers     = 6
+      unitsOrdered  = 466
+      unitsReceived = 99
 
   // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------
+  shape StockLevel
+    row
+      sku             = "ACM-1000"
+      name            = "Acme krus"
+      onHand          = 148
+      reserved        = 12
+      available       = 136
+      reorderPoint    = 12
+      reorderQuantity = 20
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-1001"
+      name            = "Acme tallerken"
+      onHand          = 96
+      reserved        = 14
+      available       = 82
+      reorderPoint    = 10
+      reorderQuantity = 12
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-1002"
+      name            = "Acme kaffekanne"
+      onHand          = 9
+      reserved        = 3
+      available       = 6
+      reorderPoint    = 10
+      reorderQuantity = 16
+      blocked         = false
+      alertOpen       = true
+    row
+      sku             = "ACM-2000"
+      name            = "Acme ullteppe"
+      onHand          = 34
+      reserved        = 6
+      available       = 28
+      reorderPoint    = 8
+      reorderQuantity = 16
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-2001"
+      name            = "Acme lysestake"
+      onHand          = 0
+      reserved        = 0
+      available       = 0
+      reorderPoint    = 10
+      reorderQuantity = 40
+      blocked         = true
+      alertOpen       = true
+    row
+      sku             = "ACM-2002"
+      name            = "Acme tekanne"
+      onHand          = 60
+      reserved        = 18
+      available       = 42
+      reorderPoint    = 15
+      reorderQuantity = 30
+      blocked         = false
+      alertOpen       = false
+  shape PickingCard
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      sku      = "ACM-1000"
+      quantity = 1
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      sku      = "ACM-1001"
+      quantity = 2
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      sku      = "ACM-1002"
+      quantity = 3
+      status   = "picking"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      sku      = "ACM-2000"
+      quantity = 1
+      status   = "packed"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      sku      = "ACM-2001"
+      quantity = 2
+      status   = "packed"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      sku      = "ACM-1000"
+      quantity = 3
+      status   = "dispatched"
+      carrier        = "posten"
+      trackingNumber = "RR123456789NO"
+  shape ShipmentRow
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      sku      = "ACM-1000"
+      quantity = 1
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      sku      = "ACM-1001"
+      quantity = 2
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      sku      = "ACM-1002"
+      quantity = 3
+      status   = "picking"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      sku      = "ACM-2000"
+      quantity = 1
+      status   = "packed"
+      carrier        = "dhl"
+      trackingNumber = "DHL-770013"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      sku      = "ACM-2001"
+      quantity = 2
+      status   = "packed"
+      carrier        = "dhl"
+      trackingNumber = "DHL-770014"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      sku      = "ACM-1000"
+      quantity = 3
+      status   = "dispatched"
+      carrier        = "posten"
+      trackingNumber = "RR123456789NO"
+      dispatchedAt   = "2026-10-02T14:00:00Z"
+  shape Receipt
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+      sku             = "ACM-1000"
+      received        = 20
+      lastReceivedAt  = "2026-10-01T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4002"
+      sku             = "ACM-1001"
+      received        = 30
+      lastReceivedAt  = "2026-10-02T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4003"
+      sku             = "ACM-1002"
+      received        = 40
+      lastReceivedAt  = "2026-10-03T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4004"
+      sku             = "ACM-2000"
+      received        = 50
+      lastReceivedAt  = "2026-10-04T09:00:00Z"
+  shape StockAlert
+    row
+      sku          = "ACM-1002"
+      onHand       = 9
+      reorderPoint = 10
+  shape StockFigures
+    row
+      summaryId     = "global"
+      skuCount      = 6
+      unitsOnHand   = 347
+      unitsReserved = 53
+      parcelsOpen   = 5
+  shape ItemDetail
+    row
+      sku          = "ACM-1000"
+      name         = "Acme krus"
+      onHand       = 148
+      reserved     = 12
+      available    = 136
+      reorderPoint = 12
+      blocked      = false
+      lastCounted  = 148
+    row
+      sku          = "ACM-1001"
+      name         = "Acme tallerken"
+      onHand       = 96
+      reserved     = 14
+      available    = 82
+      reorderPoint = 10
+      blocked      = false
+      lastCounted  = 96
+    row
+      sku          = "ACM-1002"
+      name         = "Acme kaffekanne"
+      onHand       = 9
+      reserved     = 3
+      available    = 6
+      reorderPoint = 10
+      blocked      = false
+      lastCounted  = 9

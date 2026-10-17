@@ -1,0 +1,22 @@
+# Specifications the render variant cannot take. One `<file>|<specification name>` per line.
+# They name public events (OrderConfirmed, OrderStatusChanged, OrderPlaced): the variant has no Translate slices.
+Sales/model/approval.play|ASmallOrderApprovesItself
+Storefront/model/checkout.play|ClearingTheBasketAfterCheckout
+# They state what a protected read guards (the render variant has no protected reads: STAGE-ESM-044) or the cascade of a reaction (STAGE-ESM-011)
+Storefront/model/basket.play|AddingAnAvailableProduct
+Storefront/model/basket.play|RejectingAProductThatIsOutOfStock
+Storefront/model/checkout.play|RejectingAnEmptyBasket
+Storefront/model/checkout.play|RejectingACheckoutWithoutLines
+Sales/model/approval.play|ARepCannotApprove
+Sales/model/approval.play|AnApprovedOrderCannotBeApprovedAgain
+Sales/model/approval.play|AnUnapprovedOrderCannotBeConfirmed
+Sales/model/fulfilment.play|AShippedOrderCannotBeCancelled
+Sales/model/fulfilment.play|ReleasingAnOrderOnHold
+Sales/model/fulfilment.play|AnOrderThatIsNotOnHoldCannotBeReleased
+Sales/model/fulfilment.play|AnOrderThatHasNotShippedCannotBeFulfilled
+# Catalog specifications that state what a protected read guards (core's; listed here so the variant renders)
+Catalog/model/publication.play|ApprovingAnUnpricedProductIsRejected
+Catalog/model/publication.play|ApprovingAnUndescribedProductIsRejected
+Catalog/model/publication.play|ApprovingTwiceIsRejected
+Catalog/model/publication.play|WithdrawingAnUnknownProductIsRejected
+Sales/model/approval.play|AnApprovedOrderIsConfirmed

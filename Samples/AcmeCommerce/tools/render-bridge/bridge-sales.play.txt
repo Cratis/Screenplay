@@ -1,0 +1,117 @@
+// RENDER VARIANT ONLY (Sales). See bridge-storefront.play.txt: Stage cannot render Translate slices, so Sales' inbound private events are
+// produced by commands (declared here, in a StateChange slice) and the storefront's checkout reaches Sales through a reaction.
+module Orders
+  feature Intake
+    slice StateChange ReceiveOrder
+      description "Render bridge for the inbound translation ReceiveOrder"
+      command ReceiveOrder
+        orderId     OrderId identifier
+        customerId  CustomerId
+        email       EmailAddress
+        lines       OrderLine[]
+        shipTo      PostalAddress
+        market      Market
+        quotedTotal Money
+        produces OrderReceived
+          for orderId
+          orderId     = orderId
+          customerId  = customerId
+          email       = email
+          lines       = lines
+          shipTo      = shipTo
+          market      = market
+          quotedTotal = quotedTotal
+      event OrderReceived
+        orderId     OrderId
+        customerId  CustomerId
+        email       EmailAddress
+        lines       OrderLine[]
+        shipTo      PostalAddress
+        market      Market
+        quotedTotal Money
+
+    slice Automation ReceiveCheckout
+      reaction ReceiveCheckoutAsOrder
+        description "Sales receives what the storefront checked out"
+        runs as system role "SalesRep"
+        when CheckoutCompleted
+          orderId
+          customerId
+          email
+          lines
+          shipTo
+          total
+          invokes ReceiveOrder
+            orderId     = orderId
+            customerId  = customerId
+            email       = email
+            lines       = lines
+            shipTo      = shipTo
+            market      = "NO"
+            quotedTotal = total
+
+    slice StateChange ChangePriceList
+      description "Render bridge for UpdatePriceList"
+      command ChangePriceList
+        sku           Sku identifier
+        price         Money
+        currency      CurrencyCode
+        effectiveFrom Date
+        produces PriceListUpdated
+          for sku
+          price         = price
+          currency      = currency
+          effectiveFrom = effectiveFrom
+      event PriceListUpdated
+        price         Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+  feature Fulfilment
+    slice StateChange ReserveForOrder
+      description "Render bridge for RecordReservation"
+      command ReserveForOrder
+        orderId  OrderId identifier
+        sku      Sku
+        quantity Quantity
+        produces OrderReservationCompleted
+          for orderId
+          sku      = sku
+          quantity = quantity
+      event OrderReservationCompleted
+        sku      Sku
+        quantity Quantity
+
+    slice StateChange PutOrderOnHold
+      description "Render bridge for HoldOrderOnShortage"
+      command PutOrderOnHold
+        orderId OrderId identifier
+        sku     Sku
+        shortBy Quantity
+        produces OrderPutOnHold
+          for orderId
+          sku     = sku
+          shortBy = shortBy
+      event OrderPutOnHold
+        sku     Sku
+        shortBy Quantity
+
+    slice StateChange ShipOrder
+      description "Render bridge for RecordShipment"
+      command ShipOrder
+        orderId        OrderId identifier
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+        produces OrderShipmentRecorded
+          for orderId
+          shipmentId     = shipmentId
+          carrier        = carrier
+          trackingNumber = trackingNumber
+          dispatchedAt   = dispatchedAt
+      event OrderShipmentRecorded
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime

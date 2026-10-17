@@ -1,0 +1,198 @@
+// Storefront INBOUND translations (anti-corruption). Every foreign public event is declared here in the shop's own shape and captured
+// into a PRIVATE event in the shop's own language. One application cannot hold two events of the same name (PLAY0472), so the consumer-local
+// name is <PublishedName>At<Consumer>; `from "<Origin>"` keeps the lineage (domain-package.sh restores the published names per domain).
+// The shop addresses a product by its SKU, so every product capture uses `key sku`: the SKU becomes the event source id.
+module Shop
+  feature Browse
+    // P1 ProductPublished (Catalog) -> ProductListed
+    slice Translate ListProduct
+      direction inbound
+
+      event ProductPublishedAtStorefront from "Catalog"
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        details   String
+        category  String
+        price     Money
+        currency  CurrencyCode
+        imageUrl  String
+
+      capture ProductFeed
+        source events
+          from ProductPublishedAtStorefront
+        key sku
+        append ProductListed
+          when added
+            productId        = $.productId
+            title            = $.name
+            shortDescription = $.details
+            slug             = $.sku
+            category         = $.category
+            displayPrice     = $.price
+            currency         = $.currency
+            imageUrl         = $.imageUrl
+            available        = 0
+
+      specification ListingAPublishedProduct
+        when append ProductPublishedAtStorefront
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+          details   = "A sturdy enamel mug"
+          category  = "Kitchen"
+          price     = 49
+          currency  = "NOK"
+          imageUrl  = "/img/acm-1000.png"
+        then ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+
+    // P2 ProductPriceChanged (Catalog) -> DisplayPriceChanged
+    slice Translate UpdateDisplayPrice
+      direction inbound
+
+      event ProductPriceChangedAtStorefront from "Catalog"
+        productId     ProductId
+        sku           Sku
+        newPrice      Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      capture PriceFeed
+        source events
+          from ProductPriceChangedAtStorefront
+        key sku
+        append DisplayPriceChanged
+          when added
+            displayPrice  = $.newPrice
+            currency      = $.currency
+            effectiveFrom = $.effectiveFrom
+
+      specification ShowingTheNewPrice
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        when append ProductPriceChangedAtStorefront
+          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku           = "ACM-1000"
+          newPrice      = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+        then DisplayPriceChanged
+          for "ACM-1000"
+          displayPrice  = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+
+    // P3 ProductRetired (Catalog) -> ProductDelisted
+    slice Translate DelistProduct
+      direction inbound
+
+      event ProductRetiredAtStorefront from "Catalog"
+        productId ProductId
+        sku       Sku
+
+      capture RetirementFeed
+        source events
+          from ProductRetiredAtStorefront
+        key sku
+        append ProductDelisted
+          when added
+            productId = $.productId
+
+      specification DelistingARetiredProduct
+        when append ProductRetiredAtStorefront
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+        then ProductDelisted
+          for "ACM-1000"
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+
+    // P9 StockLevelChanged (Warehouse) -> AvailabilityChanged
+    slice Translate UpdateAvailability
+      direction inbound
+
+      event StockLevelChangedAtStorefront from "Warehouse"
+        sku       Sku
+        onHand    StockQuantity
+        available StockQuantity
+
+      capture AvailabilityFeed
+        source events
+          from StockLevelChangedAtStorefront
+        key sku
+        append AvailabilityChanged
+          when added
+            available = $.available
+
+      specification ShowingWhatIsAvailable
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        when append StockLevelChangedAtStorefront
+          sku       = "ACM-1000"
+          onHand    = 12
+          available = 9
+        then AvailabilityChanged
+          for "ACM-1000"
+          available = 9
+
+  feature MyOrders
+    // P6 OrderStatusChanged (Sales) -> MyOrderUpdated
+    slice Translate TrackOrderStatus
+      direction inbound
+
+      event OrderStatusChangedAtStorefront from "Sales"
+        orderId OrderId
+        status  OrderStatus
+
+      capture OrderStatusFeed
+        source events
+          from OrderStatusChangedAtStorefront
+        key orderId
+        append MyOrderUpdated
+          when added
+            status = $.status
+
+      specification TrackingAShippedOrder
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when append OrderStatusChangedAtStorefront
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "shipped"
+        then MyOrderUpdated
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status = "shipped"

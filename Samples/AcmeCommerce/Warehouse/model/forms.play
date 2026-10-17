@@ -1,0 +1,41 @@
+// ============================================================
+// Warehouse / the command forms: multi-column input surfaces, declared once and found by their command
+// ============================================================
+
+module Stock
+  form ReceiveStockForm for ReceiveStock
+    generation manual
+    field sku             label "SKU"
+    field purchaseOrderId label "Purchase order"
+    field quantity        label "Units delivered"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku             row 1 column 1
+      place quantity        row 1 column 2
+      place purchaseOrderId row 2 column 1 columnSpan 2
+
+  form DispatchShipmentForm for DispatchShipment
+    generation manual
+    field carrier        label "Carrier"
+    field trackingNumber label "Tracking number"
+    layout
+      column 1 width 1fr
+      column 2 width 2fr
+      columnGap 24px
+      place carrier        row 1 column 1
+      place trackingNumber row 1 column 2
+
+  form AdjustStockForm for AdjustStock
+    generation manual
+    field quantity label "Units"
+    field increase label "Add to the shelf"
+    field reason   label "Reason"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place quantity row 1 column 1
+      place increase row 1 column 2
+      place reason   row 2 column 1 columnSpan 2

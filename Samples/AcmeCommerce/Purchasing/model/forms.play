@@ -1,0 +1,95 @@
+// ============================================================
+// Purchasing / the command forms: multi-column input surfaces, declared once and found by their command
+// ============================================================
+
+module Buying
+  form RegisterSupplierForm for RegisterSupplier
+    generation manual
+    field name         label "Supplier name"
+    field taxId        label "Tax id"
+    field contactEmail label "Purchasing contact"
+    field country      label "Country"
+    layout
+      column 1 width 2fr
+      column 2 width 1fr
+      columnGap 24px
+      rowGap 16px
+      place name         row 1 column 1
+      place taxId        row 1 column 2
+      place contactEmail row 2 column 1
+      place country      row 2 column 2
+    on submit navigate to Suppliers
+
+  form OfferSupplierProductForm for OfferSupplierProduct
+    generation manual
+    field sku          label "SKU"
+    field price        label "Unit price"
+    field currency     label "Currency"
+    field leadTimeDays label "Lead time (days)"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      column 3 width 1fr
+      columnGap 24px
+      rowGap 16px
+      place sku          row 1 column 1 columnSpan 3
+      place price        row 2 column 1
+      place currency     row 2 column 2
+      place leadTimeDays row 2 column 3
+
+  form ChoosePreferredSupplierForm for ChoosePreferredSupplier
+    generation manual
+    field sku        label "SKU"
+    field supplierId label "Preferred supplier"
+    field unitPrice  label "Agreed unit price"
+    field currency   label "Currency"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku        row 1 column 1
+      place supplierId row 1 column 2
+      place unitPrice  row 2 column 1
+      place currency   row 2 column 2
+
+  // The new-purchase-order wizard: one small form per step (supplier, lines, review).
+  form PurchaseOrderSupplierForm for CreatePurchaseOrder
+    generation manual
+    field supplierId label "Supplier"
+    on submit navigate to NewPurchaseOrder
+
+  form PurchaseOrderLineForm for AddPurchaseOrderLine
+    generation manual
+    field sku       label "SKU"
+    field quantity  label "Quantity"
+    field unitPrice label "Unit price"
+    layout
+      column 1 width 2fr
+      column 2 width 1fr
+      column 3 width 1fr
+      columnGap 24px
+      place sku       row 1 column 1
+      place quantity  row 1 column 2
+      place unitPrice row 1 column 3
+    on submit navigate to NewPurchaseOrder
+
+  form SubmitPurchaseOrderForm for SubmitPurchaseOrder
+    generation manual
+    field purchaseOrderNumber label "Purchase order number"
+    on submit navigate to PurchaseOrders
+
+  form ReceiveGoodsForm for ReceivePurchaseOrderGoods
+    generation manual
+    field sku        label "SKU"
+    field quantity   label "Units delivered"
+    field receiptId  label "Delivery note"
+    field receivedAt label "Received at"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      rowGap 16px
+      place sku        row 1 column 1
+      place quantity   row 1 column 2
+      place receiptId  row 2 column 1
+      place receivedAt row 2 column 2

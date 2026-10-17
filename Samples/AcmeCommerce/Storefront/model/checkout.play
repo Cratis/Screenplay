@@ -1,0 +1,265 @@
+module Shop
+  feature Checkout
+    // Step 1 of the wizard: where to deliver
+    slice StateChange EnterShippingAddress
+      description "Wizard step 1: where the order goes"
+
+      command EnterShippingAddress
+        basketId BasketId identifier
+        shipTo   PostalAddress
+        produces ShippingAddressEntered
+          for basketId
+          shipTo = shipTo
+
+      event ShippingAddressEntered
+        shipTo PostalAddress
+
+      screen AddressStep
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action EnterShippingAddress
+
+      specification EnteringAnAddress
+        given caller
+          authenticated
+          role "Shopper"
+        when EnterShippingAddress
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          shipTo   = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+        then ShippingAddressEntered
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+
+    // Step 2: how to deliver
+    slice StateChange ChooseDeliveryMethod
+      description "Wizard step 2: how the order is delivered"
+
+      command ChooseDeliveryMethod
+        basketId BasketId identifier
+        method   DeliveryMethod
+        produces DeliveryMethodChosen
+          for basketId
+          method = method
+
+      event DeliveryMethodChosen
+        method DeliveryMethod
+
+      screen DeliveryStep
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChooseDeliveryMethod
+
+      specification ChoosingExpressDelivery
+        given caller
+          authenticated
+          role "Shopper"
+        when ChooseDeliveryMethod
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method   = "express"
+        then DeliveryMethodChosen
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method = "express"
+
+    // What the wizard has gathered so far
+    slice StateView CheckoutProgress
+      description "The address and delivery method chosen so far, per basket"
+
+      readmodel CheckoutDraft
+        basketId BasketId key
+        shipTo   PostalAddress optional
+        method   DeliveryMethod optional
+
+      query GetCheckoutDraft => CheckoutDraft optional
+        by basketId BasketId
+
+      projection CheckoutDraftProjection => CheckoutDraft
+        from ShippingAddressEntered
+          shipTo   = shipTo
+        from DeliveryMethodChosen
+          method   = method
+        remove with BasketCleared
+
+      specification TheDraftFollowsTheSteps
+        given caller
+          authenticated
+          role "Shopper"
+        given ShippingAddressEntered
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+        given DeliveryMethodChosen
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method = "express"
+        then readmodel CheckoutDraft
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method   = "express"
+
+      screen Review
+        description "What will be ordered, before the shopper confirms"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data CheckoutDraft via query GetCheckoutDraft by basketId
+            summary CheckoutDraft
+              field shipTo label "Deliver to"
+              field method label "Delivery"
+
+    // Step 3: review and confirm
+    slice StateChange CheckOut
+      description "Wizard step 3: the shopper confirms the order"
+
+      command CheckOut
+        orderId    OrderId identifier
+        basketId   BasketId
+        customerId CustomerId
+        lines      OrderLine[]
+        shipTo     PostalAddress
+        method     DeliveryMethod
+        total      Money
+        reads BasketSize by basketId
+        reads CustomerAccount by customerId
+
+        validate
+          lines not empty  message "An order needs at least one line"
+          require BasketSize.lineCount > 0
+            message "Your basket is empty"
+
+        produces CheckoutCompleted
+          for orderId
+          orderId        = orderId
+          basketId       = basketId
+          customerId     = customerId
+          email          = CustomerAccount.email
+          lines          = lines
+          shipTo         = shipTo
+          deliveryMethod = method
+          total          = total
+
+      // orderId is also the event source id; a reaction can only take payload values, so it is repeated in the payload
+      event CheckoutCompleted
+        orderId        OrderId
+        basketId       BasketId
+        customerId     CustomerId
+        email          EmailAddress
+        lines          OrderLine[]
+        shipTo         PostalAddress
+        deliveryMethod DeliveryMethod
+        total          Money
+
+      screen Checkout
+        description "Address, delivery, review: one CommandForm per step"
+        template blueprint Cratis.Blueprint.Default WizardScreen version "^1"
+          header
+            title "Checkout"
+          actions
+            action EnterShippingAddress
+            action ChooseDeliveryMethod
+            action CheckOut
+              navigate to MyOrders
+
+      specification RejectingAnEmptyBasket
+        given caller
+          authenticated
+          role "Shopper"
+        given CustomerRegistered
+          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name  = "Ada Lovelace"
+          email = "ada@example.com"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-1000"
+          quantity  = 2
+          unitPrice = 49
+        given BasketLineRemoved
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku = "ACM-1000"
+        given ShippingAddressEntered
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+        given DeliveryMethodChosen
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method = "standard"
+        when CheckOut
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          method     = "standard"
+          total      = 98
+        then error "Your basket is empty"
+
+      specification RejectingACheckoutWithoutLines
+        given caller
+          authenticated
+          role "Shopper"
+        when CheckOut
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          lines      = []
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          method     = "standard"
+          total      = 0
+        then error "An order needs at least one line"
+
+    // AUTOMATION: a reaction that invokes a command when an event occurs
+    slice Automation EmptyBasketAfterCheckout
+      description "The basket is emptied once the order is placed"
+
+      reaction ClearBasket
+        description "The basket is emptied once the order is placed"
+        runs as system role "Shopper"
+        when CheckoutCompleted
+          basketId
+          invokes ClearBasketContents
+            basketId = basketId
+
+      specification ClearingTheBasketAfterCheckout
+        given caller
+          authenticated
+          role "Shopper"
+        when append CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        // the public event is the other consequence of the same checkout (translation/publish.play)
+        then events in any order
+        then BasketCleared
+        then OrderPlaced
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
+          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          total      = 98
+
+    slice StateChange ClearBasketContents
+      description "Empties a basket (invoked by the automation, not by the shopper)"
+
+      command ClearBasketContents
+        basketId BasketId identifier
+        produces BasketCleared
+          for basketId
+
+      event BasketCleared
+        description "The basket was emptied (after checkout)"
+
+      screen ClearBasket
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ClearBasketContents
+              navigate to Basket
+
+      specification ClearingABasket
+        given caller
+          authenticated
+          role "Shopper"
+        when ClearBasketContents
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+        then BasketCleared
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
