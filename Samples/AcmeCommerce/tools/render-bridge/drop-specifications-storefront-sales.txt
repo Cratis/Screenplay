@@ -19,3 +19,4 @@ Catalog/model/publication.play|ApprovingAnUnpricedProductIsRejected
 Catalog/model/publication.play|ApprovingAnUndescribedProductIsRejected
 Catalog/model/publication.play|ApprovingTwiceIsRejected
 Catalog/model/publication.play|WithdrawingAnUnknownProductIsRejected
+Sales/model/approval.play|AnApprovedOrderIsConfirmed

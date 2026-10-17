@@ -245,6 +245,35 @@ module Orders
           invokes ConfirmOrder
             orderId = orderId
 
+      specification AnApprovedOrderIsConfirmed
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          email       = "grace@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        when append OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+        // the outcome of the reaction (the fact it reacts to is excluded); the public events follow from it (translation/publish.play)
+        then events in any order
+        then OrderConfirmationIssued
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        then OrderConfirmed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines   = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo  = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          status  = "approved"
+
     slice StateChange ConfirmOrder
       description "Confirms an approved order: the shop's promise becomes the warehouse's work"
 
