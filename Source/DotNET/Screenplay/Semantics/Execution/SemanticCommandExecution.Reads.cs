@@ -5,6 +5,8 @@ namespace Cratis.Screenplay.Semantics.Execution;
 
 internal sealed partial class SemanticCommandExecution
 {
+    static string KeyText(SemanticValue key) => key is SemanticTextValue text ? text.Value : string.Empty;
+
     SemanticExecutionResult? ReadRequired()
     {
         foreach (var read in command.Reads)
@@ -34,6 +36,4 @@ internal sealed partial class SemanticCommandExecution
             ValidationFailures = [new(message, SemanticValidationSeverity.Error)]
         };
     }
-
-    static string KeyText(SemanticValue key) => key is SemanticTextValue text ? text.Value : string.Empty;
 }
