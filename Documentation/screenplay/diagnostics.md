@@ -599,7 +599,7 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
-| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
+| `PLAY0168` | Error | A concept and a type, two of either, or two policies are declared under one name in a document; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
 | `PLAY0171` | Error | A concurrency block narrows nothing. |
