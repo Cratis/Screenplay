@@ -210,6 +210,25 @@ module Stock
         increase = true
         reason   = found
 
+      // The accepted paths cascade into the stock level and the reorder watch; the guard is specified here
+      specification TakingMoreThanTheShelfHoldsIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when FoundMugs increase = false
+        then error "The shelf holds less than that"
+
+      specification ASalesRepCannotAdjustStock
+        given caller
+          authenticated
+          role "SalesRep"
+        when FoundMugs
+        then denied
+
       screen AdjustStock
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
