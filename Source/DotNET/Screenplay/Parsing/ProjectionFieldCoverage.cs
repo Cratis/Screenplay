@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class ProjectionFieldCoverage
 {
-    internal static HashSet<string>? Covered(IReadOnlyList<ProjectionBlockSyntax> blocks, IReadOnlyList<PropertySyntax> properties, bool autoMap, IReadOnlyList<EverySyntax> inherited, DeclarationScope scope, ConsistencyDeclarations declarations, bool isNested, bool honorJoinAutoMap = false)
+    internal static HashSet<string>? Covered(IReadOnlyList<ProjectionBlockSyntax> blocks, IReadOnlyList<PropertySyntax> properties, bool autoMap, IReadOnlyList<EverySyntax> inherited, DeclarationScope scope, ConsistencyDeclarations declarations, bool isNested)
     {
         var mapped = new HashSet<string>(StringComparer.Ordinal);
         var every = inherited.Concat(blocks.OfType<EverySyntax>()).ToList();
@@ -69,7 +69,7 @@ internal static class ProjectionFieldCoverage
                             mapped.Add(Root(mapping.Property));
                         }
 
-                        if (honorJoinAutoMap ? Enabled(joined.AutoMap, autoMap) : autoMap)
+                        if (Enabled(joined.AutoMap, autoMap))
                         {
                             var eventType = declarations.Event(joined.Event, scope);
                             if (eventType is null)
