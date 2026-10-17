@@ -26,5 +26,5 @@ Regenerate only this corpus with
 `for_ProtectedCommandReadsCorpus.when_loading_v25_source.should_select_v25_only_with_the_mode`.
 Regeneration first runs every specification, writes the new resources, and then
 intentionally fails. Review the bytes, rebuild, and rerun without the variable.
-Race cases remain in the evaluator's decide/commit specifications; the source
-language gains no race construct.
+Race cases are the separate `races-v1` vectors, run through the public decide,
+extend and commit calls; the source language gains no race construct.

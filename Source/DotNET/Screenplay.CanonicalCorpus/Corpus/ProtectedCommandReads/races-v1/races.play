@@ -1,0 +1,82 @@
+command reads protected
+concept GeneratedId : Uuid
+  generate uuidv7
+module Races
+  feature Decisions
+    slice StateChange Write
+      event Recorded
+        value String
+      event Removed
+      event OtherRecorded
+        value String
+      event OtherRemoved
+      event Saved
+        value String
+      event Created
+      constraint UniqueValue
+        unique value on Saved
+      command Update
+        id String identifier
+        lookup String
+        reads View by lookup
+        validate
+          require View.value != ""
+            message "Value is empty."
+        produces Saved
+          for id
+          value = View.value
+      command NoFacts
+        id String identifier
+        lookup String
+        reads View by lookup
+        validate
+          require View.value != ""
+            message "Value is empty."
+      command Merge
+        id String identifier
+        lookup String
+        reads View as first by lookup
+        reads OtherView as second by lookup
+      command Create
+        id GeneratedId generated identifier
+        produces Created
+          for id
+      command Record
+        id String identifier
+        value String
+        produces Recorded
+          for id
+          value = value
+      command Remove
+        id String identifier
+        produces Removed
+          for id
+      command RecordOther
+        id String identifier
+        value String
+        produces OtherRecorded
+          for id
+          value = value
+      command RemoveOther
+        id String identifier
+        produces OtherRemoved
+          for id
+    slice StateView Lookup
+      readmodel View
+        id String key
+        value String
+      projection Build => View
+        from Recorded
+          id = $eventSourceId
+          value = value
+        remove with Removed
+      query Get => View optional
+        by id String
+      readmodel OtherView
+        id String key
+        value String
+      projection BuildOther => OtherView
+        from OtherRecorded
+          id = $eventSourceId
+          value = value
+        remove with OtherRemoved
