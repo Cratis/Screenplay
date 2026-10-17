@@ -180,9 +180,11 @@ module Stock
       specification TheItemPageShowsNumbersAndShelves
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"

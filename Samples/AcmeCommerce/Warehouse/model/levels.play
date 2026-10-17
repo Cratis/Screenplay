@@ -15,9 +15,11 @@ module Stock
         name ProductName
         produces SkuRegistered
           for sku
+          sku  = sku
           name = name
 
       event SkuRegistered
+        sku  Sku
         name ProductName
 
       example Mug : RegisterSku
@@ -68,6 +70,7 @@ module Stock
           role "WarehouseClerk"
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         when BlockSku
           sku = "ACM-1000"
@@ -100,6 +103,7 @@ module Stock
           role "WarehouseClerk"
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         when Reorder
         then ReorderPointSet
@@ -141,6 +145,7 @@ module Stock
           role "WarehouseClerk"
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         when ShelfCount
         then StockCounted
@@ -175,22 +180,26 @@ module Stock
         produces when increase == true
           StockIncreased
             for sku
+            sku          = sku
             movementId = movementId
             quantity     = quantity
             reason       = reason
         produces when increase == false
           StockDecreased
             for sku
+            sku          = sku
             movementId = movementId
             quantity     = quantity
             reason       = reason
 
       event StockIncreased
+        sku          Sku
         movementId MovementId
         quantity     Quantity
         reason       StockAdjustmentReason
 
       event StockDecreased
+        sku          Sku
         movementId MovementId
         quantity     Quantity
         reason       StockAdjustmentReason
@@ -292,6 +301,7 @@ module Stock
       specification TheShelfStartsEmpty
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         then readmodel StockLevel
           sku       = "ACM-1000"
@@ -303,14 +313,17 @@ module Stock
       specification ReceivingAndReservingMovesTheNumbers
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
         given ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"

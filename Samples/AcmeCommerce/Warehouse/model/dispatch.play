@@ -18,6 +18,7 @@ module Stock
             message "The parcel is not packed"
         produces ShipmentHandedToCarrier
           for orderId
+          orderId        = orderId
           shipmentId     = shipmentId
           carrier        = carrier
           trackingNumber = trackingNumber
@@ -26,6 +27,7 @@ module Stock
           dispatchedAt   = $context.occurred
 
       event ShipmentHandedToCarrier
+        orderId        OrderId
         shipmentId     ShipmentId
         carrier        Carrier
         trackingNumber TrackingNumber
@@ -62,6 +64,7 @@ module Stock
           quantity = 3
         given ShipmentHandedToCarrier
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
           carrier        = posten
           trackingNumber = "RR123456789NO"
@@ -70,6 +73,7 @@ module Stock
           dispatchedAt   = "2026-10-02T14:00:00Z"
         when append ShipmentHandedToCarrier
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6002"
           carrier        = dhl
           trackingNumber = "DHL-0001"
@@ -97,11 +101,12 @@ module Stock
         description "A dispatched parcel takes its units off the shelf and releases the reservation"
         runs as system role "WarehouseClerk"
         when ShipmentHandedToCarrier
+          orderId
           sku
           quantity
           invokes TakeDispatchedStock
             sku      = sku
-            orderId  = $eventSourceId
+            orderId  = orderId
             quantity = quantity
 
     slice StateChange TakeDispatchedStock
@@ -111,10 +116,12 @@ module Stock
         quantity Quantity
         produces StockDispatched
           for sku
+          sku      = sku
           orderId  = orderId
           quantity = quantity
 
       event StockDispatched
+        sku      Sku
         orderId  OrderId
         quantity Quantity
 
@@ -170,6 +177,7 @@ module Stock
           quantity = 3
         given ShipmentHandedToCarrier
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
           carrier        = posten
           trackingNumber = "RR123456789NO"

@@ -25,6 +25,7 @@ module Stock
         key sku
         append SkuRegistered
           when added
+            sku  = $.sku
             name = $.name
 
       specification RegisteringAPublishedProduct
@@ -35,6 +36,7 @@ module Stock
         then events in any order
         then SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         then StockLevelSnapshotTaken
           for "ACM-1000"
@@ -64,6 +66,7 @@ module Stock
       specification BlockingARetiredProduct
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         when append ProductRetiredAtWarehouse
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
@@ -99,9 +102,11 @@ module Stock
       specification ReservingAConfirmedOrderLine
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -118,6 +123,7 @@ module Stock
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -160,11 +166,13 @@ module Stock
         key sku
         append StockReceived
           when added
+            sku             = $.sku
             purchaseOrderId = $.purchaseOrderId
             quantity        = $.quantity
             receivedAt      = $.receivedAt
         append StockReceived
           when receiptId
+            sku             = $.sku
             purchaseOrderId = $.purchaseOrderId
             quantity        = $.quantity
             receivedAt      = $.receivedAt
@@ -172,6 +180,7 @@ module Stock
       specification BookingTheFirstDelivery
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         when append PurchaseOrderReceivedAtWarehouse
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
@@ -183,6 +192,7 @@ module Stock
         then events in any order
         then StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -199,6 +209,7 @@ module Stock
       specification BookingARepeatDelivery
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given PurchaseOrderReceivedAtWarehouse
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
@@ -217,6 +228,7 @@ module Stock
         then events in any order
         then StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 20
           receivedAt      = "2026-10-05T09:00:00Z"

@@ -17,11 +17,13 @@ module Stock
             message "That SKU is blocked for receiving"
         produces StockReceived
           for sku
+          sku             = sku
           purchaseOrderId = purchaseOrderId
           quantity        = quantity
           receivedAt      = $context.occurred
 
       event StockReceived
+        sku             Sku
         purchaseOrderId PurchaseOrderId
         quantity        Quantity
         receivedAt      DateTime
@@ -38,6 +40,7 @@ module Stock
           role "WarehouseClerk"
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given SkuBlockedForReceiving
           for "ACM-1000"
@@ -91,9 +94,11 @@ module Stock
       specification AReceiptAppearsOnTheLog
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"

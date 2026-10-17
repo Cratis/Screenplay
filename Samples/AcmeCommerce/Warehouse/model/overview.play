@@ -27,23 +27,29 @@ module Stock
         description "Every movement of stock leads to a fresh snapshot of the SKU's level"
         runs as system role "WarehouseClerk"
         when SkuRegistered
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
         when StockReceived
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
         when StockIncreased
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
         when StockDecreased
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
         when ReservationMade
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
         when StockDispatched
+          sku
           invokes RecordStockLevel
-            sku = $eventSourceId
+            sku = sku
 
     slice StateChange RaiseReorderAlarm
       description "Raises the reorder alarm when the SKU is below its reorder point and no alarm is open for it"
@@ -73,16 +79,18 @@ module Stock
         description "Watches the shelf after every drop in available stock; one alarm per crossing"
         runs as system role "WarehouseClerk"
         when ReservationMade
+          sku
           movementId
           invokes RaiseReorderAlarm
-            sku        = $eventSourceId
+            sku        = sku
             crossingId = movementId
             on refused by validation
               acknowledge
         when StockDecreased
+          sku
           movementId
           invokes RaiseReorderAlarm
-            sku        = $eventSourceId
+            sku        = sku
             crossingId = movementId
             on refused by validation
               acknowledge
@@ -91,14 +99,17 @@ module Stock
       specification RaisingTheAlarmOnTheFirstCrossing
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 12
           receivedAt      = "2026-10-02T09:00:00Z"
         when append ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -135,9 +146,11 @@ module Stock
       specification StayingSilentWhileTheAlarmIsOpen
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 12
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -149,6 +162,7 @@ module Stock
           suggestedQuantity = 50
         when append ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -245,14 +259,17 @@ module Stock
       specification TheFiguresFollowTheShelves
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
         given ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -265,6 +282,7 @@ module Stock
       specification AnAlarmShowsOnTheDashboardUntilStockReturns
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given ReorderPointCrossed
           for "ACM-1000"

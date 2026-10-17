@@ -78,9 +78,11 @@ module Stock
       specification ReservingWhatTheShelfCovers
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -93,6 +95,7 @@ module Stock
         then events in any order
         then ReservationMade
           for "ACM-1000"
+          sku = "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -117,9 +120,11 @@ module Stock
       specification ReportingAShortage
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 2
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -143,9 +148,11 @@ module Stock
       specification ABlockedSkuIsNeverReserved
         given SkuRegistered
           for "ACM-1000"
+          sku = "ACM-1000"
           name = "Acme mug"
         given StockReceived
           for "ACM-1000"
+          sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
@@ -183,11 +190,13 @@ module Stock
             message "The shelf holds less than that"
         produces ReservationMade
           for sku
+          sku        = sku
           orderId    = orderId
           quantity   = quantity
           movementId = movementId
 
       event ReservationMade
+        sku        Sku
         orderId    OrderId
         quantity   Quantity
         movementId MovementId
@@ -199,10 +208,11 @@ module Stock
         runs as system role "WarehouseClerk"
         when ReservationMade
           orderId
+          sku
           quantity
           invokes PlanShipment
             orderId  = orderId
-            sku      = $eventSourceId
+            sku      = sku
             quantity = quantity
 
     slice StateChange PlanShipment
