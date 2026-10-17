@@ -26,3 +26,9 @@ module Shop
       rowGap 16px
       place name row 1 column 1
       place email row 1 column 2
+
+  // Adding to the basket: the product comes from the page it is added on, the shopper picks how many
+  form AddToBasketForm for AddToBasket
+    field sku label "Product"
+    field quantity label "How many?"
+    on submit navigate to Basket

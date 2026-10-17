@@ -83,7 +83,7 @@ module Shop
           grid
             data ListedProduct[] via query AllListedProducts
             // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:productCard
-            component Acme.Commerce.ProductCard productCard
+            component Acme.Commerce.productCard productCard
               context from query AllListedProducts
               on select
                 navigate to ProductPage

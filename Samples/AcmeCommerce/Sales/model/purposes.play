@@ -1,0 +1,10 @@
+// Why Sales keeps personal data (the customer's email and delivery address on an order).
+purpose OrderFulfilmentProcessing
+  description "Approve, confirm, ship and account for the orders customers placed"
+  basis contract
+  subjects customer
+  retention "The statutory bookkeeping period after the order is fulfilled"
+  recipient "The warehouse (the delivery address), the carrier"
+
+module Orders
+  purpose OrderFulfilmentProcessing

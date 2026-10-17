@@ -178,6 +178,7 @@ module Orders
         approved  Bool
         rejected  Bool
         confirmed Bool
+        reserved  Bool
         onHold    Bool
         shipped   Bool
         fulfilled Bool
@@ -224,6 +225,7 @@ module Orders
           approved  = false
           rejected  = false
           confirmed = false
+          reserved  = false
           onHold    = false
           shipped   = false
           fulfilled = false
@@ -234,6 +236,8 @@ module Orders
           rejected = true
         from OrderConfirmationIssued
           confirmed = true
+        from OrderReservationCompleted
+          reserved = true
         from OrderPutOnHold
           onHold = true
         from OrderHoldReleased
@@ -261,7 +265,7 @@ module Orders
           activity
             data OrderTimeline via query GetOrderTimeline by orderId
             // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:orderTimeline
-            component Acme.Commerce.OrderTimeline orderTimeline
+            component Acme.Commerce.orderTimeline orderTimeline
               context from query GetOrderTimeline
 
       specification TheRecordPageFollowsTheOrder
