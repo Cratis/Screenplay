@@ -116,6 +116,32 @@ declarations requires explicit `retiredSemanticAddresses` and, for event contrac
 may normalize whitespace. Review exact before/after bytes, dropped comments and
 `introducedExecutableErrors` before applying.
 
+### Reference continuity and refusals
+
+Reference occurrence identity follows only exact correspondence, verified relocation
+pairing or trusted planner lineage from `propose-move`. Other unmatched occurrences
+are removals and additions, not inferred moves. A batch can remove one reference and
+add an unrelated reference with different text, just as two sequential proposals can.
+`Safe` still refuses newly unresolved references; `Draft` records them as deliberate
+reference debt. Matched references still cannot lose a resolved target, silently
+rebind unchanged text or capture existing debt.
+
+If unmatched removed and added references have exactly the same text, the transaction
+refuses their ambiguous correspondence, even across owners or documents and under
+`Draft`. Comparison is ordinal: qualification and case are not normalized, and equal
+tail names alone do not establish identity. Use `propose-move` or semantic migrations
+for a genuine identity-preserving change, or split deliberate removals and additions.
+Changing text while changing owners is remove + add, not a rename that preserves
+reference identity. Explicit stream-candidate selection still requires its exact
+replacement proof and cannot excuse other removed references.
+
+Reference-validator refusals populate `conflicts[].document` and `path` with the
+first offending document's identity and portable path, both as strings (a conflict without a
+document reports `null`). The message names the reference
+text, member/role, document path and line:column; ambiguous batches list disappeared
+and introduced occurrences, capped at ten with a remaining count. `candidates` is
+reserved for property-planner evidence and stays empty for these refusals.
+
 ## Plan a property change
 
 For add, read the owner declaration handle with `read-ast` and supply

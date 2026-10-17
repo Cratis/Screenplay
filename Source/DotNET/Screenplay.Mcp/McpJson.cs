@@ -14,7 +14,7 @@ static class McpJson
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         MaxDepth = 256,
-        Converters = { new JsonStringEnumConverter(), new McpSyntaxJson() }
+        Converters = { new JsonStringEnumConverter(), new McpSyntaxJson(), new McpDocumentIdJson(), new McpPortablePlayPathJson() }
     };
 
     internal static readonly JsonElement Empty = JsonSerializer.SerializeToElement(new { });
