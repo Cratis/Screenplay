@@ -13,7 +13,7 @@ public class when_regenerating_the_current_full_golden : Specification
 
     void Establish()
     {
-        _directory = Path.GetFullPath(Path.Combine(frozen_esm_goldens.Directory(), "../../../../../..", ".ai-work", "golden", "regeneration", Guid.NewGuid().ToString("N")));
+        _directory = Path.Combine(Path.GetTempPath(), "screenplay-golden-regeneration", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_directory);
     }
 
