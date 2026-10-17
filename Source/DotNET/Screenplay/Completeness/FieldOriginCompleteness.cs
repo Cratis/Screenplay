@@ -26,7 +26,7 @@ static class FieldOriginCompleteness
             foreach (var (projection, blocks, scope) in builders.Where(builder => builder.Projection.File is null))
             {
                 var properties = model.Properties.ToArray();
-                var covered = ProjectionFieldCoverage.Covered(blocks, properties, ProjectionFieldCoverage.Enabled(projection.AutoMap, true), [], scope, declarations, false, true);
+                var covered = ProjectionFieldCoverage.Covered(blocks, properties, ProjectionFieldCoverage.Enabled(projection.AutoMap, true), [], scope, declarations, false);
                 if (covered is null)
                 {
                     continue;

@@ -1932,8 +1932,7 @@ public static class DiagnosticCodes
 
     /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
-    /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
-    /// joined event is replaced by the level's.
+    /// <c>children</c> or <c>nested</c> block loses its subscription to every event type.
     /// </summary>
     public const string PartiallyLoweredProjectionSyntax = "PLAY0380";
 
