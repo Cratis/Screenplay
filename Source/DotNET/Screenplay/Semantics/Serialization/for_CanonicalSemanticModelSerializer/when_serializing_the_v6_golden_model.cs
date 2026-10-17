@@ -14,13 +14,13 @@ public class when_serializing_the_v6_golden_model : Specification
 
     void Establish()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
         _expected = canonical_serialization_golden_vectors.SemanticModelV6Bytes;
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV6();
+        _model = SemanticModelSerializer.Deserialize(_expected);
     }
 
     void Because() => _written = SemanticModelSerializer.Serialize(_model);
 
+    [Fact] void should_select_v6() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V6);
     [Fact] void should_match_the_checked_in_v6_bytes() => _written.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_v6_revision() => SemanticModelSerializer.Deserialize(_expected).Revision.ShouldEqual(_model.Revision);
     [Fact] void should_retain_v5_absence() => _model.Application.Modules.Single().Features.SelectMany(AllSlices).SelectMany(_ => _.Specifications).Any(_ => !_.ThenAbsentReadModels.IsEmpty).ShouldBeTrue();

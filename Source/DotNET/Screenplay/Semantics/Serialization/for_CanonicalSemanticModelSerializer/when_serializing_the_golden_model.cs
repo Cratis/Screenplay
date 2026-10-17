@@ -21,7 +21,7 @@ public class when_serializing_the_golden_model : Specification
     void Establish()
     {
         _expected = canonical_serialization_golden_vectors.SemanticModelBytes;
-        _model = canonical_serialization_golden_vectors.CreateSemanticModel();
+        _model = SemanticModelSerializer.Deserialize(_expected);
     }
 
     void Because()
@@ -34,6 +34,7 @@ public class when_serializing_the_golden_model : Specification
         _produced = [.. slices.Single(_ => _.Name == "Creation").Commands.Single().Produces];
     }
 
+    [Fact] void should_select_v1() => _roundTripped.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     [Fact] void should_match_the_checked_in_utf8_bytes() => _serialized.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_warn_on_both_legacy_projection_transition_cardinalities() =>
         _model.DeprecationDiagnostics.Select(_ => (_.Code, _.Severity))

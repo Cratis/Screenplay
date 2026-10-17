@@ -12,11 +12,11 @@ public class when_round_tripping_the_v18_golden : Specification
 
     void Because()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        _bytes = SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV18());
+        _bytes = canonical_serialization_golden_vectors.EsmV18Bytes;
     }
 
-    [Fact] void should_pin_bytes() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV18Bytes);
+    [Fact] void should_select_v18() => SemanticModelSerializer.Deserialize(_bytes).SemanticVersion.ShouldEqual(SemanticVersion.V18);
+    [Fact] void should_preserve_the_language_version() => SemanticModelSerializer.Deserialize(_bytes).LanguageVersion.ShouldEqual(LanguageVersion.V18);
     [Fact] void should_round_trip_bytes_and_revision() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(_bytes)).ShouldEqual(_bytes);
 
     [Fact]

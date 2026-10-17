@@ -15,11 +15,12 @@ public class when_serializing_the_v4_golden_model : Specification
     void Establish()
     {
         _expected = canonical_serialization_golden_vectors.SemanticModelV4Bytes;
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV4();
+        _model = SemanticModelSerializer.Deserialize(_expected);
     }
 
     void Because() => _written = SemanticModelSerializer.Serialize(_model);
 
+    [Fact] void should_select_v4() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V4);
     [Fact] void should_match_the_checked_in_v4_bytes() => _written.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_v4_revision() => SemanticModelSerializer.Deserialize(_expected).Revision.ShouldEqual(_model.Revision);
     [Fact] void should_change_the_revision_if_historical_tags_change()

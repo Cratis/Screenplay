@@ -13,12 +13,11 @@ public class when_round_tripping_the_v23_golden : Specification
 
     void Because()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        _bytes = SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV23());
+        _bytes = canonical_serialization_golden_vectors.EsmV23Bytes;
         _read = SemanticModelSerializer.Deserialize(_bytes);
     }
 
-    [Fact] void should_pin_the_new_golden() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV23Bytes);
+    [Fact] void should_preserve_the_language_version() => _read.LanguageVersion.ShouldEqual(LanguageVersion.V23);
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(_read).ShouldEqual(_bytes);
     [Fact] void should_select_v23() => _read.SemanticVersion.ShouldEqual(SemanticVersion.V23);
     [Fact] void should_keep_v22_support_frozen() => EsmSchemaV22Support.Supports(LanguageVersion.V23, SemanticVersion.V23).ShouldBeFalse();

@@ -2,115 +2,88 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using System.Runtime.CompilerServices;
+using System.Globalization;
 using Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Rewrites the checked-in golden vectors from their source models, but only on explicit request.
+/// Rewrites the current full ESM golden on explicit request; older full goldens are frozen.
 /// </summary>
 /// <remarks>
-/// Regeneration is opt-in through the <see cref="Variable"/> environment variable and always ends in
-/// <see cref="GoldenVectorsRegenerated"/>, so a run that regenerates can never pass - in CI or anywhere else.
-/// The golden bytes are embedded at build time, so the rerun must rebuild before it compares them.
+/// Regeneration always ends in <see cref="GoldenVectorsRegenerated"/>, so a regenerating run cannot pass.
+/// Rebuild embedded resources before rerunning without the request.
 /// </remarks>
 public static class golden_vector_regeneration
 {
     /// <summary>
-    /// The environment variable that requests regeneration when set to <c>1</c>.
+    /// The environment variable requesting the current golden with <c>1</c> or its version number.
     /// </summary>
     public const string Variable = "SCREENPLAY_REGENERATE_GOLDEN";
-
-    static readonly IReadOnlyDictionary<string, Func<ExecutableSemanticModel>> _versionBuilders = new Dictionary<string, Func<ExecutableSemanticModel>>(StringComparer.Ordinal)
-    {
-        ["3"] = canonical_serialization_golden_vectors.CreateSemanticModelV3,
-        ["4"] = canonical_serialization_golden_vectors.CreateSemanticModelV4,
-        ["5"] = canonical_serialization_golden_vectors.CreateSemanticModelV5,
-        ["6"] = canonical_serialization_golden_vectors.CreateSemanticModelV6,
-        ["7"] = canonical_serialization_golden_vectors.CreateSemanticModelV7,
-        ["8"] = canonical_serialization_golden_vectors.CreateSemanticModelV8,
-        ["9"] = canonical_serialization_golden_vectors.CreateSemanticModelV9,
-        ["10"] = canonical_serialization_golden_vectors.CreateSemanticModelV10,
-        ["11"] = canonical_serialization_golden_vectors.CreateSemanticModelV11,
-        ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12,
-        ["13"] = canonical_serialization_golden_vectors.CreateSemanticModelV13,
-        ["14"] = canonical_serialization_golden_vectors.CreateSemanticModelV14,
-        ["15"] = canonical_serialization_golden_vectors.CreateSemanticModelV15,
-        ["16"] = canonical_serialization_golden_vectors.CreateSemanticModelV16,
-        ["17"] = canonical_serialization_golden_vectors.CreateSemanticModelV17,
-        ["18"] = canonical_serialization_golden_vectors.CreateSemanticModelV18,
-        ["19"] = canonical_serialization_golden_vectors.CreateSemanticModelV19,
-        ["20"] = canonical_serialization_golden_vectors.CreateSemanticModelV20,
-        ["21"] = canonical_serialization_golden_vectors.CreateSemanticModelV21,
-        ["22"] = canonical_serialization_golden_vectors.CreateSemanticModelV22,
-        ["23"] = canonical_serialization_golden_vectors.CreateSemanticModelV23,
-        [TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV24,
-        ["25"] = canonical_serialization_golden_vectors.CreateSemanticModelV25,
-        ["26"] = canonical_serialization_golden_vectors.CreateSemanticModelV26,
-        [CompositeReadModelKeyVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture)] = canonical_serialization_golden_vectors.CreateSemanticModelV27,
-        ["28"] = canonical_serialization_golden_vectors.CreateSemanticModelV28
-    };
 
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
-    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12" || Environment.GetEnvironmentVariable(Variable) == "13" || Environment.GetEnvironmentVariable(Variable) == "14" || Environment.GetEnvironmentVariable(Variable) == "15" || Environment.GetEnvironmentVariable(Variable) == "16" || Environment.GetEnvironmentVariable(Variable) == "17" || Environment.GetEnvironmentVariable(Variable) == "18" || Environment.GetEnvironmentVariable(Variable) == "19" || Environment.GetEnvironmentVariable(Variable) == "20" || Environment.GetEnvironmentVariable(Variable) == "21" || Environment.GetEnvironmentVariable(Variable) == "22" || Environment.GetEnvironmentVariable(Variable) == "23" || Environment.GetEnvironmentVariable(Variable) == TextRuleVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) || Environment.GetEnvironmentVariable(Variable) == "25" || Environment.GetEnvironmentVariable(Variable) == "26" || Environment.GetEnvironmentVariable(Variable) == CompositeReadModelKeyVersion.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) || Environment.GetEnvironmentVariable(Variable) == "28";
+    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) is not (null or "" or "0");
 
     /// <summary>
-    /// Rewrites every golden vector from its source model when regeneration was requested.
+    /// Rewrites only the current full ESM golden (and, with <c>1</c>, the non-ESM sidecars).
     /// </summary>
-    /// <exception cref="GoldenVectorsRegenerated">Always thrown after the vectors are rewritten.</exception>
+    /// <exception cref="GoldenVectorsRegenerated">The request is refused or regeneration completed.</exception>
     public static void RegenerateWhenRequested()
     {
-        if (!IsRequested)
+        RefuseLegacyEventRoutesRegeneration();
+        if (IsRequested)
         {
-            return;
+            Regenerate(Environment.GetEnvironmentVariable(Variable)!, frozen_esm_goldens.Directory());
         }
+    }
 
-        var directory = GoldenDirectory();
+    internal static void RefuseLegacyEventRoutesRegeneration()
+    {
+        if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_EVENT_ROUTES") == "1")
+        {
+            throw new GoldenVectorsRegenerated("ESM v8 full golden is frozen. SCREENPLAY_REGENERATE_EVENT_ROUTES cannot rewrite older goldens.");
+        }
+    }
+
+    internal static void Regenerate(string request, string directory)
+    {
+        var current = frozen_esm_goldens.CurrentVersion;
+        if (request != "1" && int.TryParse(request, NumberStyles.None, CultureInfo.InvariantCulture, out var version) && version > 0 && version < current)
+        {
+            throw new GoldenVectorsRegenerated($"ESM v{version} full golden is frozen. Older goldens cannot be regenerated; only the current ESM v{current} golden may be rewritten.");
+        }
+        if (request != "1" && request != current.ToString(CultureInfo.InvariantCulture))
+        {
+            throw new GoldenVectorsRegenerated($"Unknown golden regeneration request '{request}'. Use {Variable}=1 or {current} for the current full ESM golden.");
+        }
         if (!Directory.Exists(directory))
         {
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        var version = Environment.GetEnvironmentVariable(Variable);
-        if (VersionBuilder(version) is { } build)
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV28();
+        if (model.SemanticVersion.Major != current)
         {
-            var name = Write(directory, $"full-esm-v{version}.json", SemanticModelSerializer.Serialize(build()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
+            throw new GoldenVectorsRegenerated($"The current golden builder must select ESM v{current}; nothing was regenerated.");
         }
-
-        var written = new[]
+        var written = new List<string> { Write(directory, $"full-esm-v{current}.json", SemanticModelSerializer.Serialize(model)) };
+        if (request == "1")
         {
-            Write(directory, "full-esm-v1.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModel())),
-            Write(directory, "full-esm-v2.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV2())),
-            Write(directory, "full-esm-v3.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV3())),
-            Write(directory, "full-esm-v4.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV4())),
-            Write(directory, "full-esm-v5.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV5())),
-            Write(directory, "full-esm-v6.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV6())),
-            Write(directory, "full-esm-v7.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV7())),
-            Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())),
-            Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog())),
-            Write(directory, "typed-contexts-v1.json", when_describing_typed_contexts.GoldenBytes()),
-            Write(directory, "unbound-handler-context-v1.json", when_describing_an_unbound_handler.GoldenBytes())
-        };
-
-        throw new GoldenVectorsRegenerated(
-            $"Golden vectors regenerated ({string.Join(", ", written)}) in '{directory}'. " +
-            $"Review the diff - every revision hash inside changes with the model - then rebuild and rerun without {Variable}.");
+            written.Add(Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())));
+            written.Add(Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog())));
+            written.Add(Write(directory, "typed-contexts-v1.json", when_describing_typed_contexts.GoldenBytes()));
+            written.Add(Write(directory, "unbound-handler-context-v1.json", when_describing_an_unbound_handler.GoldenBytes()));
+        }
+        throw new GoldenVectorsRegenerated($"Golden vectors regenerated ({string.Join(", ", written)}) in '{directory}'. Older full ESM goldens remain frozen. Review the diff, then rebuild and rerun without {Variable}.");
     }
-
-    static Func<ExecutableSemanticModel>? VersionBuilder(string? version) =>
-        _versionBuilders.TryGetValue(version ?? string.Empty, out var builder) ? builder : null;
 
     static string Write(string directory, string name, byte[] bytes)
     {
         File.WriteAllBytes(Path.Combine(directory, name), bytes);
+
         return name;
     }
-
-    static string GoldenDirectory([CallerFilePath] string path = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, "..", "Golden"));
 }
 #endif

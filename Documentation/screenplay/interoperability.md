@@ -290,6 +290,18 @@ These resources are linked from the compiler's Golden folder in Debug and Releas
 typed-context sidecars are not ESM and are excluded from this API. Availability does not grant admission:
 your consumer still decides which ESM versions and extensions it supports.
 
+Full goldens below the current ESM version are frozen (v1–v27 with v28 current). Their specs round-trip
+checked-in bytes instead of rebuilding older models from shared fixtures. A checked-in SHA-256 table in
+`Semantics/Serialization/given/frozen_esm_goldens.cs` pins every byte; the compiler spec requires exactly
+v1..v(current−1), checks every file exists, and rejects even a one-byte change. All versions remain published.
+`SCREENPLAY_REGENERATE_GOLDEN=28` rewrites only the current full golden; `=1` also rewrites non-ESM sidecars,
+never older full goldens. Older selectors and the legacy event-routes regeneration switch fail as frozen.
+When adding a new ESM version, preserve the previous current golden and add its SHA-256 to that table,
+move its spec to frozen-byte round trips while retaining feature assertions, and update the current builder
+used for regeneration. Do not update an existing hash to accept a changed frozen file. The
+[golden-vector regeneration guide](https://github.com/Cratis/Screenplay/blob/main/Source/DotNET/Screenplay/Semantics/Serialization/Golden/README.md#regenerating)
+has the commands and rebuild steps.
+
 `Cratis.Screenplay.CanonicalCorpus` provides source-backed vectors for consumers that compile Screenplay independently of their rendering pipeline. `RegisterProjectCorpus.LegacyV1` contains single-file, folder, reverse-ordered, and relocated forms of the same application. Each form carries exact UTF-8 bytes, stable document keys, portable display paths, and identity-catalog bytes; all compile to the pinned semantic revision, canonical ESM bytes, and normalized specification outcomes. A relocated path changes the workspace transport revision, **not** the semantic revision.
 
 `RegisterProjectCorpus.V2` names the evolved *scenario*, not the ESM schema. It pins new ESM v4 bytes and revision: generation 1 of `ProjectRegistered` carries `projectId` and `name`, while generation 2 carries only `name`; the command and expected event specify the stream with `for`, and the projection keys from the event source. The single-file and folder forms have distinct persisted catalogs; reordered and relocated forms reuse the folder catalog. All four produce the same bytes, identities and outcomes. Consumers pinned to v1–v3 must reject this v4 vector. The identity catalog retains `schemaVersion: 1` while its typed property addresses can now include a `Generation` part and its event assignments can carry revisions above 1. Readers without support for those address parts must reject the catalog rather than drop lineage. The legacy v1 corpus and v1–v3 serializer golden bytes remain unchanged. `Semantics/Serialization/Golden/full-esm-v4.json` is the source-backed mixed v4 serializer vector.

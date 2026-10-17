@@ -13,19 +13,19 @@ public class when_preserving_pre_event_routes_canonical_contracts : Specificatio
     {
         var vectors = new[]
         {
-            (canonical_serialization_golden_vectors.SemanticModelBytes, canonical_serialization_golden_vectors.CreateSemanticModel()),
-            (canonical_serialization_golden_vectors.SemanticModelV2Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV2()),
-            (canonical_serialization_golden_vectors.SemanticModelV3Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV3()),
-            (canonical_serialization_golden_vectors.SemanticModelV4Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV4()),
-            (canonical_serialization_golden_vectors.SemanticModelV5Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV5()),
-            (canonical_serialization_golden_vectors.SemanticModelV6Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV6()),
-            (canonical_serialization_golden_vectors.SemanticModelV7Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV7())
+            (canonical_serialization_golden_vectors.SemanticModelBytes, SemanticVersion.V1),
+            (canonical_serialization_golden_vectors.SemanticModelV2Bytes, SemanticVersion.V2),
+            (canonical_serialization_golden_vectors.SemanticModelV3Bytes, SemanticVersion.V3),
+            (canonical_serialization_golden_vectors.SemanticModelV4Bytes, SemanticVersion.V4),
+            (canonical_serialization_golden_vectors.SemanticModelV5Bytes, SemanticVersion.V5),
+            (canonical_serialization_golden_vectors.SemanticModelV6Bytes, SemanticVersion.V6),
+            (canonical_serialization_golden_vectors.SemanticModelV7Bytes, SemanticVersion.V7)
         };
-        foreach (var (bytes, model) in vectors)
+        vectors.Length.ShouldEqual(7);
+        foreach (var (bytes, version) in vectors)
         {
-            SemanticModelSerializer.Serialize(model).SequenceEqual(bytes).ShouldBeTrue();
             var read = SemanticModelSerializer.Deserialize(bytes);
-            read.Revision.ShouldEqual(model.Revision);
+            read.SemanticVersion.ShouldEqual(version);
             SemanticModelSerializer.Serialize(read).SequenceEqual(bytes).ShouldBeTrue();
             foreach (var inject in new Action<JsonNode>[]
             {
