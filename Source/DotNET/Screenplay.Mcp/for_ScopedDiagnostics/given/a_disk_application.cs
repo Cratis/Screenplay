@@ -10,17 +10,7 @@ public class a_disk_application : Specification
     protected ScopedDiagnosticResult? Result;
     protected ScopeSelectionError? Error;
 
-    void Establish()
-    {
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (!Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
-        {
-            repository = repository.Parent!;
-        }
+    void Establish() => Root = SpecFixtureDirectory.Create("scoped-diagnostics");
 
-        Root = Path.Combine(repository.FullName, ".ai-work", "533", "path-specs", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Root);
-    }
-
-    void Destroy() => Directory.Delete(Root, true);
+    void Destroy() => SpecFixtureDirectory.Delete(Root);
 }

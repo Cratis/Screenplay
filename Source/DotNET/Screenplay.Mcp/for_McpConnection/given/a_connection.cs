@@ -35,17 +35,7 @@ public class a_connection : Specification
 
     void Establish()
     {
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-
-        // A worktree checkout has a .git file rather than a .git directory.
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
-        {
-            repository = repository.Parent;
-        }
-
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository.FullName, ".ai-work", "mcp-specs");
-        RootPath = Path.Combine(output, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(RootPath);
+        RootPath = SpecFixtureDirectory.Create("mcp-connection");
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source, new UTF8Encoding(false));
         Root = new(RootPath);
         Connection = new(new McpTools(Root));
@@ -73,5 +63,5 @@ public class a_connection : Specification
         Operations = [new MoveWorkspaceDocument { Document = workspace.Documents[0].Id, Path = PortablePlayPath.Parse("renamed.play") }]
     }));
 
-    void Destroy() => Directory.Delete(RootPath, true);
+    void Destroy() => SpecFixtureDirectory.Delete(RootPath);
 }

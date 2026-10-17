@@ -8,6 +8,7 @@ namespace Cratis.Screenplay.Mcp.for_McpConnection.given;
 
 public class a_dynamic_connection : Specification
 {
+    string _parent = null!;
     internal string ModelPath = null!;
     internal string EmptyPath = null!;
     internal string DocumentsPath = null!;
@@ -16,20 +17,13 @@ public class a_dynamic_connection : Specification
 
     void Establish()
     {
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
-        {
-            repository = repository.Parent;
-        }
-
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository!.FullName, ".ai-work", "mcp-specs");
-        var parent = Path.Combine(output, Guid.NewGuid().ToString("N"));
-        ModelPath = Path.Combine(parent, "model");
-        EmptyPath = Path.Combine(parent, "empty");
+        _parent = SpecFixtureDirectory.Create("mcp-dynamic-connection");
+        ModelPath = Path.Combine(_parent, "model");
+        EmptyPath = Path.Combine(_parent, "empty");
         Directory.CreateDirectory(ModelPath);
         Directory.CreateDirectory(EmptyPath);
         File.WriteAllText(Path.Combine(ModelPath, "application.play"), a_connection.Source, new UTF8Encoding(false));
-        DocumentsPath = Path.Combine(parent, "documents");
+        DocumentsPath = Path.Combine(_parent, "documents");
         Directory.CreateDirectory(DocumentsPath);
         Tools = new McpTools { CurrentDirectoryHint = EmptyPath, DocumentsDirectoryHint = DocumentsPath };
         Connection = new(Tools);
@@ -67,5 +61,5 @@ public class a_dynamic_connection : Specification
 
     internal static string Text(JsonElement response) => response.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!;
 
-    void Destroy() => Directory.Delete(Path.GetDirectoryName(ModelPath)!, true);
+    void Destroy() => SpecFixtureDirectory.Delete(_parent);
 }

@@ -38,18 +38,7 @@ public class a_persisted_model_root : Specification
 
     void Establish()
     {
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-
-        // Model roots refuse symbolic-link ancestors such as macOS /var, so roots live under the checkout rather than the temp folder.
-        // A worktree checkout has a .git file rather than a .git directory.
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
-        {
-            repository = repository.Parent;
-        }
-
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository!.FullName, ".ai-work", "model-root-specs");
-        RootPath = Path.Combine(output, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(RootPath);
+        RootPath = SpecFixtureDirectory.Create("model-root");
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source, new UTF8Encoding(false));
         Original = ScreenplayWorkspace.Create("Projects", new ModelRootDirectory(RootPath).Read(), SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
         Original.Compilation.Success.ShouldBeTrue();
@@ -86,5 +75,5 @@ public class a_persisted_model_root : Specification
             entry => Directory.Exists(entry) ? "directory" : Convert.ToHexString(File.ReadAllBytes(entry))),
         StringComparer.Ordinal);
 
-    void Destroy() => Directory.Delete(RootPath, true);
+    void Destroy() => SpecFixtureDirectory.Delete(RootPath);
 }

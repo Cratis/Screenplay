@@ -11,15 +11,7 @@ public class a_model : Specification
 
     void Establish()
     {
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
-        {
-            repository = repository.Parent;
-        }
-
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository?.FullName ?? Directory.GetCurrentDirectory(), ".ai-work", "scope-specs");
-        Root = Path.Combine(output, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Root);
+        Root = SpecFixtureDirectory.Create("model-check");
         File.WriteAllText(Path.Combine(Root, "application.play"), """
             module M
               feature F
@@ -41,6 +33,6 @@ public class a_model : Specification
     {
         Output.Dispose();
         Error.Dispose();
-        Directory.Delete(Root, true);
+        SpecFixtureDirectory.Delete(Root);
     }
 }

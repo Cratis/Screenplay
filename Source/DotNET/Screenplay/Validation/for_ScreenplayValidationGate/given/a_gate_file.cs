@@ -14,10 +14,9 @@ public class a_gate_file : Specification
         var folder = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (folder.Parent is not null && !Path.Exists(Path.Combine(folder.FullName, ".git"))) folder = folder.Parent;
         Repository = folder.FullName;
-        Root = Path.Combine(Repository, ".ai-work", "739", "specs", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Root);
+        Root = SpecFixtureDirectory.Create("validation-gate");
         GatePath = Path.Combine(Root, "screenplay.json");
     }
 
-    void Destroy() => Directory.Delete(Root, true);
+    void Destroy() => SpecFixtureDirectory.Delete(Root);
 }
