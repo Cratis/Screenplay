@@ -5,6 +5,7 @@ import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairFailure } from '../RepairClient';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import type * as vscode from 'vscode';
 import type { RepairLaunch } from '../RepairLaunch';
 import type { RepairEnvironment } from '../RepairEnvironment';
@@ -93,14 +94,19 @@ async function tick() { await new Promise<void>(resolve => setImmediate(resolve)
 function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () => true }); }
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
-    const tasks = path.resolve('../../../.ai-work'); fs.mkdirSync(tasks, { recursive: true });
-    host.replaced.clear(); host.inspected = []; host.inspectionShown = true; host.root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'editor-owner-')));
+    host.replaced.clear(); host.inspected = []; host.inspectionShown = true; host.root = specFixtureDirectory('editor-owner-');
     host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false; host.rootFsChanged = undefined;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
     registerRepairCodeActions({ subscriptions } as unknown as vscode.ExtensionContext, { load: vi.fn(async () => {}) } as unknown as ApplicationIndex);
 });
-afterEach(() => { subscriptions.forEach(resource => resource.dispose()); vi.restoreAllMocks(); vi.useRealTimers(); });
+afterEach(() => {
+    try { subscriptions.forEach(resource => resource.dispose()); }
+    finally {
+        vi.restoreAllMocks(); vi.useRealTimers();
+        removeSpecFixtureDirectory(host.root);
+    }
+});
 it('registers one watcher before discovery and retains it through review; late disposed callbacks cannot clear a new review', async () => {
     await invoke('refresh'); const old = host.sessions[0], watch = host.watches[0];
     host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');

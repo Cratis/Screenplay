@@ -42,11 +42,7 @@ internal sealed partial class WindowsShortNamesFactAttribute : FactAttribute
             return;
         }
 
-        var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git"))) repository = repository.Parent;
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository!.FullName, ".ai-work", "mcp-specs");
-        var probe = Path.Combine(output, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(probe);
+        var probe = SpecFixtureDirectory.Create("windows-short-names");
         try
         {
             var metadata = Path.Combine(probe, ".screenplay");
@@ -60,7 +56,7 @@ internal sealed partial class WindowsShortNamesFactAttribute : FactAttribute
         }
         finally
         {
-            Directory.Delete(probe, true);
+            SpecFixtureDirectory.Delete(probe);
         }
     }
 

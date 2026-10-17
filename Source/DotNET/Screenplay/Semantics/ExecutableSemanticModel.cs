@@ -88,6 +88,11 @@ public sealed record ExecutableSemanticModel
     {
         EsmSchemaV28Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion, utcAssessmentYear);
+        return CreateValidated(languageVersion, semanticVersion, application);
+    }
+
+    internal static ExecutableSemanticModel CreateValidated(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application)
+    {
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
         return new(languageVersion, semanticVersion, revision, application);
@@ -101,7 +106,25 @@ public sealed record ExecutableSemanticModel
 
 internal static partial class SemanticModelValidator
 {
-    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default, int? utcAssessmentYear = null)
+    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default, int? utcAssessmentYear = null) =>
+        Validate(application, semanticVersion, utcAssessmentYear, null);
+
+    internal static ImmutableArray<SemanticValidationFailure> Collect(SemanticApplication application, SemanticVersion semanticVersion = default, int? utcAssessmentYear = null)
+    {
+        var failures = new List<SemanticValidationFailure>();
+        try
+        {
+            Validate(application, semanticVersion, utcAssessmentYear, failures);
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            failures.Add(new([], exception.Message));
+        }
+
+        return [.. failures];
+    }
+
+    static void Validate(SemanticApplication application, SemanticVersion semanticVersion, int? utcAssessmentYear, List<SemanticValidationFailure>? failures)
     {
         if (application is null)
         {
@@ -109,7 +132,7 @@ internal static partial class SemanticModelValidator
         }
 
         var assessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
-        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application, assessmentYear);
+        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application, assessmentYear, failures);
         context.RegisterApplication(application);
         if (application.ReactionProductionMode is { } mode &&
             (mode != SemanticReactionProductionMode.Atomic || !semanticVersion.IsAtLeast(SemanticVersion.V22)))
