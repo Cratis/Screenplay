@@ -74,10 +74,8 @@ module Shop
 
       projection CheckoutDraftProjection => CheckoutDraft
         from ShippingAddressEntered
-          basketId = $eventSourceId
           shipTo   = shipTo
         from DeliveryMethodChosen
-          basketId = $eventSourceId
           method   = method
         remove with BasketCleared
 

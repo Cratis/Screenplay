@@ -22,8 +22,8 @@ module Shop
         by orderId OrderId
 
       projection MyOrderProjection => MyOrder
+        no automap
         from CheckoutCompleted
-          orderId    = $eventSourceId
           customerId = customerId
           status     = "received"
           total      = total

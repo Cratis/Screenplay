@@ -30,8 +30,8 @@ module Orders
         by orderId OrderId
 
       projection OrderStateProjection => OrderStateEntry
+        no automap
         from OrderReceived
-          orderId     = $eventSourceId
           customerId  = customerId
           market      = market
           status      = "received"

@@ -99,7 +99,6 @@ module Shop
 
       projection CustomerAccountProjection => CustomerAccount
         from CustomerRegistered
-          customerId = $eventSourceId
           name       = name
           email      = email
         remove with CustomerAccountClosed

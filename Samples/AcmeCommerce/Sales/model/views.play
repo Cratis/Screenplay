@@ -22,7 +22,6 @@ module Orders
 
       projection PriceListProjection => PriceListEntry
         from PriceListUpdated
-          sku           = $eventSourceId
           price         = price
           currency      = currency
           effectiveFrom = effectiveFrom
@@ -89,8 +88,8 @@ module Orders
         description "Every order on the board"
 
       projection PipelineOrderProjection => PipelineOrder
+        no automap
         from OrderReceived
-          orderId     = $eventSourceId
           customerId  = customerId
           market      = market
           quotedTotal = quotedTotal
@@ -191,8 +190,8 @@ module Orders
         by orderId OrderId
 
       projection OrderDetailProjection => OrderDetail
+        no automap
         from OrderReceived
-          orderId     = $eventSourceId
           customerId  = customerId
           email       = email
           status      = "received"
@@ -219,8 +218,8 @@ module Orders
           status = "cancelled"
 
       projection OrderTimelineProjection => OrderTimeline
+        no automap
         from OrderReceived
-          orderId   = $eventSourceId
           received  = true
           approved  = false
           rejected  = false
@@ -305,8 +304,8 @@ module Orders
         authorize IsSalesManager
 
       projection WaitingOrderProjection => WaitingOrder
+        no automap
         from OrderReceived
-          orderId     = $eventSourceId
           customerId  = customerId
           quotedTotal = quotedTotal
         remove with OrderApproved
@@ -357,27 +356,27 @@ module Orders
 
   feature Reporting
     slice StateView SalesDashboard
-      description "Revenue and orders per market, from what was received and what was confirmed"
+      description "Ordered and confirmed revenue per order, joined from what was received and what was confirmed"
 
-      readmodel SalesFigures
-        description "The figures of one market"
-        market           Market key
-        orderCount       Int optional
-        orderedRevenue   Money optional
-        confirmedCount   Int optional
+      // One projection joins two kinds of event: what came in and what was confirmed. (A figure per market would need a payload key,
+      // which Stage cannot render: STAGE-ESM-017, so the figures are per order and the screen adds them up.)
+      readmodel OrderFigure
+        description "The revenue of one order"
+        orderId          OrderId key
+        market           Market
+        orderedRevenue   Money
         confirmedRevenue Money optional
 
-      query AllSalesFigures => observable SalesFigures[]
-        description "The figures of every market"
+      query AllOrderFigures => observable OrderFigure[]
+        description "The figures of every order"
 
-      // One projection joins two kinds of event: what came in and what was confirmed
-      projection SalesFiguresProjection => SalesFigures
-        from OrderReceived key market
-          increment orderCount
-          add orderedRevenue by quotedTotal
-        from OrderConfirmationIssued key market
-          increment confirmedCount
-          add confirmedRevenue by quotedTotal
+      projection OrderFigureProjection => OrderFigure
+        no automap
+        from OrderReceived
+          market         = market
+          orderedRevenue = quotedTotal
+        from OrderConfirmationIssued
+          confirmedRevenue = quotedTotal
 
       screen SalesDashboard
         description "The executive view of sales"
@@ -385,12 +384,11 @@ module Orders
           header
             title "Sales"
           kpis
-            data SalesFigures[] via query AllSalesFigures
-            summary SalesFigures
-              field orderCount       label "Orders"
-              field orderedRevenue   label "Ordered"
-              field confirmedCount   label "Confirmed"
-              field confirmedRevenue label "Confirmed revenue"
+            data OrderFigure[] via query AllOrderFigures
+            table OrderFigure
+              column orderId          label "Order"
+              column orderedRevenue   label "Ordered"
+              column confirmedRevenue label "Confirmed"
           tables
             data PipelineOrder[] via query AllPipelineOrders
             table PipelineOrder
@@ -418,9 +416,8 @@ module Orders
           shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           market      = "NO"
           quotedTotal = 98
-        then readmodel SalesFigures
+        then readmodel OrderFigure
+          orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           market           = "NO"
-          orderCount       = 1
           orderedRevenue   = 98
-          confirmedCount   = 1
           confirmedRevenue = 98

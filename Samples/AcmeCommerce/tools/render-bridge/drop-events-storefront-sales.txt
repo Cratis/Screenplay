@@ -1,0 +1,12 @@
+# The render bridge declares these private events in StateChange slices; the render variant removes their declaration from the view slices
+# (an event declared in a StateView slice gets no generated [EventType]). One `<file>|<event name>` per line.
+Storefront/model/browse.play|ProductListed
+Storefront/model/browse.play|DisplayPriceChanged
+Storefront/model/browse.play|AvailabilityChanged
+Storefront/model/browse.play|ProductDelisted
+Storefront/model/myorders.play|MyOrderUpdated
+Sales/model/state.play|OrderReceived
+Sales/model/views.play|PriceListUpdated
+Sales/model/views.play|OrderReservationCompleted
+Sales/model/views.play|OrderPutOnHold
+Sales/model/views.play|OrderShipmentRecorded

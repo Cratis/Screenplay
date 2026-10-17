@@ -56,7 +56,6 @@ module Shop
 
       projection ListedProductProjection => ListedProduct
         from ProductListed
-          sku              = $eventSourceId
           productId        = productId
           title            = title
           shortDescription = shortDescription
@@ -134,7 +133,6 @@ module Shop
 
       projection ProductPageProjection => ProductPageEntry
         from ProductListed
-          sku              = $eventSourceId
           title            = title
           shortDescription = shortDescription
           category         = category

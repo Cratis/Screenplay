@@ -176,18 +176,16 @@ module Shop
 
       projection BasketSizeProjection => BasketSize
         from BasketLineAdded
-          basketId = $eventSourceId
           increment lineCount
         from BasketLineRemoved
           decrement lineCount
         remove with BasketCleared
 
       projection BasketContentsProjection => BasketContents
+        no automap
         from BasketLineAdded
-          basketId = $eventSourceId
         children lines identified by sku
           from BasketLineAdded
-            sku       = sku
             quantity  = quantity
             unitPrice = unitPrice
           from BasketLineQuantityChanged

@@ -677,14 +677,142 @@ sample data AcmeNordic
       price         = 279
       currency      = "NOK"
       effectiveFrom = "2026-10-01"
-  shape SalesFigures
+  // Revenue per order: ordered when received, confirmed when Sales confirmed it
+  shape OrderFigure
     row
-      market           = "NO"
-      orderCount       = 30
-      orderedRevenue   = 35612
-      confirmedCount   = 16
-      confirmedRevenue = 18274
-
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      market         = "NO"
+      orderedRevenue = 749
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      market         = "NO"
+      orderedRevenue = 298
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      market         = "NO"
+      orderedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      market         = "NO"
+      orderedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      market         = "NO"
+      orderedRevenue = 749
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      market         = "NO"
+      orderedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      market         = "NO"
+      orderedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      market         = "NO"
+      orderedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      market         = "NO"
+      orderedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      market         = "NO"
+      orderedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      market         = "NO"
+      orderedRevenue = 447
+      confirmedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      market         = "NO"
+      orderedRevenue = 2397
+      confirmedRevenue = 2397
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      market         = "NO"
+      orderedRevenue = 1290
+      confirmedRevenue = 1290
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      market         = "NO"
+      orderedRevenue = 98
+      confirmedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      market         = "NO"
+      orderedRevenue = 149
+      confirmedRevenue = 149
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      market         = "NO"
+      orderedRevenue = 447
+      confirmedRevenue = 447
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      market         = "NO"
+      orderedRevenue = 98
+      confirmedRevenue = 98
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      market         = "NO"
+      orderedRevenue = 3490
+      confirmedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      market         = "NO"
+      orderedRevenue = 3490
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      market         = "NO"
+      orderedRevenue = 1290
   // ---- Purchasing (ecommerce-author-ops) -------------------------------------------------------------------
 
   // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------
