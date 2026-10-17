@@ -1,0 +1,97 @@
+// Purchasing / inbound translations: what Warehouse and Sales say, in Purchasing's own language.
+// The consumer-local names (...AtPurchasing) exist because one application cannot hold two events with the same name (PLAY0472);
+// `from "<Origin>"` keeps the lineage. Captures cannot read list payloads, so the contracts carry one scalar line each (see README).
+module Buying
+  feature Replenishment
+    slice Translate RequestReplenishment
+      description "Warehouse says a SKU fell below its reorder point; Purchasing records a replenishment request"
+      direction inbound
+
+      // Warehouse calls the id of a crossing; Purchasing reads it in its own language: the id of the purchase order it will open
+      event StockBelowReorderPointAtPurchasing from "Warehouse"
+        crossingId        PurchaseOrderId
+        sku               Sku
+        onHand            StockQuantity
+        reorderPoint      StockQuantity
+        suggestedQuantity Quantity
+
+      event ReplenishmentRequested
+        purchaseOrderId PurchaseOrderId
+        sku          Sku
+        quantity     Quantity
+        onHand       StockQuantity
+        reorderPoint StockQuantity
+
+      capture ReorderFeed
+        source events
+          from StockBelowReorderPointAtPurchasing
+        key sku
+        append ReplenishmentRequested
+          when added
+            purchaseOrderId = $.crossingId
+            sku          = $.sku
+            quantity     = $.suggestedQuantity
+            onHand       = $.onHand
+            reorderPoint = $.reorderPoint
+        append ReplenishmentRequested
+          when crossingId
+            purchaseOrderId = $.crossingId
+            sku          = $.sku
+            quantity     = $.suggestedQuantity
+            onHand       = $.onHand
+            reorderPoint = $.reorderPoint
+
+      specification RequestingReplenishmentForALowSku
+        when append StockBelowReorderPointAtPurchasing
+          crossingId        = "c0ffee00-0000-4000-8000-000000000001"
+          sku               = "ACM-1000"
+          onHand            = 4
+          reorderPoint      = 10
+          suggestedQuantity = 40
+        then ReplenishmentRequested
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          sku          = "ACM-1000"
+          quantity     = 40
+          onHand       = 4
+          reorderPoint = 10
+        // no preferred supplier is chosen in this scenario: AutoReplenish reports the block (the full chain is specified in DraftReplenishmentOrder)
+        then ReplenishmentBlocked
+          for "ACM-1000"
+          reason = "SkuSourcing 'ACM-1000' does not exist."
+
+  feature Demand
+    slice Translate RecordDemand
+      description "Sales confirmed an order line; Purchasing records the demand for the SKU"
+      direction inbound
+
+      event OrderConfirmedAtPurchasing from "Sales"
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      capture DemandFeed
+        source events
+          from OrderConfirmedAtPurchasing
+        key sku
+        append DemandRecorded
+          when added
+            orderId  = $.orderId
+            sku      = $.sku
+            quantity = $.quantity
+        append DemandRecorded
+          when orderId
+            orderId  = $.orderId
+            sku      = $.sku
+            quantity = $.quantity
+
+      specification RecordingDemandFromAConfirmedOrder
+        when append OrderConfirmedAtPurchasing
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then DemandRecorded
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3

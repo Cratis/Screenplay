@@ -1,0 +1,15 @@
+// Storefront: what a shopper sees and does. Module skeleton (features are filled by the Storefront slices).
+// The storefront has its own light top navigation, so the module OVERRIDES the application's topbar.
+module Shop
+  description "Browse, basket and checkout"
+  authorize IsShopper
+
+  navigation topbar overrides
+    item browse title "Browse" target Shop.Browse
+    item basket title "Basket" target Shop.Basket
+    item myorders title "My orders" target Shop.MyOrders
+
+  feature Browse
+  feature Basket
+  feature Checkout
+  feature MyOrders

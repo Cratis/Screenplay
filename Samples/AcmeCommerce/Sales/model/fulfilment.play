@@ -1,0 +1,154 @@
+module Orders
+  feature Fulfilment
+    slice StateChange CancelOrder
+      description "Cancels an order that has not yet shipped"
+
+      command CancelOrder
+        orderId OrderId identifier
+        reason  DecisionReason
+        reads OrderStateEntry by orderId
+
+        validate
+          require OrderStateEntry.status != "shipped"
+            message "A shipped order cannot be cancelled"
+          require OrderStateEntry.status != "fulfilled"
+            message "A fulfilled order cannot be cancelled"
+
+        produces OrderCancelled
+          for orderId
+          reason = reason
+
+      event OrderCancelled
+        reason DecisionReason
+
+      screen Cancel
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CancelOrder
+
+      specification AShippedOrderCannotBeCancelled
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        given OrderShipmentRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+          dispatchedAt   = "2026-10-20T08:00:00Z"
+        when CancelOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          reason  = "Too late"
+        then error "A shipped order cannot be cancelled"
+
+    slice StateChange ReleaseHold
+      description "Takes an order off hold once the stock is there"
+
+      command ReleaseHold
+        orderId OrderId identifier
+        reads OrderStateEntry by orderId
+
+        validate
+          require OrderStateEntry.status == "onHold"
+            message "Only an order on hold can be released"
+
+        produces OrderHoldReleased
+          for orderId
+          orderId = orderId
+
+      event OrderHoldReleased
+        orderId OrderId
+
+      screen Release
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ReleaseHold
+
+      specification ReleasingAnOrderOnHold
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        given OrderPutOnHold
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          sku     = "ACM-2000"
+          shortBy = 1
+        when ReleaseHold
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then OrderHoldReleased
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+
+      specification AnOrderThatIsNotOnHoldCannotBeReleased
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        when ReleaseHold
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then error "Only an order on hold can be released"
+
+    slice StateChange MarkOrderFulfilled
+      description "Closes an order once the shopper has it"
+
+      command MarkOrderFulfilled
+        orderId OrderId identifier
+        reads OrderStateEntry by orderId
+
+        validate
+          require OrderStateEntry.status == "shipped"
+            message "Only a shipped order can be fulfilled"
+
+        produces OrderFulfilled
+          for orderId
+          orderId = orderId
+
+      event OrderFulfilled
+        orderId OrderId
+
+      screen Fulfil
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action MarkOrderFulfilled
+
+      specification AnOrderThatHasNotShippedCannotBeFulfilled
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        when MarkOrderFulfilled
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then error "Only a shipped order can be fulfilled"

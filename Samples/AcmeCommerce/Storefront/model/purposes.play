@@ -1,0 +1,10 @@
+// Why the shop processes personal data (email address, name, delivery address): one purpose, referenced by the module.
+purpose ShopOrderProcessing
+  description "Take, deliver and follow up the orders a customer places in the shop"
+  basis contract
+  subjects customer
+  retention "Until the customer closes their account, orders for the statutory period"
+  recipient "Sales (the order), the carrier (the delivery address)"
+
+module Shop
+  purpose ShopOrderProcessing

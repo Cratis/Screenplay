@@ -1,0 +1,241 @@
+// ============================================================
+// Warehouse / outbound translation: private events become the public events Sales, Storefront and Purchasing consume (P7-P12)
+//
+// The warehouse says what it has done in its own words (ReservationMade, StockLevelSnapshotTaken, ShipmentHandedToCarrier ...) and
+// publishes ONE public contract per slice. Kept in its own folder so a renderer that cannot run Translate slices can leave it out.
+// ============================================================
+
+module Stock
+  feature Reservations
+
+    // P7 StockReserved
+    slice Translate PublishReservation
+      description "Tells Sales that the stock for an order line is reserved"
+      direction outbound
+
+      public event StockReserved
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      projection StockReservedPublisher => StockReserved
+        from ReservationMade
+          orderId  = orderId
+          sku      = $eventSourceId
+          quantity = quantity
+
+      // The reservation also plans the shipment, snapshots and watches the stock: all cascaded facts are listed
+      specification PublishingAReservation
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationMade
+          for "ACM-1000"
+          sku = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 37
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 37
+
+    // P8 StockReservationFailed
+    slice Translate PublishReservationFailure
+      description "Tells Sales that the stock for an order line could not be reserved"
+      direction outbound
+
+      public event StockReservationFailed
+        orderId OrderId
+        sku     Sku
+        shortBy Quantity
+
+      projection StockReservationFailedPublisher => StockReservationFailed
+        from ReservationFailed
+          orderId = orderId
+          sku     = sku
+          shortBy = shortBy
+
+      specification PublishingAFailedReservation
+        when append ReservationFailed
+          for "ACM-1000"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+        then StockReservationFailed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+
+  feature Overview
+
+    // P9 StockLevelChanged: published from the snapshot, which carries both numbers
+    slice Translate PublishStockLevel
+      description "Tells the shop how much of a SKU is on the shelf and how much of it can still be promised"
+      direction outbound
+
+      public event StockLevelChanged
+        sku       Sku
+        onHand    StockQuantity
+        available StockQuantity
+
+      projection StockLevelPublisher => StockLevelChanged
+        from StockLevelSnapshotTaken
+          sku       = $eventSourceId
+          onHand    = onHand
+          available = available
+
+      specification PublishingAStockLevel
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 40
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 40
+
+    // P10 StockBelowReorderPoint
+    slice Translate PublishLowStock
+      description "Tells Purchasing that a SKU fell below its reorder point, and how much to buy"
+      direction outbound
+
+      public event StockBelowReorderPoint
+        crossingId        MovementId
+        sku               Sku
+        onHand            StockQuantity
+        reorderPoint      StockQuantity
+        suggestedQuantity Quantity
+
+      projection LowStockPublisher => StockBelowReorderPoint
+        from ReorderPointCrossed
+          crossingId        = crossingId
+          sku               = $eventSourceId
+          onHand            = onHand
+          reorderPoint      = reorderPoint
+          suggestedQuantity = suggestedQuantity
+
+      specification PublishingALowStockAlarm
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when append ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          onHand            = 4
+          reorderPoint      = 10
+          suggestedQuantity = 60
+        then StockBelowReorderPoint
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          sku               = "ACM-1000"
+          onHand            = 4
+          reorderPoint      = 10
+          suggestedQuantity = 60
+
+  feature Dispatch
+
+    // P12 ShipmentDispatched
+    slice Translate PublishDispatch
+      description "Tells Sales that the parcel for an order left with a carrier, and under which tracking number"
+      direction outbound
+
+      public event ShipmentDispatched
+        orderId        OrderId
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+
+      projection ShipmentPublisher => ShipmentDispatched
+        from ShipmentHandedToCarrier
+          orderId        = $eventSourceId
+          shipmentId     = shipmentId
+          carrier        = carrier
+          trackingNumber = trackingNumber
+          dispatchedAt   = dispatchedAt
+
+      specification PublishingADispatch
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReservationMade
+          for "ACM-1000"
+          sku = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPickingStarted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given ShipmentPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when append ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
+          carrier        = posten
+          trackingNumber = "RR123456789NO"
+          sku            = "ACM-1000"
+          quantity       = 3
+          dispatchedAt   = "2026-10-02T14:00:00Z"
+        then events in any order
+        then ShipmentDispatched
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
+          carrier        = posten
+          trackingNumber = "RR123456789NO"
+          dispatchedAt   = "2026-10-02T14:00:00Z"
+        then StockDispatched
+          for "ACM-1000"
+          sku = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 37
+          available = 37
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 37
+          available = 37

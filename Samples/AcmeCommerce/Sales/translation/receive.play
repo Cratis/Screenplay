@@ -1,0 +1,48 @@
+// Sales INBOUND translations (anti-corruption): a foreign public event is declared here in Sales' own shape (consumer-local name
+// <PublishedName>AtSales, origin kept with `from`) and captured into a PRIVATE event in Sales' own language.
+module Orders
+  feature Intake
+    // P4 OrderPlaced (Storefront) -> OrderReceived
+    slice Translate ReceiveOrder
+      direction inbound
+
+      event OrderPlacedAtSales from "Storefront"
+        orderId    OrderId
+        customerId CustomerId
+        email      EmailAddress
+        lines      OrderLine[]
+        shipTo     PostalAddress
+        total      Money
+
+      capture OrderIntake
+        source events
+          from OrderPlacedAtSales
+        key orderId
+        append OrderReceived
+          when added
+            orderId     = $.orderId
+            customerId  = $.customerId
+            email       = $.email
+            lines       = $.lines
+            shipTo      = $.shipTo
+            market      = "NO"
+            quotedTotal = $.total
+
+      // The quoted total is what the shopper saw: Sales keeps it, whatever the price list says later (flow F-D).
+      specification ReceivingAnOrderFromTheStorefront
+        when append OrderPlacedAtSales
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
+          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          total      = 98
+        then OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98

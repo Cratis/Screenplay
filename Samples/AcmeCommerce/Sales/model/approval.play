@@ -1,0 +1,328 @@
+module Orders
+  feature Approval
+    // AUTOMATION driven by a policy: small orders approve themselves. The reaction runs as a sales manager (the role ApproveOrder demands).
+    // "Customer not flagged" has no home yet: nothing in the model flags a customer (open question on the Sales board).
+    slice Automation AutoApproveSmallOrders
+      description "Orders below 500 approve themselves"
+
+      reaction SmallOrderAutoApproval
+        description "Orders below 500 approve themselves, everything else waits for a manager"
+        runs as system role "SalesManager"
+        when OrderReceived
+          orderId
+          quotedTotal
+          invokes ApproveOrder
+            orderId = orderId
+        where quotedTotal < 500
+
+      // A constraint that mentions an inbound-captured event cannot sit in the inbound slice (PLAY0616): it lives with the consumer
+      constraint OneOpenOrderPerBasket
+        unique event OrderReceived
+        message "An order is received once"
+
+      // 98 < 500: the policy-driven automation approves it; the confirm automation, the status translation and the confirmation
+      // translation follow, all from one received order.
+      specification ASmallOrderApprovesItself
+        when append OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        then events in any order
+        then OrderApproved
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderConfirmationIssued
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        then OrderConfirmed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo  = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "approved"
+
+    slice StateChange ApproveOrder
+      description "A sales manager approves an order that waits for a decision"
+
+      command ApproveOrder
+        orderId OrderId identifier
+        reads OrderStateEntry by orderId
+        authorize IsSalesManager
+
+        validate
+          require OrderStateEntry.status == "received"
+            message "Only a received order can be approved"
+
+        produces OrderApproved
+          for orderId
+          orderId = orderId
+
+      event OrderApproved
+        orderId OrderId
+
+      screen ApproveNext
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApproveOrder
+
+      // The accepting scenario lives in PublishOrderStatus: a command spec cannot list the public event its event cascades into (PLAY0285).
+      specification ARepCannotApprove
+        given caller
+          authenticated
+          role "SalesRep"
+        when ApproveOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then denied
+
+      specification AnApprovedOrderCannotBeApprovedAgain
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        given OrderRejected
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          reason = "Address could not be verified"
+        when ApproveOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then error "OrderStateEntry '0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09' does not exist."
+
+    slice StateChange RejectOrder
+      description "A sales manager turns an order down, with a reason the shopper sees"
+
+      command RejectOrder
+        orderId OrderId identifier
+        reason  DecisionReason
+        reads OrderStateEntry by orderId
+        authorize IsSalesManager
+
+        validate
+          require OrderStateEntry.status == "received"
+            message "Only a received order can be rejected"
+
+        produces OrderRejected
+          for orderId
+          reason = reason
+
+      event OrderRejected
+        reason DecisionReason
+
+      screen Reject
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RejectOrder
+
+      specification ARepCannotReject
+        given caller
+          authenticated
+          role "SalesRep"
+        when RejectOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          reason  = "Address could not be verified"
+        then denied
+
+    // A rep may give up to 15%; anything larger is a manager's decision (two commands, one event)
+    slice StateChange ApplyDiscount
+      description "A sales rep gives a discount of at most 15 percent"
+
+      command ApplyDiscount
+        orderId  OrderId identifier
+        discount DiscountPercent
+
+        validate
+          discount <= 15  message "A sales rep can give at most 15%"
+
+        produces OrderDiscounted
+          for orderId
+          discount = discount
+
+      event OrderDiscounted
+        discount DiscountPercent
+
+      screen Discount
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApplyDiscount
+
+      specification AGiveAwayWithinTheRepsLimit
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when ApplyDiscount
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 10
+        then OrderDiscounted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 10
+
+      specification ARepCannotGiveMoreThanFifteenPercent
+        given caller
+          authenticated
+          role "SalesRep"
+        when ApplyDiscount
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 20
+        then error "A sales rep can give at most 15%"
+
+    slice StateChange ApplyLargeDiscount
+      description "A sales manager gives a discount above the rep's limit"
+
+      command ApplyLargeDiscount
+        orderId  OrderId identifier
+        discount DiscountPercent
+        authorize IsSalesManager
+        produces OrderDiscounted
+          for orderId
+          discount = discount
+
+      screen LargeDiscount
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApplyLargeDiscount
+
+      specification AManagerCanGiveTwentyPercent
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when ApplyLargeDiscount
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 20
+        then OrderDiscounted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 20
+
+      specification ARepCannotUseTheManagersDiscount
+        given caller
+          authenticated
+          role "SalesRep"
+        when ApplyLargeDiscount
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 20
+        then denied
+
+    // AUTOMATION: an approved order is confirmed
+    slice Automation ConfirmApprovedOrder
+      description "An approved order is confirmed towards the warehouse"
+
+      reaction ConfirmAfterApproval
+        description "The warehouse hears about an order the moment it is approved"
+        runs as system role "SalesManager"
+        when OrderApproved
+          orderId
+          invokes ConfirmOrder
+            orderId = orderId
+
+      specification AnApprovedOrderIsConfirmed
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          email       = "grace@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        when append OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+        // the outcome of the reaction (the fact it reacts to is excluded); the public events follow from it (translation/publish.play)
+        then events in any order
+        then OrderConfirmationIssued
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        then OrderConfirmed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines   = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo  = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          status  = "approved"
+
+    slice StateChange ConfirmOrder
+      description "Confirms an approved order: the shop's promise becomes the warehouse's work"
+
+      command ConfirmOrder
+        orderId OrderId identifier
+        reads OrderStateEntry by orderId
+
+        validate
+          require OrderStateEntry.status == "approved"
+            message "Only an approved order can be confirmed"
+
+        produces OrderConfirmationIssued
+          for orderId
+          orderId     = orderId
+          lines       = OrderStateEntry.lines
+          shipTo      = OrderStateEntry.shipTo
+          market      = OrderStateEntry.market
+          quotedTotal = OrderStateEntry.quotedTotal
+
+      // The private event is named differently from the public OrderConfirmed it becomes (one application cannot hold two events of one name).
+      event OrderConfirmationIssued
+        orderId     OrderId
+        lines       OrderLine[]
+        shipTo      PostalAddress
+        market      Market
+        quotedTotal Money
+
+      constraint OneConfirmationPerOrder
+        unique event OrderConfirmationIssued
+        message "An order is confirmed once"
+
+      screen Confirm
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ConfirmOrder
+
+      specification AnUnapprovedOrderCannotBeConfirmed
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        when ConfirmOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then error "Only an approved order can be confirmed"

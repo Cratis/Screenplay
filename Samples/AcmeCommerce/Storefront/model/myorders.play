@@ -1,0 +1,65 @@
+module Shop
+  feature MyOrders
+    slice StateView MyOrders
+      description "The shopper's orders and where each one stands"
+
+      // translated from Sales' public OrderStatusChanged (translation/listing.play)
+      event MyOrderUpdated
+        description "Sales moved the shopper's order to a new status (translated from OrderStatusChanged)"
+        status OrderStatus
+
+      readmodel MyOrder
+        description "One order as the shopper sees it"
+        orderId    OrderId key
+        customerId CustomerId
+        status     OrderStatus
+        total      Money
+
+      query AllMyOrders => observable MyOrder[]
+        description "The shopper's orders"
+
+      query GetMyOrder => MyOrder optional
+        by orderId OrderId
+
+      projection MyOrderProjection => MyOrder
+        no automap
+        from CheckoutCompleted
+          customerId = customerId
+          status     = "received"
+          total      = total
+        from MyOrderUpdated
+          status = status
+
+      screen MyOrders
+        description "Orders as cards with a status chip"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            title "My orders"
+          list
+            data MyOrder[] via query AllMyOrders
+            table MyOrder
+              column orderId   label "Order"
+              column status    label "Status"
+              column total     label "Total"
+
+      specification SeeingAnOrderMoveToShipped
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        given MyOrderUpdated
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status = "shipped"
+        then readmodel MyOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "shipped"
+          total   = 98
