@@ -75,15 +75,20 @@ static class WorkspaceAuthoringIdentity
             retiredDocuments,
             request.RetiredSemanticAddresses,
             request.RetiredEventAddresses).Catalog;
+        var advancements = newGenerations.AddRange(request.EventRevisionAdvancements);
+        if (!advancements.IsEmpty)
+        {
+            catalog = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+                catalog, catalog.Revision, keys, addresses, events, advancements).Catalog;
+        }
+
         if (!provisional.Success && !documents.IsEmpty)
         {
             var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, documents, catalog, provisional);
             catalog = new WorkspaceContainerIdentities(WorkspaceSyntaxIndex.Create(candidate)).Materialize(catalog);
         }
 
-        var advancements = newGenerations.AddRange(request.EventRevisionAdvancements);
-        return advancements.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
-            catalog, catalog.Revision, keys, addresses, events, advancements).Catalog;
+        return catalog;
     }
 
     static ImmutableArray<SemanticIdentityRename> InitialPropertyMigrations(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request, ImmutableArray<SemanticAddress> addresses) =>
