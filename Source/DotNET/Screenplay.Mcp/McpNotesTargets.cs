@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -22,9 +23,19 @@ static class McpNotesTargets
         return ReadTypedAddress(value, workspace);
     }
 
-    internal static bool Substituted(JsonElement value, ModelNotesAnchor anchor, ScreenplayWorkspace workspace) =>
-        value.TryGetProperty("revision", out _) ? McpWorkspaceAnalysis.For(workspace).Syntax.Find(McpAstHandles.Read(value))?.SemanticId?.ToString() != anchor.SemanticId
-            : value.TryGetProperty("address", out _) && !Enum.TryParse<SemanticKind>(McpJson.RequiredString(value, "kind"), out _);
+    internal static bool Substituted(JsonElement value, ModelNotesAnchor anchor, ScreenplayWorkspace workspace)
+    {
+        if (IsAnchor(value)) return false;
+        var resolved = ModelNotesAnchors.Resolve(anchor, workspace.IdentityCatalog);
+        if (value.TryGetProperty("revision", out _))
+        {
+            var requested = McpWorkspaceAnalysis.For(workspace).Syntax.Find(McpAstHandles.Read(value))?.Address;
+            return requested?.Equals(resolved) != true;
+        }
+
+        if (value.TryGetProperty("parts", out _)) return !McpSemanticAddresses.Read(value).Equals(resolved);
+        return resolved is null || McpJson.RequiredString(value, "kind") != resolved.Kind.ToString() || McpJson.RequiredString(value, "address") != Text(resolved);
+    }
 
     static bool IsAnchor(JsonElement value)
     {
@@ -57,10 +68,24 @@ static class McpNotesTargets
         var kind = McpJson.RequiredString(value, "kind");
         var matches = workspace.IdentityCatalog.Semantics.Where(assignment => assignment.Address.Kind.ToString() == kind && Text(assignment.Address) == text).ToArray();
         if (matches.Length == 1) return new(matches[0].Id.ToString());
+        if (matches.Length > 1) throw new McpFailure("Unknown or ambiguous note address.", -32602);
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
         var syntax = index.Entries.Where(entry => (entry.Kind == kind || entry.Kind == $"{kind}Syntax") && SyntaxAddress(entry, index) == text).ToArray();
-        if (syntax.Length == 1) return ModelNotesAnchors.ForHandle(index, syntax[0].Handle);
+        var occurrences = LogicalOccurrences(syntax).ToArray();
+        if (occurrences.Length == 1) return ModelNotesAnchors.ForHandle(index, occurrences[0].Handle);
         throw new McpFailure("Unknown or ambiguous note address.", -32602);
+    }
+
+    static IEnumerable<WorkspaceSyntaxEntry> LogicalOccurrences(WorkspaceSyntaxEntry[] entries)
+    {
+        foreach (var group in entries.GroupBy(entry => (entry.Kind, entry.Address)))
+        {
+            var declarations = group.Where(entry => entry.Node is not ModuleSyntax { IsPlacement: true } and not FeatureSyntax { IsPlacement: true }).ToArray();
+            foreach (var declaration in declarations.Length == 0 ? group.Take(1) : declarations)
+            {
+                yield return declaration;
+            }
+        }
     }
 
     static string? SyntaxAddress(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)

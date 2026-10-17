@@ -22,6 +22,7 @@ static class McpWorkspaceTransport
         {
             revision = workspace.Revision.ToString(),
             catalogRevision = workspace.IdentityCatalog.Revision.ToString(),
+            applicationIdentity = workspace.IdentityCatalog.Application.ToString(),
             workspaceJson = includeContent ? Export(workspace) : null,
             sourceSuccess = source?.Success,
             sourceDiagnosticCount = source?.Diagnostics.Count() ?? 0,
