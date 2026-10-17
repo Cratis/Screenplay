@@ -1,0 +1,7 @@
+// ============================================================
+// Warehouse / domain-local language
+// ============================================================
+
+// What one movement of stock is called: the reservation of an order line, a manual adjustment. A drop of the shelf below the reorder
+// point is told apart from the next one by the movement that caused it.
+concept MovementId : Uuid

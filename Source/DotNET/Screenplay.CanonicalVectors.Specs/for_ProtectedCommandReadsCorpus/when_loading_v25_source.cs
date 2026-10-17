@@ -105,7 +105,7 @@ public class when_loading_v25_source : Specification
     void should_pin_every_specification_outcome_and_committed_world()
     {
         var vector = ProtectedCommandReadsCorpus.V25;
-        vector.SpecificationExpectations.Length.ShouldEqual(13);
+        vector.SpecificationExpectations.Length.ShouldEqual(19);
         foreach (var form in _protected)
         {
             var compilation = SemanticExecutionPlan.Compile(form.Model);
@@ -132,7 +132,8 @@ public class when_loading_v25_source : Specification
     {
         (string Key, string Value)[] expected = name switch
         {
-            "MissingFromEmpty" or "MissingAfterRemoval" or "AbsenceBeforeRequirement" or "AbsenceBeforeGeneration" or "ReactionInvokesProtectedReadOfMissing" => [],
+            "MissingFromEmpty" or "MissingAfterRemoval" or "AbsenceBeforeRequirement" or "AbsenceBeforeGeneration" or "ReactionInvokesProtectedReadOfMissing" or "RefusedEmptyKey" or "RefusedWhitespaceKey" or "RefusedStarKey" or "RefusedHashKey" or "RefusedPaddedKey" => [],
+            "RefusedStarKeyWithStoredInstance" => [("*", "present")],
             "MissingFromNonEmpty" => [("other", "unrelated")],
             "MissingAfterOtherRecreation" => [("other", "recreated elsewhere")],
             "RequirementAfterPresence" => [("reference", "present")],
@@ -154,7 +155,7 @@ public class when_loading_v25_source : Specification
         var compilation = SemanticExecutionPlan.Compile(model);
         Assert.True(compilation.Success, string.Join('\n', compilation.Issues.Select(issue => issue.Details)));
         var plan = compilation.Plan!;
-        plan.Specifications.Count.ShouldEqual(13);
+        plan.Specifications.Count.ShouldEqual(19);
         foreach (var specification in plan.Specifications.Values)
         {
             var run = new SemanticSpecificationRunner().Run(plan, specification.Id);

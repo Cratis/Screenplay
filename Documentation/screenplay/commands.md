@@ -212,6 +212,10 @@ Execution orders authorization → property rules → required reads → derive/
 
 Decide records the unfiltered fact-log boundary and each read's key plus the view's handled event types; reads of the same key merge. A matching fact after the boundary makes commit return `Conflict` / `DecisionStateChanged`, with no facts from the command. Every intervening fact is considered, including publications. An irrelevant fact does not conflict: commit uses the latest world for constraints, projections and publications and preserves intervening state. Even a command producing no facts is checked. Race cases are [published vectors](interoperability.md#protected-command-read-race-vectors) run through the public host API, not a new specification construct.
 
+#### Keys the event store refuses
+
+A protected read decides over a key that arrives at run time, so the key itself can be one the event store cannot decide over. The shapes are: empty, whitespace-only, exactly `*`, containing `#` anywhere, and leading or trailing whitespace. Such a key, or any part of a composite key, behaves as a missing view: `Validation` with `<ReadModel> '<key>' does not exist.`, decided before the world is consulted. It rejects even when the world holds an instance stored at that key. Only protected reads change; see [decision 0091](https://github.com/Cratis/Screenplay/blob/main/decisions/0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md). Hosts map their store's refusal to this outcome, and the [published vectors](interoperability.md#protected-reads-of-refused-keys) (`ProtectedCommandReadsCorpus.V25`) pin it.
+
 ### Deciding and committing from a host
 
 `SemanticEvaluator.Execute` decides and commits at one world. A host that appends to a real store has a window between the two, in which another writer can append, so it calls the two halves itself, under [decision 0089](https://github.com/Cratis/Screenplay/blob/main/decisions/0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md):

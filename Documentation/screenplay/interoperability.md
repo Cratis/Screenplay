@@ -241,6 +241,10 @@ and run the `for_ClockScheduleVectors.when_executing_every_vector` spec in
 update the `Sha256` constant (and the fixture version when semantics change), rebuild and rerun without
 the variable. The specs execute every vector and check that the published bytes match the repository file.
 
+### Protected reads of refused keys
+
+A host that renders [protected command reads](commands.md#keys-the-event-store-refuses) must answer a key the event store refuses (empty, whitespace-only, `*`, containing `#`, or padded with whitespace) with the missing-view `Validation` outcome, not an error from its store client, even when the world holds an instance at that key. `ProtectedCommandReadsCorpus.V25` carries the vectors `RefusedEmptyKey`, `RefusedWhitespaceKey`, `RefusedStarKey`, `RefusedHashKey`, `RefusedPaddedKey` and `RefusedStarKeyWithStoredInstance`. See [decision 0091](https://github.com/Cratis/Screenplay/blob/main/decisions/0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md).
+
 ### Protected command read race vectors
 
 Race vector fixture version **1** proves the [protected command read](commands.md#what-reads-guarantees) conflict rule, under

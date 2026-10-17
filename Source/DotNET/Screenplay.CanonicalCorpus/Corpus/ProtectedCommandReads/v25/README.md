@@ -3,7 +3,7 @@
 The corpus has single-file, folder, reordered, and relocated forms. They share
 one application identity and produce identical canonical ESM bytes and revisions.
 
-Thirteen specifications cover required-read absence in empty and populated logs,
+Nineteen specifications cover required-read absence in empty and populated logs,
 removal and recreation, precedence over requirements and generation, read paths
 in requirements and produced mappings, cross-source reads, and reaction-invoked
 protected commands, including missing read state that leaves the accepted triggering fact intact. Successful presence cases prove that the guarded requirement
