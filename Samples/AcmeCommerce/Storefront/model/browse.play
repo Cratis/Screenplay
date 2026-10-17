@@ -1,0 +1,187 @@
+module Shop
+  feature Browse
+    // The shop's catalogue: every product Catalog published, in the shop's words. Four private events build it; they are the outcome of the
+    // inbound translations (translation/listing.play) and are declared here, in the slice that reads them.
+    slice StateView ProductBrowse
+      description "Listed products with display price and availability"
+
+      event ProductListed
+        description "The shop listed a product (translated from ProductPublished)"
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+
+      event DisplayPriceChanged
+        description "The price the shop shows changed (translated from ProductPriceChanged)"
+        displayPrice  Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      event AvailabilityChanged
+        description "Stock changed for a listed product (translated from StockLevelChanged)"
+        available StockQuantity
+
+      event ProductDelisted
+        description "The product is no longer sold (translated from ProductRetired)"
+        productId ProductId
+
+      readmodel ListedProduct
+        description "One product as the shopper sees it"
+        sku              Sku key
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+
+      query AllListedProducts => observable ListedProduct[]
+        description "Every product on sale"
+
+      query SearchListedProducts => observable ListedProduct[]
+        description "Products of one category"
+        filter category String optional
+
+      query ListedProductBySku => ListedProduct optional
+        by sku Sku
+
+      projection ListedProductProjection => ListedProduct
+        from ProductListed
+          sku              = $eventSourceId
+          productId        = productId
+          title            = title
+          shortDescription = shortDescription
+          slug             = slug
+          category         = category
+          displayPrice     = displayPrice
+          currency         = currency
+          imageUrl         = imageUrl
+          available        = available
+        from DisplayPriceChanged
+          displayPrice = displayPrice
+          currency     = currency
+        from AvailabilityChanged
+          available = available
+        remove with ProductDelisted
+
+      screen Browse
+        description "The shop window: a grid of product cards"
+        template ProductGrid
+          header
+            title "Shop"
+          filters
+            data ListedProduct[] via query SearchListedProducts
+          grid
+            data ListedProduct[] via query AllListedProducts
+            // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:productCard
+            component Acme.Commerce.ProductCard productCard
+              context from query AllListedProducts
+              on select
+                navigate to ProductPage
+                  with sku from item.sku
+
+      specification ListingAProductThenChangingItsPrice
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        given DisplayPriceChanged
+          for "ACM-1000"
+          displayPrice  = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+        then readmodel ListedProduct
+          sku          = "ACM-1000"
+          title        = "Acme mug"
+          displayPrice = 59
+
+    slice StateView ProductPage
+      description "One product with its price history and availability"
+
+      readmodel ProductPageEntry
+        description "Everything the product page shows"
+        sku              Sku key
+        title            ProductName
+        shortDescription ShortDescription
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+        priceChanges     Int
+
+      query ProductPageBySku => ProductPageEntry optional
+        by sku Sku
+
+      projection ProductPageProjection => ProductPageEntry
+        from ProductListed
+          sku              = $eventSourceId
+          title            = title
+          shortDescription = shortDescription
+          category         = category
+          displayPrice     = displayPrice
+          currency         = currency
+          imageUrl         = imageUrl
+          available        = available
+          priceChanges     = 0
+        from DisplayPriceChanged
+          displayPrice = displayPrice
+          currency     = currency
+          increment priceChanges
+        from AvailabilityChanged
+          available = available
+        remove with ProductDelisted
+
+      screen ProductPage
+        description "One product, full width"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data ProductPageEntry via query ProductPageBySku by sku
+            summary ProductPageEntry
+              field title label "Product"
+              field category label "Category"
+              field displayPrice label "Price"
+              field available label "In stock"
+          related
+            action AddToBasket
+
+      specification ShowingAvailabilityOnTheProductPage
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        given AvailabilityChanged
+          for "ACM-1000"
+          available = 9
+        then readmodel ProductPageEntry
+          sku       = "ACM-1000"
+          available = 9

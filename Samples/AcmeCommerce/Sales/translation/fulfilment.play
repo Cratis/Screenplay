@@ -1,0 +1,154 @@
+module Orders
+  feature Intake
+    // P2 ProductPriceChanged (Catalog) -> PriceListUpdated
+    slice Translate UpdatePriceList
+      direction inbound
+
+      event ProductPriceChangedAtSales from "Catalog"
+        productId     ProductId
+        sku           Sku
+        newPrice      Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      capture PriceListFeed
+        source events
+          from ProductPriceChangedAtSales
+        key sku
+        append PriceListUpdated
+          when added
+            price         = $.newPrice
+            currency      = $.currency
+            effectiveFrom = $.effectiveFrom
+
+      specification KeepingThePriceListCurrent
+        when append ProductPriceChangedAtSales
+          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku           = "ACM-1000"
+          newPrice      = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+        then PriceListUpdated
+          for "ACM-1000"
+          price         = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+
+  feature Fulfilment
+    // P7 StockReserved (Warehouse) -> OrderReservationCompleted
+    slice Translate RecordReservation
+      direction inbound
+
+      event StockReservedAtSales from "Warehouse"
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      capture ReservationFeed
+        source events
+          from StockReservedAtSales
+        key orderId
+        append OrderReservationCompleted
+          when added
+            sku      = $.sku
+            quantity = $.quantity
+
+      specification RecordingAReservation
+        when append StockReservedAtSales
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 2
+        then OrderReservationCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 2
+
+    // P8 StockReservationFailed (Warehouse) -> OrderPutOnHold
+    slice Translate HoldOrderOnShortage
+      direction inbound
+
+      event StockReservationFailedAtSales from "Warehouse"
+        orderId OrderId
+        sku     Sku
+        shortBy Quantity
+
+      capture ShortageFeed
+        source events
+          from StockReservationFailedAtSales
+        key orderId
+        append OrderPutOnHold
+          when added
+            sku     = $.sku
+            shortBy = $.shortBy
+
+      specification HoldingAnOrderThatCannotBeFilled
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append StockReservationFailedAtSales
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 1
+        then events in any order
+        then OrderPutOnHold
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 1
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "onHold"
+
+    // P12 ShipmentDispatched (Warehouse) -> OrderShipmentRecorded (the order becomes Shipped)
+    slice Translate RecordShipment
+      direction inbound
+
+      event ShipmentDispatchedAtSales from "Warehouse"
+        orderId        OrderId
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+
+      capture ShipmentFeed
+        source events
+          from ShipmentDispatchedAtSales
+        key orderId
+        append OrderShipmentRecorded
+          when added
+            shipmentId     = $.shipmentId
+            carrier        = $.carrier
+            trackingNumber = $.trackingNumber
+            dispatchedAt   = $.dispatchedAt
+
+      specification RecordingADispatch
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append ShipmentDispatchedAtSales
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+          dispatchedAt   = "2026-10-20T08:00:00Z"
+        then events in any order
+        then OrderShipmentRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+          dispatchedAt   = "2026-10-20T08:00:00Z"
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "shipped"

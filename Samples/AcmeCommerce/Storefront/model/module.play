@@ -1,0 +1,65 @@
+// Storefront: what a shopper sees and does. The storefront has its own light top navigation, so the module OVERRIDES the application's topbar.
+//
+// The shop never reads Catalog's or Sales' data. Everything it knows about products, stock and order status arrives as a PUBLIC event and is
+// translated (translation/listing.play) into private events in the shop's own words: Catalog's `name` is the shop's `title`, Catalog's `price`
+// is the `displayPrice`, Sales' status is a `MyOrderUpdated`. What the shop says about itself leaves as ONE public event (translation/publish.play).
+module Shop
+  description "Browse, basket and checkout"
+  authorize IsShopper
+
+  navigation topbar overrides
+    item browse title "Browse" target Shop.Browse
+    item basket title "Basket" target Shop.Basket
+    item myorders title "My orders" target Shop.MyOrders
+
+  feature Browse
+    description "Products the shop lists, with a price and availability"
+  feature Basket
+    description "What the shopper has put aside"
+  feature Checkout
+    description "Address, delivery and the order itself"
+  feature MyOrders
+    description "Where the shopper's orders stand"
+
+  // OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop.
+  // ProductGrid: header, filters and a grid of product cards (the grid is filled with the custom component acme:productCard).
+  screen template ProductGrid
+    category Shop
+    scopes slice stateview
+    fits slot content
+
+    header
+    filters
+    grid
+
+    arrangement flow
+      column gap 12
+        header
+        filters
+        grid grow
+
+  // SideSummary: the main region with a narrow summary beside it (the basket shows its lines left and the totals right).
+  screen template SideSummary
+    category Shop
+    scopes slice stateview
+    fits slot content
+
+    header
+    main
+    summary
+    actions
+
+    arrangement flow
+      column gap 16
+        header
+        row gap 24
+          main grow
+          summary width 320
+        actions
+
+      when width compact
+        column gap 12
+          header
+          main
+          summary
+          actions

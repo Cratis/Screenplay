@@ -1,0 +1,84 @@
+module Orders
+  feature Intake
+    // What Sales has decided about each order so far. The private events every Sales view builds on are declared here; most of them are the
+    // outcome of an inbound translation (translation/receive.play, translation/fulfilment.play), the rest are produced by Sales' own commands.
+    // Commands read this view (protected read: no children, removal on cancellation or rejection).
+    slice StateView OrderState
+      description "The state of each order that the decisions are made against"
+
+      event OrderReceived
+        description "Sales took an order in (translated from the storefront's OrderPlaced)"
+        orderId     OrderId
+        customerId  CustomerId
+        email       EmailAddress
+        lines       OrderLine[]
+        shipTo      PostalAddress
+        market      Market
+        quotedTotal Money
+
+      readmodel OrderStateEntry
+        description "Where an order stands, with what the later decisions need"
+        orderId     OrderId key
+        customerId  CustomerId
+        market      Market
+        status      OrderStatus
+        lines       OrderLine[]
+        shipTo      PostalAddress
+        quotedTotal Money
+
+      query GetOrderState => OrderStateEntry optional
+        by orderId OrderId
+
+      projection OrderStateProjection => OrderStateEntry
+        from OrderReceived
+          orderId     = $eventSourceId
+          customerId  = customerId
+          market      = market
+          status      = "received"
+          lines       = lines
+          shipTo      = shipTo
+          quotedTotal = quotedTotal
+        from OrderApproved
+          status = "approved"
+        from OrderPutOnHold
+          status = "onHold"
+        from OrderHoldReleased
+          status = "received"
+        from OrderConfirmationIssued
+          status = "confirmed"
+        from OrderShipmentRecorded
+          status = "shipped"
+        from OrderFulfilled
+          status = "fulfilled"
+        remove with OrderCancelled
+        remove with OrderRejected
+
+      screen State
+        description "The order state the decisions run against (support view)"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data OrderStateEntry via query GetOrderState by orderId
+            summary OrderStateEntry
+              field status      label "Status"
+              field quotedTotal label "Quoted total"
+
+      specification TheStateFollowsTheDecisions
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        given OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then readmodel OrderStateEntry
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status      = "approved"
+          quotedTotal = 98

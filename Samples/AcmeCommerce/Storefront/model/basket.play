@@ -1,0 +1,234 @@
+module Shop
+  feature Basket
+    slice StateChange AddToBasket
+      description "Puts a listed product in the basket"
+
+      command AddToBasket
+        basketId BasketId identifier
+        sku      Sku
+        quantity Quantity
+        reads ListedProduct by sku
+
+        validate
+          require ListedProduct.available > 0
+            message "That product is out of stock"
+
+        produces BasketLineAdded
+          for basketId
+          sku       = sku
+          quantity  = quantity
+          unitPrice = ListedProduct.displayPrice
+
+      event BasketLineAdded
+        sku       Sku
+        quantity  Quantity
+        unitPrice Money
+
+      example Mug : AddToBasket
+        basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+        sku      = "ACM-1000"
+        quantity = 2
+
+      specification AddingAnAvailableProduct
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 9
+        when Mug
+        then BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-1000"
+          quantity  = 2
+          unitPrice = 49
+
+      specification RejectingAProductThatIsOutOfStock
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        when Mug
+        then error "That product is out of stock"
+
+      screen AddLine
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AddToBasket
+              navigate to Basket
+
+    slice StateChange ChangeBasketQuantity
+      description "Changes how many of a product the basket holds"
+
+      command ChangeBasketQuantity
+        basketId BasketId identifier
+        sku      Sku
+        quantity Quantity
+        produces BasketLineQuantityChanged
+          for basketId
+          sku      = sku
+          quantity = quantity
+
+      event BasketLineQuantityChanged
+        sku      Sku
+        quantity Quantity
+
+      screen ChangeQuantity
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChangeBasketQuantity
+              navigate to Basket
+
+      specification ChangingAQuantity
+        given caller
+          authenticated
+          role "Shopper"
+        when ChangeBasketQuantity
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+          quantity = 3
+        then BasketLineQuantityChanged
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+          quantity = 3
+
+      specification RejectingAZeroQuantity
+        given caller
+          authenticated
+          role "Shopper"
+        when ChangeBasketQuantity
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+          quantity = 0
+        then error "A quantity is at least one"
+
+    slice StateChange RemoveFromBasket
+      description "Takes a product out of the basket"
+
+      command RemoveFromBasket
+        basketId BasketId identifier
+        sku      Sku
+        produces BasketLineRemoved
+          for basketId
+          sku = sku
+
+      event BasketLineRemoved
+        sku Sku
+
+      screen RemoveLine
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RemoveFromBasket
+              navigate to Basket
+
+      specification RemovingALine
+        given caller
+          authenticated
+          role "Shopper"
+        when RemoveFromBasket
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+        then BasketLineRemoved
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku = "ACM-1000"
+
+    // The basket as the shopper sees it: lines on the left, totals on the right (own template SideSummary)
+    slice StateView BasketView
+      description "The lines in a basket and what they add up to"
+
+      readmodel BasketContents
+        description "A basket with its lines"
+        basketId  BasketId key
+        lines     BasketLine[]
+
+      // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
+      readmodel BasketSize
+        description "How many lines a basket holds"
+        basketId  BasketId key
+        lineCount Int
+
+      query GetBasketSize => BasketSize optional
+        by basketId BasketId
+
+      query GetBasketContents => BasketContents optional
+        by basketId BasketId
+
+      query AllBaskets => observable BasketContents[]
+        description "Every open basket (a screen shows the shopper's own)"
+
+      projection BasketSizeProjection => BasketSize
+        from BasketLineAdded
+          basketId = $eventSourceId
+          increment lineCount
+        from BasketLineRemoved
+          decrement lineCount
+        remove with BasketCleared
+
+      projection BasketContentsProjection => BasketContents
+        from BasketLineAdded
+          basketId = $eventSourceId
+        children lines identified by sku
+          from BasketLineAdded
+            sku       = sku
+            quantity  = quantity
+            unitPrice = unitPrice
+          from BasketLineQuantityChanged
+            quantity = quantity
+          remove with BasketLineRemoved
+        remove with BasketCleared
+
+      screen Basket
+        description "The basket: lines beside a summary"
+        template SideSummary
+          header
+            title "Your basket"
+          main
+            data BasketContents via query GetBasketContents by basketId
+            table BasketLine
+              column sku       label "Product"
+              column quantity  label "Qty"
+              column unitPrice label "Unit price"
+          summary
+            data BasketSize via query GetBasketSize by basketId
+            summary BasketSize
+              field lineCount label "Lines"
+          actions
+            toolbar basketActions
+              button checkout title "Check out" slice Shop.Checkout.CheckOut emphasis primary icon shopping-cart
+              button keep title "Keep shopping" slice Shop.Basket.AddToBasket emphasis quiet
+
+      specification SummingUpABasket
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-1000"
+          quantity  = 2
+          unitPrice = 49
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-2000"
+          quantity  = 1
+          unitPrice = 899
+        then readmodel BasketSize
+          basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lineCount = 2

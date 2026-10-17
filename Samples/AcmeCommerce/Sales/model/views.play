@@ -1,0 +1,422 @@
+module Orders
+  feature Intake
+    slice StateView PriceList
+      description "The price list as Catalog last published it"
+
+      // translated from Catalog's public ProductPriceChanged (translation/fulfilment.play)
+      event PriceListUpdated
+        description "A price in Sales' price list changed (translated from ProductPriceChanged)"
+        price         Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      readmodel PriceListEntry
+        description "The current price of one SKU"
+        sku           Sku key
+        price         Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      query AllPriceListEntries => observable PriceListEntry[]
+        description "Every price Sales has heard of"
+
+      projection PriceListProjection => PriceListEntry
+        from PriceListUpdated
+          sku           = $eventSourceId
+          price         = price
+          currency      = currency
+          effectiveFrom = effectiveFrom
+
+      screen PriceList
+        description "What each SKU costs today"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            title "Price list"
+          list
+            data PriceListEntry[] via query AllPriceListEntries
+            table PriceListEntry
+              column sku           label "SKU"
+              column price         label "Price"
+              column currency      label "Currency"
+              column effectiveFrom label "Effective from"
+
+      specification ThePriceListFollowsTheCatalogue
+        given caller
+          authenticated
+          role "SalesRep"
+        given PriceListUpdated
+          for "ACM-1000"
+          price         = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+        then readmodel PriceListEntry
+          sku           = "ACM-1000"
+          price         = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+
+  feature Fulfilment
+    slice StateView OrdersPipeline
+      description "Every order in the column of its status"
+
+      // outcomes of the inbound translations (translation/fulfilment.play), declared here in the slice that reads them
+      event OrderReservationCompleted
+        description "The warehouse reserved stock for the order (translated from StockReserved)"
+        sku      Sku
+        quantity Quantity
+
+      event OrderPutOnHold
+        description "The warehouse could not fill the order (translated from StockReservationFailed)"
+        sku     Sku
+        shortBy Quantity
+
+      event OrderShipmentRecorded
+        description "The order left the warehouse (translated from ShipmentDispatched)"
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+
+      readmodel PipelineOrder
+        description "One order on the fulfilment board"
+        orderId     OrderId key
+        customerId  CustomerId
+        market      Market
+        quotedTotal Money
+        status      OrderStatus
+
+      query AllPipelineOrders => observable PipelineOrder[]
+        description "Every order on the board"
+
+      projection PipelineOrderProjection => PipelineOrder
+        from OrderReceived
+          orderId     = $eventSourceId
+          customerId  = customerId
+          market      = market
+          quotedTotal = quotedTotal
+          status      = "received"
+        from OrderApproved
+          status = "approved"
+        from OrderRejected
+          status = "rejected"
+        from OrderPutOnHold
+          status = "onHold"
+        from OrderHoldReleased
+          status = "received"
+        from OrderConfirmationIssued
+          status = "confirmed"
+        from OrderShipmentRecorded
+          status = "shipped"
+        from OrderFulfilled
+          status = "fulfilled"
+        from OrderCancelled
+          status = "cancelled"
+
+      screen OrdersPipeline
+        description "The fulfilment board: a column per status"
+        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            title "Orders pipeline"
+          toolbar
+            toolbar pipelineActions
+              button approve title "Approve next order" slice Orders.Approval.ApproveOrder emphasis primary icon check
+              button cancel title "Cancel order" slice Orders.Fulfilment.CancelOrder emphasis quiet
+          board
+            data PipelineOrder[] via query AllPipelineOrders
+            on select
+              navigate to OrderPage
+                with orderId from item.orderId
+
+      specification AnOrderMovesAcrossTheBoard
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        given OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given OrderShipmentRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+          dispatchedAt   = "2026-10-20T08:00:00Z"
+        then readmodel PipelineOrder
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quotedTotal = 98
+          status      = "shipped"
+
+    // The record page. The activity slot carries the CUSTOM component acme:orderTimeline over the order's own timeline.
+    slice StateView OrderDetails
+      description "One order with everything that has happened to it"
+
+      readmodel OrderDetail
+        description "The order as the record page shows it"
+        orderId        OrderId key
+        customerId     CustomerId
+        email          EmailAddress
+        status         OrderStatus
+        quotedTotal    Money
+        discount       DiscountPercent optional
+        carrier        Carrier optional
+        trackingNumber TrackingNumber optional
+
+      // The timeline is one row of steps reached: the custom component acme:orderTimeline draws them in order.
+      // (The reference evaluator carries no occurrence time on facts, so the steps are flags; a timestamped timeline needs $eventContext.)
+      readmodel OrderTimeline
+        description "Which steps an order has been through"
+        orderId   OrderId key
+        received  Bool
+        approved  Bool
+        rejected  Bool
+        confirmed Bool
+        onHold    Bool
+        shipped   Bool
+        fulfilled Bool
+        cancelled Bool
+
+      query GetOrderDetail => OrderDetail optional
+        by orderId OrderId
+
+      query GetOrderTimeline => OrderTimeline optional
+        by orderId OrderId
+
+      projection OrderDetailProjection => OrderDetail
+        from OrderReceived
+          orderId     = $eventSourceId
+          customerId  = customerId
+          email       = email
+          status      = "received"
+          quotedTotal = quotedTotal
+        from OrderApproved
+          status = "approved"
+        from OrderRejected
+          status = "rejected"
+        from OrderDiscounted
+          discount = discount
+        from OrderPutOnHold
+          status = "onHold"
+        from OrderHoldReleased
+          status = "received"
+        from OrderConfirmationIssued
+          status = "confirmed"
+        from OrderShipmentRecorded
+          status         = "shipped"
+          carrier        = carrier
+          trackingNumber = trackingNumber
+        from OrderFulfilled
+          status = "fulfilled"
+        from OrderCancelled
+          status = "cancelled"
+
+      projection OrderTimelineProjection => OrderTimeline
+        from OrderReceived
+          orderId   = $eventSourceId
+          received  = true
+          approved  = false
+          rejected  = false
+          confirmed = false
+          onHold    = false
+          shipped   = false
+          fulfilled = false
+          cancelled = false
+        from OrderApproved
+          approved = true
+        from OrderRejected
+          rejected = true
+        from OrderConfirmationIssued
+          confirmed = true
+        from OrderPutOnHold
+          onHold = true
+        from OrderHoldReleased
+          onHold = false
+        from OrderShipmentRecorded
+          shipped = true
+        from OrderFulfilled
+          fulfilled = true
+        from OrderCancelled
+          cancelled = true
+
+      screen OrderPage
+        description "One order: summary, lines and the activity timeline"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            title "Order"
+          summary
+            data OrderDetail via query GetOrderDetail by orderId
+            summary OrderDetail
+              field status         label "Status"
+              field quotedTotal    label "Quoted total"
+              field discount       label "Discount"
+              field carrier        label "Carrier"
+              field trackingNumber label "Tracking"
+          activity
+            data OrderTimeline via query GetOrderTimeline by orderId
+            // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:orderTimeline
+            component Acme.Commerce.OrderTimeline orderTimeline
+              context from query GetOrderTimeline
+
+      specification TheRecordPageFollowsTheOrder
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        given OrderDiscounted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          discount = 10
+        then readmodel OrderDetail
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status      = "received"
+          quotedTotal = 98
+          discount    = 10
+
+  feature Approval
+    slice StateView ApprovalInbox
+      description "Orders that wait for a manager's decision"
+
+      readmodel WaitingOrder
+        description "An order that nobody has decided on yet"
+        orderId     OrderId key
+        customerId  CustomerId
+        quotedTotal Money
+
+      query OrdersWaitingForApproval => observable WaitingOrder[]
+        description "The manager's inbox"
+        authorize IsSalesManager
+
+      projection WaitingOrderProjection => WaitingOrder
+        from OrderReceived
+          orderId     = $eventSourceId
+          customerId  = customerId
+          quotedTotal = quotedTotal
+        remove with OrderApproved
+        remove with OrderRejected
+        remove with OrderCancelled
+
+      screen ApprovalInbox
+        description "Cards for the orders a manager still has to decide on"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            title "Approval inbox"
+          list
+            data WaitingOrder[] via query OrdersWaitingForApproval
+            table WaitingOrder
+              column orderId     label "Order"
+              column customerId  label "Customer"
+              column quotedTotal label "Quoted total"
+              on double click
+                navigate to Decision
+                  with orderId from item.orderId
+
+      // The decision: approve or reject, one confirm dialog
+      screen Decision
+        description "Approve or reject the order, with the consequence spelled out"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ApproveOrder
+              navigate to ApprovalInbox
+            action RejectOrder
+              navigate to ApprovalInbox
+
+      specification ABigOrderWaitsForAManager
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          email       = "grace@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        then readmodel WaitingOrder
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          quotedTotal = 1798
+
+  feature Reporting
+    slice StateView SalesDashboard
+      description "Revenue and orders per market, from what was received and what was confirmed"
+
+      readmodel SalesFigures
+        description "The figures of one market"
+        market           Market key
+        orderCount       Int optional
+        orderedRevenue   Money optional
+        confirmedCount   Int optional
+        confirmedRevenue Money optional
+
+      query AllSalesFigures => observable SalesFigures[]
+        description "The figures of every market"
+
+      // One projection joins two kinds of event: what came in and what was confirmed
+      projection SalesFiguresProjection => SalesFigures
+        from OrderReceived key market
+          increment orderCount
+          add orderedRevenue by quotedTotal
+        from OrderConfirmationIssued key market
+          increment confirmedCount
+          add confirmedRevenue by quotedTotal
+
+      screen SalesDashboard
+        description "The executive view of sales"
+        template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          header
+            title "Sales"
+          kpis
+            data SalesFigures[] via query AllSalesFigures
+            summary SalesFigures
+              field orderCount       label "Orders"
+              field orderedRevenue   label "Ordered"
+              field confirmedCount   label "Confirmed"
+              field confirmedRevenue label "Confirmed revenue"
+          tables
+            data PipelineOrder[] via query AllPipelineOrders
+            table PipelineOrder
+              column orderId     label "Order"
+              column quotedTotal label "Total"
+              column status      label "Status"
+
+      specification TheFiguresGrow
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        given OrderConfirmationIssued
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        then readmodel SalesFigures
+          market           = "NO"
+          orderCount       = 1
+          orderedRevenue   = 98
+          confirmedCount   = 1
+          confirmedRevenue = 98

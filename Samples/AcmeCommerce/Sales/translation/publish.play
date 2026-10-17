@@ -1,0 +1,149 @@
+// Sales OUTBOUND translations: what Sales says about itself. One slice per public event; PublishOrderStatus turns SEVERAL private status
+// events into ONE public event.
+module Orders
+  feature Approval
+    // P5 an order is confirmed -> OrderConfirmed (consumed by Warehouse as a reservation request, by Purchasing as demand)
+    slice Translate PublishOrderConfirmed
+      direction outbound
+
+      public event OrderConfirmed
+        orderId OrderId
+        lines   OrderLine[]
+        shipTo  PostalAddress
+
+      projection OrderConfirmationPublisher => OrderConfirmed
+        from OrderConfirmationIssued
+          orderId = orderId
+          lines   = lines
+          shipTo  = shipTo
+
+      specification PublishingAConfirmedOrder
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append OrderConfirmationIssued
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        then OrderConfirmed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo  = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+
+  feature Fulfilment
+    // P6 any status event -> OrderStatusChanged (consumed by the storefront as MyOrderUpdated)
+    slice Translate PublishOrderStatus
+      direction outbound
+
+      public event OrderStatusChanged
+        orderId OrderId
+        status  OrderStatus
+
+      projection OrderStatusPublisher => OrderStatusChanged
+        from OrderApproved
+          orderId = orderId
+          status  = "approved"
+        from OrderRejected
+          orderId = $eventSourceId
+          status  = "rejected"
+        from OrderPutOnHold
+          orderId = $eventSourceId
+          status  = "onHold"
+        from OrderShipmentRecorded
+          orderId = $eventSourceId
+          status  = "shipped"
+        from OrderFulfilled
+          orderId = orderId
+          status  = "fulfilled"
+        from OrderCancelled
+          orderId = $eventSourceId
+          status  = "cancelled"
+
+      specification PublishingAnApproval
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        // an approval also confirms the order (ConfirmApprovedOrder), and the confirmation is published too
+        then events in any order
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "approved"
+        then OrderConfirmationIssued
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        then OrderConfirmed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo  = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+
+      specification PublishingARejection
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append OrderRejected
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          reason = "Address could not be verified"
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "rejected"
+
+      specification PublishingACancellation
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append OrderCancelled
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          reason = "The shopper changed their mind"
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "cancelled"
+
+      specification PublishingAFulfilment
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when append OrderFulfilled
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderStatusChanged
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "fulfilled"

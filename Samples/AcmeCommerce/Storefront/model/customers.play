@@ -1,0 +1,127 @@
+module Shop
+  feature Checkout
+    slice StateChange RegisterCustomer
+      description "A shopper signs up with a name and a unique email address"
+
+      command RegisterCustomer
+        customerId CustomerId identifier
+        name       PersonName
+        email      EmailAddress
+        produces CustomerRegistered
+          for customerId
+          name  = name
+          email = email
+
+      event CustomerRegistered
+        name  PersonName
+        email EmailAddress
+
+      constraint UniqueCustomerEmail
+        unique email on CustomerRegistered
+        message "That email address is already registered"
+
+      screen Register
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterCustomer
+
+      specification RegisteringACustomer
+        given caller
+          authenticated
+          role "Shopper"
+        when RegisterCustomer
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name       = "Ada Lovelace"
+          email      = "ada@example.com"
+        then CustomerRegistered
+          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name  = "Ada Lovelace"
+          email = "ada@example.com"
+
+      specification RejectingAnEmailThatIsAlreadyRegistered
+        given caller
+          authenticated
+          role "Shopper"
+        given CustomerRegistered
+          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name  = "Ada Lovelace"
+          email = "ada@example.com"
+        when RegisterCustomer
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+          name       = "Ada Again"
+          email      = "ada@example.com"
+        then error "That email address is already registered"
+
+      specification RejectingAnAddressWithoutAnAt
+        given caller
+          authenticated
+          role "Shopper"
+        when RegisterCustomer
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+          name       = "Grace Hopper"
+          email      = "grace.example.com"
+        then error "An email address contains @"
+
+    slice StateChange CloseCustomerAccount
+      description "A shopper closes their account (their registration is forgotten)"
+
+      command CloseCustomerAccount
+        customerId CustomerId identifier
+        produces CustomerAccountClosed
+          for customerId
+
+      event CustomerAccountClosed
+
+      screen CloseAccount
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CloseCustomerAccount
+
+      specification ClosingAnAccount
+        given caller
+          authenticated
+          role "Shopper"
+        when CloseCustomerAccount
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+        then CustomerAccountClosed
+          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+
+    slice StateView CustomerAccounts
+      description "Who is registered, by customer"
+
+      readmodel CustomerAccount
+        customerId CustomerId key
+        name       PersonName
+        email      EmailAddress
+
+      query GetCustomerAccount => CustomerAccount optional
+        by customerId CustomerId
+
+      projection CustomerAccountProjection => CustomerAccount
+        from CustomerRegistered
+          customerId = $eventSourceId
+          name       = name
+          email      = email
+        remove with CustomerAccountClosed
+
+      specification AccountsFollowRegistrations
+        given caller
+          authenticated
+          role "Shopper"
+        given CustomerRegistered
+          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name  = "Ada Lovelace"
+          email = "ada@example.com"
+        then readmodel CustomerAccount
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          name       = "Ada Lovelace"
+          email      = "ada@example.com"
+
+      screen Account
+        description "The signed-in customer's account"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data CustomerAccount via query GetCustomerAccount by customerId
+            summary CustomerAccount
+              field name  label "Name"
+              field email label "Email"
