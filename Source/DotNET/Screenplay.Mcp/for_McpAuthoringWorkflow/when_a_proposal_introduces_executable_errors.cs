@@ -65,7 +65,8 @@ public class when_a_proposal_introduces_executable_errors : given.an_authoring_c
     [Fact] void should_not_give_guidance_without_new_errors() => _unrelated.GetProperty("executableGuidance").ValueKind.ShouldEqual(JsonValueKind.Null);
     [Fact] void should_list_the_new_error() => _introducing.GetProperty("introducedExecutableErrors").EnumerateArray().Single().GetProperty("message").GetString()!.ShouldContain("'AllProjects'");
     [Fact] void should_give_the_code_of_the_new_error() => _introducing.GetProperty("introducedExecutableErrors")[0].GetProperty("code").GetString().ShouldEqual("PLAY0268");
-    [Fact] void should_include_an_empty_argument_set_for_an_undeclared_code() => _introducing.GetProperty("introducedExecutableErrors")[0].GetProperty("arguments").EnumerateObject().ShouldBeEmpty();
+    [Fact] void should_attribute_the_error_to_the_query_kind() => _introducing.GetProperty("introducedExecutableErrors")[0].GetProperty("arguments").GetProperty("subject").GetProperty("kind").GetString().ShouldEqual("declaration");
+    [Fact] void should_attribute_the_error_to_the_query_path() => _introducing.GetProperty("introducedExecutableErrors")[0].GetProperty("arguments").GetProperty("subject").GetProperty("value").GetProperty("path").EnumerateArray().Select(part => part.GetString()).ShouldEqual(["Projects", "Registration", "List", "AllProjects"]);
     [Fact] void should_say_to_fix_it_before_apply() => _introducing.GetProperty("executableGuidance").GetString()!.ShouldContain("before apply");
 
     static object Replace(string revision, string catalog, JsonElement target, JsonNode node) => new
