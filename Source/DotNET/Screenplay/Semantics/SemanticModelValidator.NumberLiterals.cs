@@ -11,7 +11,9 @@ internal static partial class SemanticModelValidator
     {
         // Reuse reference validation's value walk, including its route exclusions. Only retained
         // values count; admission-only binding of examples and case values never reaches this walk.
-        var context = new ValidationContext(version, application);
+        // Version selection precedes the binder's located collection pass. A malformed declaration must
+        // not abort that probe and hide the other declarations' contract failures.
+        var context = new ValidationContext(version, application, failures: []);
         context.RegisterApplication(application);
         context.ValidateReferences(application);
 

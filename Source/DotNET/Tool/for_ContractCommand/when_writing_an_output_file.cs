@@ -1,13 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Contracts;
 
 namespace Cratis.Screenplay.Tool.for_ContractCommand;
 
 public class when_writing_an_output_file : Specification
 {
+    string _directory;
     string _path;
     StringWriter _output;
     StringWriter _error;
@@ -15,9 +15,8 @@ public class when_writing_an_output_file : Specification
 
     void Establish()
     {
-        var directory = Path.Combine(Root(), ".ai-work");
-        Directory.CreateDirectory(directory);
-        _path = Path.Combine(directory, $"contract-{Guid.NewGuid():N}.json");
+        _directory = SpecFixtureDirectory.Create("contract-output");
+        _path = Path.Combine(_directory, "contract.json");
         _output = new();
         _error = new();
     }
@@ -30,13 +29,10 @@ public class when_writing_an_output_file : Specification
     [Fact] void should_leave_standard_output_empty() => _output.ToString().ShouldEqual(string.Empty);
     [Fact] void should_leave_standard_error_empty() => _error.ToString().ShouldEqual(string.Empty);
 
-    void Destroy() => File.Delete(_path);
-
-    static string Root([CallerFilePath] string path = "")
+    void Destroy()
     {
-        var directory = Directory.GetParent(path);
-        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Documentation"))) directory = directory.Parent;
-
-        return directory!.FullName;
+        _output.Dispose();
+        _error.Dispose();
+        SpecFixtureDirectory.Delete(_directory);
     }
 }

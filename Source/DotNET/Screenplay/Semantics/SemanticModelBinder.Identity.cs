@@ -8,8 +8,16 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
+    internal static SourceLocation FailureLocation(SemanticModelValidator.SemanticValidationFailure failure, IReadOnlyDictionary<SemanticId, SourceLocation> declarations, SourceLocation applicationLocation) =>
+        failure.Subjects.Reverse().Where(declarations.ContainsKey).Select(id => declarations[id]).FirstOrDefault(applicationLocation);
+
     private sealed partial class BindingContext
     {
+        readonly Dictionary<SemanticId, SourceLocation> _declarationLocations = [];
+
+        internal SourceLocation FailureLocation(SemanticModelValidator.SemanticValidationFailure failure) =>
+            SemanticModelBinder.FailureLocation(failure, _declarationLocations, syntax.Location);
+
         SemanticProperty BindProperty(SemanticAddress owner, PropertySyntax property, bool isIdentifier, bool commandProperty = false)
         {
             if (property.IsGenerated && !commandProperty)
@@ -91,6 +99,11 @@ public sealed partial class SemanticModelBinder
             SemanticSourceMapRole role = SemanticSourceMapRole.Declaration,
             int length = 0)
         {
+            if (role == SemanticSourceMapRole.Declaration)
+            {
+                _declarationLocations.TryAdd(id, location);
+            }
+
             if (DocumentAt(location) is not { } document)
             {
                 return;

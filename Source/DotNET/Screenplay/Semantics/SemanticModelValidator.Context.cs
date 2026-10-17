@@ -20,13 +20,16 @@ internal static partial class SemanticModelValidator
         readonly Dictionary<SemanticId, SemanticReadModel> _readModels = [];
         readonly Dictionary<SemanticId, SemanticKeyedQuery> _queries = [];
         readonly SemanticValueValidator _valueValidator;
+        readonly List<SemanticId> _subjects = [];
+        readonly List<SemanticValidationFailure>? _failures;
 
         readonly SemanticVersion _semanticVersion;
 
         readonly int _utcAssessmentYear;
 
-        public ValidationContext(SemanticVersion semanticVersion, SemanticApplication application, int? utcAssessmentYear = null)
+        public ValidationContext(SemanticVersion semanticVersion, SemanticApplication application, int? utcAssessmentYear = null, List<SemanticValidationFailure>? failures = null)
         {
+            _failures = failures;
             _eventRoutesApplication = application;
             _semanticVersion = semanticVersion;
             _utcAssessmentYear = utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
@@ -65,22 +68,43 @@ internal static partial class SemanticModelValidator
         {
             foreach (var concept in application.Concepts)
             {
-                ValidateConceptReferences(concept);
+                ValidateOwner(concept.Id, () => ValidateConceptReferences(concept));
             }
 
             foreach (var type in application.Types)
             {
-                ValidateProperties(type.Properties);
+                ValidateOwner(type.Id, () => ValidateProperties(type.Properties));
             }
 
-            ValidateEventSources();
-            ValidateTriggers();
+            ValidateBoundary(ValidateEventSources);
+            ValidateBoundary(ValidateTriggers);
             foreach (var slice in AllSlices(application))
             {
-                ValidateSlice(slice);
+                ValidateOwner(slice.Id, () => ValidateSlice(slice));
             }
 
-            ValidatePolicies(application);
+            ValidateBoundary(() => ValidatePolicies(application));
+        }
+
+        void ValidateOwner(SemanticId subject, Action validate) => ValidateBoundary(() =>
+        {
+            _subjects.Add(subject);
+            validate();
+            _subjects.RemoveAt(_subjects.Count - 1);
+        });
+
+        void ValidateBoundary(Action validate)
+        {
+            var depth = _subjects.Count;
+            try
+            {
+                validate();
+            }
+            catch (InvalidSemanticContract exception) when (_failures is not null)
+            {
+                _failures.Add(new([.. _subjects], exception.Message));
+                _subjects.RemoveRange(depth, _subjects.Count - depth);
+            }
         }
 
         void ValidateConceptReferences(SemanticConcept concept)
@@ -116,22 +140,28 @@ internal static partial class SemanticModelValidator
         {
             foreach (var eventContract in slice.Events)
             {
-                ValidateProperties(eventContract.Properties);
-                foreach (var prior in eventContract.PriorRevisions)
+                ValidateOwner(eventContract.Id, () =>
                 {
-                    ValidateProperties(prior.Properties);
-                }
+                    ValidateProperties(eventContract.Properties);
+                    foreach (var prior in eventContract.PriorRevisions)
+                    {
+                        ValidateProperties(prior.Properties);
+                    }
+                });
             }
 
             foreach (var command in slice.Commands)
             {
-                ValidateCommand(command);
+                ValidateOwner(command.Id, () => ValidateCommand(command));
             }
 
             foreach (var readModel in slice.ReadModels)
             {
-                ValidateProperties(readModel.Properties);
-                ReadModelKeyProperties(readModel);
+                ValidateOwner(readModel.Id, () =>
+                {
+                    ValidateProperties(readModel.Properties);
+                    ReadModelKeyProperties(readModel);
+                });
             }
         }
 
@@ -139,22 +169,23 @@ internal static partial class SemanticModelValidator
         {
             foreach (var projection in slice.Projections)
             {
-                ValidateProjection(projection);
+                ValidateOwner(projection.Id, () => ValidateProjection(projection));
             }
 
             foreach (var reducer in slice.Reducers)
             {
-                ValidateReducer(reducer);
+                // Reducers carry no semantic identity; their enclosing slice remains the located subject.
+                ValidateBoundary(() => ValidateReducer(reducer));
             }
 
             foreach (var query in slice.Queries)
             {
-                ValidateQuery(query);
+                ValidateOwner(query.Id, () => ValidateQuery(query));
             }
 
             foreach (var specification in slice.Specifications)
             {
-                ValidateSpecification(specification);
+                ValidateOwner(specification.Id, () => ValidateSpecification(specification));
             }
         }
 
