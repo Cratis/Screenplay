@@ -84,3 +84,196 @@ sample data AcmeNordic
   // ---- Purchasing (ecommerce-author-ops) -------------------------------------------------------------------
 
   // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------
+  shape StockLevel
+    row
+      sku             = "ACM-1000"
+      name            = "Acme krus"
+      onHand          = 148
+      reserved        = 12
+      available       = 136
+      reorderPoint    = 12
+      reorderQuantity = 20
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-1001"
+      name            = "Acme tallerken"
+      onHand          = 96
+      reserved        = 14
+      available       = 82
+      reorderPoint    = 10
+      reorderQuantity = 12
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-1002"
+      name            = "Acme kaffekanne"
+      onHand          = 9
+      reserved        = 3
+      available       = 6
+      reorderPoint    = 10
+      reorderQuantity = 16
+      blocked         = false
+      alertOpen       = true
+    row
+      sku             = "ACM-2000"
+      name            = "Acme ullteppe"
+      onHand          = 34
+      reserved        = 6
+      available       = 28
+      reorderPoint    = 8
+      reorderQuantity = 16
+      blocked         = false
+      alertOpen       = false
+    row
+      sku             = "ACM-2001"
+      name            = "Acme lysestake"
+      onHand          = 0
+      reserved        = 0
+      available       = 0
+      reorderPoint    = 10
+      reorderQuantity = 40
+      blocked         = true
+      alertOpen       = true
+    row
+      sku             = "ACM-2002"
+      name            = "Acme tekanne"
+      onHand          = 60
+      reserved        = 18
+      available       = 42
+      reorderPoint    = 15
+      reorderQuantity = 30
+      blocked         = false
+      alertOpen       = false
+  shape PickingCard
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      sku      = "ACM-1000"
+      quantity = 1
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      sku      = "ACM-1001"
+      quantity = 2
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      sku      = "ACM-1002"
+      quantity = 3
+      status   = "picking"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      sku      = "ACM-2000"
+      quantity = 1
+      status   = "packed"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      sku      = "ACM-2001"
+      quantity = 2
+      status   = "packed"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      sku      = "ACM-1000"
+      quantity = 3
+      status   = "dispatched"
+      carrier        = "posten"
+      trackingNumber = "RR123456789NO"
+  shape ShipmentRow
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      sku      = "ACM-1000"
+      quantity = 1
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      sku      = "ACM-1001"
+      quantity = 2
+      status   = "toPick"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      sku      = "ACM-1002"
+      quantity = 3
+      status   = "picking"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      sku      = "ACM-2000"
+      quantity = 1
+      status   = "packed"
+      carrier        = "dhl"
+      trackingNumber = "DHL-770013"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      sku      = "ACM-2001"
+      quantity = 2
+      status   = "packed"
+      carrier        = "dhl"
+      trackingNumber = "DHL-770014"
+    row
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      sku      = "ACM-1000"
+      quantity = 3
+      status   = "dispatched"
+      carrier        = "posten"
+      trackingNumber = "RR123456789NO"
+      dispatchedAt   = "2026-10-02T14:00:00Z"
+  shape Receipt
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+      sku             = "ACM-1000"
+      received        = 20
+      lastReceivedAt  = "2026-10-01T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4002"
+      sku             = "ACM-1001"
+      received        = 30
+      lastReceivedAt  = "2026-10-02T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4003"
+      sku             = "ACM-1002"
+      received        = 40
+      lastReceivedAt  = "2026-10-03T09:00:00Z"
+    row
+      purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4004"
+      sku             = "ACM-2000"
+      received        = 50
+      lastReceivedAt  = "2026-10-04T09:00:00Z"
+  shape StockAlert
+    row
+      sku          = "ACM-1002"
+      onHand       = 9
+      reorderPoint = 10
+  shape StockFigures
+    row
+      summaryId     = "global"
+      skuCount      = 6
+      unitsOnHand   = 347
+      unitsReserved = 53
+      parcelsOpen   = 5
+  shape ItemDetail
+    row
+      sku          = "ACM-1000"
+      name         = "Acme krus"
+      onHand       = 148
+      reserved     = 12
+      available    = 136
+      reorderPoint = 12
+      blocked      = false
+      lastCounted  = 148
+    row
+      sku          = "ACM-1001"
+      name         = "Acme tallerken"
+      onHand       = 96
+      reserved     = 14
+      available    = 82
+      reorderPoint = 10
+      blocked      = false
+      lastCounted  = 96
+    row
+      sku          = "ACM-1002"
+      name         = "Acme kaffekanne"
+      onHand       = 9
+      reserved     = 3
+      available    = 6
+      reorderPoint = 10
+      blocked      = false
+      lastCounted  = 9
