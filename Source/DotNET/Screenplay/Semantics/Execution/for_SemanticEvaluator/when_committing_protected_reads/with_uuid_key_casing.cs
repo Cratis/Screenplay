@@ -15,25 +15,28 @@ public class with_uuid_key_casing : given.a_protected_command
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    void should_match_dependencies_and_projection_keys_ordinally(bool differentCase)
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    void should_match_dependencies_ordinally(bool differentCase, bool matches)
     {
-        var request = Request(lookup: ReadId, id: WriteId);
-        var decision = _evaluator.Decide(_plan, _world, request);
-        var removal = UuidFact("Removed", differentCase ? ReadId.ToUpperInvariant() : ReadId);
+        var decision = _evaluator.Decide(_plan, _world, Request(lookup: ReadId, id: WriteId));
+        decision.Dependencies.Matches(UuidFact("Removed", differentCase ? ReadId.ToUpperInvariant() : ReadId)).ShouldEqual(matches);
+    }
 
-        // The internal fact seam permits a casing probe without changing canonical UUID request validation.
-        var latest = Append(_world, removal);
-        var view = _plan.ReadModels.Values.Single(view => view.Name == "View");
-        latest.ReadModels.Any(instance => instance.ReadModel == view.Id).ShouldEqual(differentCase);
-        decision.Dependencies.Matches(removal).ShouldEqual(!differentCase);
-        var result = decision.Commit(latest);
-        result.Kind.ShouldEqual(differentCase ? SemanticExecutionOutcomeKind.Accepted : SemanticExecutionOutcomeKind.Conflict);
-        if (result is SemanticAccepted accepted)
-        {
-            accepted.Facts.Single().Values.Single().Value.ShouldEqual(SemanticValue.Text("original"));
-        }
+    [Fact]
+    void should_conflict_on_a_canonical_removal()
+    {
+        var decision = _evaluator.Decide(_plan, _world, Request(lookup: ReadId, id: WriteId));
+        var latest = Append(_world, UuidFact("Removed", ReadId));
+        ((SemanticConflict)decision.Commit(latest)).Category.ShouldEqual(SemanticConflictCategory.DecisionStateChanged);
+    }
+
+    [Fact]
+    void should_refuse_a_noncanonical_key_before_it_reaches_the_world()
+    {
+        var result = (SemanticRejected)_evaluator.ExtendWorld(_plan, _world, [UuidFact("Removed", ReadId.ToUpperInvariant())]);
+        result.Category.ShouldEqual(SemanticRejectionCategory.Contract);
+        result.World.ShouldBeSame(_world);
     }
 
     SemanticFact UuidFact(string name, string key, string? value = null) => Fact(name, key, value) with

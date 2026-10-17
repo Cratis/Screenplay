@@ -37,6 +37,92 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
         EstablishWorld(plan, facts, true);
 
+    /// <summary>
+    /// Decides a command against a world without settling it, so a host can commit against a later world.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Execute"/> is <c>Decide(...).Commit(world)</c> at one world. A host that appends to a store extends the decided
+    /// world with facts written in the meantime (<see cref="ExtendWorld"/>) and commits against that world. A read-only
+    /// request is refused with a contract rejection; run it through <see cref="Execute"/>.
+    /// </remarks>
+    /// <param name="plan">The capability-admitted plan.</param>
+    /// <param name="world">The world the decision reads.</param>
+    /// <param name="request">The command request.</param>
+    /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
+    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    {
+        if (request.IsReadOnly)
+        {
+            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot be decided; execute it as a query."));
+        }
+
+        if (!plan.Commands.TryGetValue(request.Command, out var command))
+        {
+            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan."));
+        }
+
+        if (plan.UnadmittedArtifacts.Contains(command.Id))
+        {
+            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation."));
+        }
+
+        if (request.Queries.IsDefault)
+        {
+            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
+        }
+
+        return new SemanticCommandExecution(plan, world, command, request).Decide();
+    }
+
+    /// <summary>
+    /// Extends a world with facts that already hold in the log, such as facts another writer appended.
+    /// </summary>
+    /// <remarks>
+    /// The facts are validated as <see cref="EstablishWorld(SemanticExecutionPlan, ImmutableArray{SemanticFact})"/> validates them,
+    /// then only they are projected onto the world's read models and pending children. No constraint is checked and nothing is
+    /// published, because the facts are already in the log. The world of <c>ExtendWorld(Establish(a), b)</c> equals the world of
+    /// <c>Establish(a + b)</c>; the result is not equal as a whole, because its accepted facts hold only <paramref name="facts"/>.
+    /// A reached reducer is unsupported. On failure the result carries the unchanged input world.
+    /// </remarks>
+    /// <param name="plan">The capability-admitted plan.</param>
+    /// <param name="world">The world to extend.</param>
+    /// <param name="facts">The facts to append, in occurrence order.</param>
+    /// <returns>An accepted result holding the extended world, a contract rejection, or an unsupported projection.</returns>
+    public SemanticExecutionResult ExtendWorld(SemanticExecutionPlan plan, SemanticWorld world, ImmutableArray<SemanticFact> facts)
+    {
+        if (facts.IsDefault)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Extension facts cannot be default.");
+        }
+
+        try
+        {
+            if (ValidateHistory(plan, facts, true) is { } rejection)
+            {
+                return rejection with { World = world };
+            }
+
+            if (ReachedByHistory(plan, facts) is { } reducer)
+            {
+                return new SemanticUnsupported(
+                    world,
+                    SemanticExecutionCapability.Projection,
+                    $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+            }
+
+            if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure))
+            {
+                return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
+            }
+
+            return new SemanticAccepted(world.Commit(facts, state.ReadModels, state.PendingChildren), facts, []);
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
+    }
+
     internal static SemanticExecutionResult Append(
         SemanticExecutionPlan plan,
         SemanticWorld world,
@@ -174,26 +260,6 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             ? command.Properties.Single(property => property.Id == resolved.Target).Type
             : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
-
-    internal SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
-    {
-        if (!plan.Commands.TryGetValue(request.Command, out var command))
-        {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan."));
-        }
-
-        if (plan.UnadmittedArtifacts.Contains(command.Id))
-        {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation."));
-        }
-
-        if (request.Queries.IsDefault)
-        {
-            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
-        }
-
-        return new SemanticCommandExecution(plan, world, command, request).Decide();
-    }
 
     static SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
     {

@@ -241,6 +241,39 @@ and run the `for_ClockScheduleVectors.when_executing_every_vector` spec in
 update the `Sha256` constant (and the fixture version when semantics change), rebuild and rerun without
 the variable. The specs execute every vector and check that the published bytes match the repository file.
 
+### Protected command read race vectors
+
+Race vector fixture version **1** proves the [protected command read](commands.md#what-reads-guarantees) conflict rule, under
+[decision 0089](https://github.com/Cratis/Screenplay/blob/main/decisions/0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md).
+`Cratis.Screenplay.CanonicalCorpus.ProtectedCommandReadRaceVectors` exposes `Bytes`, `Version` and `Sha256` for
+`races.v1.json`, and `Model`, a `CanonicalCorpusVector` with the source-backed ESM v25 model the vectors run against: `races.play`
+(which declares `command reads protected`), its identity catalog, canonical ESM bytes and semantic revision. The files live in
+`Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/races-v1/`. Verify the SHA-256 of the exact bytes; do not reserialize first.
+
+Each vector gives `decided` facts, a `request`, the expected `dependencies`, and `commits`. A commit extends the decided world with `later`
+facts, or replaces it with a `history`, and states the `expect`ed outcome: `accepted` with the command's facts, `conflict` with its category, or
+`rejected` with category, code and message. Every outcome lists the event names of the world it settled against. A host runs one vector with
+the public calls only: `EstablishWorld(decided)`, `Decide(request)`, then for each commit `ExtendWorld(decided, later)` (or `EstablishWorld(history)`)
+followed by `Commit` of that same decision. A vector with several commits is the explicit repeated `Commit`.
+
+The conflict contract needs no C# type:
+
+- The boundary is the count of facts in the decided world.
+- A dependency is a key value plus a set of event contract ids: the reading view's `from` events and removals, merged per key.
+- A conflict is any fact after the boundary whose event contract is in the set and whose destination equals the key, compared ordinally.
+- The outcome is `Conflict` with category `DecisionStateChanged` and no facts. Otherwise the command settles against the later log.
+
+The vectors cover handled, removed and unrelated events at the read key and at another key, a second view of the same key, merged keys,
+commands that produce no facts, absent and rejected decisions, a late uniqueness claim, a decision committed against its own world, three
+repeated-commit cases (accepted then conflicting, accepted then constraint-rejected, and a generated event source taken by another writer),
+and a commit world that is shorter than or rewrites the decided history. Non-canonical UUID key casing is not a vector: the public path refuses it.
+The vectors do not cover the guarded write after settlement; that window is a [host obligation](reactions.md#append-a-settled-command-in-a-live-host).
+
+To regenerate the model files and the vectors from the reference evaluator, set `SCREENPLAY_REGENERATE_PROTECTED_READ_RACES=1` and run the
+`for_ProtectedCommandReadRaceVectors.when_loading_the_published_fixture` spec in `Screenplay.CanonicalVectors.Specs`. Each case states the
+outcome it is meant to show, so a regeneration that observes anything else fails. Regeneration intentionally fails at the end: review the diff,
+deliberately update the `Sha256` constant, rebuild and rerun without the variable.
+
 ### Canonical conformance corpus
 
 For ESM-version admission checks, use the released golden bytes from `Cratis.Screenplay.CanonicalCorpus`
