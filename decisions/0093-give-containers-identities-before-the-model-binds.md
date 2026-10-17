@@ -1,8 +1,10 @@
 ---
 id: 0093
 title: Give applications, modules, features and slices identities before the model binds
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-17
+decider: Sindre Wilting (delegated to the L0 coordinator)
 class: contract
 reversibility: costly
 applies-to:
