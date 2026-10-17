@@ -143,6 +143,10 @@ module Merchandising
 
       screen ProductCatalog
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader productsHeader
+              property title = "Products"
+              property subtitle = "Everything we sell, with its status"
           toolbar
             toolbar actions
               button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
@@ -224,6 +228,10 @@ module Merchandising
 
       screen ProductPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader productHeader
+              property title = "Product"
+              property subtitle = "What we know about one product"
           summary
             data ProductDetail via query ProductById by productId
             summary ProductDetail

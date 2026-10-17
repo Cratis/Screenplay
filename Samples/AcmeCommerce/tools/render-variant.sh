@@ -2,6 +2,7 @@
 # Builds the RENDERABLE VARIANT of Acme Commerce and renders it with `cratis render`.
 # The source of truth (this folder, compiled with screenplay --warnaserror) is NOT changed; the variant differs only where the
 # renderer (Stage / cratis) cannot yet take what the language says. Every difference is listed here, with its reason:
+#   0. DOMAINS (default "Catalog Storefront"): only the domains Stage can render today are in the variant, with their shell navigation.
 #   1. translation/ folders are deleted: Stage renders StateChange/StateView/Automation slices, not Translate slices or
 #      public events (STAGE-ESM-024/032/033; Stage issues #79/#212/#213). `cratis render --scope` cannot skip them (a scoped render
 #      omits the application shell). The domains are bridged instead by tools/render-bridge/bridge.play.txt: reactions that
@@ -10,6 +11,11 @@
 #      ESM v24) become `matches` rules. Not needed on cratis >= 3.75.0.
 #   3. A command whose event triggers a reaction cannot have a rendered specification (STAGE-ESM-011): those specifications
 #      are listed in tools/render-bridge/drop-specifications.txt (one `<file>|<specification name>` per line) and removed.
+#   5. `reaction batches atomic` (ESM v22, Stage#422) and `command reads protected` / command `reads` (ESM v25, Stage#503) are refused by
+#      the renderer (STAGE-ESM-043/044): tools/render-bridge/strip_reads.py removes the preamble, the `reads` and the `require` rules over read
+#      paths, turns `x = Read.prop` into command inputs, and drops the specifications that exercised a removed guard. A reaction that
+#      invokes a command which gained inputs cannot be satisfied from its trigger payload, which is why Sales, Purchasing and
+#      Warehouse are not in the default variant.
 #   4. The custom package Acme.Commerce needs `cratis render --package-set tools/packages/acme-commerce.package-set.json` and the
 #      built npm package _packages/scene.commerce. Without PACKAGE_SET=1 the three acme: components are replaced by core
 #      tables / the package is removed from the profile (render still works, the custom components are missing).
@@ -26,8 +32,31 @@ if [ "$1" = "--destination" ]; then DEST=$2; shift 2; fi
 rm -rf "$W/AcmeRender"; mkdir -p "$W"
 rsync -a --exclude tools --exclude _packages --exclude README.md "$SAMPLE/" "$W/AcmeRender/"
 V="$W/AcmeRender"
-# 1. no Translate slices in the rendered variant
+# 0. which domains: Stage cannot render every domain of the application yet (see 5.), so DOMAINS picks the ones in the variant
+DOMAINS=${DOMAINS:-"Catalog Storefront"}
+python3 - "$V" "$DOMAINS" <<'PY'
+import sys,re,os,shutil
+v=sys.argv[1]; keep=sys.argv[2].split()
+modules={'Catalog':'Merchandising','Storefront':'Shop','Sales':'Orders','Purchasing':'Buying','Warehouse':'Stock'}
+for d,m in modules.items():
+    if d not in keep: shutil.rmtree(v+'/'+d,ignore_errors=True)
+gone=[m for d,m in modules.items() if d not in keep]
+p=v+'/Shell/navigation.play'; lines=open(p).read().split('\n'); out=[]; skip=None
+for l in lines:
+    ind=len(l)-len(l.lstrip())
+    if skip is not None:
+        if l.strip()=='' or ind>skip: continue
+        skip=None
+    if l.strip().startswith('item') and re.search(r'target (%s)\b'%'|'.join(gone),l):
+        skip=ind; continue
+    out.append(l)
+open(p,'w').write('\n'.join(out))
+PY
+# 1. no Translate slices in the rendered variant: the inbound captures become bridge commands first, then translation/ goes
+python3 "$HERE/render-bridge/bridge_translations.py" "$V"
 rm -rf "$V"/*/translation
+# 1b. what Stage cannot render yet: atomic reaction batches (ESM v22), protected decision reads (ESM v25)
+python3 "$HERE/render-bridge/strip_reads.py" "$V"
 # 2. legacy text rules
 if [ "$LEGACY_TEXT_RULES" = "1" ]; then
 python3 - "$V" <<'PY'

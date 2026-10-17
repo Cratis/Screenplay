@@ -54,6 +54,10 @@ module Merchandising
 
       screen ReadyForApproval
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader publicationHeader
+              property title = "Publication"
+              property subtitle = "Described and priced products ready to approve"
           list
             data ProductReadiness[] via query AllProductReadiness
             table ProductReadiness
@@ -253,6 +257,10 @@ module Merchandising
 
       screen CatalogDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader catalogHeader
+              property title = "Catalog dashboard"
+              property subtitle = "Products by status"
           tables
             data CatalogFigure[] via query AllCatalogFigures
             table CatalogFigure

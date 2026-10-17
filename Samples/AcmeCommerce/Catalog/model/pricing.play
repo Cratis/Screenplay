@@ -72,6 +72,10 @@ module Merchandising
 
       screen PricingBoard
         template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pricingHeader
+              property title = "Pricing"
+              property subtitle = "Products by status - set a price to make one ready"
           toolbar
             toolbar actions
               button setprice title "Set price" slice Merchandising.Pricing.SetProductPrice emphasis primary icon tag
