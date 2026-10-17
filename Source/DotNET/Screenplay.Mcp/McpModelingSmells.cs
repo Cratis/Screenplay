@@ -124,7 +124,7 @@ static class McpModelingSmells
                     {
                         if (ResolveEvent(index, projection, joined.Event) is { } @event)
                         {
-                            foreach (var feed in Mapped(@event, joined.Mappings, mappings, autoMap, prefix, targets, true)) yield return feed;
+                            foreach (var feed in Mapped(@event, joined.Mappings, mappings, Mode(joined.AutoMap, autoMap), prefix, targets, true)) yield return feed;
                         }
                     }
                     break;
