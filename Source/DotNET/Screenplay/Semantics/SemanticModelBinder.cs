@@ -39,6 +39,80 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        var result = BindCore(applicationName, syntax, documents);
+        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, result.Diagnostics) };
+    }
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
+    {
+        if (SemanticModelValidator.UsesUuidComparisons(application)) return (LanguageVersion.V28, SemanticVersion.V28);
+        if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
+        if (SemanticModelValidator.UsesDateComparisons(application)) return (LanguageVersion.V26, SemanticVersion.V26);
+        if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
+        if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
+        if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
+        if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
+        if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
+        if (SemanticModelValidator.UsesGeneratedConceptRules(application))
+        {
+            return (LanguageVersion.V20, SemanticVersion.V20);
+        }
+
+        if (SemanticModelValidator.UsesRefusalBranches(application))
+        {
+            return (LanguageVersion.V19, SemanticVersion.V19);
+        }
+
+        if (SemanticModelValidator.UsesQueryRejections(application))
+        {
+            return (LanguageVersion.V18, SemanticVersion.V18);
+        }
+
+        if (SemanticModelValidator.UsesRecoverySpecifications(application))
+        {
+            return (LanguageVersion.V17, SemanticVersion.V17);
+        }
+
+        return usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
+    }
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
+    {
+        if (SemanticModelValidator.UsesConceptGeneration(application))
+        {
+            return (LanguageVersion.V15, SemanticVersion.V15);
+        }
+
+        if (SemanticModelValidator.UsesQueryFilters(application))
+        {
+            return (LanguageVersion.V14, SemanticVersion.V14);
+        }
+
+        if (SemanticModelValidator.UsesConceptCompliance(application))
+        {
+            return (LanguageVersion.V13, SemanticVersion.V13);
+        }
+
+        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
+        {
+            return (LanguageVersion.V12, SemanticVersion.V12);
+        }
+
+        // Number lowering is pure. Select v11 from the retained graph with the validator's own
+        // value walk, after examples and routed fixtures have reached their final bound shape.
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+        {
+            return (LanguageVersion.V11, SemanticVersion.V11);
+        }
+
+        return null;
+    }
+
+    CompilationResult<SemanticCompilation> BindCore(
+        string applicationName,
+        ApplicationSyntax syntax,
+        SemanticDocumentSet documents)
+    {
         if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
@@ -51,7 +125,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
                 DiagnosticCodes.UnsupportedSemanticSyntax,
                 "Exact numeric source mode is not admitted by any supported executable model (ESM) version yet (#285); this source/syntax implementation does not execute exact documents.",
-                syntax.Location)]);
+                syntax.Location,
+                DiagnosticArguments.ForIssue("Cratis/Screenplay#285"))]);
         }
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
@@ -194,71 +269,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-    {
-        if (SemanticModelValidator.UsesUuidComparisons(application)) return (LanguageVersion.V28, SemanticVersion.V28);
-        if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
-        if (SemanticModelValidator.UsesDateComparisons(application)) return (LanguageVersion.V26, SemanticVersion.V26);
-        if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
-        if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
-        if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
-        if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
-        if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
-        if (SemanticModelValidator.UsesGeneratedConceptRules(application))
-        {
-            return (LanguageVersion.V20, SemanticVersion.V20);
-        }
-
-        if (SemanticModelValidator.UsesRefusalBranches(application))
-        {
-            return (LanguageVersion.V19, SemanticVersion.V19);
-        }
-
-        if (SemanticModelValidator.UsesQueryRejections(application))
-        {
-            return (LanguageVersion.V18, SemanticVersion.V18);
-        }
-
-        if (SemanticModelValidator.UsesRecoverySpecifications(application))
-        {
-            return (LanguageVersion.V17, SemanticVersion.V17);
-        }
-
-        return usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
-    {
-        if (SemanticModelValidator.UsesConceptGeneration(application))
-        {
-            return (LanguageVersion.V15, SemanticVersion.V15);
-        }
-
-        if (SemanticModelValidator.UsesQueryFilters(application))
-        {
-            return (LanguageVersion.V14, SemanticVersion.V14);
-        }
-
-        if (SemanticModelValidator.UsesConceptCompliance(application))
-        {
-            return (LanguageVersion.V13, SemanticVersion.V13);
-        }
-
-        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
-        {
-            return (LanguageVersion.V12, SemanticVersion.V12);
-        }
-
-        // Number lowering is pure. Select v11 from the retained graph with the validator's own
-        // value walk, after examples and routed fixtures have reached their final bound shape.
-        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
-        {
-            return (LanguageVersion.V11, SemanticVersion.V11);
-        }
-
-        return null;
-    }
-
     sealed class IdentityAdmission(ApplicationSyntax application) : ScreenplaySyntaxWalker
     {
         readonly HashSet<string> _details = (application.Identity?.Details ?? []).Select(detail => detail.Name).ToHashSet(StringComparer.Ordinal);
@@ -278,7 +288,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     $"Identity detail '{detail}' is not executable: the identity block is authoring metadata until admitted (#600).",
-                    syntax.Location));
+                    syntax.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#600")));
             }
         }
     }

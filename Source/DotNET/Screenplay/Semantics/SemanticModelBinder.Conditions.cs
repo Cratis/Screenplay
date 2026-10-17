@@ -43,7 +43,7 @@ public sealed partial class SemanticModelBinder
                 }
                 else
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition operand '{comparison.Left}' must be a declared command property in {position}; read-model paths require the 'command reads protected' preamble (#129).", comparison.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition operand '{comparison.Left}' must be a declared command property in {position}; read-model paths require the 'command reads protected' preamble (#129).", comparison.Location, DiagnosticArguments.ForIssue("Cratis/Screenplay#129"));
                     return null;
                 }
             }

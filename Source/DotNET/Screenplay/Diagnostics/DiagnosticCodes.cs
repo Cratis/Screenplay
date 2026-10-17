@@ -1449,6 +1449,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Source syntax carries portable behavior that ESM v1 cannot represent.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration?;The innermost declaration that contains the refused construct; absent for document-level refusals.", "issue:text?;The tracking issue named by the refusal, such as Cratis/Screenplay#600, when it cites one.", AttachedByBinder = true)]
     public const string UnsupportedSemanticSyntax = "PLAY0268";
 
     /// <summary>
@@ -1904,16 +1905,19 @@ public static class DiagnosticCodes
     /// <summary>
     /// A quoted match pattern is not a valid ECMAScript regular expression.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.", "offset:index;The zero-based UTF-16 offset in the pattern where the problem starts.")]
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
     /// A match pattern uses a construct outside the portable linear dialect.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.", "offset:index;The zero-based UTF-16 offset in the pattern where the problem starts.")]
     public const string PatternOutsidePortableMatchDialect = "PLAY0699";
 
     /// <summary>
     /// A Studio text-rule pattern has an equivalent first-class ordinal rule.
     /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.")]
     public const string DeprecatedStudioTextRulePattern = "PLAY0787";
 
     /// <summary>
