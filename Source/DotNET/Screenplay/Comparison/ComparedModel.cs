@@ -59,10 +59,16 @@ public sealed class ComparedModel
             : ScreenplayWorkspace.Create(
                 application,
                 applicationName,
-                [.. sources.OrderBy(source => source.Key, StringComparer.Ordinal).Select(source => WorkspaceDocument.Create(source.Key, PortablePlayPath.Parse(source.Key), Encoding.UTF8.GetBytes(source.Value)))],
+                [.. sources.OrderBy(source => source.Key, StringComparer.Ordinal).Select(source => Document(source.Key, source.Value))],
                 SemanticIdentityCatalog.Empty(application));
 
         return WithoutIdentities(workspace);
+    }
+
+    static WorkspaceDocument Document(string path, string source)
+    {
+        var portable = PortablePlayPath.Parse(path);
+        return WorkspaceDocument.Create(ModelRootDocumentKeys.For(portable), portable, Encoding.UTF8.GetBytes(source));
     }
 
     /// <summary>

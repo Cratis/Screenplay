@@ -42,7 +42,9 @@ change.
 `Workspace` retains the source and compilation diagnostics.
 `HasPersistedIdentities` records your explicit choice, not a guess based on
 catalog origin. `FromSources` creates documents in memory; it does not read
-paths from disk. Invalid-but-editable source remains available for comparison.
+paths from disk. Paths can name subfolders (`Features/Register.play`): each
+document keeps its relative path and gets the same opaque key a model root
+would give it. Invalid-but-editable source remains available for comparison.
 Invalid document paths, workspace admission or exports raise the existing
 workspace contract exceptions. Bound export input size before passing it to
 `FromWorkspaceExport`; see [Workspace transport](workspace-transport.md).
