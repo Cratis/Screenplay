@@ -1,0 +1,24 @@
+// Storefront's own vocabulary. The shared kernel (Shared/) holds what every context means the same way; these are words only the shop uses.
+
+// How a product is addressed in a shop URL
+concept Slug : String
+  validate
+    not empty        message "A slug is required"
+    max 80           message "A slug has at most 80 characters"
+    not contains " " message "A slug has no spaces"
+
+concept ShortDescription : String
+  validate
+    max 280  message "A short description has at most 280 characters"
+
+concept DeliveryMethod : Enum
+  standard = 0
+  express = 1
+  pickup = 2
+
+// One line of a basket as the shopper sees it
+type BasketLine
+  description "A product in a basket with how many and at what price"
+  sku       Sku
+  quantity  Quantity
+  unitPrice Money
