@@ -48,3 +48,9 @@ eventsource SkuSourcing
   identifier Sku
   stream Sourcing
     description "Demand and replenishment for one SKU"
+
+purpose SupplierRelations
+  description "Order from suppliers and reach their purchasing contact"
+  basis contract
+  subjects supplierContact
+  retention "For as long as we buy from the supplier"

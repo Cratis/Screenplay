@@ -1,0 +1,51 @@
+// Warehouse language: physical stock. Concepts that only the Warehouse needs; shared kernel concepts live in Shared/.
+concept LocationCode : String
+  validate
+    not empty          message "A location needs a code"
+    max 12             message "A location code has at most 12 characters"
+    not contains " "   message "A location code has no spaces"
+
+concept TrackingNumber : String
+  validate
+    not empty  message "A tracking number is required"
+    min 6      message "A tracking number has at least 6 characters"
+
+concept AdjustmentId : Uuid
+
+concept AdjustmentReason : Enum
+  countCorrection = 0
+  damaged = 1
+  found = 2
+  returnedToSupplier = 3
+  other = 4
+
+concept SkuStatus : Enum
+  active = 0
+  blocked = 1
+
+concept ReservationOutcome : Enum
+  reserved = 0
+  failed = 1
+
+// Gating shared by every Warehouse screen: the clerk, and OpsAdmin who watches all domains
+policy CanWorkWarehouse
+  require role "WarehouseClerk"
+    or role "OpsAdmin"
+
+eventsource StockItem
+  description "One SKU in the warehouse: its stock, reservations and reorder point"
+  identifier Sku
+  stream Levels
+    description "Everything that happens to the stock of one SKU"
+
+eventsource Shipment
+  description "What is picked, packed and dispatched for one order"
+  identifier OrderId
+  stream Handling
+    description "Pick, pack and dispatch of one order"
+
+eventsource Location
+  description "A place in the warehouse where stock is kept"
+  identifier LocationCode
+  stream Layout
+    description "Creation and renaming of one location"

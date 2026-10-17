@@ -269,6 +269,11 @@ module Buying
 
       event PurchaseOrderArchived
 
+      screen Archive
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ArchivePurchaseOrder
+
     slice StateView PurchaseOrders
       description "The purchase orders being worked, and everything a decision needs to know about one"
 

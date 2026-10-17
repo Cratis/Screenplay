@@ -1,0 +1,476 @@
+// Warehouse / Reservations: an order asks for stock; the warehouse reserves it or says it cannot, and keeps everybody informed.
+module Stock
+  feature Reservations
+    description "Reserving stock for confirmed orders, and what that does to the levels"
+
+    slice StateChange RequestReservationManually
+      description "Asks for a reservation by hand (a counter sale); normally Sales' OrderConfirmed does it"
+
+      command RequestReservationManually
+        sku      Sku identifier
+        orderId  OrderId
+        quantity Quantity
+        produces ReservationRequested
+          for sku
+          orderId  = orderId
+          sku      = sku
+          quantity = quantity
+
+      event ReservationRequested
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      screen RequestReservation
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RequestReservationManually
+
+    // The decision: reserve only what is available. A refusal is how "not enough stock" is said; the reaction below turns it into
+    // a ReservationFailed fact. Reservations are all or nothing, so shortBy is the quantity that could not be reserved.
+    slice StateChange ReserveFromStock
+      description "Reserves a quantity of a SKU for an order when enough is available"
+
+      command ReserveFromStock
+        sku      Sku identifier
+        orderId  OrderId
+        quantity Quantity
+        reads StockLevel as level by sku
+        validate
+          require level.available >= quantity
+            message "Not enough stock is available"
+        produces ReservationMade
+          for sku
+          orderId  = orderId
+          sku      = sku
+          quantity = quantity
+
+      event ReservationMade
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+      specification RefusingWhatIsNotAvailable
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 2
+        when ReserveFromStock
+          sku      = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+        then error "Not enough stock is available"
+
+    slice Automation ReserveStock
+      description "A reservation request is answered with a reservation or a failure, never silence"
+
+      reaction ReserveStockForOrder
+        description "Success appends ReservationMade through the command; a refusal appends ReservationFailed"
+        runs as system role "WarehouseClerk"
+        when ReservationRequested
+          orderId
+          sku
+          quantity
+          invokes ReserveFromStock
+            sku      = sku
+            orderId  = orderId
+            quantity = quantity
+            on refused by validation
+              produces ReservationFailed
+                orderId = orderId
+                sku     = sku
+                shortBy = quantity
+                reason  = $refusal.message
+
+      event ReservationFailed
+        orderId  OrderId
+        sku      Sku
+        shortBy  Quantity
+        reason   String
+
+      specification ReservingStockForARequest
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 50
+        when append ReservationRequested
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then ReservationMade
+          for "ACM-1000"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku = "ACM-1000"
+          onHand = 50
+          available = 47
+        then StockLevelChanged
+          sku = "ACM-1000"
+          onHand = 50
+          available = 47
+
+      specification FailingWhenStockIsShort
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 2
+        when append ReservationRequested
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then ReservationFailed
+          for "ACM-1000"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          shortBy = 3
+          reason = "Not enough stock is available"
+        then StockReservationFailed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          shortBy = 3
+
+    // Every movement is followed by a statement of the new level: the source of public event P9.
+    slice StateChange RecordStockLevel
+      description "States the current level of a SKU as a fact so that others can follow it"
+
+      command RecordStockLevel
+        sku Sku identifier
+        reads StockLevel as level by sku
+        produces StockLevelRecorded
+          for sku
+          sku       = sku
+          onHand    = level.onHand
+          available = level.available
+
+      event StockLevelRecorded
+        sku       Sku
+        onHand    StockQuantity
+        available StockQuantity
+
+    slice Automation AnnounceStockLevel
+      description "Whatever moved the stock, the new level is recorded afterwards"
+
+      reaction AnnounceLevelAfterMovement
+        runs as system role "WarehouseClerk"
+        when StockReceived
+          sku
+          invokes RecordStockLevel
+            sku = sku
+        when StockAdjustedUp
+          sku
+          invokes RecordStockLevel
+            sku = sku
+        when StockWrittenOff
+          sku
+          invokes RecordStockLevel
+            sku = sku
+        when ReservationMade
+          sku
+          invokes RecordStockLevel
+            sku = sku
+        when StockShipped
+          sku
+          invokes RecordStockLevel
+            sku = sku
+
+      specification FoundStockIsFollowedByTheNewLevel
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        when append StockAdjustedUp
+          for "ACM-1000"
+          sku          = "ACM-1000"
+          adjustmentId = "a0000000-0000-4000-8000-000000000001"
+          quantity     = 5
+          reason       = "found"
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          onHand    = 5
+          available = 5
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 5
+          available = 5
+
+      specification LooseStockIsFollowedByTheNewLevel
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        when append StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+          quantity  = 24
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          onHand    = 24
+          available = 24
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 24
+          available = 24
+
+    slice StateChange CheckReorderPoint
+      description "Declares that the stock fell below its reorder point, once per crossing"
+
+      command CheckReorderPoint
+        sku        Sku identifier
+        crossingId OrderId
+        reads StockLevel as level by sku
+        validate
+          require level.available < level.reorderPoint
+            message "The stock is not below its reorder point"
+        produces ReorderPointCrossed
+          for sku
+          crossingId        = crossingId
+          sku               = sku
+          onHand            = level.onHand
+          reorderPoint      = level.reorderPoint
+          suggestedQuantity = level.reorderQuantity
+
+      event ReorderPointCrossed
+        crossingId        OrderId
+        sku               Sku
+        onHand            StockQuantity
+        reorderPoint      StockQuantity
+        suggestedQuantity Quantity
+
+      // Once per crossing: the claim is released when goods are received, so the next fall below the point alerts again.
+      constraint OneAlertPerCrossing
+        unique event ReorderPointCrossed
+        released by StockReceived
+        message "The reorder point crossing is already reported"
+
+    slice Automation WatchReorderPoint
+      description "A reservation that takes the stock below the reorder point is reported once per crossing; healthy stock stays silent. The reserving order identifies the crossing"
+
+      reaction WatchTheReorderPoint
+        runs as system role "WarehouseClerk"
+        when ReservationMade
+          orderId
+          sku
+          invokes CheckReorderPoint
+            sku        = sku
+            crossingId = orderId
+            on refused by constraint OneAlertPerCrossing
+              acknowledge
+            on refused by validation
+              acknowledge
+
+      specification TheFirstFallBelowTheReorderPointIsReported
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 12
+        when append ReservationMade
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then ReorderPointCrossed
+          for "ACM-1000"
+          crossingId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          onHand = 12
+          reorderPoint = 10
+          suggestedQuantity = 20
+        then StockBelowReorderPoint
+          crossingId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          onHand = 12
+          reorderPoint = 10
+          suggestedQuantity = 20
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku = "ACM-1000"
+          onHand = 12
+          available = 9
+        then StockLevelChanged
+          sku = "ACM-1000"
+          onHand = 12
+          available = 9
+
+      specification HealthyStockStaysSilent
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 50
+        when append ReservationMade
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku = "ACM-1000"
+          quantity = 3
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku = "ACM-1000"
+          onHand = 50
+          available = 47
+        then StockLevelChanged
+          sku = "ACM-1000"
+          onHand = 50
+          available = 47
+
+      specification AnAlreadyReportedCrossingStaysQuiet
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 12
+        given ReservationMade
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku               = "ACM-1000"
+          onHand            = 12
+          reorderPoint      = 10
+          suggestedQuantity = 20
+        when append ReservationMade
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          sku      = "ACM-1000"
+          quantity = 1
+        then StockReserved
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          sku = "ACM-1000"
+          quantity = 1
+        then ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          sku = "ACM-1000"
+          quantity = 1
+        then StockLevelRecorded
+          for "ACM-1000"
+          sku = "ACM-1000"
+          onHand = 12
+          available = 8
+        then StockLevelChanged
+          sku = "ACM-1000"
+          onHand = 12
+          available = 8
+
+    slice StateView ReservationLog
+      description "Every reservation, made or failed, per order and SKU"
+
+      readmodel ReservationRow
+        orderId  OrderId key
+        sku      Sku key
+        quantity Quantity
+        outcome  ReservationOutcome
+        reason   String optional
+
+      query AllReservations => observable ReservationRow[]
+      query ReservationsOfSku => observable ReservationRow[]
+        filter sku Sku
+
+      projection ReservationRowProjection => ReservationRow
+        from ReservationMade
+          key
+            orderId = orderId
+            sku     = sku
+          quantity = quantity
+          outcome  = "reserved"
+        from ReservationFailed
+          key
+            orderId = orderId
+            sku     = sku
+          quantity = shortBy
+          outcome  = "failed"
+          reason   = reason
+
+      screen Reservations
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button reserve title "Reserve" slice Stock.Reservations.RequestReservationManually emphasis quiet icon lock
+          list
+            data ReservationRow[] via query AllReservations
+            table ReservationRow
+              column orderId  label "Order"
+              column sku      label "SKU"
+              column quantity label "Quantity"
+              column outcome  label "Outcome"
+              column reason   label "Reason"
+
+      specification AReservationAppears
+        given ReservationMade
+          for "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then readmodel ReservationRow
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+          outcome  = "reserved"

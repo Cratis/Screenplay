@@ -1,0 +1,96 @@
+// Warehouse / Receiving: goods arrive, by purchase order (Purchasing's P11) or loose on the dock.
+module Stock
+  feature Receiving
+    description "Goods coming in"
+
+    slice StateChange ReceiveLooseStock
+      description "Books goods that arrived without a purchase order; a blocked SKU cannot be received by hand"
+
+      command ReceiveLooseStock
+        sku       Sku identifier
+        receiptId ReceiptId
+        quantity  Quantity
+        reads StockLevel as level by sku
+        validate
+          require level.blocked == 0
+            message "A blocked SKU cannot be received"
+        produces StockReceived
+          for sku
+          sku       = sku
+          receiptId = receiptId
+          quantity  = quantity
+
+      event StockReceived
+        sku       Sku
+        receiptId ReceiptId
+        quantity  Quantity
+
+      example Dock : ReceiveLooseStock
+        sku       = "ACM-1000"
+        receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+        quantity  = 24
+
+      specification ABlockedSkuCannotBeReceived
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given SkuBlockedForReceiving
+          for "ACM-1000"
+          sku = "ACM-1000"
+        when Dock
+        then error "A blocked SKU cannot be received"
+
+      specification AZeroReceiptIsRefused
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Dock quantity = 0
+        then error "At least one"
+
+      screen ReceiveStock
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ReceiveLooseStock
+
+    slice StateView ReceivedGoods
+      description "What was received, per receipt"
+
+      readmodel ReceiptRow
+        receiptId ReceiptId key
+        sku       Sku
+        quantity  Quantity
+
+      query AllReceipts => observable ReceiptRow[]
+
+      projection ReceiptRowProjection => ReceiptRow
+        from StockReceived key receiptId
+          receiptId = receiptId
+          sku      = sku
+          quantity = quantity
+
+      screen ReceivedGoods
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button receive title "Receive stock" slice Stock.Receiving.ReceiveLooseStock emphasis primary icon download
+          list
+            data ReceiptRow[] via query AllReceipts
+            table ReceiptRow
+              column receiptId label "Receipt"
+              column sku       label "SKU"
+              column quantity  label "Quantity"
+
+      specification AReceiptAppears
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+          quantity  = 24
+        then readmodel ReceiptRow
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+          sku       = "ACM-1000"
+          quantity  = 24

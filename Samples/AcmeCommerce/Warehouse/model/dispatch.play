@@ -1,0 +1,495 @@
+// Warehouse / Picking, Shipments, Overview: from a reservation to the carrier's hands.
+module Stock
+  feature Picking
+    description "The picking queue: what has to be picked, packed and handed over"
+
+    // A made reservation becomes a shipment to prepare. Plain automation: the command is addressed to the order, not the SKU.
+    slice StateChange PrepareShipment
+      description "Opens the shipment of an order once its stock is reserved"
+
+      command PrepareShipment
+        orderId  OrderId identifier
+        sku      Sku
+        quantity Quantity
+        produces ShipmentPrepared
+          for orderId
+          orderId  = orderId
+          sku      = sku
+          quantity = quantity
+
+      event ShipmentPrepared
+        orderId  OrderId
+        sku      Sku
+        quantity Quantity
+
+    slice Automation PrepareShipmentForReservation
+      description "Reserved stock waits in the picking queue"
+
+      reaction QueueTheShipment
+        runs as system role "WarehouseClerk"
+        when ReservationMade
+          orderId
+          sku
+          quantity
+          invokes PrepareShipment
+            orderId  = orderId
+            sku      = sku
+            quantity = quantity
+
+    slice StateChange PickOrder
+      description "A clerk starts picking an order that waits in the queue"
+
+      command PickOrder
+        orderId OrderId identifier
+        reads ShipmentRow as shipment by orderId
+        validate
+          require shipment.status == "toPick"
+            message "Only an order waiting to be picked can be picked"
+        produces ShipmentPicked
+          for orderId
+
+      event ShipmentPicked
+
+      example Pick : PickOrder
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PickingAWaitingOrder
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Pick
+        then ShipmentPicked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification AnOrderIsPickedOnce
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPicked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when Pick
+        then error "Only an order waiting to be picked can be picked"
+
+      screen Pick
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action PickOrder
+
+    slice StateChange PackShipment
+      description "A picked order is packed for the carrier"
+
+      command PackShipment
+        orderId OrderId identifier
+        reads ShipmentRow as shipment by orderId
+        validate
+          require shipment.status == "picking"
+            message "Only a picked order can be packed"
+        produces ShipmentPacked
+          for orderId
+
+      event ShipmentPacked
+
+      example Pack : PackShipment
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PackingAPickedOrder
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPicked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when Pack
+        then ShipmentPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification AnOrderThatIsNotPickedCannotBePacked
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Pack
+        then error "Only a picked order can be packed"
+
+      screen Pack
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action PackShipment
+
+    slice StateView PickingQueue
+      description "Orders to pick, being picked and packed, as a board"
+
+      readmodel PickingCard
+        orderId  OrderId key
+        sku      Sku
+        quantity Quantity
+        status   ShipmentStatus
+
+      query AllPickingCards => observable PickingCard[]
+
+      projection PickingCardProjection => PickingCard
+        from ShipmentPrepared
+          orderId  = $eventSourceId
+          sku      = sku
+          quantity = quantity
+          status   = "toPick"
+        from ShipmentPicked
+          status = "picking"
+        from ShipmentPacked
+          status = "packed"
+        from ShipmentHandedToCarrier
+          status = "dispatched"
+        remove with ShipmentArchived
+
+      screen PickingQueue
+        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          toolbar
+            toolbar actions
+              button pick title "Pick order" slice Stock.Picking.PickOrder emphasis primary icon box
+              button pack title "Pack" slice Stock.Picking.PackShipment emphasis quiet icon package
+          board
+            data PickingCard[] via query AllPickingCards
+
+      specification AWaitingOrderIsOnTheBoard
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then readmodel PickingCard
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status  = "toPick"
+
+  feature Shipments
+    description "Dispatching to carriers, and every shipment with its tracking number"
+
+    slice StateChange DispatchShipment
+      description "Hands a packed order to a carrier; an order is dispatched once"
+
+      command DispatchShipment
+        orderId        OrderId identifier
+        shipmentId     ShipmentId generated
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+        reads ShipmentRow as shipment by orderId
+        validate
+          require shipment.status == "packed"
+            message "Only a packed order can be dispatched"
+        produces ShipmentHandedToCarrier
+          for orderId
+          orderId        = orderId
+          shipmentId     = shipmentId
+          carrier        = carrier
+          trackingNumber = trackingNumber
+          dispatchedAt   = dispatchedAt
+          sku            = shipment.sku
+          quantity       = shipment.quantity
+
+      event ShipmentHandedToCarrier
+        orderId        OrderId
+        shipmentId     ShipmentId
+        carrier        Carrier
+        trackingNumber TrackingNumber
+        dispatchedAt   DateTime
+        sku            Sku
+        quantity       Quantity
+
+      // The status check refuses a second dispatch first; the constraint is the safety net when two dispatches race.
+      constraint OneDispatchPerShipment
+        unique event ShipmentHandedToCarrier
+        message "A shipment is dispatched once"
+
+      example Dispatch : DispatchShipment
+        orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        carrier        = "posten"
+        trackingNumber = "370712345678"
+        dispatchedAt   = "2026-10-12T13:05:00Z"
+
+      // The accepted path (with the public ShipmentDispatched it publishes) is in PublishDispatch: a command specification
+      // cannot list a cascaded public event (PLAY0285).
+      specification ANeverPackedOrderIsRefused
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Dispatch
+          generated shipmentId = "5e000000-0000-4000-8000-000000000001"
+        then error "Only a packed order can be dispatched"
+
+      specification ADispatchedOrderCannotBeDispatchedAgain
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPicked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given ShipmentPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e000000-0000-4000-8000-000000000001"
+          carrier        = "posten"
+          trackingNumber = "370712345678"
+          dispatchedAt   = "2026-10-12T13:05:00Z"
+          sku            = "ACM-1000"
+          quantity       = 3
+        when Dispatch
+          generated shipmentId = "5e000000-0000-4000-8000-000000000002"
+        then error "Only a packed order can be dispatched"
+
+      specification ATrackingNumberNeedsSixCharacters
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Dispatch
+          generated shipmentId = "5e000000-0000-4000-8000-000000000003"
+          trackingNumber = "123"
+        then error "A tracking number has at least 6 characters"
+
+      screen Dispatch
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action DispatchShipment
+              navigate to Shipments
+
+    // The stock leaves the building when the carrier takes it: the SKU's own stream is told, so the level follows.
+    slice StateChange ReleaseDispatchedStock
+      description "Takes dispatched units out of on hand and reserved"
+
+      command ReleaseDispatchedStock
+        sku      Sku identifier
+        orderId  OrderId
+        quantity Quantity
+        produces StockShipped
+          for sku
+          sku      = sku
+          orderId  = orderId
+          quantity = quantity
+
+      event StockShipped
+        sku      Sku
+        orderId  OrderId
+        quantity Quantity
+
+    slice Automation ReleaseStockAfterDispatch
+      description "A dispatched shipment takes its units out of stock"
+
+      reaction ReleaseStock
+        runs as system role "WarehouseClerk"
+        when ShipmentHandedToCarrier
+          orderId
+          sku
+          quantity
+          invokes ReleaseDispatchedStock
+            sku      = sku
+            orderId  = orderId
+            quantity = quantity
+
+    slice StateChange ArchiveShipment
+      description "Removes a finished shipment from the working lists"
+
+      command ArchiveShipment
+        orderId OrderId identifier
+        produces ShipmentArchived
+          for orderId
+
+      event ShipmentArchived
+
+      screen Archive
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ArchiveShipment
+
+    slice StateView Shipments
+      description "Every shipment with its status, carrier and tracking number"
+
+      readmodel ShipmentRow
+        orderId        OrderId key
+        sku            Sku
+        quantity       Quantity
+        status         ShipmentStatus
+        carrier        Carrier optional
+        trackingNumber TrackingNumber optional
+
+      query AllShipments => observable ShipmentRow[]
+      query ShipmentByOrder => ShipmentRow optional
+        by orderId OrderId
+
+      projection ShipmentRowProjection => ShipmentRow
+        from ShipmentPrepared
+          orderId  = $eventSourceId
+          sku      = sku
+          quantity = quantity
+          status   = "toPick"
+        from ShipmentPicked
+          status = "picking"
+        from ShipmentPacked
+          status = "packed"
+        from ShipmentHandedToCarrier
+          status         = "dispatched"
+          carrier        = carrier
+          trackingNumber = trackingNumber
+        remove with ShipmentArchived
+
+      screen Shipments
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button dispatch title "Dispatch" slice Stock.Shipments.DispatchShipment emphasis primary icon send
+          list
+            data ShipmentRow[] via query AllShipments
+            table ShipmentRow
+              column orderId        label "Order"
+              column sku            label "SKU"
+              column quantity       label "Quantity"
+              column status         label "Status"
+              column carrier        label "Carrier"
+              column trackingNumber label "Tracking"
+
+      specification ADispatchedShipmentCarriesItsTracking
+        given ShipmentPrepared
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5e000000-0000-4000-8000-000000000001"
+          carrier        = "posten"
+          trackingNumber = "370712345678"
+          dispatchedAt   = "2026-10-12T13:05:00Z"
+          sku            = "ACM-1000"
+          quantity       = 3
+        then readmodel ShipmentRow
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status         = "dispatched"
+          carrier        = "posten"
+          trackingNumber = "370712345678"
+
+  feature Overview
+    description "How the warehouse is doing"
+
+    slice StateView WarehouseDashboard
+      description "SKUs, units on hand and reserved, and shipments still open"
+
+      readmodel WarehouseFigures
+        summaryId     String
+        skus          Int
+        unitsOnHand   Int
+        unitsReserved Int
+        openShipments Int
+
+      query CurrentWarehouseFigures => observable WarehouseFigures[]
+
+      // Every `from` states every counter (`add ... by 0` keeps what is there): any event may be the first one a row sees
+      projection WarehouseFiguresProjection => WarehouseFigures
+        from SkuRegistered
+          key "global"
+          summaryId = "global"
+          increment skus
+          add unitsOnHand by 0
+          add unitsReserved by 0
+          add openShipments by 0
+        from StockReceived
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          add unitsOnHand by quantity
+          add unitsReserved by 0
+          add openShipments by 0
+        from StockAdjustedUp
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          add unitsOnHand by quantity
+          add unitsReserved by 0
+          add openShipments by 0
+        from StockWrittenOff
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          subtract unitsOnHand by quantity
+          add unitsReserved by 0
+          add openShipments by 0
+        from ReservationMade
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          add unitsOnHand by 0
+          add unitsReserved by quantity
+          add openShipments by 0
+        from StockShipped
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          subtract unitsOnHand by quantity
+          subtract unitsReserved by quantity
+          add openShipments by 0
+        from ShipmentPrepared
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          add unitsOnHand by 0
+          add unitsReserved by 0
+          increment openShipments
+        from ShipmentHandedToCarrier
+          key "global"
+          summaryId = "global"
+          add skus by 0
+          add unitsOnHand by 0
+          add unitsReserved by 0
+          decrement openShipments
+
+      screen WarehouseDashboard
+        template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          kpis
+            data WarehouseFigures[] via query CurrentWarehouseFigures
+            table WarehouseFigures
+              column skus          label "SKUs"
+              column unitsOnHand   label "Units on hand"
+              column unitsReserved label "Units reserved"
+              column openShipments label "Open shipments"
+
+      specification CountingWhatIsInTheBuilding
+        given SkuRegistered
+          for "ACM-1000"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku       = "ACM-1000"
+          receiptId = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          quantity  = 50
+        then readmodel WarehouseFigures
+          summaryId   = "global"
+          skus        = 1
+          unitsOnHand = 50

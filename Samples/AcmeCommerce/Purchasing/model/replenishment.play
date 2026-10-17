@@ -52,6 +52,11 @@ module Buying
 
       event PreferredSupplierCleared
 
+      screen ClearSupplier
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ClearPreferredSupplier
+
     slice StateView PreferredSuppliers
       description "Which supplier replenishment orders go to, per SKU"
 
