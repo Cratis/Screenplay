@@ -19,6 +19,10 @@ internal static class EventSourceValidator
         }
         foreach (var source in application.EventSources)
         {
+            if (string.Equals(SemanticEventRouting.StoredName(source.Id, source.Name), "Default", StringComparison.Ordinal))
+            {
+                context.Error(DiagnosticCodes.ReservedStoredName, $"Event source '{source.Name}' has the reserved stored name 'Default'; choose a stored name other than 'Default'.", source.Location);
+            }
             ValidateType(source.Identifier, false, application, context);
             foreach (var duplicate in source.Streams.GroupBy(stream => stream.Name, StringComparer.Ordinal).SelectMany(group => group.Skip(1)))
             {
@@ -26,6 +30,10 @@ internal static class EventSourceValidator
             }
             foreach (var stream in source.Streams)
             {
+                if (string.Equals(SemanticEventRouting.StoredName(stream.Id, stream.Name), "All", StringComparison.Ordinal))
+                {
+                    context.Error(DiagnosticCodes.ReservedStoredName, $"Stream '{source.Name}.{stream.Name}' has the reserved stored name 'All'; choose a stored name other than 'All'.", stream.Location);
+                }
                 ValidateType(stream.StreamId, true, application, context);
                 var parts = stream.StreamIdParts.ToArray();
                 if (parts.Length == 0) continue;

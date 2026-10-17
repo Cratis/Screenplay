@@ -92,7 +92,7 @@
         { "name": "Enum numbers fit int32", "source": ["concept Status : Enum", "  draft = 2147483648"], "diagnostics": ["PLAY0669@2"] },
         { "name": "Enum numbers forbid exponents", "source": ["concept Status : Enum", "  draft = 1e0"], "diagnostics": ["PLAY0670@2"] },
         { "name": "Stored enum pinning stays out of ordinary compilation", "validate": true, "source": ["concept Status : Enum", "  draft", "  issued", "module M", "  feature F", "    slice StateChange S", "      event E", "        status Status"], "diagnostics": [] },
-        { "name": "Inline override destinations match their own source", "validate": true, "source": ["eventsource Account", "  identifier Uuid", "  stream All", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "          stream Account.All"], "diagnostics": ["PLAY0504@10"] },
+        { "name": "Inline override destinations match their own source", "validate": true, "source": ["eventsource Account", "  identifier Uuid", "  stream All", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "          stream Account.All"], "diagnostics": ["PLAY0802@3", "PLAY0504@10"] },
         { "name": "Observer source-only filters refuse ambiguous physical parents", "validate": true, "source": ["eventsource Account", "eventsource Account", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        from Account", "        when E"], "diagnostics": ["PLAY0503@2", "PLAY0665@8"] },
         { "name": "Observer filters distinguish sources from values", "validate": true, "source": ["concept Account : String", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        from Account", "        when E"], "diagnostics": ["PLAY0665@7"] },
         { "name": "Production routes belong to commands", "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when E", "          produces E", "            stream Account.Transactions"], "diagnostics": ["PLAY0663@7"] },
@@ -3414,6 +3414,42 @@
             "diagnostics": [
                 "PLAY0385@8"
             ]
+        },
+        {
+            "name": "reserved stored source name",
+            "source": ["eventsource Default"],
+            "validate": true,
+            "diagnostics": ["PLAY0802@1"]
+        },
+        {
+            "name": "reserved stored source pin",
+            "source": ["eventsource Account", "  id \"Default\""],
+            "validate": true,
+            "diagnostics": ["PLAY0802@1"]
+        },
+        {
+            "name": "reserved stored stream name",
+            "source": ["eventsource Account", "  stream All"],
+            "validate": true,
+            "diagnostics": ["PLAY0802@2"]
+        },
+        {
+            "name": "reserved stored stream pin",
+            "source": ["eventsource Account", "  stream Archive", "    id \"All\""],
+            "validate": true,
+            "diagnostics": ["PLAY0802@2"]
+        },
+        {
+            "name": "source and stream pins away from reserved names",
+            "source": ["eventsource Default", "  id \"Account\"", "  stream All", "    id \"Archive\""],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "stored names are ordinal and reserved only for their kind",
+            "source": ["eventsource default", "eventsource DEFAULT", "eventsource All", "  stream all", "  stream ALL", "  stream Default"],
+            "validate": true,
+            "diagnostics": []
         },
         {
             "name": "duplicate projection event with different keys",
