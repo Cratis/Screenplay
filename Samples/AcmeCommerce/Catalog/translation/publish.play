@@ -1,0 +1,136 @@
+// ============================================================
+// Catalog / outbound translation: private events become the public events other domains consume (P1, P2, P3)
+//
+// Catalog says what it has done in its own words (ProductApprovedForSale ...) and publishes ONE public contract per
+// slice. Nobody else sees the private events. Kept in its own folder so a renderer that cannot run Translate
+// slices can leave it out (see ../../README.md, render-variant.sh).
+// ============================================================
+
+module Merchandising
+  feature Publication
+
+    // P1: a product approved for sale becomes visible to the shop and the warehouse
+    slice Translate PublishProduct
+      description "Publishes ProductPublished when a product is approved for sale"
+      direction outbound
+
+      public event ProductPublished
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        details   String
+        category  String
+        price     Money
+        currency  CurrencyCode
+        imageUrl  String
+
+      projection ProductPublisher => ProductPublished
+        from ProductApprovedForSale
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          details   = details
+          category  = category
+          price     = price
+          currency  = currency
+          imageUrl  = imageUrl
+
+      specification PublishingAnApprovedProduct
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        given ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+        given ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 49
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        when append ProductApprovedForSale
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+          details  = "A sturdy mug for everyday use"
+          imageUrl = "/images/acm-1000.png"
+          price    = 49
+          currency = "NOK"
+        then ProductPublished
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+          details   = "A sturdy mug for everyday use"
+          category  = "Kitchen"
+          price     = 49
+          currency  = "NOK"
+          imageUrl  = "/images/acm-1000.png"
+
+    // P2: every price change is published; a consumer that has not listed the SKU ignores it
+    slice Translate PublishPriceChange
+      description "Publishes ProductPriceChanged for every price set"
+      direction outbound
+
+      public event ProductPriceChanged
+        productId     ProductId
+        sku           Sku
+        newPrice      Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      projection PriceChangePublisher => ProductPriceChanged
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+        from ProductPriceSet
+          newPrice      = price
+          currency      = currency
+          effectiveFrom = effectiveFrom
+
+      specification PublishingAPriceChange
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when append ProductPriceSet
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price    = 59
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        then ProductPriceChanged
+          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku           = "ACM-1000"
+          newPrice      = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-03-01"
+
+    // P3: a withdrawn product is retired for everybody else (the withdrawal carries the SKU it retires)
+    slice Translate PublishRetirement
+      description "Publishes ProductRetired when a product is withdrawn"
+      direction outbound
+
+      public event ProductRetired
+        productId ProductId
+        sku       Sku
+
+      projection RetirementPublisher => ProductRetired
+        from ProductWithdrawn
+          productId = $eventSourceId
+          sku       = sku
+
+      specification PublishingARetirement
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when append ProductWithdrawn
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku = "ACM-1000"
+        then ProductRetired
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
