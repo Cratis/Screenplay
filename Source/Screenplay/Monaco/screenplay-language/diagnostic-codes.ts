@@ -18,6 +18,7 @@ export const diagnosticCodes = {
     directionlessTranslationReactsToOwnCapture: 'PLAY0694',
     pendingIntentWithOtherHandler: 'PLAY0698',
     commandHandlerRequiresAttachment: 'PLAY0800', // C# only
+    duplicateEventInProjectionScope: 'PLAY0801',
     describedCommandNotImplemented: 'PLAY0695', // C# only
     describedCommandWithoutProductions: 'PLAY0696', // C# only
     describedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only

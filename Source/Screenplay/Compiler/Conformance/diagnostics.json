@@ -1436,7 +1436,7 @@
         {
             "name": "Declared nested removal and append events remain valid",
             "validate": true,
-            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      projection P", "        children rows identified by id", "          from E", "          remove with E", "        nested row", "          from E", "          remove via join on E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        children rows identified by id", "          append E", "            when added", "        nested row", "          append E", "            when changed"],
+            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      event E2", "      projection P", "        children rows identified by id", "          from E", "          remove with E2", "        nested row", "          from E", "          remove via join on E2", "      capture C", "        source api", "          api LegacyApi", "        key id", "        children rows identified by id", "          append E", "            when added", "        nested row", "          append E", "            when changed"],
             "diagnostics": []
         },
         {
@@ -1448,7 +1448,7 @@
         {
             "name": "Qualified declared removal events remain valid",
             "validate": true,
-            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "      event E2", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E2", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
             "diagnostics": []
         },
         {
@@ -1520,7 +1520,7 @@
         {
             "name": "Declared removal and capture events remain valid",
             "validate": true,
-            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      projection P", "        remove with E", "        remove via join on E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
+            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      event E2", "      projection P", "        remove with E", "        remove via join on E2", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
             "diagnostics": []
         },
         {
@@ -1819,7 +1819,7 @@
         {
             "name": "A state view uses an event from its right once at its first reference",
             "validate": true,
-            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from E", "        from E", "    slice StateChange Write", "      event E"],
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from E", "        children rows identified by id", "          from E", "    slice StateChange Write", "      event E"],
             "diagnostics": ["PLAY0516@5"]
         },
         {
@@ -3414,6 +3414,131 @@
             "diagnostics": [
                 "PLAY0385@8"
             ]
+        },
+        {
+            "name": "duplicate projection event with different keys",
+            "source": [
+                "module A", "  feature B", "    slice StateView C",
+                "      projection P => R",
+                "        from Revised key id", "        from Revised key previousId"
+            ],
+            "diagnostics": ["PLAY0801@6"]
+        },
+        {
+            "name": "duplicate projection event with the same key",
+            "source": [
+                "module A", "  feature B", "    slice StateView C",
+                "      projection P => R",
+                "        from Revised key id", "        from Revised key id"
+            ],
+            "diagnostics": ["PLAY0801@6"]
+        },
+        {
+            "name": "duplicate projection event in a list",
+            "source": [
+                "module A", "  feature B", "    slice StateView C",
+                "      projection P => R", "        from Revised, Revised, Revised"
+            ],
+            "diagnostics": ["PLAY0801@5", "PLAY0801@5"]
+        },
+        {
+            "name": "projection event and removal share a set",
+            "source": [
+                "module A", "  feature B", "    slice StateView C",
+                "      projection P => R", "        from Revised", "        remove with Revised"
+            ],
+            "diagnostics": ["PLAY0801@6"]
+        },
+        {
+            "name": "projection join removal shares the event set",
+            "source": [
+                "module A", "  feature B", "    slice StateView C",
+                "      projection P => R", "        remove via join on Revised", "        from Revised"
+            ],
+            "diagnostics": ["PLAY0801@6"]
+        },
+        {
+            "name": "projection duplicate joins across blocks",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        join first on firstId", "          with Revised",
+                "        join second on secondId", "          with Revised"
+            ],
+            "diagnostics": ["PLAY0801@8"]
+        },
+        {
+            "name": "projection join and from have separate sets",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised", "        join first on firstId", "          with Revised"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "projection children and root have separate sets",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised", "        children first identified by id", "          from Revised",
+                "        children second identified by id", "          from Revised"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "projection duplicates within children",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        children lines identified by id", "          from Revised", "          remove with Revised"
+            ],
+            "diagnostics": ["PLAY0801@7"]
+        },
+        {
+            "name": "projection nested clear shares the event set",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        nested details", "          from Revised", "          clear with Revised"
+            ],
+            "diagnostics": ["PLAY0801@7"]
+        },
+        {
+            "name": "projection nested and root have separate sets",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised", "        nested details", "          from Revised"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "projection variants have independent sets",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised", "        variant First", "          enters on Created",
+                "          from Revised", "        variant Second", "          enters on Started", "          from Revised"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "projection duplicates within a variant",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        variant First", "          enters on Created", "          from Revised", "          from Revised"
+            ],
+            "diagnostics": ["PLAY0801@8"]
+        },
+        {
+            "name": "projection event names compare ordinally without resolving qualifications",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised, revised, A.Revised, Revised.g2"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "separate projections have independent event sets",
+            "source": [
+                "module A", "  feature B", "    slice StateView C", "      projection P => R",
+                "        from Revised", "      projection Q => S", "        from Revised"
+            ],
+            "diagnostics": []
         },
         {
             "name": "invalid reaction",

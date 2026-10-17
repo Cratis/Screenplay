@@ -92,6 +92,21 @@ projection User => UserReadModel
     DeactivatedAt = $eventContext.occurred
 ```
 
+## One use of an event per projection level
+
+Chronicle allows one use of an event type per projection level. Ordinary compilation reports
+`PLAY0801` at the second and each later reference, even if the keys are different or identical.
+The check compares authored event names ordinally; it does not resolve qualifications or generations.
+One set covers `from` (including comma-separated events), `remove with`, `remove via join` and
+`clear with`. Joins have a separate set: an event can occur once in `from` and once in a join.
+Each `children`, `nested` and variant block starts fresh sets; different projections are independent.
+Variants still do not bind to the executable model.
+
+One event cannot update two rows of the same level by appearing in two `from` blocks. Combine
+mappings that update the same row into one block. Model a genuinely second domain fact as its own
+event, produced by the command or a reaction when that fact actually occurs; do not invent events
+solely for a read-side update. Two keys do not turn one fact into two facts.
+
 ## With Parent Key
 
 When used within [Children](children) blocks, you can specify the parent relationship:

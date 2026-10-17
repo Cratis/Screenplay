@@ -11,7 +11,9 @@ public class when_commands_drive_removal_and_reactions : given.a_model
 
     void Establish()
     {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), Model + "\n" + """
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Model
+            .Replace("        from ProjectRegistered", "        from FollowUpRequested", StringComparison.Ordinal)
+            .Replace("        remove with ProjectRemoved", "        remove with ProjectRegistered", StringComparison.Ordinal) + "\n" + """
               reaction OnStartup
                 when Startup
                   produces FollowUpRequested

@@ -46,9 +46,11 @@ public class a_model : for_McpConnection.given.a_connection
               readmodel ProjectList
                 projectId ProjectId
                 name ProjectName
+              event ProjectRemoved
+                projectId ProjectId
               projection ProjectList
                 from ProjectRegistered
-                remove with ProjectRegistered
+                remove with ProjectRemoved
               query Projects => ProjectList[]
                 authorize Staff
             slice Automation FollowUp

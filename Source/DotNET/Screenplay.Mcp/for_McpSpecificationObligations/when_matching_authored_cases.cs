@@ -44,9 +44,8 @@ public class when_matching_authored_cases : given.a_model
                 when query Projects
                 then denied
               specification Removed
-                when append ProjectRegistered
+                when append ProjectRemoved
                   projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                  name = "First"
                 then no readmodel ProjectList for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             slice Automation FollowUp
         """,

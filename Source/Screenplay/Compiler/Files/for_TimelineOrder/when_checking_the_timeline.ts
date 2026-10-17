@@ -7,7 +7,7 @@ import { toSyntaxJson } from '../../Syntax/SyntaxJson';
 import { compileApplication, parsePlacedDocuments } from '../PlayApplicationAssembly';
 import { timelineOrderDiagnostics } from '../TimelineOrder';
 
-const projection = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n        from E\n    slice StateChange Write\n      event E';
+const projection = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n        children rows identified by id\n          from E\n    slice StateChange Write\n      event E';
 
 const cases = [
     { name: 'feedback preserves the backward event edge with a builder drawn first', source: 'module M\n  feature F\n    slice StateView Build\n      reducer R => Items\n        on E\n    slice StateChange Read\n      event E\n      command C\n        reads Items', expected: ['PLAY0516@5'] },

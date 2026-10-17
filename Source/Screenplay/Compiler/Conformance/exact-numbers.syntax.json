@@ -541,6 +541,54 @@
                     }
                   ],
                   "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Removed",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Unlinked",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "tags": []
                 }
               ],
               "name": "Change",
@@ -774,7 +822,7 @@
                     },
                     {
                       "kind": "RemoveWithSyntax",
-                      "event": "Added",
+                      "event": "Removed",
                       "key": {
                         "kind": "LiteralExpressionSyntax",
                         "value": {
@@ -792,7 +840,7 @@
                     },
                     {
                       "kind": "RemoveViaJoinSyntax",
-                      "event": "Added",
+                      "event": "Unlinked",
                       "key": {
                         "kind": "LiteralExpressionSyntax",
                         "value": {

@@ -132,6 +132,8 @@ internal static partial class ProjectionParser
             }
         }
 
+        ProjectionEventScopeValidator.Validate(context, name, blocks);
+
         if (blocks.Count == 0)
         {
             context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
