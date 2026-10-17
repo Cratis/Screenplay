@@ -11,12 +11,12 @@ module Stock
     slice StateChange RequestReservation
       description "Asks for stock to be reserved for an order. Normally the sales public event does it (see RequestReservationFromSales); by hand for a phone order"
       command RequestReservation
-        orderId    OrderId identifier
-        sku        Sku
+        sku        Sku identifier
+        orderId    OrderId
         quantity   Quantity
         movementId MovementId generated
         produces ReservationRequested
-          for orderId
+          for sku
           orderId    = orderId
           sku        = sku
           quantity   = quantity
@@ -87,7 +87,7 @@ module Stock
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
         when append ReservationRequested
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku        = "ACM-1000"
           quantity   = 3
@@ -129,14 +129,14 @@ module Stock
           quantity        = 2
           receivedAt      = "2026-10-02T09:00:00Z"
         when append ReservationRequested
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku        = "ACM-1000"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then events in any order
         then ReservationFailed
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku     = "ACM-1000"
           shortBy = 3
@@ -159,14 +159,14 @@ module Stock
         given SkuBlockedForReceiving
           for "ACM-1000"
         when append ReservationRequested
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku        = "ACM-1000"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then events in any order
         then ReservationFailed
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku     = "ACM-1000"
           shortBy = 3

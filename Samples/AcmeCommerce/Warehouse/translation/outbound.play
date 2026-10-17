@@ -78,7 +78,7 @@ module Stock
 
       specification PublishingAFailedReservation
         when append ReservationFailed
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "ACM-1000"
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku     = "ACM-1000"
           shortBy = 3

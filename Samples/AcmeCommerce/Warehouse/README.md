@@ -51,6 +51,7 @@ translation/    inbound.play (what Catalog, Sales and Purchasing say) and outbou
 ## Honest deviations from the design (all forced by the language today)
 
 - Captures cannot copy or fan out a list ([Screenplay#857](https://github.com/Cratis/Screenplay/issues/857)): P5 and P11 are consumed one scalar line per event.
+  Both captures are keyed by SKU (the stock the event lands on); a repeat for the same SKU is told apart by its order (P5) or receipt (P11) with a second `append ... when <id>`.
 - A command appends to one event source ([#859](https://github.com/Cratis/Screenplay/issues/859)) and a reaction-invoked command cannot generate an id
   ([#858](https://github.com/Cratis/Screenplay/issues/858)): the movement that crossed the reorder point is the P10 `crossingId`.
 - No read model is composed by a performer: a performer query makes every specification of the application unsupported (`PLAY0268`). `ItemPage`
