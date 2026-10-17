@@ -86,7 +86,7 @@ static class McpSpecificationObligations
             var syntax = (QuerySyntax)query.Syntax;
             if (syntax.Authorize is not null || query.Hierarchy.Any(owner => Authorized(index, owner)))
             {
-                Add("SPEC004", query, syntax.Location, "denial", "An authorization denial specification for this query", (spec, value) => value.WhenQuery is { } when && McpReviewSelection.Resolves(index, spec, when.Query, "Query", query) && value.ThenDenied is not null);
+                Add("SPEC004", query, syntax.Location, "denial", "An authorization denial specification for this query", (spec, value) => DeniedQuery(value) is { } name && McpReviewSelection.Resolves(index, spec, name, "Query", query));
             }
         }
         foreach (var concept in index.Declarations.Where(declaration => declaration.Syntax is ConceptSyntax))
@@ -98,7 +98,7 @@ static class McpSpecificationObligations
         foreach (var model in selected.Where(declaration => declaration.Kind == "ReadModel"))
         {
             Add("SPEC006", model, model.Location, "view", "A specification asserting this read model", (spec, value) => (value.ThenReadModels ?? []).Any(view => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model)) || value.ThenAbsentReadModels.Any(view => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model)) ||
-                value.ThenQueries.Any(query => QueryReturns(index, spec, query.Query, model)) || (value.WhenQuery is { } when && (value.ThenResults.Any() || value.ThenNoResult is not null) && QueryReturns(index, spec, when.Query, model)));
+                (DeniedQuery(value) is null && value.ThenQueries.Any(query => QueryReturns(index, spec, query.Query, model))) || (value.WhenQuery is { } when && (value.ThenResults.Any() || value.ThenNoResult is not null) && QueryReturns(index, spec, when.Query, model)));
         }
         foreach (var projection in selected.Where(declaration => declaration.Kind == "Projection"))
         {
@@ -197,6 +197,16 @@ static class McpSpecificationObligations
         var candidates = index.Resolve(new(when.CommandType, ["Command"], spec.Scope, when.Location, "review", spec.Owner));
 
         return candidates is [var command] && command.Syntax is CommandSyntax action && action.Produces.Any(production => McpReviewSelection.Resolves(index, command, production.Event, "Event", @event));
+    }
+
+    static string? DeniedQuery(SpecificationSyntax syntax)
+    {
+        if (syntax.ThenDenied is null) return null;
+        if (syntax.WhenQuery is { } performed) return performed.Query;
+        var acted = new object?[] { syntax.When, syntax.WhenAppended, syntax.WhenClock, syntax.WhenTrigger, syntax.WhenCapture, syntax.WhenRedelivered }.Any(action => action is not null);
+
+        // Like the semantic binder, a when-less denial acts through one query with no expected results.
+        return !acted && syntax.ThenQueries.ToArray() is [var query] && !query.Results.Any() ? query.Query : null;
     }
 
     static bool QueryReturns(McpSyntaxIndex index, McpDeclaration from, string name, McpDeclaration model)
