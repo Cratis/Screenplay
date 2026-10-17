@@ -22,7 +22,9 @@ public sealed partial class SemanticModelBinder
         SemanticPrimitiveType Primitive,
         bool IsCollection,
         ImmutableArray<string> Values,
-        bool IsStringConcept = false)
+        bool IsStringConcept = false,
+        DiagnosticArgument? Owner = null,
+        string? Property = null)
     {
         public bool IsNumber => Primitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber;
 
@@ -158,7 +160,15 @@ public sealed partial class SemanticModelBinder
             _ => kind.ToString()
         };
 
-        ValidationSubject CommandValidationSubject(string property, SemanticTypeReference type)
+        static DiagnosticArguments MatchArguments(ValidationSubject subject, string pattern, int? offset)
+        {
+            var arguments = DiagnosticArguments.Empty.With("pattern", DiagnosticArgument.Text(pattern));
+            if (subject.Owner is { } owner) arguments = arguments.With("subject", owner);
+            if (subject.Property is { } property) arguments = arguments.With("property", DiagnosticArgument.Text(property));
+            return offset is { } at ? arguments.With("offset", DiagnosticArgument.Index(at)) : arguments;
+        }
+
+        ValidationSubject CommandValidationSubject(string property, SemanticTypeReference type, SemanticAddress? owner = null)
         {
             var (primitive, values) = type.Kind switch
             {
@@ -166,7 +176,11 @@ public sealed partial class SemanticModelBinder
                 SemanticTypeReferenceKind.Concept => ConceptShape(type.Target),
                 _ => (SemanticPrimitiveType.Unknown, ImmutableArray<string>.Empty)
             };
-            return new($"'{property}'", primitive, type.IsCollection, values);
+            return new($"'{property}'", primitive, type.IsCollection, values)
+            {
+                Owner = owner is null ? null : DiagnosticArgument.Declaration("command", owner.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice or SemanticAddressPartKind.Declaration).Select(part => part.Key)),
+                Property = property
+            };
         }
 
         ValidationSubject ConceptValidationSubject(ConceptSyntax concept) => new(
@@ -174,7 +188,8 @@ public sealed partial class SemanticModelBinder
             concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type),
             false,
             concept.IsEnum ? [.. concept.Values] : [],
-            concept.Type == "String");
+            concept.Type == "String",
+            DiagnosticArgument.Declaration("concept", [concept.Name]));
 
         (SemanticPrimitiveType Primitive, ImmutableArray<string> Values) ConceptShape(SemanticId id)
         {
@@ -257,7 +272,7 @@ public sealed partial class SemanticModelBinder
                 var check = PortableMatchPattern.Check(pattern);
                 if (check.Replacement is { } replacement)
                 {
-                    Warning(DiagnosticCodes.DeprecatedStudioTextRulePattern, check.Description, rule.Location);
+                    Warning(DiagnosticCodes.DeprecatedStudioTextRulePattern, check.Description, rule.Location, MatchArguments(subject, pattern, null));
                     return new(property, replacement.Kind, SemanticValue.Text(replacement.Value), rule.Message) { Severity = Severity(rule.Severity) };
                 }
 
@@ -267,7 +282,8 @@ public sealed partial class SemanticModelBinder
                     Error(
                         parsed.Invalid ? DiagnosticCodes.InvalidMatchPattern : DiagnosticCodes.PatternOutsidePortableMatchDialect,
                         $"Match pattern on {subject.Description}: {parsed.Description}",
-                        MatchPatternLocation(rule, parsed.Offset));
+                        MatchPatternLocation(rule, parsed.Offset),
+                        MatchArguments(subject, pattern, parsed.Offset));
                     return null;
                 }
 

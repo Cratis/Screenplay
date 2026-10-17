@@ -26,7 +26,7 @@ import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSynt
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
-import { validateMatchOperand } from './MatchOperandValidation';
+import { matchSubject, validateMatchOperand } from './MatchOperandValidation';
 import { isReactionIdentityLine, misplacedReactionIdentity } from './ReactionIdentityParser';
 import { commandReadSources } from './CommandReadSources';
 import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
@@ -145,7 +145,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'authorize') {
             authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'validate') {
-            const validate = parseValidate(context, child, 'command');
+            const validate = parseValidate(context, child, 'command', name);
             if (validate !== undefined) {
                 validations.push(validate);
             }
@@ -214,7 +214,7 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.
-export function parseValidate(context: ParserContext, line: SourceLine, owner: 'command' | 'concept'): ValidateSyntax | undefined {
+export function parseValidate(context: ParserContext, line: SourceLine, owner: 'command' | 'concept', ownerName: string): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
         if (fence !== undefined && fence.content.startsWith('```')) {
@@ -254,7 +254,7 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
                 if (condition !== null) requirements.push({ kind: 'RequirementSyntax', condition, message, severity, location: locationOf(child) });
                 continue;
             }
-            const rule = parseValidationRule(context, owner === 'concept' ? { ...child, content: `value ${child.content}` } : child, owner);
+            const rule = parseValidationRule(context, owner === 'concept' ? { ...child, content: `value ${child.content}` } : child, owner, ownerName);
             if (rule !== undefined) {
                 rules.push(rule);
             }
@@ -263,7 +263,7 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
     }
     if (owner === 'concept' && firstWord(line.content.substring('validate'.length).trimStart()) === 'checksum') {
         const ruleLine = { ...line, content: `value ${line.content.substring('validate'.length).trimStart()}` };
-        const rule = parseValidationRule(context, ruleLine, owner);
+        const rule = parseValidationRule(context, ruleLine, owner, ownerName);
         return rule === undefined ? undefined : { kind: 'DeclarativeValidateSyntax', rules: [rule], requirements: [], location: locationOf(line) };
     }
     if (line.content === 'validate csharp') {
@@ -276,7 +276,7 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
     return undefined;
 }
 
-function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'command' | 'concept'): ValidationRuleSyntax | undefined {
+function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'command' | 'concept', ownerName: string): ValidationRuleSyntax | undefined {
     // Checksum is a new declaration, not enrichment of a formerly opaque Legacy rule.
     const checksum = firstWord(rulePattern.exec(line.content)?.[2] ?? '') === 'checksum';
     const valueContext = owner === 'concept' && !checksum ? context.valueContext : context;
@@ -294,7 +294,7 @@ function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'c
     if (parsed === undefined) {
         return undefined;
     }
-    if (parsed.kind === 'Matches' && parsed.value !== null) validateMatchOperand(context, parsed.value, locationOf(line), line.raw);
+    if (parsed.kind === 'Matches' && parsed.value !== null) validateMatchOperand(context, parsed.value, locationOf(line), line.raw, matchSubject(context, owner, ownerName, match[1]));
     const source = parsed.kind === 'Rule' ? parseRuleImplementation(context, line, owner === 'command') : { file: null, code: null, implementation: null };
     return {
         kind: 'ValidationRuleSyntax',
