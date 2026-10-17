@@ -246,6 +246,8 @@ export const DiagnosticCodes = {
     InvalidSpecificationEventOrder: 'PLAY0359',
     InvalidValidationSeverity: 'PLAY0368',
     VariantRequiresEnteringEvent: 'PLAY0382',
+    /** An event is used more than once in one projection level's event or join set. */
+    DuplicateEventInProjectionScope: 'PLAY0801',
     DuplicateProjectionVariant: 'PLAY0384',
     DuplicateVariantEnteringEvent: 'PLAY0385',
     InvalidSpecificationDenied: 'PLAY0388',
