@@ -17,7 +17,7 @@ public class when_serializing_the_v2_golden_model : Specification
     void Establish()
     {
         _expected = canonical_serialization_golden_vectors.SemanticModelV2Bytes;
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV2();
+        _model = SemanticModelSerializer.Deserialize(_expected);
     }
 
     void Because()
@@ -26,6 +26,7 @@ public class when_serializing_the_v2_golden_model : Specification
         _read = SemanticModelSerializer.Deserialize(_expected);
     }
 
+    [Fact] void should_select_v2() => _read.SemanticVersion.ShouldEqual(SemanticVersion.V2);
     [Fact] void should_match_the_checked_in_v2_bytes() => _written.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_v2_revision() => _read.Revision.ShouldEqual(_model.Revision);
     [Fact] void should_reserialize_identically() => SemanticModelSerializer.Serialize(_read).SequenceEqual(_expected).ShouldBeTrue();

@@ -6,7 +6,7 @@ using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_GoldenVectors;
 
-// With SCREENPLAY_REGENERATE_GOLDEN=1 this rewrites the golden files and fails with GoldenVectorsRegenerated;
+// With SCREENPLAY_REGENERATE_GOLDEN=1 this rewrites the current full golden and sidecars, then deliberately fails;
 // without it, it proves the run compares against the checked-in bytes and never rewrites them.
 public class when_checking_for_a_regeneration_request : Specification
 {

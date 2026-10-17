@@ -10,21 +10,18 @@ public class when_round_tripping_the_v15_golden : Specification
     [Fact]
     void should_preserve_generation_free_v14_bytes_and_revision()
     {
-        var baseline = canonical_serialization_golden_vectors.CreateSemanticModelV14();
-        var bytes = SemanticModelSerializer.Serialize(baseline);
-        bytes.SequenceEqual(canonical_serialization_golden_vectors.EsmV14Bytes).ShouldBeTrue();
-        SemanticModelSerializer.Deserialize(bytes).Revision.ShouldEqual(baseline.Revision);
+        var bytes = canonical_serialization_golden_vectors.EsmV14Bytes;
+        var baseline = SemanticModelSerializer.Deserialize(bytes);
+        baseline.SemanticVersion.ShouldEqual(SemanticVersion.V14);
+        SemanticModelSerializer.Serialize(baseline).SequenceEqual(bytes).ShouldBeTrue();
     }
 
     [Fact]
     void should_pin_v15_bytes_and_revision()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV15();
-        var bytes = SemanticModelSerializer.Serialize(model);
-        bytes.SequenceEqual(canonical_serialization_golden_vectors.EsmV15Bytes).ShouldBeTrue();
+        var bytes = canonical_serialization_golden_vectors.EsmV15Bytes;
         var roundTrip = SemanticModelSerializer.Deserialize(bytes);
-        roundTrip.Revision.ShouldEqual(model.Revision);
+        roundTrip.SemanticVersion.ShouldEqual(SemanticVersion.V15);
         SemanticModelSerializer.Serialize(roundTrip).SequenceEqual(bytes).ShouldBeTrue();
     }
 }

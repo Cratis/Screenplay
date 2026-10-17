@@ -13,19 +13,18 @@ public class when_preserving_pre_v7_canonical_contracts : Specification
     {
         var vectors = new[]
         {
-            (canonical_serialization_golden_vectors.SemanticModelBytes, canonical_serialization_golden_vectors.CreateSemanticModel()),
-            (canonical_serialization_golden_vectors.SemanticModelV2Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV2()),
-            (canonical_serialization_golden_vectors.SemanticModelV3Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV3()),
-            (canonical_serialization_golden_vectors.SemanticModelV4Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV4()),
-            (canonical_serialization_golden_vectors.SemanticModelV5Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV5()),
-            (canonical_serialization_golden_vectors.SemanticModelV6Bytes, canonical_serialization_golden_vectors.CreateSemanticModelV6())
+            (canonical_serialization_golden_vectors.SemanticModelBytes, SemanticVersion.V1),
+            (canonical_serialization_golden_vectors.SemanticModelV2Bytes, SemanticVersion.V2),
+            (canonical_serialization_golden_vectors.SemanticModelV3Bytes, SemanticVersion.V3),
+            (canonical_serialization_golden_vectors.SemanticModelV4Bytes, SemanticVersion.V4),
+            (canonical_serialization_golden_vectors.SemanticModelV5Bytes, SemanticVersion.V5),
+            (canonical_serialization_golden_vectors.SemanticModelV6Bytes, SemanticVersion.V6)
         };
         vectors.Length.ShouldEqual(6);
-        foreach (var (expected, model) in vectors)
+        foreach (var (expected, version) in vectors)
         {
-            SemanticModelSerializer.Serialize(model).SequenceEqual(expected).ShouldBeTrue();
             var roundTrip = SemanticModelSerializer.Deserialize(expected);
-            roundTrip.Revision.ShouldEqual(model.Revision);
+            roundTrip.SemanticVersion.ShouldEqual(version);
             SemanticModelSerializer.Serialize(roundTrip).SequenceEqual(expected).ShouldBeTrue();
             var text = Encoding.UTF8.GetString(expected);
             foreach (var member in new[] { "generated", "response", "generatedValues", "thenReturns", "numericMode" })

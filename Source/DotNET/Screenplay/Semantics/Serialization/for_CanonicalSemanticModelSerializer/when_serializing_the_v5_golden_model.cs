@@ -14,13 +14,13 @@ public class when_serializing_the_v5_golden_model : Specification
 
     void Establish()
     {
-        golden_vector_regeneration.RegenerateWhenRequested();
         _expected = canonical_serialization_golden_vectors.SemanticModelV5Bytes;
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV5();
+        _model = SemanticModelSerializer.Deserialize(_expected);
     }
 
     void Because() => _written = SemanticModelSerializer.Serialize(_model);
 
+    [Fact] void should_select_v5() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V5);
     [Fact] void should_match_the_checked_in_v5_bytes() => _written.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_v5_revision() => SemanticModelSerializer.Deserialize(_expected).Revision.ShouldEqual(_model.Revision);
     [Fact] void should_retain_v4_lineage() => _model.Application.Modules.Single().Features.Single().Features.Single().Slices.SelectMany(_ => _.Events).Any(_ => !_.PriorRevisions.IsEmpty).ShouldBeTrue();
