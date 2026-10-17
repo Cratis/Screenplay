@@ -834,6 +834,9 @@ module Invoicing
           // The ledger opened in 2020; imported invoices cannot predate it.
           dueDate >= "2020-01-01"                  message "Due date must not predate the invoicing ledger"
           dueDate > today                          message "Due date must be in the future"
+          // A customer is a real identity, never the nil Uuid.
+          require customerId != "00000000-0000-0000-0000-000000000000"
+            message "A customer is required"
           invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
             implementation
               hint "Preserve the existing invoice-number acceptance criteria"

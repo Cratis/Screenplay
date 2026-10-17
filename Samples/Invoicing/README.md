@@ -52,6 +52,10 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 `RegisterInvoice` keeps due dates on or after the invoicing ledger's opening date with `dueDate >= "2020-01-01"`. This command rule is admitted by ESM v26: Date orders by calendar date, and DateTime command comparisons use UTC ticks, including equality across offsets. The existing `dueDate > today` and `olderThan < today` remain authoring-only and pinned as `PLAY0268`; `today` is not admitted here. DateTime literals and compared inputs require an explicit offset or Z. Other sample refusals still prevent whole-model executable binding.
 
+## Uuid comparisons
+
+`RegisterInvoice` refuses the nil customer with `require customerId != "00000000-0000-0000-0000-000000000000"`. ESM v28 admits `==` and `!=` between Uuid values (primitives, concepts or identities) in command `require` and `produces when`, and a literal must be in canonical lowercase hyphenated spelling (anything else reports `PLAY0273`). When both sides are concepts they must be the same concept, so a customer cannot be compared with an invoice identity. Ordering, optional operands and Uuid validation rules stay refused. Other sample refusals still prevent whole-model executable binding.
+
 ## Query validation rejections
 
 `RejectingAnIncompleteCurrencyCode` asks for the rate for `"EU"` and asserts `then error`: CurrencyCode requires three characters. Query arguments obey concept rules after authorization in every ESM version; this new rejection specification selects ESM v18. `NotFindingAnUnpublishedCurrency` still uses `then no result` for the valid but absent `"XAU"`. Performer-backed queries remain outside reference executable admission in this showcase.

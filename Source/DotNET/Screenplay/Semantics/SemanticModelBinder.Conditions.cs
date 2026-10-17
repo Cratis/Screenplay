@@ -54,6 +54,7 @@ public sealed partial class SemanticModelBinder
 
             var subject = CommandValidationSubject(property.Name, property.Type);
             if (subject.IsDate) return BindDateCondition(comparison, property, leftOperand, properties, position);
+            if (subject.Primitive == SemanticPrimitiveType.Uuid) return BindUuidCondition(comparison, property, leftOperand, properties, allowReadPaths, position);
             var right = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => new(default, BindLiteral(literal)),

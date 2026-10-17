@@ -106,7 +106,7 @@ internal static partial class SemanticModelValidator
             {
                 if (requirement is null || requirement.Message?.Length == 0) throw new InvalidSemanticContract("A requirement or its message is invalid.");
                 ValidateEnum(requirement.Severity, (SemanticValidationSeverity)(-1), "requirement severity");
-                ValidateCondition(requirement.Condition, properties, allowDateComparisons: true);
+                ValidateCondition(requirement.Condition, properties, allowCommandComparisons: true);
             }
         }
 
@@ -124,7 +124,7 @@ internal static partial class SemanticModelValidator
 
             var sources = Properties(command.Properties);
             ValidateTags(produced.Tags);
-            if (produced.When is not null) ValidateCondition(produced.When, Properties(command.Properties), allowDateComparisons: true);
+            if (produced.When is not null) ValidateCondition(produced.When, Properties(command.Properties), allowCommandComparisons: true);
             if (produced.Condition is not null)
             {
                 var conditionType = ResolveExpression(produced.Condition, SemanticExpressionRootKind.Command, sources);

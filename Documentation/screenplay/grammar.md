@@ -968,6 +968,8 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | 
    command require and produces when (required command properties or literals),
    and in command/property rules (literal only). Concept date rules, reaction
    where, read paths, context and today stay refused. DateTime compares UTC ticks.
+   ESM v28 admits Uuid == and != (same concept when both sides are concepts, canonical
+   literal) in command require and produces when; Uuid validation rules stay refused.
    See Documentation/screenplay/commands.md for the rules the executable model admits.                                                  *)
 
 (* -------------------------------------------------------------- *)
