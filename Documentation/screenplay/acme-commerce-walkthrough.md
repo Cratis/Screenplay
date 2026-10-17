@@ -75,8 +75,8 @@ Four rules about composing a [folder](folders.md) into one application shaped th
   (`PLAY0472`). A consumer therefore declares a foreign public event under a *consumer-local* name,
   `<Event>At<Consumer>` - `ProductPublishedAtStorefront` - and `from "<Origin>"` keeps the lineage.
 - **No `..` imports.** `Shared/` is a sibling folder; compiling a folder walks every `.play` file in it.
-- **A read model's first event creates it.** Every required property is set there with a literal default; otherwise every
-  specification of the application becomes "unsupported".
+- **A read model's first event creates it.** Every required property is set there with a literal default. Specifications
+  that reach an unadmitted projection or depend on its read model report "unsupported"; unrelated specifications still run.
 
 ## The shared kernel
 
