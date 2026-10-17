@@ -2,6 +2,6 @@
 // Warehouse / domain-local language
 // ============================================================
 
-// One drop of a SKU's available stock below its reorder point. It is the identity of the public low-stock event, so a
-// consumer can tell the first crossing from the next one.
-concept CrossingId : Uuid
+// What one movement of stock is called: the reservation of an order line, a manual adjustment. A drop of the shelf below the reorder
+// point is told apart from the next one by the movement that caused it.
+concept MovementId : Uuid

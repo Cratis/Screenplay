@@ -78,8 +78,9 @@ module Stock
       description "Sales confirmed an order line; the warehouse is asked to reserve stock for it"
       direction inbound
 
+      // The order id is read twice in the warehouse's language: as the order the parcel is for and as the movement the reservation is
       event OrderConfirmedAtWarehouse from "Sales"
-        orderId  OrderId
+        orderId  Uuid
         sku      Sku
         quantity Quantity
 
@@ -89,9 +90,53 @@ module Stock
         key orderId
         append ReservationRequested
           when added
-            orderId  = $.orderId
-            sku      = $.sku
-            quantity = $.quantity
+            orderId    = $.orderId
+            sku        = $.sku
+            quantity   = $.quantity
+            movementId = $.orderId
+
+      // The confirmation travels all the way: reserve, plan the parcel, snapshot and publish
+      specification ReservingAConfirmedOrderLine
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append OrderConfirmedAtWarehouse
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then events in any order
+        then ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then ReservationMade
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 37
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 37
 
   feature Receiving
 
@@ -123,3 +168,63 @@ module Stock
             purchaseOrderId = $.purchaseOrderId
             quantity        = $.quantity
             receivedAt      = $.receivedAt
+
+      specification BookingTheFirstDelivery
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        when append PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          sku             = "ACM-1000"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        then events in any order
+        then StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 40
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 40
+
+      // A second delivery of the same SKU is told apart by its receipt
+      specification BookingARepeatDelivery
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          sku             = "ACM-1000"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+          sku             = "ACM-1000"
+          quantity        = 20
+          receivedAt      = "2026-10-05T09:00:00Z"
+        then events in any order
+        then StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 20
+          receivedAt      = "2026-10-05T09:00:00Z"
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 20
+          available = 20
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 20
+          available = 20

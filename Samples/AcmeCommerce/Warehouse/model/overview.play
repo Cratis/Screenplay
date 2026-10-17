@@ -49,7 +49,8 @@ module Stock
       description "Raises the reorder alarm when the SKU is below its reorder point and no alarm is open for it"
       command RaiseReorderAlarm
         sku        Sku identifier
-        crossingId CrossingId generated
+        // What caused the drop (the reservation's order, the adjustment): it tells one crossing from the next
+        crossingId MovementId
         reads StockLevel by sku
         validate
           require StockLevel.available < StockLevel.reorderPoint and StockLevel.alertOpen == false
@@ -62,7 +63,7 @@ module Stock
           suggestedQuantity = StockLevel.reorderQuantity
 
       event ReorderPointCrossed
-        crossingId        CrossingId
+        crossingId        MovementId
         onHand            StockQuantity
         reorderPoint      StockQuantity
         suggestedQuantity Quantity
@@ -72,15 +73,102 @@ module Stock
         description "Watches the shelf after every drop in available stock; one alarm per crossing"
         runs as system role "WarehouseClerk"
         when ReservationMade
+          movementId
           invokes RaiseReorderAlarm
-            sku = $eventSourceId
+            sku        = $eventSourceId
+            crossingId = movementId
             on refused by validation
               acknowledge
         when StockDecreased
+          movementId
           invokes RaiseReorderAlarm
-            sku = $eventSourceId
+            sku        = $eventSourceId
+            crossingId = movementId
             on refused by validation
               acknowledge
+
+      // Once per crossing: the first drop below the reorder point raises the alarm, the next drop while it is open stays silent
+      specification RaisingTheAlarmOnTheFirstCrossing
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 12
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationMade
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          onHand            = 12
+          reorderPoint      = 10
+          suggestedQuantity = 50
+        then StockBelowReorderPoint
+          crossingId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku               = "ACM-1000"
+          onHand            = 12
+          reorderPoint      = 10
+          suggestedQuantity = 50
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 12
+          available = 9
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 12
+          available = 9
+
+      specification StayingSilentWhileTheAlarmIsOpen
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 12
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          onHand            = 9
+          reorderPoint      = 10
+          suggestedQuantity = 50
+        when append ReservationMade
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 12
+          available = 9
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 12
+          available = 9
 
     slice StateView WarehouseDashboard
       description "What needs attention: SKUs below their reorder point, and the parcels in flight"

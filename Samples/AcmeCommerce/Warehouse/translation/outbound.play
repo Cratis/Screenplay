@@ -38,6 +38,7 @@ module Stock
           for "ACM-1000"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then events in any order
         then StockReserved
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -125,7 +126,7 @@ module Stock
       direction outbound
 
       public event StockBelowReorderPoint
-        crossingId        CrossingId
+        crossingId        MovementId
         sku               Sku
         onHand            StockQuantity
         reorderPoint      StockQuantity
@@ -191,6 +192,7 @@ module Stock
           for "ACM-1000"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         given ShipmentPlanned
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku      = "ACM-1000"

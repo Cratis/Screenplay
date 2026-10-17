@@ -1,0 +1,201 @@
+// ============================================================
+// Warehouse / Stock / Levels - where the stock sits: locations and the item page
+// ============================================================
+
+// One shelf of an item as the item page lists it
+type ItemLocation
+  locationCode LocationCode
+  label        String
+  quantity     Quantity
+
+module Stock
+  feature Levels
+
+    slice StateChange RegisterLocation
+      description "Opens a shelf or bin. A location code is used once"
+      command RegisterLocation
+        locationCode LocationCode identifier
+        label        String
+        produces LocationRegistered
+          for locationCode
+          code  = locationCode
+          label = label
+
+      event LocationRegistered
+        code  LocationCode
+        label String
+
+      constraint UniqueLocationCode
+        unique code on LocationRegistered
+        message "A location with that code already exists"
+
+      example ShelfA1 : RegisterLocation
+        locationCode = "A-01-01"
+        label        = "Aisle A, shelf 1"
+
+      specification OpeningALocation
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when ShelfA1
+        then LocationRegistered
+          for "A-01-01"
+          code  = "A-01-01"
+          label = "Aisle A, shelf 1"
+
+      specification RejectingADuplicateLocationCode
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given LocationRegistered
+          for "A-01-02"
+          code  = "A-01-01"
+          label = "Aisle A, shelf 1, again"
+        when ShelfA1
+        then error "A location with that code already exists"
+
+      specification ALocationCodeCannotBeEmpty
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when ShelfA1 locationCode = ""
+        then error "A location needs a code"
+
+      screen OpenLocation
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterLocation
+
+    slice StateChange PutStockInLocation
+      description "Notes that some of a SKU's units sit in a location"
+      command PutStockInLocation
+        sku          Sku identifier
+        locationCode LocationCode
+        quantity     Quantity
+        produces StockPlaced
+          for sku
+          locationCode = locationCode
+          quantity     = quantity
+
+      event StockPlaced
+        locationCode LocationCode
+        quantity     Quantity
+
+      example PutAway : PutStockInLocation
+        sku          = "ACM-1000"
+        locationCode = "A-01-01"
+        quantity     = 20
+
+      specification PuttingStockAway
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when PutAway
+        then StockPlaced
+          for "ACM-1000"
+          locationCode = "A-01-01"
+          quantity     = 20
+
+      screen PutAwayDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action PutStockInLocation
+
+    // ONE read model composed from many events and one join: the item with its numbers, the shelves it sits on and what each shelf is called
+    slice StateView ItemPage
+      description "One SKU in full: the numbers, the locations it sits in and its latest count"
+
+      readmodel ItemDetail
+        sku             Sku key
+        name            ProductName
+        onHand          StockQuantity
+        reserved        StockQuantity
+        available       StockQuantity
+        reorderPoint    StockQuantity
+        blocked         Bool
+        lastCounted     StockQuantity optional
+        locations       ItemLocation[]
+
+      query ItemBySku => ItemDetail optional
+        by sku Sku
+
+      projection ItemDetailProjection => ItemDetail
+        no automap
+        from SkuRegistered
+          sku          = $eventSourceId
+          name         = name
+          onHand       = 0
+          reserved     = 0
+          available    = 0
+          reorderPoint = 10
+          blocked      = false
+        from SkuBlockedForReceiving
+          blocked = true
+        from ReorderPointSet
+          reorderPoint = reorderPoint
+        from StockCounted
+          lastCounted = counted
+        from StockReceived
+          add onHand by quantity
+          add available by quantity
+        from StockIncreased
+          add onHand by quantity
+          add available by quantity
+        from StockDecreased
+          subtract onHand by quantity
+          subtract available by quantity
+        from ReservationMade
+          add reserved by quantity
+          subtract available by quantity
+        from StockDispatched
+          subtract onHand by quantity
+          subtract reserved by quantity
+        children locations identified by locationCode
+          from StockPlaced key locationCode
+            parent $eventSourceId
+            quantity = quantity
+          join location on locationCode
+            with LocationRegistered
+              label = label
+
+      screen ItemPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data ItemDetail via query ItemBySku by sku
+            summary ItemDetail
+              field sku          label "SKU"
+              field name         label "Product"
+              field onHand       label "On hand"
+              field reserved     label "Reserved"
+              field available    label "Available"
+              field reorderPoint label "Reorder at"
+              field lastCounted  label "Last count"
+          related
+            data ItemDetail via query ItemBySku by sku
+            table locations
+              column locationCode label "Location"
+              column label        label "Description"
+              column quantity     label "Units"
+
+      specification TheItemPageShowsNumbersAndShelves
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given LocationRegistered
+          for "A-01-01"
+          code  = "A-01-01"
+          label = "Aisle A, shelf 1"
+        given StockPlaced
+          for "ACM-1000"
+          locationCode = "A-01-01"
+          quantity     = 20
+        then readmodel ItemDetail
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+          onHand    = 40
+          available = 40

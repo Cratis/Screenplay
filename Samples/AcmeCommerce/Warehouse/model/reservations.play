@@ -11,19 +11,22 @@ module Stock
     slice StateChange RequestReservation
       description "Asks for stock to be reserved for an order. Normally the sales public event does it (see RequestReservationFromSales); by hand for a phone order"
       command RequestReservation
-        orderId  OrderId identifier
-        sku      Sku
-        quantity Quantity
+        orderId    OrderId identifier
+        sku        Sku
+        quantity   Quantity
+        movementId MovementId generated
         produces ReservationRequested
           for orderId
-          orderId  = orderId
-          sku      = sku
-          quantity = quantity
+          orderId    = orderId
+          sku        = sku
+          quantity   = quantity
+          movementId = movementId
 
       event ReservationRequested
-        orderId  OrderId
-        sku      Sku
-        quantity Quantity
+        orderId    OrderId
+        sku        Sku
+        quantity   Quantity
+        movementId MovementId
 
       example PhoneOrder : RequestReservation
         orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -58,10 +61,12 @@ module Stock
           orderId
           sku
           quantity
+          movementId
           invokes ReserveStockUnits
-            sku      = sku
-            orderId  = orderId
-            quantity = quantity
+            sku        = sku
+            orderId    = orderId
+            quantity   = quantity
+            movementId = movementId
             on refused by validation
               produces ReservationFailed
                 orderId = orderId
@@ -69,12 +74,107 @@ module Stock
                 // All or nothing: a reservation that cannot be met in full is short by the whole requested quantity
                 shortBy = quantity
 
+      // Success branch: the shelf covers the request, the stock is promised and everything that follows is listed
+      specification ReservingWhatTheShelfCovers
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ReservationMade
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then StockReserved
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 37
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 40
+          available = 37
+
+      // Failure branch: the shelf is short, nothing is promised and the shortage is published
+      specification ReportingAShortage
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 2
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ReservationFailed
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+        then StockReservationFailed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+
+      specification ABlockedSkuIsNeverReserved
+        given SkuRegistered
+          for "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given SkuBlockedForReceiving
+          for "ACM-1000"
+        when append ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then events in any order
+        then ReservationFailed
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+        then StockReservationFailed
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+
     slice StateChange ReserveStockUnits
       description "Promises units of one SKU to an order when the shelf can cover it and the SKU is not blocked"
       command ReserveStockUnits
         sku      Sku identifier
-        orderId  OrderId
-        quantity Quantity
+        orderId    OrderId
+        quantity   Quantity
+        movementId MovementId
         reads StockLevel by sku
         validate
           require StockLevel.blocked == false
@@ -83,12 +183,14 @@ module Stock
             message "The shelf holds less than that"
         produces ReservationMade
           for sku
-          orderId  = orderId
-          quantity = quantity
+          orderId    = orderId
+          quantity   = quantity
+          movementId = movementId
 
       event ReservationMade
-        orderId  OrderId
-        quantity Quantity
+        orderId    OrderId
+        quantity   Quantity
+        movementId MovementId
 
     // The reserved goods become something to pick
     slice Automation PlanShipmentWhenReserved
