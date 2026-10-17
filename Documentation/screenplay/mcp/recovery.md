@@ -58,6 +58,18 @@ edits are rejected rather than guessed. Restore the mapped names/paths, then use
 an explicit proposal for the change. A canonical `workspaceJson` import cannot
 overwrite a different persisted identity authority merely by opening it.
 
+There is one pre-binding exception: opening an unbound model may compute new
+collision-free deterministic Module, Feature and Slice assignments in memory.
+Every document must parse and place, every earlier assignment must still be
+present in source, and all earlier IDs, origins, event revisions, document
+mappings and application metadata must be unchanged. Both reconciliation checks
+refuse any other drift. This exception never permits a supplied `workspaceJson`
+to replace different persisted identity state, and opening never writes it.
+
+If a partial catalog has been persisted, fix the binding error through an MCP
+proposal. Fixing it outside MCP can add bound identities on open and therefore
+require reconciliation. Do not discard identity state to bypass that refusal.
+
 Pending operations block normal model reads, opening and editing. Inspect
 `workspace-state` instead of trying to bypass the marker.
 
@@ -74,6 +86,9 @@ and identity state are installed under the same rollback envelope. Notes proposa
 pin workspace, catalog and notes revisions; `read-proposal view=notes` pages their
 before/after notes. Apply stages and installs the sidecar under that same
 `pending.json` envelope, preserving original notes bytes and access settings.
+A notes apply can also persist container identities computed during open. The
+journal retains the exact earlier identity bytes even when they omit those
+containers; rollback restores both the notes and that earlier identity state.
 
 `workspace-state` has these views:
 
