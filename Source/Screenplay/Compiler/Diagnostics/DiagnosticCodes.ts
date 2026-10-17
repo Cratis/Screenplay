@@ -46,6 +46,7 @@ export const DiagnosticCodes = {
     CaptureEventsFromSeveralOrigins: 'PLAY0687',
     DirectionlessTranslationReactsToOwnCapture: 'PLAY0694',
     PendingIntentWithOtherHandler: 'PLAY0698',
+    CommandHandlerRequiresAttachment: 'PLAY0800', // C# only
     DescribedCommandNotImplemented: 'PLAY0695', // C# only
     DescribedCommandWithoutProductions: 'PLAY0696', // C# only
     DescribedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only

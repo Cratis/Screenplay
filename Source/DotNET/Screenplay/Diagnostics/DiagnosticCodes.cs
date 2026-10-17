@@ -3296,6 +3296,12 @@ public static class DiagnosticCodes
     /// </summary>
     public const string PendingIntentWithOtherHandler = "PLAY0698";
 
+    /// <summary>
+    /// A command handler requires a constrained implementation attachment.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command whose handler requires a constrained implementation attachment.")]
+    public const string CommandHandlerRequiresAttachment = "PLAY0800";
+
     /// <summary>A described command requires a target implementation.</summary>
     public const string DescribedCommandNotImplemented = "PLAY0695";
 

@@ -89,7 +89,7 @@ A handler's [`implementation` hints](commands.md#implementation-intent-handlers-
 | Owner | Authoring wrapper | Executable contract |
 | --- | --- | --- |
 | Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
-| Command handler | Hints with zero or one source | Pending with unconditional `produces`: ESM v23 CommandHandler context/result v1. File/inline remains `PLAY0268`; production-less pending is `PLAY0696`, conditional is `PLAY0697`. |
+| Command handler | Hints with zero or one source | Pending with unconditional `produces`: ESM v23 CommandHandler context/result v1. File/inline requires a constrained implementation attachment (`PLAY0800`); production-less pending is `PLAY0696`, conditional is `PLAY0697`. |
 | Operation execute/compensate phase | Hints with zero or one source | Authoring only; not admitted by any supported executable model (ESM) version yet. |
 | Concept generation rule | No wrapper: exactly one direct file/tagged fence | ESM v21 ValueGeneration, context/result v1, String result; no body is refused with PLAY0268. |
 | Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |

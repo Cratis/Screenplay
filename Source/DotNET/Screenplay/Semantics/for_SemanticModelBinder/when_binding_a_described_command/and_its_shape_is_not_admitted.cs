@@ -34,10 +34,14 @@ public class and_its_shape_is_not_admitted : given.a_semantic_binder
     [Theory]
     [InlineData("          file Choose.cs")]
     [InlineData("          ```csharp\n          return null;\n          ```")]
+    [InlineData("          implementation\n            file Choose.cs")]
+    [InlineData("          implementation\n            ```csharp\n            return null;\n            ```")]
     void should_keep_attached_handlers_unadmitted(string body)
     {
         var result = Bind("module M\n  feature F\n    slice StateChange S\n      command Choose\n        handler\n" + body);
         result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment);
+        diagnostic.Arguments["subject"].ShouldEqual(DiagnosticArgument.Declaration("command", ["M", "F", "S", "Choose"]));
+        result.Diagnostics.ShouldNotContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
     }
 }
