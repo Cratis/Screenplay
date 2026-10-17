@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -15,16 +16,17 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
 {
     static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web);
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments) in _vectors)
+        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments, bind) in _vectors)
         {
             var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: registeredTriggers.Select(triggerName => new TriggerDefinition(triggerName))));
             var result = validate ? compiler.Compile(source) : compiler.Parse(source);
+            if (bind) result = result with { Diagnostics = [.. result.Diagnostics, .. BinderDiagnostics(result.Value!, source)] };
             var reported = result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
             {
@@ -49,6 +51,18 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
 
     [Fact] void should_report_what_the_typescript_compiler_reports() => string.Join(Environment.NewLine, _mismatches).ShouldEqual(string.Empty);
 
+    // The TypeScript compiler reports the match-pattern codes while parsing a validation rule; the C# compiler
+    // reports them in the binder. A vector marked "bind" is run through the binder here so both compilers are held
+    // to the same codes, lines and arguments without moving either phase.
+    static IEnumerable<Diagnostic> BinderDiagnostics(ApplicationSyntax syntax, string source)
+    {
+        var identity = ApplicationIdentity.Create("Conformance");
+        var catalog = SemanticIdentityCatalog.Empty(identity);
+        const string StableKey = "application-document";
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(StableKey), StableKey, "application.play", source);
+        return new SemanticModelBinder().Bind("Conformance", syntax, SemanticDocumentSet.Create([document], catalog)).Diagnostics;
+    }
+
     static string Root([CallerFilePath] string path = "")
     {
         var directory = Directory.GetParent(path);
@@ -60,7 +74,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
         return directory!.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments)> Vectors()
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -71,6 +85,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             vector.TryGetProperty("validate", out var validate) && validate.GetBoolean(),
             vector.TryGetProperty("registeredTriggers", out var triggers) ? triggers.EnumerateArray().Select(trigger => trigger.GetString()!).ToArray() : [],
             vector.TryGetProperty("messages", out var messages) ? messages.EnumerateArray().Select(message => message.GetString()!).ToArray() : null,
-            vector.TryGetProperty("arguments", out var arguments) ? JsonSerializer.Deserialize<DiagnosticArguments[]>(arguments.GetRawText(), _options) : null))];
+            vector.TryGetProperty("arguments", out var arguments) ? JsonSerializer.Deserialize<DiagnosticArguments[]>(arguments.GetRawText(), _options) : null,
+            vector.TryGetProperty("bind", out var bind) && bind.GetBoolean()))];
     }
 }

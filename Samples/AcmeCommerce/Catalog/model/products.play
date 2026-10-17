@@ -237,6 +237,12 @@ module Merchandising
             summary ProductDetail
               field details  label "Description"
               field imageUrl label "Picture"
+          // The custom package's card previews the product the way the shop will show it
+          aside
+            component Acme.Commerce.productCard card
+              property name from query ProductById.name
+              property sku from query ProductById.sku
+              property price from query ProductById.price
 
       specification TheProductPageCollectsEverything
         given ProductDrafted

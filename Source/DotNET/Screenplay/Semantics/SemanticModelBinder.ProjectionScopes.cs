@@ -85,7 +85,8 @@ public sealed partial class SemanticModelBinder
                         Error(
                             DiagnosticCodes.UnsupportedSemanticSyntax,
                             $"Projection variant '{value.Name}' is not admitted by ESM v1: variants are tracked by #185, and Chronicle's projection lowering does not handle them yet (Cratis/Chronicle#4109).",
-                            value.Location);
+                            value.Location,
+                            DiagnosticArguments.ForIssue("Cratis/Screenplay#185"));
                         break;
                     case RemoveWithSyntax or RemoveViaJoinSyntax or ClearWithSyntax or ChildrenSyntax or NestedSyntax:
                         break;
@@ -231,7 +232,7 @@ public sealed partial class SemanticModelBinder
             return @event;
         }
 
-        void Warning(string code, string message, SourceLocation location) =>
-            _diagnostics.Add(new(DiagnosticSeverity.Warning, code, message, location));
+        void Warning(string code, string message, SourceLocation location, DiagnosticArguments? arguments = null) =>
+            _diagnostics.Add(Diagnostic.Warning(code, message, location, arguments ?? DiagnosticArguments.Empty));
     }
 }

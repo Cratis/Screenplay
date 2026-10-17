@@ -1,0 +1,11 @@
+{
+  "name": "@acme/scene.commerce",
+  "version": "1.0.0",
+  "description": "Acme Commerce's custom Scene runtime package: a product card, a stock badge and an order timeline.",
+  "type": "module",
+  "main": "index.js",
+  "exports": { ".": "./index.js", "./styles.css": "./styles.css" },
+  "files": ["index.js", "styles.css"],
+  "peerDependencies": { "react": ">=19" },
+  "license": "MIT"
+}
