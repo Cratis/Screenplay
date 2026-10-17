@@ -260,6 +260,21 @@ module Buying
       event PurchaseOrderCancelled
         reason String
 
+      specification CancellingADraft
+        given caller
+          authenticated
+          role "Buyer"
+        given PurchaseOrderCreated
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        when CancelPurchaseOrder
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          reason          = "Supplier discontinued the product"
+        then PurchaseOrderCancelled
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          reason = "Supplier discontinued the product"
+
       screen Cancel
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
@@ -274,6 +289,22 @@ module Buying
           for purchaseOrderId
 
       event PurchaseOrderArchived
+
+      specification ArchivingAClosedOrder
+        given caller
+          authenticated
+          role "Buyer"
+        given PurchaseOrderCreated
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        given PurchaseOrderCancelled
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          reason = "Supplier discontinued the product"
+        when ArchivePurchaseOrder
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+        then PurchaseOrderArchived
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
 
       screen Archive
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"

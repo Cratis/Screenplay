@@ -52,6 +52,20 @@ module Buying
 
       event PreferredSupplierCleared
 
+      specification ClearingAPreferredSupplier
+        given caller
+          authenticated
+          role "Buyer"
+        given PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        when ClearPreferredSupplier
+          sku = "ACM-1000"
+        then PreferredSupplierCleared
+          for "ACM-1000"
+
       screen ClearSupplier
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
           actions
@@ -130,6 +144,47 @@ module Buying
         released by PurchaseOrderGoodsReceived
         released by PurchaseOrderCancelled
         message "An open purchase order already covers that SKU"
+
+      example Replenish : CreateReplenishmentPurchaseOrder
+        purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+        sku             = "ACM-1000"
+        quantity        = 40
+
+      specification DraftingAReplenishmentOrderByHand
+        given caller
+          authenticated
+          role "Buyer"
+        given PreferredSupplierChosen
+          for "ACM-1000"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          unitPrice  = 62
+          currency   = "NOK"
+        when Replenish
+        then PurchaseOrderCreated
+          for "c0ffee00-0000-4000-8000-000000000001"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        then PurchaseOrderLineAdded
+          for "c0ffee00-0000-4000-8000-000000000001"
+          sku       = "ACM-1000"
+          quantity  = 40
+          unitPrice = 62
+        then ReplenishmentOrderPlaced
+          for "c0ffee00-0000-4000-8000-000000000001"
+          sku = "ACM-1000"
+
+      specification NoPreferredSupplierNoOrder
+        given caller
+          authenticated
+          role "Buyer"
+        when Replenish
+        then error "SkuSourcing 'ACM-1000' does not exist."
+
+      // The automation drafts these; a Buyer can also ask for one by hand from the replenishment queue.
+      screen DraftReplenishment
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CreateReplenishmentPurchaseOrder
 
     slice Automation DraftReplenishmentOrder
       description "A low-stock request becomes a draft purchase order with the preferred supplier"
@@ -260,6 +315,9 @@ module Buying
 
       screen ReplenishmentQueue
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            toolbar actions
+              button draft title "Draft order" slice Buying.Replenishment.CreateReplenishmentPurchaseOrder emphasis primary icon plus
           list
             data ReplenishmentRow[] via query AllReplenishmentRequests
             table ReplenishmentRow
