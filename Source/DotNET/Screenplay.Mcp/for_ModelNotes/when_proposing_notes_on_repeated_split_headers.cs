@@ -24,5 +24,7 @@ public class when_proposing_notes_on_repeated_split_headers : given.a_repeated_s
     [Fact] void should_have_two_explicit_module_headers() => Index.Entries.Count(entry => entry.Node is ModuleSyntax { IsPlacement: false }).ShouldEqual(2);
     [Fact] void should_have_two_explicit_feature_headers() => Index.Entries.Count(entry => entry.Node is FeatureSyntax { IsPlacement: false }).ShouldEqual(2);
     [Fact] void should_resolve_both_dotted_container_addresses() => _proposals.TrueForAll(proposal => proposal.GetProperty("success").GetBoolean()).ShouldBeTrue();
-    [Fact] void should_report_both_application_substitutions() => _proposals.TrueForAll(proposal => proposal.GetProperty("substitutions").GetArrayLength() == 1 && proposal.GetProperty("substitutions")[0].GetProperty("anchor").GetProperty("application").GetBoolean()).ShouldBeTrue();
+
+    // Decision 0093 items 1, 3 and 8: split headers share container identities before binding, without substitution.
+    [Fact] void should_not_substitute_either_logical_container() => _proposals.TrueForAll(proposal => proposal.GetProperty("substitutions").GetArrayLength() == 0).ShouldBeTrue();
 }

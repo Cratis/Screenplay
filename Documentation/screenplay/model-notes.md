@@ -32,17 +32,42 @@ elements retain their notes without rewriting the file. `lastAddress` is only a
 last-known display hint; the server refreshes it when writing notes and never uses
 it to resolve an anchor.
 
-Select syntax-only constructs by their source handle or dotted address and kind.
+Modules, nested features and slices have stable identities even while the model
+does not bind, provided every document parses and has resolved import placement.
+Select them by dotted address and kind, typed address or current source handle:
+the note anchors to that container, without substitution. Fixing binding through
+an MCP proposal preserves its ID and origin. Renaming or moving it before first
+binding carries the ID with it, just as for a bound model. Opening computes new
+container assignments in memory; only apply persists them in `identities.json`,
+including when applying a notes-only proposal.
+
+Commands, events, read models and other in-slice declarations still need binding
+to gain their own identities. Select syntax-only constructs by their source handle or dotted address and kind.
 When a construct has no semantic identity, the server substitutes its nearest
 identified owning slice, feature, module or application and reports that substitution.
 Name the particular construct in the text. Document and authoring-key anchors are
 not supported.
+
+If a document does not parse or place, no new container assignments are made
+anywhere in the model. `open-workspace` and `workspace-state` report those documents
+and the unidentified containers. Duplicate slices report `ambiguous`; an ID already
+held by another assignment reports `idCollision`. New targeting refuses rather
+than substituting around these problems, including targeting descendants of an
+ambiguous container. Existing assignments and notes are retained: resolved notes
+on an ambiguous container or its descendants carry `ambiguous: true`, not an orphan
+state. Read them without a target filter, or by their existing semantic ID.
 
 Removing an identified element leaves its note **orphaned**. The state is computed
 on read, never stored. Its current address is null and `orphanReason` is `unknown`
 when the catalog no longer contains the identity. Source proposals report the IDs
 of newly orphaned notes in `orphanedNotes` before apply. Notes are never silently
 deleted; reanchor or remove one explicitly after reviewing it.
+
+Re-adding an address recreates its deterministic identity when source is complete
+and unambiguous. A note resolves again only if that is its exact former ID. An ID
+carried to the removed address by a rename or assigned externally is different;
+use an explicit reanchor for those notes. Manual AST removal still needs
+`retiredSemanticAddresses`, and manual renames need `semanticRenames`.
 
 ## References and resolutions
 

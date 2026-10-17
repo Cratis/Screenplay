@@ -93,7 +93,9 @@ static class PersistedWorkspaceOpener
                 "UnresolvedPlacement");
         }
 
-        if (missingAssignments || !SemanticIdentityCatalogSerializer.Serialize(catalog).AsSpan().SequenceEqual(SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)))
+        if (missingAssignments ||
+            (!SemanticIdentityCatalogSerializer.Serialize(catalog).AsSpan().SequenceEqual(SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)) &&
+             !WorkspaceContainerIdentities.AllowsReopen(catalog, workspace)))
         {
             throw new ModelRootRefused(
                 "IdentityReconciliationRequired: external source edits would change persisted identities. Restore the previous declaration names and apply an explicit semantic/event rename or retirement proposal. Identity state was not replaced.",

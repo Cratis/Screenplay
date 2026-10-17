@@ -33,7 +33,8 @@ internal sealed partial class McpRecoveryJournal
             _ = root.PathFor(document.Path);
         }
 
-        if ((record.BeforeState is not null && !McpManagedFiles.Equal(record.BeforeState, McpState.Serialize(Before))) ||
+        if ((record.BeforeState is not null && !McpManagedFiles.Equal(record.BeforeState, McpState.Serialize(Before)) &&
+             !McpState.MatchesMaterialization(record.BeforeState, Before)) ||
             !McpManagedFiles.Equal(record.AfterState, McpState.Serialize(After)))
         {
             throw new McpFailure("Recovery journal identity state does not match its canonical workspace snapshots.");

@@ -42,6 +42,15 @@ sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, 
 
     internal byte[] Serialize() => Serialize(Persisted);
 
+    // The disk-open exception also applies to the journal's earlier state: opening may have computed
+    // deterministic containers in memory without writing them. Metadata and mappings must still match exactly.
+    internal static bool MatchesMaterialization(byte[] bytes, ScreenplayWorkspace workspace)
+    {
+        var state = Deserialize(bytes);
+        return WorkspaceContainerIdentities.AllowsReopen(state.Catalog, workspace) &&
+            McpManagedFiles.Equal((state with { Catalog = workspace.IdentityCatalog }).Serialize(), Serialize(workspace));
+    }
+
     static byte[] Serialize(PersistedIdentityState state)
     {
         try

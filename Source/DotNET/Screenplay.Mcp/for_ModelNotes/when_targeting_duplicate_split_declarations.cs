@@ -25,6 +25,6 @@ public class when_targeting_duplicate_split_declarations : given.a_split_notes_w
 
     [Fact] void should_refuse_ambiguous_listing() => _listing.ShouldBeOfExactType<McpFailure>();
     [Fact] void should_refuse_ambiguous_proposals() => _proposing.ShouldBeOfExactType<McpFailure>();
-    [Fact] void should_explain_the_listing_ambiguity() => _listing.Message.ShouldEqual("Unknown or ambiguous note address.");
-    [Fact] void should_explain_the_proposal_ambiguity() => _proposing.Message.ShouldEqual("Unknown or ambiguous note address.");
+    [Fact] void should_explain_the_listing_ambiguity() => _listing.Message.ShouldContain("ambiguous");
+    [Fact] void should_explain_the_proposal_ambiguity() => _proposing.Message.ShouldContain("ambiguous");
 }

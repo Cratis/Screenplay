@@ -83,7 +83,7 @@ public static class ScreenplayWorkspaceSerializer
     /// <returns>The verified workspace, including unsuccessful compilation and diagnostics for invalid-but-editable source.</returns>
     /// <exception cref="InvalidScreenplayWorkspace">
     /// The envelope is malformed, non-canonical, unsupported, duplicated, structurally inconsistent, or has a revision mismatch.
-    /// A catalog that workspace admission would change is rejected rather than silently materialized or replaced.
+    /// Catalog changes are rejected except deterministic unbound container additions admitted by the persisted reopen predicate.
     /// </exception>
     /// <exception cref="InvalidSemanticContract"></exception>
     public static ScreenplayWorkspace Deserialize(ReadOnlySpan<byte> json)
@@ -129,18 +129,25 @@ public static class ScreenplayWorkspaceSerializer
             var workspace = documents.IsEmpty
                 ? ScreenplayWorkspace.CreateEmpty(application, name, catalog)
                 : ScreenplayWorkspace.Create(application, name, documents, catalog);
+            var transport = workspace;
             if (!SemanticIdentityCatalogSerializer.Serialize(catalog).AsSpan().SequenceEqual(
                 SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)))
             {
-                throw new InvalidScreenplayWorkspace("Workspace admission would change the supplied authoritative identity catalog.");
+                if (!WorkspaceContainerIdentities.AllowsReopen(catalog, workspace))
+                {
+                    throw new InvalidScreenplayWorkspace("Workspace admission would change the supplied authoritative identity catalog.");
+                }
+
+                // Verify the original export before returning its deterministically materialized workspace.
+                transport = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, workspace.Documents, catalog, workspace.Compilation);
             }
 
-            if (workspace.Revision != revision)
+            if (transport.Revision != revision)
             {
                 throw new InvalidScreenplayWorkspace("The supplied workspace revision does not match its exact content.");
             }
 
-            if (!json.SequenceEqual(Serialize(workspace)))
+            if (!json.SequenceEqual(Serialize(transport)))
             {
                 throw new InvalidScreenplayWorkspace("Workspace JSON is valid but not canonical.");
             }

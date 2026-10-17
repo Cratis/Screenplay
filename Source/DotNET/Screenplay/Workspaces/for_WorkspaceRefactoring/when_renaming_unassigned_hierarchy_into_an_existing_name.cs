@@ -15,7 +15,8 @@ public class when_renaming_unassigned_hierarchy_into_an_existing_name
     public void should_refuse_to_collapse_distinct_logical_declarations(string hierarchy, SemanticKind kind)
     {
         var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes($"import Other.Thing\n{hierarchy}"));
-        var workspace = ScreenplayWorkspace.Create("App", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("App")));
+        var incomplete = WorkspaceDocument.Create("incomplete", PortablePlayPath.Parse("incomplete.play"), Encoding.UTF8.GetBytes("not valid Screenplay"));
+        var workspace = ScreenplayWorkspace.Create("App", [document, incomplete], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("App")));
         var target = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Address?.Kind == kind && entry.Address.Name == "Left");
         target.SemanticId.ShouldBeNull();
         var result = workspace.ProposeRename(new()
