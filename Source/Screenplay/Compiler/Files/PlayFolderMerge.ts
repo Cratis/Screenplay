@@ -80,7 +80,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
         personas,
-        policies: applications.flatMap(application => application.policies ?? []),
+        policies: declaredInOneFile(applications.flatMap(application => application.policies ?? []), 'policy', diagnostics),
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
         ...presentOnly('exposures', applications.flatMap(application => application.exposures ?? [])),

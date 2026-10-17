@@ -34,3 +34,13 @@ describe('when parsing distinct policy names', () => {
         parse('policy Access\n  require authenticated\npolicy access\n  require authenticated\npolicy Other\n  require authenticated').diagnostics.should.deep.equal([]);
     });
 });
+
+describe('when parsing one policy name declared in two files', () => {
+    it('should report only the repeated declaration across files', () => {
+        const result = parseFolder([
+            { path: 'a.play', source: 'policy IsAdmin\n  require role "Administrator"' },
+            { path: 'b.play', source: 'policy IsAdmin\n  require role "Auditor"' },
+        ]);
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.path}:${diagnostic.location.line}`).should.deep.equal(['PLAY0173@b.play:1']);
+    });
+});
