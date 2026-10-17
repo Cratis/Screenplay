@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -10,13 +11,14 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        SemanticCommandHandler? BindCommandHandler(SemanticAddress address, CommandSyntax command)
+        SemanticCommandHandler? BindCommandHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope)
         {
             if (command.Handler is not { } handler) return null;
             if (!DescribedCommandAdmission.IsDescribed(command))
             {
                 RequireImplementation(SemanticImplementationRole.CommandHandler, address, handler.File, handler.Code);
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' handler requires a constrained implementation attachment.", handler.Location);
+                var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
+                Error(DiagnosticCodes.CommandHandlerRequiresAttachment, $"Command '{command.Name}' handler requires a constrained implementation attachment.", handler.Location, DiagnosticArguments.Empty.With("subject", subject));
                 return null;
             }
 

@@ -63,7 +63,7 @@ public class admission : given.a_semantic_binder
     {
         var result = Bind(Prefix + Command + "        handler\n          file \"handler.cs\"\n");
         result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment).ShouldBeTrue();
     }
 
     [Theory]
