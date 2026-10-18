@@ -7,7 +7,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
-import { PolicyConditionSyntax } from '../Syntax/Policies';
+import { AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { combine, conditionTruth, requirementTruth, Truth } from './AuthorizationFacts';
@@ -94,14 +94,18 @@ function numberText(value: number): string {
 }
 
 // A buildable alternative can contain non-buildable claim branches inside a nested or.
+// Negations are refused before any alternative is chosen, so the not form is kept only for completeness.
 function conditionText(condition: PolicyConditionSyntax): string {
-    if (condition.kind === 'AuthenticatedConditionSyntax') return 'authenticated';
-    if (condition.kind === 'RoleConditionSyntax') return `role ${quote(condition.role)}`;
-    if (condition.kind === 'ClaimConditionSyntax') return `claim ${quote(condition.claim)} matches ${condition.matchesSubject ? 'subject' : condition.matches === null ? quote('') : expressionText(condition.matches)}`;
-    if (condition.kind === 'NotPolicyConditionSyntax') return `not ${conditionText(condition.operand)}`;
+    if (condition.kind !== 'LogicalPolicyConditionSyntax') return condition.kind === 'NotPolicyConditionSyntax' ? `not ${conditionText(condition.operand)}` : atomText(condition);
     const left = conditionText(condition.left);
     const right = conditionText(condition.right);
     return `${condition.left.kind === 'LogicalPolicyConditionSyntax' && condition.left.operator !== condition.operator ? `(${left})` : left} ${condition.operator.toLowerCase()} ${condition.right.kind === 'LogicalPolicyConditionSyntax' ? `(${right})` : right}`;
+}
+
+function atomText(condition: AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax): string {
+    if (condition.kind === 'AuthenticatedConditionSyntax') return 'authenticated';
+    if (condition.kind === 'RoleConditionSyntax') return `role ${quote(condition.role)}`;
+    return `claim ${quote(condition.claim)} matches ${condition.matchesSubject ? 'subject' : condition.matches === null ? quote('') : expressionText(condition.matches)}`;
 }
 
 export function personaDiagnostics(application: ApplicationSyntax): readonly Diagnostic[] {
