@@ -92,3 +92,4 @@
 | [0093](0093-give-containers-identities-before-the-model-binds.md) | Give applications, modules, features and slices identities before the model binds | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0094](0094-report-enum-numeric-identity-changes-in-model-comparison.md) | Report enum numeric identity changes in model comparison | accepted | none | 2026-10-18 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0097](0097-a-performer-query-is-an-opaque-read-not-a-refusal.md) | A performer query is an opaque read, not a refusal of the application | proposed | none | — | — |
+| [0099](0099-trace-lineage-reports-hops-as-a-paged-tree-with-closed-break-statuses.md) | The lineage report pages hops as a tree with closed roles and break statuses | proposed | none | — | — |
