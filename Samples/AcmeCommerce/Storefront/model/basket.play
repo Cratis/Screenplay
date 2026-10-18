@@ -162,8 +162,9 @@ module Shop
       // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
       readmodel BasketSize
         description "How many lines a basket holds"
-        basketId  BasketId key
-        lineCount Int
+        basketId   BasketId key
+        lineCount  Int
+        addedValue Money optional
 
       query GetBasketSize => BasketSize optional
         by basketId BasketId
@@ -177,6 +178,7 @@ module Shop
       projection BasketSizeProjection => BasketSize
         from BasketLineAdded
           increment lineCount
+          add addedValue by unitPrice * quantity
         from BasketLineRemoved
           decrement lineCount
         remove with BasketCleared
@@ -208,6 +210,7 @@ module Shop
             data BasketSize via query GetBasketSize by basketId
             summary BasketSize
               field lineCount label "Lines"
+              field addedValue label "Added value"
           actions
             toolbar basketActions
               button checkout title "Check out" slice Shop.Checkout.CheckOut emphasis primary icon shopping-cart
@@ -228,5 +231,6 @@ module Shop
           quantity  = 1
           unitPrice = 899
         then readmodel BasketSize
-          basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lineCount = 2
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lineCount  = 2
+          addedValue = 997

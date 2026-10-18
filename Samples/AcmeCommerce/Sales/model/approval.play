@@ -73,7 +73,7 @@ module Orders
           actions
             action ApproveOrder
 
-      // The accepting scenario lives in PublishOrderStatus: a command spec cannot list the public event its event cascades into (PLAY0285).
+      // The accepting scenario is ASmallOrderApprovesItself / PublishOrderStatus; this is the denied path.
       specification ARepCannotApprove
         given caller
           authenticated

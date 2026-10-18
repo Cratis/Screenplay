@@ -7,9 +7,10 @@ module Buying
       description "Warehouse says a SKU fell below its reorder point; Purchasing records a replenishment request"
       direction inbound
 
-      // Warehouse calls the id of a crossing; Purchasing reads it in its own language: the id of the purchase order it will open
+      // Warehouse calls the id of a crossing (MovementId); Purchasing keeps it under Warehouse's concept and reads it in its own
+      // language where it uses it: as the id of the purchase order it will open
       event StockBelowReorderPointAtPurchasing from "Warehouse"
-        crossingId        PurchaseOrderId
+        crossingId        MovementId
         sku               Sku
         onHand            StockQuantity
         reorderPoint      StockQuantity
