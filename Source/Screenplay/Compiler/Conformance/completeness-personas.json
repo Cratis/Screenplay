@@ -977,6 +977,81 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "nested buildable alternative retains subject and path claim branches",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or (claim \"owner\" matches subject or claim \"owner\" matches owner or role \"B\")",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'claim \"owner\" matches subject or claim \"owner\" matches owner or role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "nested buildable alternative retains expression claim branches",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or (claim \"owner\" matches $context.tenant or claim \"owner\" matches $identity.id or claim \"owner\" matches $env.TEAM or claim \"owner\" matches $strings.team or claim \"owner\" matches $.owner or claim \"owner\" matches $eventSourceId or claim \"owner\" matches $eventContext.eventSourceId or claim \"owner\" matches $causedBy.subject or role \"B\")",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'claim \"owner\" matches $context.tenant or claim \"owner\" matches $identity.id or claim \"owner\" matches $env.TEAM or claim \"owner\" matches $strings.team or claim \"owner\" matches $.owner or claim \"owner\" matches $eventSourceId or claim \"owner\" matches $eventContext.eventSourceId or claim \"owner\" matches $causedBy.subject or role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "nested buildable alternative retains nonstring claim targets",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or (claim \"owner\" matches 42 or claim \"owner\" matches true or claim \"owner\" matches null or claim \"owner\" matches 0.0000001 or claim \"owner\" matches 1000000000000000000000 or claim \"owner\" matches 1000000000000000100 or role \"B\")",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'claim \"owner\" matches 42 or claim \"owner\" matches true or claim \"owner\" matches null or claim \"owner\" matches 0.0000001 or claim \"owner\" matches 1000000000000000000000 or claim \"owner\" matches 1000000000000000128 or role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
         }
     ]
 }
