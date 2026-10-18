@@ -7,6 +7,7 @@ import { InteractionAncestor } from './InteractionAlternatives';
 // Each attachment is validated against its own nearest subject after workspace assembly.
 export interface InteractionUse {
     readonly behavior: string;
+    readonly arguments: readonly { readonly name: string; readonly value: string }[];
     readonly location: SourceLocation;
     readonly ancestors: readonly InteractionAncestor[];
 }

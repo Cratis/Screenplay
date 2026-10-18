@@ -18,6 +18,7 @@ import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReadModelKeys } from '../Parsing/ReadModelKeyValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
+import { effectiveStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateGuardedActions } from '../Parsing/GuardedActionValidator';
 import { validatePersonaCallers } from '../Parsing/PersonaCallerValidator';
 import { validatePurposes } from '../Parsing/PurposeValidator';
@@ -87,7 +88,8 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
     context.interactionBehaviors.push(...parsed.flatMap(document => document.interactionBehaviors));
-    context.interactionUses.push(...parsed.flatMap(document => document.interactionUses));
+    context.interactionUses.push(...effectiveStructuralInteractions(merged.value).filter(site => 'behavior' in site),
+        ...parsed.flatMap(document => document.interactionUses).filter(site => site.ancestors.some(ancestor => ancestor.keyword === 'screen')));
     context.continuationValues.push(...parsed.flatMap(document => document.continuationValues));
     validateSpecificationCases(merged.value, context);
     validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);

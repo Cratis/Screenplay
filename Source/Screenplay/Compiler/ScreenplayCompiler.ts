@@ -3,6 +3,7 @@
 
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
+import { recordStructuralInteractions } from './Parsing/StructuralInteractionSites';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples, validateSpecificationExampleTypes } from './Parsing/SpecificationCommandExamples';
@@ -76,6 +77,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     context.interactionAncestors = interactionAncestry(lines);
     context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement, languages);
     let value = parseApplication(context, lines, placement);
+    recordStructuralInteractions(value, context);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
         validateApplicationHandlers(value, context);

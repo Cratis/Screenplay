@@ -53,6 +53,7 @@ const where = pattern(`^where${dotNetWhitespace}+([^\\n]+)$`);
 const actions = new Set(['execute', 'navigate', 'open', 'close', 'refresh', 'set', 'notify', 'confirm', 'raise']);
 const behavior = pattern(`^behavior${dotNetWhitespace}+([A-Za-z_]\\w*)$`);
 const uses = pattern(`^uses${dotNetWhitespace}+([A-Za-z_]\\w*)$`);
+const behaviorArgument = pattern(`^([A-Za-z_]\\w*)${dotNetWhitespace}+([^\\n]+)$`);
 
 // Interaction bodies remain opaque in the TS AST. Check their structure instead of silently accepting
 // alternatives the C# compiler refuses. Input collection supplies only significant, non-fenced lines.
@@ -62,7 +63,13 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
     for (let index = 0; index < lines.length; index++) {
         const header = lines[index];
         const attachment = uses.exec(header.content);
-        if (attachment !== null) context.interactionUses.push({ behavior: attachment[1], location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [] });
+        if (attachment !== null) context.interactionUses.push({
+            behavior: attachment[1], location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [],
+            arguments: interactionBody(lines, header).flatMap(line => {
+                const match = behaviorArgument.exec(line.content);
+                return match === null ? [] : [{ name: match[1], value: match[2].trim() }];
+            }),
+        });
         const on = trigger.exec(header.content);
         if (on === null || on[1].startsWith('row-click ')) continue;
         const body: SourceLine[] = [];

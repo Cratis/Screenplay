@@ -14,7 +14,7 @@ import { RefusalDeclarations } from './RefusalDeclarations';
 export function validateGuardedActions(application: ApplicationSyntax, context: ParserContext): void {
     const declarations = new RefusalDeclarations(application);
     const interactions = new GuardedInteractions(declarations, context);
-    interactions.structural();
+    interactions.structural(application);
     for (const { slice } of declarations.slices) {
         for (const screen of slice.screens) validateContainer(screen.directives, [], slice, declarations, context, interactions);
     }

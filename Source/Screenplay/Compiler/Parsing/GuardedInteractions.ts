@@ -4,52 +4,21 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ScreenDataSyntax } from '../Syntax/Screens';
-import { SliceSyntax } from '../Syntax/Structure';
+import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { comparisons, validateArguments, validateItemPath, viewProperties } from './GuardedActionInputs';
 import { validateAlternativeShadowing } from './GuardedActionShadowing';
-import { GuardedInteractionBinding, InteractionAncestor } from './InteractionAlternatives';
+import { GuardedInteractionBinding } from './InteractionAlternatives';
+import { effectiveStructuralInteractions, sameInteractionLocation } from './StructuralInteractionSites';
 import { InteractionUse } from './InteractionUse';
 import { ParserContext } from './ParserContext';
 import { RefusalDeclarations } from './RefusalDeclarations';
-
-export const sameInteractionLocation = (first: SourceLocation, second: SourceLocation): boolean =>
-    first.path === second.path && first.line === second.line && first.column === second.column;
-
-// C# visits child collections in this order rather than their authored order.
-const structuralChildren: Readonly<Record<string, readonly string[]>> = {
-    application: ['behavior', 'layout', 'module'],
-    module: ['screen template', 'dialog', 'form', 'contribute', 'feature', 'on', 'uses'],
-    feature: ['feature', 'slice', 'contribute', 'on', 'uses'],
-    layout: ['slot', 'arrangement', 'on', 'uses'],
-    'screen template': ['slot', 'arrangement', 'on', 'uses'],
-    dialog: ['slot', 'arrangement', 'on', 'uses'],
-};
-
-function structuralOrder<T extends { readonly location: SourceLocation; readonly ancestors: readonly InteractionAncestor[] }>(sites: readonly T[], isUse: (site: T) => boolean): readonly T[] {
-    const children = (group: readonly T[], depth: number, parent: string): T[] => {
-        const groups = new Map<string, { ancestor: InteractionAncestor; sites: T[] }>();
-        for (const site of group) {
-            const ancestor = site.ancestors[depth] ?? { keyword: isUse(site) ? 'uses' : 'on', location: site.location };
-            const key = JSON.stringify(ancestor.location);
-            if (!groups.has(key)) groups.set(key, { ancestor, sites: [] });
-            groups.get(key)!.sites.push(site);
-        }
-        const order = structuralChildren[parent] ?? [];
-        const rank = (keyword: string) => order.includes(keyword) ? order.indexOf(keyword) : order.length;
-        return [...groups.values()].sort((first, second) => rank(first.ancestor.keyword) - rank(second.ancestor.keyword))
-            .flatMap(entry => ['on', 'uses'].includes(entry.ancestor.keyword) ? entry.sites : children(entry.sites, depth + 1, entry.ancestor.keyword));
-    };
-    return children(sites, 0, 'application');
-}
 
 // Subject-dependent interaction checks share the guarded screen-action path and input validators.
 export class GuardedInteractions {
     constructor(private readonly declarations: RefusalDeclarations, private readonly context: ParserContext) {}
 
-    structural(): void {
-        const sites = [...this.context.guardedInteractions, ...this.context.interactionUses]
-            .filter(site => !site.ancestors.some(ancestor => ancestor.keyword === 'screen'));
-        for (const site of structuralOrder(sites, site => 'behavior' in site)) {
+    structural(application: ApplicationSyntax): void {
+        for (const site of effectiveStructuralInteractions(application)) {
             if ('behavior' in site) this.validateUse(site, [], undefined);
             else if (site.ancestors.some(ancestor => ancestor.keyword === 'behavior')) validateAlternativeShadowing(site.alternatives, this.context);
             else this.validate(site, [], undefined, this.context);
