@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0803 | Both compilers and local editor validation warn about exponential ambiguity in admitted `matches` patterns, with the same subexpression, location and suggestion. Analysis silently skips patterns above 256 expanded positions or 500,000 construction/edge-pair steps; it does not check polynomial ambiguity. |
 | PLAY0667–PLAY0671 | Enum numbering syntax, uniqueness and int32 bounds. PLAY0671 is an opt-in completeness Information hint for unnumbered enums used by event properties; editors preserve it when supplied with completeness diagnostics, but ordinary validation does not report it. Numbering is opt-in through a refactoring, not an automatic correctness repair. |
 | PLAY0663–PLAY0665 | Command-only production routes, redundant overrides, and observer filter syntax, source/stream resolution and event-only triggers. |
 | PLAY0660, PLAY0662 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |

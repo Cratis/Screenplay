@@ -135,6 +135,10 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0699` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
 | `PLAY0699` | `pattern` | text | no | The decoded match pattern. | — |
 | `PLAY0699` | `offset` | index | no | The zero-based UTF-16 offset in the pattern where the problem starts. | — |
+| `PLAY0803` | `subject` | declaration | no | The command or concept that owns the match rule. | — |
+| `PLAY0803` | `property` | text | yes | The constrained command property; absent for a concept's own value. | — |
+| `PLAY0803` | `pattern` | text | no | The decoded match pattern. | — |
+| `PLAY0803` | `offset` | index | no | The zero-based UTF-16 offset of the ambiguous subexpression. | — |
 | `PLAY0781` | `command` | declaration | no | The command declaring the read. | — |
 | `PLAY0781` | `read` | text | no | The read model name or alias as the command reads it. | — |
 | `PLAY0781` | `readModel` | declaration | no | The read model declaration that cannot be protected. | — |
@@ -1247,6 +1251,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0383` | Error | A projection-level shared handler maps a property absent from a variant's known read-model shape. Unknown shapes remain undecided. |
 | `PLAY0801` | Error | An event is used more than once at one projection level across `from`, `remove with`, `remove via join` and `clear with`, or more than once in that level's separate join set. Each children, nested and variant block starts fresh sets. One event cannot update two rows of the same level; see [from-event](projections/from-event.md). |
 | `PLAY0802` | Error | An event source's stored name is exactly `Default`, or an event stream's stored name is exactly `All`. The stored name is the `id` pin when present, otherwise the declaration name. Choose a nonreserved stored name; comparison is ordinal. See [event sources](event-sources.md). |
+| `PLAY0803` | Warning | An admitted `matches` pattern has exponential ambiguity in browser backtracking. Names the repeated subexpression and suggests a simple equivalent where available. Both compilers check up to 256 expanded positions and 500,000 construction/edge-pair steps; exceeding either cap silently skips analysis. Polynomial ambiguity is not checked. See [portable match dialect](commands.md#portable-match-dialect). |
 | `PLAY0384` | Error | Two variants in one projection have the same name. |
 | `PLAY0385` | Error | An entering event is claimed more than once in one projection. |
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |

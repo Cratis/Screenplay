@@ -37860,6 +37860,43 @@
       "title": "An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0803",
+      "name": "AmbiguousMatchPattern",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An admitted match pattern has exponentially ambiguous browser backtracking paths.",
+      "reserved": false,
+      "retired": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "kind": "declaration",
+          "optional": false,
+          "meaning": "The command or concept that owns the match rule."
+        },
+        {
+          "name": "property",
+          "kind": "text",
+          "optional": true,
+          "meaning": "The constrained command property; absent for a concept\u0027s own value."
+        },
+        {
+          "name": "pattern",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The decoded match pattern."
+        },
+        {
+          "name": "offset",
+          "kind": "index",
+          "optional": false,
+          "meaning": "The zero-based UTF-16 offset of the ambiguous subexpression."
+        }
+      ]
     }
   ],
   "mcpTools": [
