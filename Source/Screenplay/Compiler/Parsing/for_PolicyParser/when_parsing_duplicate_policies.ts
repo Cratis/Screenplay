@@ -44,3 +44,20 @@ describe('when parsing one policy name declared in two files', () => {
         result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.path}:${diagnostic.location.line}`).should.deep.equal(['PLAY0173@b.play:1']);
     });
 });
+
+describe('when parsing one policy name repeated within and across files', () => {
+    it('should report each declaration of the second file as repeated across files only', () => {
+        const result = parseFolder([
+            { path: 'a.play', source: 'policy Access\n  require authenticated' },
+            { path: 'b.play', source: 'policy Access\n  require authenticated\npolicy Access\n  require authenticated' },
+        ]);
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.path}:${diagnostic.location.line}`).should.deep.equal(['PLAY0173@b.play:1', 'PLAY0173@b.play:3']);
+    });
+    it('should keep the diagnostic for a repetition within the file that declares the policy first', () => {
+        const result = parseFolder([
+            { path: 'a.play', source: 'policy Access\n  require authenticated\npolicy Access\n  require authenticated' },
+            { path: 'b.play', source: 'policy Access\n  require authenticated' },
+        ]);
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.path}:${diagnostic.location.line}`).should.have.members(['PLAY0168@a.play:3', 'PLAY0173@b.play:1']);
+    });
+});
