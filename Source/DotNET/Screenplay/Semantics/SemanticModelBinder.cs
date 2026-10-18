@@ -45,6 +45,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesAcmeSecondAdmissions(application)) return (LanguageVersion.V30, SemanticVersion.V30);
         if (SemanticModelValidator.UsesAcmeAdmissions(application)) return (LanguageVersion.V29, SemanticVersion.V29);
         if (SemanticModelValidator.UsesUuidComparisons(application)) return (LanguageVersion.V28, SemanticVersion.V28);
         if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
@@ -229,7 +230,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV29Support.EnsureSupported(languageVersion, semanticVersion);
+            if (context.UsesV30 && !semanticVersion.IsAtLeast(SemanticVersion.V30))
+            {
+                languageVersion = LanguageVersion.V30;
+                semanticVersion = SemanticVersion.V30;
+                application = BindingContext.PromoteV2Destinations(application);
+                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
+            }
+
+            EsmSchemaV30Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -355,6 +364,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal bool UsesPublicEvents { get; set; }
 
         internal bool UsesV10 { get; set; }
+
+        internal bool UsesV30 { get; set; }
 
         internal bool UsesStoredEventNames { get; set; }
 

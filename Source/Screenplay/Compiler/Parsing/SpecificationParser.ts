@@ -6,7 +6,7 @@ import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
     SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
@@ -21,7 +21,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { addFixtureValue, addInlineValue } from './SpecificationExampleParser';
 import { rejectOperationChildren } from './OperationParser';
-import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
+import { generatedFixturePattern, generatedFixturePrefix, parseConcrete, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
@@ -46,6 +46,8 @@ const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const nativeMappingPattern = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const givenClockPrefix = pattern('^given\\s+clock\\b');
 const givenCapturePrefix = pattern('^given\\s+capture\\b');
+const givenGeneratedPrefix = pattern('^given\\s+generated\\b');
+const givenGeneratedPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
 const whenTriggerPrefix = pattern('^when\\s+trigger\\b');
 const whenCapturePrefix = pattern('^when\\s+capture\\b');
@@ -84,6 +86,7 @@ interface SpecificationBody {
     thenQueries: SpecificationQuerySyntax[];
     givenClock: SpecificationClockSyntax | null;
     givenCaptures: SpecificationCaptureSyntax[];
+    givenGenerated?: SpecificationGeneratedValueSyntax[];
     whenClock: SpecificationClockSyntax | null;
     whenTrigger: SpecificationTriggerSyntax | null;
     whenCapture: SpecificationCaptureSyntax | null;
@@ -222,6 +225,11 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             skipBody(context, line.indent);
         } else {
             body.givenClock = parseClock(context, line, 'given');
+        }
+    } else if (givenGeneratedPrefix.test(line.content)) {
+        const pinned = parseGivenGenerated(context, line);
+        if (pinned !== null) {
+            (body.givenGenerated ??= []).push(pinned);
         }
     } else if (givenCapturePrefix.test(line.content)) {
         const capture = parseCapture(context, line, 'given');
@@ -499,6 +507,23 @@ function parseClock(context: ParserContext, line: SourceLine, keyword: string): 
         return null;
     }
     return { kind: 'SpecificationClockSyntax', instant: match[2], location: locationOf(line) };
+}
+
+function parseGivenGenerated(context: ParserContext, line: SourceLine): SpecificationGeneratedValueSyntax | null {
+    const match = givenGeneratedPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidGeneratedFixture, "Expected 'given generated <Command>.<property> = <value>' with exactly one concrete value.", locationOf(line));
+        context.skipBlock(line.indent);
+        return null;
+    }
+    const location = locationOf(line);
+    const source = parseConcrete(context, match[3], { ...location, column: location.column + line.content.indexOf(match[3], line.content.indexOf('=') + 1) }, DiagnosticCodes.InvalidGeneratedFixture);
+    const child = context.peekChild(line.indent);
+    if (child !== undefined) {
+        context.error(DiagnosticCodes.InvalidGeneratedFixture, 'A pinned generated value cannot have child directives.', locationOf(child));
+        context.skipBlock(line.indent);
+    }
+    return source === null ? null : { kind: 'SpecificationGeneratedValueSyntax', command: match[1], property: match[2], source, location };
 }
 
 function parseCapture(context: ParserContext, line: SourceLine, keyword: string): SpecificationCaptureSyntax | null {

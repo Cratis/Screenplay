@@ -156,7 +156,7 @@ internal static partial class SemanticModelValidator
         }
 
         bool IsIdentityDestination(SemanticProducedEvent produced, SemanticCommand command, SemanticProperty? destinationProperty) =>
-            destinationProperty is not null && (destinationProperty.IsIdentifier || produced.Route is not null || HasGeneratedIdentifier(command));
+            destinationProperty is not null && (destinationProperty.IsIdentifier || produced.Route is not null || HasGeneratedIdentifier(command) || _semanticVersion.IsAtLeast(SemanticVersion.V30));
 
         bool HasGeneratedIdentifier(SemanticCommand command) =>
             _semanticVersion.IsAtLeast(SemanticVersion.V7) && command.Properties.Any(value => value.IsGenerated && value.IsIdentifier);

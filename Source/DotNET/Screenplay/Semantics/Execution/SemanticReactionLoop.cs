@@ -22,11 +22,31 @@ namespace Cratis.Screenplay.Semantics.Execution;
 internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator, SemanticExecutionPlan plan, SemanticWorld world)
 {
     /// <summary>
+    /// Pins the values the commands that reactions invoke receive for their generated properties, each invocation taking the
+    /// next one pinned for its command and property.
+    /// </summary>
+    /// <param name="pinned">The pinned values in authored order.</param>
+    internal void Pin(ImmutableArray<SemanticSpecificationGeneratedValue> pinned)
+    {
+        if (pinned.IsDefaultOrEmpty) return;
+        foreach (var value in pinned)
+        {
+            if (!_pinned.TryGetValue((value.Command, value.Property), out var queue)) _pinned[(value.Command, value.Property)] = queue = new();
+            queue.Enqueue(value.Value);
+        }
+    }
+
+    ImmutableArray<SemanticPropertyValue> TakePinned(SemanticCommand command) =>
+        [.. command.Properties.Where(property => property.IsGenerated && _pinned.TryGetValue((command.Id, property.Id), out var queue) && queue.Count > 0)
+            .Select(property => new SemanticPropertyValue(property.Id, _pinned[(command.Id, property.Id)].Dequeue()))];
+
+    /// <summary>
     /// The most facts one scenario may append before its reactions are taken not to settle.
     /// </summary>
     internal const int MaximumFacts = 1_000;
 
     readonly Queue<(SemanticFact Fact, DateTimeOffset? Occurred)> _pending = new();
+    readonly Dictionary<(SemanticId Command, SemanticId Property), Queue<SemanticValue>> _pinned = [];
     readonly List<SemanticFact> _facts = [];
     readonly SemanticValueValidator _validator = new(
         plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
@@ -304,7 +324,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             Occurrence = occurrence,
             ReactionOrigin = reaction.Id,
             RunsAs = reaction.RunsAs,
-            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
+            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty,
+            GeneratedValues = TakePinned(command)
         };
 
         var result = evaluator.Execute(plan, World, request);
@@ -322,7 +343,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         }
 
         // An invoked response is computed by the evaluator, but is not the initiating command's response.
-        // Invocation has no generation fixture channel; reached generation reports IdentityAllocation.
+        // A value the specification pinned with 'given generated' reaches generation; an unpinned one reports IdentityAllocation.
         return AcceptCommand(accepted, occurrence?.Occurred);
     }
 

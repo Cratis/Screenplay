@@ -40,6 +40,7 @@ internal static class SemanticScenario
         var occurrence = clock is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
 
         var loop = new SemanticReactionLoop(evaluator, plan, world);
+        loop.Pin(expected.GivenGenerated);
         SemanticExecutionResult? failure;
         SemanticExecutionResponse? response = null;
         try

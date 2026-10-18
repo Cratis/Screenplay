@@ -158,6 +158,7 @@ public sealed partial class SemanticModelBinder
                 ThenAbsentReadModels = thenAbsentReadModels,
                 GivenClock = specification.GivenClock is null ? null : BindClock(specification.GivenClock),
                 GivenCaptures = [.. specification.GivenCaptures.Select(BindSpecificationCapture).OfType<SemanticSpecificationCapture>()],
+                GivenGenerated = [.. specification.GivenGenerated.Select(BindSpecificationGenerated).OfType<SemanticSpecificationGeneratedValue>()],
                 WhenClock = specification.WhenClock is null ? null : BindClock(specification.WhenClock),
                 WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),
                 WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture)

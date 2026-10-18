@@ -116,6 +116,47 @@ static class ContractAdmission
                   add total by amount * 2
         """;
 
+    internal const string AcmeSecondAdmissions = """
+        concept ShipmentId : Uuid
+        module M
+          feature F
+            slice StateChange S
+              command Place
+                orderId String identifier
+                productId String
+                produces Placed
+                  for orderId
+                  orderId = orderId
+                produces Reserved
+                  for productId
+                  productId = productId
+              event Placed
+                orderId String
+              event Reserved
+                productId String
+            slice Automation A
+              event Confirmed
+                orderId String
+              event Created
+                shipmentId ShipmentId
+              command Create
+                shipmentId ShipmentId generated identifier
+                produces Created
+                  for shipmentId
+                  shipmentId = shipmentId
+              reaction R
+                when Confirmed
+                  orderId
+                  invokes Create
+              specification Pinned
+                given generated Create.shipmentId = "11111111-1111-4111-8111-111111111111"
+                when append Confirmed
+                  orderId = "o1"
+                then Created
+                  for "11111111-1111-4111-8111-111111111111"
+                  shipmentId = "11111111-1111-4111-8111-111111111111"
+        """;
+
     internal const string ProtectedReads = """
         command reads protected
         module M
@@ -201,7 +242,8 @@ static class ContractAdmission
                 CommandUuidComparisons,
                 CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy < requestedBy", StringComparison.Ordinal),
                 CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy != raw", StringComparison.Ordinal),
-                AcmeAdmissions
+                AcmeAdmissions,
+                AcmeSecondAdmissions
             ]),
         new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
         new(

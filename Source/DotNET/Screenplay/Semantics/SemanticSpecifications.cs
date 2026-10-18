@@ -188,6 +188,12 @@ public sealed record SemanticSpecification(
     public ImmutableArray<SemanticSpecificationCapture> GivenCaptures { get; init; } = [];
 
     /// <summary>
+    /// Gets the values pinned for the generated properties of the commands that reactions invoke, in the order the invocations
+    /// take them (ESM v30).
+    /// </summary>
+    public ImmutableArray<SemanticSpecificationGeneratedValue> GivenGenerated { get; init; } = [];
+
+    /// <summary>
     /// Gets the instant the clock advances to, in round-trip UTC form, firing every clock trigger due on the way.
     /// </summary>
     public string? WhenClock { get; init; }
@@ -222,3 +228,11 @@ public sealed record SemanticSpecificationTrigger(SemanticReactionTriggerKind Ki
 /// <param name="Capture">The capture semantic identity.</param>
 /// <param name="Record">The source record.</param>
 public sealed record SemanticSpecificationCapture(SemanticId Capture, SemanticCaptureRecord Record);
+
+/// <summary>
+/// Represents a value pinned for a generated property of a command a reaction invokes.
+/// </summary>
+/// <param name="Command">The invoked command.</param>
+/// <param name="Property">The generated command property.</param>
+/// <param name="Value">The pinned value; each invocation takes the next one pinned for its command and property.</param>
+public sealed record SemanticSpecificationGeneratedValue(SemanticId Command, SemanticId Property, SemanticValue Value);

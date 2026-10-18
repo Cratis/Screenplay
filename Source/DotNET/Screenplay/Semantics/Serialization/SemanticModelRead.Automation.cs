@@ -378,6 +378,28 @@ internal static partial class SemanticModelRead
         return new(target) { Field = field, Value = value };
     }
 
+    internal static SemanticSpecificationGeneratedValue SpecificationGeneratedValue(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "pinned generated value");
+        var seen = NewSeen();
+        SemanticId command = default;
+        SemanticId target = default;
+        SemanticValue? value = null;
+        while (NextProperty(ref reader, seen, "pinned generated value") is { } property)
+        {
+            switch (property)
+            {
+                case "command": command = SemanticId.Parse(String(ref reader, property)); break;
+                case "targetProperty": target = SemanticId.Parse(String(ref reader, property)); break;
+                case "value": value = Nested(ref reader, Value, property); break;
+                default: throw Unknown(property, "pinned generated value");
+            }
+        }
+
+        Required(command.IsSet && target.IsSet && value is not null, "pinned generated value");
+        return new(command, target, value!);
+    }
+
     internal static SemanticSpecificationCapture SpecificationCapture(ref Utf8JsonReader reader)
     {
         Object(ref reader, "specification capture");
@@ -542,6 +564,8 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticSpecificationCapture> GivenCaptures { get; private set; } = [];
 
+        public ImmutableArray<SemanticSpecificationGeneratedValue> GivenGenerated { get; private set; } = [];
+
         public string? WhenClock { get; private set; }
 
         public SemanticSpecificationTrigger? WhenTrigger { get; private set; }
@@ -554,6 +578,7 @@ internal static partial class SemanticModelRead
             {
                 case "givenClock": GivenClock = String(ref reader, property); break;
                 case "givenCaptures": GivenCaptures = Array(ref reader, SpecificationCapture, property); break;
+                case "givenGenerated": GivenGenerated = Array(ref reader, SpecificationGeneratedValue, property); break;
                 case "whenClock": WhenClock = String(ref reader, property); break;
                 case "whenTrigger": RequiredToken(ref reader, JsonTokenType.StartObject, property); WhenTrigger = SpecificationTrigger(ref reader); break;
                 default: RequiredToken(ref reader, JsonTokenType.StartObject, property); WhenCapture = SpecificationCapture(ref reader); break;
