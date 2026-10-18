@@ -50,12 +50,12 @@ describe('when comparing production routes', () => {
         expect(mismatches[0].location.line).toBe(8);
     });
     it('should defer destination comparison when an inline production has no identifier to infer', () => {
-        const result = parse('eventsource Account\n  identifier Uuid\n  stream All\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        value String\n        stream Account.All\n        produces event Changed\n          value String = value');
+        const result = parse('eventsource Account\n  identifier Uuid\n  stream Main\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        value String\n        stream Account.Main\n        produces event Changed\n          value String = value');
         expect(result.diagnostics).toEqual([]);
         const command = result.value.modules[0].features[0].slices[0].commands[0];
         expect(command.properties.every(property => !property.isIdentifier)).toBe(true);
         expect(command.produces[0].for).toBeNull();
-        expect(command.stream!.stream).toBe('All');
+        expect(command.stream!.stream).toBe('Main');
     });
     it.each(['false', '1.5'])('should refuse unsupported scalar stream id %s', value => {
         const exact = value === '1.5' ? 'numbers exact\nconcept Period : Int\n' : '';
@@ -64,7 +64,7 @@ describe('when comparing production routes', () => {
         expect(result.value.modules[0].features[0].slices[0].commands[0].stream!.streamId).not.toBeNull();
     });
     it('should not treat a retained property candidate as an authoritative route during draft validation', () => {
-        const parsed = parse('import Account.All\ntype All\n  value String\neventsource Account\n  stream All\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.All').value;
+        const parsed = parse('import Account.Main\ntype Main\n  value String\neventsource Account\n  stream Main\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Main').value;
         const command = parsed.modules[0].features[0].slices[0].commands[0];
         expect(command.streamCandidates![0].propertyCandidate).not.toBeNull();
         const application = { ...parsed, modules: parsed.modules.map(module => ({ ...module, features: module.features.map(feature => ({ ...feature, slices: feature.slices.map(slice => ({ ...slice, commands: [{ ...command, stream: command.streamCandidates![0], streamCandidates: [] }] })) })) })) };

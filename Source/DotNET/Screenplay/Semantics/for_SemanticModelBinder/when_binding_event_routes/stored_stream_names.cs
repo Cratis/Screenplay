@@ -11,13 +11,13 @@ public class stored_stream_names : given.a_semantic_binder
     [Theory]
     [InlineData("  stream All\n", "All")]
     [InlineData("  stream Archive\n    id \"All\"\n", "Archive")]
-    void should_refuse_the_reserved_stored_name_only_at_binding(string declaration, string name)
+    void should_refuse_the_reserved_stored_name_at_authoring_and_keep_the_binding_backstop(string declaration, string name)
     {
         var source = "eventsource Account\n" + declaration;
         var authored = new ScreenplayCompiler().Compile(source);
-        authored.Success.ShouldBeTrue();
-        authored.Diagnostics.ShouldBeEmpty();
-        new ScreenplayCompiler().Compile(new ScreenplayPrinter().Print(authored.Value!)).Success.ShouldBeTrue();
+        authored.Success.ShouldBeFalse();
+        authored.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.ReservedStoredName);
+        new ScreenplayCompiler().Compile(new ScreenplayPrinter().Print(authored.Value!)).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.ReservedStoredName);
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();

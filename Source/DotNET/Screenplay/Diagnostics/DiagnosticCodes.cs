@@ -3579,4 +3579,9 @@ public static class DiagnosticCodes
     /// An event is used more than once in one projection level's event or join set.
     /// </summary>
     public const string DuplicateEventInProjectionScope = "PLAY0801";
+
+    /// <summary>
+    /// An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin.
+    /// </summary>
+    public const string ReservedStoredName = "PLAY0802";
 }

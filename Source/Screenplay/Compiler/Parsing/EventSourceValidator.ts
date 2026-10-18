@@ -68,11 +68,15 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
     for (const source of application.eventSources ?? []) {
         if (names.has(source.name)) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Event source '${source.name}' has multiple physical declarations.`, source.location);
         names.add(source.name);
+        if ((source.id ?? source.name) === 'Default')
+            context.error(DiagnosticCodes.ReservedStoredName, `Event source '${source.name}' has the reserved stored name 'Default'; choose a stored name other than 'Default'.`, source.location);
         validateType(source.identifier, false);
         const streams = new Set<string>();
         for (const stream of source.streams) {
             if (streams.has(stream.name)) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Stream '${source.name}.${stream.name}' has multiple declarations under this source.`, stream.location);
             streams.add(stream.name);
+            if ((stream.id ?? stream.name) === 'All')
+                context.error(DiagnosticCodes.ReservedStoredName, `Stream '${source.name}.${stream.name}' has the reserved stored name 'All'; choose a stored name other than 'All'.`, stream.location);
             validateType(stream.streamId, true);
             const parts = stream.streamIdParts;
             if (parts.length > 0) {

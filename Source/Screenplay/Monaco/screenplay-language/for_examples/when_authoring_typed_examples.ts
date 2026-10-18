@@ -133,7 +133,7 @@ describe('when authoring typed examples', () => {
         responseAnalysis(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').should.deep.equal([]);
     });
     it('should validate an imported event example value when its declaration is supplied', () => {
-        const source = ['import M.F.S.ImportedEvent', 'eventsource Account', '  identifier String', '  stream All', 'example X : ImportedEvent', '  for false', '  stream Account.All'];
+        const source = ['import M.F.S.ImportedEvent', 'eventsource Account', '  identifier String', '  stream Main', 'example X : ImportedEvent', '  for false', '  stream Account.Main'];
         const imported = { path: 'imported.play', source: 'module M\n  feature F\n    slice StateChange S\n      event ImportedEvent' };
         responseAnalysis(source).diagnostics.should.deep.equal([]);
         const diagnostics = responseAnalysis(source, [imported]).diagnostics;
