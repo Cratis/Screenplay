@@ -58,6 +58,42 @@ public static class GenerationFixturesCorpus
             .OrderBy(expectation => expectation.Specification.ToString(), StringComparer.Ordinal)]
     };
 
+    /// <summary>
+    /// Gets source and relocated forms with the portable C# generation body, preserving the original source forms.
+    /// </summary>
+    public static ImmutableArray<CanonicalCorpusSourceForm> SourceFormsV21R2
+    {
+        get
+        {
+            var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create(ApplicationName));
+            var document = new CanonicalCorpusDocument { StableKey = "application", DisplayPath = "application.play", Bytes = ResourceV21R2("source.application.play") };
+            var form = new CanonicalCorpusSourceForm { Name = "single", Documents = [document], IdentityCatalogBytes = [.. SemanticIdentityCatalogSerializer.Serialize(catalog)] };
+
+            return [form, form with { Name = "relocated", Documents = [document with { DisplayPath = "Archive/application.play" }] }];
+        }
+    }
+
+    /// <summary>
+    /// Gets the additive fixture revision with a portable C# generation body and unchanged ESM v21 semantics.
+    /// </summary>
+    public static CanonicalCorpusVector V21R2 => V21 with
+    {
+        Name = "generation-fixtures/v21r2",
+        SourceForms = SourceFormsV21R2,
+        EsmBytes = ResourceV21R2("expected.esm-v21.json"),
+        SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(ResourceV21R2("expected.semantic-revision.txt").AsSpan()).Trim())
+    };
+
+    static ImmutableArray<byte> ResourceV21R2(string name)
+    {
+        using var stream = typeof(GenerationFixturesCorpus).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalCorpus.Corpus.GenerationFixtures.v21r2.{name}") ??
+            throw new InvalidSemanticContract($"Generation fixtures v21r2 corpus resource '{name}' is missing.");
+        using var bytes = new MemoryStream();
+        stream.CopyTo(bytes);
+
+        return [.. bytes.ToArray()];
+    }
+
     static CanonicalCorpusSpecificationExpectation Expect(string name, bool rejected = false, int worldFactCount = 0, SemanticRejectionCategory category = SemanticRejectionCategory.Contract) => new()
     {
         Specification = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create(ApplicationName)).ResolveSemantic(
