@@ -111,7 +111,7 @@ it('consumes all split byte pages before issuing a token, including absent-befor
     expect(calls.filter(name => name === 'propose-repair')).toHaveLength(1);
     expect(calls.filter(name => name === 'apply')).toHaveLength(1);
 });
-it.each(['PLAY0661', 'PLAY0664'])('previews and applies %s without unsupported attachment-evidence pins', async code => {
+it.each(['PLAY0516', 'PLAY0661', 'PLAY0664'])('previews and applies %s without unsupported attachment-evidence pins', async code => {
     const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
     vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
         const [name, parameters] = args;
