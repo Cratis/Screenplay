@@ -244,7 +244,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         if (execution is not SemanticAccepted accepted)
         {
-            failures.Add($"Expected Accepted, got {execution.Kind}.");
+            failures.Add($"Expected Accepted, got {execution.Kind}.{(execution is SemanticRejected rejected ? $" {rejected.Details}" : string.Empty)}");
             return failures.ToImmutable();
         }
 

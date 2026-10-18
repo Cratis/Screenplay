@@ -46,7 +46,7 @@ internal static partial class SemanticCaptureEvaluation
     {
         var key = current.Fields.SingleOrDefault(field => field.Name == capture.Key && field.Kind == SemanticCaptureFieldKind.Value)?.Value
             ?? throw new InvalidSemanticContract($"The record presented to capture '{capture.Name}' has no key '{capture.Key}'.");
-        var context = new Context(plan, key, occurrence, accept);
+        var context = new Context(plan, capture, key, occurrence, accept);
 
         // Structural and identity preconditions reject the whole record before any append. Value maps and
         // guards are not probed here: an unsupported later effect cannot replace an earlier disposition.
@@ -204,7 +204,7 @@ internal static partial class SemanticCaptureEvaluation
             ? SemanticValue.Text(match.To)
             : value;
 
-    sealed class Context(SemanticExecutionPlan plan, SemanticValue key, SemanticCommandOccurrence? occurrence, Func<SemanticFact, SemanticExecutionResult?> accept, bool eventsSource = false)
+    sealed class Context(SemanticExecutionPlan plan, SemanticCapture capture, SemanticValue key, SemanticCommandOccurrence? occurrence, Func<SemanticFact, SemanticExecutionResult?> accept, bool eventsSource = false)
     {
         readonly SemanticValueValidator _validator = new(
             plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
@@ -220,7 +220,21 @@ internal static partial class SemanticCaptureEvaluation
 
         public void ValidateSource(ImmutableArray<SemanticCaptureAppend> appends)
         {
-            foreach (var append in appends) _validator.Validate(key, append.EventSourceType, "capture event source");
+            foreach (var append in appends)
+            {
+                var type = append.EventSourceType;
+                var primitive = type.Kind == SemanticTypeReferenceKind.Concept
+                    ? plan.Model.Application.Concepts.Single(concept => concept.Id == type.Target).Primitive
+                    : type.Primitive;
+                if (key is SemanticNumberValue && primitive == SemanticPrimitiveType.Text)
+                {
+                    var value = SemanticValueRules.CaptureText(key);
+                    var eventName = plan.Events[append.EventContract].Name;
+                    throw new InvalidSemanticContract($"Capture '{capture.Name}' key '{capture.Key}' is {value} (number); event '{eventName}' has a text event source, so the key must be text: write \"{value}\".");
+                }
+
+                _validator.Validate(key, type, "capture event source");
+            }
         }
 
         public void RecordAppends(

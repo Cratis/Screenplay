@@ -45,7 +45,7 @@ internal static partial class SemanticCaptureEvaluation
         }
         if (previous is not null && SameEventState(plan, previous, current)) return new(null, null);
 
-        var context = new Context(plan, key, occurrence, accept, eventsSource: true);
+        var context = new Context(plan, capture, key, occurrence, accept, eventsSource: true);
         context.ValidateSource(capture.Appends);
         var before = previous is null ? null : Map(context, Fields(previous), capture.Map);
         if (context.Stopped) return context.Result;

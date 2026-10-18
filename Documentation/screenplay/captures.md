@@ -143,7 +143,9 @@ and never contacts a `source`, which stays realization metadata. For each record
 - `$.<field>` reads the item being evaluated - the record, a child or the nested record - and falls back to the
   enclosing record when the item lacks the field. `$context.occurred` is the scenario's `given clock`.
 - Everything is appended to the event source the record's `key` names. Its type is the one the event's
-  commands give it, and text when no command produces the event.
+  commands give it, and text when no command produces the event. The key must match that type: for a text
+  event source, write `PlantId = "1201"`, not `PlantId = 1201`. The reference runner rejects a numeric key
+  without converting it to text and includes the key, value and required type in the specification failure.
 - The record's own appends run first, then each `children` collection's - current children in order, then the
   removed ones in their earlier order - then each `nested` record's.
 
