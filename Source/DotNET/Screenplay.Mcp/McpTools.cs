@@ -170,6 +170,7 @@ sealed class McpTools
                 McpJson.OptionalString(arguments, "case")),
             "processing-record" => McpProcessingRecord.Read(snapshot, arguments),
             "find-modeling-smells" => McpModelingSmells.Read(snapshot, arguments),
+            "trace-lineage" => McpLineage.Read(snapshot, arguments),
             "find-specification-obligations" => McpSpecificationObligations.Read(snapshot, arguments),
             "find-assertion-gaps" => McpFixtureQueries.AssertionGaps(
                 snapshot,

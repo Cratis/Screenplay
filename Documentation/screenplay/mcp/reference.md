@@ -272,6 +272,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `run-specifications` | Optional proposalId, exact specification address or semantic id, scope, offset, limit, expectedSourceRevision | Deterministic reference execution with passed, failed and unsupported results |
 | `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
 | `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
+| `trace-lineage` | Required read-model property `address`; optional offset, limit, expectedSourceRevision | Paged hop tree from the property to its readers and sources, with closed roles and break statuses |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
@@ -362,6 +363,33 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 `SMELL006` treats every indexed reference to an event property as a read, resolved through the same property links as `find-references`: automap, projection and reducer sources, keys, reaction and production conditions, opaque code references and specification assertions. Writes do not count: production and capture mappings, seeds and specification `given`/`when append` fixtures. Every property of an event counts as read when a reducer `on` rule or a reaction trigger with a `file` or inline code body handles that event, because the index cannot see into that code. Public contract events are skipped, because other services read them. Superseded event generations are skipped, so only the current shape is questioned.
 
 `related` declaration evidence is capped at 20, with `relatedCount` and `relatedTruncated`. Pages use the same bounded item/byte budgets and revision contract as the obligations report. Scope must name one module, feature or slice; document filters finding owners. The report is read-only and has **no per-declaration suppression yet**. Choosing a source annotation or an external address/rule-ID suppression contract remains a separate language/tooling decision; no new `.play` syntax is accepted by this report.
+
+### Field lineage
+
+`trace-lineage` answers "where does this field come from?" in one call, using the same property-link index as `dependencies` and `find-references`. Pass a read-model property `address`: the read model's address followed by the member name, for example `Lending.Catalog.BookCatalog.CatalogEntry.title`. An address that names no read-model property, or several, is refused.
+
+The result is a flat page of **hops**. A hop is a declaration member or the authored clause that connects two members. Each hop carries `id`, `parent` (null for the subject), `depth`, `direction` (`subject`, `downstream` or `upstream`), `role`, `status`, `kind` and `address` (resolvable through `declaration-details`; null only for literal, context and operation values) and `location`. Projection mappings add `mode` (`explicit` or `automap`) and `block` (`from`, `join` or `all`). The order is deterministic: the subject, its downstream readers, then the upstream sources depth-first, siblings sorted by address and location. Several children under one hop are **branches**: real sources that all apply, such as two events feeding one property.
+
+| Role | Meaning |
+| --- | --- |
+| `query`, `screen-display` | Downstream: a query returning the read model; a screen or form binding showing the property |
+| `read-model-property`, `event-property`, `command-property` | Members along the trace; a command property is the model's input boundary |
+| `projection-mapping` | Projection clause, explicit or AutoMap, in a `from`, `join` or `all` block |
+| `production-mapping`, `capture-mapping`, `invocation-mapping`, `interaction-mapping` | Command or reaction `produces`, capture `append`, reaction `invokes`, screen action argument |
+| `code` | A reducer, handler, trigger body or performer query |
+| `screen-input`, `literal`, `context`, `operation`, `capture-source`, `external` | Terminals: a form field for the command, a constant, a `$context` or `$eventSourceId` value, a count/increment/decrement/clear, an outside source-item path, an event with an origin produced by nothing local |
+
+`resolved` and `repeated` (a member already reached, with `repeatOf`) are not breaks. Every other status is a break: a leaf with a `reason`, past which the trace does not continue.
+
+| Status | Meaning |
+| --- | --- |
+| `missing` | A hop that should exist does not; the placeholder's `role` names the absent clause, and it carries the producer's address when a producer exists but does not map the member |
+| `ambiguous` | One authored name resolves to several declarations, listed as `candidates`; none is followed |
+| `incomplete` | The index holds the link but cannot resolve it, for example a nested path, a child or nested projection scope or a raw expression |
+| `opaque` | The next step is code; the hop names the declaration that owns it and the trace does not guess what the code reads |
+| `truncated` | The budget of 500 hops or depth 24 is spent |
+
+Every page repeats a summary computed over the whole trace: `hopCount`, `complete` (true only without breaks), `truncated`, `breakCount` and `breaks` (id, status, role, address and reason; at most 50, with `breaksTruncated`). Hops page with `offset` and `limit` (default 50, maximum 200) inside the standard byte budget; a continuation page requires `expectedSourceRevision`, and stale source is refused. The trace follows the current event generation and treats event-source identity as a `context` terminal. It is advisory and MCP-only: it does not prove runtime behavior, does not measure scenario or specification coverage, and does not apply structural completeness rules. See [decision 0099](https://github.com/Cratis/Screenplay/blob/main/decisions/0099-trace-lineage-reports-hops-as-a-paged-tree-with-closed-break-statuses.md).
 
 ### Reducer identity diagnostics
 
