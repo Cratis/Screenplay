@@ -164,6 +164,8 @@ concept TenantOrderId : String
     ```
 ````
 
+`GenerationFixturesCorpus.V21R2` publishes this portable `TenantOrderId` body in `generation-fixtures/v21r2`; use `SourceFormsV21R2` for its source. `V21` and `SourceForms` remain the frozen original with the non-compilable `return value;` body. This is a corpus revision, not a new ESM version: both revisions have identical canonical ESM bytes and semantic revision because body bytes belong to implementation attachments.
+
 The `TenantOrderId` body above is portable: it uses only `context.Now`, the tenant in string interpolation and BCL types. A body that passes `context` to a Fundamentals API is bound to the Cratis C# target, where the context is `Cratis.Concepts.GenerationContext`:
 
 ````screenplay

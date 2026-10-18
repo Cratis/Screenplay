@@ -1,0 +1,91 @@
+concept DateReference : String
+  generate pattern "{MM}{dd}-{MM}{dd}-?"
+concept RawReference : String
+  generate pattern "#{2}" checksum luhn
+concept CheckedReference : String
+  generate pattern "#{2}" checksum luhn
+  validate checksum luhn
+concept Ticket : Int
+  generate random -9223372036854775808..9223372036854775807
+concept GeneratedId : String
+  generate pattern "?{16}"
+concept TenantOrderId : String
+  generate rule TenantOrder
+    ```csharp
+    return $"{context.Tenant}:order_{context.Now:yyyyMMdd}-{Guid.NewGuid():N}";
+    ```
+module Shop
+  feature References
+    slice StateChange Issue
+      command DateValue
+        value DateReference generated
+        returns value
+      command RawValue
+        value RawReference generated
+        returns value
+      command CheckedValue
+        value CheckedReference generated
+        returns value
+      command TicketValue
+        value Ticket generated
+        returns value
+      command TenantValue
+        value TenantOrderId generated
+        returns value
+      event Prior
+      command RecordPrior
+        id GeneratedId identifier
+        produces Prior
+          for id
+      command CreateSource
+        id GeneratedId generated identifier
+        produces event First
+        produces event Second
+      specification UtcLeapDay
+        given clock "2024-03-01T00:30:00+02:00"
+        when DateValue
+          generated value = "0229-0229-A"
+        then returns "0229-0229-A"
+      specification WrongUtcDate
+        given clock "2024-03-01T00:30:00+02:00"
+        when DateValue
+          generated value = "0301-0301-A"
+        then error
+      specification RepeatedDateMismatch
+        given clock "2024-02-29T23:30:00-02:00"
+        when DateValue
+          generated value = "0301-0229-A"
+        then error
+      specification WidthOnlyWithoutClock
+        when DateValue
+          generated value = "9999-9999-A"
+        then returns "9999-9999-A"
+      specification ChecksumShapeOnly
+        when RawValue
+          generated value = "009"
+        then returns "009"
+      specification AuthoredChecksumArithmetic
+        when CheckedValue
+          generated value = "009"
+        then error
+      specification NumericFixture
+        when TicketValue
+          generated value = 7
+        then returns 7
+      specification GeneratorBodyNotExecuted
+        when TenantValue
+          generated value = "provided"
+        then returns "provided"
+      specification FreshGeneratedSource
+        when CreateSource
+          for "ABCDEFGHIJKLMNOP"
+        then First
+          for "ABCDEFGHIJKLMNOP"
+        then Second
+          for "ABCDEFGHIJKLMNOP"
+      specification GuardedSourceReuse
+        given Prior
+          for "ABCDEFGHIJKLMNOP"
+        when CreateSource
+          for "ABCDEFGHIJKLMNOP"
+        then error "A generated event source already has facts; retry the command with a fresh generated value."
