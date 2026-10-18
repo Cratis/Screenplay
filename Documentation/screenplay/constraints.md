@@ -117,7 +117,37 @@ module Billing
         then error "Constraint 'OnePaymentPerAttempt' is violated: the event source already has the constrained event."
 ```
 
-For the same reason, a specification can show that an event source may re-claim its own value, but it cannot yet show a collision between two event sources — a `given` event cannot name another event source.
+A `given` event can also name another event source with `for`, so a specification can show a unique property constraint rejecting the same value on a second event source:
+
+```screenplay
+module Accounts
+  feature Registration
+    slice StateChange ClaimEmail
+      command ClaimEmail
+        accountId Uuid identifier
+        email String
+        produces EmailClaimed
+          for accountId
+          email = email
+
+      event EmailClaimed
+        email String
+
+      constraint OneAccountPerEmail
+        unique email on EmailClaimed
+
+      specification ClaimingAnEmailTwice
+        given EmailClaimed
+          for "11111111-1111-1111-1111-111111111111"
+          email = "ada@example.com"
+        when ClaimEmail
+          for "22222222-2222-2222-2222-222222222222"
+          accountId = "22222222-2222-2222-2222-222222222222"
+          email = "ada@example.com"
+        then error
+```
+
+The `given` claims the email on the first event source; the command then tries the same email on the second and is refused. A `for` assertion selects ESM v2; see [specifications](specifications.md). A `unique event` constraint is scoped to one event source, so two different event sources never collide on it.
 
 ## What cannot be said yet
 
