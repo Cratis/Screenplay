@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, it } from 'vitest';
+import { compileApplication } from '../../Files/PlayApplicationAssembly';
 import { DiagnosticArgument } from '../../Diagnostics/DiagnosticArgument';
 import { parseForAuthoring } from '../../ScreenplayCompiler';
 
@@ -14,10 +15,14 @@ interface DiagnosticVector {
     readonly messages?: readonly string[];
     readonly arguments?: readonly Readonly<Record<string, DiagnosticArgument>>[];
     readonly validate?: boolean;
+    readonly files?: Readonly<Record<string, readonly string[]>>;
+    readonly roots?: readonly string[];
+    readonly locations?: readonly string[];
 }
 
 function diagnosticResult(vector: DiagnosticVector) {
-    return parseForAuthoring(vector.source.join('\n'), undefined, undefined, vector.validate === true);
+    return vector.files === undefined ? parseForAuthoring(vector.source.join('\n'), undefined, undefined, vector.validate === true)
+        : compileApplication(new Map(Object.entries(vector.files).map(([path, lines]) => [path, lines.join('\n')])), vector.roots);
 }
 
 const filename = join(resolve(__dirname, '..'), 'diagnostics.json');
@@ -67,6 +72,7 @@ describe('when holding the compilers to the diagnostic vectors', () => {
             const diagnostics = diagnosticResult(vector).diagnostics;
             diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`)
                 .should.deep.equal(vector.diagnostics);
+            if (vector.locations !== undefined) diagnostics.map(diagnostic => `${diagnostic.location.path}:${diagnostic.location.line}:${diagnostic.location.column}`).should.deep.equal(vector.locations);
             if (vector.arguments !== undefined) diagnostics.map(diagnostic => diagnostic.arguments ?? {}).should.deep.equal(vector.arguments);
             if (vector.messages !== undefined) diagnostics.map(diagnostic => diagnostic.message).should.deep.equal(vector.messages);
         });

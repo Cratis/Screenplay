@@ -136,7 +136,7 @@ function parseDirective(context: ParserContext, line: SourceLine): ScreenDirecti
             collectInputUses(context, line);
             return { kind: 'ScreenBehaviorSyntax', location: locationOf(line) };
         case 'uses':
-            context.skipOpaqueBlock(line.indent);
+            collectInputUses(context, line);
             return { kind: 'ScreenUsesBehaviorSyntax', location: locationOf(line) };
         default:
             if (isCodeLine(context, line)) {
@@ -271,7 +271,7 @@ function parseTable(context: ParserContext, line: SourceLine): ScreenTableSyntax
         } else if (firstWord(child.content) === 'on') {
             collectInputUses(context, child);
         } else if (isInteraction(child)) {
-            context.skipOpaqueBlock(child.indent);
+            collectInputUses(context, child);
         } else {
             context.error(DiagnosticCodes.UnknownTableDirective, `Unexpected '${child.content}' in table - expected 'column ...', 'on row-click navigate to ...', 'on <trigger>' or 'uses <Behavior>'`, locationOf(child));
         }
@@ -338,7 +338,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 collectInputUses(context, child);
                 break;
             case 'uses':
-                context.skipOpaqueBlock(child.indent);
+                collectInputUses(context, child);
                 break;
             default:
                 context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, id, property, icon, presentation, exposes, outlet, on or uses`, locationOf(child));

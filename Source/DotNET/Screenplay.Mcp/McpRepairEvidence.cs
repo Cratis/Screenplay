@@ -14,6 +14,7 @@ internal sealed record McpRepairEvidence(string BeforeRevision, string Candidate
 {
     // Chosen by the server at retention, never accepted from tool arguments or exposed as evidence.
     internal string OperationId { get; } = Guid.NewGuid().ToString("N");
+    internal bool RequirePhysicalSeparation { get; init; }
 
     internal static string Revision(ScreenplayWorkspace workspace)
     {
@@ -62,9 +63,9 @@ internal sealed record McpRepairEvidence(string BeforeRevision, string Candidate
         }
     }
 
-    internal static McpRepairEvidence Pin(McpRoot root, IMcpProposal proposal)
+    internal static McpRepairEvidence Pin(McpRoot root, IMcpProposal proposal, bool requirePhysicalSeparation = false)
     {
-        var evidence = new McpRepairEvidence(Revision(proposal.Before), Revision(proposal.Workspace));
+        var evidence = new McpRepairEvidence(Revision(proposal.Before), Revision(proposal.Workspace)) { RequirePhysicalSeparation = requirePhysicalSeparation };
 
         // A candidate's loader result must equal the exact inputs used by the selected validation.
         // Refuse a different candidate resolution rather than refreshing readiness without repeating proof.
@@ -74,7 +75,7 @@ internal sealed record McpRepairEvidence(string BeforeRevision, string Candidate
 
     internal void Verify(McpRoot root, IMcpProposal proposal)
     {
-        McpRepairWriteConflicts.Verify(root, proposal, OperationId);
+        McpRepairWriteConflicts.Verify(root, proposal, OperationId, RequirePhysicalSeparation);
         Check(BeforeRevision, McpAttachmentContents.Refresh(root, proposal.Before));
         Check(CandidateRevision, McpAttachmentContents.Refresh(root, proposal.Workspace));
     }

@@ -85,6 +85,21 @@ beforeEach(async () => {
 });
 afterEach(() => { session.dispose(); vi.restoreAllMocks(); });
 
+it('keeps PLAY0470 as diagnostics only even if a server returns it among no-input recipes', async () => {
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        const [name, parameters] = args;
+        const result = await original(...args);
+        if (name === 'read-workspace' && parameters.view === 'repairs') return { ...result, page: page([{ ...descriptor, diagnosticCode: 'PLAY0470' }], parameters, 'base') };
+        if (name === 'read-workspace' && parameters.view === 'diagnostics') return { ...result, page: page([{ ...issue, code: 'PLAY0470', severity: 'Error' }], parameters, 'base') };
+        return result;
+    });
+    const discovery = await session.discover();
+    expect(discovery.choices).toEqual([]);
+    expect(discovery.diagnostics[0].code).toBe('PLAY0470');
+    expect(calls).not.toContain('propose-repair');
+    expect(calls).not.toContain('apply');
+});
 it('consumes all split byte pages before issuing a token, including absent-before identity state', async () => {
     const choices = (await session.discover()).choices;
     const preview = await session.preview(choices[0].token);

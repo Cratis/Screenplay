@@ -46,7 +46,16 @@ internal sealed partial class McpWorkspaces
             throw new McpFailure("Pinned repair evidence v1 supports PLAY0166 and PLAY0478 only.", -32602) { FailureKind = "UnsupportedRepair" };
         }
 
+        var hasDestinationIntent = arguments.TryGetProperty("destinationIntent", out var destinationIntent);
+        if (hasDestinationIntent != (code == "PLAY0470"))
+            throw new McpFailure("destinationIntent v1 is required only for PLAY0470 and rejected on other repairs.", -32602);
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
+        if (code == "PLAY0470")
+        {
+            request = request with { Validation = WorkspaceAuthoringValidation.Executable };
+            var destinationResult = WorkspaceProductionDestinationRepairs.Propose(workspace, subject, McpDestinationIntent.Read(destinationIntent), request);
+            return destinationResult.Accepted ? Store(new McpAuthoringProposal(workspace, destinationResult, request.Validation, request.ReferencePolicy), arguments) : Rejected(destinationResult);
+        }
         var result = code == "PLAY0565" && arguments.TryGetProperty("line", out _)
             ? ProposeComplianceLine(workspace, subject, McpJson.Integer(arguments, "line", 1, 1, int.MaxValue), request)
             : WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);

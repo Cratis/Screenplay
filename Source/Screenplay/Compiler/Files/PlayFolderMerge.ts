@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
 import { validateApplicationHandlers } from '../Parsing/CommandHandlerValidator';
 import { ParserContext } from '../Parsing/ParserContext';
@@ -91,6 +92,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...presentOnly('instanceContributions', applications.flatMap(application => application.instanceContributions ?? [])),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
+    mergeStructuralInteractions(value, applications);
     const identityContext = new ParserContext(new LineReader([]));
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
@@ -109,33 +111,41 @@ function hasDeclarations(application: ApplicationSyntax): boolean {
 }
 
 function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[]): ModuleSyntax[] {
-    return groupByName(modules).map(placedLast).map(parts => parts.length === 1 ? { ...parts[0], isPlacement: false, features: parts[0].features.map(unplaced) } : {
-        ...parts[0],
-        isPlacement: false,
-        fileImports: parts.flatMap(part => part.fileImports),
-        examples: parts.flatMap(part => part.examples ?? []),
-        purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
-        description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
-        documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
-        authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
-        dependsOn: groupDependencies(parts),
-        features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
+    return groupByName(modules).map(placedLast).map(parts => {
+        if (parts.length === 1) return mergeStructuralInteractions({ ...parts[0], isPlacement: false, features: parts[0].features.map(unplaced) }, parts);
+        const owner = mergeStructuralInteractions({
+            ...parts[0],
+            isPlacement: false,
+            fileImports: parts.flatMap(part => part.fileImports),
+            examples: parts.flatMap(part => part.examples ?? []),
+            purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
+            description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
+            documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
+            authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
+            dependsOn: groupDependencies(parts),
+        }, parts, diagnostics);
+        return mergeStructuralInteractions({ ...owner, features: mergeFeatures(parts.flatMap(part => part.features), diagnostics) }, [owner]);
     });
 }
 
 function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnostic[]): FeatureSyntax[] {
-    return groupByName(features).map(placedLast).map(parts => parts.length === 1 ? unplaced(parts[0]) : {
-        ...parts[0],
-        isPlacement: false,
-        fileImports: parts.flatMap(part => part.fileImports),
-        examples: parts.flatMap(part => part.examples ?? []),
-        purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
-        description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
-        documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
-        authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
-        dependsOn: groupDependencies(parts),
-        features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
-        slices: declaredInOneFile(parts.flatMap(part => part.slices), 'slice', diagnostics, `feature '${parts[0].name}'`),
+    return groupByName(features).map(placedLast).map(parts => {
+        if (parts.length === 1) return unplaced(parts[0]);
+        const owner = mergeStructuralInteractions({
+            ...parts[0],
+            isPlacement: false,
+            fileImports: parts.flatMap(part => part.fileImports),
+            examples: parts.flatMap(part => part.examples ?? []),
+            purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
+            description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
+            documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
+            authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
+            dependsOn: groupDependencies(parts),
+        }, parts, diagnostics);
+        return mergeStructuralInteractions({ ...owner,
+            features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
+            slices: declaredInOneFile(parts.flatMap(part => part.slices), 'slice', diagnostics, `feature '${parts[0].name}'`),
+        }, [owner]);
     });
 }
 
@@ -152,7 +162,7 @@ function placedLast<T extends { readonly isPlacement: boolean }>(parts: readonly
 
 // Once merged, a feature is the feature - whether a file was placed in it no longer says anything.
 function unplaced(feature: FeatureSyntax): FeatureSyntax {
-    return { ...feature, isPlacement: false, features: feature.features.map(unplaced) };
+    return mergeStructuralInteractions({ ...feature, isPlacement: false, features: feature.features.map(unplaced) }, [feature]);
 }
 
 // Combines the gates files declare on one module or feature with 'and', never weakening an earlier one. The

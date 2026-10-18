@@ -257,6 +257,11 @@ public sealed record WorkspaceAuthoringResult
     /// </summary>
     public WorkspacePropertyReport? PropertyReport { get; init; }
 
+    /// <summary>
+    /// Gets the retained author-intent routing report, without a preservation claim.
+    /// </summary>
+    public ProductionDestinationReport? ProductionDestinationReport { get; init; }
+
     /// <summary>Gets mutability and stored-name pin evidence for an event rename.</summary>
     public WorkspaceEventRenameReport? EventRenameReport { get; init; }
 
