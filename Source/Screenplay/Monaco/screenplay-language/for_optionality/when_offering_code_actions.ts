@@ -28,6 +28,27 @@ function model(text = source): editor.ITextModel {
 afterEach(() => vi.restoreAllMocks());
 
 describe('when offering Monaco code actions', () => {
+    it('should expose a version-pinned timeline repair at the reference line', async () => {
+        const document = model('module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n    slice StateChange Write\n      event E\n');
+        const range = { startLineNumber: 5, startColumn: 1, endLineNumber: 5, endColumn: 15 } as Range;
+        const result = await createCodeActionProvider().provideCodeActions(document, range, { ...context, only: 'quickfix', markers: [{ ...marker, ...range, code: 'PLAY0516' }] }, token);
+        expect(result?.actions).toHaveLength(1);
+        expect(result?.actions[0].title).toBe('Draw the event producer before its consumer');
+        expect(result?.actions[0].edit?.edits.every(edit => 'versionId' in edit && edit.versionId === 1)).toBe(true);
+    });
+
+    it('should edit the importing model and pin every analyzed model version', async () => {
+        const root = model('module M\n  feature F\n    import "view.play"\n    import "write.play"\n');
+        const view = model('slice StateView View\n  projection P\n    from E\n');
+        const write = model('slice StateChange Write\n  event E\n');
+        const documents = new Map([['application.play', root], ['view.play', view], ['write.play', write]]);
+        const provider = createCodeActionProvider(['M', 'F'], () => documents);
+        const range = { startLineNumber: 3, startColumn: 1, endLineNumber: 3, endColumn: 15 } as Range;
+        const result = await provider.provideCodeActions(view, range, { ...context, only: 'quickfix', markers: [{ ...marker, ...range, code: 'PLAY0516' }] }, token);
+        expect(result?.actions).toHaveLength(1);
+        expect(result?.actions[0].edit?.edits).toHaveLength(3);
+        expect(result?.actions[0].edit?.edits.every(edit => 'versionId' in edit && edit.versionId === 1)).toBe(true);
+    });
     it('should pin every verified edit to the analyzed buffer version', async () => {
         const result = await createCodeActionProvider().provideCodeActions(model(), range, context, token);
         expect(result?.actions).toHaveLength(2);
