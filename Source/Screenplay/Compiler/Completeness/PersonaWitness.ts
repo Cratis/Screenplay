@@ -56,9 +56,9 @@ function satisfied(condition: PolicyConditionSyntax, values: readonly PersonaCal
             // The synthesis API already canonicalizes claim types using ordinal casing.
             return !condition.matchesSubject && target?.kind === 'LiteralExpressionSyntax' && typeof target.value === 'string' && values.some(value => value.kind === 'claim' && ordinalClaimKey(value.type!) === ordinalClaimKey(condition.claim) && value.value === target.value);
         }
-        case 'LogicalPolicyConditionSyntax': return condition.operator === 'And' ? satisfied(condition.left, values) && satisfied(condition.right, values) : satisfied(condition.left, values) || satisfied(condition.right, values);
-        default: return false;
     }
+    // Negations are refused before any choice is made, so only logical conditions remain.
+    return condition.kind === 'LogicalPolicyConditionSyntax' && (condition.operator === 'And' ? satisfied(condition.left, values) && satisfied(condition.right, values) : satisfied(condition.left, values) || satisfied(condition.right, values));
 }
 
 export const ordinalClaimKey = (type: string): string => Array.from(type, character => {

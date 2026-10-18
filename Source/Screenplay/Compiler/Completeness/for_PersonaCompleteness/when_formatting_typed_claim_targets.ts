@@ -12,6 +12,18 @@ const role = (role: string): PolicyConditionSyntax => ({ kind: 'RoleConditionSyn
 const literal = (value: string | number): ExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
 const cases: readonly { name: string; target: ExpressionSyntax; text: string }[] = [
     { name: 'exact numeric literal', target: { kind: 'LiteralExpressionSyntax', value: { literalType: 'ExactNumber', value: '0.1234567890123456789012345678' }, location }, text: '0.1234567890123456789012345678' },
+    { name: 'boolean literal', target: { kind: 'LiteralExpressionSyntax', value: true, location }, text: 'true' },
+    { name: 'fractional literal', target: literal(1.5), text: '1.5' },
+    { name: 'small exponent literal', target: literal(-1e-7), text: '-0.0000001' },
+    { name: 'large exponent literal', target: literal(1e21), text: '1000000000000000000000' },
+    { name: 'context path', target: { kind: 'ContextExpressionSyntax', path: 'occurred', location }, text: '$context.occurred' },
+    { name: 'identity path', target: { kind: 'IdentityExpressionSyntax', path: 'subject', location }, text: '$identity.subject' },
+    { name: 'environment name', target: { kind: 'EnvironmentExpressionSyntax', name: 'REGION', location }, text: '$env.REGION' },
+    { name: 'strings key', target: { kind: 'StringsExpressionSyntax', key: 'owner', location }, text: '$strings.owner' },
+    { name: 'source item path', target: { kind: 'SourceItemExpressionSyntax', path: 'owner', location }, text: '$.owner' },
+    { name: 'event source id', target: { kind: 'EventSourceIdExpressionSyntax', location }, text: '$eventSourceId' },
+    { name: 'event context path', target: { kind: 'EventContextExpressionSyntax', path: 'occurred', location }, text: '$eventContext.occurred' },
+    { name: 'raw text', target: { kind: 'RawExpressionSyntax', text: 'owner + 1', location }, text: 'owner + 1' },
     { name: 'causation root', target: { kind: 'CausedByExpressionSyntax', property: null, location }, text: '$causedBy' },
     { name: 'causation property', target: { kind: 'CausedByExpressionSyntax', property: 'subject', location }, text: '$causedBy.subject' },
     { name: 'refusal member', target: { kind: 'RefusalExpressionSyntax', member: 'message', location }, text: '$refusal.message' },
