@@ -41,17 +41,27 @@ export class MatchAmbiguityGraph {
         return result;
     }
     private repeat(node: MatchAmbiguityNode): MatchAmbiguityPositions {
+        if (node.maximum !== null) return this.boundedRepeat(node, node.maximum);
         let result = empty();
-        const copies = node.maximum ?? Math.max(1, node.minimum);
+        const copies = Math.max(1, node.minimum);
         for (let index = 0; index < copies && !this.exhausted; index++) {
             let part = this.build(node.children[0]);
-            if (node.maximum === null && index === copies - 1) {
-                // Nullable bodies permit an extra empty iteration between consuming positions.
-                const scale = part.nullable > 0 ? 2 : 1;
-                this.connect(part.last, part.first, node, scale);
-                part = { nullable: node.minimum === 0 ? scale : part.nullable, first: sum(new Map(), part.first, scale), last: sum(new Map(), part.last, scale) };
-            } else if (index >= node.minimum) part = { ...part, nullable: add(1, part.nullable) };
+            if (index === copies - 1) {
+                // ECMAScript rejects an empty iteration after the minimum is reached.
+                // Inner and outer consuming loops remain separate derivations.
+                this.connect(part.last, part.first, node);
+                part = { ...part, nullable: node.minimum === 0 ? 1 : part.nullable };
+            }
             result = this.concat(result, part, node);
+        }
+        return result;
+    }
+    private boundedRepeat(node: MatchAmbiguityNode, maximum: number): MatchAmbiguityPositions {
+        let result = empty();
+        // A prefix-closed suffix gives each count one path: b{0,2} is (b(b)?)?.
+        for (let index = maximum - 1; index >= 0 && !this.exhausted; index--) {
+            result = this.concat(this.build(node.children[0]), result, node);
+            if (index >= node.minimum) result = { ...result, nullable: add(1, result.nullable) };
         }
         return result;
     }
@@ -59,10 +69,10 @@ export class MatchAmbiguityGraph {
         this.connect(left.last, right.first, origin);
         return { nullable: Math.min(2, left.nullable * right.nullable), first: sum(left.first, right.first, left.nullable), last: sum(right.last, left.last, right.nullable) };
     }
-    private connect(left: Map<number, number>, right: Map<number, number>, origin: MatchAmbiguityNode, scale = 1): void {
+    private connect(left: Map<number, number>, right: Map<number, number>, origin: MatchAmbiguityNode): void {
         for (const [source, firstCount] of left) for (const [target, lastCount] of right) {
             if (++this.work > matchAmbiguityWorkLimit) { this.exhausted = true; return; }
-            this.edges.push({ source, target, count: Math.min(2, firstCount * lastCount * scale), origin });
+            this.edges.push({ source, target, count: Math.min(2, firstCount * lastCount), origin });
         }
     }
 }

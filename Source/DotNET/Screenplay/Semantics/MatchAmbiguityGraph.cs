@@ -65,21 +65,34 @@ internal sealed partial class MatchAmbiguityGraph
 
     Positions Repeat(MatchAmbiguityNode node)
     {
+        if (node.Maximum is { } maximum) return BoundedRepeat(node, maximum);
         var result = Empty();
-        var copies = node.Maximum ?? Math.Max(1, node.Minimum);
+        var copies = Math.Max(1, node.Minimum);
         for (var index = 0; index < copies && !Exhausted; index++)
         {
             var part = Build(node.Children[0]);
-            if (node.Maximum is null && index == copies - 1)
+            if (index == copies - 1)
             {
-                // Saturation at two retains the only distinction EDA needs. Empty body
-                // derivations permit an extra empty iteration between consumed positions.
-                Connect(part.Last, part.First, node, part.Nullable > 0 ? 2 : 1);
-                var scale = part.Nullable > 0 ? 2 : 1;
-                part = new(node.Minimum == 0 ? scale : part.Nullable, Sum([], part.First, scale), Sum([], part.Last, scale));
+                // ECMAScript rejects an empty iteration after the minimum is reached.
+                // Inner and outer consuming loops remain separate derivations.
+                Connect(part.Last, part.First, node);
+                part = part with { Nullable = node.Minimum == 0 ? 1 : part.Nullable };
             }
-            else if (index >= node.Minimum) { part = part with { Nullable = Add(1, part.Nullable) }; }
             result = Concat(result, part, node);
+        }
+
+        return result;
+    }
+
+    Positions BoundedRepeat(MatchAmbiguityNode node, int maximum)
+    {
+        var result = Empty();
+
+        // A prefix-closed suffix gives each count one path: b{0,2} is (b(b)?)?.
+        for (var index = maximum - 1; index >= 0 && !Exhausted; index--)
+        {
+            result = Concat(Build(node.Children[0]), result, node);
+            if (index >= node.Minimum) result = result with { Nullable = Add(1, result.Nullable) };
         }
 
         return result;
@@ -92,7 +105,7 @@ internal sealed partial class MatchAmbiguityGraph
         return new(Math.Min(2, left.Nullable * right.Nullable), Sum(left.First, right.First, left.Nullable), Sum(right.Last, left.Last, right.Nullable));
     }
 
-    void Connect(Dictionary<int, int> left, Dictionary<int, int> right, MatchAmbiguityNode origin, int scale = 1)
+    void Connect(Dictionary<int, int> left, Dictionary<int, int> right, MatchAmbiguityNode origin)
     {
         foreach (var (source, firstCount) in left)
         {
@@ -103,7 +116,7 @@ internal sealed partial class MatchAmbiguityGraph
                     Exhausted = true;
                     return;
                 }
-                _edges.Add(new(source, target, Math.Min(2, firstCount * lastCount * scale), origin));
+                _edges.Add(new(source, target, Math.Min(2, firstCount * lastCount), origin));
             }
         }
     }

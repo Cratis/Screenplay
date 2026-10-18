@@ -22,7 +22,8 @@ function rewrite(node: MatchAmbiguityNode, pattern: string): string | undefined 
     } else if (body.kind === 'alternate' && body.children.length === 2) {
         const left = unwrap(body.children[0]);
         const right = unwrap(body.children[1]);
-        if (pattern.slice(left.offset, left.offset + left.length) !== pattern.slice(right.offset, right.offset + right.length)) return undefined;
+        // Restrict this shortcut to one character token; a compound body may stay ambiguous.
+        if (left.kind !== 'characters' || pattern.slice(left.offset, left.offset + left.length) !== pattern.slice(right.offset, right.offset + right.length)) return undefined;
         body = left;
     } else return undefined;
     const text = pattern.slice(body.offset, body.offset + body.length);

@@ -46,7 +46,9 @@ internal sealed record MatchAmbiguity(int Offset, int Length, string Subexpressi
         {
             var left = Unwrap(body.Children[0]);
             var right = Unwrap(body.Children[1]);
-            if (pattern.Substring(left.Offset, left.Length) != pattern.Substring(right.Offset, right.Length)) return null;
+
+            // Restrict this shortcut to one character token; a compound body may stay ambiguous.
+            if (left.Kind != "characters" || pattern.Substring(left.Offset, left.Length) != pattern.Substring(right.Offset, right.Length)) return null;
             body = left;
         }
         else { return null; }

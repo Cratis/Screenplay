@@ -11,9 +11,7 @@ public class when_detecting_exponential_ambiguity
     [InlineData("(a*)*")]
     [InlineData(@"(\w|\d)+")]
     [InlineData("([a-z]+)*")]
-    [InlineData("(a?)*")]
     [InlineData("(a*|b)*")]
-    [InlineData("(a|)*")]
     [InlineData("(ab|ab)*")]
     [InlineData("(a|aa)*")]
     [InlineData("(?:[a-c]|[c-e])+")]
@@ -22,6 +20,9 @@ public class when_detecting_exponential_ambiguity
     [InlineData("(?<name>a+)+?")]
     [InlineData("(a{1,2})*")]
     [InlineData("(a{0,2})+")]
+
+    // Nonempty iterations can split aaa as a{3} or a{1} followed by a{2}.
+    [InlineData("(a{1,3})+")]
     [InlineData("(a+)+[^\\s\\S]|(b+)+")]
     public void should_find_two_synchronized_loop_derivations(string pattern) => MatchAmbiguity.Find(pattern).ShouldNotBeNull();
 
@@ -48,6 +49,11 @@ public class when_detecting_exponential_ambiguity
     [InlineData("(^|a)*")]
     [InlineData("([^a]|a)*")]
     [InlineData("(a{2})*")]
+    [InlineData("(a{2})+")]
+    [InlineData("(a?)*")]
+    [InlineData("(a|)*")]
+    [InlineData("(ab{0,2})+$")]
+    [InlineData("(ab{1,3})+$")]
     [InlineData("(a+)+a{256}")]
     [InlineData("((){3000}){3000}(a+)+")]
     public void should_not_warn_without_a_trimmed_ambiguous_cycle(string pattern) => MatchAmbiguity.Find(pattern).ShouldBeNull();
@@ -62,5 +68,6 @@ public class when_detecting_exponential_ambiguity
     [Fact] public void should_name_the_outer_repetition() => MatchAmbiguity.Find("^x(a+)+$")!.Subexpression.ShouldEqual("(a+)+");
     [Fact] public void should_use_utf16_offsets() => MatchAmbiguity.Find("😀(a+)+$")!.Offset.ShouldEqual(2);
     [Fact] public void should_omit_an_unproven_rewrite() => MatchAmbiguity.Find(@"(\w|\d)+")!.Suggestion.ShouldBeNull();
+    [Fact] public void should_omit_a_duplicate_alternative_rewrite_that_remains_ambiguous() => MatchAmbiguity.Find("(a+|a+)*")!.Suggestion.ShouldBeNull();
     [Fact] public void should_find_a_nonempty_cycle_after_a_group_anchor() => MatchAmbiguity.Find("(^(a+)+)$")!.Offset.ShouldEqual(2);
 }
