@@ -52,14 +52,14 @@ internal static class SemanticTypeCompatibility
             return false;
         }
 
-        if (sourceConcept?.Compliance is not null && (targetConcept?.Compliance is null || !targetConcept.Compliance.Equals(sourceConcept.Compliance)))
+        if (sourceConcept?.Compliance is not null && targetConcept?.Compliance?.Equals(sourceConcept.Compliance) != true)
         {
             return false;
         }
 
         var proven = sourceConcept?.Validations ?? [];
-        return targetConcept is null || targetConcept.Validations.All(rule => proven.Any(held =>
-            held.Kind == rule.Kind && Equals(held.Operand, rule.Operand) && held.Severity == rule.Severity && held.Name == rule.Name));
+        return targetConcept?.Validations.All(rule => proven.Any(held =>
+            held.Kind == rule.Kind && Equals(held.Operand, rule.Operand) && held.Severity == rule.Severity && held.Name == rule.Name)) ?? true;
     }
 
     /// <summary>
