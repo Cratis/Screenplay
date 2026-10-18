@@ -7,6 +7,7 @@ on:
       - 'Source/DotNET/**'
       - 'Source/Screenplay/**'
       - '*.props'
+      - 'global.json'
       - '.github/workflows/mcp-desktop.yml'
       - '.github/workflows/publish.yml'
   workflow_call:
@@ -26,14 +27,48 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request' && !inputs.release
+        with:
+          fetch-depth: 0
+      - name: Select native package matrix
+        id: matrix
+        shell: bash
+        env:
+          PR_SMOKE: ${{ github.event_name == 'pull_request' && !inputs.release }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          # Publish (including a release call from a PR) and manual runs retain all five RIDs.
+          matrix='[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"osx-x64","runner":"macos-15-intel"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"}]'
+          if [[ "$PR_SMOKE" == 'true' ]]; then
+            matrix='[{"rid":"linux-x64","runner":"ubuntu-latest"}]'
+            changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+            while IFS= read -r path; do
+              case "$path" in
+                Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|Source/DotNET/Screenplay/Workspaces/*|*.props|global.json|.github/workflows/mcp-desktop.yml|.github/workflows/publish.yml)
+                  matrix='[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"}]'
+                  break
+                  ;;
+              esac
+            done <<< "$changed_files"
+          fi
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
+
   package:
+    needs: changes
     strategy:
       fail-fast: false
       matrix:
-        # Publish calls this workflow on push to main (or manual release), so
-        # every native platform is built and smoke-tested before attach can run.
-        # Even a release call from a PR must use the full matrix.
-        include: ${{ fromJSON(github.event_name == 'pull_request' && !inputs.release && '[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"}]' || '[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"osx-x64","runner":"macos-15-intel"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"}]') }}
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     defaults:
