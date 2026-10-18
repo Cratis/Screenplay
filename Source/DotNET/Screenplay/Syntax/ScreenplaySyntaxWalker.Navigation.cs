@@ -25,6 +25,11 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitNavigationItem(item);
         }
+
+        foreach (var button in syntax.Buttons)
+        {
+            VisitToolbarButton(button);
+        }
     }
 
     /// <summary>

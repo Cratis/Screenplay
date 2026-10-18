@@ -349,6 +349,11 @@ public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Locati
     /// Gets the icon shown on the button, or <c>null</c>.
     /// </summary>
     public string? Icon { get; init; }
+
+    /// <summary>
+    /// Gets the policies a caller must satisfy to see the button, or <c>null</c> when everyone who reaches the toolbar sees it.
+    /// </summary>
+    public AuthorizeSyntax? Authorize { get; init; }
 }
 
 /// <summary>
