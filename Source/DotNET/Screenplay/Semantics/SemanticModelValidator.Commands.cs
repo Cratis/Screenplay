@@ -26,7 +26,8 @@ internal static partial class SemanticModelValidator
             var identity = command.Destination.Value is SemanticResolvedExpression resolved
                 ? command.Properties.SingleOrDefault(property => property.Id == resolved.Target && resolved.Root == SemanticExpressionRootKind.Command)
                 : null;
-            if (identity is not { IsIdentifier: true, Type.IsCollection: false, Type.IsOptional: false } ||
+            if (identity is not { Type.IsCollection: false, Type.IsOptional: false } ||
+                (!identity.IsIdentifier && !_semanticVersion.IsAtLeast(SemanticVersion.V30)) ||
                 identity.Type != command.Destination.Type)
             {
                 throw new InvalidSemanticContract("A command destination must reference a required scalar command identifier with the same type.");

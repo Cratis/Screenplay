@@ -107,36 +107,38 @@ type StockLine
   sku String
   quantity Int
 
-slice Translate ReceiveOrder
-  direction inbound
-  event OrderConfirmed from "sales"
-    orderId String
-    lines StockLine[]
-  event ReservationRequested
-    orderId String
-    lines StockLine[]
-  event LineReserved
-    orderId String
-    sku String
-    quantity Int
-  capture WholeOrder
-    source events
-      from OrderConfirmed
-    key orderId
-    append ReservationRequested
-      when added
-        orderId = $.orderId
-        lines = $.lines
-  capture PerLine
-    source events
-      from OrderConfirmed
-    key orderId
-    children lines identified by sku
-      append LineReserved
-        when added
-          orderId = $.orderId
-          sku = $.sku
-          quantity = $.quantity
+module Warehouse
+  feature Reservations
+    slice Translate ReceiveOrder
+      direction inbound
+      event OrderConfirmed from "sales"
+        orderId String
+        lines StockLine[]
+      event ReservationRequested
+        orderId String
+        lines StockLine[]
+      event LineReserved
+        orderId String
+        sku String
+        quantity Int
+      capture WholeOrder
+        source events
+          from OrderConfirmed
+        key orderId
+        append ReservationRequested
+          when added
+            orderId = $.orderId
+            lines = $.lines
+      capture PerLine
+        source events
+          from OrderConfirmed
+        key orderId
+        children lines identified by sku
+          append LineReserved
+            when added
+              orderId = $.orderId
+              sku = $.sku
+              quantity = $.quantity
 ```
 
 `lines = $.lines` copies the whole list into a list property of the same shape (matched by property name, so the private type may be a different type with the same members). `children lines identified by sku` makes one scope per element: an element whose `sku` has not been seen for this key is `added` and appends one private event, and `nested <object>` scopes into an object the same way. Children and nested scopes have the semantics of record captures. Another delivery with the same lines appends nothing; a delivery with an extra line appends only that line. A list that is empty or a nested object that is absent has no scopes. The element key must be present and unique in the list, or the capture is refused as it is for a record capture.

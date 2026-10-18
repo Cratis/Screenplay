@@ -33,16 +33,21 @@ public class when_binding_documented_destinations_and_rejections : given.a_seman
 
     CompilationResult<SemanticCompilation> _accepted;
     CompilationResult<SemanticCompilation> _fanOut;
+    CompilationResult<SemanticCompilation> _optionalFanOut;
     CompilationResult<SemanticCompilation> _multipleErrors;
 
     void Because()
     {
         _accepted = Bind(Source);
         _fanOut = Bind(Source.Replace("for requestId", "for contractId", StringComparison.Ordinal));
+        _optionalFanOut = Bind(Source.Replace("for requestId", "for contractId", StringComparison.Ordinal).Replace("contractId Uuid\n", "contractId Uuid optional\n", StringComparison.Ordinal));
         _multipleErrors = Bind(Source.Replace("then error \"Not allowed\"", "then error \"Not allowed\"\n                then error", StringComparison.Ordinal));
     }
 
     [Fact] void should_bind_the_documented_destination_and_single_rejection() => _accepted.Success.ShouldBeTrue();
-    [Fact] void should_explain_why_fan_out_cannot_bind() => _fanOut.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("command's required scalar identifier", StringComparison.Ordinal)).ShouldBeTrue();
+    // Decision 0098 (#859): from ESM v30 a production may name any required scalar command property as its event source.
+    [Fact] void should_bind_fan_out_to_another_required_property_at_v30() => _fanOut.Success.ShouldBeTrue();
+    [Fact] void should_select_v30_for_fan_out() => _fanOut.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V30);
+    [Fact] void should_explain_why_an_optional_destination_cannot_bind() => _optionalFanOut.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("required", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_explain_why_multiple_rejections_cannot_bind() => _multipleErrors.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("exactly one 'then error'", StringComparison.Ordinal)).ShouldBeTrue();
 }
