@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRepairVerification;
 
 public class when_only_command_reads_are_admissible : Specification
 {
-    const string Performer = "\n      query External => View[]\n        performer\n          file External.cs\n";
+    const string Performer = "\n      query External => View[]\n        scoped to identity\n";
     const string FanOut = "\n      event Othered\n      command Other\n        id String identifier\n        destination String\n        produces Othered\n          for destination\n";
 
     [Theory]
@@ -55,7 +55,7 @@ public class when_only_command_reads_are_admissible : Specification
         result.Accepted.ShouldBeFalse();
         result.Conflicts.Single().Message.ShouldContain("PLAY0781");
         result.Conflicts.Single().Message.ShouldContain("NoRemoval");
-        result.Conflicts.Single().Message.ShouldNotContain("performer");
+        result.Conflicts.Single().Message.ShouldNotContain("scoped to");
         index.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic)).ShouldBeEmpty();
     }
 

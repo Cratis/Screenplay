@@ -15,6 +15,18 @@ public sealed partial class SemanticModelBinder
         readonly (Declaration Declaration, QuerySyntax Query)[] _scopedQueries = [.. ScreenplayValidator.ScopedSlices(syntax)
             .SelectMany(entry => entry.Slice.Queries.Select(query => (new Declaration(query.Name, entry.Scope), query)))];
         ReferenceDeclarationIndex? _queryReferenceIndex;
+        readonly HashSet<QuerySyntax> _opaqueQueries = new(ReferenceEqualityComparer.Instance);
+
+        bool ReachesOpaqueQuery(SemanticAddress slice, SpecificationQuerySyntax reference)
+        {
+            var scope = new DeclarationScope([.. slice.Parts
+                .Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice)
+                .Select(part => part.Key)]);
+            _queryReferenceIndex ??= new(_scopedQueries.Select(entry => entry.Declaration));
+            var resolution = ReferenceResolver.Resolve(reference.Query, scope, _queryReferenceIndex);
+            return resolution.Resolved is { } resolved &&
+                _opaqueQueries.Contains(_scopedQueries.Single(entry => ReferenceEquals(entry.Declaration, resolved)).Query);
+        }
 
         SemanticKeyedQuery? ResolveQuery(SemanticAddress slice, SpecificationQuerySyntax reference)
         {
