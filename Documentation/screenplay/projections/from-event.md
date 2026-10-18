@@ -68,7 +68,7 @@ from UserRegistered
   IsActive = true
 ```
 
-AutoMap copies properties with matching names from the event to the read model, then applies any explicit mappings. Turn it off for a block with `no automap`.
+AutoMap copies properties with matching names from the event to the read model, then applies any explicit mappings. AutoMap cannot be turned off inside a `from` block (`PLAY0075`); use `no automap` at the projection, children, `every`/`all` or join `with` level.
 
 See [Auto-Map](auto-map) for more details.
 
