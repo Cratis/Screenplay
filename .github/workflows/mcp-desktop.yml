@@ -92,7 +92,7 @@ jobs:
         with:
           name: screenplay-event-model-board
           path: Source/Screenplay/McpApp/dist/event-model-board.html
-          retention-days: 1
+          retention-days: 3
           if-no-files-found: error
 
   package:
