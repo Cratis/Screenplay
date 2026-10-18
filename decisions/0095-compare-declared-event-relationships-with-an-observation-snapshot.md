@@ -1,8 +1,9 @@
 ---
 id: 0095
 title: Compare declared event relationships with a host-supplied observation snapshot
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-18
 decider: Sindre Wilting (delegated to the L0 coordinator)
 class: contract
 reversibility: costly
@@ -28,6 +29,11 @@ Provide a pure `Cratis.Screenplay.Observations` library in Screenplay over an im
 store, namespace and sequence. Screenplay compares the successful semantic compilation with that evidence and optional
 identity overrides; hosts own IO, store-specific causation decoding and render-target identity conventions. This adds no
 language construct, ESM member, evaluator behavior, editor feature or MCP tool, respecting [0092](0092-the-language-is-frozen-at-esm-v28.md).
+
+L0 accepted the design on 2026-10-18 with these defaults: hosts bound every scan and report a reached bound as partial
+coverage; `EventNotRegistered` and `UndeclaredEventAppended` are drift; hosts supply reactor and qualified command
+identifiers (a render-target convention tracked separately); projection and reducer consumers are reported as Unknown
+until their ownership is established; Screenplay owns the report JSON.
 
 The proposed contract is:
 
