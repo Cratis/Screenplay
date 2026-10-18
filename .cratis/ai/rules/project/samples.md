@@ -14,14 +14,14 @@ living reference for the language, so they must say what the language says today
 | `Samples/Approvals` | An approvals application built from a domain blueprint: an inbox of decision cards, a wizard that issues one command, a request page with its approval chain and an administrator's request types. |
 | `Samples/Ticketing` | A help desk built from a domain blueprint: dialog templates that issue commands, a board, a full-page portal form and nested navigation. |
 | `Samples/Crm` | An application built from a domain blueprint: `template blueprint` screens, navigation regions and `active blueprint` sample data. |
-| `Samples/Inventory`, `Samples/Hr`, `Samples/Projects`, `Samples/Administration`, `Samples/Orders` | The same, for the Inventory and Assets, HR, Project and Task Tracker, Administration and Orders blueprints - each a warning-free application whose every screen fills a template of its blueprint. |
+| `Samples/Inventory`, `Samples/Hr`, `Samples/Projects`, `Samples/Administration`, `Samples/Orders`, `Samples/Catalog`, `Samples/Vendors`, `Samples/Billing`, `Samples/CustomerPortal`, `Samples/Contracts`, `Samples/WorkOrders`, `Samples/Bookings` | The same, for the Inventory and Assets, HR, Project and Task Tracker, Administration, Orders, Catalog, Vendors, Invoicing, Customer portal, Contracts, Work orders and Bookings blueprints - each a warning-free application whose every screen fills a template of its blueprint. |
 | `Samples/AcmeCommerce` | Five bounded contexts (Catalog, Storefront, Sales, Purchasing, Warehouse) in ONE application: a shared kernel, an application shell with hierarchical navigation, public events between contexts, blueprint screens, a custom component package and the tooling that packages a domain for Studio and builds a renderable variant. The walkthrough is `Documentation/screenplay/acme-commerce-walkthrough.md`; keep it true when the sample changes. |
 | `Samples/Commerce` | Focused files composed with explicit imports at every level: a root that reads like a table of contents, a file per module and feature that imports its own folder, and one file per slice with nothing above it. |
 | `Samples/TimeTracking` | Focused files composed from one root glob: module files declare their features inline and import each feature's step files, one slice per file. |
 
 ### They render as authored
 
-The domain blueprint samples (`Crm`, `Ticketing`, `Approvals`, `Inventory`, `Hr`, `Projects`, `Administration`, `Orders`) are rendered by the published
+The domain blueprint samples (`Crm`, `Ticketing`, `Approvals`, `Inventory`, `Hr`, `Projects`, `Administration`, `Orders`, `Catalog`, `Vendors`, `Billing`, `CustomerPortal`, `Contracts`, `WorkOrders`, `Bookings`) are rendered by the published
 `cratis` with the approved package set of their blueprint's published npm package: `Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.sh <folder>`.
 A sample that only renders once it has been simplified is a defect of the sample or of the renderer - fix the one that is wrong, never remove a feature to pass.
 

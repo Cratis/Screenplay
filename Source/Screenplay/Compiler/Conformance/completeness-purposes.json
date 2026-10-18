@@ -1,0 +1,490 @@
+{
+    "cases": [
+        {
+            "name": "basis and unused",
+            "source": [
+                "purpose Care",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      command C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0605",
+                    "severity": "warning",
+                    "message": "Purpose 'Care' has no declared basis (Art. 6(1)); this finding is a prompt to look, not a legal verdict",
+                    "location": {
+                        "line": 1,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0606",
+                    "severity": "warning",
+                    "message": "Purpose 'Care' is declared but never referenced",
+                    "location": {
+                        "line": 1,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "nested personal data and inherited purpose",
+            "source": [
+                "concept HealthNote : String pii",
+                "  pii special health",
+                "  pii criminal",
+                "type Details",
+                "  note HealthNote",
+                "purpose Care",
+                "purpose Unused",
+                "  basis consent",
+                "module Services",
+                "  purpose Care",
+                "  feature Intake",
+                "    feature Records",
+                "      slice StateChange Record",
+                "        command Record",
+                "          details Details"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0605",
+                    "severity": "warning",
+                    "message": "Purpose 'Care' has no declared basis (Art. 6(1)); this finding is a prompt to look, not a legal verdict",
+                    "location": {
+                        "line": 6,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0606",
+                    "severity": "warning",
+                    "message": "Purpose 'Unused' is declared but never referenced",
+                    "location": {
+                        "line": 7,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0603",
+                    "severity": "warning",
+                    "message": "Purpose 'Care' covers special-category pii in slice 'Record' but has no condition (Art. 9(2))",
+                    "location": {
+                        "line": 6,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0604",
+                    "severity": "warning",
+                    "message": "Purpose 'Care' covers criminal-offence pii in slice 'Record' but has no authorization (Art. 10)",
+                    "location": {
+                        "line": 6,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "uncovered personal data",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      command C",
+                "        name PersonName"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "field source command C",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      command C",
+                "        name PersonName"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "field source event E",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      event E",
+                "        name PersonName"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "field source readmodel R",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      readmodel R",
+                "        name PersonName"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "field source query Q => PersonName[]",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      query Q => PersonName[]"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "purpose at module",
+            "source": [
+                "concept PersonName : String pii",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  purpose Care",
+                "  feature F",
+                "    slice StateChange Record",
+                "      command C",
+                "        name PersonName"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "purpose at feature",
+            "source": [
+                "concept PersonName : String pii",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    purpose Care",
+                "    slice StateChange Record",
+                "      command C",
+                "        name PersonName"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "purpose at slice",
+            "source": [
+                "concept PersonName : String pii",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      purpose Care",
+                "      command C",
+                "        name PersonName"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "recursive nonpersonal shape",
+            "source": [
+                "concept Secret : String secret",
+                "type Details",
+                "  nested Details",
+                "  token Secret",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      command C",
+                "        data Details"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "cross slice command reads",
+            "source": [
+                "concept PersonName : String pii",
+                "type Inner",
+                "  name PersonName",
+                "type Details",
+                "  inner Inner",
+                "  recursive Details",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateView Stored",
+                "      purpose Care",
+                "      readmodel Contact",
+                "        details Details",
+                "    slice StateChange Record",
+                "      command C",
+                "        reads Contact"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 15,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "cross slice query return",
+            "source": [
+                "concept PersonName : String pii",
+                "type Inner",
+                "  name PersonName",
+                "type Details",
+                "  inner Inner",
+                "  recursive Details",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateView Stored",
+                "      purpose Care",
+                "      readmodel Contact",
+                "        details Details",
+                "    slice StateChange Record",
+                "      query Q => Contact[]"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 15,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "qualified view",
+            "source": [
+                "concept PersonName : String pii",
+                "type Inner",
+                "  name PersonName",
+                "type Details",
+                "  inner Inner",
+                "  recursive Details",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateView Stored",
+                "      purpose Care",
+                "      readmodel Contact",
+                "        details Details",
+                "    slice StateChange Record",
+                "      query Q => Stored.Contact[]"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 15,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "imported view",
+            "source": [
+                "import M.F.Stored.Contact",
+                "concept PersonName : String pii",
+                "type Inner",
+                "  name PersonName",
+                "type Details",
+                "  inner Inner",
+                "  recursive Details",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateView Stored",
+                "      purpose Care",
+                "      readmodel Contact",
+                "        details Details",
+                "  feature Other",
+                "    slice StateChange Record",
+                "      query Q => Contact[]"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 17,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "declared protections",
+            "source": [
+                "concept Sensitive : String pii",
+                "  pii special health",
+                "  pii criminal",
+                "purpose Care",
+                "  basis consent",
+                "  condition explicitConsent",
+                "  authorization \"national law\"",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      purpose Care",
+                "      command C",
+                "        data Sensitive"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "references in empty containers count",
+            "source": [
+                "purpose Care",
+                "  basis consent",
+                "module Empty",
+                "  purpose Care"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "inline event personal shape",
+            "source": [
+                "concept PersonName : String pii",
+                "purpose Care",
+                "  basis consent",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      purpose Care",
+                "      command C",
+                "        produces event E",
+                "          name PersonName = \"Ada\"",
+                "          for \"one\""
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "personal query filter",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateChange Record",
+                "      query Q => String[]",
+                "        filter name PersonName"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'Record' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unresolved view is not guessed",
+            "source": [
+                "concept PersonName : String pii",
+                "module M",
+                "  feature F",
+                "    slice StateView First",
+                "      readmodel R",
+                "        name PersonName",
+                "  feature G",
+                "    slice StateView Second",
+                "      readmodel Other",
+                "        value String",
+                "  feature H",
+                "    slice StateChange Record",
+                "      command C",
+                "        reads Missing"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0602",
+                    "severity": "warning",
+                    "message": "Slice 'First' carries pii concepts but has no declared purpose in scope",
+                    "location": {
+                        "line": 4,
+                        "column": 5
+                    }
+                }
+            ]
+        }
+    ]
+}
