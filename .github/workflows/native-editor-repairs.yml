@@ -2,6 +2,8 @@ name: Native editor repairs
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '43 4 * * *'
   pull_request:
     paths:
       - 'Source/Screenplay/VSCodeExtension/**'
@@ -23,15 +25,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 0
+      - name: Select native repair matrix
+        id: matrix
+        shell: bash
+        env:
+          PR_SMOKE: ${{ github.event_name == 'pull_request' }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          matrix='[{"runner":"ubuntu-latest","rid":"linux-x64","executable":"Cratis.Screenplay.Tool"},{"runner":"windows-latest","rid":"win-x64","executable":"Cratis.Screenplay.Tool.exe"},{"runner":"macos-15","rid":"osx-arm64","executable":"Cratis.Screenplay.Tool"}]'
+          if [[ "$PR_SMOKE" == 'true' ]]; then
+            matrix='[{"runner":"ubuntu-latest","rid":"linux-x64","executable":"Cratis.Screenplay.Tool"}]'
+            changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+            while IFS= read -r path; do
+              case "$path" in
+                Source/DotNET/Screenplay/Workspaces/*|Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|*.props|*.targets|global.json|.github/workflows/native-editor-repairs.yml)
+                  matrix='[{"runner":"ubuntu-latest","rid":"linux-x64","executable":"Cratis.Screenplay.Tool"},{"runner":"windows-latest","rid":"win-x64","executable":"Cratis.Screenplay.Tool.exe"},{"runner":"macos-15","rid":"osx-arm64","executable":"Cratis.Screenplay.Tool"}]'
+                  break
+                  ;;
+              esac
+            done <<< "$changed_files"
+          fi
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
+
   repair:
     name: Installed VSIX / ${{ matrix.rid }}
+    needs: changes
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { runner: ubuntu-latest, rid: linux-x64, executable: Cratis.Screenplay.Tool }
-          - { runner: windows-latest, rid: win-x64, executable: Cratis.Screenplay.Tool.exe }
-          - { runner: macos-15, rid: osx-arm64, executable: Cratis.Screenplay.Tool }
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     defaults:

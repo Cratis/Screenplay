@@ -10,6 +10,8 @@ import { legacySourceOptions, SourceOptions } from '../Syntax/SourceOptions';
 import { InputUse } from './InputUses';
 import { ContinuationValueUse } from './ContinuationValueUse';
 import { GuardedInteractionBinding, InteractionAncestor } from './InteractionAlternatives';
+import { InteractionBehavior } from './InteractionBehavior';
+import { InteractionUse } from './InteractionUse';
 import { LineReader } from './LineReader';
 import { SourceLine } from './SourceLine';
 
@@ -22,6 +24,8 @@ export class ParserContext {
     readonly inputUses: InputUse[] = [];
     readonly continuationValues: ContinuationValueUse[] = [];
     readonly guardedInteractions: GuardedInteractionBinding[] = [];
+    readonly interactionBehaviors: InteractionBehavior[] = [];
+    readonly interactionUses: InteractionUse[] = [];
     interactionAncestors: ReadonlyMap<number, readonly InteractionAncestor[]> = new Map();
     scope: readonly string[] = [];
     readonly languages: ReadonlySet<string>;

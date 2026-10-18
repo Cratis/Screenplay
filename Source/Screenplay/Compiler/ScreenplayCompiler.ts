@@ -3,6 +3,7 @@
 
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
+import { recordStructuralInteractions } from './Parsing/StructuralInteractionSites';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples, validateSpecificationExampleTypes } from './Parsing/SpecificationCommandExamples';
@@ -69,13 +70,14 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[]; readonly continuationValues: readonly ContinuationValueUse[]; readonly guardedInteractions: readonly GuardedInteractionBinding[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[]; readonly continuationValues: readonly ContinuationValueUse[]; readonly guardedInteractions: readonly GuardedInteractionBinding[]; readonly interactionBehaviors: ParserContext['interactionBehaviors']; readonly interactionUses: ParserContext['interactionUses'] } {
     const lines = splitLines(source, false, path);
     const context = sourceContext(lines, path, languages);
     context.scope = placement;
     context.interactionAncestors = interactionAncestry(lines);
     context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement, languages);
     let value = parseApplication(context, lines, placement);
+    recordStructuralInteractions(value, context);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
         validateApplicationHandlers(value, context);
@@ -110,6 +112,8 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         inputUses: context.inputUses,
         continuationValues: context.continuationValues,
         guardedInteractions: context.guardedInteractions,
+        interactionBehaviors: context.interactionBehaviors,
+        interactionUses: context.interactionUses,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
 }

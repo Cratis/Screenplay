@@ -539,6 +539,57 @@ models rather than guessing. Extract before adding `generation`; parser-invalid
 inline generations cannot be edited through occurrence handles. There is no reverse
 inlining operation. Review and apply the returned proposal as any other edit.
 
+## Establish production destinations
+
+When `PLAY0470` reports mixed destination defaults, choose all destinations together.
+There is no executable before-model to preserve: binding a candidate establishes
+your selections, not their business correctness or target execution support.
+Monaco and VS Code offer no automatic action or fix-all for this workflow.
+
+1. Feature-detect `repair-capabilities.intentActions` for `PLAY0470`. It is separate
+   from the unchanged no-input `actions` list and declares intent version 1,
+   executable validation, individual review and no pinned-evidence support.
+2. Page `read-workspace` with `view: "repair-intents"` and the current revision.
+   Collect every row for the command, including repeated events, conditional
+   productions and existing explicit expressions. Diagnostic discovery is not
+   permission to select destinations on the author's behalf.
+3. Call `propose-repair` with both expected revisions, `diagnosticCode: "PLAY0470"`,
+   the command handle as `subject`, canonical formatting consent and
+   `destinationIntent: {version: 1, productions: [...]}`. Every entry contains
+   its occurrence `subject`, a non-null typed `for` expression and a `route`
+   confirmation: `{kind: "Legacy"}` or `{kind: "Named", source, stream}` with exact
+   declaration handles. Use `syntax-schema` for expression shapes. Existing
+   explicit destinations must match structurally; named source/stream selection
+   is separate from event-source identity and must be confirmed unchanged.
+4. Review the retained `production-destinations` pages and exact `before`/`after`
+   bytes with `read-proposal`. Page `production-destination-identities` for new
+   assignments and inspect `diagnostics` and `executable-diagnostics`. The routing
+   report states that neither an executable baseline nor preservation proof is
+   available. It distinguishes syntax made explicit from unchanged syntax and
+   effective routing established from an invalid model. Other commands' authored
+   routing stays unchanged; their executable behavior is not claimed preserved.
+5. Apply that exact proposal explicitly. Discovery and proposal never write.
+
+Only missing `for` expressions change. Missing/duplicate/stale/foreign selections,
+retargeting, route mismatches, unsupported expressions, unresolved imports, lost
+comments, unrelated binding blockers or missing formatting consent refuse the whole
+proposal. No partial candidate can be applied. Do not request `pinRepairEvidence`
+or downgrade validation to authoring-only.
+
+A retained preview also depends on exact saved source and membership, catalog/state,
+and the referenced physical attachments used during binding. Changes to attachment
+availability, bytes or loading diagnostics require fresh proposal and review.
+Before retention and immediately before installation, attachments must be physically
+separate from source, identity, journal, staging, backup and rollback write paths;
+exact overlap, aliases and uncertain resolution are refused. This is a new-path
+guarantee, not an expansion of ordinary unpinned repair evidence.
+
+Apply uses the journaled writer, not a crash-atomic multi-file transaction.
+`RolledBack` reports failure after verified restoration. `RecoveryRequired` retains
+the journal/backups and blocks ordinary operations. After an unknown outcome,
+inspect `workspace-state` first; never retry or recover automatically. Recovery
+requires its own explicit request.
+
 ## Fix a diagnostic
 
 Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,

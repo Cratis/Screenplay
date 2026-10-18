@@ -22,6 +22,17 @@ static class McpRepairCapabilities
             requiredFormatting = code == "PLAY0653" ? "PreserveTrivia" : "CanonicalizeTouchedDocuments",
             pinRepairEvidence = string.Equals(code, "PLAY0166", StringComparison.Ordinal) || string.Equals(code, "PLAY0478", StringComparison.Ordinal)
         }),
+        intentActions = new[]
+        {
+            new
+            {
+                diagnosticCode = "PLAY0470", tool = "propose-repair", intentSchema = "destinationIntent", intentVersion = 1,
+                discoveryView = "repair-intents", reportView = "production-destinations",
+                requiredFormatting = "CanonicalizeTouchedDocuments", requiredValidation = "Executable",
+                individualReviewRequired = true, baselineExecutableAvailable = false, preservationProven = false,
+                canFixAll = false, pinRepairEvidence = false
+            }
+        },
         evidence = new { version = 1, optional = true, revisionPrefix = "re1:", candidateResolutionChanges = "Refused", plannedWriteOverlap = "Refused", plannedWriteOverlapFailureKind = "RepairEvidenceWriteConflict" },
         structuredFailures = new { version = 1, discriminator = "failureKind", unknownApplyOutcome = "ApplyOutcomeUnknown" },
         savedFilesOnly = true,

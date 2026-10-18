@@ -15,6 +15,7 @@ internal sealed partial class McpWorkspaces
     readonly Dictionary<string, IMcpProposal> _proposals = new(StringComparer.Ordinal);
     readonly ConditionalWeakTable<IMcpProposal, McpStatePlan> _statePlans = [];
     readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _repairEvidence = [];
+    readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _destinationEvidence = [];
 
     readonly McpRoot? _configuredRoot;
     McpRoot? _root;
@@ -161,6 +162,7 @@ internal sealed partial class McpWorkspaces
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
         _repairEvidence.TryGetValue(proposal, out var evidence);
+        _destinationEvidence.TryGetValue(proposal, out var destinationEvidence);
         var previousConflict = _rootBindingConflict;
         var result = new McpDisk(Root).Apply(
             proposal,
@@ -172,8 +174,14 @@ internal sealed partial class McpWorkspaces
                 VerifyNotesPlan(proposal);
                 VerifyBaselinePlan(proposal, arguments);
                 evidence?.Verify(Root, proposal);
+                if (destinationEvidence is not null)
+                {
+                    Root.Verify(proposal.Before);
+                    new McpManagedFiles(Root).Verify(McpState.FileName, statePlan.Before);
+                    destinationEvidence.Verify(Root, proposal);
+                }
             },
-            evidence?.OperationId);
+            destinationEvidence?.OperationId ?? evidence?.OperationId);
         if (result.Success)
         {
             // Commit the verified disk outcome to the session before any further inspection can fail.
@@ -189,7 +197,7 @@ internal sealed partial class McpWorkspaces
             if (result.Success)
             {
                 AfterApply?.Invoke();
-                if (evidence is null)
+                if (evidence is null && destinationEvidence is null)
                 {
                     _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
                 }
@@ -397,7 +405,14 @@ internal sealed partial class McpWorkspaces
         RefusePendingWorkspace();
         var pinned = McpJson.Boolean(arguments, "pinRepairEvidence");
         var evidence = pinned ? McpRepairEvidence.Pin(Root, proposal) : null;
-        if (!pinned) proposal = RefreshProposal(proposal);
+        McpRepairEvidence? destinationEvidence = null;
+        if (proposal is McpAuthoringProposal { Result.ProductionDestinationReport: not null })
+        {
+            Root.Verify(proposal.Before);
+            new McpManagedFiles(Root).Verify(McpState.FileName, _stateBytes);
+            destinationEvidence = McpRepairEvidence.Pin(Root, proposal, requirePhysicalSeparation: true);
+        }
+        if (!pinned && destinationEvidence is null) proposal = RefreshProposal(proposal);
         var candidate = proposal.Workspace;
         McpRoot.CheckDocuments(candidate.Documents);
         foreach (var document in candidate.Documents)
@@ -461,6 +476,7 @@ internal sealed partial class McpWorkspaces
         _statePlans.Add(proposal, statePlan);
         _baselinePlans.Add(proposal, baselinePlan);
         if (evidence is not null) _repairEvidence.Add(proposal, evidence);
+        if (destinationEvidence is not null) _destinationEvidence.Add(proposal, destinationEvidence);
         return response;
     }
 
@@ -540,6 +556,14 @@ internal sealed partial class McpWorkspaces
         if (expectedEvidence is not null)
         {
             throw new McpFailure("The proposal has no pinned repair evidence.", -32602);
+        }
+
+        if (_destinationEvidence.TryGetValue(proposal, out var destinationEvidence))
+        {
+            Root.Verify(proposal.Before);
+            new McpManagedFiles(Root).Verify(McpState.FileName, StatePlan(proposal).Before);
+            destinationEvidence.Verify(Root, proposal);
+            return proposal;
         }
 
         var refreshed = RefreshProposal(proposal);
