@@ -46,7 +46,7 @@ projection User => UserReadModel
     LastUpdated = $eventContext.occurred
 ```
 
-AutoMap cannot be toggled inside an individual `from` block — it is controlled at the projection, children, or nested level.
+AutoMap cannot be toggled inside an individual `from` block (`no automap` there is `PLAY0075`) — it is controlled at the projection, children, or nested level.
 
 ### Join-Level Disable
 
@@ -223,7 +223,7 @@ projection Group => GroupReadModel
 1. **Leverage the Default**: AutoMap reduces boilerplate for most cases
 2. **Disable Selectively**: Use `no automap` only when needed
 3. **Document Assumptions**: AutoMap relies on naming conventions being consistent
-4. **Event-Level for Precision**: Apply `no automap` per event if only some events need explicit control
+4. **Scope Deliberately**: `no automap` is not accepted inside a `from` block (`PLAY0075`). If only some events need explicit control, disable AutoMap at the projection or children level and map explicitly
 5. **Explicit Overrides**: Let AutoMap handle the bulk, use explicit mappings for specifics
 
 ## Migration from Explicit AutoMap
