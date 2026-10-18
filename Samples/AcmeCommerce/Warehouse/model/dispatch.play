@@ -97,7 +97,7 @@ module Stock
 
     // The stock leaves the shelf when the parcel is handed over
     slice Automation TakeStockWhenDispatched
-      reaction TakeStockWhenDispatched
+      reaction TakeStockWhenDispatchedReaction
         description "A dispatched parcel takes its units off the shelf and releases the reservation"
         runs as system role "WarehouseClerk"
         when ShipmentHandedToCarrier
@@ -208,6 +208,7 @@ module Stock
       query AllShipments => observable ShipmentRow[]
 
       projection ShipmentRowProjection => ShipmentRow
+        no automap
         from ShipmentPlanned
           orderId  = $eventSourceId
           sku      = sku

@@ -328,6 +328,7 @@ module Buying
         by purchaseOrderId PurchaseOrderId
 
       projection PurchaseOrderRowProjection => PurchaseOrderRow
+        no automap
         from PurchaseOrderCreated
           purchaseOrderId  = $eventSourceId
           supplierId       = supplierId

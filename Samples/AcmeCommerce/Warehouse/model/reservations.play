@@ -54,7 +54,7 @@ module Stock
         sku     Sku
         shortBy Quantity
 
-      reaction ReserveStock
+      reaction ReserveStockReaction
         description "Reserves the requested stock for the order, or reports that it could not"
         runs as system role "WarehouseClerk"
         when ReservationRequested
@@ -234,7 +234,7 @@ module Stock
 
     // The reserved goods become something to pick
     slice Automation PlanShipmentWhenReserved
-      reaction PlanShipmentWhenReserved
+      reaction PlanShipmentWhenReservedReaction
         description "A reservation creates the shipment the pickers work from"
         runs as system role "WarehouseClerk"
         when ReservationMade
@@ -445,6 +445,7 @@ module Stock
         by orderId OrderId
 
       projection PickingCardProjection => PickingCard
+        no automap
         from ShipmentPlanned
           orderId  = $eventSourceId
           sku      = sku
