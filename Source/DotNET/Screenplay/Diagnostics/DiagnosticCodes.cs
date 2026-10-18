@@ -1915,6 +1915,12 @@ public static class DiagnosticCodes
     public const string PatternOutsidePortableMatchDialect = "PLAY0699";
 
     /// <summary>
+    /// An admitted match pattern has exponentially ambiguous browser backtracking paths.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.", "offset:index;The zero-based UTF-16 offset of the ambiguous subexpression.")]
+    public const string AmbiguousMatchPattern = "PLAY0803";
+
+    /// <summary>
     /// A Studio text-rule pattern has an equivalent first-class ordinal rule.
     /// </summary>
     [DiagnosticArgumentDefinitions("subject:declaration;The command or concept that owns the match rule.", "property:text?;The constrained command property; absent for a concept's own value.", "pattern:text;The decoded match pattern.")]

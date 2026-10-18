@@ -20,6 +20,7 @@ export const diagnosticCodes = {
     commandHandlerRequiresAttachment: 'PLAY0800', // C# only
     duplicateEventInProjectionScope: 'PLAY0801',
     reservedStoredName: 'PLAY0802',
+    ambiguousMatchPattern: 'PLAY0803',
     describedCommandNotImplemented: 'PLAY0695', // C# only
     describedCommandWithoutProductions: 'PLAY0696', // C# only
     describedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only
