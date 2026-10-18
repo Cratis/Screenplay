@@ -31,7 +31,7 @@ export class RefusalDeclarations {
         }));
     }
 
-    resolve<T extends { readonly name: string }>(name: string, from: SliceSyntax, select: (slice: SliceSyntax) => readonly T[]): { node: T; slice: SliceSyntax } | null {
+    resolve<T extends { readonly name: string }>(name: string, from: SliceSyntax | undefined, select: (slice: SliceSyntax) => readonly T[]): { node: T; slice: SliceSyntax } | null {
         const entries = this.slices.flatMap(({ slice, scope }) => select(slice).map(node => ({ node, slice, scope })));
         const scope = this.slices.find(entry => entry.slice === from)?.scope ?? [];
         const candidates = (reference: string) => {

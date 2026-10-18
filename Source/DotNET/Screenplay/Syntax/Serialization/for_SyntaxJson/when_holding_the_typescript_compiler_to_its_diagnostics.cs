@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Semantics;
 
@@ -16,21 +17,37 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
 {
     static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web);
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments, bind) in _vectors)
+        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments, bind, files, roots, locations) in _vectors)
         {
             var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: registeredTriggers.Select(triggerName => new TriggerDefinition(triggerName))));
-            var result = validate ? compiler.Compile(source) : compiler.Parse(source);
+            CompilationResult<ApplicationSyntax> result;
+            if (files is null)
+            {
+                result = validate ? compiler.Compile(source) : compiler.Parse(source);
+            }
+            else
+            {
+                result = PlayApplicationAssembly.Compile(
+                    compiler,
+                    roots ?? [.. files.Keys.Order(StringComparer.Ordinal)],
+                    new InMemoryPlayDocumentSource(files.ToDictionary(file => file.Key, file => string.Join('\n', file.Value), StringComparer.Ordinal))).Result;
+            }
             if (bind) result = result with { Diagnostics = [.. result.Diagnostics, .. BinderDiagnostics(result.Value!, source)] };
             var reported = result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
             {
                 _mismatches.Add($"{name}: expected [{string.Join(", ", expected)}], C# reports [{string.Join(", ", reported)}]");
+            }
+
+            if (locations is not null && !result.Diagnostics.Select(diagnostic => $"{diagnostic.Location.Path}:{diagnostic.Location.Line}:{diagnostic.Location.Column}").SequenceEqual(locations, StringComparer.Ordinal))
+            {
+                _mismatches.Add($"{name}: diagnostic locations differ");
             }
 
             if (arguments is not null && !result.Diagnostics.Select(diagnostic => diagnostic.Arguments).SequenceEqual(arguments))
@@ -74,7 +91,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
         return directory!.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind)> Vectors()
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -86,6 +103,9 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             vector.TryGetProperty("registeredTriggers", out var triggers) ? triggers.EnumerateArray().Select(trigger => trigger.GetString()!).ToArray() : [],
             vector.TryGetProperty("messages", out var messages) ? messages.EnumerateArray().Select(message => message.GetString()!).ToArray() : null,
             vector.TryGetProperty("arguments", out var arguments) ? JsonSerializer.Deserialize<DiagnosticArguments[]>(arguments.GetRawText(), _options) : null,
-            vector.TryGetProperty("bind", out var bind) && bind.GetBoolean()))];
+            vector.TryGetProperty("bind", out var bind) && bind.GetBoolean(),
+            vector.TryGetProperty("files", out var files) ? JsonSerializer.Deserialize<Dictionary<string, string[]>>(files.GetRawText(), _options) : null,
+            vector.TryGetProperty("roots", out var roots) ? roots.EnumerateArray().Select(root => root.GetString()!).ToArray() : null,
+            vector.TryGetProperty("locations", out var locations) ? locations.EnumerateArray().Select(location => location.GetString()!).ToArray() : null))];
     }
 }

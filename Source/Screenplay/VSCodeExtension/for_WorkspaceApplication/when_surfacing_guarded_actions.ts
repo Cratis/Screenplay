@@ -7,7 +7,8 @@ import vectors from '../../Compiler/Conformance/diagnostics.json';
 import { WorkspaceApplication } from '../WorkspaceApplication';
 
 const guardedCode = (code: string) => /^PLAY034[5-8]$/.test(code);
-const cases = vectors.cases.filter(vector => vector.diagnostics.some(diagnostic => guardedCode(diagnostic.split('@')[0])));
+// Single-buffer cases only; folder vectors (`files`) are held to both compilers by the conformance runners.
+const cases = vectors.cases.filter(vector => !('files' in vector) && vector.diagnostics.some(diagnostic => guardedCode(diagnostic.split('@')[0])));
 
 describe('when surfacing guarded action diagnostics in workspace files', () => {
     it('should cover every guarded action validation code', () => {

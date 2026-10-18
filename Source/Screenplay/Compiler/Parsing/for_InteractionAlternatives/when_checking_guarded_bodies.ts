@@ -19,6 +19,7 @@ describe('when checking guarded interaction bodies', () => {
         expect(diagnostic?.severity).toBe(severity);
     });
     it('accepts structured lists without deprecation', () => {
-        expect(parse(source('            when item.status == "open"\n              notify info "Open"\n            otherwise\n              notify info "Closed"')).diagnostics).toEqual([]);
+        // This parser-only check excludes declaration-dependent subject validation.
+        parseForAuthoring(source('            when item.status == "open"\n              notify info "Open"\n            otherwise\n              notify info "Closed"'), undefined, undefined, false).diagnostics.should.deep.equal([]);
     });
 });

@@ -3,7 +3,9 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { ShadowingAlternative } from './GuardedActionShadowing';
+import { GuardedInteractionAlternative } from './GuardedInteractionAlternative';
+import { InteractionExecution } from './InteractionExecution';
+import { interactionBody, interactionExecutions } from './InteractionExecutions';
 import { dotNetWhitespace, pattern } from '../Text/patterns';
 import { parseCondition } from './ConditionParser';
 import { validateCondition } from './GuardedActionParser';
@@ -21,7 +23,8 @@ export interface InteractionAncestor {
 export interface GuardedInteractionBinding {
     readonly location: SourceLocation;
     readonly ancestors: readonly InteractionAncestor[];
-    readonly alternatives: readonly ShadowingAlternative[];
+    readonly alternatives: readonly GuardedInteractionAlternative[];
+    readonly otherwise: readonly InteractionExecution[];
 }
 
 const screenTemplate = pattern(`^screen${dotNetWhitespace}+template(?:${dotNetWhitespace}|$)`);
@@ -38,7 +41,7 @@ export function interactionAncestry(lines: readonly SourceLine[]): ReadonlyMap<n
         }
         if (fenced || line.content.length === 0 || line.content.startsWith('//')) continue;
         while (ancestors.length > 0 && ancestors[ancestors.length - 1].indent >= line.indent) ancestors.pop();
-        if (firstWord(line.content) === 'on') result.set(line.number, ancestors.map(ancestor => ({ keyword: screenTemplate.test(ancestor.content) ? 'screen template' : firstWord(ancestor.content), location: locationOf(ancestor) })));
+        if (['on', 'uses'].includes(firstWord(line.content))) result.set(line.number, ancestors.map(ancestor => ({ keyword: screenTemplate.test(ancestor.content) ? 'screen template' : firstWord(ancestor.content), location: locationOf(ancestor) })));
         ancestors.push(line);
     }
     return result;
@@ -48,12 +51,25 @@ const inline = pattern(`^when${dotNetWhitespace}+([^\\n]+)${dotNetWhitespace}+ex
 const trigger = pattern(`^on${dotNetWhitespace}+([^\\n]+)$`);
 const where = pattern(`^where${dotNetWhitespace}+([^\\n]+)$`);
 const actions = new Set(['execute', 'navigate', 'open', 'close', 'refresh', 'set', 'notify', 'confirm', 'raise']);
+const behavior = pattern(`^behavior${dotNetWhitespace}+([A-Za-z_]\\w*)$`);
+const uses = pattern(`^uses${dotNetWhitespace}+([A-Za-z_]\\w*)$`);
+const behaviorArgument = pattern(`^([A-Za-z_]\\w*)${dotNetWhitespace}+([^\\n]+)$`);
 
 // Interaction bodies remain opaque in the TS AST. Check their structure instead of silently accepting
 // alternatives the C# compiler refuses. Input collection supplies only significant, non-fenced lines.
 export function validateInteractionBodies(context: ParserContext, lines: readonly SourceLine[]): void {
+    const declaration = behavior.exec(lines[0]?.content ?? '');
+    if (declaration !== null) context.interactionBehaviors.push({ name: declaration[1], location: locationOf(lines[0]) });
     for (let index = 0; index < lines.length; index++) {
         const header = lines[index];
+        const attachment = uses.exec(header.content);
+        if (attachment !== null) context.interactionUses.push({
+            behavior: attachment[1], location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [],
+            arguments: interactionBody(lines, header).flatMap(line => {
+                const match = behaviorArgument.exec(line.content);
+                return match === null ? [] : [{ name: match[1], value: match[2].trim() }];
+            }),
+        });
         const on = trigger.exec(header.content);
         if (on === null || on[1].startsWith('row-click ')) continue;
         const body: SourceLine[] = [];
@@ -62,7 +78,8 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
         const branches = children.filter(line => ['when', 'otherwise'].includes(firstWord(line.content)));
         const supported = ['click', 'double click', 'select'].includes(on[1].trim());
         const guards = children.filter(line => where.test(line.content));
-        const alternatives: ShadowingAlternative[] = [];
+        const alternatives: GuardedInteractionAlternative[] = [];
+        let otherwise: readonly InteractionExecution[] = [];
         let sawOtherwise = false;
         for (const branch of branches) {
             const isWhen = firstWord(branch.content) === 'when';
@@ -72,12 +89,15 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
                 const condition = parseCondition(context, match?.[1] ?? branch.content.slice(4).trim(), locationOf(branch), true);
                 if (condition !== null) {
                     validateCondition(context, condition);
-                    alternatives.push({ condition, location: locationOf(branch), message: "This 'when' alternative is shadowed by earlier alternatives in this interaction" });
+                    const executions = match === null ? interactionExecutions(interactionBody(body, branch))
+                        : interactionExecutions([{ ...branch, content: `execute ${match[2]}` }, ...interactionBody(body, branch)]);
+                    alternatives.push({ condition, executions, location: locationOf(branch), message: "This 'when' alternative is shadowed by earlier alternatives in this interaction" });
                 }
                 if (match !== null) context.error(DiagnosticCodes.InlineInteractionAlternative, "Interaction alternatives require an indented action list, not 'when <condition> execute <Command>'", locationOf(branch));
             } else {
                 if (sawOtherwise || branch.content !== 'otherwise') context.error(DiagnosticCodes.MisplacedActionOtherwise, "An interaction permits one final block-form 'otherwise'", locationOf(branch));
                 sawOtherwise = true;
+                otherwise = interactionExecutions(interactionBody(body, branch));
             }
             const position = body.indexOf(branch);
             const nested = body[position + 1];
@@ -93,7 +113,7 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
             if (!branches.some(line => firstWord(line.content) === 'when')) context.error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded interaction requires at least one 'when' alternative", locationOf(header));
         }
         if (supported) for (const guard of guards) deprecateWhere(context, guard);
-        if (alternatives.length > 0) context.guardedInteractions.push({ location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [], alternatives });
+        if (alternatives.length > 0) context.guardedInteractions.push({ location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [], alternatives, otherwise });
     }
 }
 
