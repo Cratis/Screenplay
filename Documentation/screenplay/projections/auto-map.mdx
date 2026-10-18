@@ -113,7 +113,7 @@ With default AutoMap, `Name`, `Email`, and `Age` are automatically copied. `IsAc
 5. **Children-level** `no automap` applies to child events
 6. **Default is Enabled** - AutoMap works unless explicitly disabled
 
-AutoMap cannot be toggled inside an individual `from` block.
+AutoMap cannot be toggled inside an individual `from` block (`PLAY0075`).
 
 ## Examples
 
@@ -155,7 +155,7 @@ projection User => UserReadModel
       Email = emailAddress
 ```
 
-### Projection-Level Disable with Event-Level Override
+### Projection-Level Disable Inherited by Every Event
 
 ```pdl
 projection User => UserReadModel

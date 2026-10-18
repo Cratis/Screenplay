@@ -91,7 +91,7 @@ A constraint is checked against what the command would append, together with eve
 
 ### Specifying a violation
 
-A specification's `given` events belong to the event source the command runs against, so a specification can pin a violation of a unique event constraint with `then error`:
+A specification's `given` events belong to the event source the command runs against unless a `for` names another, so a specification can pin a violation of a unique event constraint with `then error`:
 
 ```screenplay
 module Billing
