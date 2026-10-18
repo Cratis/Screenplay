@@ -63,8 +63,40 @@ jobs:
           fi
           printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
 
+  # The embedded event model board is one self-contained HTML page with no native code, so it is
+  # built once here and every package leg embeds the same file instead of rebuilding it per OS.
+  board:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+      # yarn.lock is not committed, so setup-node's yarn cache cannot key on it; cache like publish.yml does.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24-board-yarn-${{ hashFiles('**/package.json') }}
+      - name: Build embedded event model board
+        run: |
+          corepack enable
+          yarn install
+          yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenplay-event-model-board
+          path: Source/Screenplay/McpApp/dist/event-model-board.html
+          retention-days: 3
+          if-no-files-found: error
+
   package:
-    needs: changes
+    needs: [changes, board]
     strategy:
       fail-fast: false
       matrix:
@@ -91,11 +123,14 @@ jobs:
           python -m pip install jsonschema==4.26.0
       - name: Check portable plugin schemas and platform metadata
         run: python -m unittest discover -s Source/DotNET/Screenplay.Mcp/Packaging -p 'test_*.py'
-      - name: Build embedded event model board
-        run: |
-          corepack enable
-          yarn install
-          yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+      # Screenplay.Mcp.csproj embeds this file only when it exists, so a missing board would not fail the build.
+      - name: Download embedded event model board
+        uses: actions/download-artifact@v4
+        with:
+          name: screenplay-event-model-board
+          path: Source/Screenplay/McpApp/dist
+      - name: Require the embedded event model board
+        run: test -s Source/Screenplay/McpApp/dist/event-model-board.html
       - name: Check native Windows missing short-name admission
         if: runner.os == 'Windows'
         run: dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --configuration Debug --filter 'FullyQualifiedName~when_refusing_repair_write_conflicts|FullyQualifiedName~when_comparing_missing_windows_aliases'

@@ -127,7 +127,7 @@ children members identified by userId
     Role = role
 ```
 
-The `id userId` specifies the child identifier property, while `key userId` specifies which event property to use.
+The `identified by userId` clause names the child identifier property, while `key userId` names the event property whose value supplies it. The `parent groupId` line names the event property that points at the parent instance.
 
 ## Key Expressions
 

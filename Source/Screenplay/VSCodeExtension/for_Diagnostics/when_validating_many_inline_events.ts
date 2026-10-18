@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { completenessDiagnostics, parse } from '@cratis/screenplay-compiler';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
@@ -156,6 +158,30 @@ describe('when validating many inline events in the workspace', () => {
                 start: new vscode.Position(diagnostic.location.line - 1, diagnostic.location.column - 1) })),
         );
     });
+
+    for (const selection of ['privilege', 'purposes', 'personas']) {
+        const vectors = JSON.parse(readFileSync(resolve(__dirname, `../../Compiler/Conformance/completeness-${selection}.json`), 'utf8')) as { cases: { name: string; source: string[] }[] };
+        const codes = new Set(['PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0574', 'PLAY0575', 'PLAY0576']);
+        for (const vector of vectors.cases) {
+            it(`should preserve supplied ${selection} findings for ${vector.name} without enabling the check`, () => {
+                const source = vector.source.join('\n');
+                const application = new WorkspaceApplication();
+                application.set('model.play', source);
+                refresh(application, source);
+                expect(editor.diagnostics.filter(diagnostic => codes.has(String(diagnostic.code)))).toEqual([]);
+                const ordinary = application.diagnosticsFor('model.play');
+                const findings = completenessDiagnostics(parse(source, 'model.play'), [selection]);
+                vi.spyOn(application, 'diagnosticsFor').mockReturnValue([...ordinary, ...findings]);
+                refresh(application, source);
+                const supplied = editor.diagnostics.filter(diagnostic => codes.has(String(diagnostic.code)));
+                expect(supplied.map(diagnostic => ({ code: diagnostic.code, message: diagnostic.message, severity: diagnostic.severity, start: diagnostic.range.start }))).toEqual(
+                    findings.map(diagnostic => ({ code: diagnostic.code, message: diagnostic.message,
+                        severity: diagnostic.severity === 'information' ? vscode.DiagnosticSeverity.Information : vscode.DiagnosticSeverity.Warning,
+                        start: new vscode.Position(diagnostic.location.line - 1, diagnostic.location.column - 1) })),
+                );
+            });
+        }
+    }
 
     it('should preserve editor precedence and distinct codes or lines when merging diagnostics', () => {
         const source = document(2);
