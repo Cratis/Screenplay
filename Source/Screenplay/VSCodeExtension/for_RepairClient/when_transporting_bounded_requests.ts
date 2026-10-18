@@ -106,6 +106,10 @@ const capabilities = {
 it('validates only consumed capabilities and tolerates additive fields', () => {
     expect(() => validateCapabilities({ ...capabilities, additive: { newField: true } })).not.toThrow();
 });
+it('accepts separate destination-intent capabilities without treating them as pinned no-input actions', () => {
+    expect(() => validateCapabilities({ ...capabilities, intentActions: [{ diagnosticCode: 'PLAY0470', intentVersion: 1, pinRepairEvidence: false, canFixAll: false }] })).not.toThrow();
+    expect(() => validateCapabilities({ ...capabilities, actions: [], intentActions: capabilities.actions })).toThrow();
+});
 for (const patch of [{ repairContractVersion: 2 }, { schemaVersion: 2 }, { evidence: {} }, { savedFilesOnly: false }, { cancellation: {} }, { structuredFailures: {} }, { actions: [] }]) {
     it(`refuses unsupported/malformed/missing safety capabilities: ${JSON.stringify(patch)}`, () => {
         expect(() => validateCapabilities({ ...capabilities, ...patch })).toThrow();

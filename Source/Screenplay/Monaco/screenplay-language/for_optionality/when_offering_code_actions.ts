@@ -53,6 +53,14 @@ describe('when offering Monaco code actions', () => {
         expect(result?.actions.map(action => action.kind)).toEqual(['quickfix', migrationKind]);
     });
 
+    it.each([undefined, 'quickfix', 'source.fixAll'])('should never infer destination intent for PLAY0470 with kind %j', async only => {
+        const document = model('module M\n  feature F\n    slice StateChange S\n      command C\n        id Uuid identifier\n        produces event Inline\n        produces Plain\n      event Plain\n');
+        const markers = [{ ...marker, code: 'PLAY0470' }];
+        const result = await createCodeActionProvider().provideCodeActions(document, range, { ...context, markers, only }, token);
+        expect(result?.actions).toEqual([]);
+        expect(document.getValue).not.toHaveBeenCalled();
+    });
+
     it('should refuse stale analysis', async () => {
         const document = model();
         let version = 0;

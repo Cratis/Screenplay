@@ -67,6 +67,13 @@ static class McpToolSchemas
                 });
         }
 
+        if (tool.Name == "propose-repair")
+        {
+            schema["if"] = new JsonObject { ["properties"] = new JsonObject { ["diagnosticCode"] = new JsonObject { ["const"] = "PLAY0470" } }, ["required"] = new JsonArray("diagnosticCode") };
+            schema["then"] = new JsonObject { ["required"] = new JsonArray("destinationIntent"), ["properties"] = new JsonObject { ["pinRepairEvidence"] = new JsonObject { ["const"] = false }, ["formatting"] = new JsonObject { ["const"] = "CanonicalizeTouchedDocuments" } }, ["not"] = new JsonObject { ["required"] = new JsonArray("expectedRepairEvidenceRevision") } };
+            schema["else"] = new JsonObject { ["not"] = new JsonObject { ["required"] = new JsonArray("destinationIntent") } };
+        }
+
         if (tool.Name == "propose-property")
         {
             schema["allOf"] = new JsonArray(
@@ -131,6 +138,7 @@ static class McpToolSchemas
         "before" or "after" when tool == "semantic-diff" => RevisionSource(),
         "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
+        "destinationIntent" when tool == "propose-repair" => McpDestinationIntent.Schema(),
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },
         "offset" => McpAstSchemas.Integer(),
         "eventFanOutThreshold" or "propertyFanInThreshold" when tool == "find-modeling-smells" => new() { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["default"] = 5 },
@@ -159,8 +167,8 @@ static class McpToolSchemas
         "view" when tool == "describe-application" => McpAstSchemas.Choice("summary", "children", "declarations"),
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "cases", "streams", "route", "dependencies", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
-        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "named-rule-intents", "named-rule-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics", "typed-contexts", "source-map", "repairs", "executable-model"),
-        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "notes", "release-baseline"),
+        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "named-rule-intents", "named-rule-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics", "typed-contexts", "source-map", "repairs", "repair-intents", "executable-model"),
+        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "notes", "release-baseline", "production-destinations", "production-destination-identities"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };

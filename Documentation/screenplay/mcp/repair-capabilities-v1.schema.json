@@ -22,6 +22,29 @@
         }
       }
     },
+    "intentActions": {
+      "description": "Optional additive explicit-intent actions, never no-input editor repairs.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["diagnosticCode", "tool", "intentSchema", "intentVersion", "discoveryView", "reportView", "requiredFormatting", "requiredValidation", "individualReviewRequired", "baselineExecutableAvailable", "preservationProven", "canFixAll", "pinRepairEvidence"],
+        "properties": {
+          "diagnosticCode": { "const": "PLAY0470" },
+          "tool": { "const": "propose-repair" },
+          "intentSchema": { "const": "destinationIntent" },
+          "intentVersion": { "const": 1 },
+          "discoveryView": { "const": "repair-intents" },
+          "reportView": { "const": "production-destinations" },
+          "requiredFormatting": { "const": "CanonicalizeTouchedDocuments" },
+          "requiredValidation": { "const": "Executable" },
+          "individualReviewRequired": { "const": true },
+          "baselineExecutableAvailable": { "const": false },
+          "preservationProven": { "const": false },
+          "canFixAll": { "const": false },
+          "pinRepairEvidence": { "const": false }
+        }
+      }
+    },
     "evidence": {
       "type": "object",
       "required": ["version", "optional", "revisionPrefix", "candidateResolutionChanges"],

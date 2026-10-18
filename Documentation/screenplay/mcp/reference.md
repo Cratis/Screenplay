@@ -1047,8 +1047,52 @@ pin), and `PLAY0397` (`validate csharp` migration). See the
 [repair conditions](authoring-tools.md#fix-a-diagnostic) before choosing one.
 Discovery verifies acceptance and comment preservation for the first four, with
 their routing, consumer or model-preservation checks. `PLAY0397` discovery identifies
-the recipe only; its proposal may still be refused. `PLAY0470` remains deferred,
-and repairs requiring a choice are not offered.
+the recipe only; its proposal may still be refused. These no-input repairs never
+choose production destinations. `PLAY0470` is separately advertised in
+`repair-capabilities.intentActions`, not `actions`, and discovered through
+`read-workspace` with `view: "repair-intents"`.
+
+For `PLAY0470`, `propose-repair` requires `destinationIntent`:
+`{version: 1, productions: [{subject, for, route}]}`. Supply exactly one entry for
+every event-production occurrence of the diagnosed command, including conditional,
+repeated-event and already-explicit occurrences. `subject` is the production handle;
+`for` is a non-null typed `ExpressionSyntax` from `syntax-schema`. `route` is either
+`{kind: "Legacy"}` or `{kind: "Named", source: <handle>, stream: <handle>}` using
+the exact uniquely resolved declaration handles. The containing command is the
+request's `subject`. Both revisions and `CanonicalizeTouchedDocuments` consent
+are required. `destinationIntent` is rejected on unrelated repairs.
+
+Intent discovery exposes command and production handles, actual diagnostics,
+existing expressions, conditions, authored/effective route context, version and
+review requirements. Page the entire command before selecting; the server never
+supplies missing intent or copies a sibling. The only edits fill missing `for`
+members. Existing explicit expressions must be structurally equal and named routing
+must remain unchanged. Fix-all and pinned repair evidence v1 are unsupported.
+Validation is always `Executable`; an unrelated workspace blocker refuses the
+whole proposal, with diagnostics and no applyable subset.
+
+Read retained `production-destinations` and `production-destination-identities`
+views through `read-proposal`. Each result has `summary` and a bounded `page`:
+count is limited to 200 and source rows to 192 KiB per page. A single oversized row
+is refused without truncation. The summary states `baselineExecutableAvailable:
+false`, `preservationProven: false`, candidate versions and binding success, command
+default/route, counts and identity continuity. Rows disclose original omission or
+expression, submitted expression/route, resolved property/type and candidate
+routing. `MadeExplicit` and `ExplicitUnchanged` describe syntax; effective routing is
+`EstablishedFromInvalidModel`, never an invented before-destination. Authoring and
+executable diagnostics use their existing proposal views.
+
+Only explicit `apply` installs the exact retained proposal. Retention and the last
+pre-install check independently refuse attachment overlap with source, identity,
+journal, staging, backup and rollback writes, including physical aliases and
+uncertain alias resolution. Source/file-membership, catalog/state or referenced
+attachment availability, bytes and diagnostics drift invalidate the preview;
+request and review a new proposal, never silently re-plan. These checks do not
+extend ordinary unpinned repairs' guarantees. `RolledBack` is failure with verified
+restoration; `RecoveryRequired` preserves recovery evidence and blocks ordinary
+operations. Inspect `workspace-state` after an unknown outcome and never retry or
+recover automatically. See the
+[explicit-intent procedure](authoring-tools.md#establish-production-destinations).
 
 ## Editing and validation
 
