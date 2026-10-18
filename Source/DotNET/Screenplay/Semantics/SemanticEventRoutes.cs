@@ -236,7 +236,7 @@ static class SemanticEventRouting
             }
             foreach (var trigger in triggers)
             {
-                foreach (var produced in trigger.Produces.Where(produced => produced.EventContract == contract))
+                foreach (var produced in trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces)).Where(produced => produced.EventContract == contract))
                 {
                     if (produced.DestinationType is { } type)
                     {
