@@ -23,8 +23,9 @@ internal static class WorkspaceTimelineContentProof
         kind => kind.Members.Where(member => typeof(SyntaxNode).IsAssignableFrom(member.Type) ||
             (member.ElementType is not null && typeof(SyntaxNode).IsAssignableFrom(member.ElementType))).ToArray());
 
-    internal static bool Preserves(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins)
+    internal static bool Preserves(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports = null)
     {
+        if (removedImports is { Count: > 0 } && !SameSourceModuloTimelinePermutation(before, after, pins, removedImports)) return false;
         if (before.Compilation.Value is not null && after.Compilation.Value is not null)
         {
             return WorkspaceRepairVerification.SameModel(before, after);
@@ -34,15 +35,15 @@ internal static class WorkspaceTimelineContentProof
             return false;
         }
 
-        return SameSourceModuloTimelinePermutation(before, after, pins) && SameAdmissionDiagnostics(before.Compilation.Diagnostics, after.Compilation.Diagnostics);
+        return SameSourceModuloTimelinePermutation(before, after, pins, removedImports) && SameAdmissionDiagnostics(before.Compilation.Diagnostics, after.Compilation.Diagnostics);
     }
 
-    internal static bool SameSourceModuloTimelinePermutation(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins)
+    internal static bool SameSourceModuloTimelinePermutation(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports = null)
     {
         var original = WorkspaceTimelineRepairs.Timeline(before);
         var candidate = WorkspaceTimelineRepairs.Timeline(after);
         if (!original.SourceValid || !candidate.SourceValid || original.Application is null || candidate.Application is null ||
-            !PinsAlreadyPlaced(original, candidate, pins))
+            !PinsAlreadyPlaced(original, candidate, pins) || !CoversExpandedImports(original, pins, removedImports ?? []))
         {
             return false;
         }
@@ -50,10 +51,11 @@ internal static class WorkspaceTimelineContentProof
         var left = JsonNode.Parse(SyntaxJson.Serialize(original.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
         var right = JsonNode.Parse(SyntaxJson.Serialize(candidate.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
         var remaining = pins.ToList();
-        Normalize(original.Application, left, [], []);
+        var removed = (removedImports ?? []).ToList();
+        Normalize(original.Application, left, [], removed);
         Normalize(candidate.Application, right, [], remaining);
 
-        return remaining.Count == 0 && JsonNode.DeepEquals(left, right);
+        return remaining.Count == 0 && removed.Count == 0 && JsonNode.DeepEquals(left, right);
     }
 
     internal static bool SameAdmissionDiagnostics(IEnumerable<Diagnostic> before, IEnumerable<Diagnostic> after) =>
@@ -75,6 +77,18 @@ internal static class WorkspaceTimelineContentProof
         return original is { IsPlacementResolved: true } && candidate is { IsPlacementResolved: true } &&
             original.Placement.Equals(pin.Placement) && candidate.Placement.Equals(pin.Placement);
     });
+
+    static bool CoversExpandedImports(AuthoredTimeline before, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin> removed)
+    {
+        if (removed.Count == 0) return true;
+        var expected = removed.SelectMany(import => before.Documents.Where(document => document.Path != import.DocumentPath &&
+            PlayGlob.IsMatch(PlayGlob.Resolve(import.DocumentPath, import.Import.Pattern), document.Path))
+            .Select(document => (import.DocumentPath, document.Path, Placement: import.Placement))).ToArray();
+        var actual = pins.Select(pin => (pin.DocumentPath, Path: PlayGlob.Resolve(pin.DocumentPath, pin.Import.Pattern), pin.Placement)).ToArray();
+
+        return expected.Length > 0 && expected.Length == actual.Length && expected.Distinct().Count() == expected.Length &&
+            expected.All(item => actual.Count(candidate => candidate == item) == 1);
+    }
 
     static void Normalize(SyntaxNode syntax, JsonObject node, string[] outer, List<TimelineImportPin> pins)
     {
