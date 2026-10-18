@@ -3,6 +3,7 @@
 
 import { beforeEach, describe, it } from 'vitest';
 import { should } from 'chai';
+import { DiagnosticCodes } from '../../Diagnostics/DiagnosticCodes';
 import { parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../../Syntax/Structure';
 
@@ -65,3 +66,32 @@ describe('when parsing the acme commerce admissions', () => {
         (toolbar.buttons![1].authorize === undefined).should.equal(true);
     });
 });
+
+describe('when parsing a toolbar button with something other than authorize under it', () => {
+    let result: ReturnType<typeof parse>;
+    beforeEach(() => {
+        result = parse(source.replace('          button plain title "Plain" slice Shop.Basket.PutInBasket\n', '          button plain title "Plain" slice Shop.Basket.PutInBasket\n            item x action PutInBasket\n            authorize IsBuyer\n            authorize IsBuyer\n'));
+    });
+
+    it('should refuse the other line and the second authorize', () => result.diagnostics.filter(diagnostic => diagnostic.code === DiagnosticCodes.InvalidToolbarButton).length.should.equal(2));
+});
+
+for (const button of [
+    'button',
+    'button b title "T" slice Shop.Basket.PutInBasket unknown value',
+    'button b title "T" title "U"',
+    'button b title plain',
+    'button b title "T" slice "Quoted"',
+    'button b title "T" emphasis loud',
+    'button b slice Shop.Basket.PutInBasket',
+    'button b title "T" icon plus emphasis quiet',
+]) {
+    describe(`when parsing the toolbar button ${button}`, () => {
+        let result: ReturnType<typeof parse>;
+        beforeEach(() => {
+            result = parse(source.replace('          button plain title "Plain" slice Shop.Basket.PutInBasket\n', `          ${button}\n`));
+        });
+
+        it('should read it the way the C# compiler does', () => result.diagnostics.filter(diagnostic => diagnostic.code === DiagnosticCodes.InvalidToolbarButton).length.should.equal(button.endsWith('quiet') ? 0 : 1));
+    });
+}
