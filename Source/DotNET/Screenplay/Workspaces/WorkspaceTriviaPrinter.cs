@@ -176,8 +176,8 @@ static class WorkspaceTriviaPrinter
         // Composite parts record distinct name and type columns even when both identifiers have the same text.
         // Do not extend that proof to unrelated nodes whose locations may only identify a containing header.
         var parentPath = ownerPath[..ownerPath.LastIndexOf('/')];
-        var positioned = owner is EventStreamIdPartSyntax && member == "name" ||
-            owner is TypeRefSyntax && member == "name" && originals.GetValueOrDefault(parentPath) is EventStreamIdPartSyntax;
+        var positioned = (owner is EventStreamIdPartSyntax && member == "name") ||
+            (owner is TypeRefSyntax && member == "name" && originals.GetValueOrDefault(parentPath) is EventStreamIdPartSyntax);
         var spans = WorkspaceIdentifierSpans.Find(owner, member, token.Text, change.Before!, positioned ? location.Column - token.Span.Column : null)
             .Where(span => owner is not DependsOnSyntax || span.Offset > token.Text.IndexOf("on", StringComparison.Ordinal) + 1).ToArray();
         if (spans.Length != 1)
