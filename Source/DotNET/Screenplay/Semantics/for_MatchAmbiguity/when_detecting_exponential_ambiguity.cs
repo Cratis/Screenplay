@@ -8,6 +8,7 @@ public class when_detecting_exponential_ambiguity
     [Theory]
     [InlineData("(a+)+$")]
     [InlineData("(a|a)*")]
+    [InlineData("(a|a)*$")]
     [InlineData("(a*)*")]
     [InlineData(@"(\w|\d)+")]
     [InlineData("([a-z]+)*")]
@@ -24,6 +25,12 @@ public class when_detecting_exponential_ambiguity
     // Nonempty iterations can split aaa as a{3} or a{1} followed by a{2}.
     [InlineData("(a{1,3})+")]
     [InlineData("(a+)+[^\\s\\S]|(b+)+")]
+
+    // Mandatory empty matches and alternative empty prefixes are real derivations.
+    [InlineData("((a?){2}b)*$")]
+    [InlineData("((a|){2,4}b)*$")]
+    [InlineData("((a*){0,2}b)*$")]
+    [InlineData("((|)a)*$")]
     public void should_find_two_synchronized_loop_derivations(string pattern) => MatchAmbiguity.Find(pattern).ShouldNotBeNull();
 
     [Theory]
@@ -54,6 +61,20 @@ public class when_detecting_exponential_ambiguity
     [InlineData("(a|)*")]
     [InlineData("(ab{0,2})+$")]
     [InlineData("(ab{1,3})+$")]
+    [InlineData("(a?){0,3}b")]
+    [InlineData("(a|){2,4}$")]
+    [InlineData("(a*){0,2}a")]
+
+    // Empty mandatory copies are legal; finite ambiguity alone is not EDA.
+    [InlineData("(a?){2}a")]
+    [InlineData("((a?){0,3}b)*$")]
+    [InlineData("((a|){0,3}b)*$")]
+    [InlineData("((a?)?b)*$")]
+    [InlineData("((a|)?b)*$")]
+    [InlineData("((a||)*b)*$")]
+    [InlineData("(((a?){0,2})?b)*$")]
+    [InlineData("((a?){0,}b)*$")]
+    [InlineData("((a||){0,}b)*$")]
     [InlineData("(a+)+a{256}")]
     [InlineData("((){3000}){3000}(a+)+")]
     public void should_not_warn_without_a_trimmed_ambiguous_cycle(string pattern) => MatchAmbiguity.Find(pattern).ShouldBeNull();

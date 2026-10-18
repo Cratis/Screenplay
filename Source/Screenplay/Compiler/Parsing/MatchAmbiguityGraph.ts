@@ -43,27 +43,28 @@ export class MatchAmbiguityGraph {
     private repeat(node: MatchAmbiguityNode): MatchAmbiguityPositions {
         if (node.maximum !== null) return this.boundedRepeat(node, node.maximum);
         let result = empty();
-        const copies = Math.max(1, node.minimum);
-        for (let index = 0; index < copies && !this.exhausted; index++) {
-            let part = this.build(node.children[0]);
-            if (index === copies - 1) {
-                // ECMAScript rejects an empty iteration after the minimum is reached.
-                // Inner and outer consuming loops remain separate derivations.
-                this.connect(part.last, part.first, node);
-                part = { ...part, nullable: node.minimum === 0 ? 1 : part.nullable };
-            }
-            result = this.concat(result, part, node);
+        for (let index = 0; index < node.minimum && !this.exhausted; index++) {
+            result = this.concat(result, this.iteration(node, true), node);
         }
-        return result;
+        const tail = this.iteration(node, false);
+        this.connect(tail.last, tail.first, node);
+        return this.concat(result, { ...tail, nullable: 1 }, node);
     }
     private boundedRepeat(node: MatchAmbiguityNode, maximum: number): MatchAmbiguityPositions {
         let result = empty();
         // A prefix-closed suffix gives each count one path: b{0,2} is (b(b)?)?.
         for (let index = maximum - 1; index >= 0 && !this.exhausted; index--) {
-            result = this.concat(this.build(node.children[0]), result, node);
-            if (index >= node.minimum) result = { ...result, nullable: add(1, result.nullable) };
+            const required = index < node.minimum;
+            result = this.concat(this.iteration(node, required), result, node);
+            if (!required) result = { ...result, nullable: 1 };
         }
         return result;
+    }
+    private iteration(node: MatchAmbiguityNode, required: boolean): MatchAmbiguityPositions {
+        const body = this.build(node.children[0]);
+        // RepeatMatcher permits empty mandatory iterations, but rejects them once min is zero.
+        // Preserve nonempty derivations (including empty prefixes); only the wrapper may skip.
+        return required ? body : { ...body, nullable: 0 };
     }
     private concat(left: MatchAmbiguityPositions, right: MatchAmbiguityPositions, origin: MatchAmbiguityNode): MatchAmbiguityPositions {
         this.connect(left.last, right.first, origin);

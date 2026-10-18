@@ -67,21 +67,14 @@ internal sealed partial class MatchAmbiguityGraph
     {
         if (node.Maximum is { } maximum) return BoundedRepeat(node, maximum);
         var result = Empty();
-        var copies = Math.Max(1, node.Minimum);
-        for (var index = 0; index < copies && !Exhausted; index++)
+        for (var index = 0; index < node.Minimum && !Exhausted; index++)
         {
-            var part = Build(node.Children[0]);
-            if (index == copies - 1)
-            {
-                // ECMAScript rejects an empty iteration after the minimum is reached.
-                // Inner and outer consuming loops remain separate derivations.
-                Connect(part.Last, part.First, node);
-                part = part with { Nullable = node.Minimum == 0 ? 1 : part.Nullable };
-            }
-            result = Concat(result, part, node);
+            result = Concat(result, Iteration(node, true), node);
         }
+        var tail = Iteration(node, false);
+        Connect(tail.Last, tail.First, node);
 
-        return result;
+        return Concat(result, tail with { Nullable = 1 }, node);
     }
 
     Positions BoundedRepeat(MatchAmbiguityNode node, int maximum)
@@ -91,11 +84,21 @@ internal sealed partial class MatchAmbiguityGraph
         // A prefix-closed suffix gives each count one path: b{0,2} is (b(b)?)?.
         for (var index = maximum - 1; index >= 0 && !Exhausted; index--)
         {
-            result = Concat(Build(node.Children[0]), result, node);
-            if (index >= node.Minimum) result = result with { Nullable = Add(1, result.Nullable) };
+            var required = index < node.Minimum;
+            result = Concat(Iteration(node, required), result, node);
+            if (!required) result = result with { Nullable = 1 };
         }
 
         return result;
+    }
+
+    Positions Iteration(MatchAmbiguityNode node, bool required)
+    {
+        var body = Build(node.Children[0]);
+
+        // RepeatMatcher permits empty mandatory iterations, but rejects them once min is zero.
+        // Preserve nonempty derivations (including empty prefixes); only the wrapper may skip.
+        return required ? body : body with { Nullable = 0 };
     }
 
     Positions Concat(Positions left, Positions right, MatchAmbiguityNode origin)
