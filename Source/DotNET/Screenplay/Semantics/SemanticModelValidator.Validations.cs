@@ -24,6 +24,8 @@ internal static partial class SemanticModelValidator
                 case SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or
                     SemanticValidationRuleKind.StartsWith or SemanticValidationRuleKind.EndsWith when !shape.Scalar || !shape.Text:
                     throw new InvalidSemanticContract("Text comparison requires a scalar non-enumerated text value.");
+                case SemanticValidationRuleKind.DecimalPlaces when !shape.Scalar || shape.Primitive != SemanticPrimitiveType.DecimalNumber:
+                    throw new InvalidSemanticContract("Decimal places validation requires a scalar decimal number.");
                 case SemanticValidationRuleKind.Matches when !shape.Scalar || !shape.Text:
                     throw new InvalidSemanticContract("Matches validation requires a scalar non-enumerated text value.");
             }
@@ -67,7 +69,7 @@ internal static partial class SemanticModelValidator
         }
 
         static bool BindsLength(SemanticValidationRuleKind kind, bool text) =>
-            kind == SemanticValidationRuleKind.Length ||
+            kind is SemanticValidationRuleKind.Length or SemanticValidationRuleKind.DecimalPlaces ||
             (text && kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum);
 
         static SemanticTypeReference OperandType(SemanticValidationRuleKind kind, bool bindsLength, SemanticTypeReference propertyType) => kind switch
@@ -183,6 +185,12 @@ internal static partial class SemanticModelValidator
             if (validation.Kind == SemanticValidationRuleKind.Matches)
             {
                 ValidateMatchesPattern(validation.Operand!);
+            }
+
+            if (validation.Kind == SemanticValidationRuleKind.DecimalPlaces &&
+                (!_semanticVersion.IsAtLeast(SemanticVersion.V29) || validation.Operand is not SemanticNumberValue { Value: >= 0 and <= 28 } places || decimal.Truncate(places.Value) != places.Value))
+            {
+                throw new InvalidSemanticContract("Decimal places validation requires ESM v29 and a whole number of places from 0 to 28.");
             }
 
             if (bindsLength && validation.Operand is SemanticNumberValue { Value: < 0 })

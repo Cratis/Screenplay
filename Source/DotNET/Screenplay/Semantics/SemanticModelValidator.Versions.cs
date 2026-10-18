@@ -43,6 +43,26 @@ internal static partial class SemanticModelValidator
         }
     }
 
+    internal static bool UsesDecimalPlaces(SemanticApplication application) =>
+        application.Concepts.SelectMany(concept => concept.Validations)
+            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
+            .Any(rule => rule.Kind == SemanticValidationRuleKind.DecimalPlaces);
+
+    /// <summary>
+    /// Gets whether the model uses any construct admitted by decision 0098 (ESM v29).
+    /// </summary>
+    /// <param name="application">The application.</param>
+    /// <returns><c>true</c> when ESM v29 is required.</returns>
+    internal static bool UsesAcmeAdmissions(SemanticApplication application) => UsesDecimalPlaces(application);
+
+    static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesAcmeAdmissions(application),
+            version,
+            SemanticVersion.V29,
+            "An ESM v29 model must use a construct admitted by decision 0098.",
+            "Decimal places, and the other constructs of decision 0098, require ESM v29.");
+
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))

@@ -42,7 +42,8 @@ public static partial class SemanticValidationRules
         SemanticValidationRuleKind.Contains or
         SemanticValidationRuleKind.NotContains or
         SemanticValidationRuleKind.StartsWith or
-        SemanticValidationRuleKind.EndsWith;
+        SemanticValidationRuleKind.EndsWith or
+        SemanticValidationRuleKind.DecimalPlaces;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -68,6 +69,7 @@ public static partial class SemanticValidationRules
         SemanticValidationRuleKind.NotContains => !Text(value).Contains(Text(rule.Operand), StringComparison.Ordinal),
         SemanticValidationRuleKind.StartsWith => Text(value).StartsWith(Text(rule.Operand), StringComparison.Ordinal),
         SemanticValidationRuleKind.EndsWith => Text(value).EndsWith(Text(rule.Operand), StringComparison.Ordinal),
+        SemanticValidationRuleKind.DecimalPlaces => DecimalPlaces(value, rule.Operand),
         SemanticValidationRuleKind.Checksum => Checksum(value, rule.Operand),
         SemanticValidationRuleKind.AllGreaterThan => Elements(value).All(_ => Measure(_) > Number(rule.Operand)),
         SemanticValidationRuleKind.AllGreaterThanOrEqual => Elements(value).All(_ => Measure(_) >= Number(rule.Operand)),
@@ -101,6 +103,7 @@ public static partial class SemanticValidationRules
         SemanticValidationRuleKind.NotContains => $"A value must not contain {Format(rule.Operand)}.",
         SemanticValidationRuleKind.StartsWith => $"A value must start with {Format(rule.Operand)}.",
         SemanticValidationRuleKind.EndsWith => $"A value must end with {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.DecimalPlaces => $"A value must have at most {Format(rule.Operand)} decimal places.",
         SemanticValidationRuleKind.Checksum => $"A value must end in the exact {Format(rule.Operand)} check digits.",
         SemanticValidationRuleKind.AllGreaterThan => $"Every value must be greater than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => $"Every value must be at least {Format(rule.Operand)}.",
@@ -111,6 +114,11 @@ public static partial class SemanticValidationRules
         rule is { Kind: SemanticValidationRuleKind.Matches, Operand: SemanticTextValue pattern } && PortableMatchPattern.Check(pattern.Value) is { Status: PortableMatchStatus.Refused or PortableMatchStatus.Invalid } check
             ? $"outside the portable match dialect: {check.Construct}"
             : null;
+
+    static bool DecimalPlaces(SemanticValue value, SemanticValue? operand) =>
+        value is SemanticNumberValue number && operand is SemanticNumberValue places
+            ? decimal.Round(number.Value, (int)places.Value, MidpointRounding.ToZero) == number.Value
+            : throw SemanticValueRules.Malformed();
 
     static bool Checksum(SemanticValue value, SemanticValue? operand) =>
         value is SemanticTextValue text && operand is SemanticTextValue algorithm
