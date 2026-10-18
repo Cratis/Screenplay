@@ -45,7 +45,7 @@ public class when_listing_code_the_model_needs : given.a_semantic_binder
     void Because() => _result = Bind(Source);
 
     [Fact] void should_not_admit_an_executable_model() => _result.Value.ShouldBeNull();
-    [Fact] void should_preserve_play0268_for_the_query_performer() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).Arguments["subject"].ShouldEqual(DiagnosticArgument.Declaration("query", ["Orders", "Ordering", "Orders", "OrderById"]));
+    [Fact] void should_not_refuse_the_query_performer() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeEmpty();
     [Fact] void should_identify_the_command_handler_refusal_by_its_own_code() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment).Arguments["subject"].ShouldEqual(DiagnosticArgument.Declaration("command", ["Orders", "Ordering", "PlaceOrder", "PlaceOrder"]));
     [Fact] void should_list_every_attachment() => _result.ImplementationRequirements.Select(value => value.Role).ShouldContain(SemanticImplementationRole.CommandHandler);
     [Fact] void should_list_command_validation() => _result.ImplementationRequirements.Select(value => value.Role).ShouldContain(SemanticImplementationRole.CommandValidation);

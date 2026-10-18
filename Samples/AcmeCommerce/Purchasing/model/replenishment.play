@@ -437,38 +437,16 @@ module Buying
         unitsOrdered  Int
         unitsReceived Int
 
+      // The figures are composed by code from the purchase-order and supplier read models: an opaque read, so no
+      // projection and no specification states them. The rest of the application stays executable (Screenplay#862).
       query CurrentPurchasingFigures => observable PurchasingFigures[]
-
-      // Every `from` states every counter (`add ... by 0` keeps what is there): any event may be the first one a row sees
-      projection PurchasingFiguresProjection => PurchasingFigures
-        from PurchaseOrderCreated
-          key "global"
-          summaryId = "global"
-          increment orders
-          add suppliers by 0
-          add unitsOrdered by 0
-          add unitsReceived by 0
-        from SupplierRegistered
-          key "global"
-          summaryId = "global"
-          add orders by 0
-          increment suppliers
-          add unitsOrdered by 0
-          add unitsReceived by 0
-        from PurchaseOrderLineAdded
-          key "global"
-          summaryId = "global"
-          add orders by 0
-          add suppliers by 0
-          add unitsOrdered by quantity
-          add unitsReceived by 0
-        from PurchaseOrderGoodsReceived
-          key "global"
-          summaryId = "global"
-          add orders by 0
-          add suppliers by 0
-          add unitsOrdered by 0
-          add unitsReceived by quantity
+        performer
+          ```csharp
+          var orders = await readModels.GetAll<PurchaseOrderRow>();
+          var suppliers = await readModels.GetAll<SupplierRow>();
+          return [new PurchasingFigures("global", orders.Count(), suppliers.Count(),
+              orders.Sum(o => o.OrderedQuantity), orders.Sum(o => o.ReceivedQuantity))];
+          ```
 
       screen PurchasingDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
@@ -479,18 +457,3 @@ module Buying
               column suppliers     label "Suppliers"
               column unitsOrdered  label "Units ordered"
               column unitsReceived label "Units received"
-
-      specification CountingWhatIsOnOrder
-        given PurchaseOrderCreated
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-        given PurchaseOrderLineAdded
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          sku       = "ACM-1000"
-          quantity  = 40
-          unitPrice = 62
-        then readmodel PurchasingFigures
-          summaryId    = "global"
-          orders       = 1
-          unitsOrdered = 40
