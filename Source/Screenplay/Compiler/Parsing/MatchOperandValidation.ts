@@ -7,6 +7,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { ParserContext } from './ParserContext';
+import { MatchAmbiguity } from './MatchAmbiguity';
 import { checkPortableMatchPattern } from './checkPortableMatchPattern';
 import { emailMatchPattern, validateMatchPattern } from './PortableMatchPattern';
 
@@ -44,7 +45,11 @@ export function validateMatchOperand(context: ParserContext, value: ExpressionSy
         return;
     }
     const issue = validateMatchPattern(pattern);
-    if (issue === undefined) return;
+    if (issue === undefined) {
+        const ambiguity = MatchAmbiguity.find(pattern);
+        if (ambiguity !== undefined) context.warning(DiagnosticCodes.AmbiguousMatchPattern, ambiguity.description, patternLocation(raw, location, ambiguity.offset), matchArguments(subject, pattern, ambiguity.offset));
+        return;
+    }
     const description = `${issue.construct} at offset ${issue.offset}. ${issue.suggestion ?? ''}`.trimEnd();
     context.error(issue.invalid ? DiagnosticCodes.InvalidMatchPattern : DiagnosticCodes.PatternOutsidePortableMatchDialect, `Match pattern: ${description}`, patternLocation(raw, location, issue.offset), matchArguments(subject, pattern, issue.offset));
 }

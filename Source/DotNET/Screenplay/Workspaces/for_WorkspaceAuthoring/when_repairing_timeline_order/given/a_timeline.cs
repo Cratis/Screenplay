@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_repairing_tim
 public class a_timeline : Specification
 {
     internal static ScreenplayWorkspace Create(params (string Path, string Text)[] sources) => ScreenplayWorkspace.Create("Timeline",
-        [.. sources.Select(source => WorkspaceDocument.Create(source.Path, PortablePlayPath.Parse(source.Path), Encoding.UTF8.GetBytes(source.Text)))],
+        [.. sources.Select(source => WorkspaceDocument.Create(source.Path.Replace('/', '-'), PortablePlayPath.Parse(source.Path), Encoding.UTF8.GetBytes(source.Text)))],
         SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Timeline")));
 
     internal static string Slice(string name, string[] produces, params string[] consumes)

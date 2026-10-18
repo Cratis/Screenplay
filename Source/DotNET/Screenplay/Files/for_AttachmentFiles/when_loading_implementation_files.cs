@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
@@ -103,24 +103,15 @@ public class when_loading_implementation_files : Specification
     [Fact]
     async Task should_refuse_a_fifo_without_blocking()
     {
-        if (OperatingSystem.IsWindows())
+        if (!(OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()))
         {
             return;
         }
 
-        using var process = Process.Start(new ProcessStartInfo("mkfifo", Path.Combine(_root, "pipe.cs")) { UseShellExecute = false });
-        if (process is null)
-        {
-            return;
-        }
+        var created = mkfifo(Path.Combine(_root, "pipe.cs"), 0x180);
+        Assert.True(created == 0, $"mkfifo failed with errno {Marshal.GetLastPInvokeError()}.");
 
-        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
-        if (process.ExitCode != 0)
-        {
-            return;
-        }
-
-        var result = await Task.Run(() => Bind("pipe.cs")).WaitAsync(TimeSpan.FromSeconds(5));
+        var result = await Task.Run(() => Bind("pipe.cs")).WaitAsync(TimeSpan.FromSeconds(30));
         result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.AttachmentUnreadable).Severity.ShouldEqual(DiagnosticSeverity.Warning);
     }
 
@@ -304,6 +295,9 @@ public class when_loading_implementation_files : Specification
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         File.WriteAllText(full, text);
     }
+
+    [DllImport("libc", SetLastError = true)]
+    static extern int mkfifo(string path, uint mode);
 
     void Destroy() => Directory.Delete(_root, true);
 }

@@ -51,8 +51,7 @@ public sealed partial class SemanticModelBinder
                 query.ReturnType.IsCollection &&
                 query.By?.Source is null &&
                 query.Filters.All(filter => filter.Source is null) &&
-                query.Scope is null &&
-                query.Performer is null);
+                query.Scope is null);
             if (identifierNames.Length == 0 && hasAdmittedListQuery)
             {
                 var conventionalIdentifiers = readModel.Properties
@@ -102,17 +101,18 @@ public sealed partial class SemanticModelBinder
 
             if (query.Performer is not null)
             {
+                // A query a performer answers is an opaque read: the code decides what it returns, so no declarative
+                // shape can be executed. It stays listed as code the model needs and is excluded from the executable
+                // model and from specifications, instead of refusing every other declaration of the application.
                 RequireImplementation(SemanticImplementationRole.QueryPerformer, SemanticAddress.ForQuery(slice, query.Name), query.Performer.File, query.Performer.Code);
+                _opaqueQueries.Add(query);
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' is performed by code: it is an opaque read, so it is realization metadata and no specification can execute it.", query.Location);
+                return null;
             }
 
             if (query.Scope is not null)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses 'scoped to', which is not admitted into the executable model.", query.Location);
-            }
-
-            if (query.Performer is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses a performer, which is not admitted into the executable model.", query.Location);
             }
 
             if (!query.ReturnType.IsCollection && query.Filters.Any())

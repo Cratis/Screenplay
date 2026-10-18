@@ -133,6 +133,13 @@ still discovered. If one pin would introduce a finding, the proposal can pin a
 safe prefix instead. Names containing glob metacharacters have no pin repair.
 A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
 
+When two import blocks cannot move safely as whole blocks, the repair can replace
+only the affected import interval with explicit imports in the verified order.
+It keeps every matched document, including files without timeline declarations,
+and preserves comments and placements. The action title warns that new files
+need explicit imports: a replaced glob no longer discovers them automatically.
+Safe sibling moves and pins that retain a glob remain the first choices.
+
 The proposal first tries the producer before the consumer, then the consumer
 after the producer. It must remove the selected finding without introducing
 `PLAY0516` or `PLAY0517`. Own-sub-feature findings, cycle groups, unranked members,
@@ -151,8 +158,28 @@ hoisting past declarations.
 
 Use [MCP diagnostic repairs](mcp/authoring-tools.md#fix-a-diagnostic) to discover,
 preview and explicitly apply one proposal, then rediscover against its new source
-revision. These repairs require canonical formatting consent. There is no
-TypeScript quick fix or pinned-evidence editor action for `PLAY0516`.
+revision. These repairs require canonical formatting consent. The MCP
+pinned-evidence path remains unsupported for `PLAY0516`.
+
+The TypeScript compiler exposes the same repair through `findQuickFixes` and
+`prepareQuickFixes`. Supply a one-based diagnostic `line` and `PLAY0516`; for
+cross-file repairs, also supply `path` and a complete `documents` map of paths to
+source text. An edit's optional `path` identifies its destination document.
+Without that map, the repair is limited to the current buffer. The compiler
+checks the resulting syntax, placements, presentation ranks and diagnostics;
+it does not claim executable-model or identity-catalog verification.
+
+Monaco offers buffer-local actions by default. Hosts can pass an optional
+`applicationModels` callback as the second argument of `createCodeActionProvider`;
+it returns the complete path-to-`ITextModel` map. Cross-file actions pin every
+analyzed model's version, not only models receiving nonempty edits. Request a new
+action after any source changes.
+
+VS Code offers local repairs for single-document applications. Multi-file repairs
+use the existing saved-file repair session: connect the tool, save the application,
+review the proposal and explicitly apply it. That session uses the C# proof above
+without requesting unsupported pinned repair evidence. Buffer-local actions never
+silently apply a saved-file proposal.
 
 ## Patterns
 
