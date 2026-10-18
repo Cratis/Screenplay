@@ -140,6 +140,8 @@ internal sealed partial class McpWorkspaces
 
     static object ReadProposalView(IMcpProposal proposal, JsonElement arguments, string view) => view switch
     {
+        "production-destinations" => DestinationReport(proposal, arguments, false),
+        "production-destination-identities" => DestinationReport(proposal, arguments, true),
         "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
         "changes" => McpPaging.Page(proposal.WritePlan.Entries, DescribeChangeSummary, arguments, proposal.Workspace.Revision.ToString()),
         "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
@@ -150,6 +152,20 @@ internal sealed partial class McpWorkspaces
         "before" or "after" => ProposalBytes(proposal, arguments, view),
         _ => throw new McpFailure("Unknown proposal view.", -32602)
     };
+
+    static object DestinationReport(IMcpProposal proposal, JsonElement arguments, bool identities)
+    {
+        if (proposal is not McpAuthoringProposal { Result.ProductionDestinationReport: { } report } authored)
+            throw new McpFailure("This proposal has no production destination report.", -32602);
+        return new
+        {
+            summary = McpDestinationIntent.Summary(report),
+            authoringDiagnosticCount = authored.Result.AuthoringDiagnostics.Length,
+            executableDiagnosticCount = authored.Result.ExecutableDiagnostics.Length,
+            diagnosticsView = "diagnostics", executableDiagnosticsView = "executable-diagnostics",
+            page = McpPaging.BoundedSourcePage(identities ? report.NewIdentities.Cast<object>() : report.Rows.Select(McpDestinationIntent.Describe), arguments, proposal.Workspace.Revision.ToString())
+        };
+    }
 
     static object DescribeChangeSummary(WorkspaceWriteEntry entry) => new
     {
@@ -354,6 +370,13 @@ internal sealed partial class McpWorkspaces
 
     object ReadWorkspaceView(ScreenplayWorkspace workspace, JsonElement arguments, string view) => view switch
     {
+        "repair-intents" => McpJson.ToolResult(new
+        {
+            workspace = McpWorkspaceTransport.Describe(workspace), intentVersion = 1,
+            expressionSchema = "syntax-schema:ExpressionSyntax", requiredFormatting = "CanonicalizeTouchedDocuments", requiredValidation = "Executable",
+            baselineExecutableAvailable = false, preservationProven = false, individualReviewRequired = true, canFixAll = false, pinRepairEvidence = false,
+            page = McpPaging.BoundedSourcePage(WorkspaceProductionDestinationRepairs.Discover(workspace).Select(McpDestinationIntent.Describe), arguments, workspace.Revision.ToString())
+        }),
         "executable-model" => ReadExecutableModelView(workspace, arguments, view),
         _ when _eventSourceViews.Contains(view, StringComparer.Ordinal) => ReadEventSourceView(workspace, arguments, view),
         _ when _operationIntentViews.Contains(view, StringComparer.Ordinal) => ReadOperationIntentView(workspace, arguments, view),

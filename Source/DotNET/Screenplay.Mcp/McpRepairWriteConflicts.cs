@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Mcp;
 // follows links, probes arbitrary locks, creates parents, or writes a case-sensitivity test file.
 internal static class McpRepairWriteConflicts
 {
-    internal static void Verify(McpRoot root, IMcpProposal proposal, string operationId)
+    internal static void Verify(McpRoot root, IMcpProposal proposal, string operationId, bool requirePhysicalSeparation = false)
     {
         var sources = proposal.Before.Documents.Concat(proposal.Workspace.Documents)
             .Select(document => SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, document.Text)).ToImmutableArray();
@@ -25,7 +25,7 @@ internal static class McpRepairWriteConflicts
             var path = Path.Combine(root.DirectoryPath, key);
             foreach (var write in writes)
             {
-                if (path.Equals(write, StringComparison.Ordinal)) throw Conflict(reference, write);
+                if (path.Equals(write, StringComparison.Ordinal)) throw Conflict(reference, write, requirePhysicalSeparation);
             }
 
             try
@@ -33,7 +33,11 @@ internal static class McpRepairWriteConflicts
                 var input = Inspect(root, path);
 
                 // A link-refused reference remains loader evidence, but is never followed to find aliases.
-                if (input is null) continue;
+                if (input is null)
+                {
+                    if (requirePhysicalSeparation) throw Uncertain(reference);
+                    continue;
+                }
                 foreach (var write in writes)
                 {
                     var target = Inspect(root, write) ?? throw Uncertain(reference);
@@ -51,11 +55,11 @@ internal static class McpRepairWriteConflicts
 
                     if (input.Suffix.Length == 0 && target.Suffix.Length == 0)
                     {
-                        if (McpDirectoryIdentity.SameEntry(input.Existing, target.Existing)) throw Conflict(reference, write);
+                        if (McpDirectoryIdentity.SameEntry(input.Existing, target.Existing)) throw Conflict(reference, write, requirePhysicalSeparation);
                     }
                     else if (McpDirectoryIdentity.SameEntry(input.Existing, target.Existing))
                     {
-                        if (input.Suffix.Equals(target.Suffix, StringComparison.Ordinal)) throw Conflict(reference, write);
+                        if (input.Suffix.Equals(target.Suffix, StringComparison.Ordinal)) throw Conflict(reference, write, requirePhysicalSeparation);
 
                         // Missing names cannot be resolved by stat. Similar spellings are uncertainty, not an
                         // invented OS-wide case rule (Linux and macOS both support different volume semantics).
@@ -152,7 +156,7 @@ internal static class McpRepairWriteConflicts
 
     static string Comparable(string path) => string.Join('/', path.Normalize(NormalizationForm.FormC).Split('/').Select(segment => segment.TrimEnd(' ', '.')));
 
-    static McpFailure Conflict(string reference, string write) => new($"Pinned repair attachment '{reference}' overlaps planned write '{write}'; select a repair with disjoint attachment inputs.") { FailureKind = "RepairEvidenceWriteConflict" };
+    static McpFailure Conflict(string reference, string write, bool intent) => new($"{(intent ? "Destination intent" : "Pinned repair")} attachment '{reference}' overlaps planned write '{write}'; select a repair with disjoint attachment inputs.") { FailureKind = "RepairEvidenceWriteConflict" };
 
     static McpFailure Uncertain(string reference) => new($"Cannot prove pinned repair attachment '{reference}' is disjoint from planned writes without resolving an uncertain filesystem alias; no proposal can be accepted.") { FailureKind = "RepairEvidenceWriteConflict" };
 
