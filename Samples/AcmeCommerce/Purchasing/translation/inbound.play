@@ -17,7 +17,6 @@ module Buying
         suggestedQuantity Quantity
 
       event ReplenishmentRequested
-        purchaseOrderId PurchaseOrderId
         sku          Sku
         quantity     Quantity
         onHand       StockQuantity
@@ -29,14 +28,12 @@ module Buying
         key sku
         append ReplenishmentRequested
           when added
-            purchaseOrderId = $.crossingId
             sku          = $.sku
             quantity     = $.suggestedQuantity
             onHand       = $.onHand
             reorderPoint = $.reorderPoint
         append ReplenishmentRequested
           when crossingId
-            purchaseOrderId = $.crossingId
             sku          = $.sku
             quantity     = $.suggestedQuantity
             onHand       = $.onHand
@@ -51,7 +48,6 @@ module Buying
           suggestedQuantity = 40
         then ReplenishmentRequested
           for "ACM-1000"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
           sku          = "ACM-1000"
           quantity     = 40
           onHand       = 4
@@ -66,33 +62,48 @@ module Buying
       description "Sales confirmed an order line; Purchasing records the demand for the SKU"
       direction inbound
 
+      // Sales publishes the whole confirmed order: its id and every line
       event OrderConfirmedAtPurchasing from "Sales"
-        orderId  OrderId
-        sku      Sku
-        quantity Quantity
+        orderId OrderId
+        lines   StockLine[]
 
+      // One demand fact per line, found by its SKU: a repeat delivery adds nothing, a delivery with one more line adds only that line
       capture DemandFeed
         source events
           from OrderConfirmedAtPurchasing
-        key sku
-        append DemandRecorded
-          when added
-            orderId  = $.orderId
-            sku      = $.sku
-            quantity = $.quantity
-        append DemandRecorded
-          when orderId
-            orderId  = $.orderId
-            sku      = $.sku
-            quantity = $.quantity
+        key orderId
+        children lines identified by sku
+          append DemandRecorded
+            when added
+              orderId  = $.orderId
+              sku      = $.sku
+              quantity = $.quantity
 
       specification RecordingDemandFromAConfirmedOrder
         when append OrderConfirmedAtPurchasing
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":3},{"sku":"ACM-2000","quantity":1}]
+        then DemandRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku      = "ACM-1000"
           quantity = 3
         then DemandRecorded
-          for "ACM-1000"
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
+          sku      = "ACM-2000"
+          quantity = 1
+
+      // Another delivery of the same order adds only the line that is new
+      specification ARepeatedDeliveryAddsOnlyTheNewLine
+        given OrderConfirmedAtPurchasing
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":3}]
+        when append OrderConfirmedAtPurchasing
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":3},{"sku":"ACM-2000","quantity":1}]
+        then DemandRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-2000"
+          quantity = 1

@@ -84,8 +84,13 @@ replenishment (F-C) and change of price (F-D).
 
 ## What the language could not say (honest list)
 
-- `Money` has two decimals, but there is no decimal-places rule: only `>= 0`.
-- A toolbar button belongs to a screen; there is no application-level topbar toolbar construct.
+Nothing in the first list remains: the language admitted each (Screenplay decision 0098, ESM v29 and v30) and the sample uses it.
+
+- `Money` carries `decimals <= 2` ([#867](https://github.com/Cratis/Screenplay/issues/867)), and the basket's `addedValue` is `add addedValue by unitPrice * quantity` ([#864](https://github.com/Cratis/Screenplay/issues/864)).
+- The shell has application-level toolbar buttons in `navigation topbar` (`Shell/navigation.play`, [#868](https://github.com/Cratis/Screenplay/issues/868)).
+- Command specifications state the public event their slice publishes ([#866](https://github.com/Cratis/Screenplay/issues/866)).
+- Orders cross the boundary whole and fan out per line ([#857](https://github.com/Cratis/Screenplay/issues/857)); a replenishment order's id is generated and pinned in its specifications ([#858](https://github.com/Cratis/Screenplay/issues/858)); that command appends to two event sources ([#859](https://github.com/Cratis/Screenplay/issues/859)); an id keeps its own concept on each side of a boundary ([#861](https://github.com/Cratis/Screenplay/issues/861)).
+
+Still open:
+
 - `$eventContext.*` in an outbound projection makes every specification "unsupported".
-- A command specification cannot list the cascaded public event of its slice's outbound translation, so the accepted path is
-  specified in the translation (`when append <PrivateEvent>`) and the command keeps its denial specifications.
