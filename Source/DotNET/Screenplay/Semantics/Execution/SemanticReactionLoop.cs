@@ -22,25 +22,6 @@ namespace Cratis.Screenplay.Semantics.Execution;
 internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator, SemanticExecutionPlan plan, SemanticWorld world)
 {
     /// <summary>
-    /// Pins the values the commands that reactions invoke receive for their generated properties, each invocation taking the
-    /// next one pinned for its command and property.
-    /// </summary>
-    /// <param name="pinned">The pinned values in authored order.</param>
-    internal void Pin(ImmutableArray<SemanticSpecificationGeneratedValue> pinned)
-    {
-        if (pinned.IsDefaultOrEmpty) return;
-        foreach (var value in pinned)
-        {
-            if (!_pinned.TryGetValue((value.Command, value.Property), out var queue)) _pinned[(value.Command, value.Property)] = queue = new();
-            queue.Enqueue(value.Value);
-        }
-    }
-
-    ImmutableArray<SemanticPropertyValue> TakePinned(SemanticCommand command) =>
-        [.. command.Properties.Where(property => property.IsGenerated && _pinned.TryGetValue((command.Id, property.Id), out var queue) && queue.Count > 0)
-            .Select(property => new SemanticPropertyValue(property.Id, _pinned[(command.Id, property.Id)].Dequeue()))];
-
-    /// <summary>
     /// The most facts one scenario may append before its reactions are taken not to settle.
     /// </summary>
     internal const int MaximumFacts = 1_000;
@@ -61,6 +42,21 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Gets every fact appended through the loop, in order.
     /// </summary>
     public ImmutableArray<SemanticFact> Facts => [.. _facts];
+
+    /// <summary>
+    /// Pins the values the commands that reactions invoke receive for their generated properties, each invocation taking the
+    /// next one pinned for its command and property.
+    /// </summary>
+    /// <param name="pinned">The pinned values in authored order.</param>
+    public void Pin(ImmutableArray<SemanticSpecificationGeneratedValue> pinned)
+    {
+        if (pinned.IsDefaultOrEmpty) return;
+        foreach (var value in pinned)
+        {
+            if (!_pinned.TryGetValue((value.Command, value.Property), out var queue)) _pinned[(value.Command, value.Property)] = queue = new();
+            queue.Enqueue(value.Value);
+        }
+    }
 
     /// <summary>
     /// Takes facts an action already appended to the world, so the reactions to them run.
@@ -351,4 +347,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         mappings.Any(mapping => mapping.Source is SemanticEventContextExpression { Value: SemanticEventContextValueKind.CausedBySubject or SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName })
             ? new(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has no caller audit identity for $context.causedBy.")
             : null;
+
+    ImmutableArray<SemanticPropertyValue> TakePinned(SemanticCommand command) =>
+        [.. command.Properties.Where(property => property.IsGenerated && _pinned.TryGetValue((command.Id, property.Id), out var queue) && queue.Count > 0)
+            .Select(property => new SemanticPropertyValue(property.Id, _pinned[(command.Id, property.Id)].Dequeue()))];
 }

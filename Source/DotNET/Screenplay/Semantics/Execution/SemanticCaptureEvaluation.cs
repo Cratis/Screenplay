@@ -219,6 +219,8 @@ internal static partial class SemanticCaptureEvaluation
             plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
             plan.Model.Application.Types.ToDictionary(type => type.Id));
 
+        readonly Dictionary<SemanticId, string> _propertyNames = plan.Model.Application.Types.SelectMany(type => type.Properties).ToDictionary(property => property.Id, property => property.Name);
+
         public string? Unsupported { get; private set; }
 
         public SemanticExecutionResult? Failure { get; private set; }
@@ -408,7 +410,7 @@ internal static partial class SemanticCaptureEvaluation
             var written = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
             foreach (var entry in composite.Properties)
             {
-                var name = PropertyNames.GetValueOrDefault(entry.TargetProperty) ?? throw new InvalidSemanticContract($"Event property '{where}' holds an unknown captured property.");
+                var name = _propertyNames.GetValueOrDefault(entry.TargetProperty) ?? throw new InvalidSemanticContract($"Event property '{where}' holds an unknown captured property.");
                 if (!byName.TryGetValue(name, out var property))
                 {
                     throw new InvalidSemanticContract($"Event property '{where}' has no property '{name}' in '{type.Name}', so the captured value cannot be copied.");
@@ -419,10 +421,6 @@ internal static partial class SemanticCaptureEvaluation
 
             return new SemanticCompositeValue(written.ToImmutable());
         }
-
-        Dictionary<SemanticId, string> PropertyNames => _propertyNames ??= plan.Model.Application.Types.SelectMany(type => type.Properties).ToDictionary(property => property.Id, property => property.Name);
-
-        Dictionary<SemanticId, string>? _propertyNames;
 
         // A record carries no types, so an instant arrives the way the source wrote it; an instant bound for a DateTime
         // property takes its round-trip form, the way a specification's own instants do.

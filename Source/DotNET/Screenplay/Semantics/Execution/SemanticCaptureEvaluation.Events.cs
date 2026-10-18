@@ -13,18 +13,6 @@ internal static partial class SemanticCaptureEvaluation
         return new([.. fact.Values.Select(value => EventField(contract.Properties.Single(property => property.Id == value.TargetProperty).Name, value.Value, names))]);
     }
 
-    static SemanticCaptureField EventField(string name, SemanticValue value, Dictionary<SemanticId, string> names) => value switch
-    {
-        SemanticArrayValue { Values: { IsDefaultOrEmpty: false } elements } when elements.All(element => element is SemanticCompositeValue) =>
-            new(name, SemanticCaptureFieldKind.Records) { Value = value, Records = [.. elements.Cast<SemanticCompositeValue>().Select(element => EventObject(element, names))] },
-        SemanticCompositeValue composite =>
-            new(name, SemanticCaptureFieldKind.Record) { Value = value, Record = EventObject(composite, names) },
-        _ => Scalar(name, value)
-    };
-
-    static SemanticCaptureRecord EventObject(SemanticCompositeValue composite, Dictionary<SemanticId, string> names) =>
-        new([.. composite.Properties.Select(property => EventField(names[property.TargetProperty], property.Value, names))]);
-
     internal static SemanticValue EventKey(SemanticCapture capture, SemanticEventContract contract, SemanticCaptureRecord record)
     {
         var key = record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value;
@@ -88,4 +76,16 @@ internal static partial class SemanticCaptureEvaluation
                 return SemanticValueRules.AreEqual(previous, current);
         }
     }
+
+    private static SemanticCaptureField EventField(string name, SemanticValue value, Dictionary<SemanticId, string> names) => value switch
+    {
+        SemanticArrayValue { Values: { IsDefaultOrEmpty: false } elements } when elements.All(element => element is SemanticCompositeValue) =>
+            new(name, SemanticCaptureFieldKind.Records) { Value = value, Records = [.. elements.Cast<SemanticCompositeValue>().Select(element => EventObject(element, names))] },
+        SemanticCompositeValue composite =>
+            new(name, SemanticCaptureFieldKind.Record) { Value = value, Record = EventObject(composite, names) },
+        _ => Scalar(name, value)
+    };
+
+    static SemanticCaptureRecord EventObject(SemanticCompositeValue composite, Dictionary<SemanticId, string> names) =>
+        new([.. composite.Properties.Select(property => EventField(names[property.TargetProperty], property.Value, names))]);
 }
