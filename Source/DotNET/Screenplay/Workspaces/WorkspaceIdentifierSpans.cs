@@ -37,6 +37,7 @@ internal static partial class WorkspaceIdentifierSpans
             (ReactionSyntax, "name") => keyword == "reaction",
             (EventSourceSyntax, "name") => keyword == "eventsource",
             (EventStreamSyntax, "name") => keyword == "stream",
+            (EventStreamIdPartSyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,
             (CommandStreamSyntax or SpecificationStreamSyntax, "eventSource" or "stream") => keyword == "stream",
             (ObserverFilterSyntax, "eventSource" or "stream") => keyword == "from",
             (ConstraintSyntax, "name") => keyword == "constraint",
@@ -91,6 +92,12 @@ internal static partial class WorkspaceIdentifierSpans
             var match = EventHeaderRegex().Match(line);
             var group = match.Groups["name"];
             return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
+        }
+
+        if (node is EventStreamIdPartSyntax && member == "name")
+        {
+            var name = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries)[0];
+            return name == expected ? [(0, name.Length)] : [];
         }
 
         if (node is CaseValueExpressionSyntax && member == "parameter")

@@ -20,16 +20,19 @@ sealed class WorkspaceReferenceBindings
     readonly Dictionary<string, string[]> _imports;
     readonly Dictionary<(string? Source, string Stream), WorkspaceReferenceDeclaration[]> _streams;
 
-    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false)
+    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false, bool includeStreamIdParts = false)
     {
         _index = index;
-        _declarations = [.. Declarations(index)];
+
+        // Part keys are positional. Rename preserves node paths; general edits may insert or move streams.
+        _declarations = [.. Declarations(index).Where(declaration => includeStreamIdParts || declaration.Domain != WorkspaceReferenceDomain.EventStreamIdPart)];
         _byName = _declarations.GroupBy(declaration => (declaration.Domain, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _streams = _declarations.Where(declaration => declaration.Domain == WorkspaceReferenceDomain.EventStream && declaration.Owner is not null)
             .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
-        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Distinct().Select(Bind)];
+        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : [])
+            .Where(reference => includeStreamIdParts || reference.Domain != WorkspaceReferenceDomain.EventStreamIdPart).Distinct().Select(Bind)];
     }
 
     internal WorkspaceReferenceBinding[] Bindings { get; }
@@ -107,6 +110,7 @@ sealed class WorkspaceReferenceBindings
                 SystemSyntax => WorkspaceReferenceDomain.System,
                 EventSourceSyntax => WorkspaceReferenceDomain.EventSource,
                 EventStreamSyntax => WorkspaceReferenceDomain.EventStream,
+                EventStreamIdPartSyntax => WorkspaceReferenceDomain.EventStreamIdPart,
                 CommandSyntax => WorkspaceReferenceDomain.Command,
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
@@ -127,6 +131,7 @@ sealed class WorkspaceReferenceBindings
                 {
                     WorkspaceReferenceDomain.Property => index.Find(entry.Parent!)!.Node is TypeSyntax type ? type.Name : Key(index.Find(entry.Parent!)!),
                     WorkspaceReferenceDomain.SpecificationParameter => WorkspaceReferenceMembers.TableOwner(entry, index),
+                    WorkspaceReferenceDomain.EventStreamIdPart when entry.Parent is { } streamParent => Key(index.Find(streamParent)!),
                     WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
                     _ => null
                 };
@@ -200,7 +205,7 @@ sealed class WorkspaceReferenceBindings
             return new(reference, target, target is not null ? "resolved" : outcome);
         }
 
-        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter)
+        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter or WorkspaceReferenceDomain.EventStreamIdPart)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])
                 .Where(declaration => declaration.Owner == reference.Owner).ToArray();
