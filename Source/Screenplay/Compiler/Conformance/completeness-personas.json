@@ -1,0 +1,982 @@
+{
+    "cases": [
+        {
+            "name": "unused unreachable and ambiguity",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "used policy",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "inherited module gate",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  authorize Member",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 11,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "inherited feature gate",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    authorize Member",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 11,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsynthesizable persona is unknown",
+            "source": [
+                "policy Member",
+                "  require not role \"Other\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "subject comparison is unknown",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require claim \"owner\" matches subject",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "no personas",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "required policy pins alternative",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Pin",
+                "  require role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "  policy Pin",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 7,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 13,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "compound alternative formatting",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or (role \"B\" and role \"C\")",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\" and role \"C\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "claim matching ignores type case",
+            "source": [
+                "policy Member",
+                "  require claim \"team\" matches \"ops\" or claim \"team\" matches \"sales\"",
+                "policy Restricted",
+                "  require claim \"TEAM\" matches \"ops\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'claim \"team\" matches \"sales\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "reachable alternative",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"A\" or role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "negated gate denies",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require not role \"A\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "opaque gate is unknown",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  file Restricted.cs",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "query denial",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      readmodel R",
+                "      query Q => R[]",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 11,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "screen gate counts as use but never denial",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  authorize Member",
+                "  feature F",
+                "    slice StateChange S",
+                "      screen S"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "policyless persona",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "one reachable persona suppresses denial",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "persona Other",
+                "  policy Restricted",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "authenticated alternative already satisfied",
+            "source": [
+                "policy Member",
+                "  require authenticated or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "outer then nested ambiguity order",
+            "source": [
+                "policy Member",
+                "  require (role \"A\" or role \"B\") or role \"C\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"C\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "retain ambiguity before synthesis refusal",
+            "source": [
+                "policy Member",
+                "  require (role \"A\" or role \"B\") and (claim \"x\" matches subject or claim \"y\" matches subject)",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "only buildable alternative",
+            "source": [
+                "policy Member",
+                "  require claim \"x\" matches subject or role \"B\"",
+                "policy Restricted",
+                "  require role \"B\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "logical authorization alternative",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member or Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "logical authorization conjunction",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Member and Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "authenticated gate",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\"",
+                "policy Restricted",
+                "  require authenticated",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "required literal claim pins the choice",
+            "source": [
+                "policy Member",
+                "  require claim \"team\" matches \"ops\" or claim \"team\" matches \"sales\"",
+                "policy Pin",
+                "  require claim \"TEAM\" matches \"sales\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "  policy Pin",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 7,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 13,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "required nonliteral claim refuses synthesis",
+            "source": [
+                "policy Member",
+                "  require claim \"owner\" matches subject",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "compound buildable authenticated alternative",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or (role \"B\" and authenticated)",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\" and authenticated'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "escaped alternative formatting",
+            "source": [
+                "policy Member",
+                "  require role \"A\" or role \"B\\\"line\\n\\t\\\\end\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0576",
+                    "severity": "information",
+                    "message": "Persona 'Person' policy 'Member' has an unchosen buildable alternative 'role \"B\\\"line\\n\\t\\\\end\"'; add a policy that pins it.",
+                    "location": {
+                        "line": 2,
+                        "column": 3
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                }
+            ]
+        }
+    ]
+}
