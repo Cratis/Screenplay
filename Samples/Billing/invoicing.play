@@ -215,6 +215,11 @@ module Invoicing
         method       String
         amount       Money
 
+      screen RegisterPayment
+        template blueprint Cratis.Blueprint.Invoicing PaymentsList version "^1.0"
+          toolbar
+            action RegisterPayment
+
       specification RegisteringAPayment
         given caller
           authenticated

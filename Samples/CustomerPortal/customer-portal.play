@@ -220,6 +220,11 @@ module Portal
         amount       Money
         status       PortalInvoiceStatus
 
+      screen RegisterPortalInvoice
+        template blueprint Cratis.Blueprint.CustomerPortal PortalInvoicesList version "^1.0"
+          toolbar
+            action RegisterPortalInvoice
+
       specification RegisteringAPortalInvoice
         given caller
           authenticated

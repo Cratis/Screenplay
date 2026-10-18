@@ -1125,7 +1125,34 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
-              "screens": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalInvoicesList",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterPortalInvoice",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "toolbar"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "RegisterPortalInvoice"
+                }
+              ],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",

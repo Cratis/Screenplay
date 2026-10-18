@@ -1111,7 +1111,34 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
-              "screens": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "PaymentsList",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterPayment",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "toolbar"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "RegisterPayment"
+                }
+              ],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",

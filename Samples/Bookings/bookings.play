@@ -227,6 +227,11 @@ module Bookings
         location     String
         status       ResourceStatus
 
+      screen RegisterResource
+        template blueprint Cratis.Blueprint.Bookings ResourcesList version "^1.0"
+          toolbar
+            action RegisterResource
+
       specification RegisteringAResource
         given caller
           authenticated

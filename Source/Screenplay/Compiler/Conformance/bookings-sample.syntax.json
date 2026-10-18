@@ -1192,7 +1192,34 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
-              "screens": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "ResourcesList",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterResource",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "toolbar"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "RegisterResource"
+                }
+              ],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
