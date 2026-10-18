@@ -1,0 +1,651 @@
+{
+    "cases": [
+        {
+            "name": "open producer",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 5,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "authenticated only",
+            "source": [
+                "policy Access",
+                "  require authenticated",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "required role",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "stronger conjunction",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\" and role \"Auditor\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "role alternative",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\" or role \"User\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "opaque file",
+            "source": [
+                "policy Access",
+                "  file Access.cs",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "information",
+                    "message": "The effective gate of command 'Producer', producing 'E' for reaction 'R', cannot be compared with its declared system roles.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unknown policy",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Missing",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "information",
+                    "message": "The effective gate of command 'Producer', producing 'E' for reaction 'R', cannot be compared with its declared system roles.",
+                    "location": {
+                        "line": 5,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "negated role",
+            "source": [
+                "policy Access",
+                "  require not role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "claim is unknown",
+            "source": [
+                "policy Access",
+                "  require claim \"department\" matches \"ops\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "every declared role",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\" and role \"Auditor\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "inherited module",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\"",
+                "module M",
+                "  authorize Access",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "inherited feature",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    authorize Access",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "inherited nested feature",
+            "source": [
+                "policy Access",
+                "  require role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    authorize Access",
+                "    feature Inner",
+                "      slice Automation S",
+                "        event E",
+                "        command Producer",
+                "          produces E",
+                "            for \"one\"",
+                "        command C",
+                "        reaction R",
+                "          runs as system role \"Automation\"",
+                "          when E",
+                "            invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "no event producer every 1 day",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        every 1 day",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "no event producer when Startup",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when Startup",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "duplicate productions are one producer",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "        produces E",
+                "          for \"two\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 5,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "captures and reactions",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      event Input",
+                "      command C",
+                "      reaction Producer",
+                "        when Input",
+                "          produces E",
+                "            for \"one\"",
+                "      reaction Elevated",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C",
+                "    slice Translate Import",
+                "      capture Imported",
+                "        source api",
+                "        append E"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged reaction 'Producer' produces 'E' for elevated reaction 'Elevated'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                },
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged capture 'Imported' produces 'E' for elevated reaction 'Elevated'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 16,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "inline events",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      command Producer",
+                "        produces event E",
+                "          value String = \"value\"",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 4,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "no elevated identity",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "double negation requires role",
+            "source": [
+                "policy Access",
+                "  require not not role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "opaque alternative remains information",
+            "source": [
+                "policy Access",
+                "  file Access.cs",
+                "policy Required",
+                "  require role \"Automation\"",
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        authorize Required or Access",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "information",
+                    "message": "The effective gate of command 'Producer', producing 'E' for reaction 'R', cannot be compared with its declared system roles.",
+                    "location": {
+                        "line": 9,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "cross slice event references",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "    slice Automation Consumer",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 5,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "latest event generation",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      event E generation 2",
+                "      command Producer",
+                "        produces E",
+                "          for \"one\"",
+                "      command C",
+                "      reaction R",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged command 'Producer' produces 'E' for elevated reaction 'R'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 6,
+                        "column": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "refusal branch event producer",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice Automation S",
+                "      event E",
+                "      event Input",
+                "      command C",
+                "      reaction Producer",
+                "        when Input",
+                "          invokes C",
+                "            on refused by validation",
+                "              produces E",
+                "                for \"one\"",
+                "      reaction Elevated",
+                "        runs as system role \"Automation\"",
+                "        when E",
+                "          invokes C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0652",
+                    "severity": "warning",
+                    "message": "Unprivileged reaction 'Producer' produces 'E' for elevated reaction 'Elevated'; its effective gate does not require every declared system role.",
+                    "location": {
+                        "line": 7,
+                        "column": 7
+                    }
+                }
+            ]
+        }
+    ]
+}
