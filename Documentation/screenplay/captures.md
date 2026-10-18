@@ -96,7 +96,50 @@ The key must be a required property of every `from` event (`PLAY0700`), never a 
 
 The first event is `added`, not a field modification. An unchanged overlay appends nothing. Field, `and`/`or` and transition guards hold only on modifications; `when added` holds only on the first event, and root `when removed` never holds. An append without `when` holds on any change; expression guards evaluate the after state only on a change. Maps apply to both states, and `$.field` reads the mapped merged state. `$context.occurred` is the incoming occurrence, supplied by the scenario's `given clock`; other context members are not admitted.
 
-Delivery follows the fact's settled reactions, in capture semantic-identity order. Each capture append settles its own cascade before the next; the 1,000-fact scenario budget includes those appends. `children` and `nested` over events remain Unsupported, as do composite/list values used as scalars or watched by guards. The reference stores no new capture state across specifications and does not prove redelivery deduplication, observer ordering, retry safety or context propagation. Stage must still reject event-capture forms Chronicle cannot realize, including maps, expression guards and an append without `when`.
+Delivery follows the fact's settled reactions, in capture semantic-identity order. Each capture append settles its own cascade before the next; the 1,000-fact scenario budget includes those appends. `children` and `nested` over events are executed: see [Lists and objects in public events](#lists-and-objects-in-public-events). Composite and list values used as scalars or watched by guards remain Unsupported. The reference stores no new capture state across specifications and does not prove redelivery deduplication, observer ordering, retry safety or context propagation. Stage must still reject event-capture forms Chronicle cannot realize, including maps, expression guards and an append without `when`.
+
+### Lists and objects in public events
+
+A public event may carry a list of objects or an object, and a capture over events can carry it across the boundary two ways (executed by the reference evaluator, no new language version):
+
+```screenplay
+type StockLine
+  sku String
+  quantity Int
+
+slice Translate ReceiveOrder
+  direction inbound
+  event OrderConfirmed from "sales"
+    orderId String
+    lines StockLine[]
+  event ReservationRequested
+    orderId String
+    lines StockLine[]
+  event LineReserved
+    orderId String
+    sku String
+    quantity Int
+  capture WholeOrder
+    source events
+      from OrderConfirmed
+    key orderId
+    append ReservationRequested
+      when added
+        orderId = $.orderId
+        lines = $.lines
+  capture PerLine
+    source events
+      from OrderConfirmed
+    key orderId
+    children lines identified by sku
+      append LineReserved
+        when added
+          orderId = $.orderId
+          sku = $.sku
+          quantity = $.quantity
+```
+
+`lines = $.lines` copies the whole list into a list property of the same shape (matched by property name, so the private type may be a different type with the same members). `children lines identified by sku` makes one scope per element: an element whose `sku` has not been seen for this key is `added` and appends one private event, and `nested <object>` scopes into an object the same way. Children and nested scopes have the semantics of record captures. Another delivery with the same lines appends nothing; a delivery with an extra line appends only that line. A list that is empty or a nested object that is absent has no scopes. The element key must be present and unique in the list, or the capture is refused as it is for a record capture.
 
 ## The CDL vocabulary at a glance
 

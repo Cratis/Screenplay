@@ -626,6 +626,23 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then denied` | A typed authorization denial (`Unauthorized`). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
+## Pinning generated values for a reaction-invoked command
+
+A reaction can invoke a command that generates a value, such as `shipmentId ShipmentId generated identifier`. The specification pins the value the invocation takes with `given generated <Command>.<property> = <value>`:
+
+```screenplay
+specification ConfirmingAnOrderCreatesAShipment
+  given generated CreateShipment.shipmentId = "11111111-1111-4111-8111-111111111111"
+  when append OrderConfirmed
+    orderId = "o1"
+  then ShipmentCreated
+    for "11111111-1111-4111-8111-111111111111"
+    shipmentId = "11111111-1111-4111-8111-111111111111"
+    orderId = "o1"
+```
+
+Each invocation of the command by a reaction takes the next value pinned for that command and property, in authored order; two invocations need two lines. The command and property must name a `generated` property, and the value is a concrete literal of its type. An invocation with nothing pinned stays unsupported (`IdentityAllocation`) rather than inventing a value, so a specification never passes by accident. The pinned values select language/semantic `30.0`; commands that a specification invokes directly keep `generated <property> = <value>` inside the `when` block.
+
 ## Generated fixtures and return expectations
 
 Generated fixtures and `then returns` select **ESM v7** and execute in the reference runner. They pin [generated values and responses](commands.md#generated-values-and-responses) separately from request inputs and emitted events. See the [complete fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
