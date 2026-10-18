@@ -1242,6 +1242,14 @@ aggregated dependants retain `kind: "Property"`, not the owner's kind.
   `opaque-changed` records retain changes to inline code or file references by
   hash without interpreting their behavior. Description and documentation prose
   are excluded from structural comparison.
+  Enum numeric identity records also appear here with `changeKind` values
+  `enum-number-changed`, `enum-member-removed`, `enum-number-reused` or `enum-member-renamed`.
+  Only these items append `afterMember`, `beforeNumber`, `afterNumber`, `beforeNumbering`,
+  `afterNumbering` and `stored` after the existing fields. `member` is the baseline name;
+  numbering is `"positional"` or `"explicit"`. Removed members have null `afterMember` and
+  `afterNumber`. `contractBreaking` is false only for explicit renames; `stored` separately
+  reports baseline event-property reachability, including through composite types.
+  See [stored enum numbers](../model-comparison.md#stored-enum-numbers) for matching and compatibility limits.
   Constraints have no catalog semantic kind; their fallback uses exact authoring
   kind/address keys with `semanticId: null`, not an invented identity.
 - **`specifications`**: additions, removals and `expected-outcome-changed` records

@@ -11,5 +11,7 @@ internal static partial class StructuralComparison
         string? BeforeHash = null, string? AfterHash = null, string? BeforeType = null, string? AfterType = null, bool? ContractBreaking = null, bool? GenerationCovered = null,
         uint? BeforeGeneration = null, uint? AfterGeneration = null, DocumentLocation[]? BeforeDocuments = null, DocumentLocation[]? AfterDocuments = null,
         string? Snapshot = null, string? DependantAddress = null, string? Role = null, string? Resolution = null, string? EventContractId = null,
-        string? MoveKind = null, string? BeforeOwner = null, string? AfterOwner = null);
+        string? MoveKind = null, string? BeforeOwner = null, string? AfterOwner = null,
+        string? AfterMember = null, int? BeforeNumber = null, int? AfterNumber = null,
+        string? BeforeNumbering = null, string? AfterNumbering = null, bool? Stored = null);
 }

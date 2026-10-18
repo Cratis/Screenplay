@@ -56,5 +56,10 @@ public enum ComparisonGapKind
     /// <summary>
     /// At least one input is not executable; both use authoring declaration keys.
     /// </summary>
-    DeclarationLevelOnly
+    DeclarationLevelOnly,
+
+    /// <summary>
+    /// Enumerations contain duplicate names or numbers, or mismatched member and number counts.
+    /// </summary>
+    EnumerationNotComparable
 }
