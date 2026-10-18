@@ -1416,6 +1416,11 @@ immutable workspace snapshot; a new snapshot cannot reuse those verification res
 The verified `PLAY0478` repair is available through the
 [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic).
 Monaco and VS Code do not offer a quick fix for `PLAY0478` or `PLAY0470`.
+`PLAY0470` has a separate [explicit-intent MCP workflow](mcp/authoring-tools.md#establish-production-destinations):
+select every event-production occurrence, confirm explicit expressions and existing
+named routes, then review the retained candidate report before explicit apply.
+Only missing `for` expressions are filled. This establishes author-selected routing
+from an invalid model; it proves no executable preservation and offers no fix-all.
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command

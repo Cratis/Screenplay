@@ -269,7 +269,15 @@ Discovery verifies `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0516`
 listing them: authoring acceptance and comment preservation, plus each repair's
 routing, consumer or executable-model constraints. Verdicts are cached only on the
 current immutable snapshot; proposals run one fresh transaction. See the
-[repair conditions](mcp/authoring-tools.md#fix-a-diagnostic). `PLAY0470` remains deferred.
+[repair conditions](mcp/authoring-tools.md#fix-a-diagnostic). `PLAY0470` uses a separate
+explicit-intent contract: `WorkspaceProductionDestinationRepairs.Discover(workspace)`
+returns every event-production occurrence for a diagnosed command. Supply a complete
+`ProductionDestinationIntent` to `WorkspaceProductionDestinationRepairs.Propose`,
+with `Executable` validation and canonical formatting consent. Existing explicit
+expressions and named routes must be confirmed unchanged; only missing `For` members
+are filled. The retained `ProductionDestinationReport` describes established candidate
+routing, not preserved behavior: no executable before-baseline exists. See
+[establish production destinations](mcp/authoring-tools.md#establish-production-destinations).
 
 `PLAY0516` repairs move sibling modules, features, slices or explicit file imports,
 or add verified explicit pins before a retained glob. Features and slices inserted
