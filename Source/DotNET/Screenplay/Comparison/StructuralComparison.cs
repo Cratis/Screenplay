@@ -64,6 +64,7 @@ internal static partial class StructuralComparison
             {
                 Events(id, previous!, next!, [.. oldNodes.OfType<EventSyntax>()], [.. newNodes.OfType<EventSyntax>()], changes, changedIds);
             }
+            Enumerations(id, kind, previous!, next!, oldNodes, newNodes, before.IsStored(old.Address.Name), changes, Add);
             var left = before.EffectiveMembers(oldNodes);
             var right = after.EffectiveMembers(newNodes);
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
@@ -93,6 +94,10 @@ internal static partial class StructuralComparison
             {
                 Events(null, previous!, next!, [.. old.Select(value => value.Syntax).OfType<EventSyntax>()], [.. current.Select(value => value.Syntax).OfType<EventSyntax>()], changes, changedIds);
             }
+            if (kind == "Concept" && old is not null && current is not null)
+            {
+                Enumerations(null, kind, previous!, next!, [.. old.Select(value => value.Syntax)], [.. current.Select(value => value.Syntax)], before.IsStored(((ConceptSyntax)old[0].Syntax).Name), changes, Add);
+            }
             var left = old is null ? [] : before.EffectiveMembers(old.Select(value => value.Syntax));
             var right = current is null ? [] : after.EffectiveMembers(current.Select(value => value.Syntax));
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
@@ -115,8 +120,10 @@ internal static partial class StructuralComparison
             .ThenBy(change => change.BeforeAddress, StringComparer.Ordinal).ThenBy(change => change.AfterAddress, StringComparer.Ordinal)
             .ThenBy(change => change.ChangeKind, StringComparer.Ordinal).ThenBy(change => change.Member, StringComparer.Ordinal)
             .ThenBy(change => change.Snapshot, StringComparer.Ordinal).ThenBy(change => change.DependantAddress, StringComparer.Ordinal)
-            .ThenBy(change => change.Role, StringComparer.Ordinal).ThenBy(change => change.BeforeGeneration).ThenBy(change => change.AfterGeneration).ToArray();
+            .ThenBy(change => change.Role, StringComparer.Ordinal).ThenBy(change => change.BeforeGeneration).ThenBy(change => change.AfterGeneration)
+            .ThenBy(change => change.BeforeNumber).ToArray();
         var limits = matchByAddress ? [.. _limits, "Declarations are matched by exact kind and address because at least one side has no persisted identities; renames and owner moves appear as a removal and an addition."] : _limits;
+        if (before.HasEnumerations || after.HasEnumerations) limits = [.. limits, "Enumeration members are matched by name within a matched enum concept; a positional member rename appears as number reuse, and an explicit number held by a new name is reported as a rename, since rename and reuse are structurally indistinguishable."];
         return new(ordered, sections, sections.All(section => section.Complete), SemanticChange(ordered, sections.All(section => section.Complete)), limits, before.Assignments.Count + before.Unassigned.Count, after.Assignments.Count + after.Unassigned.Count);
 
         void Add(Change change)

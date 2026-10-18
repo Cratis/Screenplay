@@ -16,13 +16,17 @@ static class ModelDifferenceProjection
         difference.BeforeDeclarations,
         difference.AfterDeclarations,
         [.. difference.Changes.Where(change => change.Section == "declarations").Select(change => new DeclarationChange(Declaration(change, matching), DeclarationKind(change.ChangeKind), Move(change.MoveKind), change.BeforeOwner, change.AfterOwner, Documents(change.BeforeDocuments), Documents(change.AfterDocuments)))],
-        [.. difference.Changes.Where(change => change.Section == "members").Select(change => new MemberChange(Declaration(change, matching), change.Member!, MemberKind(change.ChangeKind), change.BeforeHash, change.AfterHash, change.ContractBreaking == true))],
+        [.. difference.Changes.Where(change => change.Section == "members" && !change.ChangeKind.StartsWith("enum-", StringComparison.Ordinal)).Select(change => new MemberChange(Declaration(change, matching), change.Member!, MemberKind(change.ChangeKind), change.BeforeHash, change.AfterHash, change.ContractBreaking == true))],
         [.. difference.Changes.Where(change => change.Section == "events").Select(change => new EventContractChange(Declaration(change, matching), EventKind(change.ChangeKind), change.Member, change.BeforeType, change.AfterType, change.ContractBreaking == true, change.GenerationCovered == true, change.BeforeGeneration, change.AfterGeneration))],
         [.. difference.Changes.Where(change => change.Section == "specifications").Select(change => new SpecificationChange(Declaration(change, matching), SpecificationKind(change.ChangeKind), change.Member, change.BeforeHash, change.AfterHash))],
         [.. difference.Changes.Where(change => change.Section == "dependants").Select(change => new DirectDependant(Declaration(ChangedDeclaration(change, difference), matching), change.Snapshot == "before" ? ComparedSide.Before : ComparedSide.After, change.DependantAddress!, change.Role!, Resolution(change.Resolution!)))],
         [.. difference.Changes.Where(change => change.Section == "identities").Select(change => new IdentityChange(Declaration(change, matching), IdentityKind(change.ChangeKind), change.EventContractId is { } id ? EventContractId.Parse(id) : null))],
         [.. difference.Sections.Select(section => new ComparisonSection(SectionKind(section.Section), section.Complete, [.. section.Gaps.Select(gap => new ComparisonGap(GapKind(gap.Kind), gap.Statement))]))],
-        [.. difference.Limits]);
+        [.. difference.Limits])
+    {
+        Enumerations = [.. difference.Changes.Where(change => change.ChangeKind.StartsWith("enum-", StringComparison.Ordinal)).Select(change => new EnumerationMemberChange(
+            Declaration(change, matching), EnumerationKind(change.ChangeKind), change.Member!, change.AfterMember, change.BeforeNumber!.Value, change.AfterNumber, Numbering(change.BeforeNumbering!), Numbering(change.AfterNumbering!), change.ContractBreaking == true, change.Stored == true))]
+    };
 
     static ComparedDeclaration Declaration(StructuralComparison.Change change, DeclarationMatching matching) => new(
         change.Kind,
@@ -57,6 +61,22 @@ static class ModelDifferenceProjection
     {
         "changed" => MemberChangeKind.Changed,
         "opaque-changed" => MemberChangeKind.OpaqueChanged,
+        _ => throw Unknown(kind)
+    };
+
+    static EnumerationMemberChangeKind EnumerationKind(string kind) => kind switch
+    {
+        "enum-number-changed" => EnumerationMemberChangeKind.NumberChanged,
+        "enum-member-removed" => EnumerationMemberChangeKind.Removed,
+        "enum-number-reused" => EnumerationMemberChangeKind.NumberReused,
+        "enum-member-renamed" => EnumerationMemberChangeKind.Renamed,
+        _ => throw Unknown(kind)
+    };
+
+    static EnumerationNumbering Numbering(string kind) => kind switch
+    {
+        "positional" => EnumerationNumbering.Positional,
+        "explicit" => EnumerationNumbering.Explicit,
         _ => throw Unknown(kind)
     };
 
@@ -120,6 +140,7 @@ static class ModelDifferenceProjection
         StructuralGapKind.UnresolvedDependants => ComparisonGapKind.UnresolvedDependants,
         StructuralGapKind.IdentitiesNotCompared => ComparisonGapKind.IdentitiesNotCompared,
         StructuralGapKind.DeclarationLevelOnly => ComparisonGapKind.DeclarationLevelOnly,
+        StructuralGapKind.EnumerationNotComparable => ComparisonGapKind.EnumerationNotComparable,
         _ => throw Unknown(kind.ToString())
     };
 

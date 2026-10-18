@@ -14,5 +14,6 @@ enum StructuralGapKind
     UnassignedSpecifications,
     UnresolvedDependants,
     IdentitiesNotCompared,
-    DeclarationLevelOnly
+    DeclarationLevelOnly,
+    EnumerationNotComparable
 }
