@@ -190,6 +190,15 @@ public sealed class SemanticExecutionPlan
     public static SemanticExecutionPlanCompilation Compile(ExecutableSemanticModel model, IEnumerable<SemanticId> selectedSlices) =>
         CompileCore(model, [.. selectedSlices]);
 
+    /// <summary>
+    /// Compiles a plan that defers slice-owned capability issues until a specification reaches them.
+    /// Application-level issues still block compilation.
+    /// </summary>
+    /// <param name="model">The validated executable semantic model.</param>
+    /// <returns>The plan compilation, blocking issues, and deferred slice-owned issues.</returns>
+    public static SemanticExecutionPlanCompilation CompileForSpecifications(ExecutableSemanticModel model) =>
+        CompileCore(model, []);
+
     internal static bool IsBlockingIssue(
         SemanticPlanIssue issue,
         ImmutableHashSet<SemanticId>? selectedSlices,
