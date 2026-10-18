@@ -8,6 +8,20 @@ import { PlacedPlayDocument } from './PlayDocumentSource';
 import { matchesPlayPattern, normalizePlayPath, resolvePlayPattern } from './PlayGlob';
 import { samePlacement } from './PlayPlacement';
 import { AuthoredDeclaration } from './AuthoredDeclaration';
+import { SyntaxNode } from '../Syntax/SyntaxNode';
+
+/** A physical declaration or one particular file reached by an import. Presentation only. */
+export interface AuthoredOrderStep {
+    readonly path: string;
+    readonly node: SyntaxNode;
+    readonly targetPath?: string;
+    readonly matchIndex?: number;
+}
+
+const origins = new WeakMap<ApplicationSyntax, ReadonlyMap<string, readonly AuthoredOrderStep[]>>();
+export const authoredOriginsOf = (application: ApplicationSyntax): ReadonlyMap<string, readonly AuthoredOrderStep[]> => origins.get(application) ?? new Map();
+export const sameAuthoredStep = (left: AuthoredOrderStep, right: AuthoredOrderStep): boolean => left.path === right.path && left.node.kind === right.node.kind &&
+    left.node.location.line === right.node.location.line && left.node.location.column === right.node.location.column && left.targetPath === right.targetPath;
 
 // Presentation metadata never enters syntax JSON, semantic bytes or identity. Merging and diagnostics
 // still use the original document order; only a consumer explicitly requesting authored order sees it.
@@ -25,17 +39,19 @@ export function copyAuthoredOrder(original: ApplicationSyntax, narrowed: Applica
     return narrowed;
 }
 
-function declarations(application: ApplicationSyntax): AuthoredDeclaration[] {
-    const found: AuthoredDeclaration[] = [];
-    const feature = (syntax: FeatureSyntax, outer: readonly string[]) => {
+function declarations(application: ApplicationSyntax): (AuthoredDeclaration & { chain: readonly SyntaxNode[] })[] {
+    const found: (AuthoredDeclaration & { chain: readonly SyntaxNode[] })[] = [];
+    const feature = (syntax: FeatureSyntax, outer: readonly string[], ancestors: readonly SyntaxNode[]) => {
         const scope = [...outer, syntax.name];
-        found.push({ scope, ...syntax.location, implicit: syntax.isPlacement, isContainer: true });
-        syntax.features.forEach(child => feature(child, scope));
-        syntax.slices.forEach(slice => found.push({ scope: [...scope, slice.name], ...slice.location, implicit: false, isContainer: false }));
+        const chain = syntax.isPlacement ? ancestors : [...ancestors, syntax];
+        found.push({ scope, ...syntax.location, implicit: syntax.isPlacement, isContainer: true, chain });
+        syntax.features.forEach(child => feature(child, scope, chain));
+        syntax.slices.forEach(slice => found.push({ scope: [...scope, slice.name], ...slice.location, implicit: false, isContainer: false, chain: [...chain, slice] }));
     };
     application.modules.forEach(module => {
-        found.push({ scope: [module.name], ...module.location, implicit: module.isPlacement, isContainer: true });
-        module.features.forEach(child => feature(child, [module.name]));
+        const chain = module.isPlacement ? [] : [module];
+        found.push({ scope: [module.name], ...module.location, implicit: module.isPlacement, isContainer: true, chain });
+        module.features.forEach(child => feature(child, [module.name], chain));
     });
     return found;
 }
@@ -70,8 +86,9 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
     const owners = containerOwners(own, new Set(roots.map(normalizePlayPath)));
     const explicit = new Set([...own.values()].flat().filter(declaration => !declaration.implicit).map(declaration => authoredOrderKey(declaration.scope)));
     const order = new Map<string, number>();
+    const trace = new Map<string, readonly AuthoredOrderStep[]>();
     const visited = new Set<string>();
-    const visit = (path: string) => {
+    const visit = (path: string, outer: readonly AuthoredOrderStep[]) => {
         const document = files.get(path);
         if (document === undefined || document.isPlacementResolved === false || visited.has(path)) return;
         visited.add(path);
@@ -82,7 +99,10 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
             })
                 .map(declaration => ({ line: declaration.line, column: declaration.column, run: () => {
                     const key = authoredOrderKey(declaration.scope);
-                    if (!order.has(key)) order.set(key, order.size);
+                    if (!order.has(key)) {
+                        order.set(key, order.size);
+                        trace.set(key, [...outer, ...declaration.chain.map(node => ({ path, node }))]);
+                    }
                 } })),
             ...(imports?.get(path) ?? discoverImports(document.source, path, languages)).map(imported => ({
                 ...imported.fileImport.location,
@@ -90,8 +110,11 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
                     const placement = placementFrom(imported, document.placement);
                     if (placement === undefined) return;
                     const pattern = resolvePlayPattern(path, imported.fileImport.pattern);
-                    [...files.keys()].filter(target => target !== path && matchesPlayPattern(pattern, target)).sort().forEach(target => {
-                        if (samePlacement(files.get(target)!.placement, placement)) visit(target);
+                    const ancestors = (own.get(path) ?? []).filter(declaration => declaration.isContainer && !declaration.implicit &&
+                        declaration.scope.length <= placement.length && declaration.scope.every((name, index) => placement[index] === name))
+                        .sort((left, right) => left.scope.length - right.scope.length).map(declaration => declaration.chain.at(-1)!);
+                    [...files.keys()].filter(target => target !== path && matchesPlayPattern(pattern, target)).sort().forEach((target, matchIndex) => {
+                        if (samePlacement(files.get(target)!.placement, placement)) visit(target, [...outer, ...[...new Set(ancestors)].map(node => ({ path, node })), { path, node: imported.fileImport, targetPath: target, matchIndex }]);
                     });
                 },
             })),
@@ -101,7 +124,8 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
     roots.map(normalizePlayPath).forEach(path => {
         const document = files.get(path);
         // A broad root glob can discover a file before the import that actually places it.
-        if (document?.placement.length === 0) visit(path);
+        if (document?.placement.length === 0) visit(path, []);
     });
     orders.set(application, order);
+    origins.set(application, trace);
 }

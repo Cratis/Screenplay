@@ -21,9 +21,22 @@ interface Slice {
 interface Reference { event: string; location: SourceLocation; readModel: boolean }
 interface Edge extends Reference { consumer: Slice; producer: Slice; left: string; right: string; container: string }
 
+/** Structured presentation evidence for a repair; never serialized into the model. */
+export interface TimelineFinding {
+    readonly diagnostic: Diagnostic;
+    readonly consumerScope: readonly string[];
+    readonly producerScope: readonly string[];
+    readonly readModel: boolean;
+    readonly ownSubFeature: boolean;
+    readonly key: string;
+}
+
 // This pass only observes syntax. Its ranks and graph never enter the persisted model.
 export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagnostic[] {
-    const order = authoredOrderOf(application);
+    return timelineOrderFindings(application).map(finding => finding.diagnostic);
+}
+
+export function timelineOrderFindings(application: ApplicationSyntax, order: ReadonlyMap<string, number> = authoredOrderOf(application)): TimelineFinding[] {
     const ordered = <T extends { name: string }>(items: readonly T[], outer: readonly string[]): T[] => items
         .map(syntax => ({ syntax, rank: order.get(authoredOrderKey([...outer, syntax.name])) ?? Number.MAX_SAFE_INTEGER }))
         .sort((left, right) => left.rank - right.rank).map(item => item.syntax);
@@ -89,7 +102,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     }
     const compare = (left: Edge, right: Edge) => left.consumer.index - right.consumer.index || left.location.line - right.location.line || left.location.column - right.location.column;
     const suppressed = new Set<Edge>();
-    const findings: { edge: Edge; diagnostic: Diagnostic }[] = [];
+    const findings: { edge: Edge; diagnostic: Diagnostic; members?: readonly string[]; ownSubFeature?: boolean }[] = [];
     for (const container of new Set(edges.map(edge => edge.container))) {
         const local = edges.filter(edge => edge.container === container);
         const graph = new Map<string, Set<string>>();
@@ -109,7 +122,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
                 return slice.identity[scope.length] === member;
             }).map(slice => slice.index));
             group.sort((left, right) => memberIndex(left) - memberIndex(right));
-            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `${member.startsWith('slice:') ? 'slice' : container === authoredOrderKey([]) ? 'module' : 'feature'} '${member.slice(member.indexOf(':') + 1)}'`).join(', ')} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.`, location: first.location } });
+            findings.push({ edge: first, members: group, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `${member.startsWith('slice:') ? 'slice' : container === authoredOrderKey([]) ? 'module' : 'feature'} '${member.slice(member.indexOf(':') + 1)}'`).join(', ')} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.`, location: first.location } });
         }
     }
     for (const edge of edges) {
@@ -118,7 +131,11 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         const ownSubFeature = edge.producer.scope.length > edge.consumer.scope.length && parent.every((name, index) => edge.producer.scope[index] === name);
         const consequence = ownSubFeature ? ' The producer is in the consumer\'s own sub-feature; this cannot be fixed by reordering.' : ' Consider drawing the producer before the consumer.';
         const use = edge.readModel ? `reads read model '${edge.event}' built by` : `uses event '${edge.event}' produced by`;
-        findings.push({ edge, diagnostic: { severity: 'information', code: DiagnosticCodes.EventFromLaterSlice, message: `Slice '${edge.consumer.syntax.name}' ${use} slice '${edge.producer.syntax.name}' drawn after it.${consequence}`, location: edge.location } });
+        findings.push({ edge, ownSubFeature, diagnostic: { severity: 'information', code: DiagnosticCodes.EventFromLaterSlice, message: `Slice '${edge.consumer.syntax.name}' ${use} slice '${edge.producer.syntax.name}' drawn after it.${consequence}`, location: edge.location } });
     }
-    return findings.sort((left, right) => compare(left.edge, right.edge)).map(finding => finding.diagnostic);
+    return findings.sort((left, right) => compare(left.edge, right.edge)).map(({ edge, diagnostic, members, ownSubFeature }) => ({
+        diagnostic, consumerScope: edge.consumer.scope, producerScope: edge.producer.scope, readModel: edge.readModel, ownSubFeature: ownSubFeature === true,
+        key: members === undefined ? authoredOrderKey([diagnostic.code, authoredOrderKey(edge.consumer.scope), ...(edge.readModel ? ['ReadModel'] : []), ordinalIgnoreCaseKey(edge.event)])
+            : authoredOrderKey([diagnostic.code, edge.container, ...[...members].sort()]),
+    }));
 }

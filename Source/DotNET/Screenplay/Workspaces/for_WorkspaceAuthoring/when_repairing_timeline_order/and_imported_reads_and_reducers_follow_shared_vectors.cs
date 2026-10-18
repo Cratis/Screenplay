@@ -34,6 +34,8 @@ public class and_imported_reads_and_reducers_follow_shared_vectors : given.a_tim
                 index.Find(repair.Subject)!.Kind.ShouldEqual(reference.GetProperty("subject").GetString());
                 Preserves(workspace, repair);
                 var after = Propose(workspace, repair).Workspace!;
+                var order = WorkspaceTimelineRepairs.Timeline(after).Ranks.OrderBy(rank => rank.Value).Select(rank => rank.Key);
+                order.ShouldEqual(reference.GetProperty("order").EnumerateArray().Select(scope => JsonSerializer.Serialize(scope.EnumerateArray().Select(name => name.GetString()).ToArray())));
                 after.Compilation.Diagnostics.Count(value => value.Code == DiagnosticCodes.EventFromLaterSlice).ShouldEqual(1);
                 offered++;
             }

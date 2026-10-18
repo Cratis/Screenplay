@@ -608,7 +608,7 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 | `PLAY0683`, `PLAY0684` | Raise NanoID size to the smallest size reaching 64 random bits for its alphabet, or bytes count to 8. Use the concept subject, even across documents, with `CanonicalizeTouchedDocuments`. |
 | `PLAY0683` | Add a unique constraint in the command's slice only when exactly one production maps the generated command property to exactly one event property. Use the command-property subject; identifiers have no constraint repair. |
-| `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
+| `PLAY0516` (Information) | Move a sibling declaration or file-import block, pin an already placed file before a retained glob, or replace unsafe-to-move glob blocks with a complete ordered import list. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
 `PLAY0661` completes a partial command-read key when every missing part has one same-named compatible source. It preserves authored part order and requires canonical formatting consent. Queries and trigger reads are not repaired. `PLAY0660` and `PLAY0662` have no automatic repair. `propose-property` handles non-key read-model properties. Key-part rename remains unsupported; `propose-rename` still refuses all read-model property handles.
 
@@ -625,16 +625,21 @@ must match. When neither binds, merged syntax must match modulo only sibling
 modules/features/slices/import order and approved explicit import pins; admission
 diagnostics must retain the same code/severity multiset. One-sided model availability
 and new errors/warnings are refused. Only already placed files at the same placement
-may be pinned, and the glob remains. A prefix can require several pins; no other
-nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
+may be pinned, and the glob remains. A prefix can require several pins. If whole
+import blocks cannot move safely, a proposal can replace the affected import
+interval with a complete explicit list, including documents with no timeline
+ranks. The replacement preserves each document's placement and every comment;
+new files then require explicit imports. No other nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
 In a fresh workspace, a proposal may establish missing document assignments using
 only the documents' existing IDs and stable keys. Every existing assignment, origin
 and event contract revision must remain unchanged; any other catalog change refuses
 the repair. Discovery and proposals do not persist these assignments; only apply does.
 Rediscover after each applied move or pin instead of combining
 recipes from one snapshot. `canFixAll` is true, but each proposal is still verified.
-The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`);
-there is no TypeScript quick fix or VS Code pinned-evidence action for it.
+The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`).
+VS Code's saved-file repair session can preview and apply it without that path.
+The [TypeScript and Monaco quick fixes](../imports.md#repair-a-backward-timeline-reference)
+use an immutable source snapshot rather than MCP pinned evidence.
 
 `PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
 Only acceptance and conflicts for verified repairs are cached per subject

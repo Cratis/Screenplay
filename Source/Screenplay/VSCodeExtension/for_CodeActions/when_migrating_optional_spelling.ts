@@ -65,8 +65,34 @@ async function actions(context?: Partial<vscode.CodeActionContext>, text = sourc
 }
 
 describe('when migrating optional spelling in VS Code', () => {
+    it('should offer and reverify a timeline repair using its original diagnostic line', async () => {
+        const text = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n    slice StateChange Write\n      event E\n';
+        await actions({ diagnostics: [] }, text);
+        const timeline = { code: 'PLAY0516', range: new vscode.Range(4, 0, 4, 15) } as vscode.Diagnostic;
+        const fixes = await request({ diagnostics: [timeline], only: vscode.CodeActionKind.QuickFix }, 4);
+        expect(fixes).toHaveLength(1);
+        expect(fixes[0].title).toBe('Draw the event producer before its consumer');
+        expect(editor.applied).toBe(0);
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(true);
+        expect(editor.applied).toBe(1);
+    });
     beforeEach(() => { editor.applied = 0; editor.documents = []; });
     afterEach(() => vi.restoreAllMocks());
+
+    it('should leave multi-file timeline repairs to the saved-file session, including drift after discovery', async () => {
+        const text = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n    slice StateChange Write\n      event E\n';
+        await actions({ diagnostics: [] }, text);
+        const application = new WorkspaceApplication();
+        application.set('model.play', text);
+        registerCodeActions({ subscriptions: [] } as unknown as vscode.ExtensionContext, { fileOf: () => ({ application, path: 'model.play' }) } as unknown as ApplicationIndex);
+        const timeline = { code: 'PLAY0516', range: new vscode.Range(4, 0, 4, 15) } as vscode.Diagnostic;
+        const fixes = await request({ diagnostics: [timeline] }, 4);
+        expect(fixes).toHaveLength(1);
+        application.set('sibling.play', 'trigger Tick');
+        expect(await request({ diagnostics: [timeline] }, 4)).toEqual([]);
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(false);
+        expect(editor.applied).toBe(0);
+    });
 
     it('should offer compliance line and document fixes with explicit version-checked apply', async () => {
         const text = 'concept Value : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
