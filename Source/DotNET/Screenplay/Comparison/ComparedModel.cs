@@ -65,12 +65,6 @@ public sealed class ComparedModel
         return WithoutIdentities(workspace);
     }
 
-    static WorkspaceDocument Document(string path, string source)
-    {
-        var portable = PortablePlayPath.Parse(path);
-        return WorkspaceDocument.Create(ModelRootDocumentKeys.For(portable), portable, Encoding.UTF8.GetBytes(source));
-    }
-
     /// <summary>
     /// Reads a canonical workspace export whose identity catalog is authoritative.
     /// </summary>
@@ -79,4 +73,10 @@ public sealed class ComparedModel
     /// <exception cref="InvalidScreenplayWorkspace">The export is malformed, noncanonical or inconsistent.</exception>
     /// <exception cref="InvalidSemanticContract">The exported catalog is invalid.</exception>
     public static ComparedModel FromWorkspaceExport(ReadOnlySpan<byte> json) => WithIdentities(ScreenplayWorkspaceSerializer.Deserialize(json));
+
+    static WorkspaceDocument Document(string path, string source)
+    {
+        var portable = PortablePlayPath.Parse(path);
+        return WorkspaceDocument.Create(ModelRootDocumentKeys.For(portable), portable, Encoding.UTF8.GetBytes(source));
+    }
 }
