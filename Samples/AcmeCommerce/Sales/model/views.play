@@ -153,7 +153,7 @@ module Orders
           quotedTotal = 98
           status      = "shipped"
 
-    // The record page. The activity slot carries the CUSTOM component acme:orderTimeline over the order's own timeline.
+    // The record page. The activity slot shows the order's own timeline.
     slice StateView OrderDetails
       description "One order with everything that has happened to it"
 
@@ -168,7 +168,7 @@ module Orders
         carrier        Carrier optional
         trackingNumber TrackingNumber optional
 
-      // The timeline is one row of steps reached: the custom component acme:orderTimeline draws them in order.
+      // The timeline is one row of steps reached, shown on the order page as a summary.
       // (The reference evaluator carries no occurrence time on facts, so the steps are flags; a timestamped timeline needs $eventContext.)
       readmodel OrderTimeline
         description "Which steps an order has been through"
@@ -263,9 +263,13 @@ module Orders
               field trackingNumber label "Tracking"
           activity
             data OrderTimeline via query GetOrderTimeline by orderId
-            // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:orderTimeline
-            component Acme.Commerce.orderTimeline orderTimeline
-              context from query GetOrderTimeline
+            summary OrderTimeline
+              field received  label "Received"
+              field approved  label "Approved"
+              field confirmed label "Confirmed"
+              field reserved  label "Reserved"
+              field shipped   label "Shipped"
+              field fulfilled label "Fulfilled"
 
       specification TheRecordPageFollowsTheOrder
         given caller

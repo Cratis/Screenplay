@@ -1,9 +1,9 @@
 // ============================================================
 // The application's shell: ONE root template (a blueprint AppShell), theme, packages and the sample-data pack
 //
-// Every domain's screens are drawn inside this shell. The custom package Acme.Commerce (@acme/scene.commerce)
-// ships acme:productCard, acme:stockBadge and acme:orderTimeline - rendering it needs `cratis render --package-set`
-// (see ../README.md).
+// Every domain's screens are drawn inside this shell. The custom package Acme.Commerce (@acme/scene.commerce) is declared
+// for `cratis render --package-set` (see ../README.md) but no screen uses its components any more: a stage (Studio's Play
+// included) renders only the packages it ships, and a screen built from stock components plays everywhere.
 // ============================================================
 
 ui profile Web

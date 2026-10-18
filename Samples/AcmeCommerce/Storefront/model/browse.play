@@ -81,9 +81,11 @@ module Shop
             data ListedProduct[] via query SearchListedProducts
           grid
             data ListedProduct[] via query AllListedProducts
-            // CUSTOM component from the package Acme.Commerce (@acme/scene.commerce): acme:productCard
-            component Acme.Commerce.productCard productCard
-              context from query AllListedProducts
+            table ListedProduct
+              column title        label "Product"
+              column category     label "Category"
+              column displayPrice label "Price"
+              column available    label "In stock"
               on select
                 navigate to ProductPage
                   with sku from item.sku
