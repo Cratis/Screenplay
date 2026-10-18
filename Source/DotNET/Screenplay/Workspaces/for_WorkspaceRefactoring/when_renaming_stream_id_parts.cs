@@ -142,10 +142,11 @@ public class when_renaming_stream_id_parts
     [Theory]
     [InlineData(WorkspaceAuthoringFormatting.PreserveTrivia)]
     [InlineData(WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)]
-    void should_refuse_a_rename_with_an_unresolved_route(WorkspaceAuthoringFormatting formatting)
+    void should_refuse_a_rename_when_an_unresolved_route_prevents_document_parsing(WorkspaceAuthoringFormatting formatting)
     {
         var split = Source.IndexOf("module M", StringComparison.Ordinal);
         var workspace = Workspace(Source[..split], Source[split..].Replace("stream Account.Ledger\n", "stream Missing.Ledger\n", StringComparison.Ordinal));
+        WorkspaceSyntaxIndex.Create(workspace).Entries.Select(entry => entry.Node).OfType<CommandStreamSyntax>().ShouldBeEmpty();
         Refused(Rename(workspace, "month", formatting), "Every document must parse");
     }
 

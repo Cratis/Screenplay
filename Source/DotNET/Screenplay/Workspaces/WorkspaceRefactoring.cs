@@ -293,7 +293,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
 
         if (target.Node is not (SpecificationParameterSyntax or SpecificationCaseSyntax)) RejectOpaque(workspace.Documents, index, target, request);
-        var bindings = new WorkspaceReferenceBindings(index);
+        var bindings = new WorkspaceReferenceBindings(index, includeStreamIdParts: true);
         bindings.RequireNoCollisions();
         if (target.Node is EventStreamIdPartSyntax && bindings.Bindings.FirstOrDefault(binding => binding.Reference.Domain == WorkspaceReferenceDomain.EventStreamIdPart && binding.Target is null) is { } unprovenPart)
         {
@@ -441,7 +441,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         }
 
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
-        var candidateBindings = new WorkspaceReferenceBindings(candidateIndex);
+        var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeStreamIdParts: true);
         candidateBindings.RequireNoCollisions();
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
         RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);

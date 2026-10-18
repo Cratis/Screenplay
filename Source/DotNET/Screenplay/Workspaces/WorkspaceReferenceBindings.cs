@@ -20,16 +20,18 @@ sealed class WorkspaceReferenceBindings
     readonly Dictionary<string, string[]> _imports;
     readonly Dictionary<(string? Source, string Stream), WorkspaceReferenceDeclaration[]> _streams;
 
-    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false)
+    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false, bool includeStreamIdParts = false)
     {
         _index = index;
-        _declarations = [.. Declarations(index)];
+        // Part keys are positional. Rename preserves node paths; general edits may insert or move streams.
+        _declarations = [.. Declarations(index).Where(declaration => includeStreamIdParts || declaration.Domain != WorkspaceReferenceDomain.EventStreamIdPart)];
         _byName = _declarations.GroupBy(declaration => (declaration.Domain, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _streams = _declarations.Where(declaration => declaration.Domain == WorkspaceReferenceDomain.EventStream && declaration.Owner is not null)
             .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
-        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Distinct().Select(Bind)];
+        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : [])
+            .Where(reference => includeStreamIdParts || reference.Domain != WorkspaceReferenceDomain.EventStreamIdPart).Distinct().Select(Bind)];
     }
 
     internal WorkspaceReferenceBinding[] Bindings { get; }
