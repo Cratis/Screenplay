@@ -14,6 +14,10 @@ sealed record WorkspacePropertyProjectionEffect(
     AuthoredDeclaration[] Targets,
     MappingSyntax Mapping,
     WorkspacePropertyProjectionSource[] Sources,
-    bool Complete);
+    bool Complete)
+{
+    // AutoMap effects carry a synthesized mapping located at the feed, not an authored mapping clause.
+    internal bool AutoMapped { get; init; }
+}
 
 sealed record WorkspacePropertyProjectionSource(string Path, AuthoredDeclaration[] Members);

@@ -36,7 +36,7 @@ internal sealed partial class WorkspacePropertyLinks
                 targets,
                 new SetMappingSyntax(pair.Target.Name, new PathExpressionSyntax(pair.Source.Name, use.Location), use.Location),
                 [new(pair.Source.Name, sources)],
-                targets.Length == 1 && sources.Length == 1));
+                targets.Length == 1 && sources.Length == 1) { AutoMapped = true });
             Add(use, "automap", new(pair.Target.Name, targets, sources is [var source] ? source : null, sources.Length != 1));
             Add(use, "automap", new(pair.Source.Name, sources, targets is [var target] ? target : null, targets.Length != 1));
         }

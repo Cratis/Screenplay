@@ -83,6 +83,12 @@ internal sealed partial class WorkspacePropertyLinks
     internal string AdditionFixtureRole(WorkspaceSyntaxEntry entry) => FixtureRole(entry);
     internal AuthoredDeclaration? AdditionOwner(WorkspaceSyntaxEntry entry) => Owner(entry);
 
+    internal SyntaxNode? NodeAt(WorkspaceNodeHandle handle) => _handles.TryGetValue(handle, out var entry) ? entry.Node : null;
+
+    internal SyntaxNode? ProductionOf(WorkspaceNodeHandle handle) => _handles.TryGetValue(handle, out var entry) ? Parents(entry).FirstOrDefault(parent => ProductionStep(parent.Node))?.Node : null;
+
+    internal AuthoredDeclaration? OwnerOf(WorkspaceSyntaxEntry entry) => Owner(entry);
+
     internal AuthoredDeclaration[] Find(string address) => [.. _properties.Values.SelectMany(properties => properties).Where(property => property.Address == address)];
 
     internal IEnumerable<WorkspacePropertyLink> Incoming(AuthoredDeclaration property) => _links.Where(link => link.Candidates.Contains(property));
