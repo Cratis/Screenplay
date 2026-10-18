@@ -573,7 +573,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                             query.Authorize,
                             SemanticQueryArguments.KeyProperties(bound),
                             module,
-                            featurePath)
+                            featurePath,
+                            queryFilterNames: query.Filters.Select(filter => filter.Name))
                     });
                 }
             }
