@@ -228,7 +228,19 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application, context.UtcAssessmentYear);
+            EsmSchemaV28Support.EnsureSupported(languageVersion, semanticVersion);
+            var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
+            if (!failures.IsEmpty)
+            {
+                foreach (var failure in failures)
+                {
+                    context.Error(DiagnosticCodes.InvalidSemanticBinding, failure.Message, context.FailureLocation(failure));
+                }
+
+                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
+            }
+
+            var model = ExecutableSemanticModel.CreateValidated(languageVersion, semanticVersion, application);
             var compiledDocuments = documents;
             if (context.UsesV4)
             {

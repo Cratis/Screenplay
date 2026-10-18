@@ -1061,6 +1061,10 @@ itself what an unresolvable one means.
 | `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including reserved stored source `Default` or stream `All` names (also through `id` pins), stored-name collisions, an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision, an authorization policy, property rule or requirement referencing a generated value before generation, or a `produces` or `invokes` mapping that assigns a property of an incompatible type, such as an optional value into a required property; the diagnostic is located at the mapping and names the property and both types. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
 
+Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
+
+Comparison operands must be required, including command properties and protected read-model properties on either side. An optional operand is refused with `PLAY0268` at the comparison rather than deferred to semantic contract validation.
+
 ### Specification event-source assertions
 
 | Code | Severity | Reported when |

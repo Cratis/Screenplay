@@ -17,7 +17,7 @@ internal sealed partial class McpWorkspaces
         CheckContinuation(arguments, "expectedNotesRevision", notes.Revision!);
         var scope = McpJson.OptionalString(arguments, "scope");
         var filter = McpNotesFilter.Read(arguments, workspace);
-        var items = ModelNotesAnchors.Items(notes.Document!, workspace.IdentityCatalog).Where(filter.Matches);
+        var items = ModelNotesAnchors.Items(notes.Document!, workspace).Where(filter.Matches);
         var view = McpNotesArguments.View(arguments);
         object page = view == "findings"
             ? McpPaging.Page(ModelNotesAnchors.Findings(notes.Document! with { Notes = [.. items.Select(item => item.Note)] }, workspace.IdentityCatalog, scope), arguments, notes.Revision!)

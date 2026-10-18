@@ -39,6 +39,6 @@ public class a_repeated_split_notes_workspace : a_split_notes_workspace
             """);
         Split = ScreenplayWorkspace.Create("Acme", Root.Read(), SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Acme")));
         Index = WorkspaceSyntaxIndex.Create(Split);
-        Opened = Result(Workspaces.Open(McpJson.Empty));
+        Opened = Result(Workspaces.Open(Arguments(new { applicationName = "Acme" })));
     }
 }
