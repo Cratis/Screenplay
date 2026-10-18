@@ -23,6 +23,7 @@ sealed class WorkspaceReferenceBindings
     internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false, bool includeStreamIdParts = false)
     {
         _index = index;
+
         // Part keys are positional. Rename preserves node paths; general edits may insert or move streams.
         _declarations = [.. Declarations(index).Where(declaration => includeStreamIdParts || declaration.Domain != WorkspaceReferenceDomain.EventStreamIdPart)];
         _byName = _declarations.GroupBy(declaration => (declaration.Domain, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
