@@ -55,6 +55,12 @@ public sealed partial class SemanticModelBinder
             var subject = CommandValidationSubject(property.Name, property.Type);
             if (subject.IsDate) return BindDateCondition(comparison, property, leftOperand, properties, position);
             if (subject.Primitive == SemanticPrimitiveType.Uuid) return BindUuidCondition(comparison, property, leftOperand, properties, allowReadPaths, position);
+            if (property.Type.IsOptional)
+            {
+                OptionalConditionOperand(property, comparison.Location);
+                return null;
+            }
+
             var right = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => new(default, BindLiteral(literal)),
@@ -101,6 +107,12 @@ public sealed partial class SemanticModelBinder
                 var other = right.Read is { } readName
                     ? _commandReads[readName].View.Properties.Values.Single(value => value.Id == right.Property)
                     : properties.Values.Single(value => value.Id == right.Property);
+                if (other.Type.IsOptional)
+                {
+                    OptionalConditionOperand(other, comparison.Location);
+                    return null;
+                }
+
                 var otherSubject = CommandValidationSubject(other.Name, other.Type);
                 if (otherSubject.Primitive != subject.Primitive || otherSubject.IsCollection || otherSubject.IsDate ||
                     (subject.Primitive == SemanticPrimitiveType.Text && !otherSubject.Values.SequenceEqual(subject.Values)))
@@ -121,6 +133,9 @@ public sealed partial class SemanticModelBinder
             };
             return new SemanticComparison(leftOperand, op, right);
         }
+
+        void OptionalConditionOperand(SemanticProperty property, SourceLocation location) =>
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Condition on '{property.Name}' is not admitted: comparison operands must be required; optional properties have no portable comparison.", location);
 
         SemanticConditionOperand? BindReadConditionOperand(PathExpressionSyntax path, string position) =>
             BindReadPath(path.Path, path.Location, position) is { } read ? new(read.Property.Id, null) { Read = read.Read } : null;

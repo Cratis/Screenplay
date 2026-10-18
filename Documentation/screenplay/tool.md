@@ -432,6 +432,8 @@ The CLI does not read MCP workspace state from `.screenplay/identities.json`. It
 
 The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance.
 
+A projection the reference evaluator cannot execute does not stop unrelated specifications. A specification is `unsupported` if its given, appended, produced or reaction-cascade events reach that projection, or if it supplies, reads, queries or asserts the projection's read model (including an absence assertion). Application-level capability issues still prevent every selected specification from running. `planIssues` lists both application-level and deferred slice-level issues, even when the selected specifications pass.
+
 The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `executed`, `passed`, `failed`, `unsupported`, `diagnostics`, `planIssues` and `results`. Counts cover the complete selection; `executed` excludes unsupported scenarios. Each result gives its `address`, `semanticId`, `outcome`, `executionOutcome`, comparison `failures`, and nullable `capability` and `reason`. A model that does not bind reports `unbound` and executable diagnostics, with no scenario results. A bound model with no specifications reports zero discovered; that is not evidence of scenario coverage.
 
 | Exit code | Meaning |

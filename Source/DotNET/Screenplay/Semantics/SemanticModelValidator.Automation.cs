@@ -92,7 +92,7 @@ internal static partial class SemanticModelValidator
         {
             foreach (var trigger in _triggers.Values)
             {
-                ValidateProperties(trigger.Properties);
+                ValidateOwner(trigger.Id, () => ValidateProperties(trigger.Properties));
             }
         }
 
@@ -100,12 +100,12 @@ internal static partial class SemanticModelValidator
         {
             foreach (var reaction in slice.Reactions)
             {
-                ValidateReaction(reaction);
+                ValidateOwner(reaction.Id, () => ValidateReaction(reaction));
             }
 
             foreach (var capture in slice.Captures)
             {
-                ValidateCapture(capture);
+                ValidateOwner(capture.Id, () => ValidateCapture(capture));
             }
         }
 

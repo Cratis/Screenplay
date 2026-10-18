@@ -35,7 +35,7 @@ static class McpSpecificationExecution
             throw new McpFailure("UnknownSpecificationSelection: no specification matches the exact address, semantic id or scope.", -32602);
         }
 
-        var admitted = SemanticExecutionPlan.Compile(compilation.Model);
+        var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
         var runner = new SemanticSpecificationRunner();
         var results = selected.Select(assignment =>
         {
@@ -68,7 +68,7 @@ static class McpSpecificationExecution
         var unsupportedCount = results.Count(result => result.Outcome == "unsupported");
         var outcome = Outcome(failed == 0, unsupportedCount > 0 || admitted.Plan is null);
 
-        return new(revision, outcome, declarations.Length, selected.Length, passed + failed, passed, failed, unsupportedCount, [.. workspace.Compilation.Diagnostics], [.. admitted.Issues], results);
+        return new(revision, outcome, declarations.Length, selected.Length, passed + failed, passed, failed, unsupportedCount, [.. workspace.Compilation.Diagnostics], [.. admitted.Issues, .. admitted.UnselectedIssues], results);
     }
 
     static string? TableAddress(SemanticCompilation compilation, SemanticId id, string address) =>
