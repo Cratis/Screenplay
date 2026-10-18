@@ -85,6 +85,8 @@ internal sealed partial class WorkspacePropertyLinks
 
     internal SyntaxNode? NodeAt(WorkspaceNodeHandle handle) => _handles.TryGetValue(handle, out var entry) ? entry.Node : null;
 
+    internal SyntaxNode? ProductionOf(WorkspaceNodeHandle handle) => _handles.TryGetValue(handle, out var entry) ? Parents(entry).FirstOrDefault(parent => ProductionStep(parent.Node))?.Node : null;
+
     internal AuthoredDeclaration? OwnerOf(WorkspaceSyntaxEntry entry) => Owner(entry);
 
     internal AuthoredDeclaration[] Find(string address) => [.. _properties.Values.SelectMany(properties => properties).Where(property => property.Address == address)];

@@ -24,10 +24,12 @@ internal sealed partial class McpLineageTrace
     static McpLineageStep Ambiguous(McpLineageStep step, string name, McpDeclaration[] candidates) =>
         step with { Status = "ambiguous", Candidates = candidates, Reason = $"'{name}' resolves to {candidates.Length} declarations; none is followed." };
 
-    IEnumerable<Referrer> Referencing(McpDeclaration declaration, params string[] roles) => _index.Incoming(declaration)
-        .Where(reference => roles.Contains(reference.Reference.Role, StringComparer.Ordinal) && reference.Reference.Owner is not null && reference.Candidates.Length == 1)
-        .Select(reference => new Referrer(reference.Reference, reference.Reference.Owner!))
+    IEnumerable<Referrer> Referencing(McpDeclaration declaration, params string[] roles) => References(declaration, roles)
         .DistinctBy(referrer => (referrer.Owner.Kind, referrer.Owner.Address));
+
+    IEnumerable<Referrer> References(McpDeclaration declaration, params string[] roles) => _index.Incoming(declaration)
+        .Where(reference => roles.Contains(reference.Reference.Role, StringComparer.Ordinal) && reference.Reference.Owner is not null && reference.Candidates.Length == 1)
+        .Select(reference => new Referrer(reference.Reference, reference.Reference.Owner!));
 
     IEnumerable<McpLineageStep> Readers(McpDeclaration property)
     {

@@ -87,22 +87,22 @@ internal sealed partial class McpLineageTrace
         _ => []
     };
 
+    // Every hop is placed behind the budget check, so only the final truncated hop can take the count to HopBudget.
     void Expand(McpLineageHop parent, McpLineageStep[] children, string direction)
     {
-        if (children.Length == 0) return;
         var depth = parent.Depth + 1;
-        if (depth > DepthBudget)
-        {
-            Truncate(children[0], parent, depth, direction, $"The depth budget of {DepthBudget} is spent; {children.Length} hop(s) below this point are not traced.");
-            return;
-        }
         foreach (var child in children)
         {
             if (_stopped) return;
-            if (_hops.Count == HopBudget - 1)
+            if (_hops.Count >= HopBudget - 1)
             {
                 Truncate(child, parent, depth, direction, $"The budget of {HopBudget} hops is spent; the rest of the trace is not reported.");
                 _stopped = true;
+                return;
+            }
+            if (depth > DepthBudget)
+            {
+                Truncate(child, parent, depth, direction, $"The depth budget of {DepthBudget} is spent; {children.Length} hop(s) below this point are not traced.");
                 return;
             }
             Visit(child, parent, depth, direction);
