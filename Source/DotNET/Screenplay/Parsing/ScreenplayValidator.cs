@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Parsing;
 /// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
 /// events referenced by reactions, <c>produces</c>, constraints and <c>seed</c> blocks, and the types
 /// referenced by properties - and that <c>concurrency</c> and <c>seed</c> blocks are not empty and
-/// <c>authentication</c> provider and <c>type</c> names are unique.
+/// <c>authentication</c> provider, <c>policy</c> and <c>type</c> names are unique.
 /// </summary>
 internal static partial class ScreenplayValidator
 {
@@ -144,6 +144,7 @@ internal static partial class ScreenplayValidator
         bool allowUnresolvedPersonaPolicies,
         ParserContext context)
     {
+        ValidateDuplicatePolicies(application, context);
         ValidateAuthorizations(application, names.Policies, context);
         ValidateReadModels(slices, names.ReadModels, names.Events, context);
         ValidateTypes(application, names.Types, context);

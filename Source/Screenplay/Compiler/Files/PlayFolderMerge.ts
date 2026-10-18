@@ -63,6 +63,10 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     // Modules merge before personas are claimed, so the diagnostics come in the order the C# merge reports them.
     const modules = mergeModules(applications.flatMap(application => application.modules), diagnostics);
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
+    const declaredPolicies = applications.flatMap(application => application.policies ?? []);
+    const policies = declaredInOneFile(declaredPolicies, 'policy', diagnostics);
+    // Like the C# merge, a policy dropped as repeated across files is not also reported as repeated within its file.
+    const droppedPolicies = declaredPolicies.filter(policy => !policies.includes(policy)).map(policy => policy.location);
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
         sourceOptions,
@@ -80,7 +84,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
         personas,
-        policies: applications.flatMap(application => application.policies ?? []),
+        policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
         ...presentOnly('exposures', applications.flatMap(application => application.exposures ?? [])),
@@ -91,7 +95,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
-    const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
+    const documentDiagnostics = documents.flatMap(document => document.diagnostics).filter(diagnostic =>
+        diagnostic.code !== DiagnosticCodes.DuplicateDeclaration || !droppedPolicies.some(location => sameLocation(location, diagnostic.location)));
+    const all = [...documentDiagnostics, ...diagnostics];
     return { value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 
@@ -219,6 +225,7 @@ function declaredInOneFile<T extends { readonly name: string; readonly location:
 }
 
 const describe = (path: string | undefined): string => path ?? 'another file';
+const sameLocation = (left: SourceLocation, right: SourceLocation): boolean => left.path === right.path && left.line === right.line && left.column === right.column;
 const error = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'error', code, message, location });
 const warning = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'warning', code, message, location });
 
