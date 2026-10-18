@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -85,8 +86,13 @@ internal static partial class WorkspaceIdentifierSpans
         };
     }
 
-    internal static IEnumerable<(int Offset, int Length)> Find(SyntaxNode node, string member, string line, string expected)
+    internal static IEnumerable<(int Offset, int Length)> Find(SyntaxNode node, string member, string line, string expected, int? identifierOffset = null)
     {
+        if (identifierOffset is { } offset)
+        {
+            return Find(line, expected).Where(span => span.Offset == offset);
+        }
+
         if (node is EventSyntax && member == "name")
         {
             var match = EventHeaderRegex().Match(line);
@@ -131,6 +137,9 @@ internal static partial class WorkspaceIdentifierSpans
 
     internal static IEnumerable<(int Offset, int Length)> Find(string line, string expected)
     {
+        var comment = SourceLineSplitter.CommentStart(line);
+        if (comment >= 0) line = line[..comment];
+
         for (var position = 0; position < line.Length;)
         {
             var character = line[position];
