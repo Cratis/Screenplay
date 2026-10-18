@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0530, PLAY0531 | Opt-in data-binding completeness (`data-bindings`, `PLAY0530` or `PLAY0531`): conflicting visible screen bindings and query return-type/cardinality mismatches. The TypeScript `completenessDiagnostics` API computes these after error-free compilation. Both editors preserve supplied findings; ordinary validation does not request completeness checks. |
 | PLAY0667–PLAY0671 | Enum numbering syntax, uniqueness and int32 bounds. PLAY0671 is an opt-in completeness Information hint for unnumbered enums used by event properties; editors preserve it when supplied with completeness diagnostics, but ordinary validation does not report it. Numbering is opt-in through a refactoring, not an automatic correctness repair. |
 | PLAY0663–PLAY0665 | Command-only production routes, redundant overrides, and observer filter syntax, source/stream resolution and event-only triggers. |
 | PLAY0660, PLAY0662 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |
@@ -43,7 +44,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 | PLAY0666 | Warns when a reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins remain unknown. |
 | PLAY0690 | Compares known nominal producer destinations with reducer-backed instance queries, or warns about several identity domains in one reducer. Unknown provenance suppresses the comparison. Both editors preserve supplied native warnings; local TypeScript validation does not compute them. |
 | PLAY0661, PLAY0662 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
-| PLAY0530–PLAY0537 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. TypeScript has no completeness-check API. They are not ordinary parser warnings. |
+| PLAY0532–PLAY0537, PLAY0574–PLAY0576, PLAY0602–PLAY0606, PLAY0652 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. The TypeScript completeness API supports only data bindings (PLAY0530/PLAY0531) and enum pinning (PLAY0671), including their diagnostic-code aliases and `all`; the remaining checks are C#-only. PLAY0536 is blocked on TypeScript interaction/behavior syntax: `Syntax/Screens.ts` retains only `on`/`uses` markers, without event or behavior names. These are not ordinary parser warnings. |
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |
 | PLAY0686 | Retired by ESM v16, which carries event `id` pins as stored names. Both editors still preserve warnings supplied by earlier native compilers; ordinary TypeScript validation does not bind the ESM. |
 

@@ -1,0 +1,149 @@
+{
+    "declarations": [
+        "module M",
+        "  feature F",
+        "    slice StateView View",
+        "      readmodel R",
+        "        value String",
+        "      readmodel Other",
+        "        value String",
+        "      query Q => R[]",
+        "      query Q2 => R[]",
+        "      query One => R",
+        "      query Different => Other[]",
+        "      screen S"
+    ],
+    "cases": [
+        {
+            "name": "different cardinalities",
+            "directives": ["data R[] via query Q", "data R via query One"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 14, "column": 9}}]
+        },
+        {
+            "name": "different by parameters",
+            "directives": ["data R[] via query Q by first", "data R[] via query Q by second"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 14, "column": 9}}]
+        },
+        {
+            "name": "different queries",
+            "directives": ["data R[] via query Q", "data R[] via query Q2"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 14, "column": 9}}]
+        },
+        {
+            "name": "different query shape",
+            "directives": ["data R[] via query Different"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Different' return type or cardinality", "location": {"line": 13, "column": 9}}]
+        },
+        {
+            "name": "different query cardinality",
+            "directives": ["data R via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Q' return type or cardinality", "location": {"line": 13, "column": 9}}]
+        },
+        {
+            "name": "unresolved queries do not become visible bindings",
+            "directives": ["data R via query Missing", "data R[] via query Q"],
+            "diagnostics": []
+        },
+        {
+            "name": "identical rebinding",
+            "directives": ["data R[] via query Q", "data R[] via query Q"],
+            "diagnostics": []
+        },
+        {
+            "name": "qualified names resolve to the same query",
+            "directives": ["data R[] via query Q", "data R[] via query M.F.View.Q"],
+            "diagnostics": []
+        },
+        {
+            "name": "sibling sections are independent",
+            "directives": ["section First", "  data R[] via query Q", "section Second", "  data R via query One"],
+            "diagnostics": []
+        },
+        {
+            "name": "nested ancestor conflict",
+            "directives": ["data R[] via query Q", "section Detail", "  section Nested", "    data R[] via query Q2"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 16, "column": 13}}]
+        },
+        {
+            "name": "all parent bindings are visible regardless of source order",
+            "directives": ["section Detail", "  data R[] via query Q2", "data R[] via query Q"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 14, "column": 11}}]
+        },
+        {
+            "name": "conflict precedes mismatch at one location",
+            "directives": ["data R[] via query Q", "data R via query Q2"],
+            "diagnostics": [
+                {"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 14, "column": 9}},
+                {"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Q2' return type or cardinality", "location": {"line": 14, "column": 9}}
+            ]
+        },
+        {
+            "name": "template slots inherit their containing bindings",
+            "directives": ["data R[] via query Q", "template T", "  body", "    data R[] via query Q2"],
+            "diagnostics": [{"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 16, "column": 13}}]
+        },
+        {
+            "name": "template slots are siblings",
+            "directives": ["template T", "  first", "    data R[] via query Q", "  second", "    data R via query One"],
+            "diagnostics": []
+        },
+        {
+            "name": "component outlets are not binding containers",
+            "directives": ["data R[] via query Q", "component Panel panel", "  outlet body", "    data R[] via query Q2"],
+            "diagnostics": []
+        },
+        {
+            "name": "screen contributions are not binding containers",
+            "source": ["layout Shell", "  category Test", "  content contributes body", "module M", "  feature F", "    slice StateView View", "      readmodel R", "        value String", "      query Q => R[]", "      query Q2 => R[]", "      screen S", "        data R[] via query Q", "        contribute to body", "          data R[] via query Q2"],
+            "diagnostics": []
+        },
+        {
+            "name": "unresolved views do not establish a mismatch",
+            "directives": ["data Unknown via query Q"],
+            "diagnostics": []
+        },
+        {
+            "name": "nearest query wins and its return type resolves in its own scope",
+            "source": ["module M", "  feature F", "    slice StateView Source", "      readmodel SourceR", "      query Q => SourceR[]", "    slice StateView Target", "      readmodel R", "      query Q => R[]", "      screen S", "        data R[] via query Q", "        data R[] via query Source.Q"],
+            "diagnostics": [
+                {"code": "PLAY0530", "severity": "warning", "message": "Data binding 'R' conflicts with another visible binding - use the same cardinality, query and by parameter, or separate containers", "location": {"line": 11, "column": 9}},
+                {"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Source.Q' return type or cardinality", "location": {"line": 11, "column": 9}}
+            ]
+        },
+        {
+            "name": "ambiguous query is not guessed",
+            "source": ["module M", "  feature F", "    slice StateView First", "      readmodel FirstR", "      query Q => FirstR[]", "    slice StateView Second", "      readmodel SecondR", "      query Q => SecondR[]", "    slice StateView Target", "      screen S", "        data FirstR via query Q"],
+            "diagnostics": []
+        },
+        {
+            "name": "imported query and view resolve to local declarations",
+            "source": ["import M.F.Source.Q", "import M.F.Source.R", "module M", "  feature F", "    slice StateView Source", "      readmodel R", "      query Q => R[]", "  feature G", "    slice StateView Target", "      screen S", "        data R via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Q' return type or cardinality", "location": {"line": 11, "column": 9}}]
+        },
+        {
+            "name": "projection inferred views participate",
+            "source": ["module M", "  feature F", "    slice StateView View", "      event E", "      projection Inferred", "        from E", "      query Q => Inferred[]", "      screen S", "        data Inferred via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'Inferred' does not match query 'Q' return type or cardinality", "location": {"line": 9, "column": 9}}]
+        },
+        {
+            "name": "projection aliases participate",
+            "source": ["module M", "  feature F", "    slice StateView View", "      event E", "      projection P => Alias", "        from E", "      query Q => Alias[]", "      screen S", "        data Alias via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'Alias' does not match query 'Q' return type or cardinality", "location": {"line": 9, "column": 9}}]
+        },
+        {
+            "name": "projection variants replace the projection name",
+            "source": ["module M", "  feature F", "    slice StateView View", "      event E", "      projection P", "        variant Active", "          enters on E", "      query Q => Active[]", "      screen S", "        data Active via query Q", "        data P via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'Active' does not match query 'Q' return type or cardinality", "location": {"line": 10, "column": 9}}]
+        },
+        {
+            "name": "duplicate view names within one slice have one identity",
+            "source": ["module M", "  feature F", "    slice StateView View", "      event E", "      readmodel R", "      projection P => R", "        from E", "      query Q => R[]", "      screen S", "        data R via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'R' does not match query 'Q' return type or cardinality", "location": {"line": 10, "column": 9}}]
+        },
+        {
+            "name": "reducer inferred views participate",
+            "source": ["module M", "  feature F", "    slice StateView View", "      event E", "      reducer Reduce => Reduced", "        on E", "      query Q => Reduced[]", "      screen S", "        data Reduced via query Q"],
+            "diagnostics": [{"code": "PLAY0531", "severity": "warning", "message": "Data binding 'Reduced' does not match query 'Q' return type or cardinality", "location": {"line": 9, "column": 9}}]
+        }
+    ]
+}

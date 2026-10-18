@@ -109,14 +109,14 @@ public sealed partial class SemanticModelBinder
             return null;
         }
 
-        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath, string? commandName = null)
+        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath, string? commandName = null, IEnumerable<string>? queryFilterNames = null)
         {
             var module = syntax.Modules.Single(value => value.Name == moduleName);
             var scopes = EffectiveAuthorizationScopes.For(module, featurePath, own);
             SemanticAuthorization? result = null;
             foreach (var scope in scopes)
             {
-                var bound = BindAuthorization(scope, artifactProperties, commandName);
+                var bound = BindAuthorization(scope, artifactProperties, commandName, queryFilterNames);
                 if (bound is not null)
                 {
                     result = result is null ? bound : new SemanticLogicalAuthorization(result, SemanticLogicalOperator.And, bound);
@@ -126,19 +126,19 @@ public sealed partial class SemanticModelBinder
             return result;
         }
 
-        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<SemanticProperty> artifactProperties, string? commandName)
+        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<SemanticProperty> artifactProperties, string? commandName, IEnumerable<string>? queryFilterNames)
         {
             if (authorize is null) return null;
             var properties = artifactProperties.ToDictionary(property => property.Name, StringComparer.Ordinal);
-            return BindAuthorizationNode(authorize.Requirement, properties, commandName);
+            return BindAuthorizationNode(authorize.Requirement, properties, commandName, queryFilterNames);
         }
 
-        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, Dictionary<string, SemanticProperty> properties, string? commandName)
+        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, Dictionary<string, SemanticProperty> properties, string? commandName, IEnumerable<string>? queryFilterNames)
         {
             if (requirement is LogicalPolicyRequirementSyntax logical)
             {
-                var left = BindAuthorizationNode(logical.Left, properties, commandName);
-                var right = BindAuthorizationNode(logical.Right, properties, commandName);
+                var left = BindAuthorizationNode(logical.Left, properties, commandName, queryFilterNames);
+                var right = BindAuthorizationNode(logical.Right, properties, commandName, queryFilterNames);
                 return left is null || right is null ? null :
                     new SemanticLogicalAuthorization(left, PolicyOperator(logical.Operator), right);
             }
@@ -164,7 +164,10 @@ public sealed partial class SemanticModelBinder
                 }
                 else if (!ResolvesPolicyPath(path, properties))
                 {
-                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.", reference.Location);
+                    var message = queryFilterNames?.Contains(path, StringComparer.Ordinal) == true
+                        ? $"Policy '{policy.Name}' artifact path '{path}' names query filter '{path}'. Policies read only the query's 'by' argument, not filters. Declare '{path}' with 'by' to authorize by it."
+                        : $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.";
+                    Error(DiagnosticCodes.InvalidSemanticBinding, message, reference.Location);
                 }
             }
 
