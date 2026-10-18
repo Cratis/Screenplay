@@ -16,14 +16,19 @@ import { TranslationDirection } from '../Syntax/TranslationDirection';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
+import { prepareTimelineQuickFixes } from './TimelineQuickFixes';
 
 export interface QuickFixEdit {
+    /** Destination document for an application-snapshot repair; absent for a buffer-local edit. */
+    readonly path?: string;
     readonly start: number;
     readonly length: number;
     readonly text: string;
 }
 
 export interface QuickFix {
+    /** Original diagnostic line, which may differ from the edited import's line. */
+    readonly line?: number;
     readonly diagnosticCode: string;
     readonly title: string;
     readonly scope: 'occurrence' | 'document';
@@ -31,13 +36,15 @@ export interface QuickFix {
 }
 
 export interface QuickFixOptions {
+    readonly path?: string;
+    readonly documents?: ReadonlyMap<string, string>;
     readonly line?: number;
     readonly placement?: PlayPlacement;
     readonly diagnosticCode?: string;
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
+    return code === DiagnosticCodes.EventFromLaterSlice || code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -53,7 +60,19 @@ export function findQuickFixes(source: string, options: QuickFixOptions = {}): Q
 // One immutable buffer version owns the analysis and document verdict. Cursor moves reuse them;
 // single-occurrence verdicts have a bounded cache. Range requests verify the independent recipes
 // together once per version, rather than reparsing N times for N intersecting markers.
-export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
+export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement' | 'path' | 'documents'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
+    const local = prepareLocalQuickFixes(source, options);
+    let timeline: ReturnType<typeof prepareTimelineQuickFixes> | undefined;
+    return (line, diagnosticCode) => {
+        const requests = typeof line === 'number' ? [{ line, diagnosticCode }] : line ?? [];
+        const localFixes = local(line, diagnosticCode);
+        const selected = requests.filter(request => request.diagnosticCode === DiagnosticCodes.EventFromLaterSlice || (request.diagnosticCode === undefined && localFixes.length === 0));
+        const fixes = selected.length === 0 ? [] : [...new Set(selected.map(request => request.line))].flatMap(line => (timeline ??= prepareTimelineQuickFixes(source, options))(line));
+        return [...localFixes, ...fixes];
+    };
+}
+
+function prepareLocalQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement'>): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
     const original = parseForAuthoring(source, undefined, options.placement);
     // PLAY0614 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
     // so a document whose only errors are public-event boundary errors stays repairable.

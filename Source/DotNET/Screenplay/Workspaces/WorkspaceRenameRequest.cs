@@ -20,7 +20,7 @@ public sealed record WorkspaceRenameRequest
     public required Semantics.CatalogRevision ExpectedCatalogRevision { get; init; }
 
     /// <summary>
-    /// Gets the original declaration occurrence; logical headers include every fragment.
+    /// Gets the original declaration occurrence, including a composite stream id part; logical headers include every fragment.
     /// </summary>
     public required WorkspaceNodeHandle Target { get; init; }
 

@@ -71,7 +71,7 @@ A one-shot query returning an optional scalar type named `observable` must keep 
 
 ## What the caller sees
 
-`authorize` says *who may call* a query. In the executable semantic model, declarative gates on optional keyed lookups, unkeyed list queries and keyed list queries run before the lookup. A keyed query compares a supplied caller against the `by` argument; an unkeyed list query has no query-key artifact. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Caller-supplied equality filters on collection queries are admitted by ESM v14. Policies still see only the `by` argument, not filters. A policy that names a query filter reports `PLAY0273`; declare that argument with `by` instead to authorize by it. Explicit scopes, context-sourced filters and performer-backed queries remain authoring syntax and are not admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
+`authorize` says *who may call* a query. In the executable semantic model, declarative gates on optional keyed lookups, unkeyed list queries and keyed list queries run before the lookup. A keyed query compares a supplied caller against the `by` argument; an unkeyed list query has no query-key artifact. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Caller-supplied equality filters on collection queries are admitted by ESM v14. Policies still see only the `by` argument, not filters. A policy that names a query filter reports `PLAY0273`; declare that argument with `by` instead to authorize by it. Explicit scopes and context-sourced filters remain authoring syntax and are not admitted into the reference evaluator. A performer-backed query is an opaque read (see [below](#a-query-a-performer-answers-is-an-opaque-read)). It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
 
 `scoped to` states it:
 
@@ -176,7 +176,7 @@ query ListInvoices => InvoiceListReadModel[]
   authorize IsAuthenticated
 ```
 
-The executable semantic model admits unfiltered lists, lists narrowed by one caller-supplied `by` key, and caller-supplied equality filters on collections, including their `observable` forms. A model with filters selects ESM v14; models without filters keep their existing bytes, version and revision. `scoped to`, `performer`, `by ... from <source>` and `filter ... from <source>` remain unadmitted (`PLAY0268`), each with its own message. The reference evaluator answers a live query with a snapshot; live change sets, paging and ordering are not part of v14.
+The executable semantic model admits unfiltered lists, lists narrowed by one caller-supplied `by` key, and caller-supplied equality filters on collections, including their `observable` forms. A model with filters selects ESM v14; models without filters keep their existing bytes, version and revision. `scoped to`, `by ... from <source>` and `filter ... from <source>` remain unadmitted (`PLAY0268`), each with its own message. A `performer` query is not refused: it is an opaque read. The reference evaluator answers a live query with a snapshot; live change sets, paging and ordering are not part of v14.
 
 ## Executable query shape
 
@@ -271,6 +271,12 @@ query ListLineItems => InvoiceLineReportReadModel[]
 ````
 
 Inside a performer, `context` is the [`QueryContext`](context.md) — the query's arguments, the tenant, the caller, the identity recorded as having caused it, the causation, and when the query was received. A `file` reference compiles against the same type, so moving a block out to a file changes nothing about what it can see.
+
+### A query a performer answers is an opaque read
+
+The code decides what a performer returns, so no declarative shape can be executed or specified. Binding does not refuse the application for it. The query is listed as code the model needs (`QueryPerformer`), reported as `PLAY0270` information (`Query '<name>' is performed by code`), and left out of the executable model: it takes no part in the plan and no specification can assert it. A specification whose `then query` names a performer query is left out of the executable specifications with the same information; every other declaration and specification of the application keeps running with `screenplay test`. Everything else about the query — its read model, the screen bound to it, its authorization — is unchanged.
+
+A read model a performer composes therefore sits next to projected read models without making the application `unbound`. Specify the declarative part (the events that feed it) as usual; the performer's own logic is realization metadata that a test of the real code covers.
 
 A query is complete without a performer. The `performer` is realization metadata, not a precondition — see [Declarative first](grammar.md#declarative-first--file-is-never-required).
 

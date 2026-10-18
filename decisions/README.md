@@ -91,3 +91,4 @@
 | [0092](0092-the-language-is-frozen-at-esm-v28.md) | The language is frozen at ESM v28 | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0093](0093-give-containers-identities-before-the-model-binds.md) | Give applications, modules, features and slices identities before the model binds | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0094](0094-report-enum-numeric-identity-changes-in-model-comparison.md) | Report enum numeric identity changes in model comparison | accepted | none | 2026-10-18 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0097](0097-a-performer-query-is-an-opaque-read-not-a-refusal.md) | A performer query is an opaque read, not a refusal of the application | proposed | none | — | — |

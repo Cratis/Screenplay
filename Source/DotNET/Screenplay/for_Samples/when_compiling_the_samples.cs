@@ -100,7 +100,8 @@ public partial class when_compiling_the_samples : given.the_samples
                     _slicesWithoutScreens.Add(name);
                 }
 
-                if (!slice.Specifications.Any())
+                // A query a performer answers is an opaque read: no specification can state what code returns.
+                if (!slice.Specifications.Any() && !slice.Queries.Any(query => query.Performer is not null))
                 {
                     _slicesWithoutSpecifications.Add(name);
                 }

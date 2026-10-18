@@ -16,7 +16,7 @@ function intersects(left: IRange, right: IRange): boolean {
 
 // The compiler owns recipes and verification. The adapter only translates verified offsets and pins
 // edits to the analyzed buffer version, so future fixes need no editor-specific parsing or .NET bridge.
-export function createCodeActionProvider(placement?: readonly string[]): languages.CodeActionProvider {
+export function createCodeActionProvider(placement?: readonly string[], applicationModels?: () => ReadonlyMap<string, editor.ITextModel>): languages.CodeActionProvider {
     const cache = new WeakMap<editor.ITextModel, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     return {
         provideCodeActions(model, range, context, token) {
@@ -29,10 +29,14 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
             });
             if (!migrationRequested && diagnostics.length === 0) return { actions: [], dispose() {} };
             const version = model.getVersionId();
-            const placementKey = JSON.stringify(placement) ?? '';
+            const models = applicationModels?.();
+            const path = models === undefined ? undefined : [...models].find(([, document]) => document === model)?.[0];
+            if (models !== undefined && path === undefined) return { actions: [], dispose() {} };
+            const versions = new Map([...(models?.values() ?? [model])].map(document => [document, document.getVersionId()]));
+            const placementKey = JSON.stringify([placement, models === undefined ? undefined : [...models].map(([path, document]) => [path, document.uri.toString(), versions.get(document)])]);
             let analysis = cache.get(model);
             if (analysis?.version !== version || analysis.placement !== placementKey) {
-                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(model.getValue(), { placement }) };
+                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(model.getValue(), { placement, path, documents: models === undefined ? undefined : new Map([...models].map(([path, document]) => [path, document.getValue()])) }) };
                 cache.set(model, analysis);
             }
             const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
@@ -41,20 +45,26 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
             }))).filter(fix => fix.scope === 'occurrence');
             const requested = [...occurrences, ...(context.only === undefined || migrationRequested ? [DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.LegacyComplianceMarker].flatMap(code => analysis.fixes(undefined, code)) : [])];
             const fixes = requested.filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrationKind(fix.diagnosticCode) : 'quickfix'));
-            if (token.isCancellationRequested || model.getVersionId() !== version) return { actions: [], dispose() {} };
+            if (token.isCancellationRequested || [...versions].some(([document, version]) => document.getVersionId() !== version)) return { actions: [], dispose() {} };
+            const supported = fixes.filter(fix => fix.edits.every(edit => edit.path === undefined || models?.has(edit.path)));
             return {
-                actions: fixes.map(fix => ({
+                actions: supported.map(fix => ({
                     title: fix.title,
                     kind: fix.scope === 'document' ? migrationKind(fix.diagnosticCode) : 'quickfix',
                     isPreferred: fix.scope === 'occurrence',
                     edit: { edits: fix.edits.map(edit => {
-                        const start = model.getPositionAt(edit.start);
-                        const end = model.getPositionAt(edit.start + edit.length);
-                        return { resource: model.uri, versionId: version, textEdit: {
+                        const document = edit.path === undefined ? model : models!.get(edit.path)!;
+                        const start = document.getPositionAt(edit.start);
+                        const end = document.getPositionAt(edit.start + edit.length);
+                        return { resource: document.uri, versionId: versions.get(document)!, textEdit: {
                             range: { startLineNumber: start.lineNumber, startColumn: start.column, endLineNumber: end.lineNumber, endColumn: end.column },
                             text: edit.text,
                         } };
-                    }) },
+                    }).concat(fix.diagnosticCode !== DiagnosticCodes.EventFromLaterSlice || models === undefined ? [] : [...models].filter(([path]) => !fix.edits.some(edit => edit.path === path)).map(([, document]) => ({
+                        // A sibling change can invalidate the ordering proof. Empty edits pin every
+                        // analyzed model, including those whose source is not changed by the repair.
+                        resource: document.uri, versionId: versions.get(document)!, textEdit: { range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, text: '' },
+                    }))) },
                 })),
                 dispose() {},
             };

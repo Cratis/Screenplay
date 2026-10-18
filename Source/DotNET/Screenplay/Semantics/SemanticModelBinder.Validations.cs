@@ -287,6 +287,11 @@ public sealed partial class SemanticModelBinder
                     return null;
                 }
 
+                if (MatchAmbiguity.Find(pattern) is { } ambiguity)
+                {
+                    Warning(DiagnosticCodes.AmbiguousMatchPattern, ambiguity.Description, MatchPatternLocation(rule, ambiguity.Offset), MatchArguments(subject, pattern, ambiguity.Offset));
+                }
+
                 return new(property, kind, SemanticValue.Text(pattern), rule.Message) { Severity = Severity(rule.Severity) };
             }
 

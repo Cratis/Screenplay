@@ -454,7 +454,7 @@ constraint `released by` references and screen/behavior `on event` triggers.
 
 Event pins are carried as `storedName` by ESM v16; consumers must explicitly admit that version. The compatibility `eventPinWarnings` array is empty. See the [rename reference](reference.md) and review the candidate's binding diagnostics.
 
-Event sources and streams, examples and specifications are also rename targets. Source and stream renames repair bound command and specification routes and migrate catalog entries atomically, including a source's owned streams. Existing pins stay unchanged. No pins are added automatically; add `id` with a typed edit before renaming a declaration with stored events. An unpinned rename preserves catalog identity but changes its stored name. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
+Event sources and streams, composite stream id parts, examples and specifications are also rename targets. Select an `EventStreamIdPartSyntax` handle to rename that part and its bound command, specification, example and redelivery mappings. Part declaration order, mapping order, values, encoded stored ids and catalog identities stay unchanged. A sibling part-name collision or an unproven mapping refuses the proposal. Source and stream renames repair bound command and specification routes and migrate catalog entries atomically, including a source's owned streams. Existing pins stay unchanged. No pins are added automatically; add `id` with a typed edit before renaming a declaration with stored events. An unpinned rename preserves catalog identity but changes its stored name. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
 
 The planner coordinates logical fragments, repairs proven typed references and
 preserves assigned descendant/event identities. It refuses ambiguous targets,
@@ -608,7 +608,7 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 | `PLAY0683`, `PLAY0684` | Raise NanoID size to the smallest size reaching 64 random bits for its alphabet, or bytes count to 8. Use the concept subject, even across documents, with `CanonicalizeTouchedDocuments`. |
 | `PLAY0683` | Add a unique constraint in the command's slice only when exactly one production maps the generated command property to exactly one event property. Use the command-property subject; identifiers have no constraint repair. |
-| `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
+| `PLAY0516` (Information) | Move a sibling declaration or file-import block, pin an already placed file before a retained glob, or replace unsafe-to-move glob blocks with a complete ordered import list. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
 `PLAY0661` completes a partial command-read key when every missing part has one same-named compatible source. It preserves authored part order and requires canonical formatting consent. Queries and trigger reads are not repaired. `PLAY0660` and `PLAY0662` have no automatic repair. `propose-property` handles non-key read-model properties. Key-part rename remains unsupported; `propose-rename` still refuses all read-model property handles.
 
@@ -625,16 +625,21 @@ must match. When neither binds, merged syntax must match modulo only sibling
 modules/features/slices/import order and approved explicit import pins; admission
 diagnostics must retain the same code/severity multiset. One-sided model availability
 and new errors/warnings are refused. Only already placed files at the same placement
-may be pinned, and the glob remains. A prefix can require several pins; no other
-nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
+may be pinned, and the glob remains. A prefix can require several pins. If whole
+import blocks cannot move safely, a proposal can replace the affected import
+interval with a complete explicit list, including documents with no timeline
+ranks. The replacement preserves each document's placement and every comment;
+new files then require explicit imports. No other nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
 In a fresh workspace, a proposal may establish missing document assignments using
 only the documents' existing IDs and stable keys. Every existing assignment, origin
 and event contract revision must remain unchanged; any other catalog change refuses
 the repair. Discovery and proposals do not persist these assignments; only apply does.
 Rediscover after each applied move or pin instead of combining
 recipes from one snapshot. `canFixAll` is true, but each proposal is still verified.
-The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`);
-there is no TypeScript quick fix or VS Code pinned-evidence action for it.
+The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`).
+VS Code's saved-file repair session can preview and apply it without that path.
+The [TypeScript and Monaco quick fixes](../imports.md#repair-a-backward-timeline-reference)
+use an immutable source snapshot rather than MCP pinned evidence.
 
 `PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
 Only acceptance and conflicts for verified repairs are cached per subject

@@ -225,6 +225,7 @@ public sealed class ScreenplayWorkspace
 
     /// <summary>
     /// Proposes a logical rename, repairing proven typed references and migrating assigned descendant identities.
+    /// Composite stream id part renames preserve declaration order, values and stored identities.
     /// No source or catalog is written by a proposal.
     /// </summary>
     /// <param name="request">The revision-bound rename and explicit formatting policy.</param>

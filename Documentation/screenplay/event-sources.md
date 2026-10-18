@@ -133,6 +133,8 @@ Existing `id` pins stay untouched, even when the new name equals the pin. No pin
 
 **Migrate a stream stored as `All`.** Rename it with `screenplay_propose_rename` (`propose-rename`), then review the proposal before applying. Do not add or keep `id "All"`: the pin preserves the reserved stored name and still reports `PLAY0802`. If a pin already exists, remove or replace it with a typed edit. Chronicle cannot distinguish old events stored under stream type `All` from source-only appends. Treat that history as source-only and read it through a source-only route or as unrouted facts in the consumer; Screenplay does not admit source-only route syntax. Moving that history to the new stream name requires an explicit Chronicle data migration, not a rename pin.
 
+To rename a composite id part, select its `EventStreamIdPartSyntax` handle instead. The proposal updates the declaration and bound part mappings in command routes, specification routes, examples and redelivery locators. Declaration and mapping order, types, values, encoded stored ids and catalog identities remain unchanged. A name already used by another part of that stream or an unproven mapping refuses the proposal.
+
 Colliding names, duplicate physical source declarations, captured route debt and affected opaque references refuse the proposal. The default `PreserveTrivia` patches only proved identifier spans; canonical formatting does not waive reference safety.
 
 ## Tooling support
