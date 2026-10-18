@@ -280,7 +280,10 @@ routing, not preserved behavior: no executable before-baseline exists. See
 [establish production destinations](mcp/authoring-tools.md#establish-production-destinations).
 
 `PLAY0516` repairs move sibling modules, features, slices or explicit file imports,
-or add verified explicit pins before a retained glob. Features and slices inserted
+add verified explicit pins before a retained glob, or replace unsafe-to-move glob
+blocks with a verified explicit import list. An explicit list retains every matched
+document, even one with no timeline declarations; new files require their own
+imports. Features and slices inserted
 mid-list print before their next located sibling; other collections retain their
 existing printing rule. The reference subject is selected by event name and exact
 location, not by parsing the diagnostic message. Verification preserves comments,
