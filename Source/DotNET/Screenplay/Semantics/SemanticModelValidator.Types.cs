@@ -74,7 +74,8 @@ internal static partial class SemanticModelValidator
         }
 
         bool IsCompatibleSource(SemanticTypeReference source, SemanticTypeReference target) =>
-            SemanticTypeCompatibility.IsCompatibleSource(source, target);
+            SemanticTypeCompatibility.IsCompatibleSource(source, target) ||
+            (_semanticVersion.IsAtLeast(SemanticVersion.V29) && SemanticTypeCompatibility.ConvertsConcept(source, target, id => _concepts.GetValueOrDefault(id)));
 
         bool SameType(SemanticTypeReference left, SemanticTypeReference right) =>
             SemanticTypeCompatibility.SameType(left, right);

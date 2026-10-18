@@ -231,6 +231,16 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             EsmSchemaV29Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
+            if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
+                SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
+            {
+                // Only a construct admitted by decision 0098 (a concept converted to another over the same primitive) is refused
+                // below ESM v29 and accepted at it.
+                languageVersion = LanguageVersion.V29;
+                semanticVersion = SemanticVersion.V29;
+                failures = [];
+            }
+
             if (!failures.IsEmpty)
             {
                 foreach (var failure in failures)
@@ -368,6 +378,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             RegisterReadModelDeclarations();
             RegisterQueryDeclarations();
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
+            _boundConcepts = concepts.ToDictionary(concept => concept.Id);
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
             if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);

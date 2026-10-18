@@ -58,13 +58,15 @@ internal static partial class SemanticModelValidator
     internal static bool UsesProjectionProducts(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Projections).Any(projection => ProjectionMappings(projection).Any(mapping => mapping.Factor is not null));
 
-    static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version) =>
-        ValidateFeatureVersion(
-            UsesAcmeAdmissions(application),
-            version,
-            SemanticVersion.V29,
-            "An ESM v29 model must use a construct admitted by decision 0098.",
-            "Decimal places, and the other constructs of decision 0098, require ESM v29.");
+    // ESM v29 is the umbrella of decision 0098. Some of its constructs (a concept converted to another over the same primitive)
+    // are not detectable from the model alone, so a v29 model need not use any particular one.
+    static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version)
+    {
+        if (!version.IsAtLeast(SemanticVersion.V29) && UsesAcmeAdmissions(application))
+        {
+            throw new InvalidSemanticContract("Decimal places, projection products and the other constructs of decision 0098 require ESM v29.");
+        }
+    }
 
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)

@@ -11,6 +11,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        Dictionary<SemanticId, SemanticConcept> _boundConcepts = [];
+
         SemanticConcept BindConcept(ConceptSyntax concept)
         {
             if (concept.Description is not null) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Concept '{concept.Name}' description is authoring metadata.", concept.Location);

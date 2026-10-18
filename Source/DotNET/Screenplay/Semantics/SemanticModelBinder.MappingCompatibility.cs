@@ -22,7 +22,8 @@ public sealed partial class SemanticModelBinder
         bool IsCompatibleMapping(PropertyMappingSyntax mapping, Dictionary<string, SemanticProperty> sources, SemanticProperty target, string declaration)
         {
             if (mapping.Source is not PathExpressionSyntax path || !sources.TryGetValue(path.Path, out var source) ||
-                SemanticTypeCompatibility.IsCompatibleSource(source.Type, target.Type))
+                SemanticTypeCompatibility.IsCompatibleSource(source.Type, target.Type) ||
+                SemanticTypeCompatibility.ConvertsConcept(source.Type, target.Type, id => _boundConcepts.GetValueOrDefault(id)))
             {
                 return true;
             }
