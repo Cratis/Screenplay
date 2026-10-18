@@ -60,7 +60,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     /// <returns>The reference execution, or a failed unsupported result when plan admission fails.</returns>
     public SemanticSpecificationRun Run(SemanticCompilation compilation, SemanticId specification)
     {
-        var admitted = SemanticExecutionPlan.Compile(compilation.Model);
+        var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
         if (admitted.Plan is not { } plan)
         {
             var details = string.Join("; ", admitted.Issues.Select(issue => issue.Details));
@@ -98,6 +98,19 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 SemanticWorld.Empty,
                 SemanticExecutionCapability.Projection,
                 $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+            return new(specification, false, unsupported, [unsupported.Details]);
+        }
+
+        var readModels = expected.GivenReadModels.Select(state => state.ReadModel)
+            .Concat(expected.ThenReadModels.Select(state => state.ReadModel))
+            .Concat(expected.ThenAbsentReadModels.Select(state => state.ReadModel))
+            .Concat(expected.ThenQueries.Where(query => plan.Queries.ContainsKey(query.Query)).Select(query => plan.Queries[query.Query].ReadModel));
+        if (readModels.Any(plan.IsUnadmittedReadModel))
+        {
+            var unsupported = new SemanticUnsupported(
+                SemanticWorld.Empty,
+                SemanticExecutionCapability.Projection,
+                "Specification requires read-model state whose projection was not admitted by scoped execution-plan compilation.");
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
