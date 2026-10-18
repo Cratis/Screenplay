@@ -19,6 +19,16 @@ describe('when repairing timeline order', () => {
         expect(compileApplication(new Map([['application.play', after]])).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0516')).toEqual([]);
     });
 
+    it('should keep every line intact when the document has no final newline', () => {
+        const unterminated = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n    slice StateChange Write\n      event E\n    slice StateView Other\n      readmodel O';
+        const fixes = findQuickFixes(unterminated, { line: 5, diagnosticCode: 'PLAY0516' });
+        expect(fixes.length).toBeGreaterThan(0);
+        for (const fix of fixes) {
+            const after = applyQuickFixEdits(unterminated, fix.edits)!;
+            expect(after.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0).sort()).toEqual(unterminated.split('\n').map(line => line.trim()).sort());
+        }
+    });
+
     it('should offer range requests independently and deduplicate the same finding', () => {
         const fixes = prepareQuickFixes(source)([{ line: 5, diagnosticCode: 'PLAY0516' }, { line: 5, diagnosticCode: 'PLAY0516' }]);
         expect(fixes).toHaveLength(1);

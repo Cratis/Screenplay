@@ -104,6 +104,7 @@ export function moveTimelineText(source: string, moved: SyntaxNode, anchor: Synt
     const ending = source.includes('\r\n') ? '\r\n' : '\n';
     let block = source.slice(left.start, left.end);
     if (target < source.length && !block.endsWith('\n')) block += ending;
+    if (target === source.length && !source.endsWith('\n')) block = ending + block.replace(/\r?\n$/, '');
     return target < left.start ? source.slice(0, target) + block + source.slice(target, left.start) + source.slice(left.end)
         : source.slice(0, left.start) + source.slice(left.end, target) + block + source.slice(target);
 }
