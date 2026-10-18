@@ -91,6 +91,11 @@ public partial class ScreenplayPrinter
                 WriteSpecificationBlock(writer, $"given capture {capture.Capture}", capture, capture.Record);
             }
 
+            foreach (var generated in specification.GivenGenerated)
+            {
+                writer.Line($"given generated {generated.Command}.{generated.Property} = {writer.Expression(generated.Source)}", generated);
+            }
+
             if (specification.When is not null)
             {
                 writer.Line(SpecificationHeader(writer, $"when {specification.When.CommandType}", specification.When.Values, specification.When.InlineProperty), specification.When);

@@ -48,8 +48,14 @@ internal static partial class SemanticCaptureEvaluation
             ?? throw new InvalidSemanticContract($"The record presented to capture '{capture.Name}' has no key '{capture.Key}'.");
         var context = new Context(plan, capture, key, occurrence, accept);
 
-        // Structural and identity preconditions reject the whole record before any append. Value maps and
-        // guards are not probed here: an unsupported later effect cannot replace an earlier disposition.
+        ValidatePreconditions(context, capture, previous, current);
+        return EvaluateScopes(context, capture, previous, current);
+    }
+
+    // Structural and identity preconditions reject the whole record before any append. Value maps and
+    // guards are not probed here: an unsupported later effect cannot replace an earlier disposition.
+    static void ValidatePreconditions(Context context, SemanticCapture capture, SemanticCaptureRecord? previous, SemanticCaptureRecord current)
+    {
         foreach (var children in capture.Children)
         {
             Index(Records(previous, children.Field), children.IdentifiedBy);
@@ -65,7 +71,10 @@ internal static partial class SemanticCaptureEvaluation
         context.ValidateSource(capture.Appends);
         foreach (var children in capture.Children) context.ValidateSource(children.Appends);
         foreach (var nested in capture.Nested) context.ValidateSource(nested.Appends);
+    }
 
+    static SemanticCaptureEvaluationResult EvaluateScopes(Context context, SemanticCapture capture, SemanticCaptureRecord? previous, SemanticCaptureRecord current)
+    {
         var before = previous is null ? null : Map(context, Fields(previous), capture.Map);
         if (context.Stopped) return context.Result;
         var after = Map(context, Fields(current), capture.Map);
@@ -251,7 +260,7 @@ internal static partial class SemanticCaptureEvaluation
             Appends(appends, before, after, enclosing);
         }
 
-        public SemanticCaptureExpression.Lookup Read(Dictionary<string, SemanticCaptureField>? record, string field, Dictionary<string, SemanticCaptureField>? enclosing = null)
+        public SemanticCaptureExpression.Lookup Read(Dictionary<string, SemanticCaptureField>? record, string field, Dictionary<string, SemanticCaptureField>? enclosing = null, bool structured = false)
         {
             if (field.Contains('.', StringComparison.Ordinal))
             {
@@ -260,6 +269,9 @@ internal static partial class SemanticCaptureEvaluation
             }
 
             var present = record?.GetValueOrDefault(field) ?? enclosing?.GetValueOrDefault(field);
+
+            // A list or object read from an event keeps its whole value, so it can be copied into a list or object property.
+            if (structured && present is { Value: SemanticCompositeValue or SemanticArrayValue }) return new(present.Value, null);
             if (present is null or { Kind: SemanticCaptureFieldKind.Value, Value: not (SemanticCompositeValue or SemanticArrayValue) }) return new(present?.Value, null);
             Unsupported ??= $"Capture field '{field}' is a {present.Kind} value the reference evaluator cannot use as a scalar.";
             return new(null, Unsupported);
@@ -286,12 +298,13 @@ internal static partial class SemanticCaptureEvaluation
                 foreach (var mapping in append.Mappings)
                 {
                     var property = properties[mapping.TargetProperty];
+                    var structured = property.Type.IsCollection || property.Type.Kind == SemanticTypeReferenceKind.CompositeType;
                     var source = mapping.Field is { } field
-                        ? Read(item, field, enclosing)
+                        ? Read(item, field, enclosing, structured)
                         : new SemanticCaptureExpression.Lookup(Value(mapping.Value!), null);
                     if (source.Unsupported is not null) return;
                     var value = source.Value ?? SemanticValue.Null;
-                    if (mapping.Field is not null) value = Coerce(value, property.Type);
+                    if (mapping.Field is not null) value = structured ? Retarget(value, property.Type, property.Name) : Coerce(value, property.Type);
                     _validator.Validate(value, property.Type, $"event property '{property.Name}'");
                     values.Add(new(property.Id, value));
                 }
@@ -367,6 +380,49 @@ internal static partial class SemanticCaptureEvaluation
             SemanticEventContextExpression => throw new InvalidSemanticContract("A capture using $context.occurred needs the scenario's 'given clock'."),
             _ => throw new InvalidSemanticContract("A capture mapping expression is unknown.")
         };
+
+        // A list or object copied from an event arrives typed by the public event's own composite type. It is written again
+        // in the target's type by property name, the way Chronicle reads the same JSON shape into either type.
+        SemanticValue Retarget(SemanticValue value, SemanticTypeReference target, string where)
+        {
+            if (value is SemanticNullValue) return value;
+            if (target.IsCollection)
+            {
+                return value is SemanticArrayValue array
+                    ? new SemanticArrayValue([.. array.Values.Select(element => Retarget(element, target with { IsCollection = false, IsOptional = false }, where))])
+                    : throw new InvalidSemanticContract($"Event property '{where}' is a list, but the captured value is not.");
+            }
+
+            if (target.Kind != SemanticTypeReferenceKind.CompositeType)
+            {
+                return Coerce(value, target);
+            }
+
+            if (value is not SemanticCompositeValue composite)
+            {
+                throw new InvalidSemanticContract($"Event property '{where}' is an object, but the captured value is not.");
+            }
+
+            var type = plan.Model.Application.Types.Single(candidate => candidate.Id == target.Target);
+            var byName = type.Properties.ToDictionary(property => property.Name, StringComparer.Ordinal);
+            var written = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
+            foreach (var entry in composite.Properties)
+            {
+                var name = PropertyNames.GetValueOrDefault(entry.TargetProperty) ?? throw new InvalidSemanticContract($"Event property '{where}' holds an unknown captured property.");
+                if (!byName.TryGetValue(name, out var property))
+                {
+                    throw new InvalidSemanticContract($"Event property '{where}' has no property '{name}' in '{type.Name}', so the captured value cannot be copied.");
+                }
+
+                written.Add(new(property.Id, Retarget(entry.Value, property.Type, $"{where}.{name}")));
+            }
+
+            return new SemanticCompositeValue(written.ToImmutable());
+        }
+
+        Dictionary<SemanticId, string> PropertyNames => _propertyNames ??= plan.Model.Application.Types.SelectMany(type => type.Properties).ToDictionary(property => property.Id, property => property.Name);
+
+        Dictionary<SemanticId, string>? _propertyNames;
 
         // A record carries no types, so an instant arrives the way the source wrote it; an instant bound for a DateTime
         // property takes its round-trip form, the way a specification's own instants do.

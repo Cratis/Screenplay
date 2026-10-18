@@ -5,8 +5,25 @@ namespace Cratis.Screenplay.Semantics.Execution;
 
 internal static partial class SemanticCaptureEvaluation
 {
-    internal static SemanticCaptureRecord EventRecord(SemanticEventContract contract, SemanticFact fact) =>
-        new([.. fact.Values.Select(value => Scalar(contract.Properties.Single(property => property.Id == value.TargetProperty).Name, value.Value))]);
+    // A list of objects becomes child records and an object a nested record, so a capture over events can fan out and
+    // narrow with 'children' and 'nested' like any record. The whole value stays beside them to be copied.
+    internal static SemanticCaptureRecord EventRecord(SemanticExecutionPlan plan, SemanticEventContract contract, SemanticFact fact)
+    {
+        var names = plan.Model.Application.Types.SelectMany(type => type.Properties).ToDictionary(property => property.Id, property => property.Name);
+        return new([.. fact.Values.Select(value => EventField(contract.Properties.Single(property => property.Id == value.TargetProperty).Name, value.Value, names))]);
+    }
+
+    static SemanticCaptureField EventField(string name, SemanticValue value, Dictionary<SemanticId, string> names) => value switch
+    {
+        SemanticArrayValue { Values: { IsDefaultOrEmpty: false } elements } when elements.All(element => element is SemanticCompositeValue) =>
+            new(name, SemanticCaptureFieldKind.Records) { Value = value, Records = [.. elements.Cast<SemanticCompositeValue>().Select(element => EventObject(element, names))] },
+        SemanticCompositeValue composite =>
+            new(name, SemanticCaptureFieldKind.Record) { Value = value, Record = EventObject(composite, names) },
+        _ => Scalar(name, value)
+    };
+
+    static SemanticCaptureRecord EventObject(SemanticCompositeValue composite, Dictionary<SemanticId, string> names) =>
+        new([.. composite.Properties.Select(property => EventField(names[property.TargetProperty], property.Value, names))]);
 
     internal static SemanticValue EventKey(SemanticCapture capture, SemanticEventContract contract, SemanticCaptureRecord record)
     {
@@ -39,20 +56,11 @@ internal static partial class SemanticCaptureEvaluation
         {
             return new($"Capture '{capture.Name}' requires a text or numeric event key '{capture.Key}'.", null);
         }
-        if (!capture.Children.IsDefaultOrEmpty || !capture.Nested.IsDefaultOrEmpty)
-        {
-            return new($"Capture '{capture.Name}' over events has children or nested scopes the reference evaluator does not support.", null);
-        }
         if (previous is not null && SameEventState(plan, previous, current)) return new(null, null);
 
         var context = new Context(plan, capture, key, occurrence, accept, eventsSource: true);
-        context.ValidateSource(capture.Appends);
-        var before = previous is null ? null : Map(context, Fields(previous), capture.Map);
-        if (context.Stopped) return context.Result;
-        var after = Map(context, Fields(current), capture.Map);
-        if (context.Stopped) return context.Result;
-        context.Appends(capture.Appends, before, after, null);
-        return context.Result;
+        ValidatePreconditions(context, capture, previous, current);
+        return EvaluateScopes(context, capture, previous, current);
     }
 
     static bool SameEventState(SemanticExecutionPlan plan, SemanticCaptureRecord previous, SemanticCaptureRecord current)

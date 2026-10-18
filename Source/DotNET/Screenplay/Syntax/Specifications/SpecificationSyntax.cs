@@ -117,6 +117,12 @@ public record SpecificationSyntax(
     public IEnumerable<SpecificationCaptureSyntax> GivenCaptures { get; init; } = [];
 
     /// <summary>
+    /// Gets the values pinned for the generated properties of a command a reaction invokes, stated with
+    /// <c>given generated &lt;Command&gt;.&lt;property&gt; = &lt;value&gt;</c>, in authored order (ESM v30).
+    /// </summary>
+    public IEnumerable<SpecificationGeneratedValueSyntax> GivenGenerated { get; init; } = [];
+
+    /// <summary>
     /// Gets the instant the clock reaches, as the action, stated with <c>when clock</c>.
     /// </summary>
     public SpecificationClockSyntax? WhenClock { get; init; }
@@ -306,6 +312,16 @@ public record SpecificationQueryResultSyntax(
 /// <param name="Instant">The ISO 8601 instant as written, such as <c>2026-10-05T08:00:00Z</c>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SpecificationClockSyntax(string Instant, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents <c>given generated &lt;Command&gt;.&lt;property&gt; = &lt;value&gt;</c> - the value the next invocation of the command by a reaction
+/// receives for a generated property.
+/// </summary>
+/// <param name="Command">The name of the invoked command.</param>
+/// <param name="Property">The name of the generated property.</param>
+/// <param name="Source">The concrete value.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationGeneratedValueSyntax(string Command, string Property, ExpressionSyntax Source, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an application trigger firing, stated with <c>when trigger</c>.

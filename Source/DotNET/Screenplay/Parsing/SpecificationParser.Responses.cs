@@ -60,6 +60,27 @@ internal static partial class SpecificationParser
         return value is null ? null : new PropertyMappingSyntax(match.Groups[1].Value, value, line.Location);
     }
 
+    static SpecificationGeneratedValueSyntax? ParseGivenGenerated(ParserContext context, SourceLine line)
+    {
+        var match = GivenGeneratedRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidGeneratedFixture, "Expected 'given generated <Command>.<property> = <value>' with exactly one concrete value.", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var source = match.Groups[3];
+        var value = ParseConcrete(context, source.Value, line.LocationAt(source.Index), DiagnosticCodes.InvalidGeneratedFixture);
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.InvalidGeneratedFixture, "A pinned generated value cannot have child directives.", child.Location);
+            context.SkipBlock(line.Indent);
+        }
+
+        return value is null ? null : new SpecificationGeneratedValueSyntax(match.Groups[1].Value, match.Groups[2].Value, value, line.Location);
+    }
+
     static ExpressionSyntax? ParseConcrete(ParserContext context, string text, SourceLocation location, string code)
     {
         if (text.StartsWith("case.", StringComparison.Ordinal)) return ParseSpecificationValue(context, text, location);
@@ -88,6 +109,12 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^then\s+returns\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenReturnsPrefixRegex();
+
+    [GeneratedRegex(@"^given\s+generated\b", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenGeneratedPrefixRegex();
+
+    [GeneratedRegex(@"^given\s+generated\s+([A-Z]\w*)\.([a-z_]\w*)\s*=(?:\s+(?<3>.+)|(?<3>[^=>\n].*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenGeneratedRegex();
 
     [GeneratedRegex(@"^generated\s+[^\s=]", RegexOptions.NonBacktracking)]
     private static partial Regex GeneratedFixturePrefixRegex();
