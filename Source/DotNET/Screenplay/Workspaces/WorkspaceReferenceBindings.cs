@@ -107,6 +107,7 @@ sealed class WorkspaceReferenceBindings
                 SystemSyntax => WorkspaceReferenceDomain.System,
                 EventSourceSyntax => WorkspaceReferenceDomain.EventSource,
                 EventStreamSyntax => WorkspaceReferenceDomain.EventStream,
+                EventStreamIdPartSyntax => WorkspaceReferenceDomain.EventStreamIdPart,
                 CommandSyntax => WorkspaceReferenceDomain.Command,
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
@@ -127,6 +128,7 @@ sealed class WorkspaceReferenceBindings
                 {
                     WorkspaceReferenceDomain.Property => index.Find(entry.Parent!)!.Node is TypeSyntax type ? type.Name : Key(index.Find(entry.Parent!)!),
                     WorkspaceReferenceDomain.SpecificationParameter => WorkspaceReferenceMembers.TableOwner(entry, index),
+                    WorkspaceReferenceDomain.EventStreamIdPart when entry.Parent is { } streamParent => Key(index.Find(streamParent)!),
                     WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
                     _ => null
                 };
@@ -200,7 +202,7 @@ sealed class WorkspaceReferenceBindings
             return new(reference, target, target is not null ? "resolved" : outcome);
         }
 
-        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter)
+        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter or WorkspaceReferenceDomain.EventStreamIdPart)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])
                 .Where(declaration => declaration.Owner == reference.Owner).ToArray();

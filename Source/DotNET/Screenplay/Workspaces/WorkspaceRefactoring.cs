@@ -82,7 +82,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         foreach (var entry in index.Entries)
         {
             var named = WorkspaceOpaqueText.Named(entry.Node, request.ExpectedName, request.NewName) ??
-                PossibleReferencePaths(entry.Node).SelectMany(path => path.Split('.')).FirstOrDefault(segment => segment == request.ExpectedName || segment == request.NewName);
+                (target.Node is EventStreamIdPartSyntax ? null : PossibleReferencePaths(entry.Node).SelectMany(path => path.Split('.')).FirstOrDefault(segment => segment == request.ExpectedName || segment == request.NewName));
             if (named is not null)
             {
                 throw new InvalidWorkspaceAuthoring($"Cannot prove reference safety through {entry.Kind} at '{Position(documents, entry)}' ({entry.Handle.Path}), which names '{named}'. Use explicit coordinated typed edits; canonical formatting does not make opaque references safe.");
@@ -234,10 +234,10 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax)))
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, or stream id part declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -288,11 +288,18 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring($"Event source '{eventSource!.Name}' already declares stream '{request.NewName}'.");
         }
 
+        RequireStreamPartTarget(index, target, request.NewName);
+
         bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
 
         if (target.Node is not (SpecificationParameterSyntax or SpecificationCaseSyntax)) RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();
+        if (target.Node is EventStreamIdPartSyntax && bindings.Bindings.FirstOrDefault(binding => binding.Reference.Domain == WorkspaceReferenceDomain.EventStreamIdPart && binding.Target is null) is { } unprovenPart)
+        {
+            throw new InvalidWorkspaceAuthoring($"Cannot prove a stream id part rename while mapping '{unprovenPart.Reference.Text}' at '{Position(workspace.Documents, unprovenPart.Reference.Entry)}' is {unprovenPart.Outcome}. Repair the route with a typed edit first.");
+        }
+
         if (target.Node is ModuleSyntax or FeatureSyntax)
         {
             var containers = index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax)
