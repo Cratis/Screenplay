@@ -86,6 +86,8 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const context = new ParserContext(new LineReader([]), undefined, languages);
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
+    context.interactionBehaviors.push(...parsed.flatMap(document => document.interactionBehaviors));
+    context.interactionUses.push(...parsed.flatMap(document => document.interactionUses));
     context.continuationValues.push(...parsed.flatMap(document => document.continuationValues));
     validateSpecificationCases(merged.value, context);
     validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);

@@ -76,7 +76,7 @@ describe('when validating interaction shadowing after parsing', () => {
     });
     it('should not mistake screen templates for screen declarations', () => {
         const source = ['module M', '  screen template Page', '    on click', '      when item.ready == true', '        notify info "First"', '      when item.ready == true', '        notify info "Second"'];
-        parse(source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0347@6']);
+        parse(source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0346@3', 'PLAY0347@6']);
     });
     it('should ignore binding-shaped text inside fenced code', () => {
         const source = [...declarations, '        ```typescript', '        on click', ...alternatives, '        ```', '', '        // A real binding follows.', '        on select', ...alternatives];

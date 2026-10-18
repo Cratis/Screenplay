@@ -374,6 +374,51 @@
             "messages": ["Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action"]
         },
         {
+            "name": "Guarded interaction subjects exclude missing tied and component-only data",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "      query Details => Item", "      screen Missing", "        on click", "          when item.missing == null", "            notify info \"Missing\"", "      screen Tied", "        data Item via query Details", "        data Item via query Details", "        on double click", "          when item.missing == null", "            notify info \"Tied\"", "      screen Context", "        component App.Table entries", "          context from query Details", "          on select", "            when item.missing == null", "              notify info \"Context\""],
+            "diagnostics": ["PLAY0346@8", "PLAY0346@14", "PLAY0346@20"],
+            "messages": ["A guarded interaction requires exactly one nearest 'data' subject; component context and selection do not supply 'item'", "A guarded interaction requires exactly one nearest 'data' subject; component context and selection do not supply 'item'", "A guarded interaction requires exactly one nearest 'data' subject; component context and selection do not supply 'item'"]
+        },
+        {
+            "name": "Guarded interaction paths validate nested scalar and collection fields before shadowing",
+            "validate": true,
+            "source": ["type Child", "  status String", "module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "        child Child", "        children Child[]", "      query Details => Item", "      screen Details", "        data Item via query Details", "        on click", "          when item.missing == null or item.child.missing == null", "            notify info \"Missing\"", "          when item.missing == null", "            notify info \"Shadowed\"", "        on double click", "          when item.status.missing == null", "            notify info \"Scalar\"", "        on select", "          when item.children.status == null", "            notify info \"Collection\""],
+            "diagnostics": ["PLAY0345@14", "PLAY0345@14", "PLAY0345@16", "PLAY0347@16", "PLAY0345@19", "PLAY0345@22"],
+            "messages": ["Unknown or collection-valued subject field 'item.missing' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.child.missing' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.missing' - guarded actions require an item field path", "This 'when' alternative is shadowed by earlier alternatives in this interaction", "Subject field 'item.status.missing' continues past scalar 'status'", "Unknown or collection-valued subject field 'item.children.status' - guarded actions require an item field path"]
+        },
+        {
+            "name": "Guarded interaction arguments validate continuations fallback and cardinality in walker order",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "        id Uuid", "        ids Uuid[]", "      query Details => Item", "      command Retry", "        id Uuid", "        ids Uuid[]", "      screen Details", "        data Item via query Details", "        on click", "          when item.status == null", "            execute Retry", "              with missing from item.missing", "              on failure", "                execute Retry", "                  with id from item.ids", "              on success", "                execute Retry", "                  with ids from item.id", "                  with ids from item.ids", "          otherwise", "            execute Retry", "              with ids from item.ids.value", "              with missing from item.id"],
+            "diagnostics": ["PLAY0348@17", "PLAY0345@17", "PLAY0348@23", "PLAY0348@20", "PLAY0345@27", "PLAY0348@28"],
+            "messages": ["Command 'Retry' has no argument property 'missing'", "Unknown or collection-valued subject field 'item.missing' - guarded actions require an item field path", "Command argument 'Retry.ids' and subject field 'item.id' must have matching collection cardinality", "Command argument 'Retry.id' and subject field 'item.ids' must have matching collection cardinality", "Unknown or collection-valued subject field 'item.ids.value' - guarded actions require an item field path", "Command 'Retry' has no argument property 'missing'"]
+        },
+        {
+            "name": "Guarded interaction table rows inherit types while outlets replace the nearest subject",
+            "validate": true,
+            "source": ["type Row", "  status String", "module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "        rows Row[]", "      query Details => Item", "      screen Details", "        data Item via query Details", "        table rows", "          on select", "            when item.status == null", "              notify info \"Row\"", "        table Item", "          on click", "            when item.status == null", "              notify info \"Direct\"", "        table unknown", "          on click", "            when item.status == null", "              notify info \"Unknown\"", "        component App.Panel panel", "          outlet content", "            data Item via query Details", "            data Item via query Details", "            on click", "              when item.status == null", "                notify info \"Tied\"", "          on double click", "            when item.status == null", "              notify info \"Inherited\""],
+            "diagnostics": ["PLAY0346@21", "PLAY0346@28"]
+        },
+        {
+            "name": "Guarded interaction named attachments validate every subject and deduplicate shared findings",
+            "validate": true,
+            "source": ["behavior Shared", "  on click", "    when item.missing == null", "      execute Retry", "        with missing from item.id", "module M", "  feature F", "    slice StateView S", "      readmodel Item", "        id Uuid", "      query Details => Item", "      command Retry", "        id Uuid", "      screen Missing", "        uses Shared", "      screen Details", "        data Item via query Details", "        uses Shared", "        component App.Panel panel", "          uses Shared", "        table Item", "          uses Shared", "      screen Other", "        uses Shared"],
+            "diagnostics": ["PLAY0346@15", "PLAY0348@5", "PLAY0345@3", "PLAY0346@24"]
+        },
+        {
+            "name": "Guarded interaction structural attachments validate before screens and named uses warn at attachments",
+            "validate": true,
+            "source": ["behavior Shared", "  on click", "    when item.status == null", "      notify info \"Shared\"", "module M", "  uses Shared", "  on click", "    when item.status == null", "      notify info \"First\"", "    when item.status == null", "      notify info \"Second\"", "  screen template Page", "    category Workspace", "    uses Shared", "    on select", "      when item.status == null", "        notify info \"Template\"", "  feature F", "    slice StateView S", "      screen Details", "        on click", "          when item.status == null", "            notify info \"Screen\""],
+            "diagnostics": ["PLAY0346@15", "PLAY0346@14", "PLAY0346@7", "PLAY0347@10", "PLAY0346@6", "PLAY0346@21"]
+        },
+        {
+            "name": "Interaction inline alternatives retain command inputs after parse errors",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      command Retry", "        id Uuid", "      screen Details", "        on click", "          when item.status == null execute Retry", "            with missing from item.id"],
+            "diagnostics": ["PLAY0563@8", "PLAY0346@7", "PLAY0348@9"]
+        },
+        {
             "name": "Interaction shadowing follows parse errors and validates named behaviors first",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "        ready Bool", "      query Details => Item", "      screen Details", "        data Item via query Details", "        on click", "          when item.status == \"open\"", "            notify info \"Open\"", "          when item.status == \"open\" and item.ready == true", "            notify info \"Ready\"", "        unexpected", "behavior Shared", "  on click", "    when item.ready == true", "      notify info \"First\"", "    when item.ready == true", "      notify info \"Second\""],
