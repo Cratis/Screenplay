@@ -10,6 +10,9 @@
         { "name": "Distinct cross-file behavior arguments retain both effective attachments", "source": [], "files": { "a.play": ["behavior Shared", "  parameter message String", "  on click", "    when item.ready == true", "      notify info \"Ready\"", "module M", "  uses Shared", "    message \"First\""], "b.play": ["module M", "  uses Shared", "    message \"Second\""] }, "locations": ["a.play:7:3", "b.play:2:3"], "diagnostics": ["PLAY0346@7", "PLAY0346@2"] },
         { "name": "Behavior attachment signatures compare argument names in ordinal order", "source": [], "files": { "a.play": ["behavior Shared", "  parameter first String", "  parameter second String", "  on click", "    when item.ready == true", "      notify info \"Ready\"", "module M", "  feature F", "    uses Shared", "      first \"One\"", "      second \"Two\""], "b.play": ["module M", "  feature F", "    uses Shared", "      second \"Two\"", "      first \"One\""] }, "locations": ["b.play:3:5", "a.play:9:5"], "diagnostics": ["PLAY0340@3", "PLAY0346@9"] },
         { "name": "Same-file repeated behavior uses remain distinct attachments in folder assembly", "source": [], "files": { "a.play": ["behavior Shared", "  on click", "    when item.ready == true", "      notify info \"Ready\"", "module M", "  uses Shared", "  uses Shared"] }, "locations": ["a.play:6:3", "a.play:7:3"], "diagnostics": ["PLAY0346@6", "PLAY0346@7"] },
+        { "name": "Duplicate policies in one document", "validate": true, "source": ["policy IsAdmin", "  require role \"Administrator\"", "policy IsAdmin", "  require role \"Auditor\""], "diagnostics": ["PLAY0168@3"], "messages": ["Duplicate declaration of policy 'IsAdmin' - policy names must be unique"] },
+        { "name": "Every repeated policy points at its declaration", "validate": true, "source": ["policy Access", "  require authenticated", "policy Access", "  require authenticated", "policy Access", "  require authenticated"], "diagnostics": ["PLAY0168@3", "PLAY0168@5"] },
+        { "name": "Distinct policy names are ordinal", "validate": true, "source": ["policy Access", "  require authenticated", "policy access", "  require authenticated", "policy Other", "  require authenticated"], "diagnostics": [] },
         { "name": "Removal cannot repeat its key", "source": ["module M", "  feature F", "    slice StateView S", "      projection P", "        remove with E key id", "          key", "            first = first", "            second = second"], "diagnostics": ["PLAY0662@6"] },
         { "name": "Removal accepts only parent or key children", "source": ["module M", "  feature F", "    slice StateView S", "      projection P", "        remove with E", "          other id"], "diagnostics": ["PLAY0069@6"] },
         { "name": "Structured arguments on malformed example headers", "source": ["example invalid"], "diagnostics": ["PLAY0518@1"], "arguments": [{"text":{"kind":"text","value":"example invalid"}}] },
@@ -101,7 +104,7 @@
         { "name": "Enum numbers fit int32", "source": ["concept Status : Enum", "  draft = 2147483648"], "diagnostics": ["PLAY0669@2"] },
         { "name": "Enum numbers forbid exponents", "source": ["concept Status : Enum", "  draft = 1e0"], "diagnostics": ["PLAY0670@2"] },
         { "name": "Stored enum pinning stays out of ordinary compilation", "validate": true, "source": ["concept Status : Enum", "  draft", "  issued", "module M", "  feature F", "    slice StateChange S", "      event E", "        status Status"], "diagnostics": [] },
-        { "name": "Inline override destinations match their own source", "validate": true, "source": ["eventsource Account", "  identifier Uuid", "  stream All", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "          stream Account.All"], "diagnostics": ["PLAY0504@10"] },
+        { "name": "Inline override destinations match their own source", "validate": true, "source": ["eventsource Account", "  identifier Uuid", "  stream All", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "          stream Account.All"], "diagnostics": ["PLAY0802@3", "PLAY0504@10"] },
         { "name": "Observer source-only filters refuse ambiguous physical parents", "validate": true, "source": ["eventsource Account", "eventsource Account", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        from Account", "        when E"], "diagnostics": ["PLAY0503@2", "PLAY0665@8"] },
         { "name": "Observer filters distinguish sources from values", "validate": true, "source": ["concept Account : String", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        from Account", "        when E"], "diagnostics": ["PLAY0665@7"] },
         { "name": "Production routes belong to commands", "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when E", "          produces E", "            stream Account.Transactions"], "diagnostics": ["PLAY0663@7"] },
@@ -3468,6 +3471,42 @@
             "diagnostics": [
                 "PLAY0385@8"
             ]
+        },
+        {
+            "name": "reserved stored source name",
+            "source": ["eventsource Default"],
+            "validate": true,
+            "diagnostics": ["PLAY0802@1"]
+        },
+        {
+            "name": "reserved stored source pin",
+            "source": ["eventsource Account", "  id \"Default\""],
+            "validate": true,
+            "diagnostics": ["PLAY0802@1"]
+        },
+        {
+            "name": "reserved stored stream name",
+            "source": ["eventsource Account", "  stream All"],
+            "validate": true,
+            "diagnostics": ["PLAY0802@2"]
+        },
+        {
+            "name": "reserved stored stream pin",
+            "source": ["eventsource Account", "  stream Archive", "    id \"All\""],
+            "validate": true,
+            "diagnostics": ["PLAY0802@2"]
+        },
+        {
+            "name": "source and stream pins away from reserved names",
+            "source": ["eventsource Default", "  id \"Account\"", "  stream All", "    id \"Archive\""],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "stored names are ordinal and reserved only for their kind",
+            "source": ["eventsource default", "eventsource DEFAULT", "eventsource All", "  stream all", "  stream ALL", "  stream Default"],
+            "validate": true,
+            "diagnostics": []
         },
         {
             "name": "duplicate projection event with different keys",

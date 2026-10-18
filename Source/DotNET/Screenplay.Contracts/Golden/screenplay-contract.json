@@ -37849,6 +37849,17 @@
       "title": "An event is used more than once in one projection level\u0027s event or join set.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0802",
+      "name": "ReservedStoredName",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

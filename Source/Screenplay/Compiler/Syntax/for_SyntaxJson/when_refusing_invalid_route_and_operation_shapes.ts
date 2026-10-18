@@ -8,19 +8,19 @@ import { EventSourceSyntax } from '../EventSourceSyntax';
 import { TypeRefSyntax } from '../Declarations';
 import { validateSyntaxInvariants } from '../SyntaxInvariants';
 
-const prefix = 'eventsource Account\n  identifier String\n  stream All\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        value String\n        produces event Changed\n          value String = value';
+const prefix = 'eventsource Account\n  identifier String\n  stream Main\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        value String\n        produces event Changed\n          value String = value';
 const location = { line: 1, column: 1 };
 
 describe('when refusing invalid route and operation shapes', () => {
     it('should refuse a production route containing an ambiguous property candidate', () => {
         const command = parse(prefix).value.modules[0].features[0].slices[0].commands[0];
-        const stream: CommandStreamSyntax = { kind: 'CommandStreamSyntax', eventSource: 'Account', stream: 'All', streamId: null, streamIdParts: [], propertyCandidate: command.properties[0], location };
+        const stream: CommandStreamSyntax = { kind: 'CommandStreamSyntax', eventSource: 'Account', stream: 'Main', streamId: null, streamIdParts: [], propertyCandidate: command.properties[0], location };
         const invalid = { ...command.produces[0], stream };
         expect(() => validateSyntaxInvariants(invalid)).toThrow('A production route cannot contain a property candidate.');
     });
     it('should refuse the wrong node kind in an authoritative command stream', () => {
         const command = parse(prefix).value.modules[0].features[0].slices[0].commands[0];
-        const stream = { kind: 'ObserverFilterSyntax', eventSource: 'Account', stream: 'All', location } as unknown as CommandStreamSyntax;
+        const stream = { kind: 'ObserverFilterSyntax', eventSource: 'Account', stream: 'Main', location } as unknown as CommandStreamSyntax;
         const invalid = { ...command, stream };
         expect(() => validateSyntaxInvariants(invalid)).toThrow('The authoritative command stream must be a command stream node.');
     });

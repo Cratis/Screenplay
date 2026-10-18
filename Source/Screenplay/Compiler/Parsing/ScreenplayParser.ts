@@ -175,8 +175,11 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         } else if (keyword === 'identity') {
             identity = parseIdentity(context, line, identity);
         } else if (keyword === 'policy') {
-            // Legacy policies were opaque: enrich their structure without adding diagnostics.
-            policies.push(parsePolicy(context, line));
+            const policy = parsePolicy(context, line);
+            if (policies.some(previous => previous.name === policy.name)) {
+                context.error(DiagnosticCodes.DuplicateDeclaration, `Duplicate declaration of policy '${policy.name}' - policy names must be unique`, policy.location);
+            }
+            policies.push(policy);
         } else if (keyword === 'exposure') {
             exposures.push(parseExposure(context, line));
         } else if (keyword === 'instance') {

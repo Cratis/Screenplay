@@ -249,6 +249,8 @@ export const DiagnosticCodes = {
     VariantRequiresEnteringEvent: 'PLAY0382',
     /** An event is used more than once in one projection level's event or join set. */
     DuplicateEventInProjectionScope: 'PLAY0801',
+    /** An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin. */
+    ReservedStoredName: 'PLAY0802',
     DuplicateProjectionVariant: 'PLAY0384',
     DuplicateVariantEnteringEvent: 'PLAY0385',
     InvalidSpecificationDenied: 'PLAY0388',

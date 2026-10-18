@@ -14,7 +14,7 @@ public class when_removing_a_redundant_production_route : Specification
 
     void Because()
     {
-        const string source = "eventsource Account\n  identifier String\n  stream All\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        stream Account.All\n        produces event E\n          stream Account.All\n";
+        const string source = "eventsource Account\n  identifier String\n  stream Main\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        stream Account.Main\n        produces event E\n          stream Account.Main\n";
         var document = WorkspaceDocument.Create("source", PortablePlayPath.Parse("source.play"), Encoding.UTF8.GetBytes(source));
         var workspace = ScreenplayWorkspace.Create("Routes", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Routes")));
         var index = WorkspaceSyntaxIndex.Create(workspace);

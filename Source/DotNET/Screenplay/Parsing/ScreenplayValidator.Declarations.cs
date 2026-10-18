@@ -40,6 +40,16 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    static void ValidateDuplicatePolicies(ApplicationSyntax application, ParserContext context)
+    {
+        foreach (var duplicate in application.Policies.GroupBy(policy => policy.Name, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error(DiagnosticCodes.DuplicateDeclaration, $"Duplicate declaration of policy '{duplicate.Name}' - policy names must be unique", duplicate.Location);
+        }
+    }
+
     static void ValidateDuplicateProviders(ApplicationSyntax application, ParserContext context)
     {
         foreach (var duplicate in (application.Authentication?.Providers ?? [])

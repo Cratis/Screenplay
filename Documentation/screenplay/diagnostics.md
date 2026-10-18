@@ -599,7 +599,7 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
-| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
+| `PLAY0168` | Error | A concept and a type, two of either, or two policies are declared under one name in a document; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
 | `PLAY0171` | Error | A concurrency block narrows nothing. |
@@ -1246,6 +1246,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0382` | Error | A variant declares no `enters on` event. |
 | `PLAY0383` | Error | A projection-level shared handler maps a property absent from a variant's known read-model shape. Unknown shapes remain undecided. |
 | `PLAY0801` | Error | An event is used more than once at one projection level across `from`, `remove with`, `remove via join` and `clear with`, or more than once in that level's separate join set. Each children, nested and variant block starts fresh sets. One event cannot update two rows of the same level; see [from-event](projections/from-event.md). |
+| `PLAY0802` | Error | An event source's stored name is exactly `Default`, or an event stream's stored name is exactly `All`. The stored name is the `id` pin when present, otherwise the declaration name. Choose a nonreserved stored name; comparison is ordinal. See [event sources](event-sources.md). |
 | `PLAY0384` | Error | Two variants in one projection have the same name. |
 | `PLAY0385` | Error | An entering event is claimed more than once in one projection. |
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
