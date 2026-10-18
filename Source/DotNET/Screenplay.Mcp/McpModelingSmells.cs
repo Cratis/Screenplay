@@ -4,6 +4,7 @@
 using System.Text.Json;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -11,6 +12,9 @@ static class McpModelingSmells
 {
     static readonly string[] _eventSuffixes = ["Updated", "Changed", "Edited", "Saved", "Modified", "Deleted", "Synced", "Received"];
     static readonly string[] _commandPrefixes = ["Update", "Edit", "Save", "Set", "Manage", "Get", "Load", "Fetch"];
+
+    // Production and capture mappings, seed values and specification given/append values write an event property; every other indexed link, resolved or not, reads it.
+    static readonly string[] _writeRoles = ["mapping-target", "fixture"];
 
     internal static object Read(McpSnapshot snapshot, JsonElement arguments)
     {
@@ -95,11 +99,48 @@ static class McpModelingSmells
                 }
             }
         }
+        var read = Read(index.PropertyLinks);
+        var opaque = OpaqueConsumed(index);
+        foreach (var @event in selected.Where(declaration => declaration.Syntax is EventSyntax { Visibility: not EventVisibility.Public } && !Superseded(index, declaration) && !opaque.Contains(declaration.Syntax)))
+        {
+            foreach (var property in ((EventSyntax)@event.Syntax).Properties.Where(property => !read.Contains(property)))
+            {
+                Add("SMELL006", @event, $"Is '{@event.Name}.{property.Name}' part of the business fact, although no projection, reducer, reaction, condition or specification reads it?", property.Name);
+            }
+        }
 
-        return McpReviewSelection.Page(snapshot, findings, arguments, "Advisory questions only; never compiler diagnostics and never part of --warnaserror. No suppression syntax or persistence is implemented. Names are case-sensitive. Shapes compare nonempty sets of declared property names/types/modifiers, not business meaning. Fan-out counts distinct resolved event targets, not occurrences or operations. Fan-in includes explicit mappings, known-event automap, every/all, joins, nested/child paths and variants; opaque code and unresolved references are not inferred. Related evidence is capped at 20 with complete counts.");
+        return McpReviewSelection.Page(snapshot, findings, arguments, "Advisory questions only; never compiler diagnostics and never part of --warnaserror. No suppression syntax or persistence is implemented. Names are case-sensitive. Shapes compare nonempty sets of declared property names/types/modifiers, not business meaning. Fan-out counts distinct resolved event targets, not occurrences or operations. Fan-in includes explicit mappings, known-event automap, every/all, joins, nested/child paths and variants; through all, only events whose payload supplies the value count. Opaque code and unresolved references are not inferred. Unread event properties count any indexed reference other than a production, capture, seed or given write as a read, including automap, opaque code, comments and unclassified name matches; superseded generations and public contract events are skipped, as are events handled by a reducer rule or reaction with file or inline code, because the index cannot see into it. Related evidence is capped at 20 with complete counts.");
     }
 
     static string[] Shape(EventSyntax syntax) => [.. syntax.Properties.Select(property => $"{property.Name}:{property.Type.Name}:{property.Type.IsCollection}:{property.Type.IsOptional}").Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+
+    static bool Superseded(McpSyntaxIndex index, McpDeclaration @event) =>
+        index.Find(@event.Address, @event.Kind).Any(other => other.Syntax is EventSyntax newer && newer.Generation > ((EventSyntax)@event.Syntax).Generation);
+
+    // A consumer the index cannot see into (a reducer rule or reaction trigger with a file or inline code body) may read any property of the event it handles.
+    static HashSet<SyntaxNode> OpaqueConsumed(McpSyntaxIndex index)
+    {
+        var consumed = new HashSet<SyntaxNode>(ReferenceEqualityComparer.Instance);
+        foreach (var declaration in index.Declarations)
+        {
+            var names = declaration.Syntax switch
+            {
+                ReducerSyntax reducer => reducer.Rules.Where(rule => rule.File is not null || rule.Code is not null).Select(rule => rule.Event),
+                ReactionSyntax reaction => reaction.Triggers.Where(trigger => trigger.File is not null || trigger.Code is not null).Select(trigger => trigger.Source).OfType<NamedTriggerSourceSyntax>().Select(source => source.Name),
+                _ => []
+            };
+            foreach (var name in names)
+            {
+                // An unresolved or ambiguous name cannot be proven, so every candidate counts as consumed.
+                foreach (var candidate in index.Resolve(new(name, ["Event"], declaration.Scope, declaration.Location, "review", declaration.Owner))) consumed.Add(candidate.Syntax);
+            }
+        }
+
+        return consumed;
+    }
+
+    static HashSet<SyntaxNode> Read(WorkspacePropertyLinks links) =>
+        links.Links.Where(link => !_writeRoles.Contains(link.Reference.Role, StringComparer.Ordinal)).SelectMany(link => link.Candidates).Select(candidate => candidate.Syntax).ToHashSet<SyntaxNode>(ReferenceEqualityComparer.Instance);
 
     static McpDeclaration[] Produced(McpSyntaxIndex index, McpDeclaration command) => [.. index.Outgoing(command.Owner).Where(reference => reference.Role == "produces").Select(index.Resolve).Where(candidates => candidates.Length == 1).Select(candidates => candidates[0]).Where(declaration => declaration.Kind == "Event").Distinct()];
 
@@ -131,7 +172,8 @@ static class McpModelingSmells
                 case AllSyntax all:
                     foreach (var @event in index.Declarations.Where(declaration => declaration.Syntax is EventSyntax && index.Find(declaration.Address, declaration.Kind).Length == 1))
                     {
-                        foreach (var feed in Mapped(@event, all.Mappings, mappings, Mode(all.AutoMap, autoMap), prefix, targets, false)) yield return feed;
+                        // all reaches every event type, so an event feeds a property only when its own payload supplies the value.
+                        foreach (var feed in Mapped(@event, all.Mappings, mappings, Mode(all.AutoMap, autoMap), prefix, targets, false, mapping => Reads(mapping, (EventSyntax)@event.Syntax))) yield return feed;
                     }
                     break;
                 case ChildrenSyntax children:
@@ -144,6 +186,26 @@ static class McpModelingSmells
         }
     }
 
+    static bool Reads(MappingSyntax mapping, EventSyntax @event) =>
+        Paths(mapping).Any(path => @event.Properties.Any(property => property.Name == path.Split('.')[0]));
+
+    static IEnumerable<string> Paths(MappingSyntax mapping) => mapping switch
+    {
+        SetMappingSyntax set => Paths(set.Source),
+        AddMappingSyntax add => Paths(add.Value),
+        SubtractMappingSyntax subtract => Paths(subtract.Value),
+        _ => []
+    };
+
+    static IEnumerable<string> Paths(ExpressionSyntax expression) => expression switch
+    {
+        PathExpressionSyntax path => [path.Path],
+        TemplateExpressionSyntax template => template.Parts.OfType<TemplateInterpolationSyntax>().SelectMany(part => Paths(part.Expression)),
+        ListExpressionSyntax list => list.Items.SelectMany(Paths),
+        ObjectExpressionSyntax value => value.Members.SelectMany(member => Paths(member.Value)),
+        _ => []
+    };
+
     static bool Mode(AutoMapMode mode, bool inherited) => mode == AutoMapMode.Inherit ? inherited : mode == AutoMapMode.Enabled;
 
     static McpDeclaration? ResolveEvent(McpSyntaxIndex index, McpDeclaration from, string name) => index.Resolve(new(name, ["Event"], from.Scope, from.Location, "review", from.Owner)) is [var @event] ? @event : null;
@@ -151,8 +213,8 @@ static class McpModelingSmells
     static IEnumerable<PropertySyntax> ElementProperties(McpSyntaxIndex index, McpDeclaration projection, IEnumerable<PropertySyntax> targets, string name) =>
         targets.FirstOrDefault(property => property.Name == name) is { } property && index.Resolve(new(property.Type.Name, ["Type"], projection.Scope, property.Location, "review", projection.Owner)) is [var type] && type.Syntax is TypeSyntax syntax ? syntax.Properties : [];
 
-    static IEnumerable<(string Property, McpDeclaration Event)> Mapped(McpDeclaration @event, IEnumerable<MappingSyntax> mappings, IEnumerable<MappingSyntax> inherited, bool autoMap, string prefix, IEnumerable<PropertySyntax> targets, bool isJoin) =>
-        mappings.Concat(inherited).Select(mapping => (prefix + mapping.Property, @event)).Concat(autoMap && @event.Syntax is EventSyntax syntax
+    static IEnumerable<(string Property, McpDeclaration Event)> Mapped(McpDeclaration @event, IEnumerable<MappingSyntax> mappings, IEnumerable<MappingSyntax> inherited, bool autoMap, string prefix, IEnumerable<PropertySyntax> targets, bool isJoin, Func<MappingSyntax, bool>? feeds = null) =>
+        mappings.Concat(inherited).Where(mapping => feeds?.Invoke(mapping) ?? true).Select(mapping => (prefix + mapping.Property, @event)).Concat(autoMap && @event.Syntax is EventSyntax syntax
             ? ProjectionAutoMap.Properties(
                 mappings,
                 targets,
