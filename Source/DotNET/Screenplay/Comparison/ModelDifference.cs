@@ -36,4 +36,10 @@ public sealed record ModelDifference(
     IReadOnlyList<DirectDependant> Dependants,
     IReadOnlyList<IdentityChange> Identities,
     IReadOnlyList<ComparisonSection> Sections,
-    IReadOnlyList<string> NotCompared);
+    IReadOnlyList<string> NotCompared)
+{
+    /// <summary>
+    /// Gets numeric identity changes within matched enumeration concepts.
+    /// </summary>
+    public IReadOnlyList<EnumerationMemberChange> Enumerations { get; init; } = [];
+}

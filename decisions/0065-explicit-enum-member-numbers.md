@@ -32,6 +32,10 @@ applies-to:
 
 > **2026-10-11 — ESM v12 admission.** Phase 1 shipped authoring in Screenplay 4.137.0. This admission implements optional immutable `SemanticConcept.Numbers`, canonical last-member `numbers`, binding, strict reading and programmatic validation as language/semantic 12.0 and schemaVersion 12. Positional pins bind as absence and preserve existing bytes; non-positional arrays activate v12, whose literals retain v11 lowering. The source-backed `EnumMemberNumbersCorpus.V12` and `full-esm-v12.json` pin sparse/negative identities and name-based outcomes. V11 is published and frozen; v12 is the next unused version against current main, subject to rechecking at merge under 0025 and 0066. The publishing admission merge lists v12 as released, without assigning a product release version in advance. The accepted decision text below is preserved; stage records implementation, not a verified verdict.
 
+> **2026-10-18 — comparison follow-up.** [0094](0094-report-enum-numeric-identity-changes-in-model-comparison.md)
+> classifies baseline enum numeric identity changes under 0053, including explicit renames with retained numbers,
+> with additive MCP records and explicit matching and compatibility limits. The decision text below is preserved.
+
 ## Context
 
 An enum concept is an indented list of member names (`[ "@" ], LowerIdent` in `ConceptDecl`, grammar.md). `SemanticConcept.Values` holds the names in declaration order, and the executable model treats an enum as a text concept whose values the reference evaluator compares by name. No member carries a number.

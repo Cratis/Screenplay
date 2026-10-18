@@ -49,11 +49,13 @@ static class McpSemanticDiff
                 unavailable = section.Gaps.Select(gap => gap.Statement).ToArray()
             }).ToArray(),
             limits = revisions ? difference.Limits : [.. difference.Limits, "No revision-to-revision comparison."],
-            page = McpPaging.BoundedSourcePage(difference.Changes.Select(Project).Cast<object>(), arguments, revision)
+            page = McpPaging.BoundedSourcePage(difference.Changes.Select(Project), arguments, revision)
         };
     }
 
-    static Change Project(StructuralComparison.Change change) => new(
+    static object Project(StructuralComparison.Change change) => change.ChangeKind.StartsWith("enum-", StringComparison.Ordinal)
+        ? new EnumerationChange(change.Section, change.ChangeKind, change.SemanticId, change.Kind, change.BeforeAddress, change.AfterAddress, change.Member, ContractBreaking: change.ContractBreaking, AfterMember: change.AfterMember, BeforeNumber: change.BeforeNumber, AfterNumber: change.AfterNumber, BeforeNumbering: change.BeforeNumbering, AfterNumbering: change.AfterNumbering, Stored: change.Stored)
+        : new Change(
         change.Section,
         change.ChangeKind,
         change.SemanticId,
@@ -83,6 +85,14 @@ static class McpSemanticDiff
     static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
     sealed record DocumentLocation(string DocumentId, string Path);
+
+    sealed record EnumerationChange(string Section, string ChangeKind, string? SemanticId, string Kind, string? BeforeAddress, string? AfterAddress, string? Member = null,
+        string? BeforeHash = null, string? AfterHash = null, string? BeforeType = null, string? AfterType = null, bool? ContractBreaking = null, bool? GenerationCovered = null,
+        uint? BeforeGeneration = null, uint? AfterGeneration = null, DocumentLocation[]? BeforeDocuments = null, DocumentLocation[]? AfterDocuments = null,
+        string? Snapshot = null, string? DependantAddress = null, string? Role = null, string? Resolution = null, string? EventContractId = null,
+        string? MoveKind = null, string? BeforeOwner = null, string? AfterOwner = null,
+        string? AfterMember = null, int? BeforeNumber = null, int? AfterNumber = null,
+        string? BeforeNumbering = null, string? AfterNumbering = null, bool? Stored = null);
 
     sealed record Change(string Section, string ChangeKind, string? SemanticId, string Kind, string? BeforeAddress, string? AfterAddress, string? Member = null,
         string? BeforeHash = null, string? AfterHash = null, string? BeforeType = null, string? AfterType = null, bool? ContractBreaking = null, bool? GenerationCovered = null,
