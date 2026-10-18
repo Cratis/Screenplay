@@ -315,7 +315,7 @@ module Buying
       description "The purchase orders being worked, and everything a decision needs to know about one"
 
       readmodel PurchaseOrderRow
-        purchaseOrderId     PurchaseOrderId
+        id                  PurchaseOrderId
         supplierId          SupplierId
         purchaseOrderNumber PurchaseOrderNumber optional
         status              PurchaseOrderStatus
@@ -325,12 +325,12 @@ module Buying
 
       query AllPurchaseOrders => observable PurchaseOrderRow[]
       query PurchaseOrderById => PurchaseOrderRow optional
-        by purchaseOrderId PurchaseOrderId
+        by id PurchaseOrderId
 
       projection PurchaseOrderRowProjection => PurchaseOrderRow
         no automap
         from PurchaseOrderCreated
-          purchaseOrderId  = $eventSourceId
+          id  = $eventSourceId
           supplierId       = supplierId
           status           = "draft"
           lineCount        = 0
@@ -374,14 +374,14 @@ module Buying
               button cancel title "Cancel order" slice Buying.PurchaseOrders.CancelPurchaseOrder emphasis quiet icon x
               button archive title "Archive" slice Buying.PurchaseOrders.ArchivePurchaseOrder emphasis quiet icon archive
           summary
-            data PurchaseOrderRow via query PurchaseOrderById by purchaseOrderId
+            data PurchaseOrderRow via query PurchaseOrderById by id
             summary PurchaseOrderRow
               field purchaseOrderNumber label "Number"
               field status              label "Status"
               field orderedQuantity     label "Ordered"
               field receivedQuantity    label "Received"
           related
-            data PurchaseOrderRow via query PurchaseOrderById by purchaseOrderId
+            data PurchaseOrderRow via query PurchaseOrderById by id
             summary PurchaseOrderRow
               field lineCount label "Lines"
 
@@ -407,7 +407,7 @@ module Buying
           quantity        = 25
           receivedAt      = "2026-10-12T09:30:00Z"
         then readmodel PurchaseOrderRow
-          purchaseOrderId     = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          id     = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
           purchaseOrderNumber = "PO-2026-000101"
           status              = "partiallyReceived"
           lineCount           = 1

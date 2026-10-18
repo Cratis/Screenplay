@@ -75,7 +75,7 @@ module Buying
       description "Which supplier replenishment orders go to, per SKU"
 
       readmodel SkuSourcing
-        sku        Sku key
+        id        Sku key
         supplierId SupplierId
         unitPrice  Money
         currency   CurrencyCode
@@ -84,7 +84,7 @@ module Buying
 
       projection SkuSourcingProjection => SkuSourcing
         from PreferredSupplierChosen
-          sku        = $eventSourceId
+          id        = $eventSourceId
           supplierId = supplierId
           unitPrice  = unitPrice
           currency   = currency
@@ -109,7 +109,7 @@ module Buying
           unitPrice  = 62
           currency   = "NOK"
         then readmodel SkuSourcing
-          sku       = "ACM-1000"
+          id       = "ACM-1000"
           unitPrice = 62
 
     // The automation's command. The "skip when an open PO already covers the SKU" rule is the constraint below: while a

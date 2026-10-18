@@ -18,7 +18,7 @@ module Orders
 
       readmodel OrderStateEntry
         description "Where an order stands, with what the later decisions need"
-        orderId     OrderId key
+        id     OrderId key
         customerId  CustomerId
         market      Market
         status      OrderStatus
@@ -27,7 +27,7 @@ module Orders
         quotedTotal Money
 
       query GetOrderState => OrderStateEntry optional
-        by orderId OrderId
+        by id OrderId
 
       projection OrderStateProjection => OrderStateEntry
         no automap
@@ -57,7 +57,7 @@ module Orders
         description "The order state the decisions run against (support view)"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           summary
-            data OrderStateEntry via query GetOrderState by orderId
+            data OrderStateEntry via query GetOrderState by id
             summary OrderStateEntry
               field status      label "Status"
               field quotedTotal label "Quoted total"
@@ -79,6 +79,6 @@ module Orders
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then readmodel OrderStateEntry
-          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          id     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           status      = "approved"
           quotedTotal = 98

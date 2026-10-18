@@ -239,7 +239,7 @@ module Stock
       description "Every SKU with what is on hand, what is promised and what is left"
 
       readmodel StockLevel
-        sku             Sku key
+        id             Sku key
         name            ProductName
         onHand          StockQuantity
         reserved        StockQuantity
@@ -252,12 +252,12 @@ module Stock
 
       query AllStockLevels => observable StockLevel[]
       query StockLevelBySku => StockLevel optional
-        by sku Sku
+        by id Sku
 
       projection StockLevelProjection => StockLevel
         no automap
         from SkuRegistered
-          sku             = $eventSourceId
+          id             = $eventSourceId
           name            = name
           onHand          = 0
           reserved        = 0
@@ -323,7 +323,7 @@ module Stock
           sku = "ACM-1000"
           name = "Acme mug"
         then readmodel StockLevel
-          sku       = "ACM-1000"
+          id       = "ACM-1000"
           name      = "Acme mug"
           onHand    = 0
           available = 0
@@ -347,7 +347,7 @@ module Stock
           quantity = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then readmodel StockLevel
-          sku       = "ACM-1000"
+          id       = "ACM-1000"
           onHand    = 40
           reserved  = 3
           available = 37

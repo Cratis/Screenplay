@@ -90,12 +90,12 @@ module Shop
       description "Who is registered, by customer"
 
       readmodel CustomerAccount
-        customerId CustomerId key
+        id CustomerId key
         name       PersonName
         email      EmailAddress
 
       query GetCustomerAccount => CustomerAccount optional
-        by customerId CustomerId
+        by id CustomerId
 
       projection CustomerAccountProjection => CustomerAccount
         from CustomerRegistered
@@ -112,7 +112,7 @@ module Shop
           name  = "Ada Lovelace"
           email = "ada@example.com"
         then readmodel CustomerAccount
-          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           name       = "Ada Lovelace"
           email      = "ada@example.com"
 
@@ -120,7 +120,7 @@ module Shop
         description "The signed-in customer's account"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           summary
-            data CustomerAccount via query GetCustomerAccount by customerId
+            data CustomerAccount via query GetCustomerAccount by id
             summary CustomerAccount
               field name  label "Name"
               field email label "Email"

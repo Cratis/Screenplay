@@ -11,7 +11,7 @@ module Merchandising
       description "Which products are described and priced, and so ready to be approved"
 
       readmodel ProductReadiness
-        productId ProductId key
+        id ProductId key
         sku       Sku
         name      ProductName
         category  String
@@ -25,11 +25,11 @@ module Merchandising
 
       query AllProductReadiness => observable ProductReadiness[]
       query ReadinessOf => ProductReadiness optional
-        by productId ProductId
+        by id ProductId
 
       projection ProductReadinessProjection => ProductReadiness
         from ProductDrafted
-          productId = $eventSourceId
+          id = $eventSourceId
           sku       = sku
           name      = name
           category  = category
@@ -84,7 +84,7 @@ module Merchandising
           currency = "NOK"
           effectiveFrom = "2026-03-01"
         then readmodel ProductReadiness
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          id = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           sku       = "ACM-1000"
           name      = "Acme mug"
           category  = "Kitchen"

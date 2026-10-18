@@ -433,7 +433,7 @@ module Stock
       description "Parcels in columns by where they are: to pick, picking, packed, dispatched"
 
       readmodel PickingCard
-        orderId        OrderId key
+        id        OrderId key
         sku            Sku
         quantity       Quantity
         status         ShipmentStatus
@@ -442,12 +442,12 @@ module Stock
 
       query AllPickingCards => observable PickingCard[]
       query PickingCardByOrder => PickingCard optional
-        by orderId OrderId
+        by id OrderId
 
       projection PickingCardProjection => PickingCard
         no automap
         from ShipmentPlanned
-          orderId  = $eventSourceId
+          id  = $eventSourceId
           sku      = sku
           quantity = quantity
           status   = "toPick"
@@ -480,7 +480,7 @@ module Stock
         given ShipmentPacked
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then readmodel PickingCard
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku      = "ACM-1000"
           quantity = 3
           status   = "packed"
