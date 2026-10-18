@@ -10,7 +10,7 @@ using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Workspaces;
 
-internal static class WorkspaceTimelineRepairs
+internal static partial class WorkspaceTimelineRepairs
 {
     static readonly ConditionalWeakTable<ScreenplayWorkspace, AuthoredTimeline> _timelines = [];
 
@@ -31,7 +31,7 @@ internal static class WorkspaceTimelineRepairs
         var finding = original.Findings.SingleOrDefault(finding => finding.Diagnostic.Code == repair.DiagnosticCode &&
             Subject(index, finding)?.Handle == repair.Subject);
         var recipe = finding is null ? null : Recipe(index, finding);
-        if (recipe is null || !WorkspaceTimelineContentProof.Preserves(before, after, recipe.Pins) ||
+        if (recipe is null || !WorkspaceTimelineContentProof.Preserves(before, after, recipe.Pins, recipe.RemovedImports) ||
             !WorkspaceRepairVerification.KeepsCatalog(before, after) || before.Compilation.Success != result.ExecutableReady ||
             !before.Documents.Select(document => (document.Id, document.StableKey, document.Path)).SequenceEqual(after.Documents.Select(document => (document.Id, document.StableKey, document.Path))))
         {
@@ -114,13 +114,14 @@ internal static class WorkspaceTimelineRepairs
         }
 
         var parent = index.Find(consumerEntry.Parent)!;
-        if (left.Node is FileImportSyntax leftImport && right.Node is FileImportSyntax rightImport)
+        if (left.Node is FileImportSyntax leftImport && right.Node is FileImportSyntax)
         {
             if (left.Location == right.Location && PlayGlob.HasWildcard(leftImport.Pattern))
             {
                 return Pin(index, timeline, finding, subject, parent, consumerEntry, left, right);
             }
-            if (PlayGlob.HasWildcard(leftImport.Pattern) || PlayGlob.HasWildcard(rightImport.Pattern)) return null;
+
+            // Whole-glob moves are tried before freezing the currently reached files into a list.
         }
         else if (consumerEntry.Member is not ("modules" or "features" or "slices") || left.Node.GetType() != right.Node.GetType())
         {
@@ -131,14 +132,16 @@ internal static class WorkspaceTimelineRepairs
         {
             var movedStep = moved == producerEntry ? right : left;
             var anchorStep = moved == producerEntry ? left : right;
-            var ranks = Move(timeline, Block(timeline, movedStep), Block(timeline, anchorStep), after);
+            var ranks = Move(timeline, OccurrenceBlock(timeline, movedStep), OccurrenceBlock(timeline, anchorStep), after);
             if (ranks is null || !Safe(timeline, TimelineOrder.Analyze(timeline.Application, ranks), finding.Key)) continue;
             var operation = new MoveWorkspaceNode(moved.Handle, moved.Node, parent.Handle, parent.Node, moved.Member!, anchor.Index!.Value + (after ? 1 : 0));
 
             return new(new(finding.Diagnostic.Code, subject.Handle, [operation]) { Title = finding.ReadModel ? "Draw the read-model builder before its reader" : "Draw the event producer before its consumer" }, ranks);
         }
 
-        return null;
+        return left.Node is FileImportSyntax && right.Node is FileImportSyntax
+            ? ExpandImports(index, timeline, finding, subject, parent, consumerEntry, producerEntry, left, right)
+            : null;
     }
 
     static WorkspaceSyntaxEntry? Entry(WorkspaceSyntaxIndex index, AuthoredOrderStep step)
@@ -287,5 +290,6 @@ internal static class WorkspaceTimelineRepairs
     sealed record TimelineRecipe(WorkspaceDiagnosticRepair Repair, IReadOnlyDictionary<string, int> Ranks)
     {
         internal ImmutableArray<TimelineImportPin> Pins { get; init; } = [];
+        internal ImmutableArray<TimelineImportPin> RemovedImports { get; init; } = [];
     }
 }
