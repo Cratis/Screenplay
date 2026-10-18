@@ -2,7 +2,7 @@
 # Copyright (c) Cratis. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #
-# Renders every domain blueprint sample (Samples/Crm, Ticketing, Approvals, Inventory, Hr, Projects, Administration, Orders) exactly as
+# Renders every domain blueprint sample (Samples/Crm, Ticketing, Approvals, Inventory, Hr, Projects, Administration, Orders, Catalog, Vendors, Billing, CustomerPortal, Contracts, WorkOrders, Bookings) exactly as
 # authored with the installed `cratis` and the approved package set of the blueprint's published npm package, and fails when one does not
 # render - a Stage admission refusal, an unknown package, or a `template blueprint ...` reference to a template the package does not ship
 # (Cratis/Stage#457). The samples are the examples of the language; a render that needs them simplified is a defect of the sample or of the
@@ -28,14 +28,20 @@ mkdir -p "$work/packages"
 (cd "$work/packages" && npm init -y >/dev/null && npm install --no-audit --no-fund --silent \
     "@cratis/scene.blueprint.crm@${version}" "@cratis/scene.blueprint.ticketing@${version}" "@cratis/scene.blueprint.approvals@${version}" \
     "@cratis/scene.blueprint.inventory@${version}" "@cratis/scene.blueprint.hr@${version}" "@cratis/scene.blueprint.project-tracker@${version}" \
-    "@cratis/scene.blueprint.administration@${version}" "@cratis/scene.blueprint.orders@${version}") \
+    "@cratis/scene.blueprint.administration@${version}" "@cratis/scene.blueprint.orders@${version}" \
+    "@cratis/scene.blueprint.catalog@${version}" "@cratis/scene.blueprint.vendors@${version}" "@cratis/scene.blueprint.invoicing@${version}" \
+    "@cratis/scene.blueprint.customer-portal@${version}" "@cratis/scene.blueprint.contracts@${version}" "@cratis/scene.blueprint.work-orders@${version}" \
+    "@cratis/scene.blueprint.bookings@${version}") \
     || { echo "render-blueprint-samples: the blueprint packages could not be installed" >&2; exit 2; }
 
 failures=0
 # sample folder | npm package suffix | export | application name (not a folder name of the sample: the project would collide with it)
 for entry in "Crm|crm|crmBlueprint|CrmApp" "Ticketing|ticketing|ticketingBlueprint|TicketingApp" "Approvals|approvals|approvalsBlueprint|ApprovalsApp" \
     "Inventory|inventory|inventoryBlueprint|InventoryApp" "Hr|hr|hrBlueprint|HrApp" "Projects|project-tracker|projectTrackerBlueprint|ProjectsApp" \
-    "Administration|administration|administrationBlueprint|AdministrationApp" "Orders|orders|ordersBlueprint|OrdersApp"; do
+    "Administration|administration|administrationBlueprint|AdministrationApp" "Orders|orders|ordersBlueprint|OrdersApp" \
+    "Catalog|catalog|catalogBlueprint|CatalogApp" "Vendors|vendors|vendorsBlueprint|VendorsApp" "Billing|invoicing|invoicingBlueprint|BillingApp" \
+    "CustomerPortal|customer-portal|customerPortalBlueprint|PortalApp" "Contracts|contracts|contractsBlueprint|ContractsApp" "WorkOrders|work-orders|workOrdersBlueprint|WorkOrdersApp" \
+    "Bookings|bookings|bookingsBlueprint|BookingsApp"; do
     IFS='|' read -r sample suffix exported application <<<"$entry"
     node "${harness}/render-blueprint-samples.cjs" "$work/packages/node_modules" "$suffix" "$exported" "$work/${sample}.packages.json" \
         || { echo "render-blueprint-samples: ${sample}: the approved package set could not be made" >&2; exit 2; }

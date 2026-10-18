@@ -1,0 +1,2179 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "InvoiceId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PaymentId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Money",
+      "type": "Decimal",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "InvoiceStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "values": [
+        "draft",
+        "sent",
+        "overdue",
+        "paid",
+        "void"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Invoicing"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsAccountant"
+        }
+      },
+      "description": "Invoices for a finance team",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Everything you have billed",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Invoices",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "number"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customer",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customer"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "issued"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "due"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "amount"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customer",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers an invoice",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customer",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "InvoicingQuickCreateInvoice",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterInvoice",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewInvoice"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAnInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customer",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Northwind Traders"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "sent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterInvoice",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "number",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-2041"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "customer",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Northwind Traders"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "issued",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-12"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "due",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-11-11"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 4820
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "sent"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every invoice with what is owed and its status.",
+              "events": [],
+              "name": "InvoicesList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customer"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "issued"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "due"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "amount"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoicesProjection",
+                  "readModel": "Invoices",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllInvoices",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Invoices"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "invoiceId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "InvoiceId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetInvoice",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Invoices"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Invoices",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customer",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "InvoicesList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Invoices"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "InvoicePage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "InvoiceRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customer",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Northwind Traders"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "sent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingAnRegisteredInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Invoices",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What has come in",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Payments",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterPayment",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PaymentRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "paymentId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reference"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoice"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "received",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "received"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "method",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "method"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "amount"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "paymentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PaymentId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "received",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "method",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a payment",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "received",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "method",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterPayment",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAPayment",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PaymentRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "PAY-3318"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2036"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "received",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-14"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "method",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Bank transfer"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 5430
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterPayment",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "paymentId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "PAY-3318"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoice",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-2036"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "received",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-14"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Bank transfer"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 5430
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "The payments received and the invoices they settled.",
+              "events": [],
+              "name": "PaymentsList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PaymentRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "paymentId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "reference"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoice"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "received"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "method"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "amount"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "PaymentsProjection",
+                  "readModel": "Payments",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllPayments",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Payments"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "paymentId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "PaymentId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetPayment",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Payments"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Payments",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "paymentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PaymentId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "received",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "method",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "PaymentsList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Payments"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PaymentRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "PAY-3318"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2036"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "received",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-14"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "method",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Bank transfer"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 5430
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredPayment",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Payments",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "PAY-3318"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What is owed, what is overdue and what came in this month",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Overview",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "What is owed and what has come in",
+              "events": [],
+              "name": "OverviewView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customer"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "issued"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "due"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "OverviewItemsProjection",
+                  "readModel": "OverviewItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllOverviewItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "OverviewItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "OverviewItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customer",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "InvoicingOverview",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Overview"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customer",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Northwind Traders"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "sent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingAnRegisteredInvoiceOnOverview",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "OverviewItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "The day each invoice falls due, on a calendar",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "DueDates",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "When each invoice falls due",
+              "events": [],
+              "name": "DueDatesView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customer"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "issued"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "due"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "DueDatesItemsProjection",
+                  "readModel": "DueDatesItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllDueDatesItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "DueDatesItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "DueDatesItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customer",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Invoicing",
+                      "name": "InvoicingDueDates",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "DueDates"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customer",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Northwind Traders"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "sent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingAnRegisteredInvoiceOnDueDates",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "DueDatesItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Invoicing"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Bills customers, records the payments that come in and chases what is overdue",
+      "name": "Accountant",
+      "policies": [
+        "IsAccountant"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}

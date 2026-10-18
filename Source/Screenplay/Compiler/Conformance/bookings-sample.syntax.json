@@ -1,0 +1,2482 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "BookingId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ResourceId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "BookingStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "values": [
+        "requested",
+        "confirmed",
+        "checkedIn",
+        "completed",
+        "cancelled"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ResourceStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "available",
+        "booked",
+        "maintenance"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Bookings"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsEmployee"
+        }
+      },
+      "description": "Bookings for shared rooms, equipment and vehicles",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Everything that has been booked",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Bookings",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterBooking",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookingRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookingId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reference"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "resourceValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "bookedBy"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dateValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "fromValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "untilValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "bookingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "untilValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a booking",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "BookingRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "untilValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterBooking",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "BookingsQuickCreateBooking",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterBooking",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewBooking"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringABooking",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace Hopper"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-15"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "09:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkedIn"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterBooking",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookingId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "BK-4410"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "resourceValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Fjord meeting room"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookedBy",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Grace Hopper"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dateValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-15"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "fromValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "09:00"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "untilValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "11:00"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "checkedIn"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every booking with its resource, time and status.",
+              "events": [],
+              "name": "BookingsList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookingRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookingId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "reference"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "resourceValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookedBy"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dateValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "fromValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "untilValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "BookingsProjection",
+                  "readModel": "Bookings",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsEmployee"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllBookings",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Bookings"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsEmployee"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "bookingId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "BookingId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetBooking",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Bookings"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Bookings",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "untilValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "BookingsList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Bookings"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "BookingPage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "BookingRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace Hopper"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-15"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "09:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkedIn"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredBooking",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Bookings",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookingId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What can be booked",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Resources",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterResource",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ResourceRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "resourceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "typeValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "capacity",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "capacity"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "location"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "resourceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ResourceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "capacity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ResourceStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a resource",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ResourceRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "capacity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ResourceStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterResource",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAResource",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ResourceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "capacity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 12
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Floor 2"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "booked"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterResource",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "resourceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Fjord meeting room"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "typeValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Room"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "capacity",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 12
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "location",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Floor 2"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "booked"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "The rooms, equipment and vehicles that can be booked.",
+              "events": [],
+              "name": "ResourcesList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ResourceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "resourceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "typeValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "capacity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "location"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ResourcesProjection",
+                  "readModel": "Resources",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsEmployee"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllResources",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Resources"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsEmployee"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "resourceId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "ResourceId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetResource",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Resources"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Resources",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ResourceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "capacity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "location",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ResourceStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "ResourcesList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Resources"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ResourceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "capacity",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 12
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "location",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Floor 2"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "booked"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredResource",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Resources",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Every booking on a calendar: who has what, and when",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Calendar",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Who has what, and when",
+              "events": [],
+              "name": "CalendarView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookingRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookingId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "reference"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "resourceValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookedBy"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dateValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "CalendarItemsProjection",
+                  "readModel": "CalendarItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsEmployee"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllCalendarItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "CalendarItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "CalendarItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "BookingsCalendar",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Calendar"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookingRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace Hopper"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-15"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "09:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkedIn"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredBookingOnCalendar",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "CalendarItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookingId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Book a room, equipment or a vehicle in four short steps",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "NewBooking",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RequestBooking",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookingRequested",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookingId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reference"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "resourceValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "bookedBy"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dateValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "fromValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "untilValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "bookingId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "untilValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Requests a booking in a few steps",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "BookingRequested",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reference",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "resourceValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "bookedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "dateValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "fromValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "untilValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookingStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RequestBooking",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Bookings",
+                      "name": "NewBookingWizard",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RequestBooking",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "NewBooking"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Employee"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RequestingABooking",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookingRequested",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0012"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reference",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "BK-4410"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "resourceValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Fjord meeting room"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookedBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace Hopper"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dateValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-15"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "fromValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "09:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "untilValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "checkedIn"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RequestBooking",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookingId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0012"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reference",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "BK-4410"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "resourceValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Fjord meeting room"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookedBy",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Grace Hopper"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dateValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-15"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "fromValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "09:00"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "untilValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "11:00"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "checkedIn"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Bookings"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Books rooms, equipment and vehicles and keeps track of what is booked",
+      "name": "Employee",
+      "policies": [
+        "IsEmployee"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}

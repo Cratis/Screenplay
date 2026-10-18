@@ -1,0 +1,1561 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ContractId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Money",
+      "type": "Decimal",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ContractStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "values": [
+        "draft",
+        "inReview",
+        "active",
+        "expiring",
+        "expired",
+        "terminated"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Contracts"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsContractManager"
+        }
+      },
+      "description": "Contracts for a legal or procurement team",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Every agreement you are bound by",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Contracts",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterContract",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ContractRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "contractId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "number"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "title"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "counterparty",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "counterparty"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "typeValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "endValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "endValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "valueValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "valueValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "contractId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "counterparty",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "endValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "valueValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a contract",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ContractRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "counterparty",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "endValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "valueValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterContract",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Contracts",
+                      "name": "ContractsQuickCreateContract",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterContract",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewContract"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "ContractManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAContract",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ContractRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Annual supply of fittings"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "counterparty",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartwell Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "endValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-12-31"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "valueValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 184000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterContract",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "contractId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "number",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "CT-2026-014"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "title",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Annual supply of fittings"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "counterparty",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Hartwell Supply"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "typeValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Supply"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "endValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-12-31"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "valueValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 184000
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "active"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every contract with who it is with, when it ends and what it is worth.",
+              "events": [],
+              "name": "ContractsList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ContractRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "contractId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "counterparty"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "typeValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "endValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "valueValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ContractsProjection",
+                  "readModel": "Contracts",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsContractManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllContracts",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Contracts"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsContractManager"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "contractId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "ContractId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetContract",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Contracts"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Contracts",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contractId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "counterparty",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "endValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "valueValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Contracts",
+                      "name": "ContractsList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Contracts"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Contracts",
+                      "name": "ContractPage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "ContractRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ContractRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Annual supply of fittings"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "counterparty",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartwell Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "endValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-12-31"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "valueValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 184000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "ContractManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredContract",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Contracts",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contractId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Every live contract on a schedule, in a lane for each counterparty, with its notice dates",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Timeline",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Terms and notice dates by counterparty",
+              "events": [],
+              "name": "TimelineView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ContractRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "contractId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "counterparty"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "typeValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "TimelineItemsProjection",
+                  "readModel": "TimelineItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsContractManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllTimelineItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "TimelineItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "TimelineItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contractId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "counterparty",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Contracts",
+                      "name": "ContractsTimeline",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Timeline"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ContractRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Annual supply of fittings"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "counterparty",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartwell Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "endValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-12-31"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "valueValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 184000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "ContractManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredContractOnTimeline",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "TimelineItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contractId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What needs your review, your signature or a renewal decision",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "NeedsAttention",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Review, sign or renew",
+              "events": [],
+              "name": "NeedsAttentionView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ContractRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "contractId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "counterparty"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "typeValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "NeedsAttentionItemsProjection",
+                  "readModel": "NeedsAttentionItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsContractManager"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllNeedsAttentionItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "NeedsAttentionItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "NeedsAttentionItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "contractId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ContractId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "counterparty",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "typeValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.Contracts",
+                      "name": "ContractsReview",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "NeedsAttention"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ContractRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Annual supply of fittings"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "counterparty",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Hartwell Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "typeValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Supply"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "endValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-12-31"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "valueValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 184000
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "active"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "ContractManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredContractOnNeedsAttention",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "NeedsAttentionItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "contractId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "CT-2026-014"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Contracts"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Drafts, reviews and renews the contracts the company is bound by",
+      "name": "ContractManager",
+      "policies": [
+        "IsContractManager"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}

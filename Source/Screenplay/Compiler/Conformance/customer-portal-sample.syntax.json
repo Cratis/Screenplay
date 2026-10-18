@@ -1,0 +1,2484 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PortalOrderId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PortalInvoiceId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Money",
+      "type": "Decimal",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PortalOrderStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "values": [
+        "inProgress",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PortalInvoiceStatus",
+      "type": "Enum",
+      "valueNumbers": [
+        0,
+        1,
+        2
+      ],
+      "values": [
+        "unpaid",
+        "overdue",
+        "paid"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.CustomerPortal"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "IsCustomer"
+        }
+      },
+      "description": "A self-service portal for customers",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Everything you have ordered",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Orders",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterPortalOrder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "portalOrderId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "number"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "placed"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "delivery"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "itemsValue"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "total"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "portalOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "total",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a portal order",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PortalOrderRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "total",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterPortalOrder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalQuickCreateReorder",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterPortalOrder",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "QuickNewPortalOrder"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAPortalOrder",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-19"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1284.5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterPortalOrder",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "portalOrderId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "number",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "SO-1042"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "placed",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-12"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "delivery",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-19"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "itemsValue",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 4
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "total",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 1284.5
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "inProgress"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Your orders and where each one is.",
+              "events": [],
+              "name": "PortalOrdersList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PortalOrderRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "portalOrderId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "placed"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "delivery"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "itemsValue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "total"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "PortalOrdersProjection",
+                  "readModel": "PortalOrders",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllPortalOrders",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "PortalOrders"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "portalOrderId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "PortalOrderId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetPortalOrder",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "PortalOrders"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "PortalOrders",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "portalOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "total",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalOrdersList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Orders"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalOrderPage",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "PortalOrderRecord"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-19"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1284.5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredPortalOrder",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "PortalOrders",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "portalOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "What you have been billed",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Invoices",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterPortalInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PortalInvoiceRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "portalInvoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "number"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "issued"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "due"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "amount"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "portalInvoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalInvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalInvoiceStatus"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Registers a portal invoice",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PortalInvoiceRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalInvoiceStatus"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterPortalInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAPortalInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalInvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "unpaid"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterPortalInvoice",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "portalInvoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "number",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-2041"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "issued",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-12"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "due",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-11-11"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 4820
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "status",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "unpaid"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Your invoices and which ones are still to pay.",
+              "events": [],
+              "name": "PortalInvoicesList",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PortalInvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "portalInvoiceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "issued"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "due"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "amount"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "PortalInvoicesProjection",
+                  "readModel": "PortalInvoices",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllPortalInvoices",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "PortalInvoices"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "portalInvoiceId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "PortalInvoiceId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "GetPortalInvoice",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "PortalInvoices"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "PortalInvoices",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "portalInvoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalInvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "due",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalInvoiceStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalInvoicesList",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Invoices"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalInvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "due",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-11-11"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4820
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "unpaid"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ListingTheRegisteredPortalInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "PortalInvoices",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "portalInvoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0021"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2041"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Your account at a glance: open orders, what you owe and what happened lately",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Home",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Your orders, invoices and requests",
+              "events": [],
+              "name": "HomeView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PortalOrderRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "portalOrderId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "placed"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "delivery"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "itemsValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "HomeItemsProjection",
+                  "readModel": "HomeItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllHomeItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "HomeItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "HomeItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "portalOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalHome",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Home"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-19"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1284.5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredPortalOrderOnHome",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "HomeItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "portalOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Your conversations with us: questions, reminders and quotes",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Support",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Your conversations with us",
+              "events": [],
+              "name": "SupportView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PortalOrderRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "portalOrderId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "placed"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "delivery"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "itemsValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "SupportItemsProjection",
+                  "readModel": "SupportItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllSupportItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "SupportItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "SupportItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "portalOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalSupport",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Support"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-19"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1284.5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredPortalOrderOnSupport",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "SupportItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "portalOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Your details, delivery address and preferences",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Profile",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Your details, delivery address and preferences",
+              "events": [],
+              "name": "ProfileView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "PortalOrderRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "portalOrderId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "number"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "placed"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "delivery"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "itemsValue"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ProfileItemsProjection",
+                  "readModel": "ProfileItems",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsCustomer"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllProfileItems",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "ProfileItems"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "ProfileItems",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "portalOrderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PortalOrderId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "placed",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "delivery",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemsValue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "blueprint": "Cratis.Blueprint.CustomerPortal",
+                      "name": "PortalProfile",
+                      "slots": [],
+                      "version": "^1.0"
+                    }
+                  ],
+                  "name": "Profile"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PortalOrderRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "placed",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "delivery",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-19"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemsValue",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 4
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1284.5
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "inProgress"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ShowingTheRegisteredPortalOrderOnProfile",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "ProfileItems",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "portalOrderId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "number",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "SO-1042"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Portal"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "A customer's contact who follows their orders and invoices and asks for help",
+      "name": "Customer",
+      "policies": [
+        "IsCustomer"
+      ]
+    }
+  ],
+  "systems": [],
+  "types": []
+}

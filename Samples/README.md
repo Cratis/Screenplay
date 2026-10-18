@@ -18,6 +18,13 @@ screenplay --warnaserror Samples/<Sample>
 | [Hr](Hr) | 1 file, 10 slices | An application built from the HR blueprint: a directory, an org chart, time off and onboarding, with the blueprint's Norwegian pack. |
 | [Projects](Projects) | 1 file, 7 slices | An application built from the Project and Task Tracker blueprint: projects, my tasks and a board by status and by person. |
 | [Orders](Orders) | 1 file, 5 slices | An application built from the Orders blueprint: orders, a fulfilment board and a delivery calendar. |
+| [Catalog](Catalog) | 1 file, 5 slices | An application built from the Catalog blueprint: a catalog overview, products with their variants and price history, and categories. |
+| [Vendors](Vendors) | 1 file, 5 slices | An application built from the Vendors blueprint: vendors with their contacts and orders, an onboarding board and a performance dashboard. |
+| [Billing](Billing) | 1 file, 6 slices | An application built from the Invoicing blueprint: a receivables overview, invoices with their lines and payments, and a due-date calendar. |
+| [CustomerPortal](CustomerPortal) | 1 file, 7 slices | An application built from the Customer portal blueprint: a customer's account home, orders, invoices, support inbox and profile. |
+| [Contracts](Contracts) | 1 file, 4 slices | An application built from the Contracts blueprint: contracts with their parties and obligations, a terms timeline and a review inbox. |
+| [WorkOrders](WorkOrders) | 1 file, 5 slices | An application built from the Work orders blueprint: work orders with their tasks, parts and time, a board and a visit schedule. |
+| [Bookings](Bookings) | 1 file, 6 slices | An application built from the Bookings blueprint: a booking calendar, bookings, resources as cards and a new-booking wizard. |
 | [Administration](Administration) | 1 file, 9 slices | An application built from the Administration blueprint: users, roles and permissions, settings and an audit log. |
 | [AcmeCommerce](AcmeCommerce) | many small files | A full multi-domain application - Catalog, Storefront, Sales, Purchasing, Warehouse - in one folder tree: shared kernel, application shell with hierarchical navigation, public events between contexts, blueprint screens and a custom component package. |
 | [Commerce](Commerce) | many small files | An application composed with [imports](../Documentation/screenplay/imports.md) at every level: a root file that reads like a table of contents, a file per module and per feature that imports its own folder, and one file per slice that holds only the slice. |
