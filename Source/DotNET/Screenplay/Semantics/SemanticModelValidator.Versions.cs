@@ -58,6 +58,14 @@ internal static partial class SemanticModelValidator
     internal static bool UsesProjectionProducts(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Projections).Any(projection => ProjectionMappings(projection).Any(mapping => mapping.Factor is not null));
 
+    internal static bool UsesTextRules(SemanticApplication application) =>
+        application.Concepts.SelectMany(concept => concept.Validations)
+            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
+            .Any(rule => TextRuleVersion.IsTextRule(rule.Kind));
+
+    internal static bool UsesDescribedHandlers(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
     // ESM v29 is the umbrella of decision 0098. Some of its constructs (a concept converted to another over the same primitive)
     // are not detectable from the model alone, so a v29 model need not use any particular one.
     static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version)
@@ -67,14 +75,6 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("Decimal places, projection products and the other constructs of decision 0098 require ESM v29.");
         }
     }
-
-    internal static bool UsesTextRules(SemanticApplication application) =>
-        application.Concepts.SelectMany(concept => concept.Validations)
-            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
-            .Any(rule => TextRuleVersion.IsTextRule(rule.Kind));
-
-    internal static bool UsesDescribedHandlers(SemanticApplication application) =>
-        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
 
     static IEnumerable<SemanticProjectionMapping> ProjectionMappings(SemanticProjection projection) =>
         projection.Scope is null ? [] : ScopeMappings(projection.Scope);

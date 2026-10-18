@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
@@ -97,6 +98,20 @@ internal static class SpecificationOutcomeConsistencyValidator
             if (!seen.Add(occurrence)) continue;
             foreach (var (slice, scope) in declarations.Slices)
             {
+                // An outbound Translate slice publishes the event its projection folds (decision 0098): the public event follows the
+                // private one, so a command specification may state it.
+                foreach (var projection in slice.Projections.Where(projection => projection.ReadModel is not null))
+                {
+                    if (!projection.Blocks.OfType<FromSyntax>().Any(from => from.Events.Any(spec => declarations.Event(spec.Event, scope) == occurrence)))
+                    {
+                        continue;
+                    }
+
+                    if (declarations.Event(projection.ReadModel!, scope) is not { } published) continue;
+                    if (published == expected) return true;
+                    pending.Enqueue(published);
+                }
+
                 foreach (var reaction in slice.Reactions)
                 {
                     foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Source is NamedTriggerSourceSyntax named &&

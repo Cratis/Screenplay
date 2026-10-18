@@ -12,6 +12,8 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static string Factor(ScreenplayWriter writer, ExpressionSyntax? factor) => factor is null ? string.Empty : $" * {writer.Expression(factor)}";
+
     void WriteProjection(ScreenplayWriter writer, ProjectionSyntax projection)
     {
         using var anchor = writer.Anchor(projection);
@@ -262,8 +264,6 @@ public partial class ScreenplayPrinter
                 throw new UnsupportedSyntaxForPrinting("automap mode", autoMap.ToString());
         }
     }
-
-    static string Factor(ScreenplayWriter writer, ExpressionSyntax? factor) => factor is null ? string.Empty : $" * {writer.Expression(factor)}";
 
     void WriteMappings(ScreenplayWriter writer, IEnumerable<MappingSyntax> mappings, IReadOnlySet<string> reserved)
     {
