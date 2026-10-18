@@ -8,11 +8,12 @@ namespace Cratis.Screenplay.for_ScreenplayCompiler;
 public class when_a_refusal_constraint_cannot_apply : given.a_compiler
 {
     [Theory]
-    [InlineData("Missing", DiagnosticCodes.UnknownRefusalConstraint, DiagnosticSeverity.Error)]
-    [InlineData("OtherClaim", DiagnosticCodes.UnreachableRefusalBranch, DiagnosticSeverity.Warning)]
-    void should_distinguish_an_unknown_constraint_from_a_known_unreachable_target(string constraint, string code, DiagnosticSeverity severity)
+    [InlineData("Missing", "OtherClaimed", DiagnosticCodes.UnknownRefusalConstraint, DiagnosticSeverity.Error, 1)]
+    [InlineData("OtherClaim", "OtherClaimed", DiagnosticCodes.UnreachableRefusalBranch, DiagnosticSeverity.Warning, 1)]
+    [InlineData("OtherClaim", "Claimed", DiagnosticCodes.UnreachableRefusalBranch, DiagnosticSeverity.Warning, 0)]
+    void should_distinguish_an_unknown_constraint_from_a_known_unreachable_target(string constraint, string target, string code, DiagnosticSeverity severity, int count)
     {
-        var result = _compiler.Compile($"module Billing\n  feature Payments\n    slice Automation Claiming\n      event Approved\n      event Claimed\n      event OtherClaimed\n      command Claim\n        produces Claimed\n      constraint OtherClaim\n        unique event OtherClaimed\n      reaction Claimer\n        when Approved\n          invokes Claim\n            on refused by constraint {constraint}\n              acknowledge\n");
-        result.Diagnostics.Count(diagnostic => diagnostic.Code == code && diagnostic.Severity == severity).ShouldEqual(1);
+        var result = _compiler.Compile($"module Billing\n  feature Payments\n    slice Automation Claiming\n      event Approved\n      event Claimed\n      event OtherClaimed\n      command Claim\n        produces Claimed\n      constraint OtherClaim\n        unique event {target}\n      reaction Claimer\n        when Approved\n          invokes Claim\n            on refused by constraint {constraint}\n              acknowledge\n");
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == code && diagnostic.Severity == severity).ShouldEqual(count);
     }
 }

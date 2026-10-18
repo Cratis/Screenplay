@@ -83,7 +83,7 @@ function validateRoutes(application: ApplicationSyntax, context: ParserContext):
             const type = commandDestinationType(command, produced, application, { resolver, slice });
             producers.push({ event, command, type, route: produced.stream ?? command.stream });
         }
-        for (const produced of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)) {
+        for (const produced of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => [...trigger.produces, ...trigger.invokes.flatMap(invocation => invocation.onRefused ?? []).flatMap(branch => branch.produces)])) {
             const event = eventOf(produced.event, slice);
             if (event !== null) producers.push({ event, command: null, type: null });
         }
