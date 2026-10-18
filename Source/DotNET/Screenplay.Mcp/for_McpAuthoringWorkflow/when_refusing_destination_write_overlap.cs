@@ -84,7 +84,7 @@ public class when_refusing_destination_write_overlap : given.a_destination_repai
         failure.ShouldBeOfExactType<McpFailure>();
 
         // Root.Verify deliberately refuses every link before the proposal/write-conflict boundary.
-        failure!.Message.ShouldEqual($"Symbolic links and reparse points are not admitted: '{alias}'.");
+        failure.Message.ShouldEqual($"Symbolic links and reparse points are not admitted: '{alias}'.");
         reachedRetention.ShouldBeFalse();
         ShouldHaveNoInstalledSource();
         Directory.GetFileSystemEntries(RootPath).ShouldContainOnly(Path.Combine(RootPath, "application.play"), alias);
@@ -101,7 +101,7 @@ public class when_refusing_destination_write_overlap : given.a_destination_repai
         File.CreateSymbolicLink(alias, Path.Combine(RootPath, "application.play"));
         var failure = Catch.Exception(() => McpRepairWriteConflicts.Verify(Root, proposal, OperationId, requirePhysicalSeparation: true));
         failure.ShouldBeOfExactType<McpFailure>();
-        ((McpFailure)failure!).FailureKind.ShouldEqual("RepairEvidenceWriteConflict");
+        ((McpFailure)failure).FailureKind.ShouldEqual("RepairEvidenceWriteConflict");
         failure.Message.ShouldContain("without resolving an uncertain filesystem alias; no proposal can be accepted.");
         ShouldHaveNoInstalledSource();
         Directory.GetFileSystemEntries(RootPath).ShouldContainOnly(Path.Combine(RootPath, "application.play"), alias);
