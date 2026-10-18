@@ -51,7 +51,7 @@ jobs:
             changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
             while IFS= read -r path; do
               case "$path" in
-                Source/DotNET/Screenplay/Workspaces/*|Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|*.props|global.json|.github/workflows/native-editor-repairs.yml)
+                Source/DotNET/Screenplay/Workspaces/*|Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|*.props|*.targets|global.json|.github/workflows/native-editor-repairs.yml)
                   matrix='[{"runner":"ubuntu-latest","rid":"linux-x64","executable":"Cratis.Screenplay.Tool"},{"runner":"windows-latest","rid":"win-x64","executable":"Cratis.Screenplay.Tool.exe"},{"runner":"macos-15","rid":"osx-arm64","executable":"Cratis.Screenplay.Tool"}]'
                   break
                   ;;

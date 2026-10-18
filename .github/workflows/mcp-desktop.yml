@@ -54,7 +54,7 @@ jobs:
             changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
             while IFS= read -r path; do
               case "$path" in
-                Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|Source/DotNET/Screenplay/Workspaces/*|*.props|global.json|.github/workflows/mcp-desktop.yml|.github/workflows/publish.yml)
+                Source/DotNET/Screenplay.Mcp/*|Source/DotNET/Tool/*|Source/DotNET/Screenplay/Workspaces/*|*.props|*.targets|global.json|.github/workflows/mcp-desktop.yml|.github/workflows/publish.yml)
                   matrix='[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"}]'
                   break
                   ;;
