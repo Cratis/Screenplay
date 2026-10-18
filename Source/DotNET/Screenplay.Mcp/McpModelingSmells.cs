@@ -100,7 +100,8 @@ static class McpModelingSmells
             }
         }
         var read = Read(index.PropertyLinks);
-        foreach (var @event in selected.Where(declaration => declaration.Syntax is EventSyntax && !Superseded(index, declaration)))
+        var opaque = OpaqueConsumed(index);
+        foreach (var @event in selected.Where(declaration => declaration.Syntax is EventSyntax { Visibility: not EventVisibility.Public } && !Superseded(index, declaration) && !opaque.Contains(declaration.Syntax)))
         {
             foreach (var property in ((EventSyntax)@event.Syntax).Properties.Where(property => !read.Contains(property)))
             {
@@ -108,13 +109,35 @@ static class McpModelingSmells
             }
         }
 
-        return McpReviewSelection.Page(snapshot, findings, arguments, "Advisory questions only; never compiler diagnostics and never part of --warnaserror. No suppression syntax or persistence is implemented. Names are case-sensitive. Shapes compare nonempty sets of declared property names/types/modifiers, not business meaning. Fan-out counts distinct resolved event targets, not occurrences or operations. Fan-in includes explicit mappings, known-event automap, every/all, joins, nested/child paths and variants; through all, only events whose payload supplies the value count. Opaque code and unresolved references are not inferred. Unread event properties count any indexed reference other than a production, capture, seed or given write as a read, including automap, opaque code, comments and unclassified name matches; superseded generations are skipped. Related evidence is capped at 20 with complete counts.");
+        return McpReviewSelection.Page(snapshot, findings, arguments, "Advisory questions only; never compiler diagnostics and never part of --warnaserror. No suppression syntax or persistence is implemented. Names are case-sensitive. Shapes compare nonempty sets of declared property names/types/modifiers, not business meaning. Fan-out counts distinct resolved event targets, not occurrences or operations. Fan-in includes explicit mappings, known-event automap, every/all, joins, nested/child paths and variants; through all, only events whose payload supplies the value count. Opaque code and unresolved references are not inferred. Unread event properties count any indexed reference other than a production, capture, seed or given write as a read, including automap, opaque code, comments and unclassified name matches; superseded generations and public contract events are skipped, as are events handled by a reducer rule or reaction with file or inline code, because the index cannot see into it. Related evidence is capped at 20 with complete counts.");
     }
 
     static string[] Shape(EventSyntax syntax) => [.. syntax.Properties.Select(property => $"{property.Name}:{property.Type.Name}:{property.Type.IsCollection}:{property.Type.IsOptional}").Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
     static bool Superseded(McpSyntaxIndex index, McpDeclaration @event) =>
         index.Find(@event.Address, @event.Kind).Any(other => other.Syntax is EventSyntax newer && newer.Generation > ((EventSyntax)@event.Syntax).Generation);
+
+    // A consumer the index cannot see into (a reducer rule or reaction trigger with a file or inline code body) may read any property of the event it handles.
+    static HashSet<SyntaxNode> OpaqueConsumed(McpSyntaxIndex index)
+    {
+        var consumed = new HashSet<SyntaxNode>(ReferenceEqualityComparer.Instance);
+        foreach (var declaration in index.Declarations)
+        {
+            var names = declaration.Syntax switch
+            {
+                ReducerSyntax reducer => reducer.Rules.Where(rule => rule.File is not null || rule.Code is not null).Select(rule => rule.Event),
+                ReactionSyntax reaction => reaction.Triggers.Where(trigger => trigger.File is not null || trigger.Code is not null).Select(trigger => trigger.Source).OfType<NamedTriggerSourceSyntax>().Select(source => source.Name),
+                _ => []
+            };
+            foreach (var name in names)
+            {
+                // An unresolved or ambiguous name cannot be proven, so every candidate counts as consumed.
+                foreach (var candidate in index.Resolve(new(name, ["Event"], declaration.Scope, declaration.Location, "review", declaration.Owner))) consumed.Add(candidate.Syntax);
+            }
+        }
+
+        return consumed;
+    }
 
     static HashSet<SyntaxNode> Read(WorkspacePropertyLinks links) =>
         links.Links.Where(link => !_writeRoles.Contains(link.Reference.Role, StringComparer.Ordinal)).SelectMany(link => link.Candidates).Select(candidate => candidate.Syntax).ToHashSet<SyntaxNode>(ReferenceEqualityComparer.Instance);
