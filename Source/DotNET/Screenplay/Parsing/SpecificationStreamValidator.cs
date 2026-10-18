@@ -38,7 +38,7 @@ internal static class SpecificationStreamValidator
 
         // Preserve the existing fixture-route boundary: only commands supply destination types here.
         var producers = AuthoringProducers.In(application, declarations)
-            .Where(producer => producer.Kind is AuthoringProducerKind.Command or AuthoringProducerKind.Reaction or AuthoringProducerKind.Capture)
+            .Where(producer => producer.Kind is AuthoringProducerKind.Command or AuthoringProducerKind.Reaction or AuthoringProducerKind.Refusal or AuthoringProducerKind.Capture)
             .Select(producer => new Producer(producer.Event, producer.Command, producer.Kind == AuthoringProducerKind.Command ? producer.Type : null, producer.Route)).ToArray();
         foreach (var occurrence in SpecificationRouteOccurrence.In(declarations, expansion))
         {
