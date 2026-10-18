@@ -43861,6 +43861,41 @@
       }
     },
     {
+      "name": "trace-lineage",
+      "requiredParameters": [
+        "address"
+      ],
+      "optionalParameters": [
+        "expectedSourceRevision",
+        "limit",
+        "offset"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "expectedSourceRevision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "address"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "ui-profiles",
       "requiredParameters": [],
       "optionalParameters": [
