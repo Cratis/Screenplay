@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Semantics;
@@ -23,6 +24,8 @@ internal static partial class StructuralComparison
         readonly Dictionary<(string Kind, string Address), AuthoredDeclaration[]> _indexed;
         readonly Dictionary<(string Name, SourceLocation Location), SpecificationSyntax> _effectiveSpecifications;
         readonly bool _exampleExpansionFailed;
+        readonly HashSet<string> _storedTypeNames;
+        readonly int _invalidEnumerations;
 
         internal Snapshot(ScreenplayWorkspace workspace, AuthoringSnapshot? source, WorkspaceSyntaxIndex? syntax, bool matchByAddress, bool declarationLevelOnly)
         {
@@ -38,6 +41,10 @@ internal static partial class StructuralComparison
             var roots = _source.Compilation.Success && _source.Compilation.Value is { } application
                 ? [application]
                 : _syntax.Entries.Where(entry => entry.Parent is null).Select(entry => entry.Node).OfType<ApplicationSyntax>().ToArray();
+            _storedTypeNames = new(roots.SelectMany(StoredTypeNames.For), StringComparer.Ordinal);
+            var enumerations = _indexed.Where(pair => pair.Key.Kind == "Concept").SelectMany(pair => pair.Value).Select(declaration => declaration.Syntax).OfType<ConceptSyntax>().Where(concept => concept.IsEnum).ToArray();
+            HasEnumerations = enumerations.Length > 0;
+            _invalidEnumerations = enumerations.Count(concept => !ComparableEnumeration(concept));
             var expanded = roots.Select(SpecificationExamples.Expand).ToArray();
             _effectiveSpecifications = expanded.SelectMany(value => value.Specifications).GroupBy(value => (value.Authored.Name, value.Authored.Location))
                 .Where(group => group.Count() == 1).ToDictionary(group => group.Key, group => group.Single().Effective);
@@ -52,6 +59,9 @@ internal static partial class StructuralComparison
         internal Dictionary<string, SemanticIdentityAssignment> Assignments { get; }
         internal Dictionary<string, SyntaxNode[]> Nodes { get; }
         internal Dictionary<string, AuthoredDeclaration[]> Unassigned { get; }
+        internal bool HasEnumerations { get; }
+
+        internal bool IsStored(string conceptName) => _storedTypeNames.Contains(conceptName);
 
         internal DocumentLocation[] Documents(string id)
         {
@@ -73,6 +83,7 @@ internal static partial class StructuralComparison
                 yield break;
             }
             if (_declarationLevelOnly && (section == "declarations" || section == "members")) yield return new(StructuralGapKind.DeclarationLevelOnly, "At least one model has no executable model; both sides use authoring declaration keys only, without property-level matching.");
+            if (section == "members" && _invalidEnumerations > 0) yield return new(StructuralGapKind.EnumerationNotComparable, $"{_invalidEnumerations} enumerations have duplicate members or numbers, or numbers that do not match their members; stored numeric identities were not compared.");
             if (_exampleExpansionFailed && (section == "members" || section == "specifications")) yield return new(StructuralGapKind.ExampleResolution, "Typed example resolution is incomplete; effective specification steps cannot be compared.");
             if (!_sourceComplete) yield return new(StructuralGapKind.IncompleteSource, "Source syntax or import placement is incomplete; missing declarations/members are not evidence of no change.");
             var unavailable = Assignments.Count(pair => !Comparable(pair.Key) && (section == "members" || section == "declarations" || (section == "events" && pair.Value.Address.Kind == SemanticKind.EventContract) || (section == "specifications" && pair.Value.Address.Kind == SemanticKind.Specification)));
@@ -108,7 +119,7 @@ internal static partial class StructuralComparison
 
         internal bool ComparableAuthoring(string key) => Unassigned.TryGetValue(key, out var declarations) && declarations.All(declaration => !declaration.IsImplicit) && ComparableNodes([.. declarations.Select(declaration => declaration.Syntax)]);
 
-        bool ComparableNodes(SyntaxNode[] nodes) => nodes.Length > 0 && !(_exampleExpansionFailed && nodes.Any(node => node is SpecificationSyntax)) && (nodes.Length == 1 || nodes.All(node => node is EventSyntax)) &&
+        bool ComparableNodes(SyntaxNode[] nodes) => nodes.Length > 0 && nodes.OfType<ConceptSyntax>().All(concept => !concept.IsEnum || ComparableEnumeration(concept)) && !(_exampleExpansionFailed && nodes.Any(node => node is SpecificationSyntax)) && (nodes.Length == 1 || nodes.All(node => node is EventSyntax)) &&
             (!nodes.Any(node => node is EventSyntax) || (nodes.All(node => node is EventSyntax) && nodes.OfType<EventSyntax>().Select(node => node.Generation).Distinct().Count() == nodes.Length && nodes.OfType<EventSyntax>().All(node => node.Properties.Select(property => property.Name).Distinct(StringComparer.Ordinal).Count() == node.Properties.Count())));
 
         SyntaxNode[] FindNodes(SemanticIdentityAssignment assignment)
