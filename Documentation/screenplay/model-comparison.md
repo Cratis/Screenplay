@@ -8,7 +8,9 @@ description: Compare authored Screenplay models by persisted identity or exact a
 Use `ModelComparison.Compare` from `Cratis.Screenplay.Comparison` in the
 `Cratis.Screenplay` package to inspect structural changes without running MCP.
 The result describes authored structure, not executable equivalence or a
-specification execution verdict.
+specification execution verdict. To compare declared event relationships with
+host-supplied registrations, appends and consumers, use the
+[observation comparison API](observation-comparison.md).
 
 This example compares two in-memory sources and finds an added event property:
 

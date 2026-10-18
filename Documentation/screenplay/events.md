@@ -30,6 +30,10 @@ The optional `file` line names the repository relative file this declaration is 
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
 
+To compare stored type names and generations with host-supplied registrations
+and bounded append counts, use the [observation comparison API](observation-comparison.md).
+It reports evidence and coverage, not payload compatibility.
+
 ## Released event contracts
 
 At release time, explicitly [admit the shipped revisions](tool.md#admit-and-check-released-event-revisions)
