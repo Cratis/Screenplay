@@ -637,9 +637,17 @@ A mapping may assign a value of one concept to a property of a different concept
 concept OrderId : Uuid
 concept MovementId : Uuid
 
-produces StockMoved
-  for movementId
-  movementId = orderId        // OrderId becomes MovementId
+module Stock
+  feature Moves
+    slice StateChange MoveStock
+      command MoveStock
+        id String identifier
+        orderId OrderId
+        produces StockMoved
+          for id
+          movementId = orderId    // OrderId becomes MovementId
+      event StockMoved
+        movementId MovementId
 ```
 
 The mapping is admitted when all of these hold: both concepts are over the same primitive, neither is an enumeration, the source is not optional when the target is required, and the target concept declares no rule the source concept does not also declare, so the value is already proved. A personal-data or secret classification on the source must be repeated on the target. Anything else is still the type mismatch error. The check applies to every property mapping: `produces`, reaction productions and invocations, and projections. A model that needs the conversion selects language/semantic `29.0`; models using none keep their existing version and bytes.
