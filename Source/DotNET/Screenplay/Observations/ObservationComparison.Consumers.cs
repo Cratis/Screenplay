@@ -7,6 +7,9 @@ namespace Cratis.Screenplay.Observations;
 
 internal sealed partial class ObservationComparisonRun
 {
+    static bool ReachedTail(ObservedConsumer consumer, long tail) =>
+        consumer.NextSequenceNumber is { } next ? next > tail : consumer.LastHandledSequenceNumber is { } last && last >= tail;
+
     void CompareConsumers()
     {
         foreach (var consumer in snapshot.Consumers.Where(value => value.Owner == ObservedConsumerOwner.Platform))
@@ -85,6 +88,11 @@ internal sealed partial class ObservationComparisonRun
             reason = snapshot.Coverage.Complete ? null : ObservationUnknownReason.PartialCoverage;
             Add(candidates.Length == 0 ? ObservationFindingKind.ConsumerNotRegistered : ObservationFindingKind.ConsumerOnOtherSequence, outcome, candidates.Length == 0 ? "No application reaction consumer subscribes to the trigger event." : "Matching reaction consumers subscribe only on another sequence.", reaction, type, consumer: mapped, reason: reason);
         }
+        else if (mapped is not null && map.Consumers.Count(value => value.Value == mapped) > 1)
+        {
+            outcome = ObservationOutcome.Unknown;
+            reason = ObservationUnknownReason.AmbiguousIdentity;
+        }
         else if (mapped is not null && MappedSubscriptionMismatch(reaction, mapped))
         {
             outcome = ObservationOutcome.Drift;
@@ -95,11 +103,6 @@ internal sealed partial class ObservationComparisonRun
             outcome = MissingConsumerOutcome();
             reason = snapshot.Coverage.Complete ? null : ObservationUnknownReason.PartialCoverage;
             Add(ObservationFindingKind.ConsumerMismatch, outcome, "The mapped consumer subscription does not match the reaction triggers on the scanned sequence.", reaction, type, consumer: mapped, reason: reason);
-        }
-        else if (mapped is not null && map.Consumers.Count(value => value.Value == mapped) > 1)
-        {
-            outcome = ObservationOutcome.Unknown;
-            reason = ObservationUnknownReason.AmbiguousIdentity;
         }
         else if (mapped is null || ReactionBehind(reaction))
         {
@@ -132,6 +135,6 @@ internal sealed partial class ObservationComparisonRun
         var consumers = snapshot.Consumers.Where(value => value.Identifier == identifier && value.SequenceId == snapshot.Coverage.SequenceId &&
             value.Owner == ObservedConsumerOwner.Application && value.Kind == ObservedConsumerKind.Reaction).ToArray();
 
-        return consumers.Length == 0 || consumers.Any(value => value.LastHandledSequenceNumber is null || value.LastHandledSequenceNumber < tail);
+        return consumers.Length == 0 || consumers.Any(value => !ReachedTail(value, tail));
     }
 }
