@@ -53,7 +53,10 @@ internal static partial class SemanticModelValidator
     /// </summary>
     /// <param name="application">The application.</param>
     /// <returns><c>true</c> when ESM v29 is required.</returns>
-    internal static bool UsesAcmeAdmissions(SemanticApplication application) => UsesDecimalPlaces(application);
+    internal static bool UsesAcmeAdmissions(SemanticApplication application) => UsesDecimalPlaces(application) || UsesProjectionProducts(application);
+
+    internal static bool UsesProjectionProducts(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Projections).Any(projection => ProjectionMappings(projection).Any(mapping => mapping.Factor is not null));
 
     static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
@@ -70,6 +73,16 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    static IEnumerable<SemanticProjectionMapping> ProjectionMappings(SemanticProjection projection) =>
+        projection.Scope is null ? [] : ScopeMappings(projection.Scope);
+
+    static IEnumerable<SemanticProjectionMapping> ScopeMappings(SemanticProjectionScope scope) =>
+        scope.From.SelectMany(from => from.Mappings)
+            .Concat(scope.Joins.SelectMany(join => join.Mappings))
+            .Concat(scope.Every?.Mappings ?? [])
+            .Concat(scope.Children.SelectMany(child => ScopeMappings(child.Scope)))
+            .Concat(scope.Nested.SelectMany(nested => ScopeMappings(nested.Scope)));
 
     static IEnumerable<SemanticComparison> Comparisons(SemanticCondition condition) => condition switch
     {

@@ -263,6 +263,8 @@ public partial class ScreenplayPrinter
         }
     }
 
+    static string Factor(ScreenplayWriter writer, ExpressionSyntax? factor) => factor is null ? string.Empty : $" * {writer.Expression(factor)}";
+
     void WriteMappings(ScreenplayWriter writer, IEnumerable<MappingSyntax> mappings, IReadOnlySet<string> reserved)
     {
         foreach (var mapping in mappings)
@@ -275,8 +277,8 @@ public partial class ScreenplayPrinter
                     IncrementMappingSyntax increment => $"increment {increment.Property}",
                     DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
                     CountMappingSyntax count => $"count {count.Property}",
-                    AddMappingSyntax add => $"add {add.Property} by {writer.Expression(add.Value)}",
-                    SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {writer.Expression(subtract.Value)}",
+                    AddMappingSyntax add => $"add {add.Property} by {writer.Expression(add.Value)}{Factor(writer, add.Factor)}",
+                    SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {writer.Expression(subtract.Value)}{Factor(writer, subtract.Factor)}",
                     _ => throw new UnsupportedSyntaxForPrinting("projection mapping", mapping.GetType().Name)
                 },
                 mapping);

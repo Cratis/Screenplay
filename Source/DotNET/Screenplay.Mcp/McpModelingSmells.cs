@@ -192,8 +192,8 @@ static class McpModelingSmells
     static IEnumerable<string> Paths(MappingSyntax mapping) => mapping switch
     {
         SetMappingSyntax set => Paths(set.Source),
-        AddMappingSyntax add => Paths(add.Value),
-        SubtractMappingSyntax subtract => Paths(subtract.Value),
+        AddMappingSyntax add => Paths(add.Value).Concat(add.Factor is null ? [] : Paths(add.Factor)),
+        SubtractMappingSyntax subtract => Paths(subtract.Value).Concat(subtract.Factor is null ? [] : Paths(subtract.Factor)),
         _ => []
     };
 

@@ -198,6 +198,12 @@ public static partial class SemanticModelCanonicalJson
             WriteProjectionValue(writer, mapping.Source);
         }
 
+        if (mapping.Factor is not null)
+        {
+            writer.WritePropertyName("factor");
+            WriteProjectionValue(writer, mapping.Factor);
+        }
+
         writer.WriteEndObject();
     }
 

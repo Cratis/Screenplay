@@ -17,6 +17,13 @@ internal sealed partial class WorkspacePropertyLinks
         _ => null
     };
 
+    static ExpressionSyntax? MappingFactor(MappingSyntax mapping) => mapping switch
+    {
+        AddMappingSyntax add => add.Factor,
+        SubtractMappingSyntax subtract => subtract.Factor,
+        _ => null
+    };
+
     static bool IncompleteProjection(PropertyProjectionScope scope, AuthoredDeclaration[] events, AuthoredDeclaration[] targets, string path) =>
         targets.Length != 1 || events.Length != 1 || scope.Nested is not null || path.Contains('.');
 
@@ -25,7 +32,7 @@ internal sealed partial class WorkspacePropertyLinks
         var use = ProjectionUse(scope, mapping);
         var targets = Members(scope.Models, scope.Nested ?? mapping.Property);
         var expression = MappingExpression(mapping);
-        var paths = ProjectionPaths(expression);
+        var paths = ProjectionPaths(expression).Concat(ProjectionPaths(MappingFactor(mapping))).ToArray();
         var sources = paths.SelectMany(entry => Members(events, ((PathExpressionSyntax)entry.Node).Path)).Distinct().ToArray();
         var incomplete = IncompleteProjection(scope, events, targets, mapping.Property) ||
             paths.Any(entry => Members(events, ((PathExpressionSyntax)entry.Node).Path).Length != 1) || expression is RawExpressionSyntax;
