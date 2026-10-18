@@ -83,7 +83,7 @@ internal static class WorkspaceTimelineContentProof
         if (removed.Count == 0) return true;
         var expected = removed.SelectMany(import => before.Documents.Where(document => document.Path != import.DocumentPath &&
             PlayGlob.IsMatch(PlayGlob.Resolve(import.DocumentPath, import.Import.Pattern), document.Path))
-            .Select(document => (import.DocumentPath, document.Path, Placement: import.Placement))).ToArray();
+            .Select(document => (import.DocumentPath, document.Path, import.Placement))).ToArray();
         var actual = pins.Select(pin => (pin.DocumentPath, Path: PlayGlob.Resolve(pin.DocumentPath, pin.Import.Pattern), pin.Placement)).ToArray();
 
         return expected.Length > 0 && expected.Length == actual.Length && expected.Distinct().Count() == expected.Length &&

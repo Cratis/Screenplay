@@ -120,6 +120,7 @@ internal static partial class WorkspaceTimelineRepairs
             {
                 return Pin(index, timeline, finding, subject, parent, consumerEntry, left, right);
             }
+
             // Whole-glob moves are tried before freezing the currently reached files into a list.
         }
         else if (consumerEntry.Member is not ("modules" or "features" or "slices") || left.Node.GetType() != right.Node.GetType())

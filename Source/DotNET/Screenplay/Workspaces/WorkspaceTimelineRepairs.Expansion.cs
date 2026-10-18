@@ -33,15 +33,20 @@ internal static partial class WorkspaceTimelineRepairs
         var document = timeline.Documents.Single(document => document.Path == consumer.Path);
         var compiler = new ScreenplayCompiler();
         var discovered = ScreenplayCompiler.DiscoverImports(document.Source, document.Path, compiler.Languages);
-        var removed = selected.Select(entry => new TimelineImportPin(document.Path,
-            discovered.Single(import => import.Import.Location == entry.Location).PlacementFrom(document.Placement)!, (FileImportSyntax)entry.Node)).ToArray();
+        var removed = selected.Select(entry => new TimelineImportPin(
+            document.Path,
+            discovered.Single(import => import.Import.Location == entry.Location).PlacementFrom(document.Placement)!,
+            (FileImportSyntax)entry.Node)).ToArray();
         if (removed.Any(import => import.Placement is null)) return null;
         var expanded = removed.SelectMany(import => timeline.Documents
             .Where(target => target.Path != document.Path && PlayGlob.IsMatch(PlayGlob.Resolve(document.Path, import.Import.Pattern), target.Path))
             .OrderBy(target => target.Path, StringComparer.Ordinal).Select(target => (target.Path, Original: import))).ToArray();
         if (expanded.Length == 0 || expanded.Select(item => item.Path).Distinct(StringComparer.Ordinal).Count() != expanded.Length ||
             expanded.Any(item => item.Path.IndexOfAny(['*', '?', '[', ']', '{', '}']) >= 0 ||
-                !timeline.Documents.Single(document => document.Path == item.Path).Placement.Equals(item.Original.Placement))) return null;
+                !timeline.Documents.Single(document => document.Path == item.Path).Placement.Equals(item.Original.Placement)))
+        {
+            return null;
+        }
 
         foreach (var after in new[] { false, true })
         {
@@ -71,10 +76,12 @@ internal static partial class WorkspaceTimelineRepairs
             };
             if (ReferenceEquals(replacement, parent.Node)) return null;
 
-            return new(new(finding.Diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(parent.Handle, parent.Node, replacement)])
-            {
-                Title = "Replace timeline globs with ordered imports (new files need explicit imports)"
-            }, ranks)
+            return new(
+                new(finding.Diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(parent.Handle, parent.Node, replacement)])
+                {
+                    Title = "Replace timeline globs with ordered imports (new files need explicit imports)"
+                },
+                ranks)
             {
                 Pins = [.. paths.Zip(imports).Select(pair => new TimelineImportPin(document.Path, expanded.Single(item => item.Path == pair.First).Original.Placement, pair.Second))],
                 RemovedImports = [.. removed]
