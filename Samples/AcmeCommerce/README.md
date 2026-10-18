@@ -86,7 +86,6 @@ replenishment (F-C) and change of price (F-D).
 
 - `Money` has two decimals, but there is no decimal-places rule: only `>= 0`.
 - A toolbar button belongs to a screen; there is no application-level topbar toolbar construct.
-- A query `performer` (a read model composed from elsewhere) is not admitted by the executable binder, so it cannot coexist
-  with `screenplay test`; `$eventContext.*` in an outbound projection makes every specification "unsupported".
+- `$eventContext.*` in an outbound projection makes every specification "unsupported".
 - A command specification cannot list the cascaded public event of its slice's outbound translation, so the accepted path is
   specified in the translation (`when append <PrivateEvent>`) and the command keeps its denial specifications.

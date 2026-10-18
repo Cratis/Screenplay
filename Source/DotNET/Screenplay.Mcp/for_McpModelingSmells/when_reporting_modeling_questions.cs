@@ -23,7 +23,7 @@ public class when_reporting_modeling_questions : given.a_model
     }
 
     [Fact] void should_compile_the_seed() => _report.GetProperty("success").GetBoolean().ShouldBeTrue();
-    [Fact] void should_report_all_five_rules() => _items.Select(item => item.GetProperty("ruleId").GetString()).Distinct().ShouldContainOnly("SMELL001", "SMELL002", "SMELL003", "SMELL004", "SMELL005");
+    [Fact] void should_report_all_six_rules() => _items.Select(item => item.GetProperty("ruleId").GetString()).Distinct().ShouldContainOnly("SMELL001", "SMELL002", "SMELL003", "SMELL004", "SMELL005", "SMELL006");
     [Fact] void should_ask_questions_only() => _items.All(item => item.GetProperty("question").GetString()!.EndsWith('?')).ShouldBeTrue();
     [Fact] void should_report_information_only() => _items.All(item => item.GetProperty("severity").GetString() == "info").ShouldBeTrue();
     [Fact] void should_flag_the_generic_copy() => _items.Any(item => item.GetProperty("ruleId").GetString() == "SMELL003" && item.GetProperty("declaration").GetProperty("name").GetString() == "ProjectUpdated").ShouldBeTrue();

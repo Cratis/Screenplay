@@ -1,8 +1,10 @@
 ---
 id: 0098
 title: Admit the constructs the Acme Commerce sample is blocked on (exception to the freeze)
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-18
+decider: Einar (owner, maintainer)
 class: product
 reversibility: costly
 applies-to:
@@ -58,13 +60,16 @@ follows each; the decider may accept any subset.
 
 ## Decision
 
-Pending. Until accepted, no construct, keyword, grammar, diagnostic family or ESM version is added for these issues.
-Accepted items are implemented with a superseding note listing their ESM version numbers, and each must land in Stage,
-the CLI, the AI corpus and Studio under the catch-up rule of 0092 item 5.
+Accepted for all eight items (#857, #858, #859, #861, #864, #866, #867, #868), decided by the owner on 2026-10-18.
+The freeze of decision 0092 was set for the maintainer who asked for it and does not bind the Acme Commerce work; this
+record is the item 4 exception the freeze asks for. The recommendations above were advisory; the owner accepted
+every item. Each item is implemented with a specification, documentation and AI corpus on every surface, and
+lands in Stage, the CLI, Studio and the AI corpus under the catch-up rule of 0092 item 5. The ESM version
+numbers each item takes are listed in a superseding note on the pull request that admits it.
 
 ## Options considered
 
-- Accept all eight. Rejected as a recommendation: four have a reasonable model-side alternative.
+- Accept all eight. Chosen by the owner.
 - Decline all eight. Possible; the sample then keeps its workarounds, which are listed in its README.
 
 ## Related issues

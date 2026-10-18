@@ -26,6 +26,7 @@ enum WorkspaceReferenceDomain
     System,
     EventSource,
     EventStream,
+    EventStreamIdPart,
     Fixture,
     Reaction,
     Constraint,
@@ -54,6 +55,7 @@ static class WorkspaceReferenceMembers
                     if (IsBehaviorParameter(entry, index, text)) continue;
                     var owner = domain switch
                     {
+                        WorkspaceReferenceDomain.EventStreamIdPart => StreamPartOwner(entry, index),
                         WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
                         WorkspaceReferenceDomain.SpecificationParameter => TableOwner(entry, index),
                         WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
@@ -81,6 +83,21 @@ static class WorkspaceReferenceMembers
                 }
             }
         }
+    }
+
+    internal static string? StreamPartOwner(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
+    {
+        var route = entry.Parent is { } parent ? index.Find(parent)?.Node : null;
+        var names = route switch
+        {
+            CommandStreamSyntax command => (command.EventSource, command.Stream),
+            SpecificationStreamSyntax specification => (specification.EventSource, specification.Stream),
+            _ => (string.Empty, string.Empty)
+        };
+        var sources = index.Entries.Where(candidate => candidate.Node is EventSourceSyntax source && source.Name == names.Item1).ToArray();
+        if (sources.Length != 1) return null;
+        var streams = index.Entries.Where(candidate => candidate.Parent == sources[0].Handle && candidate.Node is EventStreamSyntax stream && stream.Name == names.Item2).ToArray();
+        return streams.Length == 1 ? WorkspaceReferenceBindings.Key(streams[0]) : null;
     }
 
     internal static string? TableOwner(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
@@ -188,6 +205,7 @@ static class WorkspaceReferenceMembers
     {
         QueryIdentitySourceSyntax => [("query", WorkspaceReferenceDomain.Query)],
         CaseValueExpressionSyntax => [("parameter", WorkspaceReferenceDomain.SpecificationParameter)],
+        PropertyMappingSyntax when entry.Member == "streamIdParts" && entry.Parent is { } routeParent && index.Find(routeParent)?.Node is CommandStreamSyntax or SpecificationStreamSyntax => [("property", WorkspaceReferenceDomain.EventStreamIdPart)],
         PropertyMappingSyntax when entry.Parent is { } caseParent && index.Find(caseParent)?.Node is SpecificationCaseSyntax => [("property", WorkspaceReferenceDomain.SpecificationParameter)],
         _ => null
     };

@@ -67,7 +67,7 @@ public class when_protecting_command_reads : given.an_authoring_connection
     [Fact]
     void should_preview_with_an_unrelated_unadmitted_query()
     {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source + "\n      query External => View[]\n        performer\n          file External.cs\n");
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source + "\n      query External => View[]\n        scoped to identity\n");
         Initialize();
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString();
@@ -83,7 +83,7 @@ public class when_protecting_command_reads : given.an_authoring_connection
         var candidate = Candidate(proposal);
         candidate.Compilation.Success.ShouldBeFalse();
         candidate.Documents.Single().Text.ShouldContain("command reads protected");
-        candidate.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("performer", StringComparison.Ordinal)).ShouldBeTrue();
+        candidate.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("scoped to", StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Fact]

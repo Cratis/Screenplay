@@ -48,20 +48,8 @@ translation/    inbound.play (what Warehouse and Sales say) and publish.play (wh
   and P11 is published one receipt line per event (see `agents/wave2/ecommerce-contracts-p5.md`).
 - The supplier is chosen by the Buyer (`ChoosePreferredSupplier`) from the offers, not computed as the cheapest: a projection cannot pick a minimum.
 - A purchase order is numbered at submission (`PO-...`), not at creation: a reaction-created draft cannot generate a number.
-- No read model is composed by a performer: a performer query makes every specification of the application unsupported (`PLAY0268`,
-  [Screenplay#862](https://github.com/Cratis/Screenplay/issues/862)). The dashboard is projected; its counters all state every `from`
-  (`add ... by 0`) because any event may be the first a row sees. What the performer version would say (not compiled):
-
-  ````screenplay
-  query CurrentPurchasingFigures => PurchasingFigures
-    performer
-      ```csharp
-      var orders = await readModels.GetAll<PurchaseOrderRow>();
-      var suppliers = await readModels.GetAll<SupplierRow>();
-      return new PurchasingFigures("global", orders.Count(), suppliers.Count(),
-          orders.Sum(o => o.OrderedQuantity), orders.Sum(o => o.ReceivedQuantity));
-      ```
-  ````
+- The dashboard read model is composed by a query `performer` (Screenplay#862): an opaque read, so it has no projection and no specification;
+  the rest of Purchasing stays executable with `screenplay test`.
 - Cross-context mappings must share one concept ([Screenplay#861](https://github.com/Cratis/Screenplay/issues/861)): an id that travels (`crossingId` from Warehouse, read as `PurchaseOrderId` here) is declared with
   the consumer's own concept in the consumer's local copy of the contract.
 - A command specification cannot list a cascaded public event (`PLAY0285`): the accepted path of `ReceivePurchaseOrderGoods` is proven in `PublishGoodsReceived`.

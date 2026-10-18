@@ -63,6 +63,13 @@ public sealed partial class SemanticModelBinder
                 };
             }
 
+            var opaque = specification.ThenQueries.FirstOrDefault(value => ReachesOpaqueQuery(slice, value));
+            if (opaque is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' reads query '{opaque.Query}', which code performs, so it is not an executable specification.", opaque.Location);
+                return null;
+            }
+
             SemanticCommand? command = null;
             if (specification.When is not null &&
                 (!commands.TryGetValue(ShortName(specification.When.CommandType), out command) ||
