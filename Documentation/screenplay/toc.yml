@@ -123,6 +123,8 @@
   href: model-notes.md
 - name: Model comparison API
   href: model-comparison.md
+- name: Observation comparison API
+  href: observation-comparison.md
 - name: Value rule checks
   href: value-rule-checks.md
 - name: Check command date comparisons
