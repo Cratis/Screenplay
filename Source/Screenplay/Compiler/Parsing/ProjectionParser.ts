@@ -29,7 +29,7 @@ const clearWithPattern = pattern('^clear\\s+with\\s+(@?[\\w.]+)$');
 const variantPattern = pattern('^variant\\s+(@?[\\w.]+)\\s*$');
 const entersOnPattern = pattern('^enters\\s+on\\s+(@?[\\w.]+)(?:\\s+key\\s+(.+))?$');
 const keywordMappingPattern = pattern('^(increment|decrement|count|clear)\\s+(@?[$\\w.]+)$');
-const arithmeticPattern = pattern('^(add|subtract)\\s+(@?[$\\w.]+)\\s+by\\s+(.+)$');
+const arithmeticPattern = pattern('^(add|subtract)\\s+(@?[$\\w.]+)\\s+by\\s+(.+?)(?:\\s+\\*\\s+(.+))?$');
 const setPattern = pattern('^set\\s+(@?[$\\w.]+)\\s+(?:=|to)\\s+(.+)$');
 const assignmentPattern = pattern('^(@?[$\\w.@]+)\\s*=(?!=|>)\\s*(.+)$');
 const keywordMappings: Record<string, MappingKind> = {
@@ -378,7 +378,7 @@ function pushMapping(context: ParserContext, line: SourceLine, mappings: Mapping
     }
     const arithmetic = arithmeticPattern.exec(line.content);
     if (arithmetic !== null) {
-        mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), value: parseProjectionExpression(arithmetic[3], location, context), location });
+        mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), value: parseProjectionExpression(arithmetic[3], location, context), ...(arithmetic[4] === undefined ? {} : { factor: parseProjectionExpression(arithmetic[4], location, context) }), location });
         return;
     }
     const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);

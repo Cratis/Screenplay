@@ -293,6 +293,24 @@ To assert a localized rule's rejection, quote the key in the specification: `the
 
 Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Choose either the bare or the quoted form for a specification: the executable model accepts exactly one rejection and no success outcomes. Both forms round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
 
+## Stating the public event a command publishes
+
+When a command's private event is published by an outbound `Translate` slice, a specification of the command may state the public event after the private one. The accepted path is then proved where the command is, with both facts, rather than in a separate `when append` specification on the translation slice:
+
+```screenplay
+specification SettingAPriceIsPublished
+  when SetProductPrice
+    productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+    price = 59
+  then ProductPriceSet
+    price = 59
+  then ProductPriceChanged
+    productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+    newPrice = 59
+```
+
+The expected facts are the command's own events and the public events its outbound projection derives from them, in the order they were appended. Without the public event the exact fact count would fail; with it stated, a published event whose values differ fails the specification. `PLAY0285` no longer calls a public event unreachable when an outbound projection publishes it from an event the command produces. The statement of the public event takes no `for`, because its destination is derived from the private event. This needs no new language version.
+
 ## Query results
 
 A read model assertion proves that projected state exists. A query assertion proves that callers can actually retrieve the expected state through the declared read contract. State must not be used as an implicit query assertion because one read model can have several queries with different arguments and filtering.

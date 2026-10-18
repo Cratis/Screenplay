@@ -378,7 +378,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             RegisterReadModelDeclarations();
             RegisterQueryDeclarations();
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
-            _boundConcepts = concepts.ToDictionary(concept => concept.Id);
+            _boundConcepts = concepts.GroupBy(concept => concept.Id).ToDictionary(group => group.Key, group => group.First());
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
             if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);

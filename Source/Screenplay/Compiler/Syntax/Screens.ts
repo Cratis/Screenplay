@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax } from './Authorization';
 import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
@@ -219,6 +220,7 @@ export interface ToolbarButtonSyntax extends SyntaxNode {
     readonly slice?: string | null;
     readonly emphasis?: ToolbarEmphasis | null;
     readonly icon?: string | null;
+    readonly authorize?: AuthorizeSyntax | null;
 }
 
 export interface ScreenToolbarSyntax extends SyntaxNode {

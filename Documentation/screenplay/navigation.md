@@ -38,6 +38,7 @@ module Support
 - `target` names a module, or a module and a feature path (`Sales.Orders.Returns` for a nested feature). A module target goes to the module's first feature. An item with no target must have sub-items (`PLAY0748`).
 - `slot` names the layout slot the target renders into. Without it the target renders into the layout's primary content slot. A slot no layout declares is `PLAY0749`.
 - In the sidebar, an item may nest further `item` lines: top-level items target modules and sub-items target features. Topbar items do not nest (`PLAY0746`).
+- `button <id> title "<text>" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>]` is an application-level toolbar button in `navigation topbar`. It has the grammar and the checks of a [screen toolbar button](screens.md): the slice is a State Change slice (`PLAY0761` to `PLAY0765`), and the button opens that slice's task dialog over whichever page the user is on. An indented `authorize <Policy>` line under the button limits who sees it; it takes the same policy expression as `authorize` on a command. Buttons are not allowed in `navigation sidebar` (`PLAY0741`). In a module, `navigation topbar extends` adds buttons after the application's, `overrides` shows only the module's own, and `inherits` keeps the application's, exactly as for items.
 
 ## At module level
 
