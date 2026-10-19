@@ -82,6 +82,7 @@ export const clauseKeywords = [
     'profile',
     'require',
     'authenticated',
+    'anonymous',
     'role',
     'claim',
     'subject',
