@@ -13,10 +13,9 @@ A trailing `[]` makes a collection of the type. It follows the complete type nam
 
 ```text
 data PricedProduct[] via query AllPricedProducts
-lines InvoiceLine[] optional
 ```
 
-Source: `Samples/AcmeCommerce/Catalog/model/pricing.play:97`. Grammar: `TypeRef = QualifiedName, [ "[]" ], [ "optional" | "?" ]`. See [Types](types.md).
+Source: `Samples/AcmeCommerce/Catalog/model/pricing.play:97`. In a property, `[]` comes before `optional`: `InvoiceLine[] optional` (illustrative; see [Types](types.md)). Grammar: `TypeRef = QualifiedName, [ "[]" ], [ "optional" | "?" ]`. See [Types](types.md).
 
 Reason: one suffix reads the same in every position that takes a type (event, command and read-model properties, query results, screen data).
 
@@ -85,7 +84,7 @@ A `$` prefix names a value that does not come from the event or command being ma
 | `$context.<member>` | The command, query or capture context, such as `occurred` or `tenant` | Mapping sources, policy conditions, capture maps | `registeredAt = $context.occurred` |
 | `$identity.<property>` | The caller. Equivalent to `$context.identity`; claim names after `claims.` are not checked | Mapping sources, `from query ... by` | `requestedBy = $identity.userName` |
 | `$env.<NAME>` | An environment variable | Mapping sources, `tag` | `source = $env.SERVICE_NAME` |
-| `$strings.<key>` | A localized string, resolved against the active locale at runtime | Messages, `notify`, mapping sources | `message $strings.common.done` |
+| `$strings.<key>` | A localized string, resolved against the active locale at runtime | Messages, `notify`, mapping sources | `notify info $strings.common.done` |
 | `$refusal.<part>` | `reason`, `constraint` or `message` of the refusal a reaction is handling | Refusal branches | `reason = $refusal.reason` |
 | `$eventSourceId` | The event source id of the event being projected | Projection mappings | `vendorId = $eventSourceId` |
 | `$eventContext.<member>` | The event context (sequence number, correlation id, occurred) | Projection mappings | `PlacedAt = $eventContext.occurred` |
@@ -173,11 +172,11 @@ In a `.play` file, `//` starts a comment that runs to the end of the line. The c
 @authorize AuthorizationCode   // a property called authorize
 ```
 
-See [Overview](overview.md#comments). Standalone projection (PDL) source also accepts `#` comments.
+Source: `Documentation/screenplay/grammar.md:1736`. See [Overview](overview.md#comments). Standalone projection (PDL) source also accepts `#` comments.
 
 ## Capture guards
 
-Capture backtick guards are the only place `&&`, `||` and `!` are admitted. Everywhere else, conditions use `and`, `or` and comparison symbols. The one exception is the backtick guard on a capture append:
+Outside inline code (embedded C# and screen code), capture backtick guards are the only place `&&`, `||` and `!` are admitted. Everywhere else, conditions use `and`, `or` and comparison symbols. The one exception is the backtick guard on a capture append:
 
 ```text
 append InvoiceFlagged
