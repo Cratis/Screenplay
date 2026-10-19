@@ -173,6 +173,9 @@ a given is history of the event source the specification acts on (decision 0101)
 - A runner that appends givens to real event streams, such as one against Chronicle, appends sourceless givens to
   the action's event source. Without one, it uses any one identity for all sourceless facts in the specification,
   different from every identity the specification states.
+- A projection keyed on a payload property that maps `$eventSourceId` from a sourceless given reads `null` in the
+  reference evaluator, while such a runner reads the action's identity. Don't assert that value; state `for` on the
+  given when it matters.
 
 State `for` on the given when the command appends to more than one event source or an assertion depends on where the
 given is. The executable model carries a sourceless given without an event source; nothing about it changes.

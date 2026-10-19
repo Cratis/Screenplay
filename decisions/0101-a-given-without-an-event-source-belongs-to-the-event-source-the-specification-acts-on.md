@@ -52,6 +52,11 @@ its own, and it is not on a wildcard stream.
   reference outcome. When there is no action event source, it may use any one identity, the same for every
   sourceless fact in the specification and different from every identity the specification states; no reference
   outcome depends on that identity.
+- **Known divergence: `$eventSourceId` from a sourceless given.** A projection keyed on a payload property that
+  maps `$eventSourceId` from a sourceless given reads `null` in the reference evaluator, while a consumer that
+  appended the given to the action's event source reads that identity. Following the ruling that specifications
+  assert behavior rather than event source identities, a specification should not assert that value; state `for`
+  on the given when it matters. The reference evaluator keeps its behavior.
 - **Recommendation, not a rule.** When the action appends to more than one event source, or an assertion depends on
   the given's event source, state `for` on the given. No diagnostic enforces this.
 
