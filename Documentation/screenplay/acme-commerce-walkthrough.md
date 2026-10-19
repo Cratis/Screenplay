@@ -48,7 +48,7 @@ shorter one.
 The sample was written in this order, and each step compiles on its own:
 
 1. The **shared kernel** (`Shared/`): concepts, event sources, policies, personas and the theme.
-2. The **shell** (`Shell/`, `Application/`): the UI profile, the navigation and the Forbidden, NotFound and Error screens.
+2. The **shell** (`Shell/`): the UI profile and the navigation.
 3. **Catalog** first, because it publishes the first contracts (P1 to P3).
 4. **Storefront**, which only listens to Catalog and then publishes the first order (P4).
 5. **Sales**, **Warehouse** and **Purchasing**, which close the loops: order to cash to dock, and replenishment.
@@ -61,7 +61,6 @@ The sample was written in this order, and each step compiles on its own:
 application.play                the ONLY `domain AcmeCommerce` line; `reaction batches atomic`, `command reads protected`
 Shared/                         the shared kernel
 Shell/                          ui profile, navigation, the one sample-data pack
-Application/                    the Forbidden / NotFound / Error screens
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
 _packages/scene.commerce/       the custom component package @acme/scene.commerce
@@ -107,13 +106,11 @@ one identity has more than one history.
 
 **Policies and personas.** `Shared/access.play` declares the [policies](policies.md) (`IsShopper`, `IsSalesManager`,
 `CanCurateCatalog`, `CanBuy`, `CanWorkWarehouse`, ...) and then the personas that hold them: Shopper, Merchandiser, SalesRep,
-SalesManager, Buyer, WarehouseClerk and OpsAdmin. A module admits its own persona and the OpsAdmin, who sees administration and
-dashboards everywhere:
+SalesManager, Buyer and WarehouseClerk: six personas, each a real person who works in the shop. A module admits its own persona(s):
 
 ```text
 policy CanCurateCatalog
   require role "Merchandiser"
-    or role "OpsAdmin"
 ```
 
 **Processing purposes.** Storefront (`ShopOrderProcessing`), Sales (`OrderFulfilmentProcessing`) and Purchasing
@@ -411,7 +408,6 @@ Screens fill [templates](templates.md). The sample uses the foundation blueprint
 | `WizardScreen` | 2 | Storefront checkout and Purchasing "New purchase order" |
 | `SideSheet` | 1 | Purchasing goods receipt |
 | `MasterDetailScreen` | 1 | Purchasing suppliers |
-| `ForbiddenScreen`, `NotFoundScreen`, `ErrorScreen` | 1 each | the shell's state screens, in `Application/` |
 | own `ProductGrid`, `SideSummary` | 1 each | Storefront browse and basket |
 
 Command input is a [form](forms.md) declared once and found by its command (`form DescribeProductForm for DescribeProduct`),
@@ -430,13 +426,13 @@ screen template ProductGrid
 
   header
   filters
-  grid
+  products
 
   arrangement flow
     ...
 ```
 
-`ProductGrid` is a header, filters and a grid of cards; `SideSummary` is the main region with a narrow summary beside it (the
+`ProductGrid` is a header, filters and the products (its slot is not called `grid`: in an arrangement `grid` is the layout kind); `SideSummary` is the main region with a narrow summary beside it (the
 basket shows its lines left and the totals right) and rearranges for a compact width. See
 [layout arrangement](layout-arrangement.md).
 
@@ -488,7 +484,7 @@ scalar. The exit code of `test` is therefore 3, not 0. `cratis screenplay valida
 ### Packaging a domain for Studio
 
 Studio imports one event model per domain. `tools/domain-package.sh` assembles a single domain as a standalone model - the
-`domain` line, `Shared/`, the domain folder, and for Catalog the `Application/` screens - proves that it compiles with
+`domain` line, `Shared/` and the domain folder - proves that it compiles with
 `--warnaserror` and passes its specifications, and writes `<Domain>.zip`:
 
 ```bash

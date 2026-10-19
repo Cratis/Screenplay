@@ -32,11 +32,6 @@ module Stock
         when Publish
         then denied
 
-      screen PublishStockLevelDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action RecordStockLevel
-
     slice Automation SnapshotStockOnMovement
       reaction SnapshotStockOnMovementReaction
         description "Every movement of stock leads to a fresh snapshot of the SKU's level"
@@ -138,11 +133,6 @@ module Stock
           role "SalesRep"
         when Alarm
         then denied
-
-      screen RaiseAlarmDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action RaiseReorderAlarm
 
     slice Automation WatchReorderPoint
       reaction WatchReorderPointReaction
@@ -261,8 +251,8 @@ module Stock
       readmodel StockFigures
         summaryId   String key
         skuCount      Int optional
-        unitsOnHand   Int optional
-        unitsReserved Int optional
+        unitsOnHand   StockQuantity optional
+        unitsReserved StockQuantity optional
         parcelsOpen   Int optional
 
       query CurrentStockFigures => observable StockFigures[]
@@ -294,7 +284,7 @@ module Stock
           decrement parcelsOpen
 
       readmodel StockAlert
-        sku          Sku key
+        id           Sku key
         onHand       StockQuantity
         reorderPoint StockQuantity
 
@@ -303,7 +293,7 @@ module Stock
       projection StockAlertProjection => StockAlert
         no automap
         from ReorderPointCrossed
-          sku          = $eventSourceId
+          id           = $eventSourceId
           onHand       = onHand
           reorderPoint = reorderPoint
         remove with StockReceived
@@ -311,6 +301,10 @@ module Stock
 
       screen WarehouseDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader warehouseDashboardHeader
+              property title = "Warehouse"
+              property subtitle = "What needs attention today"
           kpis
             data StockFigures[] via query CurrentStockFigures
             table StockFigures
@@ -321,10 +315,12 @@ module Stock
           tables
             data StockAlert[] via query AllStockAlerts
             table StockAlert
-              column sku          label "SKU running out"
+              column id           label "SKU running out"
               column onHand       label "On hand"
               column reorderPoint label "Reorder at"
-              on row-click navigate to ItemPage by sku
+              on double click
+                navigate to ItemPage
+                  with id from item.id
 
       specification TheFiguresFollowTheShelves
         given SkuRegistered
@@ -361,6 +357,6 @@ module Stock
           reorderPoint      = 10
           suggestedQuantity = 60
         then readmodel StockAlert
-          sku          = "ACM-1000"
+          id           = "ACM-1000"
           onHand       = 4
           reorderPoint = 10

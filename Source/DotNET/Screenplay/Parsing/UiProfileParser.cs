@@ -89,12 +89,19 @@ internal static partial class UiProfileParser
                     var themeMatch = ThemeReferenceRegex().Match(line.Content);
                     if (!themeMatch.Success)
                     {
-                        context.Error(DiagnosticCodes.InvalidProfileTheme, $"Invalid theme reference '{line.Content}' - expected 'theme <Name>'", line.Location);
+                        context.Error(DiagnosticCodes.InvalidProfileTheme, $"Invalid theme reference '{line.Content}' - expected 'theme <Name>' or 'theme \"<Name>\"'", line.Location);
+                        break;
+                    }
+
+                    var quotedTheme = themeMatch.Groups[2].Success ? StringLiteral.Unescape(themeMatch.Groups[2].Value) : null;
+                    if (quotedTheme is not null && string.IsNullOrWhiteSpace(quotedTheme))
+                    {
+                        context.Error(DiagnosticCodes.InvalidProfileTheme, "Invalid theme reference - a quoted theme name cannot be empty or blank", line.Location);
                         break;
                     }
 
                     hasTheme = true;
-                    theme = themeMatch.Groups[1].Value;
+                    theme = quotedTheme ?? themeMatch.Groups[1].Value;
                     directiveLocations["theme"] = line.Location;
                     break;
                 case "layout":
@@ -262,7 +269,7 @@ internal static partial class UiProfileParser
     [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex PackageNameRegex();
 
-    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("^theme\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex ThemeReferenceRegex();
 
     [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]

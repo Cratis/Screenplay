@@ -26,7 +26,6 @@ Shared/                         the shared kernel: concepts with their validatio
                                 composite types, ALL event sources, policies and personas, the Acme theme
 Shell/                          the ui profile (blueprint AppShell root pinned ^1, theme, packages, the one sample-data
                                 pack), the application navigation (hierarchical sidebar module -> feature, topbar)
-Application/                    the Forbidden / NotFound / Error screens and the client-error report behind them
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications;
                                 module.play is the skeleton (module description, authorize, features, navigation mode)
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
@@ -42,7 +41,9 @@ tools/                          domain-package.sh, render-variant.sh, render-bri
 | Purchasing | `Buying` | Buyer | suppliers, replenishment, purchase orders |
 | Warehouse | `Stock` | WarehouseClerk | reservation, receiving, picking, dispatch |
 
-OpsAdmin sees administration and dashboards in every domain.
+Six personas, no more: a persona is a real person who works in the shop. A screen belongs to the persona who may use it (the narrowest persona
+whose policies satisfy the slice's gates) and to its slice, and never makes an actor row of its own. Error, validation, loading, empty and
+confirmation states are not modelled: the components bring them.
 
 ## The one-application rules (all verified)
 
@@ -73,14 +74,17 @@ replenishment (F-C) and change of price (F-D).
 - `tools/domain-package.sh <Domain>` assembles `domain <X>` + `Shared/` + the domain folder, proves it compiles with
   `--warnaserror` and passes its specifications, and writes `<Domain>.zip` - the unit Studio imports (one ZIP per event
   model). Inbound contracts get their published names back in the package (`KEEP_LOCAL_NAMES=1` keeps the local ones).
-- `tools/render-variant.sh` builds the renderable variant and runs `cratis render` (`DOMAINS="Catalog Storefront"` by default).
-  Stage renders neither Translate slices nor public events, nor `reaction batches atomic` (Stage#422), nor protected decision
-  reads (Stage#503). The variant therefore moves each inbound private event into a bridge command (`render-bridge/bridge_translations.py`),
-  deletes `translation/`, strips the preamble and the `reads` (`render-bridge/strip_reads.py`) and drops the specifications that
-  need them. Every difference is documented in the script header. A reaction that invokes a command which gained inputs cannot be
-  satisfied from its trigger payload, so Sales, Purchasing and Warehouse are not rendered yet. Proven for Catalog + Storefront (cratis
-  3.75.0): `cratis render --package-set`, `dotnet build`, `npm run build`, generated `dotnet test` 90/90, headless Chromium
-  walk of the screens with the hierarchical sidebar, the Shop topbar override and the toolbar button. Then:
+- `tools/render-variant.sh` builds the renderable variant and runs `cratis render` (`DOMAINS="Catalog Storefront"` by default;
+  `DOMAINS="Catalog Storefront Sales Purchasing Warehouse"` is the whole application). Stage renders neither Translate slices nor public
+  events (Stage#79, #212, #213). The variant therefore moves each inbound private event into a bridge command
+  (`render-bridge/bridge_translations.py`), deletes `translation/` and drops the specifications that cannot render
+  (`render-bridge/drop-specifications.txt`, each with its reason). Two constructs are replaced because Stage does not render them
+  (`render-bridge/stand_in_for_unrendered.py`): the Purchasing dashboard answered by a `performer` is projected from the events
+  instead (STAGE-ESM-007) and the Storefront basket's `add addedValue by unitPrice * quantity` is left out (STAGE-ESM-050,
+  Chronicle adds one event property). Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
+  (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. Proven for all five domains with a
+  Stage carrying Stage#590, #593 and #594 (Stage 4.177.1 plus #594 until it is released: a local pack, CLI built against it): `cratis render`, `dotnet build` 0 warnings / 0 errors,
+  `npm run build`, generated `dotnet test` 459/459. Then:
   `dotnet build`, `npm install`, `npm run build`, `dotnet test AcmeCommerce.Specs`.
 - `_packages/scene.commerce` is plain ES modules with React external. `cratis render --package-set
   tools/packages/acme-commerce.package-set.json` approves it (see `Scene/Documentation/package-hosting.md`). A live Stage

@@ -91,6 +91,8 @@
   href: sub-languages.md
 - name: File references
   href: file-references.md
+- name: Notation conventions
+  href: notation.md
 - name: Grammar
   href: grammar.md
 - name: Compiler and CLI

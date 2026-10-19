@@ -68,11 +68,6 @@ module Orders
       event OrderApproved
         orderId OrderId
 
-      screen ApproveNext
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ApproveOrder
-
       // The accepting scenario is ASmallOrderApprovesItself / PublishOrderStatus; this is the denied path.
       specification ARepCannotApprove
         given caller
@@ -122,11 +117,6 @@ module Orders
       event OrderRejected
         reason DecisionReason
 
-      screen Reject
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RejectOrder
-
       specification ARepCannotReject
         given caller
           authenticated
@@ -153,11 +143,6 @@ module Orders
 
       event OrderDiscounted
         discount DiscountPercent
-
-      screen Discount
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ApplyDiscount
 
       specification AGiveAwayWithinTheRepsLimit
         given caller
@@ -198,11 +183,6 @@ module Orders
         produces OrderDiscounted
           for orderId
           discount = discount
-
-      screen LargeDiscount
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ApplyLargeDiscount
 
       specification AManagerCanGiveTwentyPercent
         given caller
@@ -304,11 +284,6 @@ module Orders
       constraint OneConfirmationPerOrder
         unique event OrderConfirmationIssued
         message "An order is confirmed once"
-
-      screen Confirm
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action ConfirmOrder
 
       specification AnUnapprovedOrderCannotBeConfirmed
         given caller

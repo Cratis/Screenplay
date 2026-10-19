@@ -36,18 +36,14 @@ static class WorkspaceFixtureDeclarations
 
     internal static WorkspaceSyntaxEntry? Resolve(string name, WorkspaceSyntaxEntry use, WorkspaceSyntaxIndex index)
     {
-        var entries = index.Entries.Where(entry => entry.Node is SpecificationExampleSyntax or CommandSyntax or EventSyntax or ReadModelSyntax)
-            .Where(entry => entry.Node is not EventSyntax historical || !index.Entries.Any(other => other.Node is EventSyntax current &&
-                current.Name == historical.Name && current.Generation > historical.Generation &&
-                WorkspaceReferenceBindings.Scope(other, index).Segments.SequenceEqual(WorkspaceReferenceBindings.Scope(entry, index).Segments)))
-            .Select(entry => (Entry: entry, Declaration: new Declaration(WorkspaceReferenceBindings.Name(entry.Node)!, WorkspaceReferenceBindings.Scope(entry, index))))
-            .ToArray();
-        var resolution = ReferenceResolver.Resolve(name, WorkspaceReferenceBindings.Scope(use, index), [.. entries.Select(entry => entry.Declaration)]);
-        if (resolution.IsUnresolved && index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().Where(import => import.Name == name).ToArray() is [var imported])
+        var candidates = WorkspaceFixtureCandidates.For(index);
+        var scope = candidates.ScopeOf(use);
+        var resolution = ReferenceResolver.Resolve(name, scope, candidates.Declarations);
+        if (resolution.IsUnresolved && candidates.ImportsNamed(name) is [var imported])
         {
-            resolution = ReferenceResolver.Resolve(imported.QualifiedName, WorkspaceReferenceBindings.Scope(use, index), [.. entries.Select(entry => entry.Declaration)]);
+            resolution = ReferenceResolver.Resolve(imported.QualifiedName, scope, candidates.Declarations);
         }
-        var matches = entries.Where(entry => entry.Declaration == resolution.Resolved).Take(2).ToArray();
+        var matches = candidates.Entries.Where(entry => entry.Declaration == resolution.Resolved).Take(2).ToArray();
 
         return matches is [var match] ? match.Entry : null;
     }

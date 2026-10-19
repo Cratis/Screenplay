@@ -13,3 +13,4 @@ module Shop
   feature Basket
   feature Checkout
   feature MyOrders
+  feature Account

@@ -292,20 +292,18 @@ from LineItem key order.id
 ### Composite Keys
 
 ```pdl
-key <Type> {
+key <Type>
   <Property> = <expression>
   ...
-}
 ```
 
 Examples:
 
 ```pdl
-key OrderLineKey {
+key OrderLineKey
   OrderId = orderId
   LineNumber = lineNumber
   Sequence = $eventContext.sequenceNumber
-}
 ```
 
 ### Arithmetic Operations
