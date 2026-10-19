@@ -83,8 +83,8 @@ replenishment (F-C) and change of price (F-D).
   instead (STAGE-ESM-007) and the Storefront basket's `add addedValue by unitPrice * quantity` is left out (STAGE-ESM-050,
   Chronicle adds one event property). Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
   (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. Proven for all five domains with a
-  Stage carrying Stage#590 and #593 (a local pack, CLI built against it): `cratis render`, `dotnet build` 0 warnings / 0 errors,
-  `npm run build`, generated `dotnet test` 447/447. Then:
+  Stage carrying Stage#590, #593 and #594 (Stage 4.177.1 plus #594 until it is released: a local pack, CLI built against it): `cratis render`, `dotnet build` 0 warnings / 0 errors,
+  `npm run build`, generated `dotnet test` 459/459. Then:
   `dotnet build`, `npm install`, `npm run build`, `dotnet test AcmeCommerce.Specs`.
 - `_packages/scene.commerce` is plain ES modules with React external. `cratis render --package-set
   tools/packages/acme-commerce.package-set.json` approves it (see `Scene/Documentation/package-hosting.md`). A live Stage
