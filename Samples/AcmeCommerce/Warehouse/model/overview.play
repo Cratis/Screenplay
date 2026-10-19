@@ -261,8 +261,8 @@ module Stock
       readmodel StockFigures
         summaryId   String key
         skuCount      Int optional
-        unitsOnHand   Int optional
-        unitsReserved Int optional
+        unitsOnHand   StockQuantity optional
+        unitsReserved StockQuantity optional
         parcelsOpen   Int optional
 
       query CurrentStockFigures => observable StockFigures[]

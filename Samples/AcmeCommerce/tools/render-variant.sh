@@ -11,11 +11,11 @@
 #      ESM v24) become `matches` rules. Not needed on cratis >= 3.75.0.
 #   3. A command whose event triggers a reaction cannot have a rendered specification (STAGE-ESM-011): those specifications
 #      are listed in tools/render-bridge/drop-specifications.txt (one `<file>|<specification name>` per line) and removed.
-#   5. `reaction batches atomic` (ESM v22, Stage#422) and `command reads protected` / command `reads` (ESM v25, Stage#503) are refused by
-#      the renderer (STAGE-ESM-043/044): tools/render-bridge/strip_reads.py removes the preamble, the `reads` and the `require` rules over read
-#      paths, turns `x = Read.prop` into command inputs, and drops the specifications that exercised a removed guard. A reaction that
-#      invokes a command which gained inputs cannot be satisfied from its trigger payload, which is why Sales, Purchasing and
-#      Warehouse are not in the default variant.
+#   5. `reaction batches atomic` (ESM v22) and `command reads protected` / command `reads` (ESM v25) render: nothing is stripped
+#      (STRIP_READS=1 runs tools/render-bridge/strip_reads.py, the old behaviour for a renderer older than Stage#566/#574).
+#   6. A query a `performer` answers (Purchasing dashboard) is an opaque read Stage cannot render (STAGE-ESM-007): the figures are projected from the
+#      events instead. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) is refused by STAGE-ESM-050 (Chronicle adds one event property):
+#      the total is left out. Both in tools/render-bridge/stand_in_for_unrendered.py.
 #   4. The custom package Acme.Commerce needs `cratis render --package-set tools/packages/acme-commerce.package-set.json` and the
 #      built npm package _packages/scene.commerce. Without PACKAGE_SET=1 the three acme: components are replaced by core
 #      tables / the package is removed from the profile (render still works, the custom components are missing).
@@ -61,6 +61,8 @@ rm -rf "$V"/*/translation
 # 1b. what Stage cannot render yet: atomic reaction batches (ESM v22), protected decision reads (ESM v25)
 # Stage (>= the release carrying #566/#574) renders both, so nothing is stripped unless STRIP_READS=1 asks for the old behaviour
 if [ "$STRIP_READS" = "1" ]; then python3 "$HERE/render-bridge/strip_reads.py" "$V"; fi
+# 1c. stand-ins for what Stage cannot render yet: a performer query (STAGE-ESM-007), a product operand in a projection (STAGE-ESM-050)
+python3 "$HERE/render-bridge/stand_in_for_unrendered.py" "$V"
 # 2. legacy text rules
 if [ "$LEGACY_TEXT_RULES" = "1" ]; then
 python3 - "$V" <<'PY'

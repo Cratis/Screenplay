@@ -73,14 +73,17 @@ replenishment (F-C) and change of price (F-D).
 - `tools/domain-package.sh <Domain>` assembles `domain <X>` + `Shared/` + the domain folder, proves it compiles with
   `--warnaserror` and passes its specifications, and writes `<Domain>.zip` - the unit Studio imports (one ZIP per event
   model). Inbound contracts get their published names back in the package (`KEEP_LOCAL_NAMES=1` keeps the local ones).
-- `tools/render-variant.sh` builds the renderable variant and runs `cratis render` (`DOMAINS="Catalog Storefront"` by default).
-  Stage renders neither Translate slices nor public events, nor `reaction batches atomic` (Stage#422), nor protected decision
-  reads (Stage#503). The variant therefore moves each inbound private event into a bridge command (`render-bridge/bridge_translations.py`),
-  deletes `translation/`, strips the preamble and the `reads` (`render-bridge/strip_reads.py`) and drops the specifications that
-  need them. Every difference is documented in the script header. A reaction that invokes a command which gained inputs cannot be
-  satisfied from its trigger payload, so Sales, Purchasing and Warehouse are not rendered yet. Proven for Catalog + Storefront (cratis
-  3.75.0): `cratis render --package-set`, `dotnet build`, `npm run build`, generated `dotnet test` 90/90, headless Chromium
-  walk of the screens with the hierarchical sidebar, the Shop topbar override and the toolbar button. Then:
+- `tools/render-variant.sh` builds the renderable variant and runs `cratis render` (`DOMAINS="Catalog Storefront"` by default;
+  `DOMAINS="Catalog Storefront Sales Purchasing Warehouse"` is the whole application). Stage renders neither Translate slices nor public
+  events (Stage#79, #212, #213). The variant therefore moves each inbound private event into a bridge command
+  (`render-bridge/bridge_translations.py`), deletes `translation/` and drops the specifications that cannot render
+  (`render-bridge/drop-specifications.txt`, each with its reason). Two constructs are replaced because Stage does not render them
+  (`render-bridge/stand_in_for_unrendered.py`): the Purchasing dashboard answered by a `performer` is projected from the events
+  instead (STAGE-ESM-007) and the Storefront basket's `add addedValue by unitPrice * quantity` is left out (STAGE-ESM-050,
+  Chronicle adds one event property). Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
+  (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. Proven for all five domains with a
+  Stage carrying Stage#590 and #593 (a local pack, CLI built against it): `cratis render`, `dotnet build` 0 warnings / 0 errors,
+  `npm run build`, generated `dotnet test` 447/447. Then:
   `dotnet build`, `npm install`, `npm run build`, `dotnet test AcmeCommerce.Specs`.
 - `_packages/scene.commerce` is plain ES modules with React external. `cratis render --package-set
   tools/packages/acme-commerce.package-set.json` approves it (see `Scene/Documentation/package-hosting.md`). A live Stage
