@@ -21,9 +21,7 @@ ui profile Storefront
     Cratis.Components
     Cratis.Blueprint.Default
 
-  root template blueprint Cratis.Blueprint.Default AppShell version "^1"
-    option navigationMode horizontal
-    option menuTheme light
+  root template StorefrontShell
 
   appearance
     color scheme light

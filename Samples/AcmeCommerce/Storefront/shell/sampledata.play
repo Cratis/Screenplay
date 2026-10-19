@@ -8,137 +8,493 @@ sample data AcmeStorefront
   locale nb-NO
 
   // ---- Storefront -----------------------------------------------------------------------------
-  // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
+  // What the shop lists: 23 products in six categories (Kjøkken, Stue, Kontor, Utendørs, Bad, Belysning), SKUs ACM-1000.., price in NOK, a picture each,
+  // stock as the warehouse last reported it (ACM-1003 and ACM-1015 are sold out).
   shape ListedProduct
     row
       id              = "ACM-1000"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1000"
       title            = "Acme krus"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Emaljekrus som tåler både bål og oppvaskmaskin"
       slug             = "ACM-1000"
       category         = "Kjøkken"
       displayPrice     = 149
       currency         = "NOK"
-      imageUrl         = "/img/acm-1000.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekrus%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 12
     row
       id              = "ACM-1001"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
       title            = "Acme tallerken"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Dyp tallerken i herdet keramikk"
       slug             = "ACM-1001"
       category         = "Kjøkken"
       displayPrice     = 89
       currency         = "NOK"
-      imageUrl         = "/img/acm-1001.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Etallerken%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 40
     row
       id              = "ACM-1002"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
       title            = "Acme kaffekanne"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Presskanne i rustfritt stål, 1 liter"
       slug             = "ACM-1002"
       category         = "Kjøkken"
       displayPrice     = 349
       currency         = "NOK"
-      imageUrl         = "/img/acm-1002.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekaffekanne%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 6
     row
       id              = "ACM-1003"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
       title            = "Acme kopp"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Espressokopp med tykk bunn"
       slug             = "ACM-1003"
       category         = "Kjøkken"
       displayPrice     = 79
       currency         = "NOK"
-      imageUrl         = "/img/acm-1003.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekopp%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 0
     row
-      id              = "ACM-2000"
+      id              = "ACM-1004"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
-      title            = "Acme ullteppe"
-      shortDescription = "Solid kvalitet fra Acme"
-      slug             = "ACM-2000"
-      category         = "Bolig"
-      displayPrice     = 899
-      currency         = "NOK"
-      imageUrl         = "/img/acm-2000.png"
-      available        = 4
-    row
-      id              = "ACM-2002"
-      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
-      title            = "Acme pute"
-      shortDescription = "Solid kvalitet fra Acme"
-      slug             = "ACM-2002"
-      category         = "Bolig"
-      displayPrice     = 249
-      currency         = "NOK"
-      imageUrl         = "/img/acm-2002.png"
-      available        = 18
-    row
-      id              = "ACM-3000"
-      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
-      title            = "Acme kaffekvern"
-      shortDescription = "Solid kvalitet fra Acme"
-      slug             = "ACM-3000"
+      title            = "Acme kokkekniv"
+      shortDescription = "Smidd kokkekniv, 20 cm blad"
+      slug             = "ACM-1004"
       category         = "Kjøkken"
       displayPrice     = 599
       currency         = "NOK"
-      imageUrl         = "/img/acm-3000.png"
-      available        = 3
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekokkekniv%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
+      available        = 9
     row
-      id              = "ACM-3001"
-      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
-      title            = "Acme termos"
-      shortDescription = "Solid kvalitet fra Acme"
-      slug             = "ACM-3001"
-      category         = "Friluft"
-      displayPrice     = 279
+      id              = "ACM-1005"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      title            = "Acme ullteppe"
+      shortDescription = "Teppe i ren ull, 130 x 180 cm"
+      slug             = "ACM-1005"
+      category         = "Stue"
+      displayPrice     = 899
       currency         = "NOK"
-      imageUrl         = "/img/acm-3001.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Eullteppe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
       available        = 22
+    row
+      id              = "ACM-1006"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
+      title            = "Acme pute"
+      shortDescription = "Pute med avtagbart trekk"
+      slug             = "ACM-1006"
+      category         = "Stue"
+      displayPrice     = 249
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Epute%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 35
+    row
+      id              = "ACM-1007"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
+      title            = "Acme lysestake"
+      shortDescription = "Lysestake i børstet messing"
+      slug             = "ACM-1007"
+      category         = "Stue"
+      displayPrice     = 199
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Elysestake%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 18
+    row
+      id              = "ACM-1008"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1008"
+      title            = "Acme vase"
+      shortDescription = "Håndblåst vase, 28 cm"
+      slug             = "ACM-1008"
+      category         = "Stue"
+      displayPrice     = 329
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Evase%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 11
+    row
+      id              = "ACM-1009"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1009"
+      title            = "Acme skrivebordslampe"
+      shortDescription = "Dimbar LED-lampe med klemfeste"
+      slug             = "ACM-1009"
+      category         = "Kontor"
+      displayPrice     = 499
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Eskrivebordslampe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 14
+    row
+      id              = "ACM-1010"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1010"
+      title            = "Acme notatbok"
+      shortDescription = "A5 notatbok med stiplet papir"
+      slug             = "ACM-1010"
+      category         = "Kontor"
+      displayPrice     = 129
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Enotatbok%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 80
+    row
+      id              = "ACM-1011"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1011"
+      title            = "Acme penneholder"
+      shortDescription = "Penneholder i eik"
+      slug             = "ACM-1011"
+      category         = "Kontor"
+      displayPrice     = 99
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Epenneholder%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 27
+    row
+      id              = "ACM-1012"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1012"
+      title            = "Acme kontorstol"
+      shortDescription = "Ergonomisk stol med justerbar rygg"
+      slug             = "ACM-1012"
+      category         = "Kontor"
+      displayPrice     = 2490
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Ekontorstol%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 5
+    row
+      id              = "ACM-1013"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1013"
+      title            = "Acme termos"
+      shortDescription = "Termos med 12 timers varme, 0,75 liter"
+      slug             = "ACM-1013"
+      category         = "Utendørs"
+      displayPrice     = 399
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Etermos%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 25
+    row
+      id              = "ACM-1014"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1014"
+      title            = "Acme ryggsekk"
+      shortDescription = "Ryggsekk 28 liter, vanntett"
+      slug             = "ACM-1014"
+      category         = "Utendørs"
+      displayPrice     = 1190
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Eryggsekk%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 8
+    row
+      id              = "ACM-1015"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1015"
+      title            = "Acme hengekøye"
+      shortDescription = "Hengekøye for to personer"
+      slug             = "ACM-1015"
+      category         = "Utendørs"
+      displayPrice     = 699
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Ehengek%C3%B8ye%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 0
+    row
+      id              = "ACM-1016"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1016"
+      title            = "Acme turprimus"
+      shortDescription = "Kompakt gassbrenner"
+      slug             = "ACM-1016"
+      category         = "Utendørs"
+      displayPrice     = 549
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Eturprimus%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 13
+    row
+      id              = "ACM-1017"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1017"
+      title            = "Acme håndkle"
+      shortDescription = "Håndkle i økologisk bomull"
+      slug             = "ACM-1017"
+      category         = "Bad"
+      displayPrice     = 189
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Eh%C3%A5ndkle%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 60
+    row
+      id              = "ACM-1018"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1018"
+      title            = "Acme badematte"
+      shortDescription = "Sklisikker matte i bambus"
+      slug             = "ACM-1018"
+      category         = "Bad"
+      displayPrice     = 229
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Ebadematte%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 19
+    row
+      id              = "ACM-1019"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1019"
+      title            = "Acme såpedispenser"
+      shortDescription = "Dispenser i glass og stål"
+      slug             = "ACM-1019"
+      category         = "Bad"
+      displayPrice     = 159
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Es%C3%A5pedispenser%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 31
+    row
+      id              = "ACM-1020"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1020"
+      title            = "Acme gulvlampe"
+      shortDescription = "Gulvlampe med stoffskjerm"
+      slug             = "ACM-1020"
+      category         = "Belysning"
+      displayPrice     = 1290
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Egulvlampe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 7
+    row
+      id              = "ACM-1021"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1021"
+      title            = "Acme lyslenke"
+      shortDescription = "Lyslenke for ute og inne, 10 meter"
+      slug             = "ACM-1021"
+      category         = "Belysning"
+      displayPrice     = 179
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Elyslenke%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 44
+    row
+      id              = "ACM-1022"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1022"
+      title            = "Acme nattlys"
+      shortDescription = "Nattlys med bevegelsessensor"
+      slug             = "ACM-1022"
+      category         = "Belysning"
+      displayPrice     = 119
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Enattlys%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 52
   shape ProductPageEntry
     row
       sku              = "ACM-1000"
       title            = "Acme krus"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Emaljekrus som tåler både bål og oppvaskmaskin"
       category         = "Kjøkken"
       displayPrice     = 149
       currency         = "NOK"
-      imageUrl         = "/img/acm-1000.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekrus%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 12
       priceChanges     = 0
     row
       sku              = "ACM-1001"
       title            = "Acme tallerken"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Dyp tallerken i herdet keramikk"
       category         = "Kjøkken"
       displayPrice     = 89
       currency         = "NOK"
-      imageUrl         = "/img/acm-1001.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Etallerken%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 40
       priceChanges     = 1
     row
       sku              = "ACM-1002"
       title            = "Acme kaffekanne"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Presskanne i rustfritt stål, 1 liter"
       category         = "Kjøkken"
       displayPrice     = 349
       currency         = "NOK"
-      imageUrl         = "/img/acm-1002.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekaffekanne%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 6
       priceChanges     = 2
     row
       sku              = "ACM-1003"
       title            = "Acme kopp"
-      shortDescription = "Solid kvalitet fra Acme"
+      shortDescription = "Espressokopp med tykk bunn"
       category         = "Kjøkken"
       displayPrice     = 79
       currency         = "NOK"
-      imageUrl         = "/img/acm-1003.png"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekopp%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
       available        = 0
-      priceChanges     = 3
+      priceChanges     = 0
+    row
+      sku              = "ACM-1004"
+      title            = "Acme kokkekniv"
+      shortDescription = "Smidd kokkekniv, 20 cm blad"
+      category         = "Kjøkken"
+      displayPrice     = 599
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FFEDD5'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23C2410C'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23C2410C'%3Ekokkekniv%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23C2410C'%20fill-opacity='0.7'%3EKj%C3%B8kken%3C/text%3E%3C/svg%3E"
+      available        = 9
+      priceChanges     = 1
+    row
+      sku              = "ACM-1005"
+      title            = "Acme ullteppe"
+      shortDescription = "Teppe i ren ull, 130 x 180 cm"
+      category         = "Stue"
+      displayPrice     = 899
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Eullteppe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 22
+      priceChanges     = 2
+    row
+      sku              = "ACM-1006"
+      title            = "Acme pute"
+      shortDescription = "Pute med avtagbart trekk"
+      category         = "Stue"
+      displayPrice     = 249
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Epute%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 35
+      priceChanges     = 0
+    row
+      sku              = "ACM-1007"
+      title            = "Acme lysestake"
+      shortDescription = "Lysestake i børstet messing"
+      category         = "Stue"
+      displayPrice     = 199
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Elysestake%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 18
+      priceChanges     = 1
+    row
+      sku              = "ACM-1008"
+      title            = "Acme vase"
+      shortDescription = "Håndblåst vase, 28 cm"
+      category         = "Stue"
+      displayPrice     = 329
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FEF3C7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23B45309'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23B45309'%3Evase%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23B45309'%20fill-opacity='0.7'%3EStue%3C/text%3E%3C/svg%3E"
+      available        = 11
+      priceChanges     = 2
+    row
+      sku              = "ACM-1009"
+      title            = "Acme skrivebordslampe"
+      shortDescription = "Dimbar LED-lampe med klemfeste"
+      category         = "Kontor"
+      displayPrice     = 499
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Eskrivebordslampe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 14
+      priceChanges     = 0
+    row
+      sku              = "ACM-1010"
+      title            = "Acme notatbok"
+      shortDescription = "A5 notatbok med stiplet papir"
+      category         = "Kontor"
+      displayPrice     = 129
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Enotatbok%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 80
+      priceChanges     = 1
+    row
+      sku              = "ACM-1011"
+      title            = "Acme penneholder"
+      shortDescription = "Penneholder i eik"
+      category         = "Kontor"
+      displayPrice     = 99
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Epenneholder%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 27
+      priceChanges     = 2
+    row
+      sku              = "ACM-1012"
+      title            = "Acme kontorstol"
+      shortDescription = "Ergonomisk stol med justerbar rygg"
+      category         = "Kontor"
+      displayPrice     = 2490
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23E0E7FF'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%234338CA'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%234338CA'%3Ekontorstol%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%234338CA'%20fill-opacity='0.7'%3EKontor%3C/text%3E%3C/svg%3E"
+      available        = 5
+      priceChanges     = 0
+    row
+      sku              = "ACM-1013"
+      title            = "Acme termos"
+      shortDescription = "Termos med 12 timers varme, 0,75 liter"
+      category         = "Utendørs"
+      displayPrice     = 399
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Etermos%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 25
+      priceChanges     = 1
+    row
+      sku              = "ACM-1014"
+      title            = "Acme ryggsekk"
+      shortDescription = "Ryggsekk 28 liter, vanntett"
+      category         = "Utendørs"
+      displayPrice     = 1190
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Eryggsekk%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 8
+      priceChanges     = 2
+    row
+      sku              = "ACM-1015"
+      title            = "Acme hengekøye"
+      shortDescription = "Hengekøye for to personer"
+      category         = "Utendørs"
+      displayPrice     = 699
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Ehengek%C3%B8ye%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 0
+      priceChanges     = 0
+    row
+      sku              = "ACM-1016"
+      title            = "Acme turprimus"
+      shortDescription = "Kompakt gassbrenner"
+      category         = "Utendørs"
+      displayPrice     = 549
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23DCFCE7'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%2315803D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%2315803D'%3Eturprimus%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%2315803D'%20fill-opacity='0.7'%3EUtend%C3%B8rs%3C/text%3E%3C/svg%3E"
+      available        = 13
+      priceChanges     = 1
+    row
+      sku              = "ACM-1017"
+      title            = "Acme håndkle"
+      shortDescription = "Håndkle i økologisk bomull"
+      category         = "Bad"
+      displayPrice     = 189
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Eh%C3%A5ndkle%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 60
+      priceChanges     = 2
+    row
+      sku              = "ACM-1018"
+      title            = "Acme badematte"
+      shortDescription = "Sklisikker matte i bambus"
+      category         = "Bad"
+      displayPrice     = 229
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Ebadematte%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 19
+      priceChanges     = 0
+    row
+      sku              = "ACM-1019"
+      title            = "Acme såpedispenser"
+      shortDescription = "Dispenser i glass og stål"
+      category         = "Bad"
+      displayPrice     = 159
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23CFFAFE'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%230E7490'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%230E7490'%3Es%C3%A5pedispenser%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%230E7490'%20fill-opacity='0.7'%3EBad%3C/text%3E%3C/svg%3E"
+      available        = 31
+      priceChanges     = 1
+    row
+      sku              = "ACM-1020"
+      title            = "Acme gulvlampe"
+      shortDescription = "Gulvlampe med stoffskjerm"
+      category         = "Belysning"
+      displayPrice     = 1290
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Egulvlampe%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 7
+      priceChanges     = 2
+    row
+      sku              = "ACM-1021"
+      title            = "Acme lyslenke"
+      shortDescription = "Lyslenke for ute og inne, 10 meter"
+      category         = "Belysning"
+      displayPrice     = 179
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Elyslenke%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 44
+      priceChanges     = 0
+    row
+      sku              = "ACM-1022"
+      title            = "Acme nattlys"
+      shortDescription = "Nattlys med bevegelsessensor"
+      category         = "Belysning"
+      displayPrice     = 119
+      currency         = "NOK"
+      imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Enattlys%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
+      available        = 52
+      priceChanges     = 1
   shape BasketSize
     row
       id  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"

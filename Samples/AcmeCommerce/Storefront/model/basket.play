@@ -154,6 +154,10 @@ module Shop
       query GetBasketContents => BasketContents optional
         by basketId BasketId
 
+      // What the shop's topbar counts: the basket indicator reads the first basket's line count (a shopper has one open basket)
+      query AllBasketSizes => observable BasketSize[]
+        description "Every open basket's size (the topbar shows the shopper's own)"
+
       query AllBaskets => observable BasketContents[]
         description "Every open basket (a screen shows the shopper's own)"
 
