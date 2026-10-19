@@ -74,6 +74,10 @@ module Stock
 
       screen ReceivingLog
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader receivingLogHeader
+              property title = "Receiving"
+              property subtitle = "Deliveries that reached the dock"
           toolbar
             action ReceiveStock
               label "Receive goods"

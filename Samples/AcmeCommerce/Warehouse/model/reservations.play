@@ -242,6 +242,10 @@ module Stock
       screen Reservations
         description "The stock promised to orders, with a way to reserve by hand"
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader reservationsHeader
+              property title = "Reservations"
+              property subtitle = "Stock promised to orders"
           toolbar
             action RequestReservation
               label "Reserve stock"
@@ -481,6 +485,10 @@ module Stock
 
       screen PickingQueue
         template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pickingQueueHeader
+              property title = "Picking"
+              property subtitle = "Parcels from planned to picked, packed and dispatched"
           toolbar
             action PickOrder
               label "Pick order"
