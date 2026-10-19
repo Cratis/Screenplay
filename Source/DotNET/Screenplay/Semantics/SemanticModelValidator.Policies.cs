@@ -25,6 +25,20 @@ internal static partial class SemanticModelValidator
             _ => false
         };
 
+        static bool IsAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
+            authorization is SemanticPolicyReference reference &&
+            policies.Any(policy => policy.Name == reference.Name && policy.Condition is SemanticAnonymousCondition);
+
+        static bool ReferencesAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) => authorization switch
+        {
+            SemanticPolicyReference => IsAnonymous(authorization, policies),
+            SemanticLogicalAuthorization logical => ReferencesAnonymous(logical.Left, policies) || ReferencesAnonymous(logical.Right, policies),
+            _ => false
+        };
+
+        static bool RequiresCaller(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
+            authorization is not null && !IsAnonymous(authorization, policies);
+
         void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
@@ -49,20 +63,6 @@ internal static partial class SemanticModelValidator
                 default: throw new InvalidSemanticContract("Invalid policy condition.");
             }
         }
-
-        static bool IsAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
-            authorization is SemanticPolicyReference reference &&
-            policies.Any(policy => policy.Name == reference.Name && policy.Condition is SemanticAnonymousCondition);
-
-        static bool ReferencesAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) => authorization switch
-        {
-            SemanticPolicyReference => IsAnonymous(authorization, policies),
-            SemanticLogicalAuthorization logical => ReferencesAnonymous(logical.Left, policies) || ReferencesAnonymous(logical.Right, policies),
-            _ => false
-        };
-
-        static bool RequiresCaller(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
-            authorization is not null && !IsAnonymous(authorization, policies);
 
         void ValidateEffectiveAuthorization(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies, IEnumerable<SemanticProperty> properties)
         {

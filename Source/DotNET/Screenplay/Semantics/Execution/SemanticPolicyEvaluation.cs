@@ -34,12 +34,12 @@ internal static class SemanticPolicyEvaluation
         return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties);
     }
 
+    internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
+        EvaluateCondition(condition, null, new(caller, false), new Dictionary<string, SemanticValue>(), null, []).IsTrue;
+
     static bool IsAnonymous(SemanticAuthorization authorization, SemanticExecutionPlan plan) =>
         authorization is SemanticPolicyReference reference &&
         plan.Model.Application.Policies.Any(policy => policy.Name == reference.Name && policy.Condition is SemanticAnonymousCondition);
-
-    internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
-        EvaluateCondition(condition, null, new(caller, false), new Dictionary<string, SemanticValue>(), null, []).IsTrue;
 
     static SemanticPolicyDecision EvaluateAuthorization(
         SemanticAuthorization authorization,
