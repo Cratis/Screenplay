@@ -1,0 +1,230 @@
+// ============================================================
+// Storefront: the sample-data pack of this application. Design and preview time only - a production build never sees it.
+// Each shape names the read model it supplies rows for. Storefront is its own application, so it carries only its own shapes.
+// ============================================================
+
+sample data AcmeStorefront
+  title "Acme Storefront - Nordic"
+  locale nb-NO
+
+  // ---- Storefront -----------------------------------------------------------------------------
+  // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
+  shape ListedProduct
+    row
+      id              = "ACM-1000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1000"
+      title            = "Acme krus"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1000"
+      category         = "Kjøkken"
+      displayPrice     = 149
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1000.png"
+      available        = 12
+    row
+      id              = "ACM-1001"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      title            = "Acme tallerken"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1001"
+      category         = "Kjøkken"
+      displayPrice     = 89
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1001.png"
+      available        = 40
+    row
+      id              = "ACM-1002"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      title            = "Acme kaffekanne"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1002"
+      category         = "Kjøkken"
+      displayPrice     = 349
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1002.png"
+      available        = 6
+    row
+      id              = "ACM-1003"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      title            = "Acme kopp"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-1003"
+      category         = "Kjøkken"
+      displayPrice     = 79
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1003.png"
+      available        = 0
+    row
+      id              = "ACM-2000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      title            = "Acme ullteppe"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-2000"
+      category         = "Bolig"
+      displayPrice     = 899
+      currency         = "NOK"
+      imageUrl         = "/img/acm-2000.png"
+      available        = 4
+    row
+      id              = "ACM-2002"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      title            = "Acme pute"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-2002"
+      category         = "Bolig"
+      displayPrice     = 249
+      currency         = "NOK"
+      imageUrl         = "/img/acm-2002.png"
+      available        = 18
+    row
+      id              = "ACM-3000"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
+      title            = "Acme kaffekvern"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-3000"
+      category         = "Kjøkken"
+      displayPrice     = 599
+      currency         = "NOK"
+      imageUrl         = "/img/acm-3000.png"
+      available        = 3
+    row
+      id              = "ACM-3001"
+      productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
+      title            = "Acme termos"
+      shortDescription = "Solid kvalitet fra Acme"
+      slug             = "ACM-3001"
+      category         = "Friluft"
+      displayPrice     = 279
+      currency         = "NOK"
+      imageUrl         = "/img/acm-3001.png"
+      available        = 22
+  shape ProductPageEntry
+    row
+      sku              = "ACM-1000"
+      title            = "Acme krus"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 149
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1000.png"
+      available        = 12
+      priceChanges     = 0
+    row
+      sku              = "ACM-1001"
+      title            = "Acme tallerken"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 89
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1001.png"
+      available        = 40
+      priceChanges     = 1
+    row
+      sku              = "ACM-1002"
+      title            = "Acme kaffekanne"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 349
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1002.png"
+      available        = 6
+      priceChanges     = 2
+    row
+      sku              = "ACM-1003"
+      title            = "Acme kopp"
+      shortDescription = "Solid kvalitet fra Acme"
+      category         = "Kjøkken"
+      displayPrice     = 79
+      currency         = "NOK"
+      imageUrl         = "/img/acm-1003.png"
+      available        = 0
+      priceChanges     = 3
+  shape BasketSize
+    row
+      id  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      lineCount = 2
+  shape CheckoutDraft
+    row
+      basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      method   = "express"
+  shape CustomerAccount
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      name       = "Ada Lovelace"
+      email      = "ada@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      name       = "Grace Hopper"
+      email      = "grace@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      name       = "Alan Turing"
+      email      = "alan@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      name       = "Edsger Dijkstra"
+      email      = "edsger@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      name       = "Barbara Liskov"
+      email      = "barbara@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      name       = "Donald Knuth"
+      email      = "donald@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      name       = "Margaret Hamilton"
+      email      = "margaret@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      name       = "Linus Torvalds"
+      email      = "linus@example.com"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      name       = "Ingrid Solberg"
+      email      = "ingrid@example.no"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      name       = "Magnus Haugen"
+      email      = "magnus@example.no"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      name       = "Silje Berg"
+      email      = "silje@example.no"
+    row
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      name       = "Ola Nordmann"
+      email      = "ola@example.no"
+  // The signed-in shopper (Ada) sees her own orders
+  shape MyOrder
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "received"
+      total      = 749
+      deliveryMethod = "standard"
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "approved"
+      total      = 149
+      deliveryMethod = "express"
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "onHold"
+      total      = 98
+      deliveryMethod = "standard"
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "shipped"
+      total      = 149
+      deliveryMethod = "pickup"
+    row
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status     = "fulfilled"
+      total      = 447
+      deliveryMethod = "express"
