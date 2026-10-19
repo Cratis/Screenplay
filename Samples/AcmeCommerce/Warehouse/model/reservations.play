@@ -498,6 +498,13 @@ module Stock
               label "Cancel shipment"
           board
             data PickingCard[] via query AllPickingCards
+            table PickingCard
+              column id             label "Order"
+              column sku            label "SKU"
+              column quantity       label "Qty"
+              column status         label "Status"
+              column carrier        label "Carrier"
+              column trackingNumber label "Tracking"
 
       specification AParcelMovesAcrossTheBoard
         given ShipmentPlanned

@@ -62,34 +62,6 @@ module Buying
                 navigate to PurchaseOrderPage
                   with id from item.id
 
-      screen PurchaseOrderPage
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          header
-            component Cratis.Blueprint.Default.pageHeader purchaseOrderPageHeader
-              property title = "Purchase order"
-              property subtitle = "Status, quantities and what the buyer may do next"
-          summary
-            data PurchaseOrderRow via query PurchaseOrderById by id
-            summary PurchaseOrderRow
-              field purchaseOrderNumber label "Number"
-              field status              label "Status"
-              field orderedQuantity     label "Ordered"
-              field receivedQuantity    label "Received"
-          related
-            data PurchaseOrderRow via query PurchaseOrderById by id
-            summary PurchaseOrderRow
-              field lineCount label "Lines"
-            action AddPurchaseOrderLine
-              label "Add line"
-            action SubmitPurchaseOrder
-              label "Submit"
-            action ReceivePurchaseOrderGoods
-              label "Receive goods"
-            action CancelPurchaseOrder
-              label "Cancel order"
-            action ArchivePurchaseOrder
-              label "Archive"
-
       specification TheListFollowsTheOrderToItsFirstReceipt
         given PurchaseOrderCreated
           for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
@@ -290,6 +262,34 @@ module Buying
           role "Buyer"
         when Submit purchaseOrderNumber = "2026-000101"
         then error "A purchase order number starts with PO-"
+
+      screen PurchaseOrderPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader purchaseOrderPageHeader
+              property title = "Purchase order"
+              property subtitle = "Status, quantities and what the buyer may do next"
+          summary
+            data PurchaseOrderRow via query PurchaseOrderById by id
+            summary PurchaseOrderRow
+              field purchaseOrderNumber label "Number"
+              field status              label "Status"
+              field orderedQuantity     label "Ordered"
+              field receivedQuantity    label "Received"
+          related
+            data PurchaseOrderRow via query PurchaseOrderById by id
+            summary PurchaseOrderRow
+              field lineCount label "Lines"
+            action AddPurchaseOrderLine
+              label "Add line"
+            action SubmitPurchaseOrder
+              label "Submit"
+            action ReceivePurchaseOrderGoods
+              label "Receive goods"
+            action CancelPurchaseOrder
+              label "Cancel order"
+            action ArchivePurchaseOrder
+              label "Archive"
 
     slice StateChange ReceivePurchaseOrderGoods
       description "Books goods that arrived against a submitted purchase order; one receipt is one line, so partial deliveries are just several receipts"

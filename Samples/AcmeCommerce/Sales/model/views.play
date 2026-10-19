@@ -118,9 +118,14 @@ module Orders
             title "Orders pipeline"
           board
             data PipelineOrder[] via query AllPipelineOrders
-            on select
-              navigate to OrderPage
-                with orderId from item.orderId
+            table PipelineOrder
+              column orderId     label "Order"
+              column market      label "Market"
+              column quotedTotal label "Total"
+              column status      label "Status"
+              on double click
+                navigate to OrderPage
+                  with orderId from item.orderId
 
       specification AnOrderMovesAcrossTheBoard
         given caller
@@ -509,16 +514,6 @@ module Orders
                   with orderId from item.orderId
 
       // The decision: approve or reject, one confirm dialog
-      screen Decision
-        description "Approve or reject the order, with the consequence spelled out"
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action ApproveOrder
-              navigate to ApprovalInbox
-            action RejectOrder
-              navigate to ApprovalInbox
-            action ApplyLargeDiscount
-              navigate to ApprovalInbox
 
       specification ABigOrderWaitsForAManager
         given caller

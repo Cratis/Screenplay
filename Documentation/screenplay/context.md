@@ -1,3 +1,8 @@
+---
+title: "Contexts"
+description: "How the typed context in scope for inline and file-referenced Screenplay code differs for handlers, queries, rules and policies."
+---
+
 # Contexts
 
 Inline and file-referenced code is a **sandbox**. You do not write a namespace, a class, or usually even a signature — just the body — because Screenplay puts a predictable `context` in scope for you.

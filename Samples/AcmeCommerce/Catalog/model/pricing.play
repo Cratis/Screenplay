@@ -95,9 +95,14 @@ module Merchandising
               property subtitle = "Products by status - set a price to make one ready"
           board
             data PricedProduct[] via query AllPricedProducts
-            on select
-              navigate to ProductPage
-                with productId from item.productId
+            table PricedProduct
+              column sku    label "SKU"
+              column name   label "Product"
+              column price  label "Price"
+              column status label "Status"
+              on double click
+                navigate to ProductPage
+                  with productId from item.productId
 
       specification TheBoardFollowsTheStatus
         given ProductDrafted

@@ -1,3 +1,8 @@
+---
+title: "Operations and external systems"
+description: "Describe in Screenplay the work a command asks an external system to do, with inputs, system and compensation intent; syntax-only."
+---
+
 # Operations and external systems
 
 Describe the work a command asks another system to do without hiding it in a handler. An operation states its inputs, the external system it uses, and optional execution and compensation intent.

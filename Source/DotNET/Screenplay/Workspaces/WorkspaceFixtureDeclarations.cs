@@ -43,8 +43,7 @@ static class WorkspaceFixtureDeclarations
         {
             resolution = ReferenceResolver.Resolve(imported.QualifiedName, scope, candidates.Declarations);
         }
-        var matches = candidates.Entries.Where(entry => entry.Declaration == resolution.Resolved).Take(2).ToArray();
 
-        return matches is [var match] ? match.Entry : null;
+        return candidates.EntryOf(resolution.Resolved);
     }
 }
