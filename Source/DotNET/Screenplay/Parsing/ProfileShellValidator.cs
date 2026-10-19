@@ -438,6 +438,6 @@ internal static partial class ProfileShellValidator
     [GeneratedRegex("^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$", RegexOptions.NonBacktracking)]
     private static partial Regex HexColor();
 
-    [GeneratedRegex(@"^data:image/(?:png|jpeg|jpg|svg\+xml|webp);base64,(?<data>[A-Za-z0-9+/]*={0,2})$", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^data:image/(?:png|jpeg|jpg|svg\+xml|webp);base64,(?<data>[A-Za-z0-9+/]*={0,2})$", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking)]
     private static partial Regex LogoImage();
 }
