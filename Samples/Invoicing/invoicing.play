@@ -448,9 +448,16 @@ ui profile Desktop
     option showFooter true
 
   // How the application looks regardless of the shell.
+  identity
+    name "Invoicing"
+    logo initials "IN"
+    show name true
+
   appearance
     color scheme dark
     accent "#4f46e5"
+    corners round
+    font inter
 
   // The template a new screen starts from in the designer.
   new screens use template List
