@@ -160,7 +160,7 @@ Screenplay has no source-language-version pin, so decision 0075's refusal for a 
 
 Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
 
-To evolve an inline event, first use `WorkspaceEventRefactorings.ProposeExtractInlineEvent` or MCP `propose-extract-inline-event`. The declaration moves into the slice, keeping its id, description, documentation, tags and property identities. Its production keeps explicit routing or receives the previously implicit identifier destination. Extraction requires unchanged canonical ESM and catalog assignments, preserves comments exactly once or refuses, and needs explicit canonical formatting consent. Add later generations only after extraction; there is no reverse inlining refactoring.
+To evolve an inline event, first use `WorkspaceEventRefactorings.ProposeExtractInlineEvent` or MCP `propose-extract-inline-event`. The declaration moves into the slice, keeping its id, description, documentation, tags and property identities. Its production keeps explicit routing or receives the previously implicit identifier destination. Extraction requires unchanged canonical ESM and catalog assignments, preserves comments exactly once or refuses, and needs explicit canonical formatting consent. Add later generations only after extraction. The reverse, `WorkspaceEventRefactorings.ProposeInlineStandaloneEvent` or MCP `propose-inline-event`, is opt-in and refuses unless inlining provably preserves meaning; see [Inline a standalone event](mcp/authoring-tools.md#inline-a-standalone-event).
 
 ````screenplay
 event Renamed

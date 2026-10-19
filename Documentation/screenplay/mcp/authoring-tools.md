@@ -538,8 +538,36 @@ declaration, while production and mapping comments remain attached to their inte
 Extraction requires byte-identical canonical ESM, unchanged catalog assignments
 and every comment preserved exactly once. It refuses unsupported or unbindable
 models rather than guessing. Extract before adding `generation`; parser-invalid
-inline generations cannot be edited through occurrence handles. There is no reverse
-inlining operation. Review and apply the returned proposal as any other edit.
+inline generations cannot be edited through occurrence handles. Review and apply
+the returned proposal as any other edit.
+
+## Inline a standalone event
+
+Use `read-ast` to find the standalone `EventSyntax` handle, then call
+`propose-inline-event` with `subject`, `expectedRevision`,
+`expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`.
+This opt-in refactoring is the reverse of extraction. It moves the declaration into
+the single `produces` clause that uses it, keeping the production's explicit `for`,
+its mappings, and the event's id pin, description, documentation, tags and comments.
+Screenplay never suggests it as a style diagnostic, and the standalone form stays valid.
+
+The proposal requires byte-identical canonical ESM, unchanged catalog assignments,
+unchanged diagnostics and every comment preserved exactly once. It refuses, with a
+reason and no partial rewrite, unless all of these hold:
+
+- Exactly one production in the application names the event, and nothing else
+  references it (projections, reactions, specifications, constraints, queries,
+  imports or opaque code).
+- The event and the production's command share one slice and one document.
+- The production is unconditional, has a written `for`, carries no plain `tag`
+  lines, and maps every event property exactly once.
+- The event is private, local, generation 1 with no other generation, has no
+  `file` attachment, and the producer is not a handler.
+
+Plain production tags are per-production tags, so moving them into an inline event
+would make them event-type tags; an omitted `for` would silently become the inline
+identifier default. Both refuse. Extracting an event and inlining it again restores
+the event declaration, but the extraction's written `for` remains in the result.
 
 ## Establish production destinations
 

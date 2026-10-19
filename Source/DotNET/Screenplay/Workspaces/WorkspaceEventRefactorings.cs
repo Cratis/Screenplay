@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Workspaces;
 /// <summary>
 /// Provides explicit event refactorings through revision-bound typed authoring proposals.
 /// </summary>
-public static class WorkspaceEventRefactorings
+public static partial class WorkspaceEventRefactorings
 {
     /// <summary>
     /// Moves an inline event declaration into its owning slice, retaining routing, metadata and assigned identities.

@@ -289,11 +289,13 @@ module Buying
     slice StateView ReplenishmentQueue
       description "Open replenishment requests, per SKU, and what became of them"
 
+      // The counters are plain numbers: a row that first sees a blocked or ordered event starts them at zero (`add ... by 0`), which a
+      // concept cannot do in Chronicle (a never-set concept is null)
       readmodel ReplenishmentRow
         sku          Sku
-        quantity     Quantity
-        onHand       StockQuantity
-        reorderPoint StockQuantity
+        quantity     Int
+        onHand       Int
+        reorderPoint Int
         status       RequestStatus
 
       query AllReplenishmentRequests => observable ReplenishmentRow[]

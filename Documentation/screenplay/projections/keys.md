@@ -168,10 +168,9 @@ from OrderPlaced key order.id
 ```pdl
 projection OrderLine => OrderLineReadModel
   from LineItemAdded
-    key OrderLineKey {
+    key OrderLineKey
       OrderId = orderId
       ProductId = productId
-    }
     Quantity = quantity
     UnitPrice = unitPrice
     LineTotal = total
@@ -181,11 +180,10 @@ projection OrderLine => OrderLineReadModel
 
 ```pdl
 from ReservationMade
-  key ReservationKey {
+  key ReservationKey
     HotelId = hotelId
     RoomNumber = roomNumber
     CheckInDate = checkInDate
-  }
   GuestName = guestName
   Nights = nights
 ```

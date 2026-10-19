@@ -426,13 +426,13 @@ screen template ProductGrid
 
   header
   filters
-  grid
+  products
 
   arrangement flow
     ...
 ```
 
-`ProductGrid` is a header, filters and a grid of cards; `SideSummary` is the main region with a narrow summary beside it (the
+`ProductGrid` is a header, filters and the products (its slot is not called `grid`: in an arrangement `grid` is the layout kind); `SideSummary` is the main region with a narrow summary beside it (the
 basket shows its lines left and the totals right) and rearranges for a compact width. See
 [layout arrangement](layout-arrangement.md).
 

@@ -182,7 +182,11 @@ and never contacts a `source`, which stays realization metadata. For each record
   the parent's previous collection, or a nested record whose field was missing or null, is `added` only.
   Every child of a first root record is new, even when other roots have children with the same identity.
 - `` when `<expression>` `` holds a small portable grammar: fields, string, number, boolean and `null`
-  literals, `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&`, `||`, `!` and parentheses. Ordering compares numbers only.
+  literals, `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&`, `||`, `!` and parentheses. A field on its own is true when it
+  holds the boolean `true`. Ordering compares numbers only. The C# binder parses the guard and reports `PLAY0268`
+  for anything outside this set. The TypeScript compiler keeps the guard as text and checks only that its closing
+  backtick is present; it does not read the operators. Outside inline code (embedded C# and screen code), this is the only place `&&`, `||` and `!` are admitted; see
+  [Notation conventions](notation.md#capture-guards).
   Expressions evaluate the mapped current record even on its first observation; unguarded appends also run
   on a first record. Maps, expressions and unguarded appends keep their existing meaning.
 - `$.<field>` reads the item being evaluated - the record, a child or the nested record - and falls back to the

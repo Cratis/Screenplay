@@ -324,7 +324,7 @@ WhenExpr = "added"
 | --- | --- |
 | `when added` | Appends when an item appears in the source. |
 | `when removed` | Appends when an item disappears from the source. |
-| `` when `<expression>` `` | Appends when a raw template-literal expression evaluates to true. The expression is captured verbatim, unparsed. |
+| `` when `<expression>` `` | Appends when a raw template-literal expression evaluates to true. The parser captures the text; the C# binder parses it (see below). |
 | `when <Path>` | Appends when the named property changes. |
 | `when <Path> from <value> to <value>` | Appends when the named property transitions from one specific value to another. |
 | `when <Path> or <Path> { or <Path> }` | Appends when any of the named properties change. |
@@ -332,7 +332,7 @@ WhenExpr = "added"
 
 `or` and `and` cannot be mixed within a single property-change `when` clause - `when a or b and c` is a compile error. These forms test changes, not Boolean comparisons.
 
-A backtick guard is a separate, opaque implementation expression. For example, ``when `status == "sent" && overdue == true` `` is valid authoring syntax: the C# compiler stores the entire guard verbatim, including backticks, without parsing its operators or assigning it a language. The TypeScript compiler reads a capture's source, key and appends but skips each append's body, including its `when` guard. It is not the `and`/`or` condition grammar used by `produces when`. A target implementation must interpret it; parsing alone does not establish portable execution.
+A backtick guard is not the `and`/`or` condition grammar used by `produces when`. For example, ``when `status == "sent" && overdue == true` `` is valid: the C# parser stores the guard text verbatim, including backticks, and the semantic binder then parses it. The binder admits fields, string, number, boolean and `null` literals, the comparisons `==`, `!=`, `<`, `<=`, `>` and `>=`, and `&&`, `||`, `!` and parentheses. A field on its own is true when it holds the boolean `true`, and ordering compares numbers only. A guard outside that set reports `PLAY0268`. The TypeScript compiler keeps the guard as text and checks only that its closing backtick is present; it does not read the operators. Backtick guards are the only place `&&`, `||` and `!` are admitted; see [Notation conventions](../notation.md#capture-guards) and the [executable model rules](../captures.md#in-the-executable-semantic-model).
 
 ### Children Block
 
