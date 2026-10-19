@@ -1,3 +1,8 @@
+---
+title: "Events"
+description: "Declare Screenplay events: immutable, past-tense facts with typed properties, public contracts, generations and inline declarations."
+---
+
 # Events
 
 Events are immutable, past-tense facts — the record of something that happened. An event declaration defines the event type's name and properties. Properties use [concepts](concepts.md), composite [types](types.md), or primitives.

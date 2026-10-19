@@ -1,6 +1,6 @@
 ---
 title: Imports
-description: Compose an application from focused .play files - import files and glob patterns, place what they declare in a module or feature, and keep composite files at the root and per module.
+description: "Compose a Screenplay application from focused .play files with imports and globs, placed in a module or feature."
 ---
 
 A [folder of `.play` files](folders.md) is already one application. That solves the large file, but each file still has to say where it belongs. A slice file restates `module Ordering` and `feature Orders` above the one slice it is about. And nothing in the folder says *what* the application is made of - that is whatever happens to be on disk.
