@@ -95,7 +95,7 @@ concept Sku : String
     not contains " "     message "A SKU has no spaces"
 ```
 
-Other shared concepts are `Money` (a `Decimal`, `>= 0`), `Quantity` (an `Int`, `> 0`), `CurrencyCode` (three letters),
+Other shared concepts are `Money` (a `Decimal`, `>= 0`, `decimals <= 2`), `Quantity` (an `Int`, `> 0`), `CurrencyCode` (three letters),
 `PurchaseOrderNumber` (starts with `PO-`) and `EmailAddress`, which is marked `pii` with a stated reason. Each domain adds the
 words only it uses: Storefront has `Slug`, `ShortDescription`, the enumeration concept `DeliveryMethod` (`standard`, `express`,
 `pickup`) and the composite type `BasketLine`. Concepts that every context uses include the enumerations `OrderStatus`,
@@ -322,8 +322,9 @@ again.
 
 Every behaviour above has a [specification](specifications.md): a command is given a caller (`authenticated`, `role "..."`) and
 prior events and then either produces events or is refused with a message; a view is given events and then shows a read model.
-The accepted path of a command whose slice publishes a public event is specified where the publication is (`when append
-<PrivateEvent>` in the translate slice), because a command specification cannot list a cascaded public event.
+The accepted path of a command whose slice publishes a public event states that public event after the private ones (`then
+ProductPriceChanged` after `then ProductPriceSet`), so the publication is proved where the command is; the translate slice keeps
+its own specification for the event-driven path.
 
 ## The shell
 
@@ -374,7 +375,15 @@ to the shell:
 
 ### Toolbars
 
-A toolbar belongs to a screen. Catalog's product list carries a primary button that opens the slice's dialog:
+The application's topbar declares buttons once, for every page (`Shell/navigation.play`), and a policy gates each:
+
+```text
+navigation topbar
+  button newProduct title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+    authorize CanCurateCatalog
+```
+
+A screen's toolbar belongs to that screen. Catalog's product list carries a primary button that opens the slice's dialog:
 
 ```text
 toolbar
