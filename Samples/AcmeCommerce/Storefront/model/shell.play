@@ -37,7 +37,7 @@ module Shop
           component Cratis.Blueprint.Default.globalSearch shopSearch
             property label = "Search the shop"
             property placeholder = "Search products"
-            property urlKey = "products"
+            property urlKey = "productsq"
           component Cratis.Blueprint.Default.indicatorButton shopBasket
             property icon = "cart"
             property label = "Basket"

@@ -73,22 +73,31 @@ module Shop
         remove with ProductDelisted
 
       screen Browse
-        description "The shop window: a grid of product cards"
+        description "The shop window: product cards with picture, name, price and stock; the search box in the topbar narrows them"
         template ProductGrid
           header
-            title "Shop"
+            component Cratis.Blueprint.Default.pageHeader browseHeader
+              property title = "Shop"
+              property subtitle = "For the kitchen, the living room, the office and the trail"
           filters
             data ListedProduct[] via query SearchListedProducts
           products
             data ListedProduct[] via query AllListedProducts
-            table ListedProduct
-              column title        label "Product"
-              column category     label "Category"
-              column displayPrice label "Price"
-              column available    label "In stock"
+            component Cratis.Blueprint.Default.dataList productList
+              id "productList"
+              property rows from query AllListedProducts
+              property variant = "cards"
+              property idField = "id"
+              property titleField = "title"
+              property imageField = "imageUrl"
+              property selectionMode = "single"
+              property pageSize = 12
+              property urlKey = "products"
+              property label = "Products"
+              property columns = [{"field":"category","header":"Category"},{"field":"displayPrice","header":"Price","kind":"currency","currency":"NOK"},{"field":"available","header":"In stock","kind":"number"}]
               on select
                 navigate to ProductPage
-                  with sku from item.sku
+                  with sku from component.productList.value
 
       specification ListingAProductThenChangingItsPrice
         given caller
