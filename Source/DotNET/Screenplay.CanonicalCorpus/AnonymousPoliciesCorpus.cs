@@ -10,7 +10,7 @@ using Cratis.Screenplay.Semantics.Serialization;
 namespace Cratis.Screenplay.CanonicalCorpus;
 
 /// <summary>
-/// Provides source-backed anonymous policy condition (decision 0102) vectors.
+/// Provides source-backed anonymous policy condition (decision 0103) vectors.
 /// </summary>
 public static class AnonymousPoliciesCorpus
 {
@@ -40,7 +40,7 @@ public static class AnonymousPoliciesCorpus
     }
 
     /// <summary>
-    /// Gets the ESM v31 anonymous policy condition (decision 0102) vector.
+    /// Gets the ESM v31 anonymous policy condition (decision 0103) vector.
     /// </summary>
     public static CanonicalCorpusVector V31 => new()
     {

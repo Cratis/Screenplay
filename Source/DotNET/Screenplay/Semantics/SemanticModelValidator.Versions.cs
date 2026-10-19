@@ -88,7 +88,7 @@ internal static partial class SemanticModelValidator
             version,
             SemanticVersion.V31,
             "An ESM v31 model must declare an anonymous policy.",
-            "The anonymous policy condition of decision 0102 requires ESM v31.");
+            "The anonymous policy condition of decision 0103 requires ESM v31.");
 
     static void ValidateAcmeSecondAdmissionVersion(SemanticApplication application, SemanticVersion version)
     {

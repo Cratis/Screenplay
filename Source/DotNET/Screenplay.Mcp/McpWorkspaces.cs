@@ -288,7 +288,8 @@ internal sealed partial class McpWorkspaces
         identityMigrations = report.IdentityMigrations.Select(migration => new { migration.Domain, migration.Id, previousAddress = McpSemanticAddresses.Describe(migration.PreviousAddress), currentAddress = McpSemanticAddresses.Describe(migration.CurrentAddress) }),
         report.Retired,
         report.ReferenceRepairs,
-        report.FragmentsMoved
+        report.FragmentsMoved,
+        specificationsCarried = report.SpecificationsCarried.Select(McpSemanticAddresses.Describe)
     };
 
     static McpRoot RootFromClientUri(string uri)

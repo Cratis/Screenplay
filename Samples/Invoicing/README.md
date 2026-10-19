@@ -66,7 +66,7 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 ## A public module
 
-`PublicVerification` lets anyone confirm an invoice number, signed in or not. Its module is gated by `Anyone`, a policy that `require`s `anonymous`: every caller passes, with or without an identity. An anonymous policy is the whole condition of its policy and the whole gate of what it authorizes, so nothing in the module adds another `authorize` - that is why it is a module of its own rather than a feature under `Invoicing`, whose `IsPerson` gate would otherwise apply too (`PLAY0807`). `VerifyingWithoutSigningIn` has no `given caller`, which only an anonymous gate allows. The anonymous policy selects ESM v31 ([decision 0102](https://github.com/Cratis/Screenplay/blob/main/decisions/0102-admit-the-anonymous-policy-condition-in-esm-v31.md)).
+`PublicVerification` lets anyone confirm an invoice number, signed in or not. Its module is gated by `Anyone`, a policy that `require`s `anonymous`: every caller passes, with or without an identity. An anonymous policy is the whole condition of its policy and the whole gate of what it authorizes, so nothing in the module adds another `authorize` - that is why it is a module of its own rather than a feature under `Invoicing`, whose `IsPerson` gate would otherwise apply too (`PLAY0807`). `VerifyingWithoutSigningIn` has no `given caller`, which only an anonymous gate allows. The anonymous policy selects ESM v31 ([decision 0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md)).
 
 ## Who uses it
 

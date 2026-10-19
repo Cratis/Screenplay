@@ -158,7 +158,7 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V30 = new(30, 0);
 
     /// <summary>
-    /// Gets the language version admitting the anonymous policy condition of decision 0102.
+    /// Gets the language version admitting the anonymous policy condition of decision 0103.
     /// </summary>
     public static readonly LanguageVersion V31 = new(31, 0);
 
@@ -343,7 +343,7 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V30 = new(30, 0);
 
     /// <summary>
-    /// Gets the semantic version admitting the anonymous policy condition of decision 0102.
+    /// Gets the semantic version admitting the anonymous policy condition of decision 0103.
     /// </summary>
     public static readonly SemanticVersion V31 = new(31, 0);
 

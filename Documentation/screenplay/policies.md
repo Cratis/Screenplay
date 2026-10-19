@@ -121,7 +121,7 @@ Because it lets everyone in, an anonymous policy is the whole authorization of w
 - An `authorize` line that names an anonymous policy names nothing else (`PLAY0806`).
 - A command or query gated by an anonymous policy has no other gate on its module, its feature or itself (`PLAY0807`). Gates combine with `and`, while `[AllowAnonymous]` in a generated application overrides `[Authorize]`; refusing the mix keeps the model and the application in agreement. Put the anonymous gate on the public commands and queries, and keep the other gates on the rest.
 
-A specification for a command or query gated only by an anonymous policy may leave out `given caller`, as `AVisitorRegistersInterest` does; one that gives a caller is checked the same way. A model with an anonymous policy uses ESM v31 ([decision 0102](https://github.com/Cratis/Screenplay/blob/main/decisions/0102-admit-the-anonymous-policy-condition-in-esm-v31.md)).
+A specification for a command or query gated only by an anonymous policy may leave out `given caller`, as `AVisitorRegistersInterest` does; one that gives a caller is checked the same way. A model with an anonymous policy uses ESM v31 ([decision 0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md)).
 
 ## Examples
 

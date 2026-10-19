@@ -427,8 +427,10 @@ Use `propose-move` rather than a manual AST move when moving a slice to another
 feature or a feature to another module or feature. Copy its `target` and
 `newParent` `{kind, parts}` addresses from the workspace identity inventory and
 supply `expectedRevision` and `expectedCatalogRevision`. Optional occurrence
-handles are guards, not substitutes for the logical addresses. Declaration moves
-between slices are deferred.
+handles are guards, not substitutes for the logical addresses. A single command,
+event, read model, projection, query, reaction or capture moves to another slice
+with the source-slice specifications that cover only it; see
+[Logical parent moves](reference.md#logical-parent-moves).
 
 The planner moves all fragments, computes every assigned semantic and event
 migration and repairs qualified references, including `depends on`. It does not
