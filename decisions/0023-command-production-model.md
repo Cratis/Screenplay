@@ -186,5 +186,5 @@ Authors can describe a complete command before choosing its implementation. Type
 ## Open questions
 
 1. **Provider capability publication** (#309): where profiles are published and how editors discover them.
-2. **Existing notation audit:** whether and how existing `[]` and `=>` should change. Audit them separately; this record neither adds new C#/TypeScript notation nor silently removes existing spelling.
+2. **Existing notation audit:** whether and how existing `[]` and `=>` should change. Audit them separately; this record neither adds new C#/TypeScript notation nor silently removes existing spelling. Settled for the freeze period by [decision 0100](0100-retain-notation-conventions-and-park-readable-alternatives.md): the current spellings are retained and documented; readable alternatives are parked.
 3. **Inline events in reactions:** whether to lift #299's restriction now that 0022 admits reactions into ESM v6.
