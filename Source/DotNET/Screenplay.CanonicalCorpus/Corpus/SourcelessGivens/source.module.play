@@ -62,6 +62,8 @@ module Banking
     slice StateView Directory
       readmodel AliasEntry
         alias String
+      query AliasByName => AliasEntry optional
+        by alias String
       projection Aliases => AliasEntry
         from AliasClaimed key alias
           alias = alias
@@ -83,6 +85,8 @@ module Banking
       readmodel Profile
         accountId AccountId
         name String
+      query ProfileFor => Profile optional
+        by accountId AccountId
       projection Profiles => Profile
         from ProfileNamed
           accountId = $eventSourceId
