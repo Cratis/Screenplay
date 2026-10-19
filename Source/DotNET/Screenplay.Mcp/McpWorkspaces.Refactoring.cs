@@ -69,15 +69,6 @@ internal sealed partial class McpWorkspaces
         return refusal is null ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : MoveRefused(request, refusal);
     }
 
-    static object MoveRefused(WorkspaceMoveRequest request, string reason) => McpJson.ToolResult(new
-    {
-        success = false,
-        failureKind = "InvalidOperation",
-        conflicts = new[] { new { kind = nameof(WorkspaceConflictKind.InvalidOperation), message = $"Move '{MovePath(request.Target)}' to '{MovePath(request.NewParent)}' refused: {reason}" } }
-    }, true);
-
-    static string MovePath(SemanticAddress address) => $"{address.Kind}:{string.Join('.', address.Parts.Skip(1).Select(part => part.Key))}";
-
     internal object Rename(JsonElement arguments)
     {
         var workspace = Current();
@@ -100,4 +91,17 @@ internal sealed partial class McpWorkspaces
 
     // Retain the response member for existing clients; event pins are carried by ESM v16.
     static IEnumerable<Diagnostic> EventPinWarnings(ScreenplayWorkspace workspace) => [];
+
+    static object MoveRefused(WorkspaceMoveRequest request, string reason)
+    {
+        var refusal = new
+        {
+            success = false,
+            failureKind = "InvalidOperation",
+            conflicts = new[] { new { kind = nameof(WorkspaceConflictKind.InvalidOperation), message = $"Move '{MovePath(request.Target)}' to '{MovePath(request.NewParent)}' refused: {reason}" } }
+        };
+        return McpJson.ToolResult(refusal, true);
+    }
+
+    static string MovePath(SemanticAddress address) => $"{address.Kind}:{string.Join('.', address.Parts.Skip(1).Select(part => part.Key))}";
 }

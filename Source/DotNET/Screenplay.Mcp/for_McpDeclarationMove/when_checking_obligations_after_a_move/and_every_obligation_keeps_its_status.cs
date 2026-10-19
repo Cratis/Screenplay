@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_moving_a_declaration.given;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Workspaces;
-using Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_moving_a_declaration.given;
 
 namespace Cratis.Screenplay.Mcp.for_McpDeclarationMove.when_checking_obligations_after_a_move;
 

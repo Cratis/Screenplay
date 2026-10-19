@@ -16,6 +16,10 @@ internal sealed partial class WorkspaceRefactoring
         SemanticKind.Query, SemanticKind.Reaction, SemanticKind.Capture, SemanticKind.Specification
     ];
 
+    static readonly string[] _sliceOwnedMembers = ["reducers", "constraints"];
+
+    static readonly string[] _sliceDeclarationMembers = ["events", "commands", "readModels", "projections", "queries", "specifications", "reactions", "captures"];
+
     static SemanticAddress RehomedAddress(SemanticAddress address, SemanticAddress source, SemanticAddress destination) =>
         SemanticAddress.FromCanonical(address.Kind, [.. destination.Parts, .. address.Parts.Skip(source.Parts.Length)]);
 
@@ -80,7 +84,7 @@ internal sealed partial class WorkspaceRefactoring
         {
             var node = nodes[entry.Handle];
             Detach(node);
-            if (parent[entry.Member!] is not JsonArray members) parent[entry.Member!] = members = new JsonArray();
+            if (parent[entry.Member!] is not JsonArray members) parent[entry.Member!] = members = [];
             members.Add(node);
             touched.Add(entry.Handle.Document);
         }
@@ -109,8 +113,6 @@ internal sealed partial class WorkspaceRefactoring
         return fragment;
     }
 
-    static readonly string[] _sliceDeclarationMembers = ["events", "commands", "readModels", "projections", "queries", "specifications", "reactions", "captures"];
-
     static void SliceDeclarations(JsonObject slice, Dictionary<string, JsonNode> contents)
     {
         foreach (var member in _sliceDeclarationMembers)
@@ -128,7 +130,7 @@ internal sealed partial class WorkspaceRefactoring
         foreach (var (id, before) in original)
         {
             if (before["kind"] is null || !candidate.TryGetValue(id, out var after)) continue;
-            var changed = new[] { "reducers", "constraints" }
+            var changed = _sliceOwnedMembers
                 .Where(member => !JsonNode.DeepEquals(before[member], after[member]))
                 .SelectMany(member => Names(before[member]).Concat(Names(after[member])).Distinct(StringComparer.Ordinal).Select(name => $"{member[..^1]} '{name}'"))
                 .ToArray();
