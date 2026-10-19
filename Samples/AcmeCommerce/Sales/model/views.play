@@ -476,6 +476,7 @@ module Orders
         description "An order that nobody has decided on yet"
         orderId     OrderId key
         customerId  CustomerId
+        email       EmailAddress
         quotedTotal Money
 
       query OrdersWaitingForApproval => observable WaitingOrder[]
@@ -486,6 +487,7 @@ module Orders
         no automap
         from OrderReceived
           customerId  = customerId
+          email       = email
           quotedTotal = quotedTotal
         remove with OrderApproved
         remove with OrderRejected
@@ -500,7 +502,7 @@ module Orders
             data WaitingOrder[] via query OrdersWaitingForApproval
             table WaitingOrder
               column orderId     label "Order"
-              column customerId  label "Customer"
+              column email       label "Customer"
               column quotedTotal label "Quoted total"
               on double click
                 navigate to Decision

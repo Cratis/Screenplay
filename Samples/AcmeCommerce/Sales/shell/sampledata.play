@@ -194,22 +194,27 @@ sample data AcmeSales
     row
       orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
       customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email       = "ada@example.com"
       quotedTotal = 749
     row
       orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
       customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email       = "grace@example.com"
       quotedTotal = 520
     row
       orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
       customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email       = "alan@example.com"
       quotedTotal = 1290
     row
       orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
       customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email       = "edsger@example.com"
       quotedTotal = 520
     row
       orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
       customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email       = "barbara@example.com"
       quotedTotal = 520
   shape OrderDetail
     row
