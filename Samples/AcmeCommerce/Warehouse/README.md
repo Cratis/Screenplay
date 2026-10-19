@@ -1,7 +1,7 @@
 # Warehouse (Acme Commerce sample)
 
 Physical stock: what is on the shelf, what is promised to an order, what is picked, packed and dispatched. Module `Stock`, personas
-`WarehouseClerk` (policy `CanWorkWarehouse`) and `OpsAdmin`. Event sources `StockItem` (SKU), `Shipment` (order) and `Location` (code).
+`WarehouseClerk` (policy `CanWorkWarehouse`). Event sources `StockItem` (SKU), `Shipment` (order) and `Location` (code).
 
 ```
 model/          state changes, state views, automations, screens, forms, specifications

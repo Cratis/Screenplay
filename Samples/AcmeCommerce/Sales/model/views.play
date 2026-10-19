@@ -116,10 +116,6 @@ module Orders
         template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
           header
             title "Orders pipeline"
-          toolbar
-            toolbar pipelineActions
-              button approve title "Approve next order" slice Orders.Approval.ApproveOrder emphasis primary icon check
-              button cancel title "Cancel order" slice Orders.Fulfilment.CancelOrder emphasis quiet
           board
             data PipelineOrder[] via query AllPipelineOrders
             on select
@@ -162,8 +158,11 @@ module Orders
         orderId        OrderId key
         customerId     CustomerId
         email          EmailAddress
+        market         Market
         status         OrderStatus
         quotedTotal    Money
+        deliveryCity   String
+        deliveryPostalCode String
         discount       DiscountPercent optional
         carrier        Carrier optional
         trackingNumber TrackingNumber optional
@@ -194,8 +193,11 @@ module Orders
         from OrderReceived
           customerId  = customerId
           email       = email
+          market      = market
           status      = "received"
           quotedTotal = quotedTotal
+          deliveryCity       = shipTo.city
+          deliveryPostalCode = shipTo.postalCode
         from OrderApproved
           status = "approved"
         from OrderRejected
@@ -248,19 +250,38 @@ module Orders
         from OrderCancelled
           cancelled = true
 
+      // The page a rep works an order from: facts, lines, where it goes, how far it has come - and what the rep may do next
       screen OrderPage
-        description "One order: summary, lines and the activity timeline"
+        description "One order: facts, delivery, fulfilment progress and the rep's actions"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           header
-            title "Order"
+            component Cratis.Blueprint.Default.pageHeader orderHeader
+              property title = "Order"
+              property subtitle = "Everything about one order and where it stands"
           summary
             data OrderDetail via query GetOrderDetail by orderId
             summary OrderDetail
+              field email          label "Customer"
+              field market         label "Market"
               field status         label "Status"
               field quotedTotal    label "Quoted total"
-              field discount       label "Discount"
+              field discount       label "Discount %"
               field carrier        label "Carrier"
               field trackingNumber label "Tracking"
+          related
+            action ApplyDiscount
+              label "Give discount"
+            action ReleaseHold
+              label "Release hold"
+            action MarkOrderFulfilled
+              label "Mark fulfilled"
+            action CancelOrder
+              label "Cancel order"
+          aside
+            data OrderDetail via query GetOrderDetail by orderId
+            summary OrderDetail
+              field deliveryCity       label "Deliver to"
+              field deliveryPostalCode label "Postal code"
           activity
             data OrderTimeline via query GetOrderTimeline by orderId
             summary OrderTimeline
@@ -292,6 +313,160 @@ module Orders
           status      = "received"
           quotedTotal = 98
           discount    = 10
+
+  // The customer-service desk: find any order by customer, market, status or tracking number and open it
+  feature Lookup
+    slice StateView OrderLookup
+      description "Every order with the customer and the shipment, to answer what a customer asks"
+
+      readmodel OrderRow
+        description "One order as the desk's list shows it"
+        orderId        OrderId key
+        customerId     CustomerId
+        email          EmailAddress
+        market         Market
+        quotedTotal    Money
+        status         OrderStatus
+        carrier        Carrier optional
+        trackingNumber TrackingNumber optional
+
+      query AllOrderRows => observable OrderRow[]
+        description "Every order the desk can look up"
+
+      projection OrderRowProjection => OrderRow
+        no automap
+        from OrderReceived
+          customerId  = customerId
+          email       = email
+          market      = market
+          quotedTotal = quotedTotal
+          status      = "received"
+        from OrderApproved
+          status = "approved"
+        from OrderRejected
+          status = "rejected"
+        from OrderPutOnHold
+          status = "onHold"
+        from OrderHoldReleased
+          status = "received"
+        from OrderConfirmationIssued
+          status = "confirmed"
+        from OrderShipmentRecorded
+          status         = "shipped"
+          carrier        = carrier
+          trackingNumber = trackingNumber
+        from OrderFulfilled
+          status = "fulfilled"
+        from OrderCancelled
+          status = "cancelled"
+
+      screen OrderList
+        description "All orders: who ordered, what it is worth, where it stands and how it ships"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader ordersHeader
+              property title = "Orders"
+              property subtitle = "Find an order and open it"
+          list
+            data OrderRow[] via query AllOrderRows
+            table OrderRow
+              column orderId        label "Order"
+              column email          label "Customer"
+              column market         label "Market"
+              column quotedTotal    label "Total"
+              column status         label "Status"
+              column carrier        label "Carrier"
+              column trackingNumber label "Tracking"
+              on double click
+                navigate to OrderPage
+                  with orderId from item.orderId
+
+      specification TheDeskSeesTheShipment
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        given OrderShipmentRecorded
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+          dispatchedAt   = "2026-10-20T08:00:00Z"
+        then readmodel OrderRow
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          email          = "ada@example.com"
+          status         = "shipped"
+          carrier        = "posten"
+          trackingNumber = "TRK-100200"
+
+  // Orders that were turned down or called off, with the reason the customer was given
+  feature Cancellations
+    slice StateView ClosedOrders
+      description "Orders that were rejected or cancelled, and why"
+
+      readmodel ClosedOrder
+        description "One order that will not be fulfilled"
+        orderId OrderId key
+        outcome OrderStatus
+        reason  DecisionReason
+
+      query AllClosedOrders => observable ClosedOrder[]
+        description "Every rejected or cancelled order"
+
+      projection ClosedOrderProjection => ClosedOrder
+        no automap
+        from OrderRejected
+          outcome = "rejected"
+          reason  = reason
+        from OrderCancelled
+          outcome = "cancelled"
+          reason  = reason
+
+      screen Cancellations
+        description "Rejected and cancelled orders with their reasons"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader cancellationsHeader
+              property title = "Cancellations"
+              property subtitle = "Orders that will not be fulfilled, and why"
+          list
+            data ClosedOrder[] via query AllClosedOrders
+            table ClosedOrder
+              column orderId label "Order"
+              column outcome label "Outcome"
+              column reason  label "Reason"
+              on double click
+                navigate to OrderPage
+                  with orderId from item.orderId
+
+      specification ACancelledOrderIsListedWithItsReason
+        given caller
+          authenticated
+          role "SalesRep"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        given OrderCancelled
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          reason = "The customer changed their mind"
+        then readmodel ClosedOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          outcome = "cancelled"
+          reason  = "The customer changed their mind"
 
   feature Approval
     slice StateView ApprovalInbox
@@ -340,6 +515,8 @@ module Orders
               navigate to ApprovalInbox
             action RejectOrder
               navigate to ApprovalInbox
+            action ApplyLargeDiscount
+              navigate to ApprovalInbox
 
       specification ABigOrderWaitsForAManager
         given caller
@@ -373,6 +550,7 @@ module Orders
 
       query AllOrderFigures => observable OrderFigure[]
         description "The figures of every order"
+        authorize IsSalesManager
 
       projection OrderFigureProjection => OrderFigure
         no automap

@@ -82,7 +82,7 @@ public partial class when_compiling_the_samples : given.the_samples
     [Fact] void should_find_slices() => _slices.ShouldBeGreaterThan(0);
     [Fact] void should_compile_without_errors_or_warnings() => _diagnostics.ShouldBeEmpty();
     [Fact] void should_use_only_canonical_optionality() => _legacyOptionality.ShouldBeEmpty();
-    [Fact] void should_give_every_state_view_slice_a_screen() => _slicesWithoutScreens.ShouldBeEmpty();
+    [Fact] void should_give_every_watched_state_view_slice_a_screen() => _slicesWithoutScreens.ShouldBeEmpty();
     [Fact] void should_give_every_slice_a_specification() => _slicesWithoutSpecifications.ShouldBeEmpty();
     [Fact] void should_define_every_referenced_string_in_every_locale() => _missingStrings.ShouldBeEmpty();
     [Fact] void should_reach_every_file_from_the_root_composite() => _unreachable.ShouldBeEmpty();
@@ -95,10 +95,10 @@ public partial class when_compiling_the_samples : given.the_samples
             {
                 _slices++;
                 var name = $"{sample}: {module.Name} {slice.Type} {slice.Name}";
-                // A state view is what a screen shows, so it carries one. A state change needs no screen of its own: the persona
-                // works it from an action on the screen they already use, and the input-surface completeness check (PLAY0532,
-                // PLAY0533) proves that every command has such an issuer.
-                if (slice.Type is SliceType.StateView && !slice.Screens.Any())
+                // A state change needs a UI issuer (an action on a screen the persona already works in), not a dialog of its own: the input
+                // surfaces completeness check (PLAY0533) holds it to that. A state view something watches keeps its screen; a support view that only
+                // the commands' protected reads use (no observable query) is state, not a screen.
+                if (slice.Type is SliceType.StateView && slice.Queries.Any(query => query.IsObservable) && !slice.Screens.Any())
                 {
                     _slicesWithoutScreens.Add(name);
                 }
