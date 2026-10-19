@@ -118,6 +118,17 @@ public sealed record WorkspacePropertyReport
     public bool DeployableWithoutTransformation { get; init; }
 
     /// <summary>
+    /// Gets whether the plan drafts a new event generation. A draft is source only: no migrator is declared and it
+    /// claims no deployment, replay or migration readiness.
+    /// </summary>
+    public bool EvolutionDraft { get; init; }
+
+    /// <summary>
+    /// Gets the inline events extracted into their slice in the same proposal so they can carry a new generation.
+    /// </summary>
+    public ImmutableArray<SemanticAddress> ExtractedInlineEvents { get; init; } = [];
+
+    /// <summary>
     /// Gets the version change, or null when unchanged or unknown.
     /// </summary>
     public WorkspacePropertyEsmVersionChange? EsmVersionChange { get; init; }
