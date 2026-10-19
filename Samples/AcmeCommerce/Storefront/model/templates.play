@@ -1,7 +1,7 @@
 // Storefront's OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop (not copied from a blueprint).
 module Shop
   // OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop.
-  // ProductGrid: header, filters and a grid of product cards (the grid is a table of product rows).
+  // ProductGrid: header, filters and the products (a table of product rows). The slot is not called "grid": inside an arrangement `grid` is the layout kind, so a slot of that name is never placed.
   screen template ProductGrid
     category Shop
     scopes slice stateview
@@ -9,13 +9,13 @@ module Shop
 
     header
     filters
-    grid
+    products
 
     arrangement flow
       column gap 12
         header
         filters
-        grid grow
+        products grow
 
   // SideSummary: the main region with a narrow summary beside it (the basket shows its lines left and the totals right).
   screen template SideSummary
