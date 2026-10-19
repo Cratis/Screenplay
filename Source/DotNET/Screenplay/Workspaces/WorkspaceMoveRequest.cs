@@ -42,14 +42,14 @@ public sealed record WorkspaceMoveRequest
     public WorkspaceNodeHandle? NewParentHandle { get; init; }
 
     /// <summary>
-    /// Gets the formatting policy; no fallback to canonical printing is permitted.
-    /// </summary>
-    /// <summary>
     /// Gets the specifications of the source slice that move with a single declaration, because they cover only it.
     /// </summary>
     /// <remarks>Only valid when <see cref="Target"/> is a declaration inside a slice and <see cref="NewParent"/> is a slice.</remarks>
     public ImmutableArray<SemanticAddress> CarriedSpecifications { get; init; } = [];
 
+    /// <summary>
+    /// Gets the formatting policy; no fallback to canonical printing is permitted.
+    /// </summary>
     public WorkspaceAuthoringFormatting Formatting { get; init; } = WorkspaceAuthoringFormatting.PreserveTrivia;
 
     /// <summary>
@@ -96,4 +96,9 @@ public sealed record WorkspaceMoveReport(
     /// Gets the current addresses of the specifications that moved with a single declaration.
     /// </summary>
     public ImmutableArray<SemanticAddress> SpecificationsCarried { get; init; } = [];
+
+    /// <summary>
+    /// Gets every logical address the move rewrites, previous to current, whether or not an identity is assigned to it.
+    /// </summary>
+    internal IReadOnlyDictionary<SemanticAddress, SemanticAddress> AddressMigrations { get; init; } = new Dictionary<SemanticAddress, SemanticAddress>();
 }

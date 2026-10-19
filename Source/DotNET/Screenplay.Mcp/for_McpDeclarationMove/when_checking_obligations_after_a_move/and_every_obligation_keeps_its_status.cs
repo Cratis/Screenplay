@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Workspaces;
 using Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_moving_a_declaration.given;
 
@@ -15,7 +16,7 @@ public class and_every_obligation_keeps_its_status : Specification
 
     void Because()
     {
-        _refusal = McpDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(a_declaration_move_connection.Model), []);
+        _refusal = McpDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(a_declaration_move_connection.Model), new Dictionary<SemanticAddress, SemanticAddress>());
     }
 
     [Fact] void should_not_refuse() => _refusal.ShouldBeNull();

@@ -65,7 +65,7 @@ internal sealed partial class McpWorkspaces
         if (refusal is not null) return MoveRefused(request, refusal);
         var result = workspace.ProposeMove(request with { CarriedSpecifications = carried });
         if (!result.Accepted) return Rejected(result);
-        refusal = McpDeclarationMove.Obligations(before, McpWorkspaceAnalysis.For(result.Workspace!).Source, result.MoveReport!.IdentityMigrations);
+        refusal = McpDeclarationMove.Obligations(before, McpWorkspaceAnalysis.For(result.Workspace!).Source, result.MoveReport!.AddressMigrations);
         return refusal is null ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : MoveRefused(request, refusal);
     }
 

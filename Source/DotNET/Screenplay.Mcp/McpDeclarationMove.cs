@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax.Specifications;
-using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -74,13 +73,12 @@ static class McpDeclarationMove
     /// </summary>
     /// <param name="before">The workspace before the move.</param>
     /// <param name="after">The candidate workspace.</param>
-    /// <param name="migrations">The identity migrations the move reports.</param>
+    /// <param name="migrations">Every logical address the move rewrites, previous to current.</param>
     /// <returns>A refusal, or null when every obligation keeps its status.</returns>
-    internal static string? Obligations(McpSnapshot before, McpSnapshot after, IEnumerable<WorkspaceMoveIdentityMigration> migrations)
+    internal static string? Obligations(McpSnapshot before, McpSnapshot after, IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations)
     {
-        var moved = migrations.Where(migration => _kinds.ContainsKey(migration.PreviousAddress.Kind))
-            .GroupBy(migration => (_kinds[migration.PreviousAddress.Kind], Path(migration.PreviousAddress)))
-            .ToDictionary(group => group.Key, group => Path(group.First().CurrentAddress));
+        var moved = migrations.Where(migration => _kinds.ContainsKey(migration.Key.Kind))
+            .ToDictionary(migration => (_kinds[migration.Key.Kind], Path(migration.Key)), migration => Path(migration.Value));
         var previous = Status(before, (kind, address) => moved.GetValueOrDefault((kind, address)) ?? address);
         var current = Status(after, (_, address) => address);
         var broken = previous.Where(pair => pair.Value && !current.GetValueOrDefault(pair.Key)).Select(pair => pair.Key)
