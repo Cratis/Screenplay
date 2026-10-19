@@ -113,11 +113,21 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    static bool IsThemeIdentifier(string name) =>
+        name.Length > 0 &&
+        (name[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or '_') &&
+        name.All(character => char.IsLetterOrDigit(character) || character == '_');
+
     static void ValidateProfileTheme(UiProfileSyntax profile, string themeName, Dictionary<string, ThemeSyntax> themes, ParserContext context)
     {
         if (!themes.TryGetValue(themeName, out var theme))
         {
-            context.Warning(DiagnosticCodes.UnknownTheme, $"Unknown theme '{themeName}' - declare it with 'theme {themeName}'", profile.Location);
+            if (IsThemeIdentifier(themeName))
+            {
+                context.Warning(DiagnosticCodes.UnknownTheme, $"Unknown theme '{themeName}' - declare it with 'theme {themeName}'", profile.Location);
+            }
+
+            // A name that is not an identifier cannot be declared in a document, so it names a package-provided theme the compiler cannot see.
             return;
         }
 
