@@ -347,6 +347,8 @@ export const DiagnosticCodes = {
     ExpectedClaimMatchTarget: 'PLAY0121',
     MixedPolicyImplementation: 'PLAY0440',
     RepeatedPolicyRequirement: 'PLAY0441',
+    AnonymousPolicyCombined: 'PLAY0804',
+    NegatedAnonymousPolicy: 'PLAY0805',
     UnexpectedTokenInPolicyCondition: 'PLAY0115',
     ExpectedPolicyCondition: 'PLAY0116',
     UnclosedPolicyConditionGroup: 'PLAY0117',

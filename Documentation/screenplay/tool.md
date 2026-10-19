@@ -26,7 +26,7 @@ docker run --rm -v "$PWD/specifications:/work:ro" cratis/screenplay --warnaserro
 
 The image also runs the [MCP server](mcp/index.md): `docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model`.
 Use its [`propose-move`](mcp/edit.md#move-a-slice-or-feature-to-another-parent) tool
-for identity-preserving slice and feature moves across logical parents. This is an
+for identity-preserving slice, feature and single-declaration moves across logical parents. This is an
 MCP proposal, reviewed and applied through `apply`, not a CLI move command.
 
 ## Check generated references

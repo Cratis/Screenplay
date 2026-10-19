@@ -94,7 +94,21 @@ There is no singular generation-report alias.
 multi-generation events. A new generation is not deployable to Chronicle without
 transformations. `esmVersionKnown` is false when the candidate does not bind;
 `esmVersionChange` is then null, not an inferred version. Source acceptance and
-executable readiness remain separate. Review [the retained property proposal](mcp/edit.md#change-a-property-everywhere-it-flows)
+executable readiness remain separate.
+
+A plan that adds a generation is an evolution draft: the report sets
+`evolutionDraft: true`. Screenplay cannot declare an event transformation yet
+([#71](https://github.com/Cratis/Screenplay/issues/71)), so no migrator is
+authored or emitted, and nothing in the report claims the draft is safe to deploy,
+replay or migrate; `deployableWithoutTransformation` stays false. Generation N keeps
+its payload, contract identity and property identities. Inline events cannot carry a
+generation, so a removal with `newGeneration` extracts the inline event in the same
+proposal and reports it in `extractedInlineEvents`; this is the way to drop a
+`PLAY0469` identifier copy from a contract that may already be stored. A
+generation-2 event cannot be turned back into generation 1 without the event source
+id, so a downcast that restores the copy needs Chronicle-side migration support.
+
+Review [the retained property proposal](mcp/edit.md#change-a-property-everywhere-it-flows)
 before applying it.
 
 ## Public contracts and origin

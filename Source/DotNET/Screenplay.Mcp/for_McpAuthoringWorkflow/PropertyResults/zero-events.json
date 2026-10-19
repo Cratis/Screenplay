@@ -171,6 +171,8 @@
   ],
   "generations": [],
   "deployableWithoutTransformation": true,
+  "evolutionDraft": false,
+  "extractedInlineEvents": [],
   "esmVersionChange": null,
   "esmVersionKnown": true
 }

@@ -6,7 +6,8 @@ what it receives into its own language (anti-corruption), so a change in one lan
 
 The full story - how it was built, domain by domain, and what each Studio feature shows - is in the
 [walkthrough](../../Documentation/screenplay/acme-commerce-walkthrough.md). The Studio project is the permanent keeper project
-**Acme Commerce** (application **Acme Commerce Shop**) in the Cratis tenant of Cratis Studio, filled by the loader in
+**Acme Commerce** in the Cratis tenant of Cratis Studio - **one application per domain** (Acme Shop, Acme Catalog, Acme Sales,
+Acme Purchasing, Acme Warehouse), each with its own logo, theme, accent and shell - filled by the loader in
 `scripts/samples/acme-commerce` of the `Cratis/Studio` repository.
 
 It is the epic sample for Studio, Screenplay, Scene and Stage: everything the language says about concepts, constraints,
@@ -23,9 +24,11 @@ screenplay test Samples/AcmeCommerce               # every specification
 ```
 application.play                the ONLY `domain AcmeCommerce` line; `reaction batches atomic`, `command reads protected`
 Shared/                         the shared kernel: concepts with their validation rules, enums with pinned numbers,
-                                composite types, ALL event sources, policies and personas, the Acme theme
-Shell/                          the ui profile (blueprint AppShell root pinned ^1, theme, packages, the one sample-data
-                                pack), the application navigation (hierarchical sidebar module -> feature, topbar)
+                                composite types, ALL event sources, policies and personas
+<Domain>/shell/                 the domain's OWN look and chrome: shell.play (theme, ui profile: blueprint AppShell root pinned ^1,
+                                menu mode and theme, colour scheme, accent, packages), navigation.play (the domain's logo as an
+                                inlined SVG data URI, topbar, sidebar) and sampledata.play (the domain's sample-data pack)
+assets/logos/                   the five logo SVGs; tools/embed-logos.py inlines them into each navigation.play
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications;
                                 module.play is the skeleton (module description, authorize, features, navigation mode)
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
@@ -44,6 +47,25 @@ tools/                          domain-package.sh, render-variant.sh, render-bri
 Six personas, no more: a persona is a real person who works in the shop. A screen belongs to the persona who may use it (the narrowest persona
 whose policies satisfy the slice's gates) and to its slice, and never makes an actor row of its own. Error, validation, loading, empty and
 confirmation states are not modelled: the components bring them.
+
+## One application per domain: identity and look
+
+Scene keeps the logo and the UI profile at **application level only** (rule NAV8: a module shows the application's logo locked), so a domain
+that has its own logo, theme and shell is its own application. The five share the platform (`Cratis.Components` and the Default blueprint's
+`AppShell`, pinned `^1`; Stage ships only those, so no profile lists a domain blueprint) and differ in what an application may choose:
+
+| Domain | Application | Accent | Menu | Look |
+| --- | --- | --- | --- | --- |
+| Storefront | Acme Shop | `#C2410C` warm orange | horizontal, light | customer-facing: warm, spacious, round corners, serif |
+| Catalog | Acme Catalog | `#4338CA` indigo | static sidebar, light | a calm back office |
+| Sales | Acme Sales | `#1D4ED8` blue | static sidebar, dark menu | a focused order desk, sharp corners |
+| Purchasing | Acme Purchasing | `#B45309` amber | slim rail with labels | dense buyer desk |
+| Warehouse | Acme Warehouse | `#0F766E` teal | compact rail, dark scheme | a dense floor console |
+
+A domain's package (`tools/domain-package.sh <Domain>`) carries its own `shell/` folder, so importing it into its application brings the ui profile,
+the navigation with the logo and the sample data. The combined `screenplay Samples/AcmeCommerce` still compiles as one tree (five profiles, five
+navigation layouts). The name, logo image, corners and font of the Studio designer's App and Look tabs are not yet part of the `ui profile`
+grammar: the loader's `identity` stage saves them (see `scripts/samples/acme-commerce` in Cratis/Studio).
 
 ## The one-application rules (all verified)
 
@@ -95,7 +117,7 @@ replenishment (F-C) and change of price (F-D).
 Nothing in the first list remains: the language admitted each (Screenplay decision 0098, ESM v29 and v30) and the sample uses it.
 
 - `Money` carries `decimals <= 2` ([#867](https://github.com/Cratis/Screenplay/issues/867)), and the basket's `addedValue` is `add addedValue by unitPrice * quantity` ([#864](https://github.com/Cratis/Screenplay/issues/864)).
-- The shell has application-level toolbar buttons in `navigation topbar` (`Shell/navigation.play`, [#868](https://github.com/Cratis/Screenplay/issues/868)).
+- The shell has application-level toolbar buttons in `navigation topbar` (`<Domain>/shell/navigation.play`, [#868](https://github.com/Cratis/Screenplay/issues/868)).
 - Command specifications state the public event their slice publishes ([#866](https://github.com/Cratis/Screenplay/issues/866)).
 - Orders cross the boundary whole and fan out per line ([#857](https://github.com/Cratis/Screenplay/issues/857)); a replenishment order's id is generated and pinned in its specifications ([#858](https://github.com/Cratis/Screenplay/issues/858)); that command appends to two event sources ([#859](https://github.com/Cratis/Screenplay/issues/859)); an id keeps its own concept on each side of a boundary ([#861](https://github.com/Cratis/Screenplay/issues/861)).
 

@@ -1,0 +1,23 @@
+// ============================================================
+// Catalog: the application's navigation and logo
+//
+// The merchandiser's back office: products, pricing, publication and the catalog dashboard, with the one thing done most often - a new product - always at hand.
+// The logo is the SVG in assets/logos/catalog.svg, inlined as a data URI (tools/embed-logos.py regenerates the line): Studio and Stage take
+// a Screenplay document only, never a file beside it, and a data URI cannot 404.
+// ============================================================
+
+layout CatalogNavigation
+  category Shell
+  content
+
+  navigation topbar
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM2MzY2RjEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM0MzM4Q0EiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMCIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xNCAzMS41VjE3YTMgMyAwIDAgMSAzLTNoMTQuNWEzIDMgMCAwIDEgMi4xLjlsMTYgMTZhMyAzIDAgMCAxIDAgNC4yTDM4LjEgNDkuNmEzIDMgMCAwIDEtNC4yIDBsLTE4LTE4YTMgMyAwIDAgMS0uOS0yLjF6IiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iNCIgZmlsbD0iIzQzMzhDQSIvPjxwYXRoIGQ9Ik0zMyAzNWw1LjUgNS41TTMwIDQxbDQuNSA0LjUiIHN0cm9rZT0iIzQzMzhDQSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iLjU1Ii8+PC9zdmc+Cg==" title "Acme Catalog"
+    button newProduct title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+      authorize CanCurateCatalog
+
+  navigation sidebar
+    item catalog title "Catalog" icon tag target Merchandising
+      item products title "Products" target Merchandising.Products
+      item pricing title "Pricing" target Merchandising.Pricing
+      item publication title "Publication" target Merchandising.Publication
+      item catalogdashboard title "Dashboard" target Merchandising.Reporting

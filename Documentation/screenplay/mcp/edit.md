@@ -144,8 +144,9 @@ Without a release baseline, choose `eventNeverPersisted: true` only when the cur
 generation has never been stored, or choose `newGeneration: true` to keep the old
 shape and append one new generation. With a baseline, unadmitted current revisions
 default to an in-place edit; admitted revisions require explicit `newGeneration`
-and refuse `eventNeverPersisted`. Historical generations cannot be edited;
-extract inline events first. New generations require a transformation before
+and refuse `eventNeverPersisted`. Historical generations cannot be edited.
+Extract inline events first, except for a removal with `newGeneration`, which
+extracts the event in the same proposal. New generations require a transformation before
 Chronicle deployment, which Screenplay does not yet express.
 
 Review the required `property.generations` array in the proposal and in
@@ -199,7 +200,9 @@ for unadmitted revisions. `eventNeverPersisted`
 edits the highest generation in place; `newGeneration` appends the current shape
 plus the property as N+1. For the RegisterProject v2 model, these mean editing
 generation 2 or appending generation 3. Both keep ESM v4; a new generation reports
-`deployableWithoutTransformation: false` and `esmVersionChange: null`.
+`deployableWithoutTransformation: false`, `evolutionDraft: true` and `esmVersionChange: null`.
+A removal with `newGeneration` may also select an inline event's property: the same
+proposal extracts the event and lists it in `extractedInlineEvents`.
 
 Use `CanonicalizeTouchedDocuments` for structural additions. Review `changed`
 (`added` and `fixtureAdded`), `chainCandidates` and `generations` with `read-proposal`,
@@ -251,8 +254,25 @@ its behavior. Use propose-move and show me the migrations before applying.
 
 `propose-move` takes the target and destination parent as logical addresses, so a
 feature written in several files moves every fragment together. Slices can move
-to features; features can move to modules or other features. Declaration moves
-between slices are deferred.
+to features; features can move to modules or other features. A single command,
+event, read model, projection, query, reaction or capture can move to another slice:
+
+```text
+Move the BorrowBook command into the Loans slice. Use propose-move and tell me
+which specifications travel with it.
+```
+
+The specifications of the source slice that cover only the moved declaration move
+with it and are listed in the report's `specificationsCarried`. A specification
+covers a declaration when it meets one of that declaration's
+[specification obligations](reference.md#logical-parent-moves) or its `when` step
+names it; coverage comes from nothing else. The move refuses when a
+covering specification also covers a declaration that stays behind, or when any
+specification obligation that was met before the move would be unmet after it.
+Screens never move: an `execute`, `refresh` or `navigate to` that names the moved
+declaration is repaired to its new address. An unqualified reference is not
+rewritten; if the move would change what it refers to, the proposal asks you to
+qualify it first. A command may keep producing events that stay in the source slice.
 
 The proposal computes every assigned semantic and event-contract identity migration
 and repairs qualified typed references, including `depends on` and interaction

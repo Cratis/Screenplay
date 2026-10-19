@@ -23,7 +23,7 @@ internal static class SemanticPolicyEvaluation
         IEnumerable<SemanticProperty> properties,
         SemanticReactionIdentity? runsAs = null)
     {
-        if (authorization is null) return new(SemanticPolicyOutcome.Allow);
+        if (authorization is null || IsAnonymous(authorization, plan)) return new(SemanticPolicyOutcome.Allow);
         if (runsAs is not null)
         {
             if (runsAs is not { Kind: SemanticReactionIdentityKind.System, Roles.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
@@ -36,6 +36,10 @@ internal static class SemanticPolicyEvaluation
 
     internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
         EvaluateCondition(condition, null, new(caller, false), new Dictionary<string, SemanticValue>(), null, []).IsTrue;
+
+    static bool IsAnonymous(SemanticAuthorization authorization, SemanticExecutionPlan plan) =>
+        authorization is SemanticPolicyReference reference &&
+        plan.Model.Application.Policies.Any(policy => policy.Name == reference.Name && policy.Condition is SemanticAnonymousCondition);
 
     static SemanticPolicyDecision EvaluateAuthorization(
         SemanticAuthorization authorization,
@@ -83,6 +87,7 @@ internal static class SemanticPolicyEvaluation
         IEnumerable<SemanticProperty> properties) => condition switch
     {
         SemanticAuthenticatedCondition => new(caller.Caller.Authenticated),
+        SemanticAnonymousCondition => new(true),
         SemanticNotPolicyCondition not => EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties).Not(),
         SemanticRoleCondition role => new(caller.Caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),

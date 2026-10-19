@@ -70,6 +70,8 @@ public static class PersonaCallers
             case AuthenticatedConditionSyntax:
                 values.Add(new("authenticated", "true", null, policy, condition.Location));
                 return null;
+            case AnonymousConditionSyntax:
+                return null;
             case RoleConditionSyntax role:
                 values.Add(new("role", role.Role, null, policy, condition.Location));
                 return null;
@@ -93,6 +95,7 @@ public static class PersonaCallers
     static bool Satisfied(PolicyConditionSyntax condition, IReadOnlyList<PersonaCallerContribution> values) => condition switch
     {
         AuthenticatedConditionSyntax => true,
+        AnonymousConditionSyntax => true,
         RoleConditionSyntax role => values.Any(value => value.Kind == "role" && value.Value == role.Role),
         ClaimConditionSyntax { MatchesSubject: false, Matches: LiteralExpressionSyntax { Value: string literal } } claim => values.Any(value => value.Kind == "claim" && string.Equals(value.Type, claim.Claim, StringComparison.OrdinalIgnoreCase) && value.Value == literal),
         LogicalPolicyConditionSyntax { Operator: LogicalOperator.And } logical => Satisfied(logical.Left, values) && Satisfied(logical.Right, values),

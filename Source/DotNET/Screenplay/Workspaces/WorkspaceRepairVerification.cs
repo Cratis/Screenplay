@@ -138,7 +138,7 @@ internal static class WorkspaceRepairVerification
             (WorkspaceEventRepairs.HasConsumers(index, repair) || !result.ExecutableReady ||
                 !WorkspaceProductionRepairs.KeepsDestinations(index, index.Find(index.Find(repair.Subject)!.Parent!)!, result, true, true)))
         {
-            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Removing the payload property changes the event contract. Consumer, opaque implementation or routing impact cannot be proven safe.");
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Removing the payload property changes the event contract. Consumer, opaque implementation or routing impact cannot be proven safe. To keep the original generation, remove the property with propose-property and newGeneration, which drafts a new event generation.");
         }
         if (result.Accepted && (repair.DiagnosticCode == DiagnosticCodes.LowGenerationEntropy || repair.DiagnosticCode == DiagnosticCodes.LowGeneratedIdentifierEntropy) &&
             result.Workspace!.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.RefutedGeneratedConceptRule &&

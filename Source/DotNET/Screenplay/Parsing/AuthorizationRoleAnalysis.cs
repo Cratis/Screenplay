@@ -46,6 +46,7 @@ internal sealed class AuthorizationRoleAnalysis(ApplicationSyntax application)
     static SemanticPolicyCondition Condition(PolicyConditionSyntax condition) => condition switch
     {
         AuthenticatedConditionSyntax => new SemanticAuthenticatedCondition(),
+        AnonymousConditionSyntax => new SemanticAnonymousCondition(),
         RoleConditionSyntax role => new SemanticRoleCondition(role.Role),
         NotPolicyConditionSyntax not => new SemanticNotPolicyCondition(Condition(not.Operand)),
         LogicalPolicyConditionSyntax logical => new SemanticLogicalPolicyCondition(Condition(logical.Left), Operator(logical.Operator), Condition(logical.Right)),
