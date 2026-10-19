@@ -105,11 +105,14 @@ module Shop
       component Cratis.Blueprint.Default.statCard summaryLineCount
         property label = "Lines"
         property value = 3
+        property format = "number"
+        property change = null
       component Cratis.Blueprint.Default.statCard summaryTotal
         property label = "Total"
         property value = 734
         property format = "currency"
         property currency = "NOK"
+        property change = null
 
     content actions
       component Cratis.Blueprint.Default.actionButton summaryAction
