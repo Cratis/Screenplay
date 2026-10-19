@@ -188,15 +188,24 @@ module Shop
         description "The basket: lines beside a summary"
         template SideSummary
           header
-            title "Your basket"
+            component Cratis.Blueprint.Default.pageHeader basketHeader
+              property title = "Your basket"
+              property subtitle = "Change a quantity or remove a line, then check out"
           main
-            data BasketContents via query GetBasketContents by basketId
-            table BasketLine
-              column sku       label "Product"
-              column quantity  label "Qty"
-              column unitPrice label "Unit price"
+            data BasketContents via query AllBaskets
+            component Cratis.Blueprint.Default.dataList basketLines
+              id "basketLines"
+              property rows from query AllBaskets.0.lines
+              property idField = "sku"
+              property titleField = "sku"
+              property selectionMode = "single"
+              property label = "Basket lines"
+              property columns = [{"field":"sku","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
+              on select
+                navigate to Basket
+                  with sku from component.basketLines.value
           summary
-            data BasketSize via query GetBasketSize by basketId
+            data BasketSize via query AllBasketSizes
             summary BasketSize
               field lineCount label "Lines"
               field addedValue label "Added value"
