@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_discovering_refactorings;
 
-public class and_theCurrentRevision_is_stale : given.a_refactoring_workspace
+public class and_the_revision_is_stale : given.a_refactoring_workspace
 {
     JsonElement _response;
 
