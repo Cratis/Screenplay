@@ -157,6 +157,27 @@ static class ContractAdmission
                   shipmentId = "11111111-1111-4111-8111-111111111111"
         """;
 
+    internal const string AnonymousPolicies = """
+        policy Anyone
+          require anonymous
+        module M
+          feature F
+            slice StateChange S
+              command Register
+                authorize Anyone
+                id String identifier
+                produces Registered
+                  for id
+                  id = id
+              event Registered
+                id String
+              specification RegisteringNeedsNoCaller
+                when Register
+                  id = "r1"
+                then Registered
+                  id = "r1"
+        """;
+
     internal const string ProtectedReads = """
         command reads protected
         module M
@@ -205,7 +226,7 @@ static class ContractAdmission
         new("module", Slice),
         new("numbers", "numbers exact\n"),
         new("persona", "persona Person\n"),
-        new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
+        new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
