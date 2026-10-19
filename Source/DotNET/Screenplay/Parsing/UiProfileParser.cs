@@ -96,7 +96,7 @@ internal static partial class UiProfileParser
                     var quotedTheme = themeMatch.Groups[2].Success ? StringLiteral.Unescape(themeMatch.Groups[2].Value) : null;
                     if (quotedTheme is not null && string.IsNullOrWhiteSpace(quotedTheme))
                     {
-                        context.Error(DiagnosticCodes.InvalidProfileTheme, "Invalid theme reference - a quoted theme name cannot be empty", line.Location);
+                        context.Error(DiagnosticCodes.InvalidProfileTheme, "Invalid theme reference - a quoted theme name cannot be empty or blank", line.Location);
                         break;
                     }
 
