@@ -56,6 +56,7 @@ internal static class ReactionIdentityAnalysis
     static bool? Condition(SemanticPolicyCondition condition, Func<string, bool?> role, bool? authenticated) => condition switch
     {
         SemanticAuthenticatedCondition => authenticated,
+        SemanticAnonymousCondition => true,
         SemanticRoleCondition required => role(required.Role),
         SemanticNotPolicyCondition not => !Condition(not.Operand, role, authenticated),
         SemanticLogicalPolicyCondition logical => Combine(Condition(logical.Left, role, authenticated), logical.Operator, Condition(logical.Right, role, authenticated)),

@@ -100,6 +100,7 @@ internal static partial class SemanticModelRead
         return kind switch
         {
             "opaque" when allowOpaque && role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticOpaquePolicyCondition(string.Empty),
+            "anonymous" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticAnonymousCondition(),
             "authenticated" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticAuthenticatedCondition(),
             "role" when role is not null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticRoleCondition(role),
             "claim" when claim is not null && role is null && op is null && left is null && right is null &&
