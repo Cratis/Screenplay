@@ -258,19 +258,6 @@ module Orders
             component Cratis.Blueprint.Default.pageHeader orderHeader
               property title = "Order"
               property subtitle = "Everything about one order and where it stands"
-            toolbar orderActions
-              item discount action ApplyDiscount
-                label "Give discount"
-                icon percentage
-              item release action ReleaseHold
-                label "Release hold"
-                icon play
-              item fulfil action MarkOrderFulfilled
-                label "Mark fulfilled"
-                icon check
-              item cancel action CancelOrder
-                label "Cancel order"
-                icon times
           summary
             data OrderDetail via query GetOrderDetail by orderId
             summary OrderDetail
@@ -281,6 +268,15 @@ module Orders
               field discount       label "Discount %"
               field carrier        label "Carrier"
               field trackingNumber label "Tracking"
+          related
+            action ApplyDiscount
+              label "Give discount"
+            action ReleaseHold
+              label "Release hold"
+            action MarkOrderFulfilled
+              label "Mark fulfilled"
+            action CancelOrder
+              label "Cancel order"
           aside
             data OrderDetail via query GetOrderDetail by orderId
             summary OrderDetail

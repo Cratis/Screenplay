@@ -24,3 +24,11 @@ module Orders
     field orderId  label "Order"
     field discount label "Discount %"
     on submit navigate to ApprovalInbox
+
+  form ReleaseHoldForm for ReleaseHold
+    field orderId label "Order"
+    on submit navigate to OrderPage by orderId
+
+  form MarkOrderFulfilledForm for MarkOrderFulfilled
+    field orderId label "Order"
+    on submit navigate to OrderPage by orderId
