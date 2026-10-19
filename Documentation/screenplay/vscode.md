@@ -436,6 +436,20 @@ including when replacement happened after inspection. Reload the window, review 
 new root and deliberately configure/discover it instead; reload does not recover
 the previous transaction.
 
+## C# completeness checks
+
+The [completeness checks](completeness.md) are opt-in and the editor's own validation does not compute them; several
+are C#-only. With the repair bridge above configured, run **Screenplay: Run C# Completeness Checks** from the command
+palette. The extension asks the same `screenplay mcp` server for every completeness check, pages through the results
+against one pinned source revision and shows them in their own problem collection, labelled **Screenplay C# check**.
+It starts no server of its own: when the bridge is disabled or unconfigured you get one message and nothing runs.
+
+A finding describes the saved file. Editing a document clears its findings, a document with unsaved edits shows
+none, and a stale revision, a changed setting or model root, or a closed connection clears them all. Run the command
+again after saving. Set `screenplay.verdicts.onSave` to `true` in User settings to rerun the checks a moment after
+every save; failures there are only logged. If the model has errors the checks are skipped and the command says so.
+PLAY0546 is not shown, because the server's `diagnostics` tool does not run the semantic binder.
+
 ## Theme
 
 The board is drawn in its dark theme whatever your color theme is. Its labels are colored for a dark surface, the same as in Studio's viewer, and would be unreadable on a light one.
