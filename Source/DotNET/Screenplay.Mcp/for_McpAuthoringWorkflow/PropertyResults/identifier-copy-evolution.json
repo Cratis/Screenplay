@@ -1,0 +1,243 @@
+{
+  "action": "remove",
+  "target": {
+    "address": {
+      "kind": "Property",
+      "parts": [
+        {
+          "kind": "Application",
+          "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+        },
+        {
+          "kind": "Module",
+          "key": "Projects"
+        },
+        {
+          "kind": "Feature",
+          "key": "Naming"
+        },
+        {
+          "kind": "Slice",
+          "key": "Rename"
+        },
+        {
+          "kind": "Declaration",
+          "key": "Renamed"
+        },
+        {
+          "kind": "OwnerKind",
+          "key": "8"
+        },
+        {
+          "kind": "Member",
+          "key": "projectId"
+        }
+      ]
+    },
+    "kind": "Event",
+    "generation": 1
+  },
+  "changed": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Naming"
+          },
+          {
+            "kind": "Slice",
+            "key": "Rename"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Renamed"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "projectId"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "mapping-target",
+      "change": "removed",
+      "location": {
+        "line": 11,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Naming"
+          },
+          {
+            "kind": "Slice",
+            "key": "Rename"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Renamed"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "projectId"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "declaration",
+      "change": "removed",
+      "location": {
+        "line": 15,
+        "column": 9,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    }
+  ],
+  "notChanged": [],
+  "needsDecision": [],
+  "chainCandidates": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Naming"
+          },
+          {
+            "kind": "Slice",
+            "key": "Rename"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Rename"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "projectId"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "property",
+      "reason": "notSelected"
+    }
+  ],
+  "generations": [
+    {
+      "event": {
+        "kind": "EventContract",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Naming"
+          },
+          {
+            "kind": "Slice",
+            "key": "Rename"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Renamed"
+          }
+        ]
+      },
+      "from": 1,
+      "to": 2,
+      "mode": "newGeneration",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
+    }
+  ],
+  "deployableWithoutTransformation": false,
+  "evolutionDraft": true,
+  "extractedInlineEvents": [
+    {
+      "kind": "EventContract",
+      "parts": [
+        {
+          "kind": "Application",
+          "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+        },
+        {
+          "kind": "Module",
+          "key": "Projects"
+        },
+        {
+          "kind": "Feature",
+          "key": "Naming"
+        },
+        {
+          "kind": "Slice",
+          "key": "Rename"
+        },
+        {
+          "kind": "Declaration",
+          "key": "Renamed"
+        }
+      ]
+    }
+  ],
+  "esmVersionChange": {
+    "from": "1.0",
+    "to": "4.0"
+  },
+  "esmVersionKnown": true
+}
