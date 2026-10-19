@@ -336,7 +336,7 @@ PackagesBlock  = "packages", NL,
 
 ProfileLayoutDecl = "layout", Ident, NL ;
 
-ProfileThemeDecl = "theme", Ident, NL ;
+ProfileThemeDecl = "theme", ( Ident | QuotedString ), NL ;
 
 ProfileRootDecl = "root", "template", TemplateRefName, NL,
                  [ INDENT, { ShellOptionDecl }, DEDENT ] ;
@@ -526,7 +526,7 @@ ContributionDecl = "contribute", "to", Ident, NL,
 ContributionDirective = NavigateDecl
                       | "label", LocalizableString, NL
                       | "order", Integer, NL
-                      | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
+                      | ( "id" | "icon" | "presentation" | "group" ), ( Ident | QuotedString ), NL
                       | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
 
 (* A navigation region is one part of the application shell's navigation:
@@ -542,8 +542,8 @@ NavigationRegionDecl = "navigation", ( "topbar" | "sidebar" ), [ "inherits" | "e
 
 NavigationLogoDecl = "logo", "image", String, "title", LocalizableString, NL ;
 
-NavigationItemDecl = "item", ( Ident | String ), "title", LocalizableString,
-                 [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
+NavigationItemDecl = "item", ( Ident | QuotedString ), "title", LocalizableString,
+                 [ "icon", ( Ident | QuotedString ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
                  [ INDENT, { NavigationItemDecl }, DEDENT ] ;
 
 (* Forms describe command input and optional query-backed population. A
@@ -655,10 +655,10 @@ InstanceValue  = "set", ComponentPath, "=", JSONValue, NL
                | "items", ComponentPath, NL,
                  INDENT, { ContributedItem }, DEDENT ;
 
-ContributedItem = "item", ( Ident | String ), NL,
+ContributedItem = "item", ( Ident | QuotedString ), NL,
                  INDENT, { Ident, "=", JSONValue, NL }, DEDENT ;
 
-ComponentPath  = ( Ident | String ), ".", Ident, { ".", Ident } ;
+ComponentPath  = ( Ident | QuotedString ), ".", Ident, { ".", Ident } ;
 
 VariantDecl    = "variant", "width", ArrangementSizeClass, ",", "height", ArrangementSizeClass, NL,
                  INDENT, { PlaceDecl }, DEDENT ;
@@ -1503,10 +1503,10 @@ ToolbarDecl    = "toolbar", Ident, NL,
 ToolbarItem    = "item", Ident, ( "action" | "dialog" ), QualifiedName, NL,
                | "item", Ident, "navigate", "to", QualifiedName, NL ;
 
-ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
+ToolbarButton  = "button", ( Ident | QuotedString ), "title", LocalizableString,
                  [ "slice", QualifiedName ],
                  [ "emphasis", ( "primary" | "secondary" | "quiet" ) ],
-                 [ "icon", ( Ident | String ) ], NL ;
+                 [ "icon", ( Ident | QuotedString ) ], NL ;
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
