@@ -1,7 +1,7 @@
 # Purchasing (Acme Commerce sample)
 
 Buying from suppliers: who the suppliers are, what they offer, what has to be replenished and the purchase orders that result. Module `Buying`
-(policy `CanBuy`), personas `Buyer` and `OpsAdmin`. Event sources `Supplier`, `PurchaseOrder` (shared) and `SkuSourcing` (Purchasing's own, per SKU).
+(policy `CanBuy`), persona `Buyer`. Event sources `Supplier`, `PurchaseOrder` (shared) and `SkuSourcing` (Purchasing's own, per SKU).
 
 ```
 model/          concepts.play, suppliers.play, replenishment.play (replenishment, demand, overview), purchase-orders.play, forms.play

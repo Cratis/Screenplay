@@ -8,7 +8,6 @@
 //   Shared/        the shared kernel: concepts, enums, composite types, event sources, policies, personas, theme
 //   Shell/         the UI profile (blueprint AppShell root, theme, packages, the one sample-data pack) and the
 //                  application-level navigation (sidebar module -> feature, topbar)
-//   Application/   the application's own state screens (Forbidden, NotFound, Error) and client-error reporting
 //   <Domain>/model/        state changes, state views, automations, screens and specifications
 //   <Domain>/translation/  Translate slices: outbound publication and inbound anti-corruption
 //
