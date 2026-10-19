@@ -1,7 +1,7 @@
 // Purchasing / Replenishment + Demand + Overview: what has to be bought, from whom, and how the department is doing.
 module Buying
-  feature Replenishment
-    description "Low-stock requests from the warehouse and the purchase orders they turn into"
+  feature Sourcing
+    description "Which supplier a SKU is bought from"
 
     slice StateChange ChoosePreferredSupplier
       description "Pins the supplier replenishment orders go to for one SKU (the Buyer picks the cheapest offer)"
@@ -37,11 +37,6 @@ module Buying
           unitPrice  = 62
           currency   = "NOK"
 
-      screen ChooseSupplier
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ChoosePreferredSupplier
-
     slice StateChange ClearPreferredSupplier
       description "Forgets the preferred supplier of a SKU; replenishment is blocked until a new one is chosen"
 
@@ -66,11 +61,6 @@ module Buying
         then PreferredSupplierCleared
           for "ACM-1000"
 
-      screen ClearSupplier
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ClearPreferredSupplier
-
     slice StateView PreferredSuppliers
       description "Which supplier replenishment orders go to, per SKU"
 
@@ -93,14 +83,17 @@ module Buying
       screen PreferredSuppliers
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
           toolbar
-            toolbar actions
-              button choose title "Choose supplier" slice Buying.Replenishment.ChoosePreferredSupplier emphasis quiet icon star
+            action ChoosePreferredSupplier
+              label "Choose supplier"
+            action ClearPreferredSupplier
+              label "Clear supplier"
           list
             data SkuSourcing[] via query AllSkuSourcing
             table SkuSourcing
-              column sku       label "SKU"
-              column unitPrice label "Unit price"
-              column currency  label "Currency"
+              column id         label "SKU"
+              column supplierId label "Supplier"
+              column unitPrice  label "Unit price"
+              column currency   label "Currency"
 
       specification APreferredSupplierAppears
         given PreferredSupplierChosen
@@ -111,6 +104,9 @@ module Buying
         then readmodel SkuSourcing
           id       = "ACM-1000"
           unitPrice = 62
+
+  feature Replenishment
+    description "Low-stock requests from the warehouse and the purchase orders they turn into"
 
     // The automation's command. The "skip when an open PO already covers the SKU" rule is the constraint below: while a
     // replenishment order for the SKU is open, a second one is refused and the reaction acknowledges the refusal.
@@ -189,12 +185,6 @@ module Buying
           role "Buyer"
         when Replenish
         then error "SkuSourcing 'ACM-1000' does not exist."
-
-      // The automation drafts these; a Buyer can also ask for one by hand from the replenishment queue.
-      screen DraftReplenishment
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action CreateReplenishmentPurchaseOrder
 
     slice Automation DraftReplenishmentOrder
       description "A low-stock request becomes a draft purchase order with the preferred supplier"
@@ -385,11 +375,6 @@ module Buying
           sku      = "ACM-1000"
           quantity = 3
 
-      screen RecordDemand
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RecordManualDemand
-
     slice StateView OpenDemand
       description "Units ordered by customers per SKU, less what suppliers have delivered"
 
@@ -410,6 +395,9 @@ module Buying
 
       screen OpenDemand
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          toolbar
+            action RecordManualDemand
+              label "Record demand"
           list
             data DemandRow[] via query AllOpenDemand
             table DemandRow
@@ -459,6 +447,8 @@ module Buying
 
       screen PurchasingDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
+          header
+            title "Purchasing"
           kpis
             data PurchasingFigures[] via query CurrentPurchasingFigures
             table PurchasingFigures
@@ -466,3 +456,10 @@ module Buying
               column suppliers     label "Suppliers"
               column unitsOrdered  label "Units ordered"
               column unitsReceived label "Units received"
+          tables
+            data ReplenishmentRow[] via query AllReplenishmentRequests
+            table ReplenishmentRow
+              column sku          label "SKU to replenish"
+              column quantity     label "Suggested"
+              column onHand       label "On hand"
+              column status       label "Status"

@@ -5,6 +5,110 @@ module Buying
   feature Suppliers
     description "The suppliers we buy from and what they offer"
 
+    slice StateView Suppliers
+      description "Every supplier with the products it offers"
+
+      readmodel SupplierRow
+        supplierId   SupplierId
+        name         SupplierName
+        taxId        SupplierTaxId
+        country      String
+        offerCount   Int
+
+      query AllSuppliers => observable SupplierRow[]
+      query SupplierById => SupplierRow optional
+        by supplierId SupplierId
+
+      projection SupplierRowProjection => SupplierRow
+        from SupplierRegistered
+          supplierId = $eventSourceId
+          name       = name
+          taxId      = taxId
+          country    = country
+          offerCount = 0
+        from SupplierOfferAdded
+          increment offerCount
+
+      readmodel SupplierOffer
+        offerId      SupplierOfferId key
+        supplierId   SupplierId
+        sku          Sku
+        price        Money
+        currency     CurrencyCode
+        leadTimeDays LeadTimeDays
+
+      query OffersOfSupplier => observable SupplierOffer[]
+        filter supplierId SupplierId
+
+      projection SupplierOfferProjection => SupplierOffer
+        no automap
+        from SupplierProductOffered
+          offerId      = $eventSourceId
+          supplierId   = supplierId
+          sku          = sku
+          price        = price
+          currency     = currency
+          leadTimeDays = leadTimeDays
+
+      screen Suppliers
+        template blueprint Cratis.Blueprint.Default MasterDetailScreen version "^1"
+          list
+            toolbar actions
+              button register title "Register supplier" slice Buying.Suppliers.RegisterSupplier emphasis primary icon plus
+            action OfferSupplierProduct
+              label "Offer product"
+            data SupplierRow[] via query AllSuppliers
+            table SupplierRow
+              column name    label "Supplier"
+              column country label "Country"
+              column offerCount label "Offers"
+              on row-click navigate to SupplierPage by supplierId
+          details
+            data SupplierOffer[] via query OffersOfSupplier
+            table SupplierOffer
+              column sku          label "SKU"
+              column price        label "Price"
+              column currency     label "Currency"
+              column leadTimeDays label "Lead time (days)"
+
+      screen SupplierPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          summary
+            data SupplierRow via query SupplierById by supplierId
+            summary SupplierRow
+              field name    label "Supplier"
+              field taxId   label "Tax id"
+              field country label "Country"
+
+      specification ASupplierAppearsWithItsOffers
+        given SupplierRegistered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          name         = "Nordic Ceramics AS"
+          taxId        = "NO 912 345 678"
+          contactEmail = "orders@nordic-ceramics.example"
+          country      = "NO"
+        given SupplierOfferAdded
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          offerId    = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+        given SupplierProductOffered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+          supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          sku          = "ACM-1000"
+          price        = 62
+          currency     = "NOK"
+          leadTimeDays = 14
+        then readmodel SupplierOffer
+          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+          supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          sku          = "ACM-1000"
+          price        = 62
+        then readmodel SupplierRow
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          name       = "Nordic Ceramics AS"
+          offerCount = 1
+
     slice StateChange RegisterSupplier
       description "Registers a supplier; one tax id belongs to one supplier"
 
@@ -152,111 +256,3 @@ module Buying
           role "Buyer"
         when Mug price = -1
         then error "An amount cannot be negative"
-
-      screen NewOffer
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action OfferSupplierProduct
-
-    slice StateView Suppliers
-      description "Every supplier with the products it offers"
-
-      readmodel SupplierRow
-        supplierId   SupplierId
-        name         SupplierName
-        taxId        SupplierTaxId
-        country      String
-        offerCount   Int
-
-      query AllSuppliers => observable SupplierRow[]
-      query SupplierById => SupplierRow optional
-        by supplierId SupplierId
-
-      projection SupplierRowProjection => SupplierRow
-        from SupplierRegistered
-          supplierId = $eventSourceId
-          name       = name
-          taxId      = taxId
-          country    = country
-          offerCount = 0
-        from SupplierOfferAdded
-          increment offerCount
-
-      readmodel SupplierOffer
-        offerId      SupplierOfferId key
-        supplierId   SupplierId
-        sku          Sku
-        price        Money
-        currency     CurrencyCode
-        leadTimeDays LeadTimeDays
-
-      query OffersOfSupplier => observable SupplierOffer[]
-        filter supplierId SupplierId
-
-      projection SupplierOfferProjection => SupplierOffer
-        no automap
-        from SupplierProductOffered
-          offerId      = $eventSourceId
-          supplierId   = supplierId
-          sku          = sku
-          price        = price
-          currency     = currency
-          leadTimeDays = leadTimeDays
-
-      screen Suppliers
-        template blueprint Cratis.Blueprint.Default MasterDetailScreen version "^1"
-          list
-            toolbar actions
-              button register title "Register supplier" slice Buying.Suppliers.RegisterSupplier emphasis primary icon plus
-              button offer title "Offer product" slice Buying.Suppliers.OfferSupplierProduct emphasis quiet icon tag
-            data SupplierRow[] via query AllSuppliers
-            table SupplierRow
-              column name    label "Supplier"
-              column country label "Country"
-              column offerCount label "Offers"
-              on row-click navigate to SupplierPage by supplierId
-          details
-            data SupplierOffer[] via query OffersOfSupplier
-            table SupplierOffer
-              column sku          label "SKU"
-              column price        label "Price"
-              column currency     label "Currency"
-              column leadTimeDays label "Lead time (days)"
-
-      screen SupplierPage
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          summary
-            data SupplierRow via query SupplierById by supplierId
-            summary SupplierRow
-              field name    label "Supplier"
-              field taxId   label "Tax id"
-              field country label "Country"
-
-      specification ASupplierAppearsWithItsOffers
-        given SupplierRegistered
-          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          name         = "Nordic Ceramics AS"
-          taxId        = "NO 912 345 678"
-          contactEmail = "orders@nordic-ceramics.example"
-          country      = "NO"
-        given SupplierOfferAdded
-          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          offerId    = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
-        given SupplierProductOffered
-          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
-          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
-          supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          sku          = "ACM-1000"
-          price        = 62
-          currency     = "NOK"
-          leadTimeDays = 14
-        then readmodel SupplierOffer
-          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
-          supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          sku          = "ACM-1000"
-          price        = 62
-        then readmodel SupplierRow
-          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          name       = "Nordic Ceramics AS"
-          offerCount = 1

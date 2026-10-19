@@ -1207,7 +1207,7 @@ sample data AcmeNordic
       lastReceivedAt  = "2026-10-04T09:00:00Z"
   shape StockAlert
     row
-      sku          = "ACM-1002"
+      id           = "ACM-1002"
       onHand       = 9
       reorderPoint = 10
   shape StockFigures
@@ -1219,7 +1219,7 @@ sample data AcmeNordic
       parcelsOpen   = 5
   shape ItemDetail
     row
-      sku          = "ACM-1000"
+      id           = "ACM-1000"
       name         = "Acme krus"
       onHand       = 148
       reserved     = 12
@@ -1228,7 +1228,7 @@ sample data AcmeNordic
       blocked      = false
       lastCounted  = 148
     row
-      sku          = "ACM-1001"
+      id           = "ACM-1001"
       name         = "Acme tallerken"
       onHand       = 96
       reserved     = 14
@@ -1237,7 +1237,7 @@ sample data AcmeNordic
       blocked      = false
       lastCounted  = 96
     row
-      sku          = "ACM-1002"
+      id           = "ACM-1002"
       name         = "Acme kaffekanne"
       onHand       = 9
       reserved     = 3
@@ -1245,3 +1245,65 @@ sample data AcmeNordic
       reorderPoint = 10
       blocked      = false
       lastCounted  = 9
+  shape ReservationRow
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c01"
+      sku      = "ACM-1000"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      quantity = 1
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c02"
+      sku      = "ACM-1001"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      quantity = 2
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c03"
+      sku      = "ACM-1002"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      quantity = 3
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c04"
+      sku      = "ACM-2000"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      quantity = 1
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c05"
+      sku      = "ACM-2001"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      quantity = 2
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c06"
+      sku      = "ACM-2002"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      quantity = 4
+  shape StockAdjustmentRow
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d01"
+      sku       = "ACM-1000"
+      quantity  = 5
+      increased = true
+      reason    = "found"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d02"
+      sku       = "ACM-1002"
+      quantity  = 2
+      increased = false
+      reason    = "damaged"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d03"
+      sku       = "ACM-2000"
+      quantity  = 1
+      increased = true
+      reason    = "returned"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d04"
+      sku       = "ACM-1001"
+      quantity  = 3
+      increased = false
+      reason    = "count"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d05"
+      sku       = "ACM-2002"
+      quantity  = 4
+      increased = true
+      reason    = "correction"

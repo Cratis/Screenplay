@@ -61,11 +61,6 @@ module Stock
         when ShelfA1 locationCode = ""
         then error "A location needs a code"
 
-      screen OpenLocation
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RegisterLocation
-
     slice StateChange PutStockInLocation
       description "Notes that some of a SKU's units sit in a location"
       command PutStockInLocation
@@ -96,17 +91,12 @@ module Stock
           locationCode = "A-01-01"
           quantity     = 20
 
-      screen PutAwayDialog
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action PutStockInLocation
-
     // ONE read model composed from many events and one join: the item with its numbers, the shelves it sits on and what each shelf is called
     slice StateView ItemPage
       description "One SKU in full: the numbers, the locations it sits in and its latest count"
 
       readmodel ItemDetail
-        sku             Sku key
+        id              Sku key
         name            ProductName
         onHand          StockQuantity
         reserved        StockQuantity
@@ -117,12 +107,12 @@ module Stock
         locations       ItemLocation[]
 
       query ItemBySku => ItemDetail optional
-        by sku Sku
+        by id Sku
 
       projection ItemDetailProjection => ItemDetail
         no automap
         from SkuRegistered
-          sku          = $eventSourceId
+          id           = $eventSourceId
           name         = name
           onHand       = 0
           reserved     = 0
@@ -160,10 +150,15 @@ module Stock
 
       screen ItemPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            action PutStockInLocation
+              label "Put away"
+            action RegisterLocation
+              label "Open location"
           summary
-            data ItemDetail via query ItemBySku by sku
+            data ItemDetail via query ItemBySku by id
             summary ItemDetail
-              field sku          label "SKU"
+              field id           label "SKU"
               field name         label "Product"
               field onHand       label "On hand"
               field reserved     label "Reserved"
@@ -171,7 +166,7 @@ module Stock
               field reorderPoint label "Reorder at"
               field lastCounted  label "Last count"
           related
-            data ItemDetail via query ItemBySku by sku
+            data ItemDetail via query ItemBySku by id
             table locations
               column locationCode label "Location"
               column label        label "Description"
@@ -197,7 +192,7 @@ module Stock
           locationCode = "A-01-01"
           quantity     = 20
         then readmodel ItemDetail
-          sku       = "ACM-1000"
+          id        = "ACM-1000"
           name      = "Acme mug"
           onHand    = 40
           available = 40

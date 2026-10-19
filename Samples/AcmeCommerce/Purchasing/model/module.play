@@ -5,6 +5,7 @@ module Buying
   authorize CanBuy
 
   feature Suppliers
+  feature Sourcing
   feature Replenishment
   feature PurchaseOrders
   feature Demand

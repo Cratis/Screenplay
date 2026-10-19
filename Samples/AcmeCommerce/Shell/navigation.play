@@ -41,11 +41,14 @@ layout AcmeNavigation
       item purchaseorders title "Purchase orders" target Buying.PurchaseOrders
       item suppliers title "Suppliers" target Buying.Suppliers
       item replenishment title "Replenishment" target Buying.Replenishment
+      item preferred title "Preferred suppliers" target Buying.Sourcing
       item demand title "Demand" target Buying.Demand
       item overview title "Dashboard" target Buying.Overview
     item warehouse title "Warehouse" icon box target Stock
       item levels title "Stock levels" target Stock.Levels
-      item picking title "Picking" target Stock.Reservations
+      item adjustments title "Adjustments" target Stock.Adjustments
+      item reservations title "Reservations" target Stock.Reservations
+      item picking title "Picking" target Stock.Picking
       item receiving title "Receiving" target Stock.Receiving
       item shipments title "Shipments" target Stock.Dispatch
       item stockoverview title "Dashboard" target Stock.Overview

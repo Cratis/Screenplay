@@ -37,16 +37,21 @@ translation/    inbound.play (what Catalog, Sales and Purchasing say) and outbou
 
 ## Screens
 
+Every screen belongs to the `WarehouseClerk` (the module is gated by `CanWorkWarehouse`); there is no actor row per screen. Only real screens are modelled:
+the components bring the error, validation, loading, empty and confirmation states, and a command is an `action` (with its command-bound form, see `forms.play`)
+on the screen the clerk already works in.
+
 | Screen | Template | Reached from |
 | --- | --- | --- |
-| `StockLevels` (list, `acme:stockBadge`), toolbar: Adjust stock, Count, Register SKU | `ListScreen` | Warehouse / Stock levels |
-| `ItemPage` (record: numbers, locations) | `RecordPage` | row click on a stock level or alert |
-| `PickingQueue` (board by shipment status) | `BoardScreen` | Warehouse / Picking |
-| `ReceivingLog` (list) | `ListScreen` | Warehouse / Receiving |
-| `Shipments` (list) | `ListScreen` | Warehouse / Shipments |
+| `StockLevels` (list), actions: Adjust stock, Count, Reorder point, Block SKU; button Register SKU | `ListScreen` | Warehouse / Stock levels |
+| `ItemPage` (record: numbers, locations), actions: Put away, Open location | `RecordPage` | row click on a stock level or alert |
+| `StockAdjustments` (list of corrections with their reason), actions: Adjust stock, Count | `ListScreen` | Warehouse / Adjustments |
+| `Reservations` (what is promised to which order), action: Reserve stock | `ListScreen` | Warehouse / Reservations |
+| `PickingQueue` (board by shipment status), actions: Pick order, Pack, Cancel shipment | `BoardScreen` | Warehouse / Picking |
+| `ReceivingLog` (list), action: Receive goods | `ListScreen` | Warehouse / Receiving |
+| `Shipments` (list), action: Dispatch | `ListScreen` | Warehouse / Shipments |
 | `WarehouseDashboard` (KPIs, running-out alerts) | `DashboardScreen` | Warehouse / Dashboard |
-| `AdjustStock`, `Count`, `SetReorder`, `RegisterSkuDialog`, `OpenLocation`, `PutAwayDialog`, `ReceiveGoods`, `Reserve`, `Dispatch` | `QuickCreateDialog` | toolbar buttons / list actions |
-| `BlockSkuDialog`, `PickOrderDialog`, `PackDialog`, `CancelShipmentDialog` | `ConfirmDialog` | board and list actions |
+| `RegisterSkuDialog` (a creation flow started from the list) | `QuickCreateDialog` | button on Stock levels and in the topbar |
 
 ## Honest deviations from the design (all forced by the language today)
 
