@@ -73,7 +73,9 @@ module Shop
         description "Address, delivery, review: one CommandForm per step, the draft built so far shown as progress"
         template blueprint Cratis.Blueprint.Default WizardScreen version "^1"
           header
-            title "Checkout"
+            component Cratis.Blueprint.Default.pageHeader checkoutHeader
+              property title = "Checkout"
+              property subtitle = "Address, delivery, then confirm"
           progress
             data CheckoutDraft via query GetCheckoutDraft by basketId
             summary CheckoutDraft

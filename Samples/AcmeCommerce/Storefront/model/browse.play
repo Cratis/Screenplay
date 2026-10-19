@@ -154,6 +154,10 @@ module Shop
       screen ProductPage
         description "One product, full width"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader productPageHeader
+              property title = "Product"
+              property subtitle = "Everything about this product, and add it to your basket"
           summary
             data ProductPageEntry via query ProductPageBySku by sku
             summary ProductPageEntry
