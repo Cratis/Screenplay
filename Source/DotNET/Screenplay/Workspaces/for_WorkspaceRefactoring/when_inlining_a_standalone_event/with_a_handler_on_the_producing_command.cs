@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_inlining_a_
 
 public class with_a_handler_on_the_producing_command : given.a_standalone_event
 {
-    protected override string Source => Eligible.Replace("        produces Renamed // production intent\n", "        handler\n          ```csharp\n          // nothing\n          ```\n        produces Renamed // production intent\n", StringComparison.Ordinal);
+    protected override string Source => Eligible.Replace("        produces Renamed // production intent\n", "        handler\n          implementation\n            hint \"Record the new name\"\n        produces Renamed // production intent\n", StringComparison.Ordinal);
 
     void Because() => _result = Inline();
 
