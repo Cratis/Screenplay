@@ -118,9 +118,14 @@ module Orders
             title "Orders pipeline"
           board
             data PipelineOrder[] via query AllPipelineOrders
-            on select
-              navigate to OrderPage
-                with orderId from item.orderId
+            table PipelineOrder
+              column orderId     label "Order"
+              column market      label "Market"
+              column quotedTotal label "Total"
+              column status      label "Status"
+              on double click
+                navigate to OrderPage
+                  with orderId from item.orderId
 
       specification AnOrderMovesAcrossTheBoard
         given caller
