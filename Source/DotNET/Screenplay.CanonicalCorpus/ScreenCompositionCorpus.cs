@@ -18,6 +18,7 @@ public static class ScreenCompositionCorpus
     const string ShellRunnableSourceCase = "screen-shell-navigation-runnable";
     const string UiProfileRootSourceCase = "ui-profile-root-positive";
     const string UiProfileRootLegacySourceCase = "ui-profile-root-legacy-layout";
+    const string UiProfileQuotedThemeSourceCase = "ui-profile-quoted-theme";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -199,6 +200,17 @@ public static class ScreenCompositionCorpus
                     [
                         "UiProfileSyntax",
                         "RootTemplateSyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = UiProfileQuotedThemeSourceCase,
+                    Document = Document("ui-profile-quoted-theme", "positive/UiProfileQuotedTheme.play", $"{Prefix}.positive.UiProfileQuotedTheme.play.txt"),
+                    Requires = "Screenplay ui profile theme named by the quoted display name of a package-provided theme (Cratis/Screenplay#880)",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "UiProfileSyntax"
                     ]
                 }
             ],

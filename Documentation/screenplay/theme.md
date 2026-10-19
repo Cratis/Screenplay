@@ -52,6 +52,17 @@ This is a warning, not an error - the pairing might still work by coincidence, s
 
 A `ui profile` that selects a theme nothing in the document declares gets the same treatment as any other unresolved name - a warning naming the unknown theme.
 
+### Naming a package-provided theme
+
+The themes a component package ships have display names with spaces, such as `Scene Default Light`. A `theme <Name>` declaration needs an identifier, so a document cannot declare one. A `ui profile` can still select it by its real name, written as a quoted string:
+
+```screenplay
+ui profile Desktop
+  theme "Scene Default Light"
+```
+
+The quoted text, with its escapes resolved, is the theme name wherever the profile carries it, and the printer writes it back quoted. An identifier name such as `theme Aurora` is unchanged and prints bare. A name that is not an identifier cannot be declared in a document, so it refers to a theme a package provides. The compiler cannot see package themes, so such a name is not checked against the document's declarations and gets no `PLAY0231`. A quoted name that does match a theme the document declares resolves to it, and the compatibility check applies as for an identifier. An empty, blank or unterminated quoted name is `PLAY0229`. Standalone `theme <Name>` declarations keep identifier-only names.
+
 ## Out of scope
 
 A packaged "pick-one-to-start-from" UI kit - a bundle of packages, a theme, and a sample gallery - is a different, tooling-level concept from `theme`. It is not a `.play` file construct at all; see the Scene UI starters work instead.

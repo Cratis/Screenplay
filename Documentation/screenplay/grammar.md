@@ -336,7 +336,7 @@ PackagesBlock  = "packages", NL,
 
 ProfileLayoutDecl = "layout", Ident, NL ;
 
-ProfileThemeDecl = "theme", Ident, NL ;
+ProfileThemeDecl = "theme", ( Ident | StringLiteral ), NL ;
 
 ProfileRootDecl = "root", "template", TemplateRefName, NL,
                  [ INDENT, { ShellOptionDecl }, DEDENT ] ;

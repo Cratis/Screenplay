@@ -773,7 +773,7 @@ Hosts read the refusal from the `PLAY0781` `reason` argument instead of the mess
 | `PLAY0228` | Error | A `theme` declares compatibility with the same package more than once. |
 | `PLAY0229` | Error | A `ui profile`'s `theme` line is not `theme <Name>`. |
 | `PLAY0230` | Error | A `ui profile` declares `theme` more than once. |
-| `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. |
+| `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. A quoted name that is not an identifier refers to a package-provided theme and is never reported. |
 | `PLAY0232` | Warning | A `ui profile` selects a theme not declared compatible with one of the profile's own packages. |
 
 ### Sample data

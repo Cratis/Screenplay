@@ -87,6 +87,13 @@ public sealed partial class ScreenplayPrinter :
         hasContent = true;
     }
 
+    static string ThemeReference(string name) => IsIdentifierName(name) ? name : StringLiteral.Quote(name);
+
+    static bool IsIdentifierName(string text) =>
+        text.Length > 0 &&
+        (text[0] is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '_') &&
+        text.All(character => char.IsLetterOrDigit(character) || character == '_');
+
     static string ShellOptionValue(ShellOptionSyntax option) => option.Kind == ShellOptionValueKind.Text ? StringLiteral.Quote(option.Value) : option.Value;
 
     static ScreenplayWriter DocumentWriter(SyntaxNode root)
@@ -281,7 +288,7 @@ public sealed partial class ScreenplayPrinter :
 
         if (uiProfile.Theme is not null)
         {
-            writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
+            writer.DirectiveLine($"theme {ThemeReference(uiProfile.Theme)}", uiProfile, "theme");
         }
     }
 

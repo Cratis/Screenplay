@@ -53,15 +53,6 @@ module Orders
         remove with OrderCancelled
         remove with OrderRejected
 
-      screen State
-        description "The order state the decisions run against (support view)"
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          summary
-            data OrderStateEntry via query GetOrderState by id
-            summary OrderStateEntry
-              field status      label "Status"
-              field quotedTotal label "Quoted total"
-
       specification TheStateFollowsTheDecisions
         given caller
           authenticated
