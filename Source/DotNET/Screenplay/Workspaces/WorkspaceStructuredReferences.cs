@@ -60,10 +60,10 @@ static class WorkspaceStructuredReferences
         // From the mapping outwards, each enclosing object member selects the type of its value.
         foreach (var member in ancestors.Take(mappingIndex).Reverse().Select(ancestor => ancestor.Node).OfType<ObjectMemberSyntax>())
         {
-            type = declarations.Named<TypeSyntax>(type)?.Properties.SingleOrDefault(property => property.Name == member.Name)?.Type.Name;
+            type = Properties(declarations, type)?.SingleOrDefault(property => property.Name == member.Name)?.Type.Name;
         }
 
-        return declarations.Named<TypeSyntax>(type) is not null ? type : null;
+        return Properties(declarations, type) is not null ? type : null;
     }
 
     static IEnumerable<PropertySyntax>? StepProperties(WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index, List<WorkspaceSyntaxEntry> ancestors, WorkspaceUniqueDeclarations declarations)
@@ -74,7 +74,7 @@ static class WorkspaceStructuredReferences
         {
             ProducesSyntax produced => ProductionProperties(produced, step, index, declarations),
             SpecificationOperationSyntax operation => OperationInputs(operation.Operation, step, index),
-            CaptureAppendSyntax appended => declarations.Named<EventSyntax>(appended.Event)?.Properties,
+            CaptureAppendSyntax appended => EventProperties(declarations, appended.Event),
             SpecificationQueryResultSyntax => QueryView(step, ancestors, declarations)?.Properties,
             SpecificationQuerySyntax query => QueryProperties(query.Query, declarations),
             _ => null
@@ -88,7 +88,7 @@ static class WorkspaceStructuredReferences
             return (index.Productions.Resolve(produced.Event, slice).Declaration?.Node as OperationSyntax)?.Inputs;
         }
 
-        return declarations.Named<EventSyntax>(produced.Event)?.Properties;
+        return EventProperties(declarations, produced.Event);
     }
 
     static IEnumerable<PropertySyntax>? OperationInputs(string operation, WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index) => index.OwningSlice(step) is { } slice
@@ -110,4 +110,8 @@ static class WorkspaceStructuredReferences
 
         return target is null ? null : declarations.Named<ReadModelSyntax>(target.ReturnType.Name);
     }
+
+    static IEnumerable<PropertySyntax>? Properties(WorkspaceUniqueDeclarations declarations, string? type) => declarations.Named<TypeSyntax>(type)?.Properties;
+
+    static IEnumerable<PropertySyntax>? EventProperties(WorkspaceUniqueDeclarations declarations, string @event) => declarations.Named<EventSyntax>(@event)?.Properties;
 }
