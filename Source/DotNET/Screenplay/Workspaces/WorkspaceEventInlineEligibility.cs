@@ -108,9 +108,14 @@ sealed record WorkspaceEventInlineEligibility(string? Refusal, WorkspaceSyntaxEn
             return "the production omits 'for', which would silently become the inline identifier default.";
         }
 
+        if (!@event.Properties.Any())
+        {
+            return "the event has no properties, and a production with nothing to map cannot be proven to produce the same event.";
+        }
+
         var properties = @event.Properties.Select(property => property.Name).Order(StringComparer.Ordinal).ToArray();
         var mappings = syntax.Mappings.Select(mapping => mapping.Property).Order(StringComparer.Ordinal).ToArray();
-        return properties.Length == 0 || !properties.SequenceEqual(mappings) || properties.Distinct(StringComparer.Ordinal).Count() != properties.Length
+        return !properties.SequenceEqual(mappings) || properties.Distinct(StringComparer.Ordinal).Count() != properties.Length
             ? "the production does not map every event property exactly once with typed mappings."
             : null;
     }

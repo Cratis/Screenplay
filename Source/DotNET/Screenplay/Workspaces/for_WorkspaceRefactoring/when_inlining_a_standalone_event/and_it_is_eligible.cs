@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_inlining_a_standalone_event;
@@ -20,5 +21,7 @@ public class and_it_is_eligible : given.a_standalone_event
     [Fact] void should_preserve_the_description_once() => _result.Workspace!.Documents[0].Text.Split("A new name").Length.ShouldEqual(2);
     [Fact] void should_preserve_the_documentation_once() => _result.Workspace!.Documents[0].Text.Split("Name history.").Length.ShouldEqual(2);
     [Fact] void should_keep_the_destination() => _result.Workspace!.Documents[0].Text.ShouldContain("for projectId");
-    [Fact] void should_keep_the_semantic_identities() => WorkspaceSyntaxIndex.Create(_result.Workspace!).Entries.Where(entry => entry.Address is not null).Select(entry => entry.Address!.ToString()).Order().ShouldEqual(WorkspaceSyntaxIndex.Create(_workspace).Entries.Where(entry => entry.Address is not null).Select(entry => entry.Address!.ToString()).Order());
+    [Fact] void should_keep_the_semantic_identities() => Addresses(_result.Workspace!).ShouldContainOnly(Addresses(_workspace));
+
+    static SemanticAddress[] Addresses(ScreenplayWorkspace workspace) => [.. WorkspaceSyntaxIndex.Create(workspace).Entries.Where(entry => entry.Address is not null).Select(entry => entry.Address!)];
 }

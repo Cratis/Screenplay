@@ -48,11 +48,15 @@ public static partial class WorkspaceEventRefactorings
         var result = WorkspaceRepairVerification.RequireComments(WorkspaceRepairVerification.Propose(workspace, request with { Operations = operations }));
         if (result.Accepted && (!WorkspaceRepairVerification.SameModel(workspace, result.Workspace!) ||
             workspace.IdentityCatalog.Revision != result.Workspace!.IdentityCatalog.Revision ||
-            result.Workspace.Compilation.Diagnostics.Count() != workspace.Compilation.Diagnostics.Count()))
+            !DiagnosticKeys(result.Workspace).SequenceEqual(DiagnosticKeys(workspace))))
         {
             return WorkspaceRepairVerification.Refuse(result, WorkspaceConflictKind.InvalidOperation, "Inlining must preserve canonical executable bytes, every catalog assignment and the diagnostics of the model.");
         }
 
         return result;
     }
+
+    // Lines and columns legitimately move with the declaration, so a diagnostic is identified by its code and document.
+    static IEnumerable<(string Code, string? Path)> DiagnosticKeys(ScreenplayWorkspace workspace) =>
+        workspace.Compilation.Diagnostics.Select(diagnostic => (diagnostic.Code, diagnostic.Location.Path)).Order();
 }
