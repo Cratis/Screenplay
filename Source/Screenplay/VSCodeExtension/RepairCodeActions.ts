@@ -108,7 +108,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     // The C# completeness checks borrow this bridge: same configuration, trust, root and process, never a launch of their own.
     const verdicts = registerVerdicts(context, { connect: async () => {
         const owner = await connect();
-        return { root: owner.session.launch.root, page: (args, signal) => { authorize(owner); return owner.session.readDiagnosticsPage(args, signal); } };
+        return { root: owner.session.launch.root, call: (tool, args, signal) => { authorize(owner); return owner.session.readTool(tool, args, signal); } };
     } });
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
     const authorize = (owner: RepairConnectionOwner) => {

@@ -51,6 +51,6 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |
 | PLAY0686 | Retired by ESM v16, which carries event `id` pins as stored names. Both editors still preserve warnings supplied by earlier native compilers; ordinary TypeScript validation does not bind the ESM. |
 
-The opt-in C# repair bridge is not a general C# validation service. In VS Code it can fetch the completeness verdicts for you: see [C# completeness checks in VS Code](vscode.md#c-completeness-checks). Elsewhere, run the CLI or MCP checks for C#-only verdicts. Public-event repair capabilities and ESM, Stage and Chronicle support remain required before the full feature ships.
+The opt-in C# repair bridge is not a general C# validation service. In VS Code it can fetch the completeness verdicts and PLAY0546 for you: see [C# completeness checks in VS Code](vscode.md#c-completeness-checks). Elsewhere, run the CLI or MCP checks for C#-only verdicts. Public-event repair capabilities and ESM, Stage and Chronicle support remain required before the full feature ships.
 
 This boundary follows the TypeScript compiler's syntax/authoring scope, not executable admission: a check may be C#-only even when C# reports it before binding. See [Diagnostics](diagnostics.md) for conditions and severities, [guarded actions](screens.md) for their meaning, and [reaction refusals](reactions.md) for their executable admission boundary.

@@ -12,7 +12,7 @@ const maximumItems = pageLimit * maximumPages;
 /**
  * The codes the completeness checks report. The editor's ordinary validation never computes them,
  * and every other code in the MCP result is already shown by that validation, so only these appear.
- * PLAY0546 is not among them: the diagnostics tool does not run the semantic binder.
+ * PLAY0546 is not among them: it is a semantic binder warning, read separately from the executable diagnostics.
  */
 export const verdictCodes: ReadonlySet<string> = new Set([
     'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
@@ -27,11 +27,54 @@ export interface VerdictResult {
     readonly diagnostics: ServerDiagnostic[];
 }
 
-/** One call of the MCP `diagnostics` tool. */
-export type DiagnosticsCall = (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+export type VerdictTool = 'diagnostics' | 'open-workspace' | 'read-workspace';
+
+/** One call of a read-only MCP tool. */
+export type VerdictCall = (tool: VerdictTool, args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+
+/** The binder warning the diagnostics tool never reports; it comes from the executable diagnostics view. */
+export const binderVerdictCode = 'PLAY0546';
 
 /** Pages through every completeness finding, pinning the source revision the first page reported. */
-export async function readVerdicts(call: DiagnosticsCall): Promise<VerdictResult> {
+export async function readVerdicts(call: VerdictCall): Promise<VerdictResult> {
+    const result = await readCompleteness(args => call('diagnostics', args));
+    // The binder warning rides along when the model binds. Any refusal there (for example, the model has errors) is silent.
+    const binder = await readBinderVerdicts(call).catch(error => {
+        if (error instanceof RepairFailure && error.kind === 'StaleEpoch') throw error;
+        return [];
+    });
+    if (binder.length) {
+        // The workspace and the diagnostics tool number revisions differently, so prove the source stayed put by pinning the first one again.
+        const again = await call('diagnostics', { checks: 'all', limit: 1, offset: 0, expectedSourceRevision: result.revision });
+        if (text(again.sourceRevision) !== result.revision) throw new RepairFailure('StaleSourceRevision', 'The source changed while the checks were read.');
+    }
+    return { ...result, diagnostics: [...result.diagnostics, ...binder] };
+}
+
+async function readBinderVerdicts(call: VerdictCall): Promise<ServerDiagnostic[]> {
+    const opened = object((await call('open-workspace', {})).workspace);
+    const revision = text(opened.revision), catalog = text(opened.catalogRevision);
+    const found: ServerDiagnostic[] = [];
+    let offset = 0;
+    for (let pages = 0; pages < maximumPages; pages++) {
+        const result = await call('read-workspace', { view: 'executable-diagnostics', offset, limit: 100, expectedRevision: revision, expectedCatalogRevision: catalog });
+        const current = object(result.workspace);
+        if (text(current.revision) !== revision || text(current.catalogRevision) !== catalog) throw new RepairFailure('StaleRevision', 'The workspace changed while the checks were read.');
+        const page = object(result.page);
+        if (integer(page.offset) !== offset || integer(page.totalCount) > maximumItems) throw new RepairFailure('MalformedContract', 'Executable diagnostics page mismatch.');
+        const items = array(page.items);
+        for (const item of items) {
+            const parsed = diagnostic(item);
+            if (parsed.code === binderVerdictCode) found.push(parsed);
+        }
+        offset += items.length;
+        if (page.nextOffset === null) return found;
+        if (!items.length || integer(page.nextOffset) !== offset) throw new RepairFailure('MalformedContract', 'Nonprogressing executable diagnostics page.');
+    }
+    throw new RepairFailure('VerdictsTooLarge', 'Too many executable diagnostics pages.');
+}
+
+async function readCompleteness(call: (args: Record<string, unknown>) => Promise<Record<string, unknown>>): Promise<VerdictResult> {
     const collected: ServerDiagnostic[] = [];
     let revision: string | undefined;
     let status: string | null = null;

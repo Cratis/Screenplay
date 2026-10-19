@@ -15,7 +15,7 @@ applies-to:
 
 ## Context
 
-The completeness checks (PLAY0530-PLAY0537, PLAY0574-PLAY0576, PLAY0602-PLAY0606, PLAY0652, PLAY0671) are opt-in and the
+The completeness checks (PLAY0530-PLAY0537, PLAY0574-PLAY0576, PLAY0602-PLAY0606, PLAY0652, PLAY0671) and PLAY0546, a binder warning, are opt-in and the
 editor's own validation never computes them. Several are C#-only (PLAY0532-PLAY0537), so an author in VS Code saw
 nothing unless they ran the CLI or MCP by hand (issue 527). The extension already has an opt-in, workspace-trusted
 bridge to a user-installed `screenplay mcp` server for repairs.
@@ -28,7 +28,11 @@ bridge to a user-installed `screenplay mcp` server for repairs.
 2. It calls the MCP `diagnostics` tool with `checks: all`, pages through every result (page size 200, bounded) and pins
    `expectedSourceRevision` from the first page. A revision change aborts the run.
 3. Only the completeness codes are shown. Everything else the tool returns is already reported by the editor's ordinary
-   validation. PLAY0546 is not shown: the tool does not run the semantic binder.
+   validation. The `diagnostics` tool does not run the semantic binder, so PLAY0546 comes from the same run's second
+   read: `open-workspace`, then `read-workspace` with `view: executable-diagnostics`, pinned to the opened workspace
+   revision and catalog, keeping only PLAY0546. The workspace and the `diagnostics` tool number revisions differently,
+   so the run pins the `diagnostics` source revision again afterwards; a difference is stale and clears everything.
+   If that read is refused or the model does not bind, the binder verdicts are skipped silently.
 4. Findings go into their own collection, `screenplay-csharp-verdicts`, with source `Screenplay C# check`, apart from
    the editor's diagnostics and from repair findings.
 5. A verdict describes the saved file. Editing a document clears its verdicts; an unsaved document gets none; a stale

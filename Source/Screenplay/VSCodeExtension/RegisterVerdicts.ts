@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { RepairFailure } from './RepairClient';
 import { contains } from './RepairDocuments';
 import { VerdictCollection } from './VerdictCollection';
-import { readVerdicts, VerdictResult } from './VerdictReader';
+import { readVerdicts, VerdictResult, VerdictTool } from './VerdictReader';
 
 export const verdictsCommand = 'screenplay.verdicts.run';
 const saveDelay = 500;
@@ -13,7 +13,7 @@ const saveDelay = 500;
 /** What the repair bridge lends the checks: an already authorized connection to the user's `screenplay` MCP server. */
 export interface VerdictConnection {
     readonly root: string;
-    page(args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+    call(tool: VerdictTool, args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
 }
 
 export interface VerdictHost {
@@ -50,7 +50,7 @@ export function registerVerdicts(context: vscode.ExtensionContext, host: Verdict
             try {
                 const connection = await host.connect();
                 if (!current() || (saved && !contains(connection.root, saved.uri.fsPath))) return;
-                const result: VerdictResult = await readVerdicts(args => connection.page(args));
+                const result: VerdictResult = await readVerdicts((tool, args) => connection.call(tool, args));
                 if (!current()) return;
                 collection.publish(connection.root, result.diagnostics);
                 if (!silent) await report(result);

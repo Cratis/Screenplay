@@ -111,8 +111,8 @@ export class RepairSession {
         else this.environment.check();
         return this.#client.tool('workspace-state', { view: 'status' });
     }
-    /** One saved-file page of the C# `diagnostics` tool. A read only: it never touches proposals or the discovery snapshot. */
-    async readDiagnosticsPage(args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
+    /** One saved-file call of a read-only C# tool (`diagnostics`, `open-workspace`, `read-workspace`). It never touches proposals or the discovery snapshot. */
+    async readTool(name: 'diagnostics' | 'open-workspace' | 'read-workspace', args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
         if (this.#uncertain || this.#applying) throw new RepairFailure('SessionBusy', 'Finish or inspect the current apply before checking.');
         const epoch = this.#epoch;
         const guard = () => {
@@ -120,7 +120,7 @@ export class RepairSession {
             if (this.environment.checkRead) this.environment.checkRead(); else this.environment.check();
         };
         guard();
-        const result = await this.#client.tool('diagnostics', args, signal, guard);
+        const result = await this.#client.tool(name, args, signal, guard);
         guard();
         return result;
     }
