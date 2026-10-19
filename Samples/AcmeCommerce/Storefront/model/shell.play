@@ -26,6 +26,8 @@ module Shop
         footer height 48
 
     content topbar
+      // The count the basket indicator shows is read through this query; naming the read model lets a preview draw it from the sample pack
+      data BasketSize[] via query AllBasketSizes
       component Cratis.Blueprint.Default.bar shopBar
         outlet start
           component Cratis.Blueprint.Default.logo shopBrand
