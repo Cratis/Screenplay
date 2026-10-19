@@ -30,7 +30,7 @@ const scopes: Record<string, [string, string[]]> = {
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
     'a seed': ['seed\n  ', ['for']],
     'a theme': ['theme T\n  ', ['compatible with']],
-    'a ui profile': ['ui profile P\n  ', ['appearance', 'layout', 'new screens use template', 'packages', 'root template', 'root template blueprint', 'sample data', 'target platform', 'target size', 'theme']],
+    'a ui profile': ['ui profile P\n  ', ['appearance', 'layout', 'new screens use template', 'packages', 'root template', 'root template blueprint', 'sample data', 'target platform', 'target size', 'theme', 'theme (package-provided)']],
     'a ui profile root template': ['ui profile P\n  root template T\n    ', ['option']],
     'a ui profile appearance block': ['ui profile P\n  appearance\n    ', ['accent', 'color scheme']],
     'a sample data pack': ['sample data P\n  ', ['locale', 'shape', 'title']],

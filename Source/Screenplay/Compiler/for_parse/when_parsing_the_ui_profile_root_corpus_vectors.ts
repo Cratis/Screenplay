@@ -12,7 +12,7 @@ const read = (path: string): string => readFileSync(resolve(corpus, path), 'utf8
 // The ui profile root template vectors are the C# compiler's to model; this compiler reads past a ui profile. It has to read every
 // vector without trouble and report what it shares with the editors: the legacy layout line.
 describe('when parsing the ui profile root corpus vectors', () => {
-    it.each(['positive/UiProfileRoot.play.txt', 'negative/UiProfileRootUnknown.play.txt', 'negative/UiProfileRootNotAShell.play.txt', 'negative/UiProfileRootInvalid.play.txt'])('should read %s without a diagnostic', path => {
+    it.each(['positive/UiProfileRoot.play.txt', 'negative/UiProfileRootUnknown.play.txt', 'negative/UiProfileRootNotAShell.play.txt', 'negative/UiProfileRootInvalid.play.txt', 'positive/UiProfileQuotedTheme.play.txt'])('should read %s without a diagnostic', path => {
         expect(parse(read(path)).diagnostics).toEqual([]);
     });
 
