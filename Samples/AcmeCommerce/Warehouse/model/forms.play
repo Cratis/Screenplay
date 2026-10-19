@@ -39,3 +39,62 @@ module Stock
       place quantity row 1 column 1
       place increase row 1 column 2
       place reason   row 2 column 1 columnSpan 2
+
+  // The clerk's actions on a SKU, a shelf or a parcel
+  form CountStockForm for CountStock
+    generation manual
+    field sku     label "SKU"
+    field counted label "Units counted on the shelf"
+
+  form SetReorderPointForm for SetReorderPoint
+    generation manual
+    field sku             label "SKU"
+    field reorderPoint    label "Reorder at"
+    field reorderQuantity label "Reorder quantity"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku             row 1 column 1 columnSpan 2
+      place reorderPoint    row 2 column 1
+      place reorderQuantity row 2 column 2
+
+  form BlockSkuForm for BlockSku
+    generation manual
+    field sku label "SKU"
+
+  form PutStockInLocationForm for PutStockInLocation
+    generation manual
+    field sku          label "SKU"
+    field locationCode label "Location"
+    field quantity     label "Units"
+
+  form RegisterLocationForm for RegisterLocation
+    generation manual
+    field locationCode label "Location code"
+    field label        label "Description"
+
+  form RequestReservationForm for RequestReservation
+    generation manual
+    field sku      label "SKU"
+    field orderId  label "Order"
+    field quantity label "Units"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku      row 1 column 1
+      place quantity row 1 column 2
+      place orderId  row 2 column 1 columnSpan 2
+
+  form PickOrderForm for PickOrder
+    generation manual
+    field orderId label "Order"
+
+  form PackShipmentForm for PackShipment
+    generation manual
+    field orderId label "Order"
+
+  form CancelShipmentForm for CancelShipment
+    generation manual
+    field orderId label "Order"

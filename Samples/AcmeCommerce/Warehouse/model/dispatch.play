@@ -89,12 +89,6 @@ module Stock
         when Handover trackingNumber = ""
         then error "A tracking number is required"
 
-      screen Dispatch
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action DispatchShipment
-              navigate to Shipments
-
     // The stock leaves the shelf when the parcel is handed over
     slice Automation TakeStockWhenDispatched
       reaction TakeStockWhenDispatchedReaction
@@ -188,11 +182,6 @@ module Stock
         when TakeOff
         then denied
 
-      screen TakeDispatchedStockDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action TakeDispatchedStock
-
     slice StateView Shipments
       description "Every parcel with its carrier and tracking number"
 
@@ -227,8 +216,8 @@ module Stock
       screen Shipments
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
           toolbar
-            toolbar actions
-              button dispatch title "Dispatch" slice Stock.Dispatch.DispatchShipment emphasis primary icon truck
+            action DispatchShipment
+              label "Dispatch"
           list
             data ShipmentRow[] via query AllShipments
             table ShipmentRow

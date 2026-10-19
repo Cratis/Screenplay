@@ -39,16 +39,21 @@ lists its offers (`OffersOfSupplier` filters by `supplierId`). **When Chronicle#
 
 ## Screens
 
+Every screen belongs to the `Buyer` (the module is gated by `CanBuy`); there is no actor row per screen. Only real screens are modelled: the components bring
+the error, validation, loading, empty and confirmation states, and a command is an `action` (with its command-bound form, see `forms.play`) on the screen the
+buyer already works in.
+
 | Screen | Template | Reached from |
 | --- | --- | --- |
-| `PurchaseOrders` list | `ListScreen` | Purchasing / Purchase orders |
-| `NewPurchaseOrder` (supplier -> lines -> review, one CommandForm per step) | `WizardScreen` | toolbar "New purchase order" |
-| `PurchaseOrderPage` (record with the actions Add line, Submit, Receive goods, Cancel, Archive) | `RecordPage` | row click |
-| `Suppliers` (master list, offers as detail) and `SupplierPage` | `MasterDetailScreen`, `RecordPage` | Purchasing / Suppliers |
-| `PreferredSuppliers`, `ReplenishmentQueue` | `ListScreen` | Purchasing / Replenishment |
-| `OpenDemand` | `ListScreen` | Purchasing / Demand |
-| `PurchasingDashboard` | `DashboardScreen` | Purchasing / Dashboard |
-| the dialogs `NewSupplier`, `NewOffer`, `ChooseSupplier`, `AddLine`, `Submit`, `ReceiveGoods` (`SideSheet`), `Cancel`, `Archive`, `RecordDemand`, `ClearSupplier` | `QuickCreateDialog` / `SideSheet` | toolbar buttons |
+| `PurchaseOrders` list, button New purchase order | `ListScreen` | Purchasing / Purchase orders |
+| `NewPurchaseOrder` (supplier -> lines -> review, one CommandForm per step) | `WizardScreen` | button "New purchase order" |
+| `PurchaseOrderPage` (record), actions: Add line, Submit, Receive goods, Cancel, Archive | `RecordPage` | row click |
+| `Suppliers` (master list, offers as detail), button Register supplier, action Offer product; `SupplierPage` | `MasterDetailScreen`, `RecordPage` | Purchasing / Suppliers |
+| `PreferredSuppliers`, actions: Choose supplier, Clear supplier | `ListScreen` | Purchasing / Preferred suppliers (feature `Sourcing`) |
+| `ReplenishmentQueue`, button Draft order | `ListScreen` | Purchasing / Replenishment |
+| `OpenDemand`, action Record demand | `ListScreen` | Purchasing / Demand |
+| `PurchasingDashboard` (figures, what to replenish) | `DashboardScreen` | Purchasing / Dashboard |
+| `NewSupplier` (a creation flow started from the list) | `QuickCreateDialog` | button on Suppliers |
 
 ## Honest deviations from the design (all forced by the language today)
 
