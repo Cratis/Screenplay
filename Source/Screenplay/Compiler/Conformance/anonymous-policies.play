@@ -1,0 +1,26 @@
+// A policy any caller satisfies, with or without an identity - the C# and TypeScript compilers read it the same way.
+policy Anyone
+  description "Open to everyone, signed in or not"
+  require anonymous
+
+module Catalog
+  feature Browsing
+    slice StateChange RegisterInterest
+      command RegisterInterest
+        authorize Anyone
+        productId String identifier
+        email String
+        produces InterestRegistered
+          for productId
+          productId = productId
+          email = email
+      event InterestRegistered
+        productId String
+        email String
+      specification RegisteringInterestNeedsNoCaller
+        when RegisterInterest
+          productId = "p1"
+          email = "ada@example.com"
+        then InterestRegistered
+          productId = "p1"
+          email = "ada@example.com"

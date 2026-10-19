@@ -47,8 +47,8 @@ shorter one.
 
 The sample was written in this order, and each step compiles on its own:
 
-1. The **shared kernel** (`Shared/`): concepts, event sources, policies, personas and the theme.
-2. The **shell** (`Shell/`): the UI profile and the navigation.
+1. The **shared kernel** (`Shared/`): concepts, event sources, policies and personas.
+2. The **shell** of each domain (`<Domain>/shell/`): its theme, UI profile, navigation with logo and sample data.
 3. **Catalog** first, because it publishes the first contracts (P1 to P3).
 4. **Storefront**, which only listens to Catalog and then publishes the first order (P4).
 5. **Sales**, **Warehouse** and **Purchasing**, which close the loops: order to cash to dock, and replenishment.
@@ -60,7 +60,8 @@ The sample was written in this order, and each step compiles on its own:
 ```text
 application.play                the ONLY `domain AcmeCommerce` line; `reaction batches atomic`, `command reads protected`
 Shared/                         the shared kernel
-Shell/                          ui profile, navigation, the one sample-data pack
+<Domain>/shell/                 the domain's own theme, ui profile, navigation + logo, sample-data pack
+assets/logos/                   the five logo SVGs
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
 _packages/scene.commerce/       the custom component package @acme/scene.commerce
@@ -326,44 +327,68 @@ its own specification for the event-driven path.
 
 ## The shell
 
+### One application per domain
+
+Scene keeps the logo and the UI profile at application level only (a module shows the application's logo locked), so a domain that has its own
+logo, theme and shell is its own application: Acme Shop, Acme Catalog, Acme Sales, Acme Purchasing and Acme Warehouse. They share the platform
+(`Cratis.Components` and the Default blueprint's `AppShell`, `^1`) and differ in logo, accent, colour scheme, menu mode and menu theme. Each
+`<Domain>/shell/` folder holds three files, and a domain package (`tools/domain-package.sh`) carries them to Studio.
+
 ### The UI profile
 
-`Shell/shell.play` is the application's `ui profile`: the web target, the `Acme` theme, three packages, an accent colour, and a
-**root template** taken from a blueprint - the `AppShell` of `Cratis.Blueprint.Default`, pinned at `^1`:
+`<Domain>/shell/shell.play` declares the domain's theme and its `ui profile`: the web target, the packages, an accent colour, the menu and a
+**root template** taken from a blueprint - the `AppShell` of `Cratis.Blueprint.Default`, pinned at `^1`. Storefront, the customer-facing one:
 
 ```text
-ui profile Web
+theme AcmeStorefront
+  compatible with Cratis.Components
+  compatible with Cratis.Blueprint.Default
+  compatible with PrimeReact
+  compatible with Acme.Commerce
+
+ui profile Storefront
   target platform web
   target size regular
-  theme Acme
+  theme AcmeStorefront
 
   packages
     Cratis.Components
     Cratis.Blueprint.Default
-    Acme.Commerce
 
   root template blueprint Cratis.Blueprint.Default AppShell version "^1"
+    option navigationMode horizontal
+    option menuTheme light
 
   appearance
     color scheme light
-    accent "#0D9488"
+    accent "#C2410C"
 
   sample data
-    active AcmeNordic
+    active AcmeStorefront
 ```
+
+| Domain | Accent | Menu mode | Menu theme | Scheme |
+| --- | --- | --- | --- | --- |
+| Storefront | `#C2410C` | `horizontal` | light | light |
+| Catalog | `#4338CA` | `static` | light | light |
+| Sales | `#1D4ED8` | `static` | dark | light |
+| Purchasing | `#B45309` | `slimPlus` | light | light |
+| Warehouse | `#0F766E` | `compact` | dark | dark |
+
+The name, logo image, corners and font that the designer's App and Look tabs show are not in the `ui profile` grammar yet; Studio's sample loader
+saves them (`identity` stage) from `assets/logos`.
 
 ### Sample data
 
-`Shell/sampledata.play` is the one [sample data](sample-data.md) pack, `AcmeNordic` (locale `nb-NO`): 29 shapes with 194 rows,
-one shape per read model that a screen shows, in sections kept apart per domain. It is design and preview time only: a
-production build never sees it.
+`<Domain>/shell/sampledata.play` is the domain's [sample data](sample-data.md) pack (`AcmeStorefront`, `AcmeCatalog`, ..., locale `nb-NO`): one
+shape per read model that a screen shows. It is design and preview time only: a production build never sees it.
 
-### Navigation hierarchy
+### Navigation and the logo
 
-With a blueprint root template the layout carries only the [navigation regions](navigation.md). `Shell/navigation.play`
-declares the `AcmeNavigation` layout: a topbar with the five domains and a hierarchical sidebar, module then feature - for
-example Warehouse with Stock levels, Picking, Receiving, Shipments and Dashboard. A domain module then says how it relates
-to the shell:
+With a blueprint root template the layout carries only the [navigation regions](navigation.md). `<Domain>/shell/navigation.play` declares
+the domain's layout (`StorefrontNavigation`, `CatalogNavigation`, ...): the topbar with the logo - `logo image "data:image/svg+xml;base64,..."`,
+the SVG of `assets/logos` inlined by `tools/embed-logos.py`, because a document carries no file beside it and a data URI cannot 404 - and a
+hierarchical sidebar, module then feature. A domain module says how it relates to the shell:
 
 | Module | Statement | Effect |
 | --- | --- | --- |
@@ -373,7 +398,7 @@ to the shell:
 
 ### Toolbars
 
-The application's topbar declares buttons once, for every page (`Shell/navigation.play`), and a policy gates each:
+The application's topbar declares buttons once, for every page (`Catalog/shell/navigation.play`), and a policy gates each:
 
 ```text
 navigation topbar

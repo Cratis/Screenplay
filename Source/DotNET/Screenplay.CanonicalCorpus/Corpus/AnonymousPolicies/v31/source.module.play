@@ -1,0 +1,31 @@
+module Catalog
+  feature Browsing
+    slice StateChange RegisterInterest
+      command RegisterInterest
+        authorize Anyone
+        productId String identifier
+        email String
+        produces InterestRegistered
+          for productId
+          productId = productId
+          email = email
+      event InterestRegistered
+        productId String
+        email String
+      specification AVisitorWithoutAnIdentityRegistersInterest
+        when RegisterInterest
+          productId = "p1"
+          email = "ada@example.com"
+        then InterestRegistered
+          productId = "p1"
+          email = "ada@example.com"
+      specification ASignedInCustomerRegistersInterest
+        given caller
+          authenticated
+          role "Customer"
+        when RegisterInterest
+          productId = "p2"
+          email = "grace@example.com"
+        then InterestRegistered
+          productId = "p2"
+          email = "grace@example.com"

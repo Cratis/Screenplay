@@ -17444,6 +17444,228 @@
           "name": "Billing"
         }
       ]
+    },
+    {
+      "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "Anyone"
+        }
+      },
+      "description": "Lets anyone confirm an invoice number is genuine, signed in or not",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "InvoiceVerification",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Confirms an invoice number was issued, without revealing what it bills",
+              "events": [],
+              "name": "VerifyingAnInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "invoiceNumber",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "InvoiceNumber"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "VerifyInvoice",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "InvoiceVerificationReadModel"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "InvoiceVerificationReadModel",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceNumber",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceNumber"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "issued",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "VerifyInvoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceVerificationReadModel"
+                      }
+                    },
+                    {
+                      "kind": "ScreenSummarySyntax",
+                      "fields": [
+                        {
+                          "kind": "ScreenFieldSyntax",
+                          "label": "Invoice number",
+                          "property": "invoiceNumber"
+                        },
+                        {
+                          "kind": "ScreenFieldSyntax",
+                          "label": "Issued",
+                          "property": "issued"
+                        }
+                      ],
+                      "target": "InvoiceVerificationReadModel"
+                    }
+                  ],
+                  "name": "InvoiceVerification"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "InvoiceVerificationReadModel",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-000042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "VerifyingWithoutSigningIn",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [
+                    {
+                      "kind": "SpecificationQueryResultSyntax",
+                      "exactly": false,
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-000042"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issued",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceNumber",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-000042"
+                        }
+                      }
+                    ],
+                    "query": "VerifyInvoice"
+                  },
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "PublicVerification"
     }
   ],
   "personas": [
@@ -17454,6 +17676,14 @@
       "policies": [
         "IsAuthenticated",
         "CanManageInvoice"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Anyone checking an invoice number, signed in or not",
+      "name": "Visitor",
+      "policies": [
+        "Anyone"
       ]
     },
     {

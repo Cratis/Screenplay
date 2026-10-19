@@ -7,7 +7,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
-import { AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax } from '../Syntax/Policies';
+import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { combine, conditionTruth, requirementTruth, Truth } from './AuthorizationFacts';
@@ -38,6 +38,7 @@ function references(requirement: PolicyRequirementSyntax): readonly string[] {
 function evaluate(gates: readonly AuthorizeSyntax[], caller: SpecificationCallerSyntax, application: ApplicationSyntax): Truth {
     return gates.reduce<Truth>((truth, gate) => combine(truth, 'And', requirementTruth(gate.requirement, application.policies ?? [], condition => conditionTruth(condition, atom => {
         if (atom.kind === 'AuthenticatedConditionSyntax') return caller.authenticated;
+        if (atom.kind === 'AnonymousConditionSyntax') return true;
         if (atom.kind === 'RoleConditionSyntax') return caller.roles.includes(atom.role);
         if (atom.kind === 'ClaimConditionSyntax' && !atom.matchesSubject && atom.matches?.kind === 'LiteralExpressionSyntax' && typeof atom.matches.value === 'string') {
             const value = atom.matches.value;
@@ -102,8 +103,9 @@ function conditionText(condition: PolicyConditionSyntax): string {
     return `${condition.left.kind === 'LogicalPolicyConditionSyntax' && condition.left.operator !== condition.operator ? `(${left})` : left} ${condition.operator.toLowerCase()} ${condition.right.kind === 'LogicalPolicyConditionSyntax' ? `(${right})` : right}`;
 }
 
-function atomText(condition: AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax): string {
+function atomText(condition: AnonymousConditionSyntax | AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax): string {
     if (condition.kind === 'AuthenticatedConditionSyntax') return 'authenticated';
+    if (condition.kind === 'AnonymousConditionSyntax') return 'anonymous';
     if (condition.kind === 'RoleConditionSyntax') return `role ${quote(condition.role)}`;
     return `claim ${quote(condition.claim)} matches ${condition.matchesSubject ? 'subject' : condition.matches === null ? quote('') : expressionText(condition.matches)}`;
 }

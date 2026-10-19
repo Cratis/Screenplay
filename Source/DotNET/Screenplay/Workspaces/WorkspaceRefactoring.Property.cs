@@ -102,9 +102,10 @@ internal sealed partial class WorkspaceRefactoring
         return !request.EventNeverPersisted && bases.Any(value => value.Basis == "noBaseline") ? WorkspaceConflictKind.EventContractChangeRequiresDecision : null;
     }
 
-    WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspacePropertyAssertionProvenance? assertions)
+    WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspacePropertyAssertionProvenance? assertions, ScreenplayWorkspace? origin = null)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
+        if (origin is null && InlinePropertyOwners(index, request) is { Length: > 0 } inline) return EvolveInlineProperty(request, report, index, inline);
         var plan = new WorkspacePropertyPlan(index);
         var selections = new WorkspacePropertySelections(index, plan, request, report);
         if (selections.Resolve() is { } selectionRefusal) return PropertyFailure(selectionRefusal.Kind, selections.Report, selectionRefusal.Candidates);
@@ -113,21 +114,23 @@ internal sealed partial class WorkspaceRefactoring
         var events = PropertyEventOwners(selections.Selected);
         if (EventDecision(events, request) is { } decision) return PropertyFailure(decision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
         var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration, request.EventNeverPersisted, request.ReleaseBaseline);
-        return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request, assertions), generations, report);
+        return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request, assertions), generations, report, origin);
     }
 
-    WorkspaceAuthoringResult ProposePropertyEdits(WorkspacePropertyRequest request, WorkspacePropertyEdits edits, ImmutableArray<WorkspacePropertyGeneration> generations, WorkspacePropertyReport report)
+    // With an origin, the edits were planned on an in-memory extraction of it; propose them against the origin.
+    WorkspaceAuthoringResult ProposePropertyEdits(WorkspacePropertyRequest request, WorkspacePropertyEdits edits, ImmutableArray<WorkspacePropertyGeneration> generations, WorkspacePropertyReport report, ScreenplayWorkspace? origin)
     {
         var changed = edits.Apply();
         if (edits.Refusal is { } assertionRefusal) return PropertyFailure(assertionRefusal.Kind, report, assertionRefusal.Candidates);
-        var result = new WorkspaceAuthoringTransaction(workspace, edits.Renames).Propose(new()
+        var baseline = origin ?? workspace;
+        var result = new WorkspaceAuthoringTransaction(baseline, edits.Renames).Propose(new()
         {
-            ExpectedRevision = request.ExpectedRevision,
+            ExpectedRevision = origin?.Revision ?? request.ExpectedRevision,
             ExpectedCatalogRevision = request.ExpectedCatalogRevision,
             ReleaseBaseline = request.ReleaseBaseline,
             Formatting = request.Formatting,
             Validation = request.Validation,
-            Documents = edits.Documents(generations),
+            Documents = WithExtractedDocuments(edits.Documents(generations), origin),
             SemanticRenames = [.. edits.Renames.Where(pair => workspace.IdentityCatalog.Semantics.Any(assignment => assignment.Address.Equals(pair.Key))).Select(pair => new SemanticIdentityRename(pair.Key, pair.Value))],
             RetiredSemanticAddresses = edits.Retirements,
             EventRevisionAdvancements = PropertyAdvancements(generations)
@@ -142,7 +145,7 @@ internal sealed partial class WorkspaceRefactoring
         if (edits.InspectProjectionContinuity(result.Workspace!) is { } refusal) return PropertyFailure(refusal.Kind, report, refusal.Candidates);
         return result with
         {
-            PropertyReport = WorkspacePropertyReports.Readiness(workspace, result.Workspace!, report with { Changed = changed, Generations = generations })
+            PropertyReport = WorkspacePropertyReports.Readiness(baseline, result.Workspace!, report with { Changed = changed, Generations = generations })
         };
     }
 

@@ -64,6 +64,10 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 `IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. `PaymentReconciler` records a validation refusal as `PaymentReconciliationRefused`, mapping `$refusal.reason` and `$refusal.message` with the invoice identity. These branches select ESM v19; handling stops the trigger's remaining invocations, not other reactions. Redelivery does not promise once-only external effects.
 
+## A public module
+
+`PublicVerification` lets anyone confirm an invoice number, signed in or not. Its module is gated by `Anyone`, a policy that `require`s `anonymous`: every caller passes, with or without an identity. An anonymous policy is the whole condition of its policy and the whole gate of what it authorizes, so nothing in the module adds another `authorize` - that is why it is a module of its own rather than a feature under `Invoicing`, whose `IsPerson` gate would otherwise apply too (`PLAY0807`). `VerifyingWithoutSigningIn` has no `given caller`, which only an anonymous gate allows. The anonymous policy selects ESM v31 ([decision 0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md)).
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |
@@ -74,6 +78,7 @@ Invoice status, payment terms and payment method pin their current zero-based po
 | `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
 | `Customer` | `IsAuthenticated`, `IsPerson`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
 | `Auditor` | `IsAuthenticated`, `IsPerson`, `IsAuditor` | CancelledInvoices, SystemActivity |
+| `Visitor` | `Anyone` | VerifyingAnInvoice |
 
 The event model board draws a slice's screens in the row of every persona whose policies satisfy what gates the
 slice: the module's `authorize`, each enclosing feature's, and the slice's command or query.
@@ -88,6 +93,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
 | Auditing | | CancelledInvoices, SystemActivity | | |
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory, MarkInvoicePaidFromLegacyPayment | LegacyInvoiceSync, InvoiceSentPublication |
+| PublicVerification › InvoiceVerification | | VerifyingAnInvoice | | |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
 Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
@@ -96,8 +102,8 @@ is supplied. Each command screen issues its own action; action navigation such a
 happens only after success, never to the command's own input screen. Row clicks carry `invoiceId` to status,
 tagging, billing-contact, cancellation, payment and payment-plan screens. Payments are opened from the
 balance or due/overdue invoice rows; the payment form loads the balance by that identity.
-`ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
-queries' performers read the central bank feed, a credit bureau and stored invoices.
+`ExchangeRates`, `CreditStatus`, `VerifyingAnInvoice` and the overdue list on `InvoiceDashboard` are views no event builds: their
+queries' performers read the central bank feed, a credit bureau, an invoice registry and stored invoices.
 
 `RequestPaymentPlan` maps `requestedBy` from `$identity.userName`, the caller's user name. This is equivalent to `$context.identity.userName`; both spellings remain supported.
 
@@ -112,7 +118,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
-| `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
+| `policy` with `require` (`authenticated`, `anonymous`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
