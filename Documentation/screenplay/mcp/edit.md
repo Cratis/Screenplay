@@ -263,12 +263,13 @@ The specifications of the source slice that cover only the moved declaration mov
 with it and are listed in the report's `specificationsCarried`. A specification
 covers a declaration when it meets one of that declaration's
 [specification obligations](reference.md#logical-parent-moves) or its `when` step
-names it; `given` and `then` references alone do not count. The move refuses when a
+names it; coverage comes from nothing else. The move refuses when a
 covering specification also covers a declaration that stays behind, or when any
 specification obligation that was met before the move would be unmet after it.
 Screens never move: an `execute`, `refresh` or `navigate to` that names the moved
-declaration is repaired to its new address. A command may keep producing events
-that stay in the source slice.
+declaration is repaired to its new address. An unqualified reference is not
+rewritten; if the move would change what it refers to, the proposal asks you to
+qualify it first. A command may keep producing events that stay in the source slice.
 
 The proposal computes every assigned semantic and event-contract identity migration
 and repairs qualified typed references, including `depends on` and interaction

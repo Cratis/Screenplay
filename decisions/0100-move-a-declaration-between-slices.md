@@ -35,8 +35,9 @@ declarations and a declaration written in more than one fragment refuse.
 
 A specification covers a declaration when it is a matching specification of one of that declaration's obligations as
 `find-specification-obligations` reports them, or when its `when` step names that declaration (command, query,
-appended event, redelivered reaction, trigger, capture). Only declarations of the source slice count; `given` and
-`then` references never create coverage, and are repaired like any other reference. A specification that covers only
+appended event, redelivered reaction, trigger, capture). Only declarations of the source slice count, and coverage
+comes only from obligations and the `when` step: a `given` or `then` step that meets no obligation is a reference,
+repaired like any other. (A `then` read-model or result step does meet SPEC006.) A specification that covers only
 the moved declaration moves with it. One that covers it and a staying declaration refuses the move, naming both. Any
 other specification stays.
 
@@ -49,8 +50,12 @@ are an MCP review surface: it computes the carried specifications, passes them t
 The planner reuses 0038: semantic and event-contract migrations for every assigned address in the moved subtrees
 (including inline events of a moved command), unchanged event names and pins, no retired identity, destination
 collisions by address, qualified reference repair (screen `execute`, `refresh` and `navigate to` included) and
-inherited `authorize`/interaction continuity. The executable model comparison lifts slice members out by identity,
-so the moved declarations may change slice and nothing else may change. The report adds `specificationsCarried`.
+inherited `authorize`/interaction continuity. Unqualified references are not rewritten: a move that would change what
+one resolves to refuses and asks for that reference to be qualified first. The executable model comparison lifts
+every slice declaration array out by identity, empty or not, so the moved declarations may change slice and nothing
+else may change; reducers and constraints stay with their slice, and a move that changes them refuses by name. The
+obligation comparison rewrites owners through every address the planner moves, not only catalog-assigned identities.
+The report adds `specificationsCarried`.
 
 ## Options considered
 

@@ -1167,13 +1167,17 @@ it. A specification covers a declaration when it is a matching specification of 
 of that declaration's `find-specification-obligations` obligations, or when its
 `when` step names the declaration (command, query, appended event, redelivered
 reaction, trigger or capture). Only declarations of the source slice count, and
-`given` and `then` references never create coverage. A specification that covers
+coverage comes only from obligations and the `when` step; a `then` read-model or
+result step counts because it meets SPEC006. A specification that covers
 the moved declaration and a staying one refuses the move, naming both. After the
 proposal, obligations are compared by rule, owner address (rewritten through the
 move) and subject: an obligation met before that is unmet after, or a new unmet
 obligation, refuses. The executable model comparison also allows the moved
-declarations to change slice. The report adds `specificationsCarried`, the current
-addresses of the carried specifications.
+declarations to change slice; reducers and constraints stay with their slice, and a
+move that changes them refuses by name. Unqualified references are not rewritten: a
+move that would change what one resolves to refuses and asks for it to be qualified
+first. The report adds `specificationsCarried`, the current addresses of the carried
+specifications.
 
 Split subtrees move all fragments together. Inline and restated-header fragments
 remain in their documents. Restated headers outside the file's import-placement
