@@ -18,7 +18,7 @@ internal sealed partial class WorkspaceRefactoring
             .Select(handle => handle is null ? null : index.Find(handle))
             .Select(entry => entry is { Node: PropertySyntax, Parent: { } parent } ? index.Find(parent) : null)
             .OfType<WorkspaceSyntaxEntry>()
-            .Where(owner => owner is { Node: EventSyntax, Member: "inlineEvent" })
+            .Where(owner => owner.Node is EventSyntax && string.Equals(owner.Member, "inlineEvent", StringComparison.Ordinal))
             .DistinctBy(owner => owner.Handle)];
     }
 
@@ -26,6 +26,26 @@ internal sealed partial class WorkspaceRefactoring
         Failure(kind, message) with { PropertyReport = report with { Generations = [], NeedsDecision = [new(kind.ToString(), report.Target, [])] } };
 
     static WorkspacePropertyCandidate DeclarationCandidate(WorkspaceSyntaxEntry owner) => new(owner.Address!, "Event", "declaration", owner.Location);
+
+    static WorkspacePropertyRequest? Retarget(WorkspaceSyntaxIndex original, WorkspaceSyntaxIndex extracted, WorkspacePropertyRequest request)
+    {
+        var target = Retarget(original, extracted, request.Target!);
+        var additional = request.AlsoRemove.Select(selection => Retarget(original, extracted, selection.Target) is { } handle ? selection with { Target = handle } : null).ToArray();
+        if (target is null || additional.Any(selection => selection is null)) return null;
+        return request with
+        {
+            ExpectedRevision = extracted.Workspace.Revision,
+            Target = target,
+            AlsoRemove = [.. additional.OfType<WorkspacePropertySelection>()]
+        };
+    }
+
+    static WorkspaceNodeHandle? Retarget(WorkspaceSyntaxIndex original, WorkspaceSyntaxIndex extracted, WorkspaceNodeHandle handle)
+    {
+        if (original.Find(handle) is not { Node: PropertySyntax, Address: { } address }) return null;
+        var matches = extracted.Entries.Where(entry => entry.Node is PropertySyntax && address.Equals(entry.Address)).Take(2).ToArray();
+        return matches.Length == 1 ? matches[0].Handle : null;
+    }
 
     WorkspaceAuthoringResult EvolveInlineProperty(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry[] owners)
     {
@@ -71,26 +91,6 @@ internal sealed partial class WorkspaceRefactoring
         }
 
         return result with { PropertyReport = result.PropertyReport! with { ExtractedInlineEvents = [owner.Address!] } };
-    }
-
-    static WorkspacePropertyRequest? Retarget(WorkspaceSyntaxIndex original, WorkspaceSyntaxIndex extracted, WorkspacePropertyRequest request)
-    {
-        var target = Retarget(original, extracted, request.Target!);
-        var additional = request.AlsoRemove.Select(selection => Retarget(original, extracted, selection.Target) is { } handle ? selection with { Target = handle } : null).ToArray();
-        if (target is null || additional.Any(selection => selection is null)) return null;
-        return request with
-        {
-            ExpectedRevision = extracted.Workspace.Revision,
-            Target = target,
-            AlsoRemove = [.. additional.OfType<WorkspacePropertySelection>()]
-        };
-    }
-
-    static WorkspaceNodeHandle? Retarget(WorkspaceSyntaxIndex original, WorkspaceSyntaxIndex extracted, WorkspaceNodeHandle handle)
-    {
-        if (original.Find(handle) is not { Node: PropertySyntax, Address: { } address }) return null;
-        var matches = extracted.Entries.Where(entry => entry.Node is PropertySyntax && address.Equals(entry.Address)).Take(2).ToArray();
-        return matches.Length == 1 ? matches[0].Handle : null;
     }
 
     ImmutableArray<WorkspaceOperation> WithExtractedDocuments(ImmutableArray<WorkspaceOperation> documents, ScreenplayWorkspace? origin)
