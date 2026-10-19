@@ -44708,6 +44708,78 @@
       }
     },
     {
+      "name": "propose-inline-event",
+      "requiredParameters": [
+        "expectedCatalogRevision",
+        "expectedRevision",
+        "formatting",
+        "subject"
+      ],
+      "optionalParameters": [
+        "expectedReleaseBaselineRevision",
+        "includeContent",
+        "validation"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "string"
+          },
+          "expectedCatalogRevision": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "formatting": {
+            "type": "string",
+            "enum": [
+              "CanonicalizeTouchedDocuments"
+            ]
+          },
+          "validation": {
+            "type": "string",
+            "enum": [
+              "Authoring",
+              "Executable"
+            ]
+          },
+          "includeContent": {
+            "type": "boolean",
+            "default": false
+          },
+          "expectedReleaseBaselineRevision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "expectedCatalogRevision",
+          "subject",
+          "formatting"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "propose-model-notes",
       "requiredParameters": [
         "expectedCatalogRevision",

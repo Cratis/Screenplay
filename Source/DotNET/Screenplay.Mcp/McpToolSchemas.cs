@@ -177,7 +177,7 @@ static class McpToolSchemas
     {
         "propose-source" => SourceFormatting(),
         "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveTrivia"),
-        "propose-extract-inline-event" or "propose-number-enum-members" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
+        "propose-extract-inline-event" or "propose-inline-event" or "propose-number-enum-members" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
         _ => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia")
     };
 
