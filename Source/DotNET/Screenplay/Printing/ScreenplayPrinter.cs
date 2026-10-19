@@ -91,7 +91,7 @@ public sealed partial class ScreenplayPrinter :
 
     static bool IsIdentifierName(string text) =>
         text.Length > 0 &&
-        (text[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or '_') &&
+        (text[0] is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '_') &&
         text.All(character => char.IsLetterOrDigit(character) || character == '_');
 
     static string ShellOptionValue(ShellOptionSyntax option) => option.Kind == ShellOptionValueKind.Text ? StringLiteral.Quote(option.Value) : option.Value;

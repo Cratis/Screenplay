@@ -115,7 +115,7 @@ internal static partial class ScreenplayValidator
 
     static bool IsThemeIdentifier(string name) =>
         name.Length > 0 &&
-        (name[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or '_') &&
+        (name[0] is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '_') &&
         name.All(character => char.IsLetterOrDigit(character) || character == '_');
 
     static void ValidateProfileTheme(UiProfileSyntax profile, string themeName, Dictionary<string, ThemeSyntax> themes, ParserContext context)
