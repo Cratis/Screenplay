@@ -111,6 +111,19 @@ export class RepairSession {
         else this.environment.check();
         return this.#client.tool('workspace-state', { view: 'status' });
     }
+    /** One saved-file page of the C# `diagnostics` tool. A read only: it never touches proposals or the discovery snapshot. */
+    async readDiagnosticsPage(args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
+        if (this.#uncertain || this.#applying) throw new RepairFailure('SessionBusy', 'Finish or inspect the current apply before checking.');
+        const epoch = this.#epoch;
+        const guard = () => {
+            if (epoch !== this.#epoch) throw new RepairFailure('StaleEpoch', 'The workspace changed while checking.');
+            if (this.environment.checkRead) this.environment.checkRead(); else this.environment.check();
+        };
+        guard();
+        const result = await this.#client.tool('diagnostics', args, signal, guard);
+        guard();
+        return result;
+    }
     async discover(signal?: AbortSignal): Promise<{ choices: RepairChoice[]; diagnostics: ServerDiagnostic[] }> {
         if (signal?.aborted) throw new RepairFailure('Cancelled', 'Discovery consumer cancelled.');
         if (this.#uncertain || this.#retained) throw new RepairFailure('SessionBusy', 'Finish the current review, or inspect the uncertain apply outcome first.');

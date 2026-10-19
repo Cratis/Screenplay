@@ -12,6 +12,7 @@ import { classifyRootDocument, contains } from './RepairDocuments';
 import { RepairConnectionOwner } from './RepairConnectionOwner';
 import { RepairRootWatch, assertRootIdentity } from './RepairRootWatch';
 import { observationFilename } from './RepairObservation';
+import { registerVerdicts } from './RegisterVerdicts';
 export { contains } from './RepairDocuments';
 
 const previewCommand = 'screenplay.repair.preview';
@@ -104,6 +105,11 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let recovery: { root: string; details: unknown; checkRoot: () => void; inspected?: boolean } | undefined;
     void vscode.commands.executeCommand('setContext', 'screenplay.repair.recoveryRequired', false);
     let pendingReconciliation: { owner: RepairConnectionOwner; synchronized: () => boolean } | undefined;
+    // The C# completeness checks borrow this bridge: same configuration, trust, root and process, never a launch of their own.
+    const verdicts = registerVerdicts(context, { connect: async () => {
+        const owner = await connect();
+        return { root: owner.session.launch.root, page: (args, signal) => { authorize(owner); return owner.session.readDiagnosticsPage(args, signal); } };
+    } });
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
     const authorize = (owner: RepairConnectionOwner) => {
         owner.assertCurrent(disposed ? undefined : current, connectionGeneration);
@@ -143,6 +149,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             previous.retire(cause);
         }
         changed(cause);
+        verdicts.clear();
     };
     const report = async (error: unknown, relevant: () => boolean = () => !disposed) => {
         if (!relevant()) return;
