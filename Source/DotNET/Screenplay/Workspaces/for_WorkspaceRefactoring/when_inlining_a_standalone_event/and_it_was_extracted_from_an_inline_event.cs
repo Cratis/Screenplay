@@ -8,7 +8,8 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_inlining_a_
 
 public class and_it_was_extracted_from_an_inline_event : given.a_standalone_event
 {
-    const string Original = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        name String\n        produces event Renamed // production intent\n          id \"OldName\" // identity intent\n          description \"A new name\" // description intent\n          documentation\n            ```markdown\n            Name history.\n            ```\n          tag audit\n          // mapping intent\n          name String = name // same comment\n";
+    // Canonical form: both refactorings reprint touched documents canonically.
+    const string Original = "module Projects\n\n  feature Naming\n\n    slice StateChange Rename\n\n      command Rename\n        projectId Uuid identifier\n        name String\n        produces event Renamed // production intent\n          id \"OldName\" // identity intent\n          description \"A new name\" // description intent\n          documentation\n            ```markdown\n            Name history.\n            ```\n          tag audit\n          // mapping intent\n          name String = name // same comment\n";
     string _roundTrip;
 
     protected override string Source => Original;
