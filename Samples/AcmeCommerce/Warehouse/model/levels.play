@@ -71,6 +71,10 @@ module Stock
 
       screen StockLevels
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockLevelsHeader
+              property title = "Stock levels"
+              property subtitle = "What is on the shelves, what is promised and what is left"
           toolbar
             toolbar actions
               button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis primary icon plus
@@ -91,7 +95,9 @@ module Stock
               column reserved  label "Reserved"
               column available label "Available"
               column reorderPoint label "Reorder at"
-              on row-click navigate to ItemPage by id
+              on double click
+                navigate to ItemPage
+                  with id from item.id
 
       specification TheShelfStartsEmpty
         given SkuRegistered
@@ -383,6 +389,10 @@ module Stock
       screen StockAdjustments
         description "The history of corrections, with the buttons to correct or count the shelf"
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockAdjustmentsHeader
+              property title = "Adjustments"
+              property subtitle = "Corrections of the shelf and why they were made"
           toolbar
             action AdjustStock
               label "Adjust stock"

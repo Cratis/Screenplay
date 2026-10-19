@@ -62,7 +62,9 @@ module Buying
               column name    label "Supplier"
               column country label "Country"
               column offerCount label "Offers"
-              on row-click navigate to SupplierPage by supplierId
+              on double click
+                navigate to SupplierPage
+                  with supplierId from item.supplierId
           details
             data SupplierOffer[] via query OffersOfSupplier
             table SupplierOffer
@@ -73,6 +75,10 @@ module Buying
 
       screen SupplierPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader supplierPageHeader
+              property title = "Supplier"
+              property subtitle = "Who they are and what they offer"
           summary
             data SupplierRow via query SupplierById by supplierId
             summary SupplierRow

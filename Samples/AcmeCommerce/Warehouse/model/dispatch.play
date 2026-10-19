@@ -215,6 +215,10 @@ module Stock
 
       screen Shipments
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader shipmentsHeader
+              property title = "Shipments"
+              property subtitle = "Every parcel with its carrier and tracking number"
           toolbar
             action DispatchShipment
               label "Dispatch"

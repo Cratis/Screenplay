@@ -302,7 +302,9 @@ module Stock
       screen WarehouseDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
           header
-            title "Warehouse"
+            component Cratis.Blueprint.Default.pageHeader warehouseDashboardHeader
+              property title = "Warehouse"
+              property subtitle = "What needs attention today"
           kpis
             data StockFigures[] via query CurrentStockFigures
             table StockFigures
@@ -316,7 +318,9 @@ module Stock
               column id           label "SKU running out"
               column onHand       label "On hand"
               column reorderPoint label "Reorder at"
-              on row-click navigate to ItemPage by id
+              on double click
+                navigate to ItemPage
+                  with id from item.id
 
       specification TheFiguresFollowTheShelves
         given SkuRegistered

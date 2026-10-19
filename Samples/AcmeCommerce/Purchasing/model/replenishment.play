@@ -82,6 +82,10 @@ module Buying
 
       screen PreferredSuppliers
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader preferredSuppliersHeader
+              property title = "Preferred suppliers"
+              property subtitle = "Which supplier each SKU is bought from"
           toolbar
             action ChoosePreferredSupplier
               label "Choose supplier"
@@ -316,6 +320,10 @@ module Buying
 
       screen ReplenishmentQueue
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader replenishmentQueueHeader
+              property title = "Replenishment"
+              property subtitle = "Low-stock requests from the warehouse and what became of them"
           toolbar
             toolbar actions
               button draft title "Draft order" slice Buying.Replenishment.CreateReplenishmentPurchaseOrder emphasis primary icon plus
@@ -395,6 +403,10 @@ module Buying
 
       screen OpenDemand
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader openDemandHeader
+              property title = "Demand"
+              property subtitle = "What customers ordered per SKU, less what suppliers delivered"
           toolbar
             action RecordManualDemand
               label "Record demand"
@@ -448,7 +460,9 @@ module Buying
       screen PurchasingDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
           header
-            title "Purchasing"
+            component Cratis.Blueprint.Default.pageHeader purchasingDashboardHeader
+              property title = "Purchasing"
+              property subtitle = "Orders, suppliers and what has to be replenished"
           kpis
             data PurchasingFigures[] via query CurrentPurchasingFigures
             table PurchasingFigures

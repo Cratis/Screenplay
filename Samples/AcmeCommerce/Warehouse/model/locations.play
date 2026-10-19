@@ -151,10 +151,9 @@ module Stock
       screen ItemPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           header
-            action PutStockInLocation
-              label "Put away"
-            action RegisterLocation
-              label "Open location"
+            component Cratis.Blueprint.Default.pageHeader itemPageHeader
+              property title = "Item"
+              property subtitle = "One SKU: the numbers and where it sits"
           summary
             data ItemDetail via query ItemBySku by id
             summary ItemDetail
@@ -171,6 +170,10 @@ module Stock
               column locationCode label "Location"
               column label        label "Description"
               column quantity     label "Units"
+            action PutStockInLocation
+              label "Put away"
+            action RegisterLocation
+              label "Open location"
 
       specification TheItemPageShowsNumbersAndShelves
         given SkuRegistered

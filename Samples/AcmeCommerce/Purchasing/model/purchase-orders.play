@@ -43,6 +43,10 @@ module Buying
 
       screen PurchaseOrders
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader purchaseOrdersHeader
+              property title = "Purchase orders"
+              property subtitle = "What has been ordered from suppliers and what has arrived"
           toolbar
             toolbar actions
               button new title "New purchase order" slice Buying.PurchaseOrders.CreatePurchaseOrder emphasis primary icon plus
@@ -54,21 +58,16 @@ module Buying
               column lineCount        label "Lines"
               column orderedQuantity  label "Ordered"
               column receivedQuantity label "Received"
-              on row-click navigate to PurchaseOrderPage by id
+              on double click
+                navigate to PurchaseOrderPage
+                  with id from item.id
 
       screen PurchaseOrderPage
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           header
-            action AddPurchaseOrderLine
-              label "Add line"
-            action SubmitPurchaseOrder
-              label "Submit"
-            action ReceivePurchaseOrderGoods
-              label "Receive goods"
-            action CancelPurchaseOrder
-              label "Cancel order"
-            action ArchivePurchaseOrder
-              label "Archive"
+            component Cratis.Blueprint.Default.pageHeader purchaseOrderPageHeader
+              property title = "Purchase order"
+              property subtitle = "Status, quantities and what the buyer may do next"
           summary
             data PurchaseOrderRow via query PurchaseOrderById by id
             summary PurchaseOrderRow
@@ -80,6 +79,16 @@ module Buying
             data PurchaseOrderRow via query PurchaseOrderById by id
             summary PurchaseOrderRow
               field lineCount label "Lines"
+            action AddPurchaseOrderLine
+              label "Add line"
+            action SubmitPurchaseOrder
+              label "Submit"
+            action ReceivePurchaseOrderGoods
+              label "Receive goods"
+            action CancelPurchaseOrder
+              label "Cancel order"
+            action ArchivePurchaseOrder
+              label "Archive"
 
       specification TheListFollowsTheOrderToItsFirstReceipt
         given PurchaseOrderCreated
