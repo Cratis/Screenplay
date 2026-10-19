@@ -2,7 +2,7 @@ name: Docker Build
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
   workflow_dispatch:
@@ -19,8 +19,8 @@ on:
       - ".github/workflows/docker-build.yml"
       - "**/*.csproj"
       - "**/package.json"
-      - "*.props"
-      - "*.targets"
+      - "**/*.props"
+      - "**/*.targets"
       - "global.json"
       - ".yarnrc.yml"
 
