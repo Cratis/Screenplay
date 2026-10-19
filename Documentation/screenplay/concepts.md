@@ -1,3 +1,8 @@
+---
+title: "Concepts"
+description: "Declare Screenplay concepts, strongly typed names for primitive values, including where personal data and secrets are marked."
+---
+
 # Concepts
 
 Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Bare markers declare the protection a concept needs: `pii` marks personal data (GDPR Art. 4(1)); `secret` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.

@@ -1,3 +1,8 @@
+---
+title: "From Every"
+description: "Use the every directive to apply common mappings, such as a last-updated timestamp, to every event that affects a projection."
+---
+
 # From Every
 
 The `every` directive applies mappings to every event that affects the projection, regardless of event type. This is useful for setting common properties like last update timestamps.

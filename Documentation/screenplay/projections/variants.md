@@ -1,3 +1,8 @@
+---
+title: "Variants"
+description: "Declare mutually exclusive named read models in a Screenplay projection, such as a work item moving through Kanban stages."
+---
+
 # Variants
 
 A `variant` block declares one of several **mutually exclusive** named read models sharing the enclosing projection's logical identity. An entity is in exactly one variant at a time. Entering one variant removes it from every other variant of the same projection — the compiler wires that exclusion for you; you never write a `remove with` for a sibling's entering event yourself.

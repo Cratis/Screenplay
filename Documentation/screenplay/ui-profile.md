@@ -1,3 +1,8 @@
+---
+title: "UI profile"
+description: "Declare a Screenplay ui profile that names the platforms an application targets, its shell and the component packages it draws from."
+---
+
 # UI profile
 
 Screenplay's screen and template constructs are platform-agnostic on purpose - the same `screen` should work on the web, on a phone, and on desktop. Something still has to say which platforms an application targets, which shell it renders inside, and which component packages (PrimeReact, an internal widget library, ...) a build resolves widget names against. That is `ui profile`.
