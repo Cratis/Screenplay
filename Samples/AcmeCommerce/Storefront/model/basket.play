@@ -69,12 +69,6 @@ module Shop
         when Mug
         then error "That product is out of stock"
 
-      screen AddLine
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action AddToBasket
-              navigate to Basket
-
     slice StateChange ChangeBasketQuantity
       description "Changes how many of a product the basket holds"
 
@@ -90,12 +84,6 @@ module Shop
       event BasketLineQuantityChanged
         sku      Sku
         quantity Quantity
-
-      screen ChangeQuantity
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ChangeBasketQuantity
-              navigate to Basket
 
       specification ChangingAQuantity
         given caller
@@ -132,12 +120,6 @@ module Shop
 
       event BasketLineRemoved
         sku Sku
-
-      screen RemoveLine
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RemoveFromBasket
-              navigate to Basket
 
       specification RemovingALine
         given caller
@@ -212,9 +194,10 @@ module Shop
               field lineCount label "Lines"
               field addedValue label "Added value"
           actions
+            action ChangeBasketQuantity
+            action RemoveFromBasket
             toolbar basketActions
               button checkout title "Check out" slice Shop.Checkout.CheckOut emphasis primary icon shopping-cart
-              button keep title "Keep shopping" slice Shop.Basket.AddToBasket emphasis quiet
 
       specification SummingUpABasket
         given caller

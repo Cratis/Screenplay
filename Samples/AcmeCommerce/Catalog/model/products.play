@@ -107,12 +107,6 @@ module Merchandising
           details  = "A sturdy mug for the morning"
           imageUrl = "/images/mug.png"
 
-      screen DescribeProductForm
-        template blueprint Cratis.Blueprint.Default FormScreen version "^1"
-          actions
-            action DescribeProduct
-              navigate to ProductCatalog
-
     slice StateView ProductCatalog
       description "Every product with its status; the merchandiser's work list"
 
@@ -227,11 +221,12 @@ module Merchandising
           status = "withdrawn"
 
       screen ProductPage
+        description "One product: what we know about it, and the four things a merchandiser does with it"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           header
             component Cratis.Blueprint.Default.pageHeader productHeader
               property title = "Product"
-              property subtitle = "What we know about one product"
+              property subtitle = "Describe it, price it, approve it for sale"
           summary
             data ProductDetail via query ProductById by productId
             summary ProductDetail
@@ -245,14 +240,12 @@ module Merchandising
             summary ProductDetail
               field details  label "Description"
               field imageUrl label "Picture"
-          // What the shop will show of the product
           aside
             data ProductDetail via query ProductById by productId
-            summary ProductDetail
-              field name  label "Shop title"
-              field sku   label "SKU"
-              field price label "Shop price"
-
+            action DescribeProduct
+            action SetProductPrice
+            action ApproveProductForSale
+            action WithdrawProduct
       specification TheProductPageCollectsEverything
         given ProductDrafted
           for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"

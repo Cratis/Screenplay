@@ -77,6 +77,120 @@ sample data AcmeNordic
       status    = "withdrawn"
       price     = 199
 
+  // The product page (Catalog) and the publication queue read these
+  shape ProductDetail
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      status    = "approved"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      status    = "withdrawn"
+  shape ProductReadiness
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "draft"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "approved"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "withdrawn"
+
   // ---- Storefront (ecommerce-author-sales) -----------------------------------------------------------------
   // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
   shape ListedProduct
@@ -273,26 +387,31 @@ sample data AcmeNordic
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "received"
       total      = 749
+      deliveryMethod = "standard"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "approved"
       total      = 149
+      deliveryMethod = "express"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "onHold"
       total      = 98
+      deliveryMethod = "standard"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "shipped"
       total      = 149
+      deliveryMethod = "pickup"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "fulfilled"
       total      = 447
+      deliveryMethod = "express"
 
   // ---- Sales (ecommerce-author-sales) ----------------------------------------------------------------------
   // 30 orders over every status, 12 customers: the pipeline board, the dashboard and the approval inbox are drawn from them.
