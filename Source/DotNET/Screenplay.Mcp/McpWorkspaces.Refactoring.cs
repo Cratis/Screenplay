@@ -51,7 +51,7 @@ internal sealed partial class McpWorkspaces
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
         };
         Root.Verify(workspace);
-        var result = WorkspaceEventRefactorings.ProposeInlineEvent(workspace, McpAstHandles.Read(arguments.GetProperty("subject")), request);
+        var result = WorkspaceEventRefactorings.ProposeInlineStandaloneEvent(workspace, McpAstHandles.Read(arguments.GetProperty("subject")), request);
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
 
