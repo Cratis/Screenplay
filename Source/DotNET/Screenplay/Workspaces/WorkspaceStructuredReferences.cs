@@ -53,20 +53,20 @@ static class WorkspaceStructuredReferences
     static string? ValueOwner(List<WorkspaceSyntaxEntry> ancestors, int mappingIndex, WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index)
     {
         var mapping = (PropertyMappingSyntax)ancestors[mappingIndex].Node;
-        var declarations = index.Entries.Select(item => item.Node).ToArray();
+        var declarations = WorkspaceUniqueDeclarations.For(index);
         var properties = StepProperties(step, index, ancestors, declarations);
         var type = properties?.SingleOrDefault(property => property.Name == mapping.Property)?.Type.Name;
 
         // From the mapping outwards, each enclosing object member selects the type of its value.
         foreach (var member in ancestors.Take(mappingIndex).Reverse().Select(ancestor => ancestor.Node).OfType<ObjectMemberSyntax>())
         {
-            type = Properties(declarations, type)?.SingleOrDefault(property => property.Name == member.Name)?.Type.Name;
+            type = declarations.Named<TypeSyntax>(type)?.Properties.SingleOrDefault(property => property.Name == member.Name)?.Type.Name;
         }
 
-        return Properties(declarations, type) is not null ? type : null;
+        return declarations.Named<TypeSyntax>(type) is not null ? type : null;
     }
 
-    static IEnumerable<PropertySyntax>? StepProperties(WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index, List<WorkspaceSyntaxEntry> ancestors, SyntaxNode[] declarations)
+    static IEnumerable<PropertySyntax>? StepProperties(WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index, List<WorkspaceSyntaxEntry> ancestors, WorkspaceUniqueDeclarations declarations)
     {
         if (IsFixtureStep(step.Node)) return WorkspaceFixtureDeclarations.Properties(step, index);
 
@@ -74,52 +74,40 @@ static class WorkspaceStructuredReferences
         {
             ProducesSyntax produced => ProductionProperties(produced, step, index, declarations),
             SpecificationOperationSyntax operation => OperationInputs(operation.Operation, step, index),
-            CaptureAppendSyntax appended => Unique(declarations.OfType<EventSyntax>(), appended.Event)?.Properties,
+            CaptureAppendSyntax appended => declarations.Named<EventSyntax>(appended.Event)?.Properties,
             SpecificationQueryResultSyntax => QueryView(step, ancestors, declarations)?.Properties,
             SpecificationQuerySyntax query => QueryProperties(query.Query, declarations),
             _ => null
         };
     }
 
-    static IEnumerable<PropertySyntax>? ProductionProperties(ProducesSyntax produced, WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index, SyntaxNode[] declarations)
+    static IEnumerable<PropertySyntax>? ProductionProperties(ProducesSyntax produced, WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index, WorkspaceUniqueDeclarations declarations)
     {
         if (index.OwningSlice(step) is { } slice && !index.Productions.IsEventProduction(produced, slice))
         {
             return (index.Productions.Resolve(produced.Event, slice).Declaration?.Node as OperationSyntax)?.Inputs;
         }
 
-        return Unique(declarations.OfType<EventSyntax>(), produced.Event)?.Properties;
+        return declarations.Named<EventSyntax>(produced.Event)?.Properties;
     }
 
     static IEnumerable<PropertySyntax>? OperationInputs(string operation, WorkspaceSyntaxEntry step, WorkspaceSyntaxIndex index) => index.OwningSlice(step) is { } slice
         ? (index.Productions.Resolve(operation, slice).Declaration?.Node as OperationSyntax)?.Inputs : null;
 
-    static IEnumerable<PropertySyntax>? QueryProperties(string query, SyntaxNode[] declarations)
+    static IEnumerable<PropertySyntax>? QueryProperties(string query, WorkspaceUniqueDeclarations declarations)
     {
-        var declared = Unique(declarations.OfType<QuerySyntax>(), query);
+        var declared = declarations.Named<QuerySyntax>(query);
         if (declared is null) return null;
         var by = declared.By is null ? Enumerable.Empty<PropertySyntax>() : [new PropertySyntax(declared.By.Name, declared.By.Type, declared.By.Location)];
 
         return by.Concat(declared.Filters.Select(filter => new PropertySyntax(filter.Name, filter.Type, filter.Location)));
     }
 
-    static ReadModelSyntax? QueryView(WorkspaceSyntaxEntry result, List<WorkspaceSyntaxEntry> ancestors, SyntaxNode[] declarations)
+    static ReadModelSyntax? QueryView(WorkspaceSyntaxEntry result, List<WorkspaceSyntaxEntry> ancestors, WorkspaceUniqueDeclarations declarations)
     {
         var query = ancestors.SkipWhile(entry => entry != result).Skip(1).Select(entry => entry.Node).OfType<SpecificationQuerySyntax>().FirstOrDefault();
-        var target = query is null ? null : Unique(declarations.OfType<QuerySyntax>(), query.Query);
+        var target = query is null ? null : declarations.Named<QuerySyntax>(query.Query);
 
-        return target is null ? null : Unique(declarations.OfType<ReadModelSyntax>(), target.ReturnType.Name);
-    }
-
-    static IEnumerable<PropertySyntax>? Properties(SyntaxNode[] declarations, string? type) => type is null
-        ? null
-        : Unique(declarations.OfType<TypeSyntax>(), type)?.Properties;
-
-    static T? Unique<T>(IEnumerable<T> nodes, string name)
-        where T : SyntaxNode
-    {
-        var matches = nodes.Where(node => WorkspaceReferenceBindings.Name(node) == name).Take(2).ToArray();
-
-        return matches.Length == 1 ? matches[0] : null;
+        return target is null ? null : declarations.Named<ReadModelSyntax>(target.ReturnType.Name);
     }
 }
