@@ -1141,8 +1141,11 @@ address, including its application identity. Optional `targetHandle` and
 revisions are required. Formatting defaults to `PreserveTrivia`, validation to
 `Authoring`; formatting consent and executable validation work as for rename.
 
-The first release moves a Slice to a Feature or a Feature to a Module or Feature.
-Moving modules or declarations between slices is not offered. Every assigned
+It moves a Slice to a Feature, a Feature to a Module or Feature, or one Command,
+EventContract, ReadModel, Projection, Query, Reaction or Capture to another Slice.
+Modules, screens, constraints, specifications on their own and inline
+`produces event` declarations do not move; a declaration written in more than one
+fragment refuses. Every assigned
 subtree declaration gets an automatic semantic migration and every affected event
 contract an event migration. Event names and identity pins do not change. Qualified
 typed references, including container `depends on` references and interaction
@@ -1159,6 +1162,23 @@ attachments that resolve to different screens, commands or queries refuse. When 
 original model is executable, the candidate executable model is compared by
 preserved identity, allowing only container ownership changes; differences refuse.
 Authoring-only source still has inherited binding and reference continuity checked.
+
+A declaration move carries the specifications of its source slice that cover only
+it. A specification covers a declaration when it is a matching specification of one
+of that declaration's `find-specification-obligations` obligations, or when its
+`when` step names the declaration (command, query, appended event, redelivered
+reaction, trigger or capture). Only declarations of the source slice count, and
+coverage comes only from obligations and the `when` step; a `then` read-model or
+result step counts because it meets SPEC006. A specification that covers
+the moved declaration and a staying one refuses the move, naming both. After the
+proposal, obligations are compared by rule, owner address (rewritten through the
+move) and subject: an obligation met before that is unmet after, or a new unmet
+obligation, refuses. The executable model comparison also allows the moved
+declarations to change slice; reducers and constraints stay with their slice, and a
+move that changes them refuses by name. Unqualified references are not rewritten: a
+move that would change what one resolves to refuses and asks for it to be qualified
+first. The report adds `specificationsCarried`, the current addresses of the carried
+specifications.
 
 Split subtrees move all fragments together. Inline and restated-header fragments
 remain in their documents. Restated headers outside the file's import-placement
