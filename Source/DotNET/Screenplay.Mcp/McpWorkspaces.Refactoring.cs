@@ -104,6 +104,20 @@ internal sealed partial class McpWorkspaces
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
 
+    // Eligibility here is a hint from the proposals' own shape checks; the proposal stays authoritative and stores nothing here.
+    static IEnumerable<object> DescribeRefactorings(WorkspaceSyntaxIndex syntax) =>
+        WorkspaceEventRefactorings.FindExtractableInlineEvents(syntax).Select(entry => DescribeRefactoring("extract-inline-event", entry))
+            .Concat(syntax.Entries.Where(entry => WorkspaceRefactoring.IsRenameTarget(syntax, entry)).Select(entry => DescribeRefactoring("rename-declaration", entry)));
+
+    static object DescribeRefactoring(string kind, WorkspaceSyntaxEntry entry) => new
+    {
+        kind,
+        subject = McpAstHandles.Describe(entry.Handle),
+        entry.Location,
+        name = WorkspaceReferenceBindings.Name(entry.Node),
+        declarationKind = entry.Kind
+    };
+
     // Retain the response member for existing clients; event pins are carried by ESM v16.
     static IEnumerable<Diagnostic> EventPinWarnings(ScreenplayWorkspace workspace) => [];
 

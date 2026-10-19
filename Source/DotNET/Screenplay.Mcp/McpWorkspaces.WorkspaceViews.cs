@@ -365,6 +365,7 @@ internal sealed partial class McpWorkspaces
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
             "repairs" => DescribeRepairs(workspace, McpWorkspaceAnalysis.For(workspace).Syntax),
+            "refactorings" => DescribeRefactorings(McpWorkspaceAnalysis.For(workspace).Syntax),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };

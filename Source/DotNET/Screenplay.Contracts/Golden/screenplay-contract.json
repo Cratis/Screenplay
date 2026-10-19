@@ -47064,6 +47064,7 @@
               "typed-contexts",
               "source-map",
               "repairs",
+              "refactorings",
               "repair-intents",
               "executable-model"
             ],

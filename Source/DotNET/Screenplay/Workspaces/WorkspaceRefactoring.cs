@@ -40,6 +40,20 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         }
     }
 
+    /// <summary>
+    /// Decides whether a declaration has the shape <see cref="Rename"/> accepts as its target. Discovery and the
+    /// rename proposal share this check; the proposal can still refuse a target for collisions or unproven references.
+    /// </summary>
+    /// <param name="index">The syntax index of the current workspace.</param>
+    /// <param name="target">The candidate declaration.</param>
+    /// <returns><see langword="true"/> when the declaration is a rename target.</returns>
+    internal static bool IsRenameTarget(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry target)
+    {
+        var compositeProperty = IsCompositeProperty(index, target);
+        return (target.Address is not null || target.Node is SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax) &&
+            (compositeProperty || target.Node is ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax);
+    }
+
     internal WorkspaceAuthoringResult Rename(WorkspaceRenameRequest request)
     {
         if (request is null)
@@ -224,18 +238,20 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         Conflicts = [new WorkspaceConflict { Kind = kind, Message = message }]
     };
 
+    static bool IsCompositeProperty(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry target) =>
+        target.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
+
     WorkspaceAuthoringResult RenameCore(WorkspaceRenameRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
-        var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
         if (target?.Node is ConstraintSyntax)
         {
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax)))
+        var compositeProperty = target is not null && IsCompositeProperty(index, target);
+        if (target is null || !IsRenameTarget(index, target))
         {
             throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, or stream id part declaration handle.");
         }

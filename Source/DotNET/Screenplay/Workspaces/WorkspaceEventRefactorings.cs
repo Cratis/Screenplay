@@ -34,13 +34,48 @@ public static partial class WorkspaceEventRefactorings
             return Refuse(WorkspaceConflictKind.FormattingConsentRequired, "Extracting an inline event requires explicit CanonicalizeTouchedDocuments consent.");
         }
 
-        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var plan = PlanExtraction(WorkspaceSyntaxIndex.Create(workspace), subject);
+        if (plan.Refusal is { } refusal)
+        {
+            return Refuse(WorkspaceConflictKind.InvalidOperation, refusal);
+        }
+
+        var result = WorkspaceRepairVerification.RequireComments(WorkspaceRepairVerification.Propose(workspace, request with { Operations = plan.Operations }));
+        if (result.Accepted && (!WorkspaceRepairVerification.SameModel(workspace, result.Workspace!) ||
+            workspace.IdentityCatalog.Revision != result.Workspace!.IdentityCatalog.Revision))
+        {
+            return WorkspaceRepairVerification.Refuse(result, WorkspaceConflictKind.InvalidOperation, "Extraction must preserve canonical executable bytes and every catalog assignment.");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Decides whether a handle is an inline event that <see cref="ProposeExtractInlineEvent"/> can plan a move for.
+    /// Discovery and the proposal share this check. A planned extraction can still be refused when the proposal
+    /// would lose a comment or change the executable model.
+    /// </summary>
+    /// <param name="index">The syntax index of the current workspace.</param>
+    /// <param name="subject">The candidate EventSyntax handle.</param>
+    /// <returns><see langword="true"/> when the extraction can be planned.</returns>
+    internal static bool CanExtract(WorkspaceSyntaxIndex index, WorkspaceNodeHandle subject) => PlanExtraction(index, subject).Refusal is null;
+
+    /// <summary>
+    /// Finds every inline event declaration that <see cref="CanExtract"/> accepts, in syntax index order.
+    /// </summary>
+    /// <param name="index">The syntax index of the current workspace.</param>
+    /// <returns>The extractable inline event declarations.</returns>
+    internal static IEnumerable<WorkspaceSyntaxEntry> FindExtractableInlineEvents(WorkspaceSyntaxIndex index) =>
+        index.Entries.Where(entry => entry.Node is EventSyntax && CanExtract(index, entry.Handle));
+
+    static ExtractionPlan PlanExtraction(WorkspaceSyntaxIndex index, WorkspaceNodeHandle subject)
+    {
         if (index.Find(subject) is not { Node: EventSyntax } declaration || declaration.Parent is null ||
             index.Find(declaration.Parent) is not { Node: ProducesSyntax { InlineEvent: not null } produces } production ||
             index.Find(production.Parent!) is not { Node: CommandSyntax command } commandEntry ||
             index.Find(commandEntry.Parent!) is not { Node: SliceSyntax sliceSyntax } slice)
         {
-            return Refuse(WorkspaceConflictKind.InvalidOperation, "The subject must be an inline event declaration in the current workspace.");
+            return new([], "The subject must be an inline event declaration in the current workspace.");
         }
 
         var operations = ImmutableArray.CreateBuilder<WorkspaceAstOperation>();
@@ -53,24 +88,19 @@ public static partial class WorkspaceEventRefactorings
             var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
             if (identifiers.Length != 1)
             {
-                return Refuse(WorkspaceConflictKind.InvalidOperation, "The inline production has no unique required scalar identifier destination.");
+                return new([], "The inline production has no unique required scalar identifier destination.");
             }
 
             operations.Add(new AddWorkspaceNode(production.Handle, produces, "for", new PathExpressionSyntax(identifiers[0].Name, produces.Location)));
         }
 
-        var result = WorkspaceRepairVerification.RequireComments(WorkspaceRepairVerification.Propose(workspace, request with { Operations = operations.ToImmutable() }));
-        if (result.Accepted && (!WorkspaceRepairVerification.SameModel(workspace, result.Workspace!) ||
-            workspace.IdentityCatalog.Revision != result.Workspace!.IdentityCatalog.Revision))
-        {
-            return WorkspaceRepairVerification.Refuse(result, WorkspaceConflictKind.InvalidOperation, "Extraction must preserve canonical executable bytes and every catalog assignment.");
-        }
-
-        return result;
+        return new(operations.ToImmutable(), null);
     }
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()
     {
         Conflicts = [new WorkspaceConflict { Kind = kind, Message = message }]
     };
+
+    sealed record ExtractionPlan(ImmutableArray<WorkspaceAstOperation> Operations, string? Refusal);
 }
