@@ -886,6 +886,8 @@ The normal retained proposal response adds `property`, also returned by
 | `chainCandidates` | Unselected chain address, kind, role and reason |
 | `generations` | Required array of `{event, from, to, mode, mutability}`; canonical EventContract addresses, stable address order, one entry per selected event owner |
 | `deployableWithoutTransformation` | False when any candidate event has several generations; no transformation is inferred |
+| `evolutionDraft` | True when any `generations` entry has mode `newGeneration`: a source draft only, with no migrator declared and no deployment, replay or migration readiness |
+| `extractedInlineEvents` | Required array of inline event addresses extracted into their slice by the same proposal; only removal with `newGeneration` extracts |
 | `esmVersionChange` | Selected ESM version pair, or null if unchanged or unknown |
 | `esmVersionKnown` | Whether the candidate bound, independently of authoring acceptance |
 
