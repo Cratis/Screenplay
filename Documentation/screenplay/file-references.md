@@ -1,3 +1,8 @@
+---
+title: "File references"
+description: "How the Screenplay file keyword points a construct at hand-written code, and how its two meanings differ by construct."
+---
+
 # File references
 
 `file <path>` is the one keyword Screenplay points at code with. It appears in two places that look the same and mean slightly different things, and the construct it sits on is what tells them apart.

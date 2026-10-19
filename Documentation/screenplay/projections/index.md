@@ -1,3 +1,8 @@
+---
+title: "Projections"
+description: "Screenplay projections declare in the Projection Declaration Language how events become a queryable read model."
+---
+
 # Projections
 
 Projections declare how events are projected into a queryable read model. The body of a `projection` block is written in the **Projection Declaration Language (PDL)** — an embedded sub-grammar. The Screenplay parser delegates the indented body to the PDL parser (see [Sub-language Pluggability](../sub-languages.md)).

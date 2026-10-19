@@ -1,3 +1,8 @@
+---
+title: "Printing and generating"
+description: "Turn a Screenplay syntax tree back into .play text with the printer, to round-trip edits or generate a model from scratch."
+---
+
 # Printing and generating
 
 The compiler turns `.play` text into a syntax tree. The printer does the reverse: it turns a syntax tree back into `.play` text. Together they let a tool read Screenplay, change it, and write it back out - or build a tree from scratch and generate a `.play` file from a model that was never text to begin with.

@@ -97,6 +97,17 @@ module Orders
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
         then error "OrderStateEntry '0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09' does not exist."
 
+      screen Decision
+        description "Approve or reject the order, with the consequence spelled out"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ApproveOrder
+              navigate to ApprovalInbox
+            action RejectOrder
+              navigate to ApprovalInbox
+            action ApplyLargeDiscount
+              navigate to ApprovalInbox
+
     slice StateChange RejectOrder
       description "A sales manager turns an order down, with a reason the shopper sees"
 

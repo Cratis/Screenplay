@@ -1,3 +1,8 @@
+---
+title: "Sub-languages and inline code"
+description: "How Screenplay carries languages it does not read itself, such as PDL, CDL and inline code, and how to plug in another one."
+---
+
 # Sub-languages and inline code
 
 Screenplay carries languages it does not itself read. The [Projection Declaration Language](projections/index.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in ones, and an inline block carries a general purpose language for the parts a declaration cannot express.

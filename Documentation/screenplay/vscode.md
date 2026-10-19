@@ -1,3 +1,8 @@
+---
+title: "VS Code extension"
+description: "Use the Screenplay VS Code extension to open a .play file as an event model board and get live editor diagnostics."
+---
+
 # VS Code extension
 
 The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.play` file on the **event model board**, the board Cratis Studio draws. The model reads as a timeline:

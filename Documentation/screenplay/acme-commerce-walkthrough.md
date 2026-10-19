@@ -1,6 +1,6 @@
 ---
 title: "Acme Commerce: a walkthrough"
-description: How the Acme Commerce sample was built, domain by domain - five bounded contexts in one Screenplay application, the public events between them, the shell, the screens, the custom components, and what each part shows in Studio.
+description: "How the Acme Commerce sample was built: five bounded contexts in one Screenplay application, with public events, shell, screens and Studio views."
 ---
 
 # Acme Commerce: a walkthrough

@@ -1,3 +1,8 @@
+---
+title: "Event seeding"
+description: "Declare the known starting state of a Screenplay application as seed events: reference data, demo customers and test fixtures."
+---
+
 # Event seeding
 
 A running application often needs a known starting state — reference data, demo customers, the fixtures a test environment expects. Seeding declares that state the same way everything else in Screenplay is declared: as events. A top-level `seed` block lists the events to append per event source id, mirroring Chronicle's `IEventSeedingBuilder.For(eventSourceId, events)`.

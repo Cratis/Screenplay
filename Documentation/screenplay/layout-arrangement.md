@@ -1,3 +1,8 @@
+---
+title: "Layout arrangement"
+description: "Say how the slots of a Screenplay layout or template share space and reflow across size classes, using flow or freeform arrangements."
+---
+
 # Layout arrangement
 
 A [layout or template](templates.md) says a structure has a `sidebar` and a `main` — but not how those two slots share the available space, or what should happen when the available space changes shape. `arrangement` closes that gap: it says whether the slots reflow responsively (`flow`) or sit at pixel-precise coordinates (`freeform`), and it gives each mode its own way of varying by size.

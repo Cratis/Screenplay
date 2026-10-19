@@ -1,3 +1,8 @@
+---
+title: "Folders"
+description: "Split a large Screenplay application across a folder of .play files, one folder per level, and compile it back as one application."
+---
+
 # Folders
 
 A `.play` file describes an application. That works beautifully right up until the application gets big - the invoicing sample in this repository is a single file of nine hundred lines, and it only has one module. Put five modules in it and nobody can find anything, two people cannot touch it at once, and a diff stops telling you what changed.

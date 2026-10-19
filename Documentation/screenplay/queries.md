@@ -1,3 +1,8 @@
+---
+title: "Queries"
+description: "Declare Screenplay queries, the read-side entry points: return type, one-shot or observable, parameter sources and performance."
+---
+
 # Queries
 
 Queries are read-side entry points. A query maps to a return type — a read model, or a collection of read models with `[]` — and says what it is for, whether it answers once or keeps answering, where each of its parameters comes from, and, when it needs to, how it is performed.

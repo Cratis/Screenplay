@@ -1,3 +1,8 @@
+---
+title: "Reactions"
+description: "Declare Screenplay reactions, the if-this-then-that behavior that runs when an event or trigger occurs in an Automation slice."
+---
+
 # Reactions
 
 A reaction is behavior that runs when something happens — the "if this then that" of a Screenplay. It states

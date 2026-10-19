@@ -1,3 +1,8 @@
+---
+title: "Layouts and templates"
+description: "Declare Screenplay layouts, screen templates and dialog templates, and fill a template from a screen."
+---
+
 # Layouts and templates
 
 Four words, each meaning exactly one thing:

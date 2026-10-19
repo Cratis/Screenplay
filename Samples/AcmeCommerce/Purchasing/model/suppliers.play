@@ -73,19 +73,6 @@ module Buying
               column currency     label "Currency"
               column leadTimeDays label "Lead time (days)"
 
-      screen SupplierPage
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          header
-            component Cratis.Blueprint.Default.pageHeader supplierPageHeader
-              property title = "Supplier"
-              property subtitle = "Who they are and what they offer"
-          summary
-            data SupplierRow via query SupplierById by supplierId
-            summary SupplierRow
-              field name    label "Supplier"
-              field taxId   label "Tax id"
-              field country label "Country"
-
       specification ASupplierAppearsWithItsOffers
         given SupplierRegistered
           for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
@@ -262,3 +249,16 @@ module Buying
           role "Buyer"
         when Mug price = -1
         then error "An amount cannot be negative"
+
+      screen SupplierPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader supplierPageHeader
+              property title = "Supplier"
+              property subtitle = "Who they are and what they offer"
+          summary
+            data SupplierRow via query SupplierById by supplierId
+            summary SupplierRow
+              field name    label "Supplier"
+              field taxId   label "Tax id"
+              field country label "Country"

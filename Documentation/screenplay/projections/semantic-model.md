@@ -1,3 +1,8 @@
+---
+title: "Projections in the semantic model"
+description: "How a Screenplay projection is read twice, by Chronicle to run it and by the semantic binder, with Chronicle as the reference for meaning."
+---
+
 # Projections in the semantic model
 
 A projection is written once, in the Projection Declaration Language, and read by two consumers. Cratis Chronicle compiles it with the Screenplay compiler and runs it. The Screenplay semantic binder turns it into the executable semantic model (ESM) that Stage, rendered applications and the reference evaluator share. This page explains how the two stay in agreement and where the semantic model deliberately stops.

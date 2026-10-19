@@ -1,6 +1,6 @@
 ---
 title: Notation conventions
-description: The symbols Screenplay keeps on purpose - Type[], the three => arrows, ==, the concept colon, backtick templates, $ value sources, the @ escape and more - with where each is admitted and why.
+description: "The symbols Screenplay keeps on purpose, such as Type[], the three arrows, the concept colon and the @ escape, and where each is admitted."
 ---
 
 This page is a reference for the notation in Screenplay that looks like programming-language syntax. Each entry says where the notation is accepted, shows one real example and gives the reason it is kept. The language is frozen (decision 0092), so none of this changes spelling; readable alternatives are recorded as parked in [decision 0100](https://github.com/Cratis/Screenplay/blob/main/decisions/0100-retain-notation-conventions-and-park-readable-alternatives.md). The audit that produced this page is [#350](https://github.com/Cratis/Screenplay/issues/350), which [decision 0023](https://github.com/Cratis/Screenplay/blob/main/decisions/0023-command-production-model.md) left open as question 2. The [grammar](grammar.md) is the normative source; this page explains it.

@@ -1,3 +1,8 @@
+---
+title: "Authentication"
+description: "Declare the identity providers an application signs users in with, in the same Screenplay model as its policies and personas."
+---
+
 # Authentication
 
 Policies and personas describe *who may do what* — but an application also has to say *how its users sign in*. The top level `authentication` block declares the identity providers of the application, so the sign-in surface is part of the same declaration as everything else.

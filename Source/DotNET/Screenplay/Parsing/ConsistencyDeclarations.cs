@@ -32,6 +32,8 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
         .Select(node => (Node: node, Declaration: new Declaration(node.Name, entry.Scope)))).ToLookup(entry => entry.Node.Name, StringComparer.Ordinal);
     readonly Dictionary<(string Name, DeclarationScope Scope), IEnumerable<PropertySyntax>?> _resolvedViewProperties = [];
     readonly Dictionary<(string Name, DeclarationScope Scope), PropertySyntax[]> _resolvedViewKeys = [];
+    readonly Dictionary<(string Name, DeclarationScope Scope), Declaration?> _resolvedViews = [];
+    List<Declaration>? _viewDeclarations;
 
     /// <summary>
     /// Gets the scoped slices.
@@ -101,9 +103,13 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <returns>The resolved declaration, or null.</returns>
     public Declaration? View(string name, DeclarationScope scope)
     {
-        var declarations = slices.SelectMany(entry => ViewNames(entry.Slice).Distinct(StringComparer.Ordinal)
-            .Select(view => new Declaration(view, entry.Scope))).ToList();
-        return ResolveDeclaration(name, scope, declarations).Resolved;
+        if (_resolvedViews.TryGetValue((name, scope), out var cached)) return cached;
+        _viewDeclarations ??= [.. slices.SelectMany(entry => ViewNames(entry.Slice).Distinct(StringComparer.Ordinal)
+            .Select(view => new Declaration(view, entry.Scope)))];
+        var view = ResolveDeclaration(name, scope, _viewDeclarations).Resolved;
+        _resolvedViews[(name, scope)] = view;
+
+        return view;
     }
 
     /// <summary>

@@ -1,3 +1,8 @@
+---
+title: "Screens"
+description: "Declare Screenplay screens, the UI of a StateView slice, from pure intent through structure to a template with inline code."
+---
+
 # Screens
 
 A screen accepts one quoted or fenced-text `description` body line, printed first before `file` or other directives. This is report-only authoring metadata, not a localizable `title`, and does not render text in the UI. Sections and nested directives do not gain descriptions. Markdown `documentation` is not supported here.

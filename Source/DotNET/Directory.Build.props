@@ -10,7 +10,7 @@
         <RepositoryType>git</RepositoryType>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <RepositoryUrl>https://github.com/Cratis/Screenplay</RepositoryUrl>
-        <PackageProjectUrl>https://github.com/Cratis/Screenplay</PackageProjectUrl>
+        <PackageProjectUrl>https://www.cratis.io/screenplay/</PackageProjectUrl>
 
         <GenerateAssemblyTitleAttribute>true</GenerateAssemblyTitleAttribute>
         <GenerateAssemblyDescriptionAttribute>true</GenerateAssemblyDescriptionAttribute>

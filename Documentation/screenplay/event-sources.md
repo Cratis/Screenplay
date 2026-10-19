@@ -1,3 +1,8 @@
+---
+title: "Event sources and streams"
+description: "Name the business classification of an event source and its streams in Screenplay, then route a command to a stream."
+---
+
 # Event sources and streams
 
 Name the business classification of an event source and its streams, then reference a stream from a command. Executable semantic model **v8** admits source declarations, scalar and composite command routes, and specification routes. ESM v10 adds production route overrides and observer filters. Models without the new forms keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.

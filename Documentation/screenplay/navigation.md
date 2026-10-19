@@ -1,3 +1,8 @@
+---
+title: "Navigation regions"
+description: "Declare the topbar and sidebar navigation regions of a Screenplay application shell and how each module inherits or overrides them."
+---
+
 # Navigation regions
 
 The application shell has two navigation regions: a **topbar** and a **sidebar**. A `layout` declares what the application puts in them. A `module` states how it relates to them - it inherits the application's items, extends them with its own, or overrides them. The blocks are the Screenplay form of Scene's `NavigationModel`, so a navigation authored here is the one the designer shows, Stage renders and Studio round-trips.

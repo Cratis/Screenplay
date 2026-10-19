@@ -1,3 +1,8 @@
+---
+title: "Syntax tree compatibility"
+description: "What the Screenplay syntax tree promises across versions, so code generators and designers know which guarantees to build on."
+---
+
 # Syntax tree compatibility
 
 The syntax tree is a public API. Every consumer that compiles Screenplay to something - a code generator, a designer, a documentation tool - is written against these types, so what the tree promises across versions decides how much work a Screenplay upgrade costs them.

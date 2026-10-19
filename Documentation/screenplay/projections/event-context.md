@@ -1,3 +1,8 @@
+---
+title: "Event Context"
+description: "Read event metadata such as occurrence time, sequence number and correlation in a Screenplay projection with $eventContext."
+---
+
 # Event Context
 
 Event context provides access to metadata about the event itself, such as when it occurred, its sequence number, who caused it and how it was correlated.

@@ -441,23 +441,30 @@ module Buying
     slice StateView PurchasingDashboard
       description "Open purchase orders, units on order and suppliers"
 
+      // One row for the whole purchasing desk: the same instance is updated by every purchase order and supplier event (a literal key)
       readmodel PurchasingFigures
-        summaryId     String
-        orders        Int
-        suppliers     Int
-        unitsOrdered  Int
-        unitsReceived Int
+        summaryId     String key
+        orders        Int optional
+        suppliers     Int optional
+        unitsOrdered  Quantity optional
+        unitsReceived Quantity optional
 
-      // The figures are composed by code from the purchase-order and supplier read models: an opaque read, so no
-      // projection and no specification states them. The rest of the application stays executable (Screenplay#862).
       query CurrentPurchasingFigures => observable PurchasingFigures[]
-        performer
-          ```csharp
-          var orders = await readModels.GetAll<PurchaseOrderRow>();
-          var suppliers = await readModels.GetAll<SupplierRow>();
-          return [new PurchasingFigures("global", orders.Count(), suppliers.Count(),
-              orders.Sum(o => o.OrderedQuantity), orders.Sum(o => o.ReceivedQuantity))];
-          ```
+
+      projection PurchasingFiguresProjection => PurchasingFigures
+        no automap
+        from PurchaseOrderCreated key "global"
+          summaryId = "global"
+          increment orders
+        from SupplierRegistered key "global"
+          summaryId = "global"
+          increment suppliers
+        from PurchaseOrderLineAdded key "global"
+          summaryId = "global"
+          add unitsOrdered by quantity
+        from PurchaseOrderGoodsReceived key "global"
+          summaryId = "global"
+          add unitsReceived by quantity
 
       screen PurchasingDashboard
         template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
@@ -479,3 +486,25 @@ module Buying
               column quantity     label "Suggested"
               column onHand       label "On hand"
               column status       label "Status"
+
+      specification TheFiguresFollowTheDesk
+        given SupplierRegistered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          name         = "Nordic Ceramics AS"
+          taxId        = "NO 912 345 678"
+          contactEmail = "orders@nordic-ceramics.example"
+          country      = "NO"
+        given PurchaseOrderCreated
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        given PurchaseOrderLineAdded
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          sku       = "ACM-1000"
+          quantity  = 25
+          unitPrice = 31
+        then readmodel PurchasingFigures
+          summaryId     = "global"
+          orders        = 1
+          suppliers     = 1
+          unitsOrdered  = 25

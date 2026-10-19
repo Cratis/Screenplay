@@ -1,3 +1,8 @@
+---
+title: "Grammar (EBNF)"
+description: "The complete EBNF grammar of the Change Data Capture Language that a Screenplay capture block delegates to."
+---
+
 # Grammar (EBNF)
 
 This document provides the complete formal grammar for the Change Data Capture Language (CDL) - the sub-language a `capture` block delegates to - using Extended Backus-Naur Form (EBNF) notation. It mirrors the [Projection Declaration Language grammar](../projections/grammar.md), which documents PDL the same way.

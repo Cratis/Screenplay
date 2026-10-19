@@ -1,3 +1,8 @@
+---
+title: "Removal"
+description: "Delete Screenplay projection instances when an event occurs, with remove with or remove via join."
+---
+
 # Removal
 
 Removal allows you to delete projection instances when specific events occur. The language supports two types of removal: direct removal (`remove with`) and removal based on joined events (`remove via join`).

@@ -1,3 +1,8 @@
+---
+title: "Screens capability matrix"
+description: "Trace each language-level Screenplay screens release criterion to its syntax, compiler treatment, diagnostics and known gaps."
+---
+
 # Screens capability matrix
 
 This page traces each language-level screens release criterion to the Screenplay syntax that expresses it, how the

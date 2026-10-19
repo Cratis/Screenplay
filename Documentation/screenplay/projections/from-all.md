@@ -1,3 +1,8 @@
+---
+title: "All Block"
+description: "The all block in a Screenplay projection runs its mappings for every event type in the system, unlike every."
+---
+
 # All Block
 
 The `all` keyword makes the projection subscribe to **every event type in the system**, regardless of the explicit `from` blocks listed in the projection. Mappings defined inside `all` run for every event that arrives, across all event types.

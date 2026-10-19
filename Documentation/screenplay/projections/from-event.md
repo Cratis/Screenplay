@@ -1,3 +1,8 @@
+---
+title: "From Event"
+description: "Use the from directive to populate and update a Screenplay read model when a specific event occurs."
+---
+
 # From Event
 
 The `from` directive defines a rule that triggers when a specific event occurs. This is the primary way to populate and update read models from events.

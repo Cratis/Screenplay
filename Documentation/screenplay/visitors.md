@@ -1,3 +1,8 @@
+---
+title: "Visitors and traversal"
+description: "Walk a Screenplay syntax tree with root visitors or the walker to turn a .play model into your own artifacts such as C# or diagrams."
+---
+
 # Visitors and traversal
 
 Screenplay's job is to make a `.play` document compilable to anything - C#, TypeScript, a diagram, a database schema, a checklist for an auditor. The compiler gets you a syntax tree. Turning that tree into your own representation is what this page is about.

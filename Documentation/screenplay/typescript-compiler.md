@@ -1,3 +1,8 @@
+---
+title: "TypeScript compiler"
+description: "Parse, check and compile .play files from TypeScript without .NET, using the Screenplay compiler package for editors and build scripts."
+---
+
 # TypeScript compiler
 
 Quoted and fenced descriptions on concepts, policies, constraints, projection headers and screens are retained in the parsed tree. Form bodies remain outside the narrow source-to-syntax projection; their descriptions are validated with the same grammar and are available in full typed syntax JSON from the native compiler. The full transport schema preserves descriptions on all six kinds. This does not promise TypeScript executable binding.

@@ -1,3 +1,8 @@
+---
+title: "Types"
+description: "Declare Screenplay types, named structured shapes such as invoice lines, that events and commands carry as properties."
+---
+
 # Types
 
 A [concept](concepts.md) names a single primitive value. A **type** names a *shape* — the structured child records real events routinely carry: the lines of an invoice, the answers of a questionnaire, the contact behind a billing address.

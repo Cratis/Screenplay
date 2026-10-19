@@ -1,3 +1,8 @@
+---
+title: "Grammar"
+description: "Reference for Screenplay syntax details: declarative file use, keyword escapes, string escapes and the executable-model notes they carry."
+---
+
 # Grammar
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.

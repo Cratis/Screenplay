@@ -1,3 +1,8 @@
+---
+title: "Commands"
+description: "Declare a Screenplay command: its properties, authorization, validation rules and the events it produces."
+---
+
 # Commands
 
 Commands are input definitions — imperative intents. A command declares its properties, its authorization, its validation rules, and what events it produces.

@@ -1,3 +1,8 @@
+---
+title: "Domain"
+description: "Declare the business domain a Screenplay .play file belongs to, as a qualified name that groups related files."
+---
+
 # Domain
 
 A `.play` file can declare the domain it belongs to. The domain is a qualified name that groups related files — typically the name of the business domain a bounded context sits in.
