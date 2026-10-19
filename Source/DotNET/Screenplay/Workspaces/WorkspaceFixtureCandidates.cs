@@ -42,7 +42,7 @@ sealed class WorkspaceFixtureCandidates
         Declarations = new(Entries.Select(entry => entry.Declaration));
         foreach (var (entry, declaration) in Entries)
         {
-            // Two candidates with the same declaration make it ambiguous: it stays in the map as null.
+            // Keeps the scan this replaces: a declaration shared by two candidates resolves to no entry.
             _entries[declaration] = _entries.ContainsKey(declaration) ? null : entry;
         }
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name).ToDictionary(group => group.Key, group => group.ToArray());

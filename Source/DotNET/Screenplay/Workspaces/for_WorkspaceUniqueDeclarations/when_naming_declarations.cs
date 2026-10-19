@@ -50,7 +50,7 @@ public class when_naming_declarations : Specification
     [Fact] void should_name_a_unique_declaration_as_a_scan_does() => _first.Named<EventSyntax>("ProjectRegistered").ShouldBeSame(Scanned<EventSyntax>("ProjectRegistered"));
     [Fact] void should_name_a_unique_declaration() => _first.Named<EventSyntax>("ProjectRegistered").ShouldNotBeNull();
     [Fact] void should_not_name_a_duplicated_declaration() => _first.Named<EventSyntax>("ProjectRenamed").ShouldBeNull();
-    [Fact] void should_not_name_a_duplicated_declaration_as_a_scan_does() => Scanned<EventSyntax>("ProjectRenamed").ShouldBeNull();
+    [Fact] void should_not_name_a_duplicated_declaration_as_a_scan_does() => _first.Named<EventSyntax>("ProjectRenamed").ShouldEqual(Scanned<EventSyntax>("ProjectRenamed"));
     [Fact] void should_not_name_a_declaration_of_another_kind() => _first.Named<CommandSyntax>("ProjectRegistered").ShouldBeNull();
     [Fact] void should_not_name_an_unknown_declaration() => _first.Named<EventSyntax>("Missing").ShouldBeNull();
     [Fact] void should_not_name_without_a_name() => _first.Named<EventSyntax>(null).ShouldBeNull();
