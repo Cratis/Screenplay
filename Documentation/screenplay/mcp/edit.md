@@ -144,8 +144,9 @@ Without a release baseline, choose `eventNeverPersisted: true` only when the cur
 generation has never been stored, or choose `newGeneration: true` to keep the old
 shape and append one new generation. With a baseline, unadmitted current revisions
 default to an in-place edit; admitted revisions require explicit `newGeneration`
-and refuse `eventNeverPersisted`. Historical generations cannot be edited;
-extract inline events first. New generations require a transformation before
+and refuse `eventNeverPersisted`. Historical generations cannot be edited.
+Extract inline events first, except for a removal with `newGeneration`, which
+extracts the event in the same proposal. New generations require a transformation before
 Chronicle deployment, which Screenplay does not yet express.
 
 Review the required `property.generations` array in the proposal and in

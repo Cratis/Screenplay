@@ -27,9 +27,10 @@ sealed class WorkspaceInlineEvolutionContinuity(WorkspaceSyntaxIndex original, W
     HashSet<string> Removed() =>
         [.. staged.AlsoRemove.Select(selection => selection.ExpectedName).Prepend(staged.ExpectedName!)];
 
+    // An event without a contract assignment has no identity to keep, so continuity cannot be proven.
     bool KeepsContract(ScreenplayWorkspace candidate) =>
-        original.Workspace.IdentityCatalog.EventContracts.SingleOrDefault(assignment => assignment.Address.Equals(owner.Address))?.Id ==
-        candidate.IdentityCatalog.EventContracts.SingleOrDefault(assignment => assignment.Address.Equals(owner.Address))?.Id;
+        original.Workspace.IdentityCatalog.EventContracts.SingleOrDefault(assignment => assignment.Address.Equals(owner.Address))?.Id is { } id &&
+        candidate.IdentityCatalog.EventContracts.SingleOrDefault(assignment => assignment.Address.Equals(owner.Address))?.Id == id;
 
     WorkspaceSyntaxEntry[] Generation(WorkspaceSyntaxIndex candidate, uint generation) =>
         [.. candidate.Entries.Where(entry => entry.Node is EventSyntax @event && @event.Generation == generation && owner.Address!.Equals(entry.Address))];
