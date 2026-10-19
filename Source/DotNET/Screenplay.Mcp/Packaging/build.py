@@ -88,7 +88,12 @@ def pack(publish, output, version, rid, mcpb_timeout=MCPB_TIMEOUT_SECONDS):
         raise ValueError("Install @anthropic-ai/mcpb@2.1.2 before packaging")
     run_bounded([mcpb, "validate", str(output / "mcpb")], mcpb_timeout, "mcpb validate")
     bundle = output / f"screenplay-{version}-{rid}.mcpb"
-    run_bounded([mcpb, "pack", str(output / "mcpb"), str(bundle)], mcpb_timeout, "mcpb pack")
+    try:
+        run_bounded([mcpb, "pack", str(output / "mcpb"), str(bundle)], mcpb_timeout, "mcpb pack")
+    except BaseException:
+        # Whatever a failed or stopped pack left behind is not a release artifact.
+        bundle.unlink(missing_ok=True)
+        raise
     plugin = output / f"screenplay-{version}-{rid}-plugin.zip"
     with zipfile.ZipFile(plugin, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in sorted((output / "plugin").rglob("*")):

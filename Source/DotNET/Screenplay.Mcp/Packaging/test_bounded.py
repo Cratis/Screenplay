@@ -52,8 +52,8 @@ class BoundedTool(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             pid_file = Path(folder) / "child.pid"
             started = time.monotonic()
-            with self.assertRaisesRegex(PackagingToolTimedOut, "mcpb pack did not exit within 1 seconds"):
-                run_bounded([PYTHON, "-c", HANGING_PARENT, str(pid_file)], 1, "mcpb pack")
+            with self.assertRaisesRegex(PackagingToolTimedOut, "mcpb pack did not exit within 5 seconds"):
+                run_bounded([PYTHON, "-c", HANGING_PARENT, str(pid_file)], 5, "mcpb pack")
             self.assertLess(time.monotonic() - started, 30)
             if not WINDOWS:
                 self.assertTrue(wait_until_gone(int(pid_file.read_text())), "child process outlived the timeout")
@@ -82,6 +82,8 @@ class PackingStops(unittest.TestCase):
                     def run(command, timeout, label, failing_step=failing_step, failure=failure):
                         calls.append((command[1], timeout))
                         if command[1] == failing_step:
+                            if failing_step == "pack":
+                                Path(command[3]).write_bytes(b"partial archive")
                             raise failure
 
                     with mock.patch.object(build.shutil, "which", return_value="mcpb"), mock.patch.object(build, "run_bounded", run):
@@ -89,6 +91,7 @@ class PackingStops(unittest.TestCase):
                             build.pack(publish, root / "packages", "4.55.0", "osx-arm64", mcpb_timeout=7)
                     self.assertTrue(all(timeout == 7 for _, timeout in calls))
                     self.assertEqual(calls[-1][0], failing_step)
+                    self.assertEqual(list((root / "packages").glob("*.mcpb")), [])
                     self.assertEqual(list((root / "packages").glob("*.zip")), [])
                     self.assertEqual(list((root / "packages").glob("*.sha256")), [])
 

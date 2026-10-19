@@ -38,6 +38,8 @@ def _kill_tree(process):
         os.killpg(process.pid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError):
         pass
+    if process.returncode is None:
+        process.kill()
 
 
 def run_bounded(command, timeout, label):
