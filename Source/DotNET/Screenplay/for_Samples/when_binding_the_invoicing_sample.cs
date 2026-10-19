@@ -34,7 +34,7 @@ public class when_binding_the_invoicing_sample : Specification
 
     [Fact]
     void should_not_ask_the_anonymous_query_specification_for_a_caller() => _diagnostics.Any(diagnostic =>
-        diagnostic.Code == DiagnosticCodes.MissingSpecificationCaller && diagnostic.Message.Contains("VerifyingWithoutSigningIn", StringComparison.Ordinal)).ShouldBeFalse();
+        diagnostic.Code == DiagnosticCodes.MissingSpecificationCaller).ShouldBeFalse();
 
     [Fact]
     void should_keep_the_anonymous_gate_alone_on_its_path() => _diagnostics.Any(diagnostic =>
