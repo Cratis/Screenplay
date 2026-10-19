@@ -14,6 +14,7 @@ static class WorkspacePropertyReports
         var current = candidate.Compilation.Value?.Model.SemanticVersion.ToString();
         return report with
         {
+            EvolutionDraft = report.Generations.Any(generation => generation.Mode == "newGeneration"),
             DeployableWithoutTransformation = !WorkspaceSyntaxIndex.Create(candidate).Entries.Any(entry => entry.Node is EventSyntax @event && @event.Generation > 1),
             EsmVersionKnown = known,
             EsmVersionChange = known && previous is { } from && current is { } to && from != to ? new(from, to) : null
