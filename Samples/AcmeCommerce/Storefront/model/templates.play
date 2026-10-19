@@ -1,7 +1,7 @@
 // Storefront's OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop (not copied from a blueprint).
 module Shop
   // OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop.
-  // ProductGrid: header, filters and a grid of product cards (the grid is filled with the custom component acme:productCard).
+  // ProductGrid: header, filters and a grid of product cards (the grid is a table of product rows).
   screen template ProductGrid
     category Shop
     scopes slice stateview
