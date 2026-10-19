@@ -58,6 +58,6 @@ lists its offers (`OffersOfSupplier` filters by `supplierId`). **When Chronicle#
 - A purchase order is numbered at submission (`PO-...`), not at creation: a reaction-created draft cannot generate a number.
 - The dashboard read model is composed by a query `performer` (Screenplay#862): an opaque read, so it has no projection and no specification;
   the rest of Purchasing stays executable with `screenplay test`.
-- An id that travels keeps its own concept on each side: `crossingId` arrives as Warehouse's `MovementId`, and nothing in Purchasing needs it as a `PurchaseOrderId` any more.
+- An id that travels keeps its own concept on each side: `crossingId` arrives as Purchasing's own `CrossingId` (Warehouse's `MovementId`, the same Uuid), so the Purchasing package also compiles on its own, and nothing in Purchasing needs it as a `PurchaseOrderId` any more.
 - The accepted path of `ReceivePurchaseOrderGoods` is a command specification that states the public event `PurchaseOrderReceived` it publishes (`GoodsAgainstASubmittedOrderArePublished`).
 - Domain blueprints (`Cratis.Blueprint.Orders/Inventory/Approvals`) are not used here: Purchasing has no blueprint of its own, the foundation templates are referenced.
