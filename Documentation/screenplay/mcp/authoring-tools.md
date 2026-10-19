@@ -167,7 +167,14 @@ that inherit a removed example value cannot be determined, for example because t
 example or a specification using it has errors, removal refuses with
 `AmbiguousPropertyReference` instead of reporting no weakened assertion. Opaque or incomplete
 links, historical generations, inline events, keys and unsupported spans refuse
-with original candidate locations rather than guessing.
+with original candidate locations rather than guessing. The one inline exception is
+removal with `newGeneration: true` and `CanonicalizeTouchedDocuments`: the proposal
+extracts the selected inline event into its slice, as `propose-extract-inline-event`
+does, and appends N+1 without the removed properties, in one retained proposal with
+one apply. `extractedInlineEvents` lists the extracted event. Selecting properties
+of two inline events refuses with `InvalidOperation`; without formatting consent it
+refuses with `FormattingConsentRequired`. This is how to drop a `PLAY0469` identifier
+copy while keeping the stored contract.
 
 Select exactly one event mode when any selected field belongs to an event:
 `newGeneration: true` appends N+1; `eventNeverPersisted: true` edits current N in
@@ -183,6 +190,9 @@ edits have equal revisions. `[]` describes no accepted planned event edits and i
 not a success verdict. No singular alias is emitted. `deployableWithoutTransformation`
 and `esmVersionKnown` describe the candidate, independently of source acceptance.
 New generations still require transformations before Chronicle deployment.
+`evolutionDraft` is true whenever a new generation is planned: the result is a source
+draft only, no migrator is declared, and it claims no deployment, replay or migration
+readiness.
 
 Only `apply` writes the retained source and identity plan. See the [complete planner reference](reference.md#property-change-planner).
 
@@ -600,7 +610,7 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | --- | --- |
 | `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
 | `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
-| `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only. |
+| `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only; to keep the stored contract, remove the copy with `propose-property` and `newGeneration`, which drafts a new generation (inline events are extracted in the same proposal). |
 | `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
 | `PLAY0653` (Warning) | Remove duplicate compliance markers from one concept header, keeping the first occurrence of each marker, all body settings and trivia. Use the discovered concept subject and `PreserveTrivia`; no document-root repair is offered. |

@@ -199,7 +199,9 @@ for unadmitted revisions. `eventNeverPersisted`
 edits the highest generation in place; `newGeneration` appends the current shape
 plus the property as N+1. For the RegisterProject v2 model, these mean editing
 generation 2 or appending generation 3. Both keep ESM v4; a new generation reports
-`deployableWithoutTransformation: false` and `esmVersionChange: null`.
+`deployableWithoutTransformation: false`, `evolutionDraft: true` and `esmVersionChange: null`.
+A removal with `newGeneration` may also select an inline event's property: the same
+proposal extracts the event and lists it in `extractedInlineEvents`.
 
 Use `CanonicalizeTouchedDocuments` for structural additions. Review `changed`
 (`added` and `fixtureAdded`), `chainCandidates` and `generations` with `read-proposal`,
