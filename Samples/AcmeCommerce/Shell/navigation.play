@@ -35,8 +35,10 @@ layout AcmeNavigation
       item publication title "Publication" target Merchandising.Publication
       item catalogdashboard title "Dashboard" target Merchandising.Reporting
     item sales title "Sales" icon receipt target Orders
-      item pipeline title "Orders pipeline" target Orders.Fulfilment
+      item pipeline title "Pipeline" target Orders.Fulfilment
+      item orderlist title "Orders" target Orders.Lookup
       item inbox title "Approval inbox" target Orders.Approval
+      item cancellations title "Cancellations" target Orders.Cancellations
       item dashboard title "Dashboard" target Orders.Reporting
       item pricelist title "Price list" target Orders.Intake
     item purchasing title "Purchasing" icon truck target Buying
