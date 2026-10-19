@@ -98,3 +98,4 @@
 | [0101](0101-a-given-without-an-event-source-belongs-to-the-event-source-the-specification-acts-on.md) | A given without an event source belongs to the event source the specification acts on | accepted | implemented | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0102](0102-move-a-declaration-between-slices.md) | Move a single declaration between slices, carrying the specifications that cover only it | accepted | none | 2026-10-18 | woksin |
 | [0103](0103-admit-the-anonymous-policy-condition-in-esm-v31.md) | Admit the anonymous policy condition in ESM v31 (exception to the freeze) | accepted | none | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0105](0105-editor-repairs-run-over-the-stdio-mcp-bridge.md) | Editor repairs run over the stdio MCP bridge, and a review is re-checked on disk at final consent | accepted | none | 2026-10-19 | Sindre Wilting |
