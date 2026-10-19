@@ -176,6 +176,7 @@ module Shop
               field available label "In stock"
           related
             action AddToBasket
+              navigate to Basket
 
       specification ShowingAvailabilityOnTheProductPage
         given caller

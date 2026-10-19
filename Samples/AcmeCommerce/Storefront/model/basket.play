@@ -144,22 +144,24 @@ module Shop
       // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
       readmodel BasketSize
         description "How many lines a basket holds"
-        id         BasketId key
+        basketId   BasketId key
         lineCount  Int
         addedValue Money optional
 
       query GetBasketSize => BasketSize optional
-        by id BasketId
+        by basketId BasketId
 
       query GetBasketContents => BasketContents optional
         by basketId BasketId
 
-      // What the shop's topbar counts: the basket indicator reads the first basket's line count (a shopper has one open basket)
+      // What the shop's topbar counts: the basket indicator reads the line count of the shopper's own basket (the basket the session acts as)
       query AllBasketSizes => observable BasketSize[]
-        description "Every open basket's size (the topbar shows the shopper's own)"
+        description "Every open basket's size, or the one basket asked for"
+        filter basketId BasketId optional
 
       query AllBaskets => observable BasketContents[]
-        description "Every open basket (a screen shows the shopper's own)"
+        description "Every open basket, or the one basket asked for (a screen shows the shopper's own)"
+        filter basketId BasketId optional
 
       projection BasketSizeProjection => BasketSize
         from BasketLineAdded
@@ -173,10 +175,11 @@ module Shop
         no automap
         from BasketLineAdded
         children lines identified by sku
-          from BasketLineAdded
+          from BasketLineAdded key sku
+            sku       = sku
             quantity  = quantity
             unitPrice = unitPrice
-          from BasketLineQuantityChanged
+          from BasketLineQuantityChanged key sku
             quantity = quantity
           remove with BasketLineRemoved
         remove with BasketCleared
@@ -193,7 +196,7 @@ module Shop
               column quantity  label "Qty"
               column unitPrice label "Unit price"
           summary
-            data BasketSize via query GetBasketSize by id
+            data BasketSize via query GetBasketSize by basketId
             summary BasketSize
               field lineCount label "Lines"
               field addedValue label "Added value"
@@ -218,6 +221,6 @@ module Shop
           quantity  = 1
           unitPrice = 899
         then readmodel BasketSize
-          id         = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           lineCount  = 2
           addedValue = 997

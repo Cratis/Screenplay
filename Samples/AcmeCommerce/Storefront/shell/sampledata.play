@@ -497,7 +497,7 @@ sample data AcmeStorefront
       priceChanges     = 1
   shape BasketSize
     row
-      id  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
       lineCount = 2
   shape CheckoutDraft
     row
