@@ -60,6 +60,12 @@ filenames. CI checks portable schemas, runs `mcpb validate`, packs with `mcpb pa
 unpacks both packages and exercises MCP initialization, tools, resources and a
 representative application read against the real binary.
 
+`build.py` gives each `mcpb validate` and `mcpb pack` call 600 seconds
+(`--mcpb-timeout SECONDS` changes it). A call that has not exited by then is
+stopped together with every process it started, and packaging fails: an archive
+`mcpb` reported writing is not trusted, so no plugin ZIP, checksum, smoke test or
+upload follows. A non-zero exit fails the same way.
+
 The vendored `Packaging/Schemas` files are Agent Plugins **1.0.0** schemas from
 [agent-plugins.org](https://agent-plugins.org). Update them deliberately alongside
 format changes; validation does not silently follow a moving remote schema.

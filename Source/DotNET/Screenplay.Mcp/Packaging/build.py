@@ -6,14 +6,16 @@ import hashlib
 import json
 import re
 import shutil
-import subprocess
 import zipfile
 from pathlib import Path
 import jsonschema
+from bounded import run_bounded
 
 RIDS = {"osx-arm64": "darwin", "osx-x64": "darwin", "win-x64": "win32", "linux-x64": "linux", "linux-arm64": "linux"}
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
+# Each mcpb call normally finishes in well under a minute; a call that outlives this is stuck.
+MCPB_TIMEOUT_SECONDS = 600
 
 
 def write_json(path, value):
@@ -74,7 +76,7 @@ def prepare(publish, output, version, rid):
     return executable
 
 
-def pack(publish, output, version, rid):
+def pack(publish, output, version, rid, mcpb_timeout=MCPB_TIMEOUT_SECONDS):
     prepare(publish, output, version, rid)
     for name in ("plugin", "mcp"):
         schema = json.loads((HERE / "Schemas" / f"{name}.schema.json").read_text(encoding="utf-8"))
@@ -84,9 +86,9 @@ def pack(publish, output, version, rid):
     mcpb = shutil.which("mcpb")
     if mcpb is None:
         raise ValueError("Install @anthropic-ai/mcpb@2.1.2 before packaging")
-    subprocess.run([mcpb, "validate", str(output / "mcpb")], check=True)
+    run_bounded([mcpb, "validate", str(output / "mcpb")], mcpb_timeout, "mcpb validate")
     bundle = output / f"screenplay-{version}-{rid}.mcpb"
-    subprocess.run([mcpb, "pack", str(output / "mcpb"), str(bundle)], check=True)
+    run_bounded([mcpb, "pack", str(output / "mcpb"), str(bundle)], mcpb_timeout, "mcpb pack")
     plugin = output / f"screenplay-{version}-{rid}-plugin.zip"
     with zipfile.ZipFile(plugin, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in sorted((output / "plugin").rglob("*")):
@@ -104,5 +106,9 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--rid", choices=RIDS, required=True)
+    parser.add_argument("--mcpb-timeout", type=int, default=MCPB_TIMEOUT_SECONDS,
+                        help="seconds each mcpb validate/pack call may run before it is stopped")
     args = parser.parse_args()
-    pack(args.publish.resolve(), args.output.resolve(), args.version, args.rid)
+    if args.mcpb_timeout <= 0:
+        parser.error("--mcpb-timeout must be a positive number of seconds")
+    pack(args.publish.resolve(), args.output.resolve(), args.version, args.rid, args.mcpb_timeout)
