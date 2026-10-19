@@ -8,6 +8,132 @@
 module Stock
   feature Levels
 
+    slice StateView StockLevels
+      description "Every SKU with what is on hand, what is promised and what is left"
+
+      readmodel StockLevel
+        id             Sku key
+        name            ProductName
+        onHand          StockQuantity
+        reserved        StockQuantity
+        available       StockQuantity
+        reorderPoint    StockQuantity
+        reorderQuantity Quantity
+        blocked         Bool
+        alertOpen       Bool
+        lastCounted     StockQuantity optional
+
+      query AllStockLevels => observable StockLevel[]
+      query StockLevelBySku => StockLevel optional
+        by id Sku
+
+      projection StockLevelProjection => StockLevel
+        no automap
+        from SkuRegistered
+          id             = $eventSourceId
+          name            = name
+          onHand          = 0
+          reserved        = 0
+          available       = 0
+          reorderPoint    = 10
+          reorderQuantity = 50
+          blocked         = false
+          alertOpen       = false
+        from SkuBlockedForReceiving
+          blocked = true
+        from ReorderPointSet
+          reorderPoint    = reorderPoint
+          reorderQuantity = reorderQuantity
+        from StockCounted
+          lastCounted = counted
+        from StockReceived
+          add onHand by quantity
+          add available by quantity
+          alertOpen = false
+        from StockIncreased
+          add onHand by quantity
+          add available by quantity
+          alertOpen = false
+        from StockDecreased
+          subtract onHand by quantity
+          subtract available by quantity
+        from ReservationMade
+          add reserved by quantity
+          subtract available by quantity
+        from StockDispatched
+          subtract onHand by quantity
+          subtract reserved by quantity
+        from ReorderPointCrossed
+          alertOpen = true
+        remove with SkuRemoved
+
+      event SkuRemoved
+
+      screen StockLevels
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockLevelsHeader
+              property title = "Stock levels"
+              property subtitle = "What is on the shelves, what is promised and what is left"
+          toolbar
+            toolbar actions
+              button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis primary icon plus
+            action AdjustStock
+              label "Adjust stock"
+            action CountStock
+              label "Count"
+            action SetReorderPoint
+              label "Reorder point"
+            action BlockSku
+              label "Block SKU"
+          list
+            data StockLevel[] via query AllStockLevels
+            table StockLevel
+              column id        label "SKU"
+              column name      label "Product"
+              column onHand    label "On hand"
+              column reserved  label "Reserved"
+              column available label "Available"
+              column reorderPoint label "Reorder at"
+              on double click
+                navigate to ItemPage
+                  with id from item.id
+
+      specification TheShelfStartsEmpty
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        then readmodel StockLevel
+          id       = "ACM-1000"
+          name      = "Acme mug"
+          onHand    = 0
+          available = 0
+          reorderPoint = 10
+
+      specification ReceivingAndReservingMovesTheNumbers
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReservationMade
+          for "ACM-1000"
+          sku = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then readmodel StockLevel
+          id       = "ACM-1000"
+          onHand    = 40
+          reserved  = 3
+          available = 37
+
     slice StateChange RegisterSku
       description "Puts a SKU on the warehouse's books. Normally the catalogue's public event does it (see RegisterSkuFromCatalog); by hand for a consumable that has no product"
       command RegisterSku
@@ -75,12 +201,6 @@ module Stock
 
       event SkuBlockedForReceiving
 
-      screen BlockSkuDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action BlockSku
-              navigate to StockLevels
-
       specification BlockingASku
         given caller
           authenticated
@@ -135,11 +255,6 @@ module Stock
         when Reorder reorderQuantity = 0
         then error "A quantity is at least one"
 
-      screen SetReorder
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action SetReorderPoint
-
     slice StateChange CountStock
       description "Records what the clerk counted on the shelf. The count changes nothing by itself: a difference is settled with AdjustStock"
       command CountStock
@@ -175,11 +290,6 @@ module Stock
           role "WarehouseClerk"
         when ShelfCount counted = -1
         then error "Stock cannot be negative"
-
-      screen Count
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action CountStock
 
     slice StateChange AdjustStock
       description "Adds to or takes from the shelf for a stated reason (found, returned, damaged, count, correction)"
@@ -246,122 +356,70 @@ module Stock
         when FoundMugs
         then denied
 
-      screen AdjustStock
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action AdjustStock
-              navigate to StockLevels
+  feature Adjustments
+    description "Corrections of the shelf and the reasons for them"
 
-    slice StateView StockLevels
-      description "Every SKU with what is on hand, what is promised and what is left"
+    slice StateView StockAdjustments
+      description "Every correction of the shelf with its reason: what was found, returned, damaged or counted off"
 
-      readmodel StockLevel
-        id             Sku key
-        name            ProductName
-        onHand          StockQuantity
-        reserved        StockQuantity
-        available       StockQuantity
-        reorderPoint    StockQuantity
-        reorderQuantity Quantity
-        blocked         Bool
-        alertOpen       Bool
-        lastCounted     StockQuantity optional
+      readmodel StockAdjustmentRow
+        id        MovementId key
+        sku       Sku
+        quantity  Quantity
+        increased Bool
+        reason    StockAdjustmentReason
 
-      query AllStockLevels => observable StockLevel[]
-      query StockLevelBySku => StockLevel optional
-        by id Sku
+      query AllStockAdjustments => observable StockAdjustmentRow[]
 
-      projection StockLevelProjection => StockLevel
+      projection StockAdjustmentRowProjection => StockAdjustmentRow
         no automap
-        from SkuRegistered
-          id             = $eventSourceId
-          name            = name
-          onHand          = 0
-          reserved        = 0
-          available       = 0
-          reorderPoint    = 10
-          reorderQuantity = 50
-          blocked         = false
-          alertOpen       = false
-        from SkuBlockedForReceiving
-          blocked = true
-        from ReorderPointSet
-          reorderPoint    = reorderPoint
-          reorderQuantity = reorderQuantity
-        from StockCounted
-          lastCounted = counted
-        from StockReceived
-          add onHand by quantity
-          add available by quantity
-          alertOpen = false
-        from StockIncreased
-          add onHand by quantity
-          add available by quantity
-          alertOpen = false
-        from StockDecreased
-          subtract onHand by quantity
-          subtract available by quantity
-        from ReservationMade
-          add reserved by quantity
-          subtract available by quantity
-        from StockDispatched
-          subtract onHand by quantity
-          subtract reserved by quantity
-        from ReorderPointCrossed
-          alertOpen = true
-        remove with SkuRemoved
+        from StockIncreased key movementId
+          id        = movementId
+          sku       = sku
+          quantity  = quantity
+          reason    = reason
+          increased = true
+        from StockDecreased key movementId
+          id        = movementId
+          sku       = sku
+          quantity  = quantity
+          reason    = reason
+          increased = false
 
-      event SkuRemoved
-
-      screen StockLevels
+      screen StockAdjustments
+        description "The history of corrections, with the buttons to correct or count the shelf"
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockAdjustmentsHeader
+              property title = "Adjustments"
+              property subtitle = "Corrections of the shelf and why they were made"
           toolbar
-            toolbar actions
-              button adjust title "Adjust stock" slice Stock.Levels.AdjustStock emphasis quiet icon edit
-              button count title "Count" slice Stock.Levels.CountStock emphasis quiet icon list
-              button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis quiet icon plus
+            action AdjustStock
+              label "Adjust stock"
+            action CountStock
+              label "Count"
           list
-            data StockLevel[] via query AllStockLevels
-            table StockLevel
+            data StockAdjustmentRow[] via query AllStockAdjustments
+            table StockAdjustmentRow
               column sku       label "SKU"
-              column name      label "Product"
-              column onHand    label "On hand"
-              column reserved  label "Reserved"
-              column available label "Available"
-              column reorderPoint label "Reorder at"
-              on row-click navigate to ItemPage by sku
+              column quantity  label "Units"
+              column increased label "Added to the shelf"
+              column reason    label "Reason"
 
-      specification TheShelfStartsEmpty
+      specification ACorrectionIsLoggedWithItsReason
         given SkuRegistered
           for "ACM-1000"
-          sku = "ACM-1000"
+          sku  = "ACM-1000"
           name = "Acme mug"
-        then readmodel StockLevel
-          id       = "ACM-1000"
-          name      = "Acme mug"
-          onHand    = 0
-          available = 0
-          reorderPoint = 10
-
-      specification ReceivingAndReservingMovesTheNumbers
-        given SkuRegistered
+        given StockDecreased
           for "ACM-1000"
-          sku = "ACM-1000"
-          name = "Acme mug"
-        given StockReceived
-          for "ACM-1000"
-          sku = "ACM-1000"
-          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
-          quantity        = 40
-          receivedAt      = "2026-10-02T09:00:00Z"
-        given ReservationMade
-          for "ACM-1000"
-          sku = "ACM-1000"
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          quantity = 3
-          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then readmodel StockLevel
-          id       = "ACM-1000"
-          onHand    = 40
-          reserved  = 3
-          available = 37
+          sku        = "ACM-1000"
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+          quantity   = 2
+          reason     = damaged
+        then readmodel StockAdjustmentRow
+          id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+          sku       = "ACM-1000"
+          quantity  = 2
+          increased = false
+          reason    = damaged

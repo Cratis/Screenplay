@@ -5,7 +5,9 @@ module Stock
   authorize CanWorkWarehouse
 
   feature Levels
+  feature Adjustments
   feature Reservations
+  feature Picking
   feature Receiving
   feature Dispatch
   feature Overview

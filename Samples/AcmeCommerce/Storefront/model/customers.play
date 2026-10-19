@@ -1,5 +1,5 @@
 module Shop
-  feature Checkout
+  feature Account
     slice StateChange RegisterCustomer
       description "A shopper signs up with a name and a unique email address"
 
@@ -19,11 +19,6 @@ module Shop
       constraint UniqueCustomerEmail
         unique email on CustomerRegistered
         message "That email address is already registered"
-
-      screen Register
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RegisterCustomer
 
       specification RegisteringACustomer
         given caller
@@ -72,11 +67,6 @@ module Shop
 
       event CustomerAccountClosed
 
-      screen CloseAccount
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action CloseCustomerAccount
-
       specification ClosingAnAccount
         given caller
           authenticated
@@ -124,3 +114,6 @@ module Shop
             summary CustomerAccount
               field name  label "Name"
               field email label "Email"
+          aside
+            action RegisterCustomer
+            action CloseCustomerAccount

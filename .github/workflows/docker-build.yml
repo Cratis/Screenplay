@@ -2,10 +2,14 @@ name: Docker Build
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
   workflow_dispatch:
+  # Source changes are covered by the nightly build on main and by Publish, which builds the image on every
+  # release. Pull requests build it only when the image's own inputs change shape.
+  schedule:
+    - cron: "43 2 * * *"
   pull_request:
     branches:
       - "**"
@@ -13,16 +17,12 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - ".github/workflows/docker-build.yml"
-      # The image builds the event model board and the tool from source.
-      - "Source/DotNET/**"
-      - "Source/Screenplay/McpApp/**"
-      - "Source/Screenplay/Compiler/**"
-      - "Source/Screenplay/EventModels/**"
-      - "Source/Screenplay/Views/**"
-      - "package.json"
-      - "*.props"
-      - "*.targets"
+      - "**/*.csproj"
+      - "**/package.json"
+      - "**/*.props"
+      - "**/*.targets"
       - "global.json"
+      - ".yarnrc.yml"
 
 jobs:
   build:
@@ -44,3 +44,26 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: false
+
+  nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the nightly failure issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: "Nightly Docker build failed"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title | jq -r --arg t "$TITLE" 'map(select(.title == $t))[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" --label bug --body "The nightly Docker image build failed on main: $RUN_URL"
+          fi

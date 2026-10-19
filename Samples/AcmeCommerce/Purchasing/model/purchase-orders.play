@@ -3,6 +3,122 @@ module Buying
   feature PurchaseOrders
     description "Purchase orders from draft to goods received"
 
+    slice StateView PurchaseOrders
+      description "The purchase orders being worked, and everything a decision needs to know about one"
+
+      readmodel PurchaseOrderRow
+        id                  PurchaseOrderId
+        supplierId          SupplierId
+        purchaseOrderNumber PurchaseOrderNumber optional
+        status              PurchaseOrderStatus
+        lineCount           Int
+        orderedQuantity     Int
+        receivedQuantity    Int
+
+      query AllPurchaseOrders => observable PurchaseOrderRow[]
+      query PurchaseOrderById => PurchaseOrderRow optional
+        by id PurchaseOrderId
+
+      projection PurchaseOrderRowProjection => PurchaseOrderRow
+        no automap
+        from PurchaseOrderCreated
+          id  = $eventSourceId
+          supplierId       = supplierId
+          status           = "draft"
+          lineCount        = 0
+          orderedQuantity  = 0
+          receivedQuantity = 0
+        from PurchaseOrderLineAdded
+          increment lineCount
+          add orderedQuantity by quantity
+        from PurchaseOrderSubmitted
+          purchaseOrderNumber = purchaseOrderNumber
+          status              = "submitted"
+        from PurchaseOrderGoodsReceived
+          add receivedQuantity by quantity
+          status = "partiallyReceived"
+        from PurchaseOrderCancelled
+          status = "cancelled"
+        remove with PurchaseOrderArchived
+
+      screen PurchaseOrders
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader purchaseOrdersHeader
+              property title = "Purchase orders"
+              property subtitle = "What has been ordered from suppliers and what has arrived"
+          toolbar
+            toolbar actions
+              button new title "New purchase order" slice Buying.PurchaseOrders.CreatePurchaseOrder emphasis primary icon plus
+          list
+            data PurchaseOrderRow[] via query AllPurchaseOrders
+            table PurchaseOrderRow
+              column purchaseOrderNumber label "Number"
+              column status           label "Status"
+              column lineCount        label "Lines"
+              column orderedQuantity  label "Ordered"
+              column receivedQuantity label "Received"
+              on double click
+                navigate to PurchaseOrderPage
+                  with id from item.id
+
+      screen PurchaseOrderPage
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader purchaseOrderPageHeader
+              property title = "Purchase order"
+              property subtitle = "Status, quantities and what the buyer may do next"
+          summary
+            data PurchaseOrderRow via query PurchaseOrderById by id
+            summary PurchaseOrderRow
+              field purchaseOrderNumber label "Number"
+              field status              label "Status"
+              field orderedQuantity     label "Ordered"
+              field receivedQuantity    label "Received"
+          related
+            data PurchaseOrderRow via query PurchaseOrderById by id
+            summary PurchaseOrderRow
+              field lineCount label "Lines"
+            action AddPurchaseOrderLine
+              label "Add line"
+            action SubmitPurchaseOrder
+              label "Submit"
+            action ReceivePurchaseOrderGoods
+              label "Receive goods"
+            action CancelPurchaseOrder
+              label "Cancel order"
+            action ArchivePurchaseOrder
+              label "Archive"
+
+      specification TheListFollowsTheOrderToItsFirstReceipt
+        given PurchaseOrderCreated
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+        given PurchaseOrderLineAdded
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          sku       = "ACM-1000"
+          quantity  = 40
+          unitPrice = 62
+        given PurchaseOrderSubmitted
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderNumber = "PO-2026-000101"
+        given PurchaseOrderGoodsReceived
+          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          sku             = "ACM-1000"
+          quantity        = 25
+          receivedAt      = "2026-10-12T09:30:00Z"
+        then readmodel PurchaseOrderRow
+          id     = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+          purchaseOrderNumber = "PO-2026-000101"
+          status              = "partiallyReceived"
+          lineCount           = 1
+          orderedQuantity     = 40
+          receivedQuantity    = 25
+
     slice StateChange CreatePurchaseOrder
       description "Opens a draft purchase order for a supplier"
 
@@ -91,11 +207,6 @@ module Buying
         when Mugs quantity = 0
         then error "A quantity is at least one"
 
-      screen AddLine
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action AddPurchaseOrderLine
-
     slice StateChange SubmitPurchaseOrder
       description "Sends a purchase order to the supplier; it gets its number now and can only be submitted once"
 
@@ -179,11 +290,6 @@ module Buying
           role "Buyer"
         when Submit purchaseOrderNumber = "2026-000101"
         then error "A purchase order number starts with PO-"
-
-      screen Submit
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action SubmitPurchaseOrder
 
     slice StateChange ReceivePurchaseOrderGoods
       description "Books goods that arrived against a submitted purchase order; one receipt is one line, so partial deliveries are just several receipts"
@@ -273,11 +379,6 @@ module Buying
         when GoodsReceipt quantity = 0
         then error "A quantity is at least one"
 
-      screen ReceiveGoods
-        template blueprint Cratis.Blueprint.Default SideSheet version "^1"
-          actions
-            action ReceivePurchaseOrderGoods
-
     slice StateChange CancelPurchaseOrder
       description "Cancels a purchase order that has not been received in full"
 
@@ -306,11 +407,6 @@ module Buying
           for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
           reason = "Supplier discontinued the product"
 
-      screen Cancel
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action CancelPurchaseOrder
-
     slice StateChange ArchivePurchaseOrder
       description "Removes a closed purchase order from the working list"
 
@@ -336,111 +432,3 @@ module Buying
           purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
         then PurchaseOrderArchived
           for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-
-      screen Archive
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ArchivePurchaseOrder
-
-    slice StateView PurchaseOrders
-      description "The purchase orders being worked, and everything a decision needs to know about one"
-
-      readmodel PurchaseOrderRow
-        id                  PurchaseOrderId
-        supplierId          SupplierId
-        purchaseOrderNumber PurchaseOrderNumber optional
-        status              PurchaseOrderStatus
-        lineCount           Int
-        orderedQuantity     Int
-        receivedQuantity    Int
-
-      query AllPurchaseOrders => observable PurchaseOrderRow[]
-      query PurchaseOrderById => PurchaseOrderRow optional
-        by id PurchaseOrderId
-
-      projection PurchaseOrderRowProjection => PurchaseOrderRow
-        no automap
-        from PurchaseOrderCreated
-          id  = $eventSourceId
-          supplierId       = supplierId
-          status           = "draft"
-          lineCount        = 0
-          orderedQuantity  = 0
-          receivedQuantity = 0
-        from PurchaseOrderLineAdded
-          increment lineCount
-          add orderedQuantity by quantity
-        from PurchaseOrderSubmitted
-          purchaseOrderNumber = purchaseOrderNumber
-          status              = "submitted"
-        from PurchaseOrderGoodsReceived
-          add receivedQuantity by quantity
-          status = "partiallyReceived"
-        from PurchaseOrderCancelled
-          status = "cancelled"
-        remove with PurchaseOrderArchived
-
-      screen PurchaseOrders
-        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
-          toolbar
-            toolbar actions
-              button new title "New purchase order" slice Buying.PurchaseOrders.CreatePurchaseOrder emphasis primary icon plus
-          list
-            data PurchaseOrderRow[] via query AllPurchaseOrders
-            table PurchaseOrderRow
-              column purchaseOrderNumber label "Number"
-              column status           label "Status"
-              column lineCount        label "Lines"
-              column orderedQuantity  label "Ordered"
-              column receivedQuantity label "Received"
-              on row-click navigate to PurchaseOrderPage by purchaseOrderId
-
-      screen PurchaseOrderPage
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          header
-            toolbar actions
-              button addline title "Add line" slice Buying.PurchaseOrders.AddPurchaseOrderLine emphasis quiet icon plus
-              button submit title "Submit" slice Buying.PurchaseOrders.SubmitPurchaseOrder emphasis primary icon send
-              button receive title "Receive goods" slice Buying.PurchaseOrders.ReceivePurchaseOrderGoods emphasis quiet icon download
-              button cancel title "Cancel order" slice Buying.PurchaseOrders.CancelPurchaseOrder emphasis quiet icon x
-              button archive title "Archive" slice Buying.PurchaseOrders.ArchivePurchaseOrder emphasis quiet icon archive
-          summary
-            data PurchaseOrderRow via query PurchaseOrderById by id
-            summary PurchaseOrderRow
-              field purchaseOrderNumber label "Number"
-              field status              label "Status"
-              field orderedQuantity     label "Ordered"
-              field receivedQuantity    label "Received"
-          related
-            data PurchaseOrderRow via query PurchaseOrderById by id
-            summary PurchaseOrderRow
-              field lineCount label "Lines"
-
-      specification TheListFollowsTheOrderToItsFirstReceipt
-        given PurchaseOrderCreated
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-        given PurchaseOrderLineAdded
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          sku       = "ACM-1000"
-          quantity  = 40
-          unitPrice = 62
-        given PurchaseOrderSubmitted
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          purchaseOrderNumber = "PO-2026-000101"
-        given PurchaseOrderGoodsReceived
-          for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
-          sku             = "ACM-1000"
-          quantity        = 25
-          receivedAt      = "2026-10-12T09:30:00Z"
-        then readmodel PurchaseOrderRow
-          id     = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
-          purchaseOrderNumber = "PO-2026-000101"
-          status              = "partiallyReceived"
-          lineCount           = 1
-          orderedQuantity     = 40
-          receivedQuantity    = 25

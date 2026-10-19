@@ -10,4 +10,6 @@ module Orders
   feature Intake
   feature Approval
   feature Fulfilment
+  feature Lookup
+  feature Cancellations
   feature Reporting

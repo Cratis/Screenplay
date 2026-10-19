@@ -26,7 +26,6 @@ Shared/                         the shared kernel: concepts with their validatio
                                 composite types, ALL event sources, policies and personas, the Acme theme
 Shell/                          the ui profile (blueprint AppShell root pinned ^1, theme, packages, the one sample-data
                                 pack), the application navigation (hierarchical sidebar module -> feature, topbar)
-Application/                    the Forbidden / NotFound / Error screens and the client-error report behind them
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications;
                                 module.play is the skeleton (module description, authorize, features, navigation mode)
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
@@ -42,7 +41,9 @@ tools/                          domain-package.sh, render-variant.sh, render-bri
 | Purchasing | `Buying` | Buyer | suppliers, replenishment, purchase orders |
 | Warehouse | `Stock` | WarehouseClerk | reservation, receiving, picking, dispatch |
 
-OpsAdmin sees administration and dashboards in every domain.
+Six personas, no more: a persona is a real person who works in the shop. A screen belongs to the persona who may use it (the narrowest persona
+whose policies satisfy the slice's gates) and to its slice, and never makes an actor row of its own. Error, validation, loading, empty and
+confirmation states are not modelled: the components bring them.
 
 ## The one-application rules (all verified)
 

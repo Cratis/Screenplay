@@ -77,6 +77,120 @@ sample data AcmeNordic
       status    = "withdrawn"
       price     = 199
 
+  // The product page (Catalog) and the publication queue read these
+  shape ProductDetail
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      status    = "approved"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      status    = "withdrawn"
+  shape ProductReadiness
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "draft"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "approved"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "withdrawn"
+
   // ---- Storefront (ecommerce-author-sales) -----------------------------------------------------------------
   // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
   shape ListedProduct
@@ -273,26 +387,31 @@ sample data AcmeNordic
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "received"
       total      = 749
+      deliveryMethod = "standard"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "approved"
       total      = 149
+      deliveryMethod = "express"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "onHold"
       total      = 98
+      deliveryMethod = "standard"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "shipped"
       total      = 149
+      deliveryMethod = "pickup"
     row
       orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
       customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       status     = "fulfilled"
       total      = 447
+      deliveryMethod = "express"
 
   // ---- Sales (ecommerce-author-sales) ----------------------------------------------------------------------
   // 30 orders over every status, 12 customers: the pipeline board, the dashboard and the approval inbox are drawn from them.
@@ -500,142 +619,876 @@ sample data AcmeNordic
       quotedTotal = 520
   shape OrderDetail
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-      email       = "ada@example.com"
-      status      = "received"
-      quotedTotal = 749
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email              = "ada@example.com"
+      market             = "NO"
+      status             = "received"
+      quotedTotal        = 749
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-      email       = "grace@example.com"
-      status      = "received"
-      quotedTotal = 298
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email              = "grace@example.com"
+      market             = "NO"
+      status             = "received"
+      quotedTotal        = 298
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
-      email       = "alan@example.com"
-      status      = "received"
-      quotedTotal = 1290
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email              = "alan@example.com"
+      market             = "NO"
+      status             = "received"
+      quotedTotal        = 1290
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
-      email       = "edsger@example.com"
-      status      = "received"
-      quotedTotal = 98
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email              = "edsger@example.com"
+      market             = "NO"
+      status             = "received"
+      quotedTotal        = 98
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+      discount           = 10
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
-      email       = "barbara@example.com"
-      status      = "received"
-      quotedTotal = 149
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email              = "barbara@example.com"
+      market             = "NO"
+      status             = "received"
+      quotedTotal        = 149
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
-      email       = "donald@example.com"
-      status      = "approved"
-      quotedTotal = 2397
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email              = "donald@example.com"
+      market             = "NO"
+      status             = "approved"
+      quotedTotal        = 2397
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
-      email       = "margaret@example.com"
-      status      = "approved"
-      quotedTotal = 149
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      email              = "margaret@example.com"
+      market             = "NO"
+      status             = "approved"
+      quotedTotal        = 149
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
     row
-      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
-      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
-      email       = "linus@example.com"
-      status      = "approved"
-      quotedTotal = 749
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      email              = "linus@example.com"
+      market             = "NO"
+      status             = "approved"
+      quotedTotal        = 749
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      email              = "ingrid@example.no"
+      market             = "NO"
+      status             = "approved"
+      quotedTotal        = 3490
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      email              = "magnus@example.no"
+      market             = "NO"
+      status             = "rejected"
+      quotedTotal        = 98
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      email              = "silje@example.no"
+      market             = "NO"
+      status             = "rejected"
+      quotedTotal        = 2397
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      email              = "ola@example.no"
+      market             = "NO"
+      status             = "onHold"
+      quotedTotal        = 447
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email              = "ada@example.com"
+      market             = "NO"
+      status             = "onHold"
+      quotedTotal        = 98
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email              = "grace@example.com"
+      market             = "NO"
+      status             = "onHold"
+      quotedTotal        = 149
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email              = "alan@example.com"
+      market             = "NO"
+      status             = "confirmed"
+      quotedTotal        = 1290
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email              = "edsger@example.com"
+      market             = "NO"
+      status             = "confirmed"
+      quotedTotal        = 1290
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email              = "barbara@example.com"
+      market             = "NO"
+      status             = "confirmed"
+      quotedTotal        = 149
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email              = "donald@example.com"
+      market             = "NO"
+      status             = "confirmed"
+      quotedTotal        = 447
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      email              = "margaret@example.com"
+      market             = "NO"
+      status             = "shipped"
+      quotedTotal        = 149
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+      carrier            = "posten"
+      trackingNumber     = "TRK-100218"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      email              = "linus@example.com"
+      market             = "NO"
+      status             = "shipped"
+      quotedTotal        = 2397
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
+      carrier            = "dhl"
+      trackingNumber     = "TRK-100219"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      email              = "ingrid@example.no"
+      market             = "NO"
+      status             = "shipped"
+      quotedTotal        = 1290
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
+      carrier            = "ups"
+      trackingNumber     = "TRK-100220"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      email              = "magnus@example.no"
+      market             = "NO"
+      status             = "shipped"
+      quotedTotal        = 98
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
+      carrier            = "posten"
+      trackingNumber     = "TRK-100221"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      email              = "silje@example.no"
+      market             = "NO"
+      status             = "shipped"
+      quotedTotal        = 3490
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
+      carrier            = "dhl"
+      trackingNumber     = "TRK-100222"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      email              = "ola@example.no"
+      market             = "NO"
+      status             = "fulfilled"
+      quotedTotal        = 149
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+      carrier            = "ups"
+      trackingNumber     = "TRK-100223"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email              = "ada@example.com"
+      market             = "NO"
+      status             = "fulfilled"
+      quotedTotal        = 447
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
+      carrier            = "posten"
+      trackingNumber     = "TRK-100224"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email              = "grace@example.com"
+      market             = "NO"
+      status             = "fulfilled"
+      quotedTotal        = 3490
+      deliveryCity       = "Oslo"
+      deliveryPostalCode = "0154"
+      carrier            = "dhl"
+      trackingNumber     = "TRK-100225"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email              = "alan@example.com"
+      market             = "NO"
+      status             = "fulfilled"
+      quotedTotal        = 98
+      deliveryCity       = "Bergen"
+      deliveryPostalCode = "5014"
+      carrier            = "ups"
+      trackingNumber     = "TRK-100226"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email              = "edsger@example.com"
+      market             = "NO"
+      status             = "fulfilled"
+      quotedTotal        = 3490
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7013"
+      carrier            = "posten"
+      trackingNumber     = "TRK-100227"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email              = "barbara@example.com"
+      market             = "NO"
+      status             = "cancelled"
+      quotedTotal        = 3490
+      deliveryCity       = "Trondheim"
+      deliveryPostalCode = "7011"
+    row
+      orderId            = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      customerId         = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email              = "donald@example.com"
+      market             = "NO"
+      status             = "cancelled"
+      quotedTotal        = 1290
+      deliveryCity       = "Tromsø"
+      deliveryPostalCode = "9008"
+  shape OrderRow
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      market         = "NO"
+      quotedTotal    = 749
+      status         = "received"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email          = "grace@example.com"
+      market         = "NO"
+      quotedTotal    = 298
+      status         = "received"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email          = "alan@example.com"
+      market         = "NO"
+      quotedTotal    = 1290
+      status         = "received"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email          = "edsger@example.com"
+      market         = "NO"
+      quotedTotal    = 98
+      status         = "received"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email          = "barbara@example.com"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "received"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email          = "donald@example.com"
+      market         = "NO"
+      quotedTotal    = 2397
+      status         = "approved"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      email          = "margaret@example.com"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "approved"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      email          = "linus@example.com"
+      market         = "NO"
+      quotedTotal    = 749
+      status         = "approved"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      email          = "ingrid@example.no"
+      market         = "NO"
+      quotedTotal    = 3490
+      status         = "approved"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      email          = "magnus@example.no"
+      market         = "NO"
+      quotedTotal    = 98
+      status         = "rejected"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      email          = "silje@example.no"
+      market         = "NO"
+      quotedTotal    = 2397
+      status         = "rejected"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      email          = "ola@example.no"
+      market         = "NO"
+      quotedTotal    = 447
+      status         = "onHold"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      market         = "NO"
+      quotedTotal    = 98
+      status         = "onHold"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email          = "grace@example.com"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "onHold"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email          = "alan@example.com"
+      market         = "NO"
+      quotedTotal    = 1290
+      status         = "confirmed"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email          = "edsger@example.com"
+      market         = "NO"
+      quotedTotal    = 1290
+      status         = "confirmed"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email          = "barbara@example.com"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "confirmed"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email          = "donald@example.com"
+      market         = "NO"
+      quotedTotal    = 447
+      status         = "confirmed"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      email          = "margaret@example.com"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "shipped"
+      carrier        = "posten"
+      trackingNumber = "TRK-100218"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      email          = "linus@example.com"
+      market         = "NO"
+      quotedTotal    = 2397
+      status         = "shipped"
+      carrier        = "dhl"
+      trackingNumber = "TRK-100219"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      email          = "ingrid@example.no"
+      market         = "NO"
+      quotedTotal    = 1290
+      status         = "shipped"
+      carrier        = "ups"
+      trackingNumber = "TRK-100220"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      email          = "magnus@example.no"
+      market         = "NO"
+      quotedTotal    = 98
+      status         = "shipped"
+      carrier        = "posten"
+      trackingNumber = "TRK-100221"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      email          = "silje@example.no"
+      market         = "NO"
+      quotedTotal    = 3490
+      status         = "shipped"
+      carrier        = "dhl"
+      trackingNumber = "TRK-100222"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      email          = "ola@example.no"
+      market         = "NO"
+      quotedTotal    = 149
+      status         = "fulfilled"
+      carrier        = "ups"
+      trackingNumber = "TRK-100223"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      market         = "NO"
+      quotedTotal    = 447
+      status         = "fulfilled"
+      carrier        = "posten"
+      trackingNumber = "TRK-100224"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email          = "grace@example.com"
+      market         = "NO"
+      quotedTotal    = 3490
+      status         = "fulfilled"
+      carrier        = "dhl"
+      trackingNumber = "TRK-100225"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email          = "alan@example.com"
+      market         = "NO"
+      quotedTotal    = 98
+      status         = "fulfilled"
+      carrier        = "ups"
+      trackingNumber = "TRK-100226"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email          = "edsger@example.com"
+      market         = "NO"
+      quotedTotal    = 3490
+      status         = "fulfilled"
+      carrier        = "posten"
+      trackingNumber = "TRK-100227"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email          = "barbara@example.com"
+      market         = "NO"
+      quotedTotal    = 3490
+      status         = "cancelled"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email          = "donald@example.com"
+      market         = "NO"
+      quotedTotal    = 1290
+      status         = "cancelled"
+  // Rejected and cancelled orders with the reason that was given
+  shape ClosedOrder
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      outcome        = "rejected"
+      reason         = "Address could not be verified"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      outcome        = "rejected"
+      reason         = "Payment was declined"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      outcome        = "cancelled"
+      reason         = "The customer changed their mind"
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      outcome        = "cancelled"
+      reason         = "Ordered twice by mistake"
   shape OrderTimeline
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      received  = true
-      approved  = false
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-      received  = true
-      approved  = false
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
-      received  = true
-      approved  = false
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
-      received  = true
-      approved  = false
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
-      received  = true
-      approved  = false
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
-      received  = true
-      approved  = true
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
-      received  = true
-      approved  = true
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
     row
-      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
-      received  = true
-      approved  = true
-      rejected  = false
-      confirmed = false
-      reserved  = false
-      onHold    = false
-      shipped   = false
-      fulfilled = false
-      cancelled = false
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      received       = true
+      approved       = false
+      rejected       = true
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      received       = true
+      approved       = false
+      rejected       = true
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = true
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b13"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = true
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b14"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = true
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b15"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b16"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b17"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b18"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b19"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b20"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b22"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b23"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = false
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b24"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = true
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b25"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = true
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b26"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = true
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b27"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = true
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b28"
+      received       = true
+      approved       = true
+      rejected       = false
+      confirmed      = true
+      reserved       = true
+      onHold         = false
+      shipped        = true
+      fulfilled      = true
+      cancelled      = false
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b29"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = true
+    row
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b30"
+      received       = true
+      approved       = false
+      rejected       = false
+      confirmed      = false
+      reserved       = false
+      onHold         = false
+      shipped        = false
+      fulfilled      = false
+      cancelled      = true
   shape PriceListEntry
     row
       sku           = "ACM-1000"
@@ -1207,7 +2060,7 @@ sample data AcmeNordic
       lastReceivedAt  = "2026-10-04T09:00:00Z"
   shape StockAlert
     row
-      sku          = "ACM-1002"
+      id           = "ACM-1002"
       onHand       = 9
       reorderPoint = 10
   shape StockFigures
@@ -1219,7 +2072,7 @@ sample data AcmeNordic
       parcelsOpen   = 5
   shape ItemDetail
     row
-      sku          = "ACM-1000"
+      id           = "ACM-1000"
       name         = "Acme krus"
       onHand       = 148
       reserved     = 12
@@ -1228,7 +2081,7 @@ sample data AcmeNordic
       blocked      = false
       lastCounted  = 148
     row
-      sku          = "ACM-1001"
+      id           = "ACM-1001"
       name         = "Acme tallerken"
       onHand       = 96
       reserved     = 14
@@ -1237,7 +2090,7 @@ sample data AcmeNordic
       blocked      = false
       lastCounted  = 96
     row
-      sku          = "ACM-1002"
+      id           = "ACM-1002"
       name         = "Acme kaffekanne"
       onHand       = 9
       reserved     = 3
@@ -1245,3 +2098,65 @@ sample data AcmeNordic
       reorderPoint = 10
       blocked      = false
       lastCounted  = 9
+  shape ReservationRow
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c01"
+      sku      = "ACM-1000"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      quantity = 1
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c02"
+      sku      = "ACM-1001"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      quantity = 2
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c03"
+      sku      = "ACM-1002"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      quantity = 3
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c04"
+      sku      = "ACM-2000"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      quantity = 1
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c05"
+      sku      = "ACM-2001"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      quantity = 2
+    row
+      id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3c06"
+      sku      = "ACM-2002"
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      quantity = 4
+  shape StockAdjustmentRow
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d01"
+      sku       = "ACM-1000"
+      quantity  = 5
+      increased = true
+      reason    = "found"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d02"
+      sku       = "ACM-1002"
+      quantity  = 2
+      increased = false
+      reason    = "damaged"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d03"
+      sku       = "ACM-2000"
+      quantity  = 1
+      increased = true
+      reason    = "returned"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d04"
+      sku       = "ACM-1001"
+      quantity  = 3
+      increased = false
+      reason    = "count"
+    row
+      id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3d05"
+      sku       = "ACM-2002"
+      quantity  = 4
+      increased = true
+      reason    = "correction"

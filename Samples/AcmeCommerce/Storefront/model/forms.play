@@ -32,3 +32,14 @@ module Shop
     field sku label "Product"
     field quantity label "How many?"
     on submit navigate to Basket
+
+  // Basket lines: which product, how many (the basket is the page's own)
+  form ChangeBasketQuantityForm for ChangeBasketQuantity
+    field sku label "Product"
+    field quantity label "New quantity"
+
+  form RemoveFromBasketForm for RemoveFromBasket
+    field sku label "Product to remove"
+
+  form CloseCustomerAccountForm for CloseCustomerAccount
+    generation manual

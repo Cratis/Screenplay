@@ -41,12 +41,6 @@ module Stock
         when PhoneOrder quantity = 0
         then error "A quantity is at least one"
 
-      screen Reserve
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action RequestReservation
-              navigate to PickingQueue
-
     // AUTOMATION with two outcomes: the stock is promised or the shortage is reported (and published, P7/P8)
     slice Automation ReserveStock
       event ReservationFailed
@@ -226,11 +220,61 @@ module Stock
         when Promise
         then denied
 
-      screen ReserveUnits
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ReserveStockUnits
-              navigate to PickingQueue
+    slice StateView Reservations
+      description "What is promised to which order: the SKU, how many units and the order they are held for"
+
+      readmodel ReservationRow
+        id       MovementId key
+        sku      Sku
+        orderId  OrderId
+        quantity Quantity
+
+      query AllReservations => observable ReservationRow[]
+
+      projection ReservationRowProjection => ReservationRow
+        no automap
+        from ReservationMade key movementId
+          id       = movementId
+          sku      = sku
+          orderId  = orderId
+          quantity = quantity
+
+      screen Reservations
+        description "The stock promised to orders, with a way to reserve by hand"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader reservationsHeader
+              property title = "Reservations"
+              property subtitle = "Stock promised to orders"
+          toolbar
+            action RequestReservation
+              label "Reserve stock"
+          list
+            data ReservationRow[] via query AllReservations
+            table ReservationRow
+              column orderId  label "Order"
+              column sku      label "SKU"
+              column quantity label "Reserved"
+
+      specification AReservationIsListedUnderItsOrder
+        given SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+        given ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+        then readmodel ReservationRow
+          id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+          sku      = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+
+  feature Picking
+    description "Parcels from planned to picked, packed and handed over"
 
     // The reserved goods become something to pick
     slice Automation PlanShipmentWhenReserved
@@ -307,12 +351,6 @@ module Stock
         when Plan
         then denied
 
-      screen PlanShipmentDialog
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action PlanShipment
-              navigate to PickingQueue
-
     slice StateChange PickOrder
       description "A picker starts collecting the order from the shelf"
       command PickOrder
@@ -353,11 +391,6 @@ module Stock
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         when Pick
         then error "The order is not waiting to be picked"
-
-      screen PickOrderDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action PickOrder
 
     slice StateChange PackShipment
       description "The picker has collected everything and packed the parcel"
@@ -400,11 +433,6 @@ module Stock
         when Pack
         then error "The order is not being picked"
 
-      screen PackDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action PackShipment
-
     slice StateChange CancelShipment
       description "The order was cancelled before it left: the parcel is dropped from the picking queue"
       command CancelShipment
@@ -413,12 +441,6 @@ module Stock
           for orderId
 
       event ShipmentCancelled
-
-      screen CancelShipmentDialog
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action CancelShipment
-              navigate to PickingQueue
 
       specification CancellingAShipment
         given caller
@@ -463,10 +485,17 @@ module Stock
 
       screen PickingQueue
         template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pickingQueueHeader
+              property title = "Picking"
+              property subtitle = "Parcels from planned to picked, packed and dispatched"
           toolbar
-            toolbar actions
-              button pick title "Pick order" slice Stock.Reservations.PickOrder emphasis primary icon check
-              button pack title "Pack" slice Stock.Reservations.PackShipment emphasis quiet icon box
+            action PickOrder
+              label "Pick order"
+            action PackShipment
+              label "Pack"
+            action CancelShipment
+              label "Cancel shipment"
           board
             data PickingCard[] via query AllPickingCards
 

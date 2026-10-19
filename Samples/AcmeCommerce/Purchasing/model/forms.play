@@ -93,3 +93,32 @@ module Buying
       place quantity   row 1 column 2
       place receiptId  row 2 column 1
       place receivedAt row 2 column 2
+
+  // The actions on a purchase order's page and the buyer's lists ask only for what the page does not already say
+  form CancelPurchaseOrderForm for CancelPurchaseOrder
+    generation manual
+    field purchaseOrderId label "Purchase order"
+    field reason          label "Why is it cancelled?"
+    on submit navigate to PurchaseOrders
+
+  form ArchivePurchaseOrderForm for ArchivePurchaseOrder
+    generation manual
+    field purchaseOrderId label "Purchase order"
+    on submit navigate to PurchaseOrders
+
+  form ClearPreferredSupplierForm for ClearPreferredSupplier
+    generation manual
+    field sku label "SKU"
+
+  form RecordManualDemandForm for RecordManualDemand
+    generation manual
+    field sku      label "SKU"
+    field orderId  label "Order"
+    field quantity label "Units"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      columnGap 24px
+      place sku      row 1 column 1
+      place quantity row 1 column 2
+      place orderId  row 2 column 1 columnSpan 2
