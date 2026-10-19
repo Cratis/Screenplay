@@ -61,6 +61,17 @@ describe('when running the C# checks', () => {
         expect(editor.diagnosticsOf(collection, file('a.play')).map(marker => marker.code)).toEqual(['PLAY0535']);
         expect(editor.warnings).toEqual([]);
     });
+    it('still runs when connecting replaces a dead server and clears the old verdicts', async () => {
+        serve([finding({ code: 'PLAY0535', path: 'a.play' })]);
+        connect.mockImplementationOnce(async () => { verdicts.clear(); return { root: '/model', call: (tool, args) => served.call(tool, args) }; });
+        await run();
+        expect(editor.diagnosticsOf(collection, file('a.play')).map(marker => marker.code)).toEqual(['PLAY0535']);
+    });
+    it('tells the user when the server died mid-run', async () => {
+        connect.mockResolvedValue({ root: '/model', call: async () => { throw new RepairFailure('ProcessClosed', 'Repair server exited.'); } });
+        await run();
+        expect(editor.warnings[0]).toContain('ProcessClosed');
+    });
     it('tells the user when the bridge is not enabled, and launches nothing further', async () => {
         connect.mockRejectedValue(new RepairFailure('NotEnabled', 'C# repairs are opt-in. Configure screenplay.repairs in User settings.'));
         await run();

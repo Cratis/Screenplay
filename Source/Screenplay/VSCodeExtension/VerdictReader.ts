@@ -3,6 +3,7 @@
 
 import { RepairFailure, object, text, integer, array } from './RepairClient';
 import { diagnostic } from './RepairSession';
+import { RepairLocation } from './RepairLocation';
 import { ServerDiagnostic } from './ServerDiagnostic';
 
 const pageLimit = 200; // The diagnostics tool's maximum page size.
@@ -25,6 +26,22 @@ export interface VerdictResult {
     /** Why the checks did not run (for example, the model has errors), or null when they did. */
     readonly status: string | null;
     readonly diagnostics: ServerDiagnostic[];
+}
+
+/**
+ * Parses a finding of one of the wanted codes, or returns undefined for any other code without looking at its location:
+ * the strict repair parser refuses positions of 0, which an application-level finding (PLAY0537 with no entry point)
+ * legitimately carries together with no path.
+ */
+function verdictFrom(item: unknown, wanted: (code: string) => boolean): ServerDiagnostic | undefined {
+    const value = object(item);
+    if (typeof value.code !== 'string' || !wanted(value.code)) return undefined;
+    const where = object(value.location);
+    if (where.line === 0 && where.column === 0 && where.path === null) {
+        const parsed = diagnostic({ ...value, location: { ...where, line: 1, column: 1 } });
+        return { ...parsed, location: { line: 0, column: 0, path: null } satisfies RepairLocation };
+    }
+    return diagnostic(item);
 }
 
 export type VerdictTool = 'diagnostics' | 'open-workspace' | 'read-workspace';
@@ -64,8 +81,8 @@ async function readBinderVerdicts(call: VerdictCall): Promise<ServerDiagnostic[]
         if (integer(page.offset) !== offset || integer(page.totalCount) > maximumItems) throw new RepairFailure('MalformedContract', 'Executable diagnostics page mismatch.');
         const items = array(page.items);
         for (const item of items) {
-            const parsed = diagnostic(item);
-            if (parsed.code === binderVerdictCode) found.push(parsed);
+            const parsed = verdictFrom(item, code => code === binderVerdictCode);
+            if (parsed) found.push(parsed);
         }
         offset += items.length;
         if (page.nextOffset === null) return found;
@@ -90,8 +107,8 @@ async function readCompleteness(call: (args: Record<string, unknown>) => Promise
         if (typeof result.completenessStatus === 'string') status = result.completenessStatus;
         const items = array(page.items);
         for (const item of items) {
-            const parsed = diagnostic(item);
-            if (verdictCodes.has(parsed.code)) collected.push(parsed);
+            const parsed = verdictFrom(item, code => verdictCodes.has(code));
+            if (parsed) collected.push(parsed);
         }
         offset += items.length;
         if (page.nextOffset === null) return { revision, status, diagnostics: collected };

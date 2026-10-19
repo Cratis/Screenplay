@@ -39,16 +39,21 @@ export function registerVerdicts(context: vscode.ExtensionContext, host: Verdict
     let channel: vscode.OutputChannel | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let run = 0;
+    let epoch = 0;
     let disposed = false;
     const log = (message: string) => { channel ??= vscode.window.createOutputChannel('Screenplay C# checks'); channel.appendLine(message); };
-    const clear = () => { ++run; collection.clear(); };
+    // A clear invalidates what was read before it, not the run that is still connecting (a dead server is replaced while connecting).
+    const clear = () => { ++epoch; collection.clear(); };
 
     const check = async (silent: boolean, saved?: vscode.TextDocument): Promise<void> => {
         const id = ++run;
-        const current = () => !disposed && id === run;
+        let pinned = -1;
+        const current = () => !disposed && id === run && (pinned < 0 || pinned === epoch);
         for (let attempt = 0; attempt < (silent ? 2 : 1); attempt++) {
+            pinned = -1;
             try {
                 const connection = await host.connect();
+                pinned = epoch;
                 if (!current() || (saved && !contains(connection.root, saved.uri.fsPath))) return;
                 const result: VerdictResult = await readVerdicts((tool, args) => connection.call(tool, args));
                 if (!current()) return;

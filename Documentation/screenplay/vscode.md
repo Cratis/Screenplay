@@ -450,6 +450,8 @@ again after saving. Set `screenplay.verdicts.onSave` to `true` in User settings 
 every save; failures there are only logged. If the model has errors the checks are skipped and the command says so.
 The same run also reads the server's executable diagnostics, which come from the semantic binder, and shows PLAY0546 in the same collection. If the model does not bind, the server refuses that read, or a repair review is open (reopening the workspace would discard it), PLAY0546 is simply absent while the other findings still appear.
 
+A finding about the whole application, such as PLAY0537 reporting that no screen is reachable because the model has no navigation entry point, has no file or line of its own; it appears on the first line of the model's root file (the first `.play` file in the model root, alphabetically).
+
 ## Theme
 
 The board is drawn in its dark theme whatever your color theme is. Its labels are colored for a dark surface, the same as in Studio's viewer, and would be unreadable on a light one.

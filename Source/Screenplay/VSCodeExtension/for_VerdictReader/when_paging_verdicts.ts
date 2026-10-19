@@ -34,4 +34,18 @@ describe('when paging verdicts', () => {
         const call = async () => ({ sourceRevision: 'rev-1', page: { revision: 'rev-1', totalCount: 5, offset: 0, items: [], nextOffset: 0 } });
         await expect(readVerdicts(call)).rejects.toMatchObject({ kind: 'MalformedContract' });
     });
+    it('keeps an application-level finding with no path at position 0 instead of aborting the run', async () => {
+        const server = diagnosticsServer([finding({ code: 'PLAY0537', path: null, line: 0, column: 0 }), finding({ code: 'PLAY0532' })]);
+        const result = await readVerdicts(server.call);
+        expect(result.diagnostics.map(item => item.code)).toEqual(['PLAY0537', 'PLAY0532']);
+        expect(result.diagnostics[0].location).toEqual({ line: 0, column: 0, path: null });
+    });
+    it('never parses the location of a finding it does not keep', async () => {
+        const unwanted = { code: 'PLAY0100', message: 'x', severity: 'Error', location: { path: null, line: 0, column: 0 } };
+        const result = await readVerdicts(diagnosticsServer([unwanted, finding({ code: 'PLAY0532' })]).call);
+        expect(result.diagnostics.map(item => item.code)).toEqual(['PLAY0532']);
+    });
+    it('still refuses a kept finding with a malformed position', async () => {
+        await expect(readVerdicts(diagnosticsServer([finding({ code: 'PLAY0532', line: 0, column: 0 })]).call)).rejects.toMatchObject({ kind: 'MalformedContract' });
+    });
 });

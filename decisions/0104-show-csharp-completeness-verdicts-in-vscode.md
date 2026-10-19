@@ -39,10 +39,17 @@ bridge to a user-installed `screenplay mcp` server for repairs.
    completeness findings still publish. A check that reopens the workspace between a discovery and its follow-up read
    changes nothing the repair relies on: every repair call pins the revision it opened, so a differing revision is a
    clean stale refusal, never a mixed review.
+   A finding about the whole application carries no path and position 0 (PLAY0537 when screens exist but no navigation
+   entry point does). It is shown on the first line of the model's root file, the alphabetically first `.play` file
+   found breadth-first under the approved root, and nowhere if the root holds none. Any other finding without a path
+   is never placed on a guessed file. Findings are filtered by code before their locations are parsed.
 4. Findings go into their own collection, `screenplay-csharp-verdicts`, with source `Screenplay C# check`, apart from
    the editor's diagnostics and from repair findings.
 5. A verdict describes the saved file. Editing a document clears its verdicts; an unsaved document gets none; a stale
    revision, a configuration or root change, a disconnect and dispose clear all of them.
+   A dead server is replaced by the bridge's own reconnect while connecting, and the run continues on the new
+   connection; a server that dies mid-run is reported (explicit command) or logged (on save). The checks tolerate dirty
+   buffers, since a document with unsaved edits simply gets no verdicts.
 6. Setting `screenplay.verdicts.onSave` (machine scope, off by default) reruns the checks shortly after a save. A failure
    there is logged, never shown; the explicit command shows one concise message.
 

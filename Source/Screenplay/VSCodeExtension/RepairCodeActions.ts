@@ -107,7 +107,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let pendingReconciliation: { owner: RepairConnectionOwner; synchronized: () => boolean } | undefined;
     // The C# completeness checks borrow this bridge: same configuration, trust, root and process, never a launch of their own.
     const verdicts = registerVerdicts(context, { connect: async () => {
-        const owner = await connect();
+        const owner = await connect(false, true);
         return { root: owner.session.launch.root, call: (tool, args, signal) => { authorize(owner); return owner.session.readTool(tool, args, signal); } };
     } });
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
@@ -162,7 +162,8 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             catch (viewError) { if (relevant()) await vscode.window.showWarningMessage(`Cannot display complete conflict details: ${String(viewError)}`); }
         }
     };
-    const connect = async (reconnect = false): Promise<RepairConnectionOwner> => {
+    // A read-only connection (the C# checks) tolerates dirty buffers: a document with unsaved edits simply gets no verdicts.
+    const connect = async (reconnect = false, readOnly = false): Promise<RepairConnectionOwner> => {
         if (disposed) throw new RepairFailure('StaleEpoch', 'Repair commands have been disposed.');
         const launch = userRepairConfiguration();
         // A missing/replaced current root must latch watch failure, not merely
@@ -172,7 +173,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             if (!pendingReconciliation.synchronized()) throw new RepairFailure('ReconciliationRequired', 'Disk repair installed; editor synchronization pending. Reconcile or close and reopen affected clean buffers yourself before another repair. Dirty buffers are never saved or reverted automatically.');
             pendingReconciliation = undefined;
         }
-        checkRepairEnvironment(launch);
+        checkRepairEnvironment(launch, readOnly);
         if (retiring) throw new RepairFailure('ApplyPending', `A dispatched Apply at ${retiring.session.launch.root} is still awaiting its outcome. No replacement proposal is allowed.`);
         if (recovery) throw new RepairFailure('RecoveryRequired', `An apply outcome is uncertain at ${recovery.root}. Inspect workspace-state before another repair.`);
         if (current?.session.applyDispatched) throw new RepairFailure('ApplyPending', 'Wait for the dispatched Apply outcome before another repair connection.');

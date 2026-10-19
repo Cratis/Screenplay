@@ -1,9 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import * as vscode from 'vscode';
-import { VerdictCollection, verdictSource } from '../VerdictCollection';
+import { applicationRootFile, VerdictCollection, verdictSource } from '../VerdictCollection';
 import { editor, FakeDocument } from '../for_RegisterVerdicts/given/an_editor';
 import { finding } from '../for_VerdictReader/given/a_diagnostics_server';
 import { diagnostic } from '../RepairSession';
@@ -46,3 +49,37 @@ describe('when publishing verdicts', () => {
         expect(editor.diagnosticsOf(collection, file('other.play'))).toHaveLength(1);
     });
 });
+
+describe('when publishing an application-level verdict', () => {
+    let root: string;
+    const applicationLevel = () => ({ code: 'PLAY0537', message: 'No entry points', severity: 'Warning', location: { line: 0, column: 0, path: null } });
+    beforeEach(() => { editor.reset(); root = specFixtureDirectory('verdicts-'); });
+    afterEach(() => removeSpecFixtureDirectory(root));
+
+    it('shows it on the first line of the model root file, the alphabetically first .play file', () => {
+        fs.mkdirSync(path.join(root, 'sub'));
+        fs.writeFileSync(path.join(root, 'b.play'), ''); fs.writeFileSync(path.join(root, 'a.play'), ''); fs.writeFileSync(path.join(root, 'sub', 'c.play'), '');
+        new VerdictCollection().publish(root, [applicationLevel()]);
+        const [marker] = editor.diagnosticsOf(collection, vscode.Uri.file(path.join(root, 'a.play')));
+        expect(marker.code).toBe('PLAY0537');
+        expect(marker.range).toMatchObject({ start: { line: 0, character: 0 } });
+        expect(editor.count(collection)).toBe(1);
+    });
+    it('finds the root file in a subfolder when the root holds none, and shows nothing when there is no model', () => {
+        expect(applicationRootFile(root)).toBeUndefined();
+        fs.mkdirSync(path.join(root, 'sub'));
+        fs.writeFileSync(path.join(root, 'sub', 'c.play'), '');
+        expect(applicationRootFile(root)).toBe('sub/c.play');
+        const empty = specFixtureDirectory('verdicts-empty-');
+        try {
+            new VerdictCollection().publish(empty, [applicationLevel()]);
+            expect(editor.count(collection)).toBe(0);
+        } finally { removeSpecFixtureDirectory(empty); }
+    });
+    it('does not guess a file for any other unattributed finding', () => {
+        fs.writeFileSync(path.join(root, 'a.play'), '');
+        new VerdictCollection().publish(root, [{ code: 'PLAY0532', message: 'x', severity: 'Warning', location: { line: 2, column: 3, path: null } }]);
+        expect(editor.count(collection)).toBe(0);
+    });
+});
+
