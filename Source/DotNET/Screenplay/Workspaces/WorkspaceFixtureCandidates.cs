@@ -15,7 +15,7 @@ namespace Cratis.Screenplay.Workspaces;
 /// </summary>
 sealed class WorkspaceFixtureCandidates
 {
-    static readonly ConditionalWeakTable<WorkspaceSyntaxIndex, WorkspaceFixtureCandidates> _cache = new();
+    static readonly ConditionalWeakTable<WorkspaceSyntaxIndex, WorkspaceFixtureCandidates> _cache = [];
 
     readonly WorkspaceSyntaxIndex _index;
     readonly ConcurrentDictionary<WorkspaceNodeHandle, DeclarationScope> _scopes = [];
@@ -48,7 +48,7 @@ sealed class WorkspaceFixtureCandidates
     internal static WorkspaceFixtureCandidates For(WorkspaceSyntaxIndex index) => _cache.GetValue(index, created => new(created));
 
     internal DeclarationScope ScopeOf(WorkspaceSyntaxEntry entry) =>
-        _scopes.GetOrAdd(entry.Handle, _ => WorkspaceReferenceBindings.Scope(entry, _index));
+        _scopes.GetOrAdd(entry.Handle, static (_, state) => WorkspaceReferenceBindings.Scope(state.Entry, state.Index), (Entry: entry, Index: _index));
 
     internal ImportSyntax[] ImportsNamed(string name) => _imports.TryGetValue(name, out var imports) ? imports : [];
 
