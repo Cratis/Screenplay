@@ -21,11 +21,6 @@ module Orders
       event OrderCancelled
         reason DecisionReason
 
-      screen Cancel
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action CancelOrder
-
       specification AShippedOrderCannotBeCancelled
         given caller
           authenticated
@@ -67,11 +62,6 @@ module Orders
 
       event OrderHoldReleased
         orderId OrderId
-
-      screen Release
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action ReleaseHold
 
       specification ReleasingAnOrderOnHold
         given caller
@@ -130,11 +120,6 @@ module Orders
 
       event OrderFulfilled
         orderId OrderId
-
-      screen Fulfil
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action MarkOrderFulfilled
 
       specification AnOrderThatHasNotShippedCannotBeFulfilled
         given caller
