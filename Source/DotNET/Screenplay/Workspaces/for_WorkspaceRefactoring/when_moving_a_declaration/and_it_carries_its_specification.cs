@@ -23,7 +23,7 @@ public class and_it_carries_its_specification : given.a_workspace_with_two_slice
 
     SliceSyntax SliceNamed(string name) => Entries.Select(entry => entry.Node).OfType<SliceSyntax>().Single(slice => slice.Name == name);
 
-    [Fact] void should_keep_the_model_executable() => _result.Workspace!.Compilation.Success.ShouldBeTrue();
+    [Fact] void should_keep_the_model_executable() => Assert.True(_result.Workspace!.Compilation.Success, CompilationDiagnostics(_result.Workspace));
     [Fact] void should_accept() => Assert.True(_result.Accepted, string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message)));
     [Fact] void should_place_the_command_in_the_destination_slice() => SliceNamed("Intake").Commands.Select(command => command.Name).ShouldContainOnly("Register");
     [Fact] void should_carry_its_specification() => SliceNamed("Intake").Specifications.Select(specification => specification.Name).ShouldContainOnly("Registering");
@@ -32,7 +32,7 @@ public class and_it_carries_its_specification : given.a_workspace_with_two_slice
     [Fact] void should_repair_the_screen_action_that_executes_it() => Entries.Select(entry => entry.Node).OfType<ExecuteCommandActionSyntax>().Single().Command.ShouldEqual("Projects.Destination.Intake.Register");
     [Fact] void should_report_the_carried_specification() => _result.MoveReport.SpecificationsCarried.ShouldContainOnly(SemanticAddress.ForSpecification(Slice("Destination", "Intake"), "Registering"));
     [Fact] void should_report_the_moved_occurrences() => _result.MoveReport.FragmentsMoved.Length.ShouldEqual(2);
-    [Fact] void should_migrate_the_command_identity() => _result.MoveReport.IdentityMigrations.Any(migration => migration.Domain == "semantic" && migration.CurrentAddress.Equals(_moved)).ShouldBeTrue();
+    [Fact] void should_migrate_the_command_identity() => _result.MoveReport.IdentityMigrations.Where(migration => migration.Domain == "semantic").Select(migration => migration.CurrentAddress).ShouldContain(_moved);
     [Fact] void should_keep_every_semantic_identity() => _result.Workspace.IdentityCatalog.Semantics.Select(assignment => assignment.Id).ShouldContainOnly(Workspace.IdentityCatalog.Semantics.Select(assignment => assignment.Id));
     [Fact] void should_leave_every_event_contract_untouched() => _result.Workspace.IdentityCatalog.EventContracts.ShouldContainOnly(Workspace.IdentityCatalog.EventContracts);
     [Fact] void should_retire_nothing() => _result.MoveReport.Retired.ShouldBeEmpty();

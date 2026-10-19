@@ -65,6 +65,7 @@ public class a_workspace_with_two_slices_to_move_between : for_WorkspaceRefactor
                   name = "B"
             slice StateView Listing
               readmodel ProjectView
+                projectId ProjectId
                 name ProjectName
               query AllProjects => ProjectView[]
               projection ProjectList => ProjectView
@@ -83,5 +84,13 @@ public class a_workspace_with_two_slices_to_move_between : for_WorkspaceRefactor
                       refresh Projects.Source.Listing.AllProjects
         """;
 
-    void Establish() => Workspace = ScreenplayWorkspace.Create("Projects", [Document("model", "application.play", Model(DestinationMembers))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
+    protected static string CompilationDiagnostics(ScreenplayWorkspace workspace) => string.Join(" | ", workspace.Compilation.Diagnostics.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}"));
+
+    void Establish()
+    {
+        Workspace = ScreenplayWorkspace.Create("Projects", [Document("model", "application.play", Model(DestinationMembers))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
+
+        // An executable baseline is what makes the move's identity migrations and executable continuity meaningful.
+        Assert.True(Workspace.Compilation.Success, CompilationDiagnostics(Workspace));
+    }
 }

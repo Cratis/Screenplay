@@ -5,6 +5,9 @@ using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_moving_a_declaration;
 
+// Commands, events, read models and queries resolve by unique short name across the application, so moving one
+// never changes what an unqualified reference names. A reaction resolves innermost scope first: once 'Notify'
+// leaves Listing, the redelivery's unqualified 'Notify' would silently bind to the sibling slice's reaction.
 public class and_a_reference_to_it_is_unqualified : for_WorkspaceRefactoring.given.a_refactoring_workspace
 {
     WorkspaceAuthoringResult _result = null!;
@@ -13,24 +16,21 @@ public class and_a_reference_to_it_is_unqualified : for_WorkspaceRefactoring.giv
         [Document("model", "application.play", """
             module Projects
               feature Source
-                slice StateView Listing
-                  readmodel Item
+                slice Automation Listing
+                  event Recorded
                     name String
-                  query Items => Item[]
-                  screen Home
-                    on enter
-                      execute Save
-                        on success
-                          refresh Items
-                slice StateChange Saving
-                  command Save
-              feature Other
-                slice StateView Listing
-                  readmodel OtherItem
-                    name String
-                  query Items => OtherItem[]
+                  reaction Notify
+                    when Recorded
+                  specification Redelivery
+                    given Recorded
+                      name = "A"
+                    when redelivered Recorded to Notify
+                    then no events
+                slice Automation Alerts
+                  reaction Notify
+                    when Recorded
               feature Destination
-                slice StateView Lookup
+                slice Automation Lookup
             """)],
         SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
 
@@ -41,12 +41,14 @@ public class and_a_reference_to_it_is_unqualified : for_WorkspaceRefactoring.giv
         {
             ExpectedRevision = Workspace.Revision,
             ExpectedCatalogRevision = Workspace.IdentityCatalog.Revision,
-            Target = SemanticAddress.ForQuery(SemanticAddress.ForSlice(application, "Projects", "Source", "Listing"), "Items"),
+            Target = SemanticAddress.ForReaction(SemanticAddress.ForSlice(application, "Projects", "Source", "Listing"), "Notify"),
             NewParent = SemanticAddress.ForSlice(application, "Projects", "Destination", "Lookup"),
             Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments
         });
     }
 
+    string Refusal => string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message));
+
     [Fact] void should_refuse() => _result.Accepted.ShouldBeFalse();
-    [Fact] void should_ask_to_qualify_the_reference_first() => _result.Conflicts.Single().Message.ShouldContain("qualify the reference to 'Items' as 'Projects.Source.Listing.Items' first");
+    [Fact] void should_ask_to_qualify_the_reference_first() => Assert.True(Refusal.Contains("qualify the reference to 'Notify' as 'Projects.Source.Listing.Notify' first", StringComparison.Ordinal), Refusal);
 }
