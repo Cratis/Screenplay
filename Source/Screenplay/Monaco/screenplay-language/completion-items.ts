@@ -334,6 +334,7 @@ export const ruleItems: CompletionEntry[] = [
 export const policyItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:authorization intent}"', documentation: 'Report-only description; does not supply an implementation.' },
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
+    { label: 'require anonymous', insertText: 'require anonymous', documentation: 'Admits every caller, including one without an identity. Stands alone, and must be the only gate on the commands and queries it authorizes.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
     { label: 'require not role', insertText: 'require not role "${1:role}"', documentation: 'Excludes callers with a role. Add authenticated to require a signed-in caller.' },
     { label: 'require not claim', insertText: 'require not claim "${1:claim}" matches ${2:subject}', documentation: 'Requires that no claim value matches the subject or a value.' },

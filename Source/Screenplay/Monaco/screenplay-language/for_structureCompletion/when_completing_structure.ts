@@ -59,6 +59,16 @@ describe('when completing the structure of a specification', () => {
                 '                    sku = "Example"',
             ].join('\n'));
     });
+
+    it('should ask for a caller when the command is authorized', () => {
+        suggest(`policy Staff\n    require role "Staff"\n${catalog}\n            command AddProduct\n                authorize Staff\n                sku Sku\n            specification AddingAProduct\n                `)
+            .should.match(/^given caller\n {20}authenticated\n {16}when AddProduct/);
+    });
+
+    it('should not ask for a caller when an anonymous policy is the only gate', () => {
+        suggest(`policy Anyone\n    require anonymous\n${catalog}\n            command AddProduct\n                authorize Anyone\n                sku Sku\n            specification AddingAProduct\n                `)
+            .should.match(/^when AddProduct/);
+    });
 });
 
 describe('when completing the structure of a form', () => {

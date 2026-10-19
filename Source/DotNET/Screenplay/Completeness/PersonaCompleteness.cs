@@ -74,6 +74,7 @@ static class PersonaCompleteness
     static bool? Condition(PolicyConditionSyntax condition, SpecificationCallerSyntax caller) => condition switch
     {
         AuthenticatedConditionSyntax => caller.Authenticated,
+        AnonymousConditionSyntax => true,
         RoleConditionSyntax role => caller.Roles.Contains(role.Role, StringComparer.Ordinal),
         ClaimConditionSyntax { MatchesSubject: false, Matches: LiteralExpressionSyntax { Value: string value } } claim => caller.Claims.Any(atom => string.Equals(atom.Type, claim.Claim, StringComparison.OrdinalIgnoreCase) && atom.Value == value),
         NotPolicyConditionSyntax not => !Condition(not.Operand, caller),
