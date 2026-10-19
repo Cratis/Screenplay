@@ -204,7 +204,9 @@ module Shop
             action ChangeBasketQuantity
             action RemoveFromBasket
             toolbar basketActions
-              button checkout title "Check out" slice Shop.Checkout.CheckOut emphasis primary icon shopping-cart
+              item checkout navigate to Checkout
+                label "Check out"
+                icon shopping-cart
 
       specification SummingUpABasket
         given caller
