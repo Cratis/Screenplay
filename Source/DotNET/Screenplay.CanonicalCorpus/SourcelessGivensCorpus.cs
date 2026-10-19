@@ -45,9 +45,9 @@ public static class SourcelessGivensCorpus
     }
 
     /// <summary>
-    /// Gets the sourceless given vector.
+    /// Gets the sourceless given vector, an ESM v2 model.
     /// </summary>
-    public static CanonicalCorpusVector Vector => new()
+    public static CanonicalCorpusVector V2 => new()
     {
         Name = "sourceless-givens",
         ApplicationName = ApplicationName,
@@ -70,6 +70,7 @@ public static class SourcelessGivensCorpus
             ("Alias", "ReclaimingItsOwnAlias", SemanticExecutionOutcomeKind.Accepted, null),
             ("Alias", "ClaimingAnotherAccountsAlias", SemanticExecutionOutcomeKind.Rejected, "The alias is taken."),
             ("Directory", "ListingAnAliasWithoutAnAction", SemanticExecutionOutcomeKind.Accepted, null),
+            ("Name", "RefusingToProjectAGivenBeforeTheCommand", SemanticExecutionOutcomeKind.Unsupported, null),
             ("Profile", "RefusingToInventAnIdentity", SemanticExecutionOutcomeKind.Unsupported, null)
         ];
 

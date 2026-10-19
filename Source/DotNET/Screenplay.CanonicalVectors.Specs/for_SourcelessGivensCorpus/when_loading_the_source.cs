@@ -33,7 +33,7 @@ public class when_loading_the_source : Specification
     [Fact]
     void should_pin_every_model_and_its_round_trip()
     {
-        var vector = SourcelessGivensCorpus.Vector;
+        var vector = SourcelessGivensCorpus.V2;
         foreach (var model in _models)
         {
             model.Revision.ShouldEqual(vector.SemanticRevision);
@@ -45,12 +45,12 @@ public class when_loading_the_source : Specification
     [Fact]
     void should_attribute_sourceless_givens_to_the_event_source_the_specification_acts_on()
     {
-        var vector = SourcelessGivensCorpus.Vector;
-        vector.SpecificationExpectations.Length.ShouldEqual(6);
+        var vector = SourcelessGivensCorpus.V2;
+        vector.SpecificationExpectations.Length.ShouldEqual(7);
         foreach (var model in _models)
         {
             var plan = SemanticExecutionPlan.Compile(model).Plan!;
-            plan.Specifications.Count.ShouldEqual(6);
+            plan.Specifications.Count.ShouldEqual(7);
             foreach (var expectation in vector.SpecificationExpectations)
             {
                 var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);
