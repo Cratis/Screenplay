@@ -43,6 +43,7 @@ export interface MappingSyntax extends SyntaxNode {
     readonly property: string;
     readonly source?: ExpressionSyntax;
     readonly value?: ExpressionSyntax;
+    readonly factor?: ExpressionSyntax;
 }
 
 export interface EventSpecSyntax extends SyntaxNode {

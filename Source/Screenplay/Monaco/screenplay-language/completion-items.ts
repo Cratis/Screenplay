@@ -347,6 +347,7 @@ export const validateItems: CompletionEntry[] = [
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },
     { label: 'contains', insertText: '${1:property} contains "${2:text}"', documentation: 'Literal ordinal UTF-16 substring comparison on scalar text.' },
     { label: 'not contains', insertText: '${1:property} not contains "${2:text}"', documentation: 'Rejects text containing the literal operand, compared ordinally.' },
+    { label: 'decimals <=', insertText: '${1:property} decimals <= ${2:2} message "${3:message}"', documentation: 'At most this many decimal places (0 to 28) on a Decimal value; trailing zeros do not count.' },
     { label: 'starts with', insertText: '${1:property} starts with "${2:text}"', documentation: 'Literal ordinal UTF-16 prefix comparison on scalar text.' },
     { label: 'ends with', insertText: '${1:property} ends with "${2:text}"', documentation: 'Literal ordinal UTF-16 suffix comparison on scalar text.' },
     { label: 'matches', insertText: '${1:property} matches "${2:pattern}" message "${3:message}"', documentation: 'Searches text using the portable flagless JavaScript match dialect. Use ^ and $ for the whole input. Exact legacy Studio text-rule lookarounds warn with PLAY0787 and lower to ordinal rules; other lookarounds and backreferences report PLAY0699. Named email rejects JavaScript whitespace, including U+00A0.' },

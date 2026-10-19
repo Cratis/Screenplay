@@ -60,6 +60,8 @@ public sealed partial class SemanticModelBinder
             SemanticValidationRuleKind.Contains or SemanticValidationRuleKind.NotContains or
                 SemanticValidationRuleKind.StartsWith or SemanticValidationRuleKind.EndsWith when subject.IsCollection || !subject.IsText =>
                 "text comparison requires one text value that is not an enumeration",
+            SemanticValidationRuleKind.DecimalPlaces when subject.IsCollection || subject.Primitive != SemanticPrimitiveType.DecimalNumber =>
+                "decimal places constrain one decimal number",
             SemanticValidationRuleKind.Matches when subject.IsCollection || !subject.IsText =>
                 "matches requires one text value that is not an enumeration",
             SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when !subject.IsCollection || !subject.IsNumber =>
@@ -76,6 +78,13 @@ public sealed partial class SemanticModelBinder
             if (operand is SemanticNullValue)
             {
                 return "cannot be null - use 'not empty' to require a value";
+            }
+
+            if (kind == SemanticValidationRuleKind.DecimalPlaces)
+            {
+                return operand is SemanticNumberValue { Value: >= 0 and <= 28 } places && decimal.Truncate(places.Value) == places.Value
+                    ? null
+                    : "must be a whole number of decimal places from 0 to 28";
             }
 
             if (kind == SemanticValidationRuleKind.Length || (subject.IsText && kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum))
@@ -122,6 +131,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.NotContains => SemanticValidationRuleKind.NotContains,
             ValidationRuleKind.StartsWith => SemanticValidationRuleKind.StartsWith,
             ValidationRuleKind.EndsWith => SemanticValidationRuleKind.EndsWith,
+            ValidationRuleKind.DecimalPlaces => SemanticValidationRuleKind.DecimalPlaces,
             ValidationRuleKind.Checksum => SemanticValidationRuleKind.Checksum,
             ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
             ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
@@ -153,6 +163,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.NotContains => "not contains",
             ValidationRuleKind.StartsWith => "starts with",
             ValidationRuleKind.EndsWith => "ends with",
+            ValidationRuleKind.DecimalPlaces => "decimals <=",
             ValidationRuleKind.Checksum => "checksum",
             ValidationRuleKind.AllGreaterThan => "all >",
             ValidationRuleKind.AllGreaterThanOrEqual => "all >=",

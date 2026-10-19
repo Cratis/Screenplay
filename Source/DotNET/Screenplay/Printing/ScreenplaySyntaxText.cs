@@ -457,6 +457,7 @@ internal static partial class ScreenplaySyntaxText
             ValidationRuleKind.NotContains => $"not contains {value}",
             ValidationRuleKind.StartsWith => $"starts with {value}",
             ValidationRuleKind.EndsWith => $"ends with {value}",
+            ValidationRuleKind.DecimalPlaces => $"decimals <= {value}",
             ValidationRuleKind.AllGreaterThan => $"all > {value}",
             ValidationRuleKind.AllGreaterThanOrEqual => $"all >= {value}",
             ValidationRuleKind.Rule => $"rule {value}",

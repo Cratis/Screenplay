@@ -42,6 +42,18 @@ The expression after `by` can be:
 - Literal: `100`, `10.50`
 - Template: `` `${baseAmount}` ``
 
+## Multiplying two values
+
+`add` and `subtract` can take the product of two values, so a line total needs no precomputed property on the event:
+
+```screenplay
+projection BasketProjection => Basket
+  from LineAdded
+    add total by unitPrice * quantity
+```
+
+The operand is `<value> * <value>`. Each side is an event property, a literal or a template, as above. The product is computed exactly, in decimal arithmetic, and then added to (or subtracted from) the property like any other operand. Only one `*` is read, and only after `by` in `add` and `subtract`; a bare mapping such as `total = unitPrice * quantity` is not arithmetic and stays refused. A projection that multiplies selects language/semantic `29.0`; models using none keep their existing version and bytes.
+
 ## Multiple Operations
 
 Combine multiple operations in one event:

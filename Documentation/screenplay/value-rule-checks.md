@@ -68,6 +68,7 @@ Use `SemanticValue.Null` for absence. Every **evaluable** rule except `NotEmpty`
 | `Equal`, `NotEqual` | Semantic equality or inequality; text comparison is ordinal and case-sensitive. |
 | `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual` | Numeric comparison against the operand. |
 | `Length` | Text length equals the numeric operand. |
+| `DecimalPlaces` | A decimal number has at most the operand's number of decimal places; trailing zeros do not count. The operand is a whole number from 0 to 28. |
 | `AllGreaterThan`, `AllGreaterThanOrEqual` | Every collection element satisfies the numeric comparison. An empty collection passes. These rules belong on collection properties, not scalar concepts. |
 | `Matches` | Searches using the [portable match dialect](commands.md#portable-match-dialect); `^` and `$` anchor to the whole input. |
 | `Checksum` | Text ends in the exact check digits for `luhn`, `mod11` or `mod97`; see [patterns and checksums](generated-values/patterns.md). |

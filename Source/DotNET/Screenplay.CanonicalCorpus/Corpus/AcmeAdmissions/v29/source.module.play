@@ -1,0 +1,86 @@
+module Shop
+  feature Pricing
+    slice StateChange SetPrice
+      command SetPrice
+        productId ProductCode identifier
+        price Money
+        produces PriceSet
+          for productId
+          price = price
+      event PriceSet
+        price Money
+      specification SettingAPricePublishesIt
+        when SetPrice
+          productId = "mug"
+          price = 19.99
+        then PriceSet
+          for "mug"
+          price = 19.99
+        then PriceChanged
+          productId = "mug"
+          newPrice = 19.99
+      specification RejectingAThirdDecimal
+        when SetPrice
+          productId = "mug"
+          price = 19.999
+        then error "Money has at most two decimals."
+    slice Translate PublishPrice
+      direction outbound
+      public event PriceChanged
+        productId ProductCode
+        newPrice Money
+      projection PricePublisher => PriceChanged
+        from PriceSet
+          productId = $eventSourceId
+          newPrice = price
+  feature Basket
+    slice StateChange PutInBasket
+      command PutInBasket
+        basketId BasketId identifier
+        unitPrice Money
+        quantity Int
+        produces LineAdded
+          for basketId
+          unitPrice = unitPrice
+          quantity = quantity
+      event LineAdded
+        unitPrice Money
+        quantity Int
+      specification AddingALine
+        when PutInBasket
+          basketId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          unitPrice = 19.99
+          quantity = 3
+        then LineAdded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          unitPrice = 19.99
+          quantity = 3
+        then readmodel Basket
+          basketId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          total = 59.97
+    slice StateView BasketLookup
+      readmodel Basket
+        basketId BasketId key
+        total Money optional
+      query BasketById => Basket optional
+        by basketId BasketId
+      projection BasketProjection => Basket
+        from LineAdded
+          add total by unitPrice * quantity
+  feature Stock
+    slice StateChange MoveStock
+      command MoveStock
+        id String identifier
+        orderId OrderId
+        produces StockMoved
+          for id
+          movementId = orderId
+      event StockMoved
+        movementId MovementId
+      specification MovingStockForAnOrder
+        when MoveStock
+          id = "move"
+          orderId = "a1111111-1111-4111-8111-111111111111"
+        then StockMoved
+          for "move"
+          movementId = "a1111111-1111-4111-8111-111111111111"

@@ -26,7 +26,8 @@ public class rule_examples : Specification
         (Rule(SemanticValidationRuleKind.Contains, SemanticValue.Text("Ab")), SemanticValue.Text("xAbx"), SemanticValue.Text("xabx")),
         (Rule(SemanticValidationRuleKind.NotContains, SemanticValue.Text("Ab")), SemanticValue.Text("xabx"), SemanticValue.Text("xAbx")),
         (Rule(SemanticValidationRuleKind.StartsWith, SemanticValue.Text("Ab")), SemanticValue.Text("Abx"), SemanticValue.Text("xAb")),
-        (Rule(SemanticValidationRuleKind.EndsWith, SemanticValue.Text("Ab")), SemanticValue.Text("xAb"), SemanticValue.Text("Abx"))
+        (Rule(SemanticValidationRuleKind.EndsWith, SemanticValue.Text("Ab")), SemanticValue.Text("xAb"), SemanticValue.Text("Abx")),
+        (Rule(SemanticValidationRuleKind.DecimalPlaces, SemanticValue.Number(2)), SemanticValue.Number(19.99m), SemanticValue.Number(19.999m))
     ];
 
     protected static SemanticValidationRule Rule(SemanticValidationRuleKind kind, SemanticValue? operand = null) => new(default, kind, operand, null);

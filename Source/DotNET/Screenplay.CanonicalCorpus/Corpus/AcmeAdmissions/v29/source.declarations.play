@@ -1,0 +1,8 @@
+concept Money : Decimal
+  validate
+    >= 0
+    decimals <= 2 message "Money has at most two decimals."
+concept ProductCode : String
+concept BasketId : Uuid
+concept OrderId : Uuid
+concept MovementId : Uuid

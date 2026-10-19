@@ -220,4 +220,11 @@ public sealed record SemanticProjectionKeyPart(SemanticId Property, SemanticProj
 public sealed record SemanticProjectionMapping(
     ImmutableArray<SemanticId> Target,
     SemanticProjectionOperation Operation,
-    SemanticProjectionValue? Source);
+    SemanticProjectionValue? Source)
+{
+    /// <summary>
+    /// Gets the second factor of an <see cref="SemanticProjectionOperation.Add"/> or <see cref="SemanticProjectionOperation.Subtract"/>
+    /// whose operand is the product <c>Source * Factor</c> (ESM v29), or <see langword="null"/> when the source is the operand.
+    /// </summary>
+    public SemanticProjectionValue? Factor { get; init; }
+}

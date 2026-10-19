@@ -43,6 +43,21 @@ internal static partial class SemanticModelValidator
         }
     }
 
+    internal static bool UsesDecimalPlaces(SemanticApplication application) =>
+        application.Concepts.SelectMany(concept => concept.Validations)
+            .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
+            .Any(rule => rule.Kind == SemanticValidationRuleKind.DecimalPlaces);
+
+    /// <summary>
+    /// Gets whether the model uses any construct admitted by decision 0098 (ESM v29).
+    /// </summary>
+    /// <param name="application">The application.</param>
+    /// <returns><c>true</c> when ESM v29 is required.</returns>
+    internal static bool UsesAcmeAdmissions(SemanticApplication application) => UsesDecimalPlaces(application) || UsesProjectionProducts(application);
+
+    internal static bool UsesProjectionProducts(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Projections).Any(projection => ProjectionMappings(projection).Any(mapping => mapping.Factor is not null));
+
     internal static bool UsesTextRules(SemanticApplication application) =>
         application.Concepts.SelectMany(concept => concept.Validations)
             .Concat(SlicesOf(application).SelectMany(slice => slice.Commands).SelectMany(command => command.Validations))
@@ -50,6 +65,26 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
+
+    // ESM v29 is the umbrella of decision 0098. Some of its constructs (a concept converted to another over the same primitive)
+    // are not detectable from the model alone, so a v29 model need not use any particular one.
+    static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version)
+    {
+        if (!version.IsAtLeast(SemanticVersion.V29) && UsesAcmeAdmissions(application))
+        {
+            throw new InvalidSemanticContract("Decimal places, projection products and the other constructs of decision 0098 require ESM v29.");
+        }
+    }
+
+    static IEnumerable<SemanticProjectionMapping> ProjectionMappings(SemanticProjection projection) =>
+        projection.Scope is null ? [] : ScopeMappings(projection.Scope);
+
+    static IEnumerable<SemanticProjectionMapping> ScopeMappings(SemanticProjectionScope scope) =>
+        scope.From.SelectMany(from => from.Mappings)
+            .Concat(scope.Joins.SelectMany(join => join.Mappings))
+            .Concat(scope.Every?.Mappings ?? [])
+            .Concat(scope.Children.SelectMany(child => ScopeMappings(child.Scope)))
+            .Concat(scope.Nested.SelectMany(nested => ScopeMappings(nested.Scope)));
 
     static IEnumerable<SemanticComparison> Comparisons(SemanticCondition condition) => condition switch
     {

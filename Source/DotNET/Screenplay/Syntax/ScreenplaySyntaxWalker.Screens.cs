@@ -304,7 +304,14 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ToolbarButtonSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="ToolbarButtonSyntax"/> to visit.</param>
-    public virtual void VisitToolbarButton(ToolbarButtonSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitToolbarButton(ToolbarButtonSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Authorize is not null)
+        {
+            VisitAuthorize(syntax.Authorize);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="ScreenCodeSyntax"/> node and its children.

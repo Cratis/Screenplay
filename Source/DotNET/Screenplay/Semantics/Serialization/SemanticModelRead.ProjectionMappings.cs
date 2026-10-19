@@ -19,6 +19,7 @@ internal static partial class SemanticModelRead
         SemanticProjectionOperation? operation = null;
         SemanticProjectionValue? source = null;
         var sourceRead = false;
+        SemanticProjectionValue? factor = null;
         while (NextProperty(ref reader, seen, "projection mapping") is { } property)
         {
             switch (property)
@@ -26,12 +27,13 @@ internal static partial class SemanticModelRead
                 case "target": target = IdArray(ref reader, property); break;
                 case "operation": operation = ParseProjectionOperation(String(ref reader, property)); break;
                 case "source": sourceRead = true; source = NullableObject(ref reader, property, ProjectionValue); break;
+                case "factor": RequiredToken(ref reader, JsonTokenType.StartObject, property); factor = ProjectionValue(ref reader); break;
                 default: throw Unknown(property, "projection mapping");
             }
         }
 
         Required(!target.IsDefault && operation is not null && sourceRead, "projection mapping");
-        return new(target, operation!.Value, source);
+        return new(target, operation!.Value, source) { Factor = factor };
     }
 
     static SemanticProjectionValue ProjectionValue(ref Utf8JsonReader reader)

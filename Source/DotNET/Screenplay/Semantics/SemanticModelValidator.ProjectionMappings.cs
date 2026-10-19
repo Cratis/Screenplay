@@ -119,6 +119,11 @@ internal static partial class SemanticModelValidator
                 }
 
                 ValidateEnum(mapping.Operation, SemanticProjectionOperation.Unknown, "projection operation");
+                if (mapping.Factor is not null && mapping.Operation is not (SemanticProjectionOperation.Add or SemanticProjectionOperation.Subtract))
+                {
+                    throw new InvalidSemanticContract("Only an add or subtract projection mapping can carry a factor.");
+                }
+
                 var takesSource = mapping.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.Add or SemanticProjectionOperation.Subtract;
                 if (takesSource != (mapping.Source is not null))
                 {
@@ -138,6 +143,16 @@ internal static partial class SemanticModelValidator
                         if (mapping.Source is not null)
                         {
                             RequireNumeric(ResolveProjectionValue(mapping.Source, sources, out _), "projection arithmetic operand");
+                        }
+
+                        if (mapping.Factor is not null)
+                        {
+                            if (!_semanticVersion.IsAtLeast(SemanticVersion.V29) || mapping.Operation is not (SemanticProjectionOperation.Add or SemanticProjectionOperation.Subtract))
+                            {
+                                throw new InvalidSemanticContract("A projection product operand requires ESM v29 and an add or subtract mapping.");
+                            }
+
+                            RequireNumeric(ResolveProjectionValue(mapping.Factor, sources, out _), "projection arithmetic factor");
                         }
 
                         break;

@@ -14,7 +14,7 @@ import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSynt
 // The C# ValidationRuleKind members.
 export type ValidationRuleKind =
     | 'NotEmpty' | 'Max' | 'Min' | 'GreaterThan' | 'GreaterThanOrEqual' | 'LessThan' | 'LessThanOrEqual'
-    | 'Equal' | 'Length' | 'Matches' | 'AllGreaterThan' | 'AllGreaterThanOrEqual' | 'Rule' | 'NotEqual' | 'Checksum' | 'Contains' | 'NotContains' | 'StartsWith' | 'EndsWith';
+    | 'Equal' | 'Length' | 'Matches' | 'AllGreaterThan' | 'AllGreaterThanOrEqual' | 'Rule' | 'NotEqual' | 'Checksum' | 'Contains' | 'NotContains' | 'StartsWith' | 'EndsWith' | 'DecimalPlaces';
 
 export type ValidationSeverity = 'Information' | 'Warning' | 'Error';
 

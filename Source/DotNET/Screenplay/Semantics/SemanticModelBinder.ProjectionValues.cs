@@ -123,15 +123,19 @@ public sealed partial class SemanticModelBinder
                 SetMappingSyntax { Source: LiteralExpressionSyntax { Value: null } } => new(target.Path, SemanticProjectionOperation.Clear, null),
                 SetMappingSyntax set => Source(SemanticProjectionOperation.Set, set.Source),
                 ClearMappingSyntax => new(target.Path, SemanticProjectionOperation.Clear, null),
-                AddMappingSyntax add => Source(SemanticProjectionOperation.Add, add.Value),
-                SubtractMappingSyntax subtract => Source(SemanticProjectionOperation.Subtract, subtract.Value),
+                AddMappingSyntax add => Source(SemanticProjectionOperation.Add, add.Value, add.Factor),
+                SubtractMappingSyntax subtract => Source(SemanticProjectionOperation.Subtract, subtract.Value, subtract.Factor),
                 IncrementMappingSyntax or CountMappingSyntax => new(target.Path, SemanticProjectionOperation.Increment, null),
                 DecrementMappingSyntax => new(target.Path, SemanticProjectionOperation.Decrement, null),
                 _ => Unsupported()
             };
 
-            SemanticProjectionMapping? Source(SemanticProjectionOperation operation, ExpressionSyntax source) =>
-                BindProjectionValue(source, @event, "projection mapping") is { } value ? new(target.Path, operation, value) : null;
+            SemanticProjectionMapping? Source(SemanticProjectionOperation operation, ExpressionSyntax source, ExpressionSyntax? factor = null)
+            {
+                if (BindProjectionValue(source, @event, "projection mapping") is not { } value) return null;
+                if (factor is null) return new(target.Path, operation, value);
+                return BindProjectionValue(factor, @event, "projection mapping") is { } second ? new(target.Path, operation, value) { Factor = second } : null;
+            }
 
             SemanticProjectionMapping? Unsupported()
             {
