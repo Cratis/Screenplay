@@ -2,7 +2,8 @@
 # Builds the RENDERABLE VARIANT of Acme Commerce and renders it with `cratis render`.
 # The source of truth (this folder, compiled with screenplay --warnaserror) is NOT changed; the variant differs only where the
 # renderer (Stage / cratis) cannot yet take what the language says. Every difference is listed here, with its reason:
-#   0. DOMAINS (default "Catalog Storefront"): only the domains Stage can render today are in the variant, with their shell navigation.
+#   0. DOMAINS (default "Catalog Storefront"): only the domains Stage can render today are in the variant. Every domain is its own application with its
+#      own shell (<Domain>/shell: ui profile, navigation, sample data); the variant is ONE application, so it keeps the shell of the FIRST domain only.
 #   1. translation/ folders are deleted: Stage renders StateChange/StateView/Automation slices, not Translate slices or
 #      public events (STAGE-ESM-024/032/033; Stage issues #79/#212/#213). `cratis render --scope` cannot skip them (a scoped render
 #      omits the application shell). The domains are bridged instead by tools/render-bridge/bridge.play.txt: reactions that
@@ -40,8 +41,9 @@ v=sys.argv[1]; keep=sys.argv[2].split()
 modules={'Catalog':'Merchandising','Storefront':'Shop','Sales':'Orders','Purchasing':'Buying','Warehouse':'Stock'}
 for d,m in modules.items():
     if d not in keep: shutil.rmtree(v+'/'+d,ignore_errors=True)
+for d in keep[1:]: shutil.rmtree(v+'/'+d+'/shell',ignore_errors=True)
 gone=[m for d,m in modules.items() if d not in keep]
-p=v+'/Shell/navigation.play'; lines=open(p).read().split('\n'); out=[]; skip=None
+p=v+'/'+keep[0]+'/shell/navigation.play'; lines=open(p).read().split('\n'); out=[]; skip=None
 for l in lines:
     ind=len(l)-len(l.lstrip())
     if skip is not None:
@@ -93,8 +95,8 @@ PY
 fi
 # 4. the custom package
 if [ "$PACKAGE_SET" != "1" ]; then
-  sed -i.bak '/^    Acme.Commerce$/d' "$V/Shell/shell.play"; rm -f "$V/Shell/shell.play.bak"
-  sed -i.bak '/compatible with Acme.Commerce/d' "$V/Shared/theme.play"; rm -f "$V/Shared/theme.play.bak"
+  SHELL_PLAY="$V/${DOMAINS%% *}/shell/shell.play"
+  sed -i.bak '/^    Acme.Commerce$/d' "$SHELL_PLAY"; sed -i.bak '/compatible with Acme.Commerce/d' "$SHELL_PLAY"; rm -f "$SHELL_PLAY.bak"
   python3 - "$V" <<'PY'
 import sys,re,glob
 for p in glob.glob(sys.argv[1]+'/**/*.play',recursive=True):
