@@ -167,12 +167,14 @@ a given is history of the event source the specification acts on (decision 0101)
 - A `unique event` constraint counts the given as already on that event source, so the command is refused. A
   `unique <property>` constraint treats the given's value as the command's own claim, so the command may claim it
   again. A given with a different `for` holds its value for that other event source.
-- No identity is invented. When the outcome needs the given's event source identity and the action supplies none (no
-  action, a query, a trigger, a clock or a redelivery), for example a projection keyed on `$eventSourceId`, the
-  specification is reported as `Unsupported` with capability `Projection`.
+- No identity is invented. Whenever a projection needs the identity of a sourceless given, regardless of the action,
+  the specification is reported as `Unsupported` with capability `Projection`. That is a projection keyed on the
+  event source, including the default key. Givens are projected before the action runs, so this holds for
+  `when <Command>` and `when append` too, not only without an action.
 - A runner that appends givens to real event streams, such as one against Chronicle, appends sourceless givens to
   the action's event source. Without one, it uses any one identity for all sourceless facts in the specification,
-  different from every identity the specification states.
+  different from every identity the specification states. When a projection needs a sourceless given's identity,
+  the reference outcome is `Unsupported`, so there is no outcome to match.
 - A projection keyed on a payload property that maps `$eventSourceId` from a sourceless given reads `null` in the
   reference evaluator, while such a runner reads the action's identity. Don't assert that value; state `for` on the
   given when it matters.
