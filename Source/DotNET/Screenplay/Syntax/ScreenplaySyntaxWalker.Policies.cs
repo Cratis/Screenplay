@@ -47,6 +47,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case AuthenticatedConditionSyntax authenticated:
                 VisitAuthenticatedCondition(authenticated);
                 break;
+            case AnonymousConditionSyntax anonymous:
+                VisitAnonymousCondition(anonymous);
+                break;
             case RoleConditionSyntax role:
                 VisitRoleCondition(role);
                 break;
@@ -70,6 +73,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="AuthenticatedConditionSyntax"/> to visit.</param>
     public virtual void VisitAuthenticatedCondition(AuthenticatedConditionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits an <see cref="AnonymousConditionSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="AnonymousConditionSyntax"/> to visit.</param>
+    public virtual void VisitAnonymousCondition(AnonymousConditionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a negated policy condition and its operand.

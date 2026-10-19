@@ -53,6 +53,7 @@ internal static partial class PolicyParser
                 }
 
                 var parsed = ParseCondition(context, text, line.Location);
+                ValidateAnonymous(context, parsed, name.Groups[1].Value, line.Location);
                 if (hasRequire)
                 {
                     context.Error(DiagnosticCodes.RepeatedPolicyRequirement, $"Policy '{name.Groups[1].Value}' has more than one require line; combine the conditions with and/or in one require", line.Location);
@@ -131,6 +132,10 @@ internal static partial class PolicyParser
                 position++;
                 return new AuthenticatedConditionSyntax(location);
 
+            case "anonymous":
+                position++;
+                return new AnonymousConditionSyntax(location);
+
             case "role":
                 position++;
                 if (position >= tokens.Count || !IsString(tokens[position]))
@@ -173,6 +178,37 @@ internal static partial class PolicyParser
                 return null;
         }
     }
+
+    static void ValidateAnonymous(ParserContext context, PolicyConditionSyntax? condition, string policy, SourceLocation location)
+    {
+        if (condition is null or AnonymousConditionSyntax || !ContainsAnonymous(condition))
+        {
+            return;
+        }
+
+        if (NegatesAnonymous(condition))
+        {
+            context.Error(DiagnosticCodes.NegatedAnonymousPolicy, $"Policy '{policy}' negates 'anonymous'; a policy that refuses callers without an identity says 'require authenticated'", location);
+            return;
+        }
+
+        context.Error(DiagnosticCodes.AnonymousPolicyCombined, $"Policy '{policy}' combines 'anonymous' with another condition; 'anonymous' admits callers without an identity and must be the whole 'require' condition", location);
+    }
+
+    static bool ContainsAnonymous(PolicyConditionSyntax condition) => condition switch
+    {
+        AnonymousConditionSyntax => true,
+        NotPolicyConditionSyntax not => ContainsAnonymous(not.Operand),
+        LogicalPolicyConditionSyntax logical => ContainsAnonymous(logical.Left) || ContainsAnonymous(logical.Right),
+        _ => false
+    };
+
+    static bool NegatesAnonymous(PolicyConditionSyntax condition) => condition switch
+    {
+        NotPolicyConditionSyntax not => ContainsAnonymous(not.Operand),
+        LogicalPolicyConditionSyntax logical => NegatesAnonymous(logical.Left) || NegatesAnonymous(logical.Right),
+        _ => false
+    };
 
     static bool IsString(string token) => token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"');
 

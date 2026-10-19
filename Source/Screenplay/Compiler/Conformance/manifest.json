@@ -72,6 +72,7 @@
         { "name": "work-orders-sample", "path": "Samples/WorkOrders/work-orders.play" },
         { "name": "bookings-sample", "path": "Samples/Bookings/bookings.play" },
         { "name": "acme-second-admissions", "path": "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play" },
+        { "name": "anonymous-policies", "path": "Source/Screenplay/Compiler/Conformance/anonymous-policies.play" },
         { "name": "acme-admissions", "path": "Source/Screenplay/Compiler/Conformance/acme-admissions.play" },
         { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
         { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" }
