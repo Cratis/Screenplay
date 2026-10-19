@@ -7,7 +7,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_moving_a_declaration;
 
-public class and_it_carries_its_specification : given.a_workspace_with_two_commands
+public class and_it_carries_its_specification : given.a_workspace_with_two_slices_to_move_between
 {
     WorkspaceAuthoringResult _result = null!;
     SemanticAddress _moved = null!;
@@ -23,6 +23,7 @@ public class and_it_carries_its_specification : given.a_workspace_with_two_comma
 
     SliceSyntax SliceNamed(string name) => Entries.Select(entry => entry.Node).OfType<SliceSyntax>().Single(slice => slice.Name == name);
 
+    [Fact] void should_keep_the_model_executable() => _result.Workspace!.Compilation.Success.ShouldBeTrue();
     [Fact] void should_accept() => Assert.True(_result.Accepted, string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message)));
     [Fact] void should_place_the_command_in_the_destination_slice() => SliceNamed("Intake").Commands.Select(command => command.Name).ShouldContainOnly("Register");
     [Fact] void should_carry_its_specification() => SliceNamed("Intake").Specifications.Select(specification => specification.Name).ShouldContainOnly("Registering");

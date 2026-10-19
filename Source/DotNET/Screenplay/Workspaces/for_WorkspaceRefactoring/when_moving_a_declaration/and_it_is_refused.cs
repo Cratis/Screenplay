@@ -5,7 +5,7 @@ using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_moving_a_declaration;
 
-public class and_it_is_refused : given.a_workspace_with_two_commands
+public class and_it_is_refused : given.a_workspace_with_two_slices_to_move_between
 {
     protected override string DestinationMembers => """
               command Register

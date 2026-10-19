@@ -2,14 +2,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_moving_a_declaration.given;
 
-public class a_workspace_with_two_commands : for_WorkspaceRefactoring.given.a_refactoring_workspace
+public class a_workspace_with_two_slices_to_move_between : for_WorkspaceRefactoring.given.a_refactoring_workspace
 {
     protected virtual string DestinationMembers => string.Empty;
 
     protected SemanticAddress Slice(string feature, string slice) => SemanticAddress.ForSlice(Workspace.IdentityCatalog.Application, "Projects", feature, slice);
+
+    protected static SliceSyntax SliceNamed(WorkspaceAuthoringResult result, string name) =>
+        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<SliceSyntax>().Single(slice => slice.Name == name);
+
+    protected static string Refusals(WorkspaceAuthoringResult result) => string.Join(" | ", result.Conflicts.Select(conflict => conflict.Message));
 
     protected WorkspaceMoveRequest Request(SemanticAddress target, SemanticAddress parent, params SemanticAddress[] carried) => new()
     {
@@ -57,14 +63,24 @@ public class a_workspace_with_two_commands : for_WorkspaceRefactoring.given.a_re
                 then ProjectRenamed
                   for "0f8fad5b-d9cb-469f-a165-70867728950e"
                   name = "B"
+            slice StateView Listing
+              readmodel ProjectView
+                name ProjectName
+              query AllProjects => ProjectView[]
+              projection ProjectList => ProjectView
+                from ProjectRegistered
+                  name = name
           feature Destination
             slice StateChange Intake
         {{destination}}
+            slice StateView Lookup
           feature Clients
             slice StateView Client
               screen Client
                 on enter
                   execute Projects.Source.Registration.Register
+                    on success
+                      refresh Projects.Source.Listing.AllProjects
         """;
 
     void Establish() => Workspace = ScreenplayWorkspace.Create("Projects", [Document("model", "application.play", Model(DestinationMembers))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
