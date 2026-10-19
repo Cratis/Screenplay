@@ -162,12 +162,12 @@ module Shop
       // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
       readmodel BasketSize
         description "How many lines a basket holds"
-        basketId   BasketId key
+        id         BasketId key
         lineCount  Int
         addedValue Money optional
 
       query GetBasketSize => BasketSize optional
-        by basketId BasketId
+        by id BasketId
 
       query GetBasketContents => BasketContents optional
         by basketId BasketId
@@ -207,7 +207,7 @@ module Shop
               column quantity  label "Qty"
               column unitPrice label "Unit price"
           summary
-            data BasketSize via query GetBasketSize by basketId
+            data BasketSize via query GetBasketSize by id
             summary BasketSize
               field lineCount label "Lines"
               field addedValue label "Added value"
@@ -231,6 +231,6 @@ module Shop
           quantity  = 1
           unitPrice = 899
         then readmodel BasketSize
-          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          id         = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           lineCount  = 2
           addedValue = 997

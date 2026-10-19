@@ -33,7 +33,7 @@ module Shop
 
       readmodel ListedProduct
         description "One product as the shopper sees it"
-        sku              Sku key
+        id              Sku key
         productId        ProductId
         title            ProductName
         shortDescription ShortDescription
@@ -52,7 +52,7 @@ module Shop
         filter category String optional
 
       query ListedProductBySku => ListedProduct optional
-        by sku Sku
+        by id Sku
 
       projection ListedProductProjection => ListedProduct
         from ProductListed
@@ -111,7 +111,7 @@ module Shop
           currency      = "NOK"
           effectiveFrom = "2026-11-01"
         then readmodel ListedProduct
-          sku          = "ACM-1000"
+          id          = "ACM-1000"
           title        = "Acme mug"
           displayPrice = 59
 

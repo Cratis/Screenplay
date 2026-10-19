@@ -81,7 +81,7 @@ sample data AcmeNordic
   // What the shop lists: SKUs ACM-1000.., price in NOK, stock as the warehouse last reported it (ACM-1003 is sold out).
   shape ListedProduct
     row
-      sku              = "ACM-1000"
+      id              = "ACM-1000"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1000"
       title            = "Acme krus"
       shortDescription = "Solid kvalitet fra Acme"
@@ -92,7 +92,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-1000.png"
       available        = 12
     row
-      sku              = "ACM-1001"
+      id              = "ACM-1001"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
       title            = "Acme tallerken"
       shortDescription = "Solid kvalitet fra Acme"
@@ -103,7 +103,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-1001.png"
       available        = 40
     row
-      sku              = "ACM-1002"
+      id              = "ACM-1002"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
       title            = "Acme kaffekanne"
       shortDescription = "Solid kvalitet fra Acme"
@@ -114,7 +114,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-1002.png"
       available        = 6
     row
-      sku              = "ACM-1003"
+      id              = "ACM-1003"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
       title            = "Acme kopp"
       shortDescription = "Solid kvalitet fra Acme"
@@ -125,7 +125,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-1003.png"
       available        = 0
     row
-      sku              = "ACM-2000"
+      id              = "ACM-2000"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
       title            = "Acme ullteppe"
       shortDescription = "Solid kvalitet fra Acme"
@@ -136,7 +136,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-2000.png"
       available        = 4
     row
-      sku              = "ACM-2002"
+      id              = "ACM-2002"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
       title            = "Acme pute"
       shortDescription = "Solid kvalitet fra Acme"
@@ -147,7 +147,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-2002.png"
       available        = 18
     row
-      sku              = "ACM-3000"
+      id              = "ACM-3000"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
       title            = "Acme kaffekvern"
       shortDescription = "Solid kvalitet fra Acme"
@@ -158,7 +158,7 @@ sample data AcmeNordic
       imageUrl         = "/img/acm-3000.png"
       available        = 3
     row
-      sku              = "ACM-3001"
+      id              = "ACM-3001"
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
       title            = "Acme termos"
       shortDescription = "Solid kvalitet fra Acme"
@@ -211,7 +211,7 @@ sample data AcmeNordic
       priceChanges     = 3
   shape BasketSize
     row
-      basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      id  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
       lineCount = 2
   shape CheckoutDraft
     row
@@ -219,51 +219,51 @@ sample data AcmeNordic
       method   = "express"
   shape CustomerAccount
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
       name       = "Ada Lovelace"
       email      = "ada@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
       name       = "Grace Hopper"
       email      = "grace@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
       name       = "Alan Turing"
       email      = "alan@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
       name       = "Edsger Dijkstra"
       email      = "edsger@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
       name       = "Barbara Liskov"
       email      = "barbara@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
       name       = "Donald Knuth"
       email      = "donald@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c07"
       name       = "Margaret Hamilton"
       email      = "margaret@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c08"
       name       = "Linus Torvalds"
       email      = "linus@example.com"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c09"
       name       = "Ingrid Solberg"
       email      = "ingrid@example.no"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c10"
       name       = "Magnus Haugen"
       email      = "magnus@example.no"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c11"
       name       = "Silje Berg"
       email      = "silje@example.no"
     row
-      customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
+      id = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c12"
       name       = "Ola Nordmann"
       email      = "ola@example.no"
   // The signed-in shopper (Ada) sees her own orders
@@ -902,21 +902,21 @@ sample data AcmeNordic
       leadTimeDays = 9
   shape PurchaseOrderRow
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
       status          = "draft"
       lineCount       = 0
       orderedQuantity = 0
       receivedQuantity = 0
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a02"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a02"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
       status          = "draft"
       lineCount       = 2
       orderedQuantity = 60
       receivedQuantity = 0
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a03"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a03"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
       purchaseOrderNumber = "PO-2026-000101"
       status          = "submitted"
@@ -924,7 +924,7 @@ sample data AcmeNordic
       orderedQuantity = 40
       receivedQuantity = 0
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a04"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a04"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
       purchaseOrderNumber = "PO-2026-000102"
       status          = "partiallyReceived"
@@ -932,7 +932,7 @@ sample data AcmeNordic
       orderedQuantity = 80
       receivedQuantity = 35
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a05"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a05"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
       purchaseOrderNumber = "PO-2026-000103"
       status          = "received"
@@ -940,7 +940,7 @@ sample data AcmeNordic
       orderedQuantity = 24
       receivedQuantity = 24
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a06"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a06"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
       purchaseOrderNumber = "PO-2026-000104"
       status          = "submitted"
@@ -948,7 +948,7 @@ sample data AcmeNordic
       orderedQuantity = 150
       receivedQuantity = 0
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a07"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a07"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
       purchaseOrderNumber = "PO-2026-000105"
       status          = "cancelled"
@@ -956,7 +956,7 @@ sample data AcmeNordic
       orderedQuantity = 10
       receivedQuantity = 0
     row
-      purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a08"
+      id = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a08"
       supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
       purchaseOrderNumber = "PO-2026-000106"
       status          = "partiallyReceived"
@@ -1011,27 +1011,27 @@ sample data AcmeNordic
       delivered = 0
   shape SkuSourcing
     row
-      sku        = "ACM-1000"
+      id        = "ACM-1000"
       supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
       unitPrice  = 62
       currency   = "NOK"
     row
-      sku        = "ACM-1001"
+      id        = "ACM-1001"
       supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
       unitPrice  = 41
       currency   = "NOK"
     row
-      sku        = "ACM-1002"
+      id        = "ACM-1002"
       supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
       unitPrice  = 33
       currency   = "NOK"
     row
-      sku        = "ACM-1004"
+      id        = "ACM-1004"
       supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
       unitPrice  = 75
       currency   = "NOK"
     row
-      sku        = "ACM-1006"
+      id        = "ACM-1006"
       supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
       unitPrice  = 12
       currency   = "NOK"
@@ -1046,7 +1046,7 @@ sample data AcmeNordic
   // ---- Warehouse (ecommerce-author-ops) --------------------------------------------------------------------
   shape StockLevel
     row
-      sku             = "ACM-1000"
+      id             = "ACM-1000"
       name            = "Acme krus"
       onHand          = 148
       reserved        = 12
@@ -1056,7 +1056,7 @@ sample data AcmeNordic
       blocked         = false
       alertOpen       = false
     row
-      sku             = "ACM-1001"
+      id             = "ACM-1001"
       name            = "Acme tallerken"
       onHand          = 96
       reserved        = 14
@@ -1066,7 +1066,7 @@ sample data AcmeNordic
       blocked         = false
       alertOpen       = false
     row
-      sku             = "ACM-1002"
+      id             = "ACM-1002"
       name            = "Acme kaffekanne"
       onHand          = 9
       reserved        = 3
@@ -1076,7 +1076,7 @@ sample data AcmeNordic
       blocked         = false
       alertOpen       = true
     row
-      sku             = "ACM-2000"
+      id             = "ACM-2000"
       name            = "Acme ullteppe"
       onHand          = 34
       reserved        = 6
@@ -1086,7 +1086,7 @@ sample data AcmeNordic
       blocked         = false
       alertOpen       = false
     row
-      sku             = "ACM-2001"
+      id             = "ACM-2001"
       name            = "Acme lysestake"
       onHand          = 0
       reserved        = 0
@@ -1096,7 +1096,7 @@ sample data AcmeNordic
       blocked         = true
       alertOpen       = true
     row
-      sku             = "ACM-2002"
+      id             = "ACM-2002"
       name            = "Acme tekanne"
       onHand          = 60
       reserved        = 18
@@ -1107,32 +1107,32 @@ sample data AcmeNordic
       alertOpen       = false
   shape PickingCard
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
       sku      = "ACM-1000"
       quantity = 1
       status   = "toPick"
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
       sku      = "ACM-1001"
       quantity = 2
       status   = "toPick"
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
       sku      = "ACM-1002"
       quantity = 3
       status   = "picking"
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
       sku      = "ACM-2000"
       quantity = 1
       status   = "packed"
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
       sku      = "ACM-2001"
       quantity = 2
       status   = "packed"
     row
-      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
       sku      = "ACM-1000"
       quantity = 3
       status   = "dispatched"

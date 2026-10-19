@@ -49,6 +49,9 @@ for l in lines:
         skip=None
     if l.strip().startswith('item') and re.search(r'target (%s)\b'%'|'.join(gone),l):
         skip=ind; continue
+    # a toolbar button of the application shell that starts a slice of a module that is not in the variant
+    if gone and l.strip().startswith('button') and re.search(r'\bslice (%s)\.'%'|'.join(gone),l):
+        skip=ind; continue
     out.append(l)
 open(p,'w').write('\n'.join(out))
 PY
@@ -56,7 +59,8 @@ PY
 python3 "$HERE/render-bridge/bridge_translations.py" "$V"
 rm -rf "$V"/*/translation
 # 1b. what Stage cannot render yet: atomic reaction batches (ESM v22), protected decision reads (ESM v25)
-python3 "$HERE/render-bridge/strip_reads.py" "$V"
+# Stage (>= the release carrying #566/#574) renders both, so nothing is stripped unless STRIP_READS=1 asks for the old behaviour
+if [ "$STRIP_READS" = "1" ]; then python3 "$HERE/render-bridge/strip_reads.py" "$V"; fi
 # 2. legacy text rules
 if [ "$LEGACY_TEXT_RULES" = "1" ]; then
 python3 - "$V" <<'PY'

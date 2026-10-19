@@ -38,7 +38,7 @@ module Stock
             action RecordStockLevel
 
     slice Automation SnapshotStockOnMovement
-      reaction SnapshotStockOnMovement
+      reaction SnapshotStockOnMovementReaction
         description "Every movement of stock leads to a fresh snapshot of the SKU's level"
         runs as system role "WarehouseClerk"
         when SkuRegistered
@@ -145,7 +145,7 @@ module Stock
             action RaiseReorderAlarm
 
     slice Automation WatchReorderPoint
-      reaction WatchReorderPoint
+      reaction WatchReorderPointReaction
         description "Watches the shelf after every drop in available stock; one alarm per crossing"
         runs as system role "WarehouseClerk"
         when ReservationMade

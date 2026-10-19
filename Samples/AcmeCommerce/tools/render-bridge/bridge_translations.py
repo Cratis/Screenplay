@@ -40,10 +40,10 @@ for tf in glob.glob(root + '/*/translation/*.play'):
             for ap in re.finditer(r'^\s+append (\w+)', body, flags=re.M):
                 captures.append((domain, mod.group(1), None, key.group(1), ktype, ap.group(1)))
 
-# find each appended private event's declaration in a model file and move it into a bridge slice
+# find each appended private event's declaration in a model file (or in the translation slice itself) and move it into a bridge slice
 bridge_by_file = {}
 for domain, module, _, key, ktype, event in captures:
-    for mf in glob.glob('%s/%s/model/*.play' % (root, domain)):
+    for mf in glob.glob('%s/%s/model/*.play' % (root, domain)) + glob.glob('%s/%s/translation/*.play' % (root, domain)):
         t = read(mf)
         m = re.search(r'(?m)^( +)event %s\n((?:\1  .*\n|\n)*)' % event, t)
         if not m: continue
@@ -60,7 +60,7 @@ for domain, module, _, key, ktype, event in captures:
                  '        %s %s identifier' % (key, ktype or 'String')]
         lines += ['        %s %s' % (a, b) for a, b in props if a != key]
         lines += ['        produces %s' % event, '          for %s' % key]
-        lines += ['          %s = %s' % (a, a) for a, b in props if a != key]
+        lines += ['          %s = %s' % (a, a) for a, b in props]
         lines += ['', '      event %s' % event]
         lines += ['        %s %s' % (a, b) for a, b in props]
         bridge_by_file.setdefault((domain, module, feat), []).extend(lines + [''])

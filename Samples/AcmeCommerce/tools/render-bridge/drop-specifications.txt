@@ -1,0 +1,4 @@
+# Specifications the render variant cannot take. One `<file>|<specification name>` per line.
+# The rejection comes from the decision read of ApproveOrder; ApproveOrder's event triggers ConfirmApprovedOrder, whose command ConfirmOrder reads the same
+# view under the same key, so the expected message could also be the reaction's. Stage cannot tell the two apart statically (STAGE-ESM-011), and refuses it.
+Sales/model/approval.play|AnApprovedOrderCannotBeApprovedAgain
