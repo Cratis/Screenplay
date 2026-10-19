@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
-using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Strings;
@@ -83,30 +82,23 @@ public partial class when_compiling_the_samples : given.the_samples
     [Fact] void should_find_slices() => _slices.ShouldBeGreaterThan(0);
     [Fact] void should_compile_without_errors_or_warnings() => _diagnostics.ShouldBeEmpty();
     [Fact] void should_use_only_canonical_optionality() => _legacyOptionality.ShouldBeEmpty();
-    [Fact] void should_give_every_state_change_and_state_view_slice_a_screen() => _slicesWithoutScreens.ShouldBeEmpty();
+    [Fact] void should_give_every_watched_state_view_slice_a_screen() => _slicesWithoutScreens.ShouldBeEmpty();
     [Fact] void should_give_every_slice_a_specification() => _slicesWithoutSpecifications.ShouldBeEmpty();
     [Fact] void should_define_every_referenced_string_in_every_locale() => _missingStrings.ShouldBeEmpty();
     [Fact] void should_reach_every_file_from_the_root_composite() => _unreachable.ShouldBeEmpty();
 
     void CheckSlices(string sample, ApplicationSyntax application)
     {
-        // A command is exposed as an action on a screen the persona already works in, or invoked by an automation: its own dialog screen is then not needed.
-        var exposed = application.Modules.SelectMany(module => module.Features.SelectMany(SlicesOf))
-            .SelectMany(slice => slice.Screens)
-            .SelectMany(screen => ScreenContainers.All(screen.Directives).OfType<ScreenActionSyntax>())
-            .Select(action => action.Command)
-            .Concat(application.Modules.SelectMany(module => module.Features.SelectMany(SlicesOf))
-                .SelectMany(slice => slice.Reactions).SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? [])
-                .Select(invoke => invoke.Command))
-            .ToHashSet(StringComparer.Ordinal);
         foreach (var module in application.Modules)
         {
             foreach (var slice in module.Features.SelectMany(SlicesOf))
             {
                 _slices++;
                 var name = $"{sample}: {module.Name} {slice.Type} {slice.Name}";
-                var exposedAsAction = slice.Type is SliceType.StateChange && slice.Commands.Any(command => exposed.Contains(command.Name));
-                if (slice.Type is SliceType.StateChange or SliceType.StateView && !slice.Screens.Any() && !exposedAsAction)
+                // A state change needs a UI issuer (an action on a screen the persona already works in), not a dialog of its own: the input
+                // surfaces completeness check (PLAY0533) holds it to that. A state view something watches keeps its screen; a support view that only
+                // the commands' protected reads use (no observable query) is state, not a screen.
+                if (slice.Type is SliceType.StateView && slice.Queries.Any(query => query.IsObservable) && !slice.Screens.Any())
                 {
                     _slicesWithoutScreens.Add(name);
                 }
