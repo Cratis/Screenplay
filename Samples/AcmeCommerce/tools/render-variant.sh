@@ -49,6 +49,9 @@ for l in lines:
         skip=None
     if l.strip().startswith('item') and re.search(r'target (%s)\b'%'|'.join(gone),l):
         skip=ind; continue
+    # a toolbar button of the application shell that starts a slice of a module that is not in the variant
+    if gone and l.strip().startswith('button') and re.search(r'\bslice (%s)\.'%'|'.join(gone),l):
+        skip=ind; continue
     out.append(l)
 open(p,'w').write('\n'.join(out))
 PY
