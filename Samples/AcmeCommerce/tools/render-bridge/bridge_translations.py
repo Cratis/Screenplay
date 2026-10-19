@@ -54,6 +54,13 @@ for domain, module, _, key, ktype, event in captures:
         props = [(a, b) for a, b in re.findall(r'(?m)^\s{8}(\w+)\s+(\S+)\s*$', m.group(2)) if a not in ('description',)]
         t = t[:m.start()] + t[m.end():]
         write(mf, t)
+        # a command of the model that also produces this event addresses it by its own property (`for sku`): the bridge must use the same
+        # destination, otherwise a specification's `for "..."` is ambiguous (PLAY0273)
+        for other in glob.glob('%s/%s/model/*.play' % (root, domain)):
+            om = re.search(r'(?m)^ +produces (?:event )?%s\n +for (\w+)\n' % event, read(other))
+            if om and om.group(1) != key and om.group(1) in dict(props):
+                ktype, key = dict(props)[om.group(1)], om.group(1)
+                break
         lines = ['    slice StateChange Bridge%s' % event,
                  '      description "Render bridge: stands in for the inbound translation of %s"' % event,
                  '      command Bridge%s' % event,
