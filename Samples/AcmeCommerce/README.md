@@ -96,6 +96,7 @@ replenishment (F-C) and change of price (F-D).
 - `tools/domain-package.sh <Domain>` assembles `domain <X>` + `Shared/` + the domain folder, proves it compiles with
   `--warnaserror` and passes its specifications, and writes `<Domain>.zip` - the unit Studio imports (one ZIP per event
   model). Inbound contracts get their published names back in the package (`KEEP_LOCAL_NAMES=1` keeps the local ones).
+- `Catalog/model/seed.play` is the starting state of a PLAYED catalog (eight products, six approved for sale, two drafts): Stage appends a `seed` block when the sandbox starts, so Play never opens on an empty catalogue. The sample-data pack (`Catalog/shell/sampledata.play`) is what Preview draws; keep the two in step.
 - `tools/render-variant.sh` builds the renderable variant and runs `cratis render` (`DOMAINS="Catalog Storefront"` by default;
   `DOMAINS="Catalog Storefront Sales Purchasing Warehouse"` is the whole application). Stage renders neither Translate slices nor public
   events (Stage#79, #212, #213). The variant therefore moves each inbound private event into a bridge command
