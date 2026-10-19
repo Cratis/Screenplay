@@ -214,11 +214,10 @@ Event context can be used in composite keys:
 
 ```pdl
 from EventProcessed
-  key ProcessingKey {
+  key ProcessingKey
     EventId = eventId
     SequenceNumber = $eventContext.sequenceNumber
     CorrelationId = $eventContext.correlationId
-  }
   ProcessedAt = $eventContext.occurred
 ```
 
