@@ -97,8 +97,11 @@ module Shop
               field method label "Delivery"
           actions
             action EnterShippingAddress
+              label "Enter delivery address"
             action ChooseDeliveryMethod
+              label "Choose delivery"
             action CheckOut
+              label "Place order"
               navigate to MyOrders
 
       specification TheDraftFollowsTheSteps

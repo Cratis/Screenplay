@@ -211,7 +211,9 @@ module Shop
               field addedValue label "Added value"
           actions
             action ChangeBasketQuantity
+              label "Change quantity"
             action RemoveFromBasket
+              label "Remove line"
             toolbar basketActions
               item checkout navigate to Checkout
                 label "Check out"
