@@ -40,6 +40,21 @@ internal sealed partial class McpWorkspaces
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
 
+    internal object InlineEvent(JsonElement arguments)
+    {
+        var workspace = Current();
+        var request = new WorkspaceAuthoringRequest
+        {
+            ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
+            ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
+            Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource),
+            Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
+        };
+        Root.Verify(workspace);
+        var result = WorkspaceEventRefactorings.ProposeInlineEvent(workspace, McpAstHandles.Read(arguments.GetProperty("subject")), request);
+        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
+    }
+
     internal object Move(JsonElement arguments)
     {
         var workspace = Current();
