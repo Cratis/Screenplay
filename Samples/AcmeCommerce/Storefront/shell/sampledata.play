@@ -495,10 +495,12 @@ sample data AcmeStorefront
       imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Enattlys%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
       available        = 52
       priceChanges     = 1
+  // The cart indicator in the shop bar reads lineCount: two lines. (A row holds scalars only, so the basket page lines are drawn from generated data in a preview.)
   shape BasketSize
     row
-      basketId  = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-      lineCount = 2
+      basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      lineCount  = 2
+      addedValue = 647
   shape CheckoutDraft
     row
       basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
