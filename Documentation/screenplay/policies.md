@@ -1,3 +1,8 @@
+---
+title: "Policies"
+description: "Declare Screenplay policies, named authorization rules based on roles, claims or custom logic, and reference them with authorize."
+---
+
 # Policies
 
 A policy accepts one quoted or fenced-text `description` body line, printed first before its implementation. It is report-only authoring metadata (`PLAY0270`), not a requirement: a description-only policy still needs `require`, a file or code. Markdown `documentation` is not supported here.

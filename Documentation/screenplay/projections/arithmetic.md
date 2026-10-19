@@ -1,3 +1,8 @@
+---
+title: "Arithmetic Operations"
+description: "Add or subtract event values on read model properties in a Screenplay projection, unlike counters that always change by one."
+---
+
 # Arithmetic Operations
 
 Arithmetic operations allow you to add or subtract values from numeric properties using values from events. Unlike counters that always change by 1, arithmetic operations use variable amounts.

@@ -256,6 +256,21 @@ module Shop
           total      = 0
         then error "An order needs at least one line"
 
+      screen OrderTracking
+        description "Where one order stands: received, approved, shipped, delivered"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader orderTrackingHeader
+              property title = "Track your order"
+              property subtitle = "Where this order is on its way to you"
+          summary
+            data MyOrder via query GetMyOrder by orderId
+            summary MyOrder
+              field orderId        label "Order"
+              field status         label "Status"
+              field deliveryMethod label "Delivery"
+              field total          label "Total"
+
     // AUTOMATION: a reaction that invokes a command when an event occurs
     slice Automation EmptyBasketAfterCheckout
       description "The basket is emptied once the order is placed"

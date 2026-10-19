@@ -47,7 +47,7 @@ vi.mock('vscode', () => ({
         },
         registerFileSystemProvider: () => ({ dispose() {} }),
         onDidChangeConfiguration: (callback: (event: { affectsConfiguration(): boolean }) => void) => { host.changedConfiguration = callback; return { dispose() {} }; },
-        onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: (callback: (document: vscode.TextDocument) => void) => { host.openedDocument = callback; return { dispose() {} }; },
+        onDidSaveTextDocument: () => ({ dispose() {} }), onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: (callback: (document: vscode.TextDocument) => void) => { host.openedDocument = callback; return { dispose() {} }; },
         onDidChangeTextDocument: (callback: (event: vscode.TextDocumentChangeEvent) => void) => { host.documentListeners.add(callback); return { dispose: () => host.documentListeners.delete(callback) }; }, onDidCloseTextDocument: () => ({ dispose() {} }),
     },
     env: { uiKind: 1 }, UIKind: { Web: 2 }, Uri: { file: (fsPath: string) => ({ fsPath, scheme: 'file', toString: () => fsPath }) }, RelativePattern: class {},
@@ -58,7 +58,7 @@ vi.mock('vscode', () => ({
         showWarningMessage: (...args: unknown[]) => host.warnings(...args), showInformationMessage: (...args: unknown[]) => host.information(...args),
         withProgress: (_options: unknown, run: (progress: object, cancellation: { onCancellationRequested(): { dispose(): void } }) => Promise<unknown>) => run({}, { onCancellationRequested: () => ({ dispose() {} }) }),
     },
-    languages: { createDiagnosticCollection: () => ({ clear: () => { if (host.diagnosticsDisposed) throw new Error('diagnostics already disposed'); host.clear(); }, dispose() { host.diagnosticsDisposed = true; } }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
+    languages: { createDiagnosticCollection: (name: string) => name === 'screenplay-csharp-verdicts' ? { clear() {}, delete() {}, set() {}, dispose() {} } : ({ clear: () => { if (host.diagnosticsDisposed) throw new Error('diagnostics already disposed'); host.clear(); }, dispose() { host.diagnosticsDisposed = true; } }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
     commands: { executeCommand: vi.fn(), registerCommand: (name: string, callback: (...args: unknown[]) => unknown) => { host.commands.set(name, callback); return { dispose() {} }; } },
     CodeActionKind: { QuickFix: {} },
     Range: class {},
@@ -251,7 +251,7 @@ it('teardown cancels a pending installed-buffer reload without disposed UI publi
     host.files = [{ path: 'application.play', before: Buffer.from('old'), after: Buffer.from('new') }];
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
     host.warnings.mockResolvedValue('Apply'); const pending = invoke('apply'); await tick();
-    expect(host.documentListeners.size).toBe(2); // owner listener + bounded reload listener
+    expect(host.documentListeners.size).toBe(3); // verdict listener + owner listener + bounded reload listener
     subscriptions.forEach(resource => resource.dispose()); await pending;
     expect(host.documentListeners.size).toBe(0);
     expect(host.warnings.mock.calls.filter(call => String(call[0]).startsWith('Disk repair'))).toEqual([]);

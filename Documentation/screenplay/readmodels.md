@@ -1,3 +1,8 @@
+---
+title: "Read models"
+description: "Declare a Screenplay read model by name and shape, with keys and reducers, even when no projection builds it."
+---
+
 # Read models
 
 A [projection](projections/index.md) says how state is built from events, and until now that was the only way a read model appeared in a document — as the name on the right of an arrow. A view nothing declarative could build had nowhere to go at all: no way to name it, no way to say what it holds, no way to say what folds into it.

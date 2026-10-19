@@ -1,6 +1,6 @@
 ---
 title: Why Screenplay
-description: The friction Screenplay removes — one model instead of several hand-synchronized layers — and an honest look at where a hand-written slice is still the better fit.
+description: "Why Screenplay replaces several hand-synchronized layers with one model, and where a hand-written slice is still the better fit."
 ---
 
 You already know what the feature is before you write a line of it. On the whiteboard there is a command, the events it produces, a read model those events project into, and a screen that shows the read model. The design is done. What remains is the part nobody enjoys: writing that same design out several more times, in several different places, and keeping every copy in step for the rest of the project's life.

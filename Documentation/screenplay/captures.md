@@ -1,3 +1,8 @@
+---
+title: "Captures"
+description: "Capture blocks turn external data into events with the Change Data Capture Language, as a first-class Screenplay construct."
+---
+
 # Captures
 
 Captures convert external data into events — change data capture as a first-class construct. The body of a `capture` block is written in the **Change Data Capture Language (CDL)** — an embedded sub-grammar the Screenplay parser delegates to (see [Sub-language Pluggability](sub-languages.md)). Captures live inside `Translate` slices.
