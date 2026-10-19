@@ -61,8 +61,7 @@ buyer already works in.
   P5 arrives whole: `OrderConfirmedAtPurchasing` carries the order's `lines`, and the `DemandFeed` capture fans out one `DemandRecorded` per line with `children lines identified by sku`.
 - The supplier is chosen by the Buyer (`ChoosePreferredSupplier`) from the offers, not computed as the cheapest: a projection cannot pick a minimum.
 - A purchase order is numbered at submission (`PO-...`), not at creation: a reaction-created draft cannot generate a number.
-- The dashboard read model is composed by a query `performer` (Screenplay#862): an opaque read, so it has no projection and no specification;
-  the rest of Purchasing stays executable with `screenplay test`.
+- The dashboard figures are one projected row (a literal key), like the warehouse's, so the dashboard plays and previews: a read composed by a query `performer` is opaque, and Studio's Play leaves it out with the screens that show it.
 - An id that travels keeps its own concept on each side: `crossingId` arrives as Purchasing's own `CrossingId` (Warehouse's `MovementId`, the same Uuid), so the Purchasing package also compiles on its own, and nothing in Purchasing needs it as a `PurchaseOrderId` any more.
 - The accepted path of `ReceivePurchaseOrderGoods` is a command specification that states the public event `PurchaseOrderReceived` it publishes (`GoodsAgainstASubmittedOrderArePublished`).
 - Domain blueprints (`Cratis.Blueprint.Orders/Inventory/Approvals`) are not used here: Purchasing has no blueprint of its own, the foundation templates are referenced.
