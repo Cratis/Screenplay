@@ -251,8 +251,24 @@ its behavior. Use propose-move and show me the migrations before applying.
 
 `propose-move` takes the target and destination parent as logical addresses, so a
 feature written in several files moves every fragment together. Slices can move
-to features; features can move to modules or other features. Declaration moves
-between slices are deferred.
+to features; features can move to modules or other features. A single command,
+event, read model, projection, query, reaction or capture can move to another slice:
+
+```text
+Move the BorrowBook command into the Loans slice. Use propose-move and tell me
+which specifications travel with it.
+```
+
+The specifications of the source slice that cover only the moved declaration move
+with it and are listed in the report's `specificationsCarried`. A specification
+covers a declaration when it meets one of that declaration's
+[specification obligations](reference.md#logical-parent-moves) or its `when` step
+names it; `given` and `then` references alone do not count. The move refuses when a
+covering specification also covers a declaration that stays behind, or when any
+specification obligation that was met before the move would be unmet after it.
+Screens never move: an `execute`, `refresh` or `navigate to` that names the moved
+declaration is repaired to its new address. A command may keep producing events
+that stay in the source slice.
 
 The proposal computes every assigned semantic and event-contract identity migration
 and repairs qualified typed references, including `depends on` and interaction
