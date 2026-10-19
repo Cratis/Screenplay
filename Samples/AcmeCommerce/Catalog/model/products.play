@@ -9,71 +9,6 @@ module Merchandising
   feature Products
     description "The catalogue of everything we sell"
 
-    slice StateChange DraftProduct
-      description "A merchandiser starts a new product with its SKU, name and category"
-      command DraftProduct
-        productId   ProductId identifier
-        sku         Sku
-        name        ProductName
-        category    String
-        produces ProductDrafted
-          for productId
-          sku         = sku
-          name        = name
-          category    = category
-
-      event ProductDrafted
-        sku         Sku
-        name        ProductName
-        category    String
-
-      // A SKU, once drafted, is taken: no other product may be drafted with it
-      constraint UniqueSku
-        unique sku on ProductDrafted
-        message "That SKU is already in the catalogue"
-
-      example Mug : DraftProduct
-        productId   = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-        sku         = "ACM-1000"
-        name        = "Acme mug"
-        category    = "Kitchen"
-
-      specification DraftingAProduct
-        given caller
-          authenticated
-          role "Merchandiser"
-        when Mug
-        then ProductDrafted
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku         = "ACM-1000"
-          name        = "Acme mug"
-          category    = "Kitchen"
-
-      specification RejectingASkuWithoutThePrefix
-        given caller
-          authenticated
-          role "Merchandiser"
-        when Mug sku = "XYZ-1000"
-        then error "A SKU starts with ACM-"
-
-      specification RejectingADuplicateSku
-        given caller
-          authenticated
-          role "Merchandiser"
-        given ProductDrafted
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
-          sku         = "ACM-1000"
-          name        = "Acme plate"
-          category    = "Kitchen"
-        when Mug
-        then error "That SKU is already in the catalogue"
-
-      screen NewProduct
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action DraftProduct
-              navigate to ProductCatalog
-
     slice StateChange DescribeProduct
       description "Adds the selling text and the picture"
       command DescribeProduct
@@ -152,7 +87,9 @@ module Merchandising
               column category label "Category"
               column price    label "Price"
               column status   label "Status"
-              on row-click navigate to ProductPage by productId
+              on double click
+                navigate to ProductPage
+                  with productId from item.productId
 
       specification TheCatalogShowsADraft
         given ProductDrafted
@@ -240,7 +177,7 @@ module Merchandising
             summary ProductDetail
               field details  label "Description"
               field imageUrl label "Picture"
-          aside
+          related
             data ProductDetail via query ProductById by productId
             action DescribeProduct
             action SetProductPrice
@@ -260,3 +197,68 @@ module Merchandising
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           details   = "A sturdy mug for the morning"
           status    = "draft"
+
+    slice StateChange DraftProduct
+      description "A merchandiser starts a new product with its SKU, name and category"
+      command DraftProduct
+        productId   ProductId identifier
+        sku         Sku
+        name        ProductName
+        category    String
+        produces ProductDrafted
+          for productId
+          sku         = sku
+          name        = name
+          category    = category
+
+      event ProductDrafted
+        sku         Sku
+        name        ProductName
+        category    String
+
+      // A SKU, once drafted, is taken: no other product may be drafted with it
+      constraint UniqueSku
+        unique sku on ProductDrafted
+        message "That SKU is already in the catalogue"
+
+      example Mug : DraftProduct
+        productId   = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+        sku         = "ACM-1000"
+        name        = "Acme mug"
+        category    = "Kitchen"
+
+      specification DraftingAProduct
+        given caller
+          authenticated
+          role "Merchandiser"
+        when Mug
+        then ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+
+      specification RejectingASkuWithoutThePrefix
+        given caller
+          authenticated
+          role "Merchandiser"
+        when Mug sku = "XYZ-1000"
+        then error "A SKU starts with ACM-"
+
+      specification RejectingADuplicateSku
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+          sku         = "ACM-1000"
+          name        = "Acme plate"
+          category    = "Kitchen"
+        when Mug
+        then error "That SKU is already in the catalogue"
+
+      screen NewProduct
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action DraftProduct
+              navigate to ProductCatalog

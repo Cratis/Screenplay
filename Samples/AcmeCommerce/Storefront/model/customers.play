@@ -109,11 +109,15 @@ module Shop
       screen Account
         description "The signed-in customer's account"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader accountHeader
+              property title = "Your account"
+              property subtitle = "Who you are to the shop"
           summary
             data CustomerAccount via query GetCustomerAccount by id
             summary CustomerAccount
               field name  label "Name"
               field email label "Email"
-          aside
+          related
             action RegisterCustomer
             action CloseCustomerAccount

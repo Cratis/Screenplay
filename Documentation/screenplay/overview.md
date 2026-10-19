@@ -74,6 +74,7 @@ Line comments start with `//` and run to the end of the line.
 | What sets a reaction off | [Triggers](triggers.md) |
 | UI declarations at three abstraction levels | [Screens](screens.md) |
 | Built-in sub-languages and extensible inline language tags | [Sub-languages and inline code](sub-languages.md) |
+| The symbols Screenplay keeps on purpose, and why | [Notation conventions](notation.md) |
 | The full EBNF grammar | [Grammar](grammar.md) |
 
 ## Tooling
