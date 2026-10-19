@@ -36,20 +36,26 @@ module Shop
         description "The shopper's orders; open one to track it"
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
           header
-            title "My orders"
+            component Cratis.Blueprint.Default.pageHeader myOrdersHeader
+              property title = "My orders"
+              property subtitle = "Every order you placed and where it stands"
           list
             data MyOrder[] via query AllMyOrders
             table MyOrder
               column orderId   label "Order"
               column status    label "Status"
               column total     label "Total"
-              on row-click navigate to OrderTracking by orderId
+              on double click
+                navigate to OrderTracking
+                  with orderId from item.orderId
 
       screen OrderTracking
         description "Where one order stands: received, approved, shipped, delivered"
         template blueprint Cratis.Blueprint.Default RecordPage version "^1"
           header
-            title "Track your order"
+            component Cratis.Blueprint.Default.pageHeader orderTrackingHeader
+              property title = "Track your order"
+              property subtitle = "Where this order is on its way to you"
           summary
             data MyOrder via query GetMyOrder by orderId
             summary MyOrder
