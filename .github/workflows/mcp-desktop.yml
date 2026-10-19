@@ -11,6 +11,10 @@ on:
       - 'Source/Screenplay/**'
       - '*.props'
       - 'global.json'
+      # The board job runs `corepack enable && yarn install`, so the Yarn pin and root manifest belong here
+      # too (as in javascript-build.yml).
+      - 'package.json'
+      - '.yarnrc.yml'
       - '.github/workflows/mcp-desktop.yml'
       - '.github/workflows/publish.yml'
   workflow_call:
