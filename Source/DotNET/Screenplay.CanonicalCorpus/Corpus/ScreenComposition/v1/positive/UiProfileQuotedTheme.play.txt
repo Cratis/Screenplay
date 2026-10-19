@@ -1,0 +1,7 @@
+ui profile Desktop
+  target platform web
+  theme "Scene Default Light"
+
+ui profile Dark
+  target platform web
+  theme "Scene Default Dark"
