@@ -100,7 +100,7 @@ public sealed partial class SemanticModelBinder
 
             var queries = specification.ThenQueries.Select(value => (Syntax: value, Query: ResolveQuery(slice, value)))
                 .Where(value => value.Query is not null).ToArray();
-            if ((command?.Authorization is not null || queries.Any(value => value.Query!.Authorization is not null)) && specification.GivenCaller is null)
+            if ((RequiresCaller(command?.Authorization) || queries.Any(value => RequiresCaller(value.Query!.Authorization))) && specification.GivenCaller is null)
             {
                 Error(DiagnosticCodes.MissingSpecificationCaller, "An authorized specification requires an explicit 'given caller' fixture; missing identity context is never assumed.", specification.Location);
             }

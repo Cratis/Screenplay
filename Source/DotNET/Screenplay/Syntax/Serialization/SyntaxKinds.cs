@@ -280,7 +280,8 @@ internal static class SyntaxKinds
         typeof(DependsOnSyntax),
         typeof(UsesBehaviorSyntax),
         typeof(ValidationRuleSyntax),
-        typeof(VariantSyntax)
+        typeof(VariantSyntax),
+        typeof(AnonymousConditionSyntax)
     ];
 
     static readonly IReadOnlyDictionary<string, SyntaxDescriptor> _descriptors = _types

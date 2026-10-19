@@ -46,6 +46,9 @@ public static partial class SemanticModelCanonicalJson
             case SemanticAuthenticatedCondition:
                 writer.WriteString("kind", "authenticated");
                 break;
+            case SemanticAnonymousCondition:
+                writer.WriteString("kind", "anonymous");
+                break;
             case SemanticRoleCondition role:
                 writer.WriteString("kind", "role");
                 CanonicalJson.WriteString(writer, "role", role.Role);

@@ -2063,6 +2063,18 @@ public static class DiagnosticCodes
     /// <summary>A policy declares more than one require line.</summary>
     public const string RepeatedPolicyRequirement = "PLAY0441";
 
+    /// <summary>A policy combines the <c>anonymous</c> condition with another condition in its <c>require</c> line.</summary>
+    public const string AnonymousPolicyCombined = "PLAY0804";
+
+    /// <summary>A policy negates the <c>anonymous</c> condition.</summary>
+    public const string NegatedAnonymousPolicy = "PLAY0805";
+
+    /// <summary>An <c>authorize</c> line combines an anonymous policy with another policy.</summary>
+    public const string AnonymousPolicyInCompositeGate = "PLAY0806";
+
+    /// <summary>An anonymous gate is under, or above, another gate on a command's or query's authorization path.</summary>
+    public const string AnonymousPolicyUnderEnclosingGate = "PLAY0807";
+
     /// <summary>
     /// A reaction reads by a value its trigger does not take.
     /// </summary>

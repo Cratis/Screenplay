@@ -50,6 +50,7 @@ function requiredAtoms(condition: PolicyConditionSyntax, policy: string, values:
 function satisfied(condition: PolicyConditionSyntax, values: readonly PersonaCallerContribution[]): boolean {
     switch (condition.kind) {
         case 'AuthenticatedConditionSyntax': return true;
+        case 'AnonymousConditionSyntax': return true;
         case 'RoleConditionSyntax': return values.some(value => value.kind === 'role' && value.value === condition.role);
         case 'ClaimConditionSyntax': {
             const target = condition.matches;

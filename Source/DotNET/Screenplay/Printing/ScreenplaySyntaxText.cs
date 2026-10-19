@@ -111,6 +111,7 @@ internal static partial class ScreenplaySyntaxText
     public static string PolicyCondition(PolicyConditionSyntax condition) => condition switch
     {
         AuthenticatedConditionSyntax => "authenticated",
+        AnonymousConditionSyntax => "anonymous",
         RoleConditionSyntax role => $"role {StringLiteral.Quote(role.Role)}",
         NotPolicyConditionSyntax not => not.Operand is LogicalPolicyConditionSyntax
             ? $"not ({PolicyCondition(not.Operand)})"

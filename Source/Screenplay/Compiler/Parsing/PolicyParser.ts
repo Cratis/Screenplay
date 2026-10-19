@@ -40,6 +40,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
             // Negation is newly admitted syntax, not diagnostic-free enrichment of legacy fields.
             if (tokens.includes('not')) context = diagnosticContext;
             const parsed = parsePolicyCondition(context, tokens, locationOf(line), diagnosticContext);
+            validateAnonymous(diagnosticContext, parsed, name, locationOf(line));
             if (hasRequire) context.error(DiagnosticCodes.RepeatedPolicyRequirement, `Policy '${name}' has more than one require line; combine the conditions with and/or in one require`, locationOf(line));
             else condition = parsed;
             hasRequire = true;
@@ -86,6 +87,7 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
         }
         const token = tokens[position++];
         if (token === 'authenticated') return { kind: 'AuthenticatedConditionSyntax', location };
+        if (token === 'anonymous') return { kind: 'AnonymousConditionSyntax', location };
         if (token !== 'role' && token !== 'claim') {
             context.error(token === undefined ? DiagnosticCodes.ExpectedPolicyCondition : DiagnosticCodes.UnexpectedTokenInPolicyCondition, token === undefined ? 'Expected a policy condition' : `Unexpected '${token}' in policy condition`, location);
             return null;
@@ -122,4 +124,30 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
         if (condition !== null && position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, `Unexpected '${tokens[position]}' in policy condition`, location);
     }
     return condition;
+}
+
+function validateAnonymous(context: ParserContext, condition: PolicyConditionSyntax | null, policy: string, location: SourceLocation): void {
+    if (condition === null || condition.kind === 'AnonymousConditionSyntax' || !containsAnonymous(condition)) return;
+    if (negatesAnonymous(condition)) {
+        context.error(DiagnosticCodes.NegatedAnonymousPolicy, `Policy '${policy}' negates 'anonymous'; a policy that refuses callers without an identity says 'require authenticated'`, location);
+        return;
+    }
+    context.error(DiagnosticCodes.AnonymousPolicyCombined, `Policy '${policy}' combines 'anonymous' with another condition; 'anonymous' admits callers without an identity and must be the whole 'require' condition`, location);
+}
+
+function containsAnonymous(condition: PolicyConditionSyntax): boolean {
+    switch (condition.kind) {
+        case 'AnonymousConditionSyntax': return true;
+        case 'NotPolicyConditionSyntax': return containsAnonymous(condition.operand);
+        case 'LogicalPolicyConditionSyntax': return containsAnonymous(condition.left) || containsAnonymous(condition.right);
+        default: return false;
+    }
+}
+
+function negatesAnonymous(condition: PolicyConditionSyntax): boolean {
+    switch (condition.kind) {
+        case 'NotPolicyConditionSyntax': return containsAnonymous(condition.operand);
+        case 'LogicalPolicyConditionSyntax': return negatesAnonymous(condition.left) || negatesAnonymous(condition.right);
+        default: return false;
+    }
 }

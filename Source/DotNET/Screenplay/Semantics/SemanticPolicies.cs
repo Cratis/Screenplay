@@ -36,6 +36,9 @@ public sealed record SemanticNotPolicyCondition(SemanticPolicyCondition Operand)
 /// <param name="RequirementId">The stable identity of the policy implementation requirement.</param>
 public sealed record SemanticOpaquePolicyCondition(string RequirementId) : SemanticPolicyCondition;
 
+/// <summary>Admits every caller, including one without an identity, a system identity and a reaction's identity.</summary>
+public sealed record SemanticAnonymousCondition : SemanticPolicyCondition;
+
 /// <summary>Requires an authenticated caller.</summary>
 public sealed record SemanticAuthenticatedCondition : SemanticPolicyCondition;
 
