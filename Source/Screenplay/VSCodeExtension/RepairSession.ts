@@ -111,6 +111,22 @@ export class RepairSession {
         else this.environment.check();
         return this.#client.tool('workspace-state', { view: 'status' });
     }
+    /** One saved-file call of a read-only C# tool (`diagnostics`, `open-workspace`, `read-workspace`). It never touches proposals or the discovery snapshot. */
+    async readTool(name: 'diagnostics' | 'open-workspace' | 'read-workspace', args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
+        if (this.#uncertain || this.#applying) throw new RepairFailure('SessionBusy', 'Finish or inspect the current apply before checking.');
+        // The server keeps one active workspace per connection and `open-workspace` clears outstanding proposals,
+        // so a read-only caller may never reopen it under a review, a proposal or a running discovery or preview.
+        if (name === 'open-workspace' && (this.#retained || this.#proposal !== undefined || this.#busy || this.#discovery || this.#phase !== 'idle')) throw new RepairFailure('SessionBusy', 'A repair review or operation is open; checks must not reopen the workspace.');
+        const epoch = this.#epoch;
+        const guard = () => {
+            if (epoch !== this.#epoch) throw new RepairFailure('StaleEpoch', 'The workspace changed while checking.');
+            if (this.environment.checkRead) this.environment.checkRead(); else this.environment.check();
+        };
+        guard();
+        const result = await this.#client.tool(name, args, signal, guard);
+        guard();
+        return result;
+    }
     async discover(signal?: AbortSignal): Promise<{ choices: RepairChoice[]; diagnostics: ServerDiagnostic[] }> {
         if (signal?.aborted) throw new RepairFailure('Cancelled', 'Discovery consumer cancelled.');
         if (this.#uncertain || this.#retained) throw new RepairFailure('SessionBusy', 'Finish the current review, or inspect the uncertain apply outcome first.');
