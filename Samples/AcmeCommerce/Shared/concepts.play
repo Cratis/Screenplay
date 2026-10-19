@@ -12,6 +12,7 @@ concept CustomerId      : Uuid
 concept BasketId        : Uuid
 concept SupplierId      : Uuid
 concept PurchaseOrderId : Uuid
+concept SupplierOfferId : Uuid
 concept ShipmentId      : Uuid
 
 concept LocationCode : String

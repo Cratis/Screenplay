@@ -302,6 +302,7 @@ Suppliers, replenishment and purchase orders. Features: Suppliers, Replenishment
   already covers the SKU (the constraint `OneOpenReplenishmentOrderPerSku` is *released by* goods received or a cancellation),
   and when there is no preferred supplier it records `ReplenishmentBlocked`, which the replenishment read model shows as
   status `blocked`.
+- **Single-value keys.** A supplier's offers are keyed by a generated `SupplierOfferId` (the offer is an event source of its own) instead of supplier + SKU: Stage refuses composite read-model keys (STAGE-ESM-048) until Chronicle#4265 ships, and the sample has no composite key anywhere. They return when Chronicle#4265 ships.
 - **Constraints.** `UniqueSupplierTaxId`, `UniquePurchaseOrderNumber`, `OneSubmissionPerPurchaseOrder` and
   `OneOpenReplenishmentOrderPerSku`.
 

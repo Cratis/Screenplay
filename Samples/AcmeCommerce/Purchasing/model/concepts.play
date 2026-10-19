@@ -11,6 +11,9 @@ concept RequestStatus : Enum
 // What a goods receipt is called: one receipt is one line of one purchase order
 concept ReceiptId : Uuid
 
+// What Purchasing calls the id of a Warehouse stock crossing (Warehouse calls it MovementId; the id is the same Uuid on the wire)
+concept CrossingId : Uuid
+
 // Purchasing's own event source on top of the shared Supplier and PurchaseOrder sources: how one SKU is sourced
 eventsource SkuSourcing
   description "How one SKU is sourced: demand, replenishment requests and the preferred supplier"

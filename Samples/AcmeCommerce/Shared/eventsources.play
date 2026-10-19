@@ -44,6 +44,10 @@ eventsource PurchaseOrder
   stream Lifecycle
     description "Creation, submission and receipt of one purchase order"
 
+eventsource SupplierOffer
+  description "One product a supplier sells, with its price and lead time (an offer has one id; supplier + SKU would be a composite key, which waits for Chronicle#4265)"
+  identifier SupplierOfferId
+
 // ---- Warehouse -----------------------------------------------------------------------------------------------
 eventsource StockItem
   description "The physical stock of one SKU"

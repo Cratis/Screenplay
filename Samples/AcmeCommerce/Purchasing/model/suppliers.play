@@ -81,26 +81,38 @@ module Buying
       description "Records what a supplier sells and for how much"
 
       command OfferSupplierProduct
-        supplierId   SupplierId identifier
-        sku          Sku
-        price        Money
-        currency     CurrencyCode
-        leadTimeDays LeadTimeDays
-        produces SupplierProductOffered
-          for supplierId
-          supplierId   = supplierId
-          sku          = sku
-          price        = price
-          currency     = currency
-          leadTimeDays = leadTimeDays
-
-      // the offer carries its supplier id too: a projection keyed by (supplier, sku) cannot take the key from the event source
-      event SupplierProductOffered
+        offerId      SupplierOfferId generated identifier
         supplierId   SupplierId
         sku          Sku
         price        Money
         currency     CurrencyCode
         leadTimeDays LeadTimeDays
+        produces SupplierProductOffered
+          for offerId
+          offerId      = offerId
+          supplierId   = supplierId
+          sku          = sku
+          price        = price
+          currency     = currency
+          leadTimeDays = leadTimeDays
+        produces SupplierOfferAdded
+          for supplierId
+          supplierId = supplierId
+          offerId    = offerId
+
+      // One offer is one event source of its own (its generated id): a read model of offers has ONE key, the offer id. The supplier's
+      // own stream only counts its offers. (A read model keyed by supplier AND sku is a composite key; those return when Chronicle#4265 ships.)
+      event SupplierProductOffered
+        offerId      SupplierOfferId
+        supplierId   SupplierId
+        sku          Sku
+        price        Money
+        currency     CurrencyCode
+        leadTimeDays LeadTimeDays
+
+      event SupplierOfferAdded
+        supplierId SupplierId
+        offerId    SupplierOfferId
 
       example Mug : OfferSupplierProduct
         supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
@@ -119,14 +131,20 @@ module Buying
           taxId        = "NO 912 345 678"
           contactEmail = "orders@nordic-ceramics.example"
           country      = "NO"
+        given generated OfferSupplierProduct.offerId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
         when Mug
         then SupplierProductOffered
-          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
           supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
           sku          = "ACM-1000"
           price        = 62
           currency     = "NOK"
           leadTimeDays = 14
+        then SupplierOfferAdded
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          offerId    = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
 
       specification APriceBelowZeroIsRejected
         given caller
@@ -161,12 +179,13 @@ module Buying
           taxId      = taxId
           country    = country
           offerCount = 0
-        from SupplierProductOffered
+        from SupplierOfferAdded
           increment offerCount
 
       readmodel SupplierOffer
-        supplierId   SupplierId key
-        sku          Sku key
+        offerId      SupplierOfferId key
+        supplierId   SupplierId
+        sku          Sku
         price        Money
         currency     CurrencyCode
         leadTimeDays LeadTimeDays
@@ -175,10 +194,11 @@ module Buying
         filter supplierId SupplierId
 
       projection SupplierOfferProjection => SupplierOffer
+        no automap
         from SupplierProductOffered
-          key
-            supplierId = supplierId
-            sku        = sku
+          offerId      = $eventSourceId
+          supplierId   = supplierId
+          sku          = sku
           price        = price
           currency     = currency
           leadTimeDays = leadTimeDays
@@ -219,14 +239,20 @@ module Buying
           taxId        = "NO 912 345 678"
           contactEmail = "orders@nordic-ceramics.example"
           country      = "NO"
-        given SupplierProductOffered
+        given SupplierOfferAdded
           for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          supplierId = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
+          offerId    = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+        given SupplierProductOffered
+          for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
+          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
           supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
           sku          = "ACM-1000"
           price        = 62
           currency     = "NOK"
           leadTimeDays = 14
         then readmodel SupplierOffer
+          offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
           supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
           sku          = "ACM-1000"
           price        = 62
