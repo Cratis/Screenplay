@@ -125,6 +125,12 @@ public sealed record SemanticImplementationRequirement(
     /// </summary>
     public bool IsAmbiguous { get; init; }
 
+    /// <summary>
+    /// Gets the shape of the query a <see cref="SemanticImplementationRole.QueryPerformer"/> answers; null for every other role.
+    /// </summary>
+    /// <remarks>Not part of requirement identity or of the attachment manifest revision.</remarks>
+    public SemanticPerformedQueryShape? QueryShape { get; init; }
+
     /// <inheritdoc />
     public bool Equals(SemanticImplementationRequirement? other) => other is not null &&
         Role == other.Role && EqualityComparer<SemanticAddress>.Default.Equals(Owner, other.Owner) &&
@@ -133,7 +139,8 @@ public sealed record SemanticImplementationRequirement(
         RequirementId == other.RequirementId && ContextVersion == other.ContextVersion && ResultVersion == other.ResultVersion &&
         RequiredCapability == other.RequiredCapability && AttachmentResolution == other.AttachmentResolution &&
         BodySpan == other.BodySpan && BodyLines.SequenceEqual(other.BodyLines) &&
-        Hints.SequenceEqual(other.Hints) && IsProvisional == other.IsProvisional && IsAmbiguous == other.IsAmbiguous;
+        Hints.SequenceEqual(other.Hints) && IsProvisional == other.IsProvisional && IsAmbiguous == other.IsAmbiguous &&
+        EqualityComparer<SemanticPerformedQueryShape?>.Default.Equals(QueryShape, other.QueryShape);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -155,6 +162,7 @@ public sealed record SemanticImplementationRequirement(
         hash.Add(BodySpan);
         hash.Add(IsProvisional);
         hash.Add(IsAmbiguous);
+        hash.Add(QueryShape);
         foreach (var hint in Hints) hash.Add(hint);
         foreach (var line in BodyLines)
         {
