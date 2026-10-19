@@ -201,7 +201,7 @@ module Merchandising
     slice StateChange DraftProduct
       description "A merchandiser starts a new product with its SKU, name and category"
       command DraftProduct
-        productId   ProductId identifier
+        productId   ProductId generated identifier
         sku         Sku
         name        ProductName
         category    String
@@ -222,7 +222,6 @@ module Merchandising
         message "That SKU is already in the catalogue"
 
       example Mug : DraftProduct
-        productId   = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
         sku         = "ACM-1000"
         name        = "Acme mug"
         category    = "Kitchen"
@@ -232,6 +231,7 @@ module Merchandising
           authenticated
           role "Merchandiser"
         when Mug
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
         then ProductDrafted
           for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           sku         = "ACM-1000"
@@ -243,6 +243,7 @@ module Merchandising
           authenticated
           role "Merchandiser"
         when Mug sku = "XYZ-1000"
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
         then error "A SKU starts with ACM-"
 
       specification RejectingADuplicateSku
@@ -255,6 +256,7 @@ module Merchandising
           name        = "Acme plate"
           category    = "Kitchen"
         when Mug
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
         then error "That SKU is already in the catalogue"
 
       screen NewProduct
