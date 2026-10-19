@@ -79,7 +79,7 @@ module Shop
             title "Shop"
           filters
             data ListedProduct[] via query SearchListedProducts
-          grid
+          products
             data ListedProduct[] via query AllListedProducts
             table ListedProduct
               column title        label "Product"
