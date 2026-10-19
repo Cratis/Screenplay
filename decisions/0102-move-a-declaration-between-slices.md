@@ -1,5 +1,5 @@
 ---
-id: 0101
+id: 0102
 title: Move a single declaration between slices, carrying the specifications that cover only it
 status: accepted
 stage: none

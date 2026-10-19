@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Mcp;
 
 /// <summary>
 /// Decides which specifications travel with a single declaration moved between slices, and refuses a move that
-/// breaks specification obligations (decision 0101).
+/// breaks specification obligations (decision 0102).
 /// </summary>
 static class McpDeclarationMove
 {

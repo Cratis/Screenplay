@@ -138,7 +138,7 @@ specification <Name>
   then denied
 ```
 
-- `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
+- `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs. Without `for`, the event belongs to the event source the specification acts on; see [Givens without an event source](#givens-without-an-event-source).
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` or `given caller as <Persona>` — zero or one, never both. The explicit block states authentication, roles, and repeatable claim values. The persona form has no body and expands into an authenticated deterministic witness satisfying every persona policy; see [persona synthesis](personas.md#persona-callers-in-specifications). Either form satisfies the caller requirement for an authorized scenario (`PLAY0389`). It supplies no actor to reaction invocations.
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events require an action (`PLAY0352`). Errors also require an action except for one queried call asserting a Validation rejection from ESM v18.
@@ -155,6 +155,32 @@ specification <Name>
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, an event `then`, or an event `when append`. It identifies occurrence context rather than an event payload property.
 
 Without a routing line, a `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the event's producer command's unambiguous destination type (or the command under test for `when for`). A `StateView` slice can use `when append … for` to specify an event declared in a different slice when its producer supplies that type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
+
+### Givens without an event source
+
+A `given` event without `for` is fine: specifications assert behavior, and a slice usually has one event source. Such
+a given is history of the event source the specification acts on (decision 0101):
+
+- For `when <Command>`, that is the event source each fact the command appends goes to. For
+  `when append <Event> for <value>`, it is `<value>`. A sourceless `when append` and sourceless givens share one event
+  source.
+- A `unique event` constraint counts the given as already on that event source, so the command is refused. A
+  `unique <property>` constraint treats the given's value as the command's own claim, so the command may claim it
+  again. A given with a different `for` holds its value for that other event source.
+- No identity is invented. Whenever a projection needs the identity of a sourceless given, regardless of the action,
+  the specification is reported as `Unsupported` with capability `Projection`. That is a projection keyed on the
+  event source, including the default key. Givens are projected before the action runs, so this holds for
+  `when <Command>` and `when append` too, not only without an action.
+- A runner that appends givens to real event streams, such as one against Chronicle, appends sourceless givens to
+  the action's event source. Without one, it uses any one identity for all sourceless facts in the specification,
+  different from every identity the specification states. When a projection needs a sourceless given's identity,
+  the reference outcome is `Unsupported`, so there is no outcome to match.
+- A projection keyed on a payload property that maps `$eventSourceId` from a sourceless given reads `null` in the
+  reference evaluator, while such a runner reads the action's identity. Don't assert that value; state `for` on the
+  given when it matters.
+
+State `for` on the given when the command appends to more than one event source or an assertion depends on where the
+given is. The executable model carries a sourceless given without an event source; nothing about it changes.
 
 Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error.
 
