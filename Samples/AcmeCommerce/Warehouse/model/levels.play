@@ -322,9 +322,6 @@ module Stock
               button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis quiet icon plus
           list
             data StockLevel[] via query AllStockLevels
-            // The custom package's badge (Acme.Commerce acme:stockBadge) marks SKUs at or below their reorder point
-            component Acme.Commerce.StockBadge stockBadge
-              context from query AllStockLevels
             table StockLevel
               column sku       label "SKU"
               column name      label "Product"
