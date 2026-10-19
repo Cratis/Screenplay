@@ -1,0 +1,61 @@
+module Shipping
+  feature Orders
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId String identifier
+        productId String
+        quantity Int
+        produces OrderPlaced
+          for orderId
+          orderId = orderId
+          productId = productId
+        produces StockReserved
+          for productId
+          productId = productId
+          quantity = quantity
+      event OrderPlaced
+        orderId String
+        productId String
+      event StockReserved
+        productId String
+        quantity Int
+      specification PlacingAnOrderReservesTheProduct
+        when PlaceOrder
+          orderId = "o1"
+          productId = "mug"
+          quantity = 3
+        then OrderPlaced
+          for "o1"
+          orderId = "o1"
+          productId = "mug"
+        then StockReserved
+          for "mug"
+          productId = "mug"
+          quantity = 3
+  feature Dispatch
+    slice Automation Dispatching
+      event OrderConfirmed
+        orderId String
+      event ShipmentCreated
+        shipmentId ShipmentId
+        orderId String
+      command CreateShipment
+        shipmentId ShipmentId generated identifier
+        orderId String
+        produces ShipmentCreated
+          for shipmentId
+          shipmentId = shipmentId
+          orderId = orderId
+      reaction DispatchConfirmedOrders
+        when OrderConfirmed
+          orderId
+          invokes CreateShipment
+            orderId = orderId
+      specification ConfirmingAnOrderCreatesAShipment
+        given generated CreateShipment.shipmentId = "11111111-1111-4111-8111-111111111111"
+        when append OrderConfirmed
+          orderId = "o1"
+        then ShipmentCreated
+          for "11111111-1111-4111-8111-111111111111"
+          shipmentId = "11111111-1111-4111-8111-111111111111"
+          orderId = "o1"

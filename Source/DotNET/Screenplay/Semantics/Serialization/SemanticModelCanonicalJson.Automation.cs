@@ -180,6 +180,19 @@ public static partial class SemanticModelCanonicalJson
     {
         if (specification.GivenClock is not null) CanonicalJson.WriteString(writer, "givenClock", specification.GivenClock);
         if (!specification.GivenCaptures.IsDefaultOrEmpty) WriteArray(writer, "givenCaptures", specification.GivenCaptures, WriteSpecificationCapture);
+        if (!specification.GivenGenerated.IsDefaultOrEmpty)
+        {
+            WriteArray(writer, "givenGenerated", specification.GivenGenerated, (output, pinned) =>
+            {
+                output.WriteStartObject();
+                output.WriteString("command", pinned.Command.ToString());
+                output.WriteString("targetProperty", pinned.Property.ToString());
+                output.WritePropertyName("value");
+                WriteValue(output, pinned.Value);
+                output.WriteEndObject();
+            });
+        }
+
         if (specification.WhenClock is not null) CanonicalJson.WriteString(writer, "whenClock", specification.WhenClock);
         if (specification.WhenTrigger is { } fired)
         {

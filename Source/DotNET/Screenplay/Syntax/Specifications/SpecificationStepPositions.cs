@@ -16,7 +16,7 @@ internal static class SpecificationStepPositions
     static IEnumerable<SourceLocation> Locations(SpecificationSyntax specification)
     {
         var repeated = specification.Given.Cast<SyntaxNode>()
-            .Concat(specification.GivenReadModels ?? []).Concat(specification.GivenCaptures)
+            .Concat(specification.GivenReadModels ?? []).Concat(specification.GivenCaptures).Concat(specification.GivenGenerated)
             .Concat(specification.GivenOperationFailures).Concat(specification.ThenEvents)
             .Concat(specification.ThenReadModels ?? []).Concat(specification.ThenQueries)
             .Concat(specification.ThenResults).Concat(specification.ThenAbsentReadModels)

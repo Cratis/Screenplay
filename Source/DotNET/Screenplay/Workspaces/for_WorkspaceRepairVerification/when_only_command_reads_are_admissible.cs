@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRepairVerification;
 public class when_only_command_reads_are_admissible : Specification
 {
     const string Performer = "\n      query External => View[]\n        scoped to identity\n";
-    const string FanOut = "\n      event Othered\n      command Other\n        id String identifier\n        destination String\n        produces Othered\n          for destination\n";
+    const string FanOut = "\n      event Othered\n      command Other\n        id String identifier\n        destination String optional\n        produces Othered\n          for destination\n";
 
     [Theory]
     [InlineData(false)]

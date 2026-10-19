@@ -24,8 +24,31 @@ module Merchandising
         currency CurrencyCode
         effectiveFrom Date
 
-      // The accepted path is specified in PublishPriceChange, where its public consequence is: a command specification cannot list the
-      // cascaded public event and an exact fact count would fail.
+      // The accepted path states the public event the price change is published as (PublishPriceChange translates it).
+      specification SettingAPriceIsPublished
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when SetProductPrice
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price     = 59
+          currency  = "NOK"
+          effectiveFrom = "2026-03-01"
+        then ProductPriceSet
+          price    = 59
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        then ProductPriceChanged
+          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku           = "ACM-1000"
+          newPrice      = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-03-01"
 
       specification APriceBelowZeroIsRejected
         given caller

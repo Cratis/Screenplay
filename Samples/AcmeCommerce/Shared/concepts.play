@@ -61,6 +61,7 @@ concept EmailAddress : String pii
 concept Money : Decimal
   validate
     >= 0  message "An amount cannot be negative"
+    decimals <= 2  message "An amount has at most two decimals"
 
 concept CurrencyCode : String
   validate

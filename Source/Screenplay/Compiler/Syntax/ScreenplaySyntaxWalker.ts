@@ -27,7 +27,7 @@ import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -702,6 +702,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.givenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
         syntax.givenCaptures.forEach(node => this.visitSpecificationCapture(node));
+        syntax.givenGenerated?.forEach(node => this.visitSpecificationGeneratedValue(node));
         if (syntax.whenAppended !== null) this.visitSpecificationEvent(syntax.whenAppended);
         if (syntax.whenRedelivered != null) this.visitSpecificationRedelivery(syntax.whenRedelivered);
         if (syntax.whenClock !== null) this.visitSpecificationClock(syntax.whenClock);
@@ -738,6 +739,11 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecificationTrigger(syntax: SpecificationTriggerSyntax): void {
         this.visitNode(syntax);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationGeneratedValue(syntax: SpecificationGeneratedValueSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.source);
     }
 
     visitSpecificationCapture(syntax: SpecificationCaptureSyntax): void {

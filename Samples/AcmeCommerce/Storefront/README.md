@@ -16,5 +16,5 @@ about products, stock and order status arrives as a PUBLIC event and is translat
 Screens: `Browse` (own template `ProductGrid` + custom component `acme:productCard`), `Basket` (own template `SideSummary`), `Checkout`
 (blueprint `WizardScreen`), `MyOrders` (`ListScreen`), `ProductPage` (`RecordPage`). Both own templates live in `model/templates.play`.
 
-Language notes (see the Acme Commerce epic): capture fields cannot copy composites; the basket has no total because projections cannot multiply;
+Language notes (see the Acme Commerce epic): the basket carries `addedValue` (what its lines were worth when they were added: `add addedValue by unitPrice * quantity`);
 `CheckOut` is not rejected for an out-of-stock *line* (a command cannot read per element of a collection) - `AddToBasket` refuses sold-out products instead.

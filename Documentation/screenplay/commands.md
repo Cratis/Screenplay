@@ -84,6 +84,36 @@ Here the omitted `for` means `for projectId`; the identifier is **not** copied i
 
 Each inline payload property is declared once; repeating its name reports `PLAY0168`. Inline events are generation 1 only, local to the command, and cannot declare `generation` or `origin`. Reactions cannot declare inline events. Names must not collide with another standalone, imported, or inline event. `tag` inside this block is an **event-type** tag, unlike a tag on plain `produces`. [Event metadata](events.md#authoring-metadata) covers descriptions, documentation, and rename-only identity pins.
 
+### Appending to several event sources
+
+A command can append events to more than one event source. A production's `for` may name the command identifier or any other required, non-collection command property, and the events of one accepted command are appended together:
+
+```screenplay
+module Sales
+  feature Orders
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId String identifier
+        productId String
+        quantity Int
+        produces OrderPlaced
+          for orderId
+          orderId = orderId
+          productId = productId
+        produces StockReserved
+          for productId
+          productId = productId
+          quantity = quantity
+      event OrderPlaced
+        orderId String
+        productId String
+      event StockReserved
+        productId String
+        quantity Int
+```
+
+`OrderPlaced` is appended to the order's event source and `StockReserved` to the product's. A command specification states each destination with `for` on each `then` event. Optional and collection properties still cannot name a destination. A command that uses a destination other than its identifier selects language/semantic `30.0`; models using none keep their existing version and bytes. Chronicle appends each event to its own event source; this is what the reference evaluator proves, and a consumer must not assume cross-source atomicity beyond what its event store provides.
+
 If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The same rule applies when an inline production and a plain production both omit `for`: their defaults differ. The diagnostic names the production that needs a destination; adding an inline event never silently retargets a plain sibling. The compiler compares authored paths, not runtime values. Commands without a generated identifier still cannot bind a destination other than their identifier. In ESM v7 a command with a generated identifier may explicitly route a production to another required scalar command property; its response may still return the generated identifier. This does not admit named sources or streams. An inline omission without a required scalar identifier cannot bind. The [explicit-intent workspace/MCP repair](mcp/authoring-tools.md#establish-production-destinations) requires a destination selection for every occurrence and confirmation of unchanged named routes. It fills missing `for` expressions only, binds the whole candidate and retains a routing report for individual review before explicit apply. These invalid mixed-destination models have no executable before-baseline, so the repair establishes the author's routing rather than proving preservation. There is no automatic editor action or fix-all; never assume an omitted plain production meant the identifier.
 
 Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field. The inline-only typed repair removes the property and mapping together, retires the property's semantic address, and is labeled “changes the event contract”. It is excluded from fix-all. The narrow repair refuses other consumers of that event, opaque implementation impact, routing changes and comment loss; standalone/plain contracts receive guidance only, not an automatic shape change.

@@ -74,6 +74,14 @@ export interface SpecificationErrorSyntax extends SyntaxNode {
     readonly name: string | null;
 }
 
+// 'given generated <Command>.<property> = <value>' - the value the next invocation of the command by a reaction takes for a generated property.
+export interface SpecificationGeneratedValueSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationGeneratedValueSyntax';
+    readonly command: string;
+    readonly property: string;
+    readonly source: ExpressionSyntax;
+}
+
 // 'given clock "<instant>"' or 'when clock "<instant>"' - an ISO 8601 instant as written.
 export interface SpecificationClockSyntax extends SyntaxNode {
     readonly kind: 'SpecificationClockSyntax';
@@ -167,6 +175,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenErrors: readonly SpecificationErrorSyntax[];
     readonly givenClock: SpecificationClockSyntax | null;
     readonly givenCaptures: readonly SpecificationCaptureSyntax[];
+    readonly givenGenerated?: readonly SpecificationGeneratedValueSyntax[];
     readonly whenClock: SpecificationClockSyntax | null;
     readonly whenTrigger: SpecificationTriggerSyntax | null;
     readonly whenCapture: SpecificationCaptureSyntax | null;

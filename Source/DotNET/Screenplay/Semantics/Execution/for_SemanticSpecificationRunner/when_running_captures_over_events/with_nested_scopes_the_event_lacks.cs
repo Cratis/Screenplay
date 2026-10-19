@@ -3,11 +3,11 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.when_running_captures_over_events;
 
-public class with_children : given.an_event_capture
+public class with_nested_scopes_the_event_lacks : given.an_event_capture
 {
     void Because() => RunCapture("""
         append Added
-        children items identified by id
+        nested contact
           append Modified
             when added
         """, """
@@ -17,6 +17,7 @@ public class with_children : given.an_event_capture
         then Added
         """);
 
-    [Fact] void should_fail_closed_before_any_capture_append() => _run.Execution.ShouldBeOfExactType<SemanticUnsupported>();
-    [Fact] void should_not_append_the_root_effect() => _run.Execution.World.Facts.Length.ShouldEqual(1);
+    // The event has no 'contact', so there is nothing to scope into: the root effect runs and no scoped append does.
+    [Fact] void should_run_the_scenario() => _run.Execution.ShouldBeOfExactType<SemanticAccepted>();
+    [Fact] void should_append_the_root_effect_and_no_scoped_one() => _run.Execution.World.Facts.Length.ShouldEqual(2);
 }

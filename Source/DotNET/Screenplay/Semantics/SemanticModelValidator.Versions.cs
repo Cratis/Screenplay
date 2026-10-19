@@ -66,6 +66,27 @@ internal static partial class SemanticModelValidator
     internal static bool UsesDescribedHandlers(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => command.Handler is not null);
 
+    // A command that appends to an event source other than its own identifier (ESM v30, decision 0098).
+    internal static bool UsesSeveralEventSources(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command =>
+            !command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) &&
+            command.Produces.Any(produced => produced.Route is null &&
+                produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route &&
+                command.Properties.SingleOrDefault(property => property.Id == route.Target) is { IsIdentifier: false }));
+
+    internal static bool UsesGivenGenerated(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Specifications).Any(specification => !specification.GivenGenerated.IsDefaultOrEmpty);
+
+    internal static bool UsesAcmeSecondAdmissions(SemanticApplication application) => UsesSeveralEventSources(application) || UsesGivenGenerated(application);
+
+    static void ValidateAcmeSecondAdmissionVersion(SemanticApplication application, SemanticVersion version)
+    {
+        if (!version.IsAtLeast(SemanticVersion.V30) && UsesAcmeSecondAdmissions(application))
+        {
+            throw new InvalidSemanticContract("Appending to several event sources, given generated values and the other second constructs of decision 0098 require ESM v30.");
+        }
+    }
+
     // ESM v29 is the umbrella of decision 0098. Some of its constructs (a concept converted to another over the same primitive)
     // are not detectable from the model alone, so a v29 model need not use any particular one.
     static void ValidateAcmeAdmissionVersion(SemanticApplication application, SemanticVersion version)
