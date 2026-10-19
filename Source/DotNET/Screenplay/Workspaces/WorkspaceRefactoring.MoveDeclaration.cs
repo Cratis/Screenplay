@@ -23,6 +23,33 @@ internal sealed partial class WorkspaceRefactoring
     static SemanticAddress RehomedAddress(SemanticAddress address, SemanticAddress source, SemanticAddress destination) =>
         SemanticAddress.FromCanonical(address.Kind, [.. destination.Parts, .. address.Parts.Skip(source.Parts.Length)]);
 
+    static void SliceDeclarations(JsonObject slice, Dictionary<string, JsonNode> contents)
+    {
+        foreach (var member in _sliceDeclarationMembers)
+        {
+            if (slice[member] is JsonArray items)
+            {
+                foreach (var item in items) contents[member + ":" + item!["id"]!.GetValue<string>()] = item.DeepClone();
+            }
+            slice.Remove(member);
+        }
+    }
+
+    static void RequireSliceOwnedMembers(Dictionary<string, JsonNode> original, Dictionary<string, JsonNode> candidate)
+    {
+        foreach (var (id, before) in original)
+        {
+            if (before["kind"] is null || !candidate.TryGetValue(id, out var after)) continue;
+            var changed = _sliceOwnedMembers
+                .Where(member => !JsonNode.DeepEquals(before[member], after[member]))
+                .SelectMany(member => Names(before[member]).Concat(Names(after[member])).Distinct(StringComparer.Ordinal).Select(name => $"{member[..^1]} '{name}'"))
+                .ToArray();
+            if (changed.Length > 0) throw new InvalidWorkspaceAuthoring($"The move changes what slice '{before["name"]?.GetValue<string>()}' owns: {string.Join(", ", changed)}. Reducers and constraints stay with their slice; move them by hand first.");
+        }
+    }
+
+    static IEnumerable<string> Names(JsonNode? members) => members is JsonArray items ? items.Select(item => item?["name"]?.GetValue<string>() ?? "?") : [];
+
     WorkspaceAuthoringResult MoveDeclaration(WorkspaceMoveRequest request, WorkspaceSyntaxIndex index)
     {
         if (request.Target.Kind == SemanticKind.Specification) throw new InvalidWorkspaceAuthoring("A specification moves only with the declaration it covers; move that declaration instead.");
@@ -112,33 +139,6 @@ internal sealed partial class WorkspaceRefactoring
         }
         return fragment;
     }
-
-    static void SliceDeclarations(JsonObject slice, Dictionary<string, JsonNode> contents)
-    {
-        foreach (var member in _sliceDeclarationMembers)
-        {
-            if (slice[member] is JsonArray items)
-            {
-                foreach (var item in items) contents[member + ":" + item!["id"]!.GetValue<string>()] = item.DeepClone();
-            }
-            slice.Remove(member);
-        }
-    }
-
-    static void RequireSliceOwnedMembers(Dictionary<string, JsonNode> original, Dictionary<string, JsonNode> candidate)
-    {
-        foreach (var (id, before) in original)
-        {
-            if (before["kind"] is null || !candidate.TryGetValue(id, out var after)) continue;
-            var changed = _sliceOwnedMembers
-                .Where(member => !JsonNode.DeepEquals(before[member], after[member]))
-                .SelectMany(member => Names(before[member]).Concat(Names(after[member])).Distinct(StringComparer.Ordinal).Select(name => $"{member[..^1]} '{name}'"))
-                .ToArray();
-            if (changed.Length > 0) throw new InvalidWorkspaceAuthoring($"The move changes what slice '{before["name"]?.GetValue<string>()}' owns: {string.Join(", ", changed)}. Reducers and constraints stay with their slice; move them by hand first.");
-        }
-    }
-
-    static IEnumerable<string> Names(JsonNode? members) => members is JsonArray items ? items.Select(item => item?["name"]?.GetValue<string>() ?? "?") : [];
 
     sealed record MoveRehome(string Prefix, string Replacement, SemanticAddress? Declaration);
 
