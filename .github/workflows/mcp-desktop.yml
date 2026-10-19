@@ -2,6 +2,9 @@ name: MCP desktop packages
 
 on:
   workflow_dispatch:
+  # Nightly on main: the full five-RID matrix, so PRs can keep a narrower native router.
+  schedule:
+    - cron: "23 2 * * *"
   pull_request:
     paths:
       - 'Source/DotNET/**'
@@ -47,7 +50,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          # Publish (including a release call from a PR) and manual runs retain all five RIDs.
+          # Publish (including a release call from a PR), the nightly and manual runs retain all five RIDs.
           matrix='[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"osx-x64","runner":"macos-15-intel"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"}]'
           if [[ "$PR_SMOKE" == 'true' ]]; then
             matrix='[{"rid":"linux-x64","runner":"ubuntu-latest"}]'
@@ -174,3 +177,26 @@ jobs:
           cd desktop
           sha256sum -c ./*.sha256
           gh release upload "v$VERSION" ./*.mcpb ./*-plugin.zip ./*.sha256 --clobber
+
+  nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    needs: [changes, board, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the nightly failure issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: "Nightly MCP desktop packages failed"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title | jq -r --arg t "$TITLE" 'map(select(.title == $t))[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" --label bug --body "The nightly native package matrix failed on main: $RUN_URL"
+          fi
