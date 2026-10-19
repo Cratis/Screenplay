@@ -1,0 +1,33 @@
+// ============================================================
+// Purchasing: the application shell and look - a dense buyer desk with a labelled icon rail.
+//
+// Each Acme domain is its own application: its own logo (see navigation.play), theme, accent, colour scheme and menu, on the shared
+// platform (Cratis.Components + the Default blueprint's AppShell, ^1). The profile lists only the packages every Stage ships, so a screen
+// built from stock components plays everywhere, Studio's Play included.
+// ============================================================
+
+theme AcmePurchasing
+  compatible with Cratis.Components
+  compatible with Cratis.Blueprint.Default
+  compatible with PrimeReact
+  compatible with Acme.Commerce
+
+ui profile Purchasing
+  target platform web
+  target size regular
+  theme AcmePurchasing
+
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+
+  root template blueprint Cratis.Blueprint.Default AppShell version "^1"
+    option navigationMode slimPlus
+    option menuTheme light
+
+  appearance
+    color scheme light
+    accent "#B45309"
+
+  sample data
+    active AcmePurchasing

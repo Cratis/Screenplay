@@ -26,7 +26,7 @@ screenplay --warnaserror Samples/<Sample>
 | [WorkOrders](WorkOrders) | 1 file, 5 slices | An application built from the Work orders blueprint: work orders with their tasks, parts and time, a board and a visit schedule. |
 | [Bookings](Bookings) | 1 file, 6 slices | An application built from the Bookings blueprint: a booking calendar, bookings, resources as cards and a new-booking wizard. |
 | [Administration](Administration) | 1 file, 9 slices | An application built from the Administration blueprint: users, roles and permissions, settings and an audit log. |
-| [AcmeCommerce](AcmeCommerce) | many small files | A full multi-domain application - Catalog, Storefront, Sales, Purchasing, Warehouse - in one folder tree: shared kernel, application shell with hierarchical navigation, public events between contexts, blueprint screens and a custom component package. |
+| [AcmeCommerce](AcmeCommerce) | many small files | A full multi-domain application - Catalog, Storefront, Sales, Purchasing, Warehouse - in one folder tree: shared kernel, per-domain shell (own logo, theme, menu) with hierarchical navigation, public events between contexts, blueprint screens and a custom component package. |
 | [Commerce](Commerce) | many small files | An application composed with [imports](../Documentation/screenplay/imports.md) at every level: a root file that reads like a table of contents, a file per module and per feature that imports its own folder, and one file per slice that holds only the slice. |
 | [TimeTracking](TimeTracking) | many small files | An application composed from one root glob. Module files declare their features inline and import each feature's folder, and each step of the story is a file of its own. |
 

@@ -1,0 +1,191 @@
+// ============================================================
+// Catalog: the sample-data pack of this application. Design and preview time only - a production build never sees it.
+// Each shape names the read model it supplies rows for. Catalog is its own application, so it carries only its own shapes.
+// ============================================================
+
+sample data AcmeCatalog
+  title "Acme Catalog - Nordic"
+  locale nb-NO
+
+  // ---- Catalog -----------------------------------------------------------------------------
+  shape ProductRow
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      price     = 149
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      price     = 89
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      price     = 349
+      status    = "approved"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      price     = 899
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      price     = 199
+      status    = "withdrawn"
+
+  shape PricedProduct
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      price     = 149
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      price     = 89
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      price     = 349
+      status    = "approved"
+  shape CatalogFigure
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      status    = "published"
+      price     = 149
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      status    = "withdrawn"
+      price     = 199
+
+  // The product page (Catalog) and the publication queue read these
+  shape ProductDetail
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      status    = "draft"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      status    = "approved"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      status    = "published"
+    row
+      productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      status    = "withdrawn"
+  shape ProductReadiness
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+      sku       = "ACM-1000"
+      name      = "Acme krus"
+      category  = "Kjøkken"
+      details   = "En solid emaljekrus til hverdagsbruk"
+      imageUrl  = "/img/acm-1000.png"
+      price     = 149
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+      sku       = "ACM-1001"
+      name      = "Acme tallerken"
+      category  = "Kjøkken"
+      details   = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl  = "/img/acm-1001.png"
+      price     = 89
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "draft"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+      sku       = "ACM-1002"
+      name      = "Acme kaffekanne"
+      category  = "Kjøkken"
+      details   = "Kaffekanne i rustfritt stål, 1,2 liter"
+      imageUrl  = "/img/acm-1002.png"
+      price     = 349
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "approved"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+      sku       = "ACM-2000"
+      name      = "Acme ullteppe"
+      category  = "Bolig"
+      details   = "Teppe i ren ull, 130 x 180 cm"
+      imageUrl  = "/img/acm-2000.png"
+      price     = 899
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "published"
+    row
+      id        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+      sku       = "ACM-2001"
+      name      = "Acme lysestake"
+      category  = "Bolig"
+      details   = "Lysestake i messing"
+      imageUrl  = "/img/acm-2001.png"
+      price     = 199
+      currency  = "NOK"
+      described = true
+      priced    = true
+      status    = "withdrawn"
