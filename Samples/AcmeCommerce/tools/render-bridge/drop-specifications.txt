@@ -2,12 +2,3 @@
 # The rejection comes from the decision read of ApproveOrder; ApproveOrder's event triggers ConfirmApprovedOrder, whose command ConfirmOrder reads the same
 # view under the same key, so the expected message could also be the reaction's. Stage cannot tell the two apart statically (STAGE-ESM-011), and refuses it.
 Sales/model/approval.play|AnApprovedOrderCannotBeApprovedAgain
-# Stage cannot render these specifications yet (STAGE-ESM-011), none of them for a reason in the model:
-# a reactor scenario does not enforce an append-time constraint target (the shipment stream), so the second dispatch cannot be shown refused
-Warehouse/model/dispatch.play|AShipmentIsDispatchedOnce
-# a refusal scenario cannot carry the generated fixtures of the command the reaction invokes (a generated purchase order id)
-Purchasing/model/replenishment.play|AutoReplenishDraftsAnOrderForThePreferredSupplier
-Purchasing/model/replenishment.play|AutoReplenishSkipsWhenAnOpenOrderCoversTheSku
-Purchasing/model/replenishment.play|AutoReplenishReportsAMissingPreferredSupplier
-# the scenario cannot preserve all of its declared fixtures or expectations
-Purchasing/model/suppliers.play|OfferingAProduct
