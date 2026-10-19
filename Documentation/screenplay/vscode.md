@@ -448,7 +448,7 @@ A finding describes the saved file. Editing a document clears its findings, a do
 none, and a stale revision, a changed setting or model root, or a closed connection clears them all. Run the command
 again after saving. Set `screenplay.verdicts.onSave` to `true` in User settings to rerun the checks a moment after
 every save; failures there are only logged. If the model has errors the checks are skipped and the command says so.
-The same run also reads the server's executable diagnostics, which come from the semantic binder, and shows PLAY0546 in the same collection. If the model does not bind, or the server refuses that read, PLAY0546 is simply absent.
+The same run also reads the server's executable diagnostics, which come from the semantic binder, and shows PLAY0546 in the same collection. If the model does not bind, the server refuses that read, or a repair review is open (reopening the workspace would discard it), PLAY0546 is simply absent while the other findings still appear.
 
 ## Theme
 

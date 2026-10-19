@@ -51,6 +51,16 @@ describe('when running the C# checks', () => {
         expect(editor.count(collection)).toBe(0);
         expect(editor.warnings[0]).toContain('StaleSourceRevision');
     });
+    it('still publishes the completeness findings when a repair review blocks the binder read, without a message', async () => {
+        served = diagnosticsServer([finding({ code: 'PLAY0535', path: 'a.play' })]);
+        connect.mockResolvedValue({ root: '/model', call: async (tool, args) => {
+            if (tool === 'open-workspace') throw new RepairFailure('SessionBusy', 'A repair review is open.');
+            return served.call(tool, args);
+        } });
+        await run();
+        expect(editor.diagnosticsOf(collection, file('a.play')).map(marker => marker.code)).toEqual(['PLAY0535']);
+        expect(editor.warnings).toEqual([]);
+    });
     it('tells the user when the bridge is not enabled, and launches nothing further', async () => {
         connect.mockRejectedValue(new RepairFailure('NotEnabled', 'C# repairs are opt-in. Configure screenplay.repairs in User settings.'));
         await run();

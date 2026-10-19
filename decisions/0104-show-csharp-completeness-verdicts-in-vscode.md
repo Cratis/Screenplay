@@ -33,6 +33,12 @@ bridge to a user-installed `screenplay mcp` server for repairs.
    revision and catalog, keeping only PLAY0546. The workspace and the `diagnostics` tool number revisions differently,
    so the run pins the `diagnostics` source revision again afterwards; a difference is stale and clears everything.
    If that read is refused or the model does not bind, the binder verdicts are skipped silently.
+   The server keeps one active workspace per connection and `open-workspace` clears outstanding proposals, so the
+   session refuses a checking `open-workspace` with `SessionBusy` while a repair review is retained, a proposal exists
+   or discovery or preview is running. PLAY0546 is therefore skipped, silently, while a repair review is open; the
+   completeness findings still publish. A check that reopens the workspace between a discovery and its follow-up read
+   changes nothing the repair relies on: every repair call pins the revision it opened, so a differing revision is a
+   clean stale refusal, never a mixed review.
 4. Findings go into their own collection, `screenplay-csharp-verdicts`, with source `Screenplay C# check`, apart from
    the editor's diagnostics and from repair findings.
 5. A verdict describes the saved file. Editing a document clears its verdicts; an unsaved document gets none; a stale

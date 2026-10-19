@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, expect, it } from 'vitest';
+import { RepairFailure } from '../RepairClient';
 import { readVerdicts } from '../VerdictReader';
 import { diagnosticsServer, finding } from './given/a_diagnostics_server';
 
@@ -30,5 +31,14 @@ describe('when reading binder verdicts', () => {
     it('skips the binder verdicts silently when the tool refuses', async () => {
         const result = await readVerdicts(diagnosticsServer([finding({ code: 'PLAY0532' })], { binder: 'refused' }).call);
         expect(result.diagnostics.map(item => item.code)).toEqual(['PLAY0532']);
+    });
+    it('skips the binder verdicts silently while a repair review is open, keeping the completeness findings', async () => {
+        const server = diagnosticsServer([finding({ code: 'PLAY0532' })], { binder: [finding({ code: 'PLAY0546' })] });
+        const call = (tool: 'diagnostics' | 'open-workspace' | 'read-workspace', args: Record<string, unknown>) => tool === 'open-workspace'
+            ? Promise.reject(new RepairFailure('SessionBusy', 'A repair review is open.'))
+            : server.call(tool, args);
+        const result = await readVerdicts(call);
+        expect(result.diagnostics.map(item => item.code)).toEqual(['PLAY0532']);
+        expect(server.workspaceCalls).toEqual([]);
     });
 });
