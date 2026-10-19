@@ -14,8 +14,8 @@ static class WorkspaceAuthoringReferences
 {
     internal static void Validate(ScreenplayWorkspace before, ScreenplayWorkspace after, WorkspaceAuthoringRequest request, ImmutableArray<Diagnostic>.Builder diagnostics, IReadOnlyDictionary<SemanticAddress, SemanticAddress>? referenceRenames)
     {
-        var previousIndex = WorkspaceSyntaxIndex.Create(before);
-        var currentIndex = WorkspaceSyntaxIndex.Create(after);
+        var previousIndex = WorkspaceSyntaxIndex.Shared(before);
+        var currentIndex = WorkspaceSyntaxIndex.Shared(after);
         var current = new WorkspaceReferenceBindings(currentIndex);
         if (WorkspaceReferenceLayout.Equivalent(before, after))
         {
