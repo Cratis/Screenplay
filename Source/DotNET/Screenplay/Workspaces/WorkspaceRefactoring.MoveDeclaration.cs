@@ -38,7 +38,7 @@ internal sealed partial class WorkspaceRefactoring
         {
             if (carried.Kind != SemanticKind.Specification) throw new InvalidWorkspaceAuthoring($"Carried '{MoveAddress(carried)}' is not a specification.");
             var specification = SingleSliceMember(index, carried, null, "carried specification");
-            if (!Ancestors(specification, index).Contains(source)) throw new InvalidWorkspaceAuthoring($"Carried specification '{MoveAddress(carried)}' is not declared in source slice '{MoveAddress(source.Address)}'.");
+            if (!Ancestors(specification, index).Any(ancestor => ancestor.Node is SliceSyntax && source.Address!.Equals(ancestor.Address))) throw new InvalidWorkspaceAuthoring($"Carried specification '{MoveAddress(carried)}' is not declared in source slice '{MoveAddress(source.Address)}'.");
             moved.Add(specification);
         }
 
@@ -109,14 +109,34 @@ internal sealed partial class WorkspaceRefactoring
         return fragment;
     }
 
+    static readonly string[] _sliceDeclarationMembers = ["events", "commands", "readModels", "projections", "queries", "specifications", "reactions", "captures"];
+
     static void SliceDeclarations(JsonObject slice, Dictionary<string, JsonNode> contents)
     {
-        foreach (var member in slice.Where(pair => pair.Value is JsonArray { Count: > 0 } items && items.All(item => item is JsonObject { } value && value["id"] is JsonValue)).Select(pair => pair.Key).ToArray())
+        foreach (var member in _sliceDeclarationMembers)
         {
-            foreach (var item in (JsonArray)slice[member]!) contents[member + ":" + item!["id"]!.GetValue<string>()] = item.DeepClone();
+            if (slice[member] is JsonArray items)
+            {
+                foreach (var item in items) contents[member + ":" + item!["id"]!.GetValue<string>()] = item.DeepClone();
+            }
             slice.Remove(member);
         }
     }
+
+    static void RequireSliceOwnedMembers(Dictionary<string, JsonNode> original, Dictionary<string, JsonNode> candidate)
+    {
+        foreach (var (id, before) in original)
+        {
+            if (before["kind"] is null || !candidate.TryGetValue(id, out var after)) continue;
+            var changed = new[] { "reducers", "constraints" }
+                .Where(member => !JsonNode.DeepEquals(before[member], after[member]))
+                .SelectMany(member => Names(before[member]).Concat(Names(after[member])).Distinct(StringComparer.Ordinal).Select(name => $"{member[..^1]} '{name}'"))
+                .ToArray();
+            if (changed.Length > 0) throw new InvalidWorkspaceAuthoring($"The move changes what slice '{before["name"]?.GetValue<string>()}' owns: {string.Join(", ", changed)}. Reducers and constraints stay with their slice; move them by hand first.");
+        }
+    }
+
+    static IEnumerable<string> Names(JsonNode? members) => members is JsonArray items ? items.Select(item => item?["name"]?.GetValue<string>() ?? "?") : [];
 
     sealed record MoveRehome(string Prefix, string Replacement, SemanticAddress? Declaration);
 

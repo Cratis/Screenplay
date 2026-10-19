@@ -122,6 +122,7 @@ internal sealed partial class WorkspaceRefactoring
         if (!after.Compilation.Success) throw new InvalidWorkspaceAuthoring("The move made the executable model unavailable: " + string.Join(" | ", after.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Message)));
         var original = ExecutableContents(before, declarationMembership);
         var candidate = ExecutableContents(after, declarationMembership);
+        if (declarationMembership) RequireSliceOwnedMembers(original, candidate);
         var differences = original.Keys.Union(candidate.Keys).Where(id => !original.TryGetValue(id, out var old) || !candidate.TryGetValue(id, out var current) || !JsonNode.DeepEquals(old, current)).ToArray();
         if (differences.Length > 0) throw new InvalidWorkspaceAuthoring("Executable model differs beyond ownership addresses (including inherited authorize): " + string.Join(", ", differences));
     }
@@ -350,7 +351,7 @@ internal sealed partial class WorkspaceRefactoring
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
         var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeInteractions: true);
         candidateBindings.RequireNoCollisions();
-        RequireMoveReferences(candidateIndex, plan.Bindings, candidateBindings, locations, plan.Nodes, plan.Migrations);
+        RequireMoveReferences(candidateIndex, plan.Bindings, candidateBindings, locations, plan.Nodes, plan.Migrations, plan.DeclarationMove);
         foreach (var container in plan.Index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax).Select(entry => entry.Address!).Distinct())
         {
             var expected = plan.Migrations.GetValueOrDefault(container) ?? container;
@@ -371,7 +372,8 @@ internal sealed partial class WorkspaceRefactoring
                 plan.Repairs.ToImmutable(),
                 plan.Moved)
             {
-                SpecificationsCarried = plan.Carried
+                SpecificationsCarried = plan.Carried,
+                AddressMigrations = plan.Migrations
             }
         };
     }
@@ -428,7 +430,8 @@ internal sealed partial class WorkspaceRefactoring
         WorkspaceReferenceBindings current,
         Dictionary<JsonNode, (DocumentId Document, string Path)> locations,
         Dictionary<WorkspaceNodeHandle, JsonNode> nodes,
-        Dictionary<SemanticAddress, SemanticAddress> migrations)
+        Dictionary<SemanticAddress, SemanticAddress> migrations,
+        bool declarationMove = false)
     {
         var entries = after.Entries.ToDictionary(entry => (entry.Handle.Document, entry.Handle.Path));
         WorkspaceSyntaxEntry? Counterpart(WorkspaceSyntaxEntry original)
@@ -449,6 +452,11 @@ internal sealed partial class WorkspaceRefactoring
             else if (originalTarget is not null) sameTarget = Counterpart(originalTarget)?.Handle == candidate?.Target?.Entry?.Handle;
             if (candidate is null || candidate.Outcome != binding.Outcome || !sameTarget || (binding.Target is null && binding.Reference.Text != candidate.Reference.Text))
             {
+                if (declarationMove && originalTarget?.Address is { } moved && migrations.ContainsKey(moved) && !binding.Reference.Text.Contains('.'))
+                {
+                    throw new InvalidWorkspaceAuthoring($"The move would change what '{binding.Reference.Text}' at '{Position(workspace.Documents, binding.Reference.Entry)}' refers to; qualify the reference to '{binding.Reference.Text}' as '{string.Join('.', moved.Parts.Skip(1).Select(part => part.Key))}' first.");
+                }
+
                 throw new InvalidWorkspaceAuthoring($"Reference capture, ambiguity or loss at '{binding.Reference.Key}': '{binding.Reference.Text}' ({binding.Outcome}, {MoveAddress(binding.Target?.Entry?.Address)}) -> '{candidate?.Reference.Text}' ({candidate?.Outcome}, {MoveAddress(candidate?.Target?.Entry?.Address)}). Candidates: {string.Join(", ", after.Entries.Where(entry => WorkspaceReferenceBindings.Name(entry.Node) == binding.Reference.Text.Split('.')[^1]).Select(entry => entry.Address is null ? entry.Handle.Path : MoveAddress(entry.Address)))}.");
             }
         }
