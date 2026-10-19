@@ -1,3 +1,8 @@
+---
+title: "Constraints"
+description: "Declare unique constraints in Screenplay that Chronicle checks before an append commits, and see what happens on violation."
+---
+
 # Constraints
 
 One quoted or fenced-text `description` body line records authoring intent (`PLAY0270`). It prints first, before rules or `file`; it neither supplies a rule nor counts as a file constraint's declarative option. It is distinct from `message` and is not localizable. Markdown `documentation` is not supported here.

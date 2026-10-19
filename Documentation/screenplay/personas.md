@@ -1,3 +1,8 @@
+---
+title: "Personas"
+description: "Declare Screenplay personas, the named roles that interact with an application and the policies that define what each may do."
+---
+
 # Personas
 
 Personas name the roles that interact with the application — the vocabulary of Event Modeling's actors. A persona has a name, an optional description, and the [policies](policies.md) that define what the persona is allowed to do.
