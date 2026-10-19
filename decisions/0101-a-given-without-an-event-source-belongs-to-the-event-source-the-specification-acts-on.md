@@ -4,7 +4,7 @@ title: A given without an event source belongs to the event source the specifica
 status: accepted
 stage: none
 decided: 2026-10-19
-decider: einari (owner)
+decider: Einar Ingebrigtsen
 class: contract
 reversibility: costly
 applies-to:
