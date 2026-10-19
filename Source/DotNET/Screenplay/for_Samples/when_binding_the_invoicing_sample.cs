@@ -30,6 +30,17 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
+    void should_parse_the_anonymous_policy() => _application.Policies.Single(policy => policy.Name == "Anyone").Condition.ShouldBeOfExactType<AnonymousConditionSyntax>();
+
+    [Fact]
+    void should_not_ask_the_anonymous_query_specification_for_a_caller() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.MissingSpecificationCaller && diagnostic.Message.Contains("VerifyingWithoutSigningIn", StringComparison.Ordinal)).ShouldBeFalse();
+
+    [Fact]
+    void should_keep_the_anonymous_gate_alone_on_its_path() => _diagnostics.Any(diagnostic =>
+        diagnostic.Code is DiagnosticCodes.AnonymousPolicyUnderEnclosingGate or DiagnosticCodes.AnonymousPolicyInCompositeGate).ShouldBeFalse();
+
+    [Fact]
     void should_pin_the_described_command_information() => _diagnostics.Any(diagnostic =>
         diagnostic.Code == DiagnosticCodes.DescribedCommandNotImplemented && diagnostic.Severity == DiagnosticSeverity.Information &&
         diagnostic.Message.Contains("ApplyLateFee", StringComparison.Ordinal)).ShouldBeTrue();

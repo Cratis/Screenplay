@@ -509,6 +509,10 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
 | `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
 | `PLAY0441` | Error | A policy has more than one `require` line; combine the conditions with `and`/`or` in one `require`. |
+| `PLAY0804` | Error | A policy combines `anonymous` with another condition in its `require` line. `anonymous` admits every caller, so it must be the whole condition. |
+| `PLAY0805` | Error | A policy negates `anonymous`. Write `require authenticated` for a policy that refuses callers without an identity. |
+| `PLAY0806` | Error | An `authorize` line combines an anonymous policy with another policy. An anonymous policy is the whole authorization of what it gates. |
+| `PLAY0807` | Error | A command or query is gated by an anonymous policy and by another `authorize` on its module, its feature or itself. The reference semantics combine gates with `and`, while a generated `[AllowAnonymous]` overrides `[Authorize]`; refusing the mix keeps them in agreement. Move the anonymous gate to the commands and queries that are public. |
 
 ### Authentication
 
@@ -1257,7 +1261,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
 | `PLAY0387` | Error | A specification declares more than one `given caller` block or `then denied` outcome. |
 | `PLAY0388` | Error | `then denied` contains extra text or is mixed with another outcome. |
-| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. |
+| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. A command or query gated only by an anonymous policy needs no caller, so its specifications may omit it. |
 
 ### Constraints in the semantic model
 
