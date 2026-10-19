@@ -61,12 +61,6 @@ module Merchandising
           effectiveFrom = "2026-03-01"
         then error "An amount cannot be negative"
 
-      screen SetPrice
-        template blueprint Cratis.Blueprint.Default FormScreen version "^1"
-          actions
-            action SetProductPrice
-              navigate to PricingBoard
-
     slice StateView PricingBoard
       description "Products as cards in columns by status"
 
@@ -99,11 +93,11 @@ module Merchandising
             component Cratis.Blueprint.Default.pageHeader pricingHeader
               property title = "Pricing"
               property subtitle = "Products by status - set a price to make one ready"
-          toolbar
-            toolbar actions
-              button setprice title "Set price" slice Merchandising.Pricing.SetProductPrice emphasis primary icon tag
           board
             data PricedProduct[] via query AllPricedProducts
+            on select
+              navigate to ProductPage
+                with productId from item.productId
 
       specification TheBoardFollowsTheStatus
         given ProductDrafted

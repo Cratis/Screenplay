@@ -66,7 +66,9 @@ module Merchandising
               column described label "Described"
               column priced    label "Priced"
               column status    label "Status"
-              on row-click navigate to ProductPage by productId
+              on select
+                navigate to ProductPage
+                  with productId from item.id
 
       specification AProductIsReadyOnceDescribedAndPriced
         given ProductDrafted
@@ -236,12 +238,6 @@ module Merchandising
         when ApproveMug
         then error "A product is approved once until it is withdrawn"
 
-      screen Approve
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ApproveProductForSale
-              navigate to ReadyForApproval
-
     slice StateChange WithdrawProduct
       description "Takes a product off sale"
       command WithdrawProduct
@@ -262,13 +258,12 @@ module Merchandising
         when WithdrawProduct
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1099"
         then error "ProductReadiness '6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1099' does not exist."
-      screen Withdraw
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action WithdrawProduct
+
+  feature Reporting
+    description "How the catalogue stands"
 
     slice StateView CatalogDashboard
-      description "Products by status, for the merchandiser and the ops administrator"
+      description "Products by status, for the merchandiser"
 
       readmodel CatalogFigure
         productId ProductId

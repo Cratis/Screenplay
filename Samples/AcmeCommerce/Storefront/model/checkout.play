@@ -14,11 +14,6 @@ module Shop
       event ShippingAddressEntered
         shipTo PostalAddress
 
-      screen AddressStep
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action EnterShippingAddress
-
       specification EnteringAnAddress
         given caller
           authenticated
@@ -43,11 +38,6 @@ module Shop
 
       event DeliveryMethodChosen
         method DeliveryMethod
-
-      screen DeliveryStep
-        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
-          actions
-            action ChooseDeliveryMethod
 
       specification ChoosingExpressDelivery
         given caller
@@ -79,6 +69,22 @@ module Shop
           method   = method
         remove with BasketCleared
 
+      screen Checkout
+        description "Address, delivery, review: one CommandForm per step, the draft built so far shown as progress"
+        template blueprint Cratis.Blueprint.Default WizardScreen version "^1"
+          header
+            title "Checkout"
+          progress
+            data CheckoutDraft via query GetCheckoutDraft by basketId
+            summary CheckoutDraft
+              field shipTo label "Deliver to"
+              field method label "Delivery"
+          actions
+            action EnterShippingAddress
+            action ChooseDeliveryMethod
+            action CheckOut
+              navigate to MyOrders
+
       specification TheDraftFollowsTheSteps
         given caller
           authenticated
@@ -92,15 +98,6 @@ module Shop
         then readmodel CheckoutDraft
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method   = "express"
-
-      screen Review
-        description "What will be ordered, before the shopper confirms"
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
-          summary
-            data CheckoutDraft via query GetCheckoutDraft by basketId
-            summary CheckoutDraft
-              field shipTo label "Deliver to"
-              field method label "Delivery"
 
     // Step 3: review and confirm
     slice StateChange CheckOut
@@ -144,16 +141,6 @@ module Shop
         deliveryMethod DeliveryMethod
         total          Money
 
-      screen Checkout
-        description "Address, delivery, review: one CommandForm per step"
-        template blueprint Cratis.Blueprint.Default WizardScreen version "^1"
-          header
-            title "Checkout"
-          actions
-            action EnterShippingAddress
-            action ChooseDeliveryMethod
-            action CheckOut
-              navigate to MyOrders
 
       specification RejectingAnEmptyBasket
         given caller
@@ -248,12 +235,6 @@ module Shop
 
       event BasketCleared
         description "The basket was emptied (after checkout)"
-
-      screen ClearBasket
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action ClearBasketContents
-              navigate to Basket
 
       specification ClearingABasket
         given caller

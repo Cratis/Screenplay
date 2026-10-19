@@ -14,6 +14,7 @@ module Shop
         customerId CustomerId
         status     OrderStatus
         total      Money
+        deliveryMethod DeliveryMethod
 
       query AllMyOrders => observable MyOrder[]
         description "The shopper's orders"
@@ -27,11 +28,12 @@ module Shop
           customerId = customerId
           status     = "received"
           total      = total
+          deliveryMethod = deliveryMethod
         from MyOrderUpdated
           status = status
 
       screen MyOrders
-        description "Orders as cards with a status chip"
+        description "The shopper's orders; open one to track it"
         template blueprint Cratis.Blueprint.Default ListScreen version "^1"
           header
             title "My orders"
@@ -41,6 +43,20 @@ module Shop
               column orderId   label "Order"
               column status    label "Status"
               column total     label "Total"
+              on row-click navigate to OrderTracking by orderId
+
+      screen OrderTracking
+        description "Where one order stands: received, approved, shipped, delivered"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            title "Track your order"
+          summary
+            data MyOrder via query GetMyOrder by orderId
+            summary MyOrder
+              field orderId        label "Order"
+              field status         label "Status"
+              field deliveryMethod label "Delivery"
+              field total          label "Total"
 
       specification SeeingAnOrderMoveToShipped
         given caller

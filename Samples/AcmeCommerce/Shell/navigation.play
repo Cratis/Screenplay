@@ -28,10 +28,12 @@ layout AcmeNavigation
       item basket title "Basket" target Shop.Basket
       item checkout title "Checkout" target Shop.Checkout
       item myorders title "My orders" target Shop.MyOrders
+      item account title "Account" target Shop.Account
     item catalog title "Catalog" icon tag target Merchandising
       item products title "Products" target Merchandising.Products
       item pricing title "Pricing" target Merchandising.Pricing
       item publication title "Publication" target Merchandising.Publication
+      item catalogdashboard title "Dashboard" target Merchandising.Reporting
     item sales title "Sales" icon receipt target Orders
       item pipeline title "Orders pipeline" target Orders.Fulfilment
       item inbox title "Approval inbox" target Orders.Approval
