@@ -1,5 +1,65 @@
 module Orders
   feature Approval
+    // The inbox is the first slice of the feature on purpose: the navigation item "Approval inbox" targets the feature Orders.Approval,
+    // and a feature opens on its first screen. The Decision screen below is reached from the inbox, never from the menu.
+    slice StateView ApprovalInbox
+      description "Orders that wait for a manager's decision"
+
+      readmodel WaitingOrder
+        description "An order that nobody has decided on yet"
+        orderId     OrderId key
+        customerId  CustomerId
+        email       EmailAddress
+        quotedTotal Money
+
+      query OrdersWaitingForApproval => observable WaitingOrder[]
+        description "The manager's inbox"
+        authorize IsSalesManager
+
+      projection WaitingOrderProjection => WaitingOrder
+        no automap
+        from OrderReceived
+          customerId  = customerId
+          email       = email
+          quotedTotal = quotedTotal
+        remove with OrderApproved
+        remove with OrderRejected
+        remove with OrderCancelled
+
+      screen ApprovalInbox
+        description "Cards for the orders a manager still has to decide on"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            title "Approval inbox"
+          list
+            data WaitingOrder[] via query OrdersWaitingForApproval
+            table WaitingOrder
+              column orderId     label "Order"
+              column email       label "Customer"
+              column quotedTotal label "Quoted total"
+              on double click
+                navigate to Decision
+                  with orderId from item.orderId
+
+      // The decision: approve or reject, one confirm dialog
+
+      specification ABigOrderWaitsForAManager
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          email       = "grace@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        then readmodel WaitingOrder
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          quotedTotal = 1798
+
     // AUTOMATION driven by a policy: small orders approve themselves. The reaction runs as a sales manager (the role ApproveOrder demands).
     // "Customer not flagged" has no home yet: nothing in the model flags a customer (open question on the Sales board).
     slice Automation AutoApproveSmallOrders
