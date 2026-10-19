@@ -1,3 +1,8 @@
+---
+title: "Diagnostics"
+description: "The catalogue of Screenplay compiler diagnostic codes, with how to read, match and suppress them; codes never change."
+---
+
 # Diagnostics
 
 Every problem the compiler finds is reported as a **diagnostic**: a severity, a stable code, a message, and the line and column it came from. This page is the catalogue of those codes.

@@ -1,3 +1,8 @@
+---
+title: "Forms"
+description: "Declare Screenplay forms: the input surface for a command, with fields, layout, population from a query and submit behavior."
+---
+
 # Forms
 
 A form accepts one quoted or fenced-text `description` body line. It prints first before `populate` and fields, as report-only authoring metadata rather than a localizable UI label. Individual fields do not gain descriptions. Markdown `documentation` is not supported here.

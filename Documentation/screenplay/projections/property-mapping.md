@@ -1,3 +1,8 @@
+---
+title: "Property Mapping"
+description: "Assign event values to read model properties in a Screenplay projection with Property = expression mappings."
+---
+
 # Property Mapping
 
 Property mapping assigns values from events to read model properties. Mappings use the simple assignment syntax: `Property = expression`.

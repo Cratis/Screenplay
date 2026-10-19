@@ -1,3 +1,8 @@
+---
+title: "Sample data"
+description: "Declare sample data packs in Screenplay so designs and previews show realistic rows before a backend exists; never used in production."
+---
+
 # Sample data
 
 A design surface or a preview needs rows to show in a table, a list or a chart before a real backend feeds it. `sample data` declares those rows as a **pack**: demo records per shape, in one locale, written with the same literals as everything else in Screenplay.

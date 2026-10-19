@@ -1,3 +1,8 @@
+---
+title: "VS Code extension"
+description: "Use the Screenplay VS Code extension to open a .play file as an event model board and get live editor diagnostics."
+---
+
 # VS Code extension
 
 The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.play` file on the **event model board**, the board Cratis Studio draws. The model reads as a timeline:
@@ -435,6 +440,22 @@ identity before and after consent. A replaced root cannot pass inspection or res
 including when replacement happened after inspection. Reload the window, review the
 new root and deliberately configure/discover it instead; reload does not recover
 the previous transaction.
+
+## C# completeness checks
+
+The [completeness checks](completeness.md) are opt-in and the editor's own validation does not compute them; several
+are C#-only. With the repair bridge above configured, run **Screenplay: Run C# Completeness Checks** from the command
+palette. The extension asks the same `screenplay mcp` server for every completeness check, pages through the results
+against one pinned source revision and shows them in their own problem collection, labelled **Screenplay C# check**.
+It starts no server of its own: when the bridge is disabled or unconfigured you get one message and nothing runs.
+
+A finding describes the saved file. Editing a document clears its findings, a document with unsaved edits shows
+none, and a stale revision, a changed setting or model root, or a closed connection clears them all. Run the command
+again after saving. Set `screenplay.verdicts.onSave` to `true` in User settings to rerun the checks a moment after
+every save; failures there are only logged. If the model has errors the checks are skipped and the command says so.
+The same run also reads the server's executable diagnostics, which come from the semantic binder, and shows PLAY0546 in the same collection. If the model does not bind, the server refuses that read, or a repair review is open (reopening the workspace would discard it), PLAY0546 is simply absent while the other findings still appear.
+
+A finding about the whole application, such as PLAY0537 reporting that no screen is reachable because the model has no navigation entry point, has no file or line of its own; it appears on the first line of the model's root file (the first `.play` file in the model root, alphabetically).
 
 ## Theme
 
