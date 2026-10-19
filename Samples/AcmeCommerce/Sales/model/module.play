@@ -5,6 +5,7 @@ module Orders
 
   feature Intake
   feature Approval
+  feature Decision
   feature Fulfilment
   feature Lookup
   feature Cancellations
