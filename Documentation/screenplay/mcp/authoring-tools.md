@@ -459,7 +459,9 @@ realign files after the move.
 ## Rename without hand-editing references
 
 For a supported declaration, call `propose-rename` with its handle, exact
-`expectedName`, `newName`, and both workspace revisions. The default formatting
+`expectedName`, `newName`, and both workspace revisions. `read-workspace` with
+`view: "refactorings"` lists the declarations that have a supported shape; a
+listed declaration can still be refused for a collision or an unproven reference. The default formatting
 is `PreserveTrivia`: verified identifier patches leave comments, line endings,
 BOM and unrelated text intact. Event renames update typed consumers, including
 constraint `released by` references and screen/behavior `on event` triggers.
@@ -537,7 +539,8 @@ The proposal requires unchanged catalog assignments, retained comments and uncha
 
 ## Extract an inline event
 
-Use `read-ast` to find the inline `EventSyntax` handle, then call
+Page `read-workspace` with `view: "refactorings"` to find the inline events that
+can be extracted, or use `read-ast` to find the inline `EventSyntax` handle. Then call
 `propose-extract-inline-event` with `subject`, `expectedRevision`,
 `expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`.
 This is an explicit refactoring, not a diagnostic repair. The declaration moves

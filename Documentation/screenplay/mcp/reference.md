@@ -738,7 +738,7 @@ arguments or failed requests, never successful partial batches.
 | --- | --- | --- |
 | `repair-capabilities` | None | None |
 | `open-workspace` | None | `applicationName`, `path`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
+| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `refactorings` for read-only extract and rename offers; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
@@ -965,13 +965,34 @@ evidence metadata and the failure discriminator, not every MCP feature.
 
 `PLAY0787` offers a canonical-formatting repair from an exact deprecated Studio text-rule pattern to the equivalent ordinal literal comparison, preserving the rule's message and severity. Discovery is read-only; review the revision-bound proposal before explicit apply.
 
-The contract advertises `PLAY0787`, `PLAY0166`, `PLAY0478`, `PLAY0563`, `PLAY0564`, `PLAY0614`, `PLAY0653`, `PLAY0661`, `PLAY0683`, `PLAY0684`, `PLAY0688` and `PLAY0701` through `propose-repair`. `PLAY0701` rewrites a given/when capture record to a given event/when append fixture only for a capture with exactly one `from` event, using the specification subject and preserving its fields. It requires individual review and canonical formatting and does not support pinned evidence or fix-all. Multiple `from` events have no repair, and `PLAY0700` always requires an authored key decision. `PLAY0688` replaces a refuted generated-concept rule with the strategy-derived `matches` pattern, preserving its message and severity; it requires individual review and canonical formatting and does not support pinned evidence or fix-all. `PLAY0661` completes missing command-read key parts only with unique same-named compatible sources; queries and trigger reads are not repaired. `PLAY0683`/`PLAY0684` raise NanoID size or bytes count to at least 64 random bits using the concept subject, including across documents. `PLAY0683` also offers a unique constraint using the command-property subject when exactly one production maps it to exactly one event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. `PLAY0653` removes duplicate compliance markers from one concept header with `PreserveTrivia` and does not support pinned evidence. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
+The contract advertises `PLAY0787`, `PLAY0166`, `PLAY0469`, `PLAY0478`, `PLAY0516`, `PLAY0563`, `PLAY0564`, `PLAY0614`, `PLAY0653`, `PLAY0661`, `PLAY0664`, `PLAY0683`, `PLAY0684`, `PLAY0688` and `PLAY0701` through `propose-repair`. `PLAY0469` removes an inline payload copy of the event-source id; it changes the event contract, can retire semantic addresses, and requires individual review. `PLAY0516` pins timeline order before a glob import, and `PLAY0664` removes a redundant production route. `PLAY0701` rewrites a given/when capture record to a given event/when append fixture only for a capture with exactly one `from` event, using the specification subject and preserving its fields. It requires individual review and canonical formatting and does not support pinned evidence or fix-all. Multiple `from` events have no repair, and `PLAY0700` always requires an authored key decision. `PLAY0688` replaces a refuted generated-concept rule with the strategy-derived `matches` pattern, preserving its message and severity; it requires individual review and canonical formatting and does not support pinned evidence or fix-all. `PLAY0661` completes missing command-read key parts only with unique same-named compatible sources; queries and trigger reads are not repaired. `PLAY0683`/`PLAY0684` raise NanoID size or bytes count to at least 64 random bits using the concept subject, including across documents. `PLAY0683` also offers a unique constraint using the command-property subject when exactly one production maps it to exactly one event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. `PLAY0653` removes duplicate compliance markers from one concept header with `PreserveTrivia` and does not support pinned evidence. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
 `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
 repairs outside this contract remain available to legacy clients. Feature support
 comes from negotiation, not a CLI version or an ESM version. Initialize with MCP
 `2025-06-18`, send `notifications/initialized`, check `tools/list`, then read the
 capabilities. Consumers validate the fields they use, tolerate additive response
 fields and refuse unsupported contract majors or malformed responses.
+
+Every action also states, as additive fields, what an editor discloses before
+consent: `canFixAll`, `individualReviewRequired` (true exactly when `canFixAll` is
+false), `changesEventContract`, `changesRouting` and `retiresSemanticAddresses`.
+An editor that has not read these fields keeps its existing per-code review
+rules.
+
+The additive `refactorings` array advertises the two refactorings with an
+explicit subject: `extract-inline-event` through `propose-extract-inline-event`
+and `rename-declaration` through `propose-rename`. Both are discovered through
+`read-workspace` with `view: "refactorings"`, require individual review, never
+join a fix-all and do not support pinned evidence. A renamed event keeps its
+pinned identity (`eventPinDefault: "Preserve"`) unless the caller states
+`eventNeverPersisted`.
+
+`read-workspace` with `view: "refactorings"` pages offers bound to the current
+revision. Each item has `kind`, the `subject` handle, `location`, `name` and
+`declarationKind`. An offer comes from the proposal's own shape check, so it is a
+hint and not a promise: the proposal can still refuse, for example when
+extraction would lose a comment, or when a rename collides or meets a reference
+it cannot prove. Discovery writes nothing and keeps no proposal.
 
 To opt in for either action:
 

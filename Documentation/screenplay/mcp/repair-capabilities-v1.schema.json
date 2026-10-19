@@ -9,7 +9,7 @@
     "serverVersion": { "type": "string", "minLength": 1 },
     "repairContractVersion": { "const": 1 },
     "actions": {
-      "description": "PLAY0661 completes command-read keys only with unique same-named compatible sources. Queries and trigger reads are not repaired. PLAY0660 and PLAY0662 are not repairable. PLAY0683/PLAY0684 raise nanoid size or bytes count to at least 64 random bits using the concept subject, including across documents. PLAY0683 also offers a unique constraint using the command-property subject only for exactly one mapped event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. PLAY0688 replaces a refuted generated-concept rule with the strategy-derived matches pattern, preserving its message and severity; it requires individual review and canonical formatting and does not support pinned evidence or fix-all. PLAY0701 replaces a capture record fixture with an event fixture only for a capture over events with exactly one from event, using the specification subject. It requires individual review and canonical formatting and supports neither pinned evidence nor fix-all. PLAY0700 has no automatic repair.",
+      "description": "PLAY0469 removes an inline payload copy of the event-source id; it changes the event contract, can retire semantic addresses and requires individual review. PLAY0516 pins timeline order before a glob import. PLAY0664 removes a redundant production route. PLAY0661 completes command-read keys only with unique same-named compatible sources. Queries and trigger reads are not repaired. PLAY0660 and PLAY0662 are not repairable. PLAY0683/PLAY0684 raise nanoid size or bytes count to at least 64 random bits using the concept subject, including across documents. PLAY0683 also offers a unique constraint using the command-property subject only for exactly one mapped event property. Both generation repairs require individual review and canonical formatting and do not support pinned evidence. PLAY0688 replaces a refuted generated-concept rule with the strategy-derived matches pattern, preserving its message and severity; it requires individual review and canonical formatting and does not support pinned evidence or fix-all. PLAY0701 replaces a capture record fixture with an event fixture only for a capture over events with exactly one from event, using the specification subject. It requires individual review and canonical formatting and supports neither pinned evidence nor fix-all. PLAY0700 has no automatic repair.",
       "type": "array",
       "items": {
         "type": "object",
@@ -18,7 +18,34 @@
           "diagnosticCode": { "type": "string", "pattern": "^PLAY[0-9]{4}$" },
           "tool": { "const": "propose-repair" },
           "requiredFormatting": { "type": "string" },
-          "pinRepairEvidence": { "type": "boolean" }
+          "pinRepairEvidence": { "type": "boolean" },
+          "canFixAll": { "type": "boolean", "description": "Additive. Whether the repair may be applied together with other findings of the same code." },
+          "individualReviewRequired": { "type": "boolean", "description": "Additive. True exactly when canFixAll is false; the editor reviews each finding on its own." },
+          "changesEventContract": { "type": "boolean", "description": "Additive. The repair changes the shape of an existing event contract; PLAY0469 removes a payload copy of the event-source id." },
+          "changesRouting": { "type": "boolean", "description": "Additive. The repair changes where a production appends." },
+          "retiresSemanticAddresses": { "type": "boolean", "description": "Additive. The repair can retire assigned semantic addresses." }
+        }
+      }
+    },
+    "refactorings": {
+      "description": "Optional additive refactorings with an explicit subject. They are discovered through read-workspace view refactorings, are never offered as no-input repairs and never join a fix-all. A discovered offer is a hint; the proposal remains authoritative.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "tool", "discoveryView", "requiredFormatting", "canFixAll", "individualReviewRequired", "pinRepairEvidence"],
+        "properties": {
+          "kind": { "enum": ["extract-inline-event", "rename-declaration"] },
+          "tool": { "enum": ["propose-extract-inline-event", "propose-rename"] },
+          "discoveryView": { "const": "refactorings" },
+          "requiredFormatting": { "type": "string" },
+          "canFixAll": { "const": false },
+          "individualReviewRequired": { "const": true },
+          "pinRepairEvidence": { "const": false },
+          "changesEventContract": { "type": "boolean" },
+          "changesRouting": { "type": "boolean" },
+          "retiresSemanticAddresses": { "type": "boolean" },
+          "eventPinDefault": { "const": "Preserve", "description": "A renamed event keeps its pinned identity unless the caller states eventNeverPersisted." },
+          "eventNeverPersistedOptIn": { "type": "boolean" }
         }
       }
     },
