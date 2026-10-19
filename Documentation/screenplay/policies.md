@@ -11,7 +11,7 @@ policy <Name>
   require <condition>
 ```
 
-Write one `require` line. Its `<condition>` can be `authenticated`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, `not <condition>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
+Write one `require` line. Its `<condition>` can be `authenticated`, `anonymous`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, `not <condition>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
 
 Alternatively, implement the policy in an inline block:
 
@@ -57,6 +57,7 @@ The source compiler resolves policy names at all four positions and warns about 
 | Condition | Meaning |
 | --- | --- |
 | `authenticated` | The caller must be authenticated. |
+| `anonymous` | Every caller passes, with or without an identity. Stands alone; see [Public commands and queries](#public-commands-and-queries). |
 | `not <condition>` | The operand must be false; parentheses can group its operand. |
 | `role "<role>"` | The caller must have the role. |
 | `claim "<claim>" matches subject` | The claim must match the subject of the current event source. |
@@ -79,6 +80,48 @@ policy PersonOnly
 ```
 
 A caller with either the `Service` role or an `actorKind` value of `service` is denied. A missing claim has no match, so its negation is true. `not role "Service"` alone does **not** require authentication; keep `authenticated` when you need a signed-in caller. `not (role "Service" or claim "actorKind" matches "service")` negates the whole group, while `not not authenticated` restores the original condition. `not` belongs to policy conditions, not named-policy expressions in `authorize`, and cannot negate an inline or file implementation.
+
+## Public commands and queries
+
+Some things must work for someone who has not signed in: browsing a catalog, signing up, confirming an email address. Say so with a policy that requires `anonymous`, and authorize them with it:
+
+```screenplay
+policy Anyone
+  description "Open to everyone, signed in or not"
+  require anonymous
+
+module Catalog
+  feature Browsing
+    slice StateChange RegisterInterest
+      command RegisterInterest
+        authorize Anyone
+        productId String identifier
+        email String
+        produces InterestRegistered
+          for productId
+          productId = productId
+          email = email
+      event InterestRegistered
+        productId String
+        email String
+      specification AVisitorRegistersInterest
+        when RegisterInterest
+          productId = "p1"
+          email = "ada@example.com"
+        then InterestRegistered
+          productId = "p1"
+          email = "ada@example.com"
+```
+
+`anonymous` always holds. A caller without an identity passes, and so does a signed-in caller, a system identity and a reaction that runs as an identity; it does not mean *only* callers without an identity. Leaving `authorize` off says nothing about who may call, while `authorize Anyone` says the command is public on purpose, and an application renderer that refuses unauthenticated callers by default keeps it open (Stage renders it as `[AllowAnonymous]`).
+
+Because it lets everyone in, an anonymous policy is the whole authorization of what it gates:
+
+- `anonymous` is the only condition on its `require` line. Combining it with another condition reports `PLAY0804`, and `not anonymous` reports `PLAY0805` - write `require authenticated` instead.
+- An `authorize` line that names an anonymous policy names nothing else (`PLAY0806`).
+- A command or query gated by an anonymous policy has no other gate on its module, its feature or itself (`PLAY0807`). Gates combine with `and`, while `[AllowAnonymous]` in a generated application overrides `[Authorize]`; refusing the mix keeps the model and the application in agreement. Put the anonymous gate on the public commands and queries, and keep the other gates on the rest.
+
+A specification for a command or query gated only by an anonymous policy may leave out `given caller`, as `AVisitorRegistersInterest` does; one that gives a caller is checked the same way. A model with an anonymous policy uses ESM v31 ([decision 0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md)).
 
 ## Examples
 

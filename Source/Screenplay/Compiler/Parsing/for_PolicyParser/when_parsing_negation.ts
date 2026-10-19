@@ -15,6 +15,7 @@ function condition(text: string): PolicyConditionSyntax {
 
 function describeCondition(node: PolicyConditionSyntax): string {
     switch (node.kind) {
+        case 'AnonymousConditionSyntax': return 'anonymous';
         case 'AuthenticatedConditionSyntax': return 'authenticated';
         case 'RoleConditionSyntax': return `role:${node.role}`;
         case 'ClaimConditionSyntax': return `claim:${node.claim}`;

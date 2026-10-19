@@ -88,10 +88,23 @@ function sliceCommand(lines: string[], fences: boolean[], headerIndex: number, s
         if (indentOf(lines[index]) <= indentOf(lines[sliceIndex])) break;
         const command = lines[index].trim().match(/^command\s+(\w+)\s*$/);
         if (command) { name = command[1]; authorized = false; continue; }
-        if (name && /^authorize\b/.test(lines[index].trim())) authorized = true;
+        // A command gated only by an anonymous policy runs without a caller, so its specification needs none.
+        if (name && /^authorize\b/.test(lines[index].trim())) authorized = !anonymousPolicies(lines).has(lines[index].trim().replace(/^authorize\s+/, ''));
     }
     const symbol = symbols.commands.find(candidate => candidate.name === name);
     return symbol ? { symbol, authorized } : undefined;
+}
+
+function anonymousPolicies(lines: readonly string[]): Set<string> {
+    const names = new Set<string>();
+    let policy: string | undefined;
+    for (const line of lines) {
+        const header = line.match(/^policy\s+(\w+)\s*$/);
+        if (header) { policy = header[1]; continue; }
+        if (!/^\s/.test(line) && line.trim().length > 0) policy = undefined;
+        if (policy && /^\s+require\s+anonymous\s*$/.test(line)) names.add(policy);
+    }
+    return names;
 }
 
 function specificationBlock(command: CommandSymbol, authorized: boolean, symbols: DocumentSymbols, indent: number, unit: number): string {

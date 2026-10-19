@@ -1,0 +1,33 @@
+// ============================================================
+// Catalog: the application shell and look - a calm back office for merchandisers.
+//
+// Each Acme domain is its own application: its own logo (see navigation.play), theme, accent, colour scheme and menu, on the shared
+// platform (Cratis.Components + the Default blueprint's AppShell, ^1). The profile lists only the packages every Stage ships, so a screen
+// built from stock components plays everywhere, Studio's Play included.
+// ============================================================
+
+theme AcmeCatalog
+  compatible with Cratis.Components
+  compatible with Cratis.Blueprint.Default
+  compatible with PrimeReact
+  compatible with Acme.Commerce
+
+ui profile Catalog
+  target platform web
+  target size regular
+  theme AcmeCatalog
+
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+
+  root template blueprint Cratis.Blueprint.Default AppShell version "^1"
+    option navigationMode static
+    option menuTheme light
+
+  appearance
+    color scheme light
+    accent "#4338CA"
+
+  sample data
+    active AcmeCatalog

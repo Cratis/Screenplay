@@ -11,7 +11,9 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpSpecificationObligations
 {
-    internal static object Read(McpSnapshot snapshot, JsonElement arguments)
+    internal static object Read(McpSnapshot snapshot, JsonElement arguments) => McpReviewSelection.Page(snapshot, [.. Evaluate(snapshot, arguments).Select(Describe)], arguments, "Authored specification presence only, not execution or full behavioral coverage. Rules with explicit messages match exact then error text; unidentifiable rejection rules remain info/unmet. Matching specification lists are capped at 20; declaration-details pages the full inventory. Ambiguous references never establish a match.");
+
+    internal static List<McpSpecificationObligation> Evaluate(McpSnapshot snapshot, JsonElement arguments)
     {
         var selected = McpReviewSelection.Declarations(snapshot, arguments);
         var index = snapshot.Index;
@@ -22,7 +24,7 @@ static class McpSpecificationObligations
         }
         var specifications = index.Declarations.Where(declaration => declaration.Syntax is SpecificationSyntax)
             .Select(declaration => (Declaration: declaration, Syntax: expanded?.Specifications.FirstOrDefault(value => value.Authored.Location == declaration.Location && value.Authored.Name == declaration.Name)?.Effective ?? (SpecificationSyntax)declaration.Syntax)).ToArray();
-        var items = new List<object>();
+        var items = new List<McpSpecificationObligation>();
         var document = McpJson.OptionalString(arguments, "document");
 
         void Add(string ruleId, McpDeclaration owner, SourceLocation location, string subject, string description, Func<McpDeclaration, SpecificationSyntax, bool> matches, string? reason = null)
@@ -30,20 +32,7 @@ static class McpSpecificationObligations
             if (document is not null && !owner.Locations.Any(value => value.Path == document)) return;
             reason ??= index.Readiness.ExecutionReadiness(owner.Syntax, null);
             var metBy = specifications.Where(value => matches(value.Declaration, value.Syntax)).Select(value => value.Declaration.Owner).ToArray();
-            items.Add(new
-            {
-                ruleId,
-                declaration = owner.Owner,
-                location,
-                subject,
-                description,
-                severity = reason is null ? "warning" : "info",
-                reason,
-                status = metBy.Length > 0 ? "met" : "unmet",
-                specificationCount = metBy.Length,
-                specifications = metBy.Take(20).ToArray(),
-                specificationsTruncated = metBy.Length > 20
-            });
+            items.Add(new(ruleId, owner.Owner, location, subject, description, reason, metBy));
         }
 
         bool Action(McpDeclaration spec, SpecificationSyntax syntax, McpDeclaration command) => syntax.When is { } when && McpReviewSelection.Resolves(index, spec, when.CommandType, "Command", command);
@@ -136,8 +125,23 @@ static class McpSpecificationObligations
             }
         }
 
-        return McpReviewSelection.Page(snapshot, items, arguments, "Authored specification presence only, not execution or full behavioral coverage. Rules with explicit messages match exact then error text; unidentifiable rejection rules remain info/unmet. Matching specification lists are capped at 20; declaration-details pages the full inventory. Ambiguous references never establish a match.");
+        return items;
     }
+
+    static object Describe(McpSpecificationObligation obligation) => new
+    {
+        ruleId = obligation.RuleId,
+        declaration = obligation.Declaration,
+        location = obligation.Location,
+        subject = obligation.Subject,
+        description = obligation.Description,
+        severity = obligation.Reason is null ? "warning" : "info",
+        reason = obligation.Reason,
+        status = obligation.Met ? "met" : "unmet",
+        specificationCount = obligation.MetBy.Length,
+        specifications = obligation.MetBy.Take(20).ToArray(),
+        specificationsTruncated = obligation.MetBy.Length > 20
+    };
 
     static IEnumerable<(RemoveWithSyntax Removal, string Path, string? Variant)> Removals(IEnumerable<ProjectionBlockSyntax> blocks, string path = "", string? variant = null)
     {

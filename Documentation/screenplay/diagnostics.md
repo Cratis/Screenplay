@@ -509,6 +509,10 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
 | `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
 | `PLAY0441` | Error | A policy has more than one `require` line; combine the conditions with `and`/`or` in one `require`. |
+| `PLAY0804` | Error | A policy combines `anonymous` with another condition in its `require` line. `anonymous` admits every caller, so it must be the whole condition. |
+| `PLAY0805` | Error | A policy negates `anonymous`. Write `require authenticated` for a policy that refuses callers without an identity. |
+| `PLAY0806` | Error | An `authorize` line combines an anonymous policy with another policy. An anonymous policy is the whole authorization of what it gates. |
+| `PLAY0807` | Error | A command or query is gated by an anonymous policy and by another `authorize` on its module, its feature or itself. The reference semantics combine gates with `and`, while a generated `[AllowAnonymous]` overrides `[Authorize]`; refusing the mix keeps them in agreement. Move the anonymous gate to the commands and queries that are public. |
 
 ### Authentication
 
@@ -1257,7 +1261,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
 | `PLAY0387` | Error | A specification declares more than one `given caller` block or `then denied` outcome. |
 | `PLAY0388` | Error | `then denied` contains extra text or is mixed with another outcome. |
-| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. |
+| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. A command or query gated only by an anonymous policy needs no caller, so its specifications may omit it. |
 
 ### Constraints in the semantic model
 
@@ -1381,7 +1385,7 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. The inline-only repair removes the property and mapping, explicitly changes the event contract, retires its property address, and is excluded from fix-all. Consumers, opaque implementation impact or comment loss refuse the repair. Plain/standalone contracts receive guidance only: review persistence and generation evolution before changing their shape. |
+| `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. The inline-only repair removes the property and mapping, explicitly changes the event contract, retires its property address, and is excluded from fix-all. Consumers, opaque implementation impact or comment loss refuse the repair. Plain/standalone contracts receive guidance only: review persistence and generation evolution before changing their shape. To keep the stored contract instead, remove the copy with `propose-property` (`action: "remove"`, `newGeneration: true`, `CanonicalizeTouchedDocuments`), which drafts generation N+1 without the copy and extracts an inline event in the same proposal. The result is an evolution draft, not deployment-ready. |
 | `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
 | `PLAY0471` | Information | An event's `id` equals its current name. The typed removal repair covers inline and standalone declarations, preserves the executable model and catalog, and refuses comment loss. Monaco and VS Code also offer an [editor quick fix](vscode.md#event-quick-fixes) to remove the complete line unless it has a trailing comment. |
 | `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |

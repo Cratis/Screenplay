@@ -32,6 +32,12 @@ public sealed partial class SemanticModelBinder
             _ => false
         };
 
+        // Only an effective authorization that is exactly one anonymous policy runs without a caller.
+        bool RequiresCaller(SemanticAuthorization? authorization) =>
+            authorization is not null &&
+            !(authorization is SemanticPolicyReference reference &&
+                syntax.Policies.Any(policy => policy.Name == reference.Name && policy is { Condition: AnonymousConditionSyntax, Code: null, File: null }));
+
         void VerifyPersonaCallers(ImmutableArray<SemanticPolicy> policies)
         {
             foreach (var specification in expansion.Specifications.Where(specification => specification.Authored.GivenCallerPersona is not null))
@@ -77,6 +83,7 @@ public sealed partial class SemanticModelBinder
         SemanticPolicyCondition? BindPolicyCondition(PolicyConditionSyntax syntaxCondition) => syntaxCondition switch
         {
             AuthenticatedConditionSyntax => new SemanticAuthenticatedCondition(),
+            AnonymousConditionSyntax => new SemanticAnonymousCondition(),
             RoleConditionSyntax role => new SemanticRoleCondition(role.Role),
             ClaimConditionSyntax { MatchesSubject: true } claim => new SemanticClaimCondition(claim.Claim, SemanticClaimTargetKind.Subject, null),
             ClaimConditionSyntax { Matches: LiteralExpressionSyntax { Value: string value } } claim =>

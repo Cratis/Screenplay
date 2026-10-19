@@ -263,6 +263,7 @@ PolicyUnary    = "not", PolicyUnary | PolicyOperand ;
    applied to a parenthesized condition. It is not a general value operator. *)
 
 PolicyOperand  = "authenticated"
+               | "anonymous"     (* the whole condition only: PLAY0804, PLAY0805 *)
                | "role", StringLiteral
                | "claim", StringLiteral, "matches", ClaimTarget
                | "(", PolicyCondition, ")" ;
