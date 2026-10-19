@@ -12,6 +12,8 @@ Event `id` pins that differ from the display name select ESM v16 and carry the e
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
+For the symbols that look like programming-language syntax (`Type[]`, the three `=>` arrows, `==`, backtick templates, `$` value sources, the `@` escape) and why they are kept, see [Notation conventions](notation.md).
+
 Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
 
 ```ebnf

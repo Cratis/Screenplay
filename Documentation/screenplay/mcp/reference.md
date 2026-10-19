@@ -749,6 +749,7 @@ arguments or failed requests, never successful partial batches.
 | `propose-property` | `expectedRevision`, `expectedCatalogRevision`, `action`; rename/remove: `target`, `expectedName` (rename also `newName`); add: `owner`, `expectedOwnerName`, `name`, `type` | `alsoRename` or `alsoRemove`; add: `optional`, `hops`, `fixtureValue`; `newGeneration`, `eventNeverPersisted`, formatting (`PreserveTrivia` default), validation (`Authoring` default), includeContent |
 | `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
+| `propose-inline-event` | `expectedRevision`, `expectedCatalogRevision`, standalone event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; refuses unless meaning is provably preserved |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
@@ -1191,6 +1192,10 @@ Event pins that differ from the display name select ESM v16 and carry the effect
 an implicit destination explicit. It requires canonical formatting consent,
 byte-identical canonical ESM, unchanged catalog assignments and every comment
 preserved exactly once.
+
+`propose-inline-event` is the opt-in reverse: it moves a standalone event into its
+only production, under the same checks, and refuses with a reason when it cannot
+prove that meaning is preserved. See [Inline a standalone event](authoring-tools.md#inline-a-standalone-event).
 
 Two independent choices control AST authoring:
 

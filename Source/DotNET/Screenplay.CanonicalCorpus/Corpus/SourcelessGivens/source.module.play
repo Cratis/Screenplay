@@ -1,0 +1,108 @@
+// A given event without `for` belongs to the event source the specification acts on (decision 0101).
+module Banking
+  feature Accounts
+    slice StateChange Open
+      command OpenAccount
+        accountId AccountId identifier
+        owner String
+        produces AccountOpened
+          for accountId
+          owner = owner
+      event AccountOpened
+        owner String
+      constraint OneOpeningPerAccount
+        unique event AccountOpened
+        message "The account is already open."
+      specification RejectingASecondOpening
+        given AccountOpened
+          owner = "Ada"
+        when OpenAccount
+          accountId = "acc-1"
+          owner = "Ada"
+        then error "The account is already open."
+      specification OpeningBesideAnotherAccount
+        given AccountOpened
+          for "acc-2"
+          owner = "Ada"
+        when OpenAccount
+          accountId = "acc-1"
+          owner = "Ada"
+        then AccountOpened
+          for "acc-1"
+          owner = "Ada"
+    slice StateChange Alias
+      command ClaimAlias
+        accountId AccountId identifier
+        alias String
+        produces AliasClaimed
+          for accountId
+          alias = alias
+      event AliasClaimed
+        alias String
+      constraint UniqueAlias
+        unique alias on AliasClaimed
+        message "The alias is taken."
+      specification ReclaimingItsOwnAlias
+        given AliasClaimed
+          alias = "ada"
+        when ClaimAlias
+          accountId = "acc-1"
+          alias = "ada"
+        then AliasClaimed
+          for "acc-1"
+          alias = "ada"
+      specification ClaimingAnotherAccountsAlias
+        given AliasClaimed
+          for "acc-2"
+          alias = "ada"
+        when ClaimAlias
+          accountId = "acc-1"
+          alias = "ada"
+        then error "The alias is taken."
+    slice StateView Directory
+      readmodel AliasEntry
+        alias String
+      query AliasByName => AliasEntry optional
+        by alias String
+      projection Aliases => AliasEntry
+        from AliasClaimed key alias
+          alias = alias
+      specification ListingAnAliasWithoutAnAction
+        given AliasClaimed
+          alias = "ada"
+        then readmodel AliasEntry
+          alias = "ada"
+    slice StateChange Name
+      command NameProfile
+        accountId AccountId identifier
+        name String
+        produces ProfileNamed
+          for accountId
+          name = name
+      event ProfileNamed
+        name String
+      specification RefusingToProjectAGivenBeforeTheCommand
+        given ProfileNamed
+          name = "Ada"
+        when NameProfile
+          accountId = "acc-1"
+          name = "Bo"
+        then ProfileNamed
+          for "acc-1"
+          name = "Bo"
+    slice StateView Profile
+      readmodel Profile
+        accountId AccountId
+        name String
+      query ProfileFor => Profile optional
+        by accountId AccountId
+      projection Profiles => Profile
+        from ProfileNamed
+          accountId = $eventSourceId
+          name = name
+      specification RefusingToInventAnIdentity
+        given ProfileNamed
+          name = "Ada"
+        then readmodel Profile
+          accountId = "acc-1"
+          name = "Ada"
