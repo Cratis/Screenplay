@@ -8,3 +8,19 @@ module Orders
     field orderId label "Order"
     field reason label "Why is it rejected?"
     on submit navigate to ApprovalInbox
+
+  // The rep's actions on the order page ask only for what the page does not already know
+  form CancelOrderForm for CancelOrder
+    field orderId label "Order"
+    field reason label "Why is it cancelled?"
+    on submit navigate to OrderPage by orderId
+
+  form ApplyDiscountForm for ApplyDiscount
+    field orderId  label "Order"
+    field discount label "Discount (max 15%)"
+    on submit navigate to OrderPage by orderId
+
+  form ApplyLargeDiscountForm for ApplyLargeDiscount
+    field orderId  label "Order"
+    field discount label "Discount %"
+    on submit navigate to ApprovalInbox
