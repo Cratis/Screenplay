@@ -61,6 +61,8 @@ internal sealed partial class McpWorkspaces
         chainCandidates = report.ChainCandidates.Select(candidate => new { address = McpSemanticAddresses.Describe(candidate.Address), candidate.Kind, candidate.Role, candidate.Reason }),
         generations = report.Generations.Select(generation => new { @event = McpSemanticAddresses.Describe(generation.Event), generation.From, generation.To, generation.Mode, generation.Mutability }),
         report.DeployableWithoutTransformation,
+        report.EvolutionDraft,
+        extractedInlineEvents = report.ExtractedInlineEvents.Select(McpSemanticAddresses.Describe),
         report.EsmVersionChange,
         report.EsmVersionKnown
     };

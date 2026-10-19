@@ -56,6 +56,7 @@ function negation(condition: PolicyConditionSyntax): PolicyConditionSyntax | nul
 function atom(condition: PolicyConditionSyntax, policy: string, values: PersonaCallerContribution[]): PersonaCallerRefusal | null {
     switch (condition.kind) {
         case 'AuthenticatedConditionSyntax': values.push({ kind: 'authenticated', value: 'true', type: null, policy, location: condition.location }); return null;
+        case 'AnonymousConditionSyntax': return null;
         case 'RoleConditionSyntax': values.push({ kind: 'role', value: condition.role, type: null, policy, location: condition.location }); return null;
         case 'ClaimConditionSyntax':
             if (claimTypeKey(condition.claim) === claimTypeKey(roleClaimType)) return { policy, reason: 'roleClaim', location: condition.location };
@@ -73,6 +74,7 @@ function required(condition: PolicyConditionSyntax, policy: string, values: Pers
 function satisfied(condition: PolicyConditionSyntax, values: readonly PersonaCallerContribution[]): boolean {
     switch (condition.kind) {
         case 'AuthenticatedConditionSyntax': return true;
+        case 'AnonymousConditionSyntax': return true;
         case 'RoleConditionSyntax': return values.some(atom => atom.kind === 'role' && atom.value === condition.role);
         case 'ClaimConditionSyntax': {
             const target = condition.matches;

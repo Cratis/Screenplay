@@ -79,6 +79,17 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesAcmeSecondAdmissions(SemanticApplication application) => UsesSeveralEventSources(application) || UsesGivenGenerated(application);
 
+    internal static bool UsesAnonymousPolicies(SemanticApplication application) =>
+        application.Policies.Any(policy => policy.Condition is SemanticAnonymousCondition);
+
+    static void ValidateAnonymousPolicyVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesAnonymousPolicies(application),
+            version,
+            SemanticVersion.V31,
+            "An ESM v31 model must declare an anonymous policy.",
+            "The anonymous policy condition of decision 0103 requires ESM v31.");
+
     static void ValidateAcmeSecondAdmissionVersion(SemanticApplication application, SemanticVersion version)
     {
         if (!version.IsAtLeast(SemanticVersion.V30) && UsesAcmeSecondAdmissions(application))

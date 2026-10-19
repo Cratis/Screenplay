@@ -473,6 +473,8 @@
     }
   ],
   "deployableWithoutTransformation": false,
+  "evolutionDraft": false,
+  "extractedInlineEvents": [],
   "esmVersionChange": null,
   "esmVersionKnown": true
 }

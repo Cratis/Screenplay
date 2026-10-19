@@ -6,6 +6,7 @@ import { CodeBlockSyntax, FileReferenceSyntax } from './Implementations';
 import { SyntaxNode } from './SyntaxNode';
 
 export interface AuthenticatedConditionSyntax extends SyntaxNode { readonly kind: 'AuthenticatedConditionSyntax'; }
+export interface AnonymousConditionSyntax extends SyntaxNode { readonly kind: 'AnonymousConditionSyntax'; }
 export interface RoleConditionSyntax extends SyntaxNode { readonly kind: 'RoleConditionSyntax'; readonly role: string; }
 export interface ClaimConditionSyntax extends SyntaxNode {
     readonly kind: 'ClaimConditionSyntax';
@@ -23,7 +24,7 @@ export interface NotPolicyConditionSyntax extends SyntaxNode {
     readonly kind: 'NotPolicyConditionSyntax';
     readonly operand: PolicyConditionSyntax;
 }
-export type PolicyConditionSyntax = AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | LogicalPolicyConditionSyntax | NotPolicyConditionSyntax;
+export type PolicyConditionSyntax = AuthenticatedConditionSyntax | AnonymousConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | LogicalPolicyConditionSyntax | NotPolicyConditionSyntax;
 export interface PolicySyntax extends SyntaxNode {
     readonly description?: string | null;
     readonly kind: 'PolicySyntax';

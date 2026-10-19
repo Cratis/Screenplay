@@ -65,6 +65,12 @@ public record NotPolicyConditionSyntax(PolicyConditionSyntax Operand, SourceLoca
 public record AuthenticatedConditionSyntax(SourceLocation Location) : PolicyConditionSyntax(Location);
 
 /// <summary>
+/// Represents the <c>anonymous</c> policy condition, which admits every caller, including one without an identity.
+/// </summary>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record AnonymousConditionSyntax(SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
 /// Represents a <c>role "&lt;name&gt;"</c> policy condition.
 /// </summary>
 /// <param name="Role">The name of the required role.</param>

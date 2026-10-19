@@ -146,6 +146,7 @@ internal static partial class ScreenplayValidator
     {
         ValidateDuplicatePolicies(application, context);
         ValidateAuthorizations(application, names.Policies, context);
+        AnonymousGateValidator.Validate(application, context);
         ValidateReadModels(slices, names.ReadModels, names.Events, context);
         ValidateTypes(application, names.Types, context);
         IdentityValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);

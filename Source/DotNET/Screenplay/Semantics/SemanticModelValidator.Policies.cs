@@ -25,11 +25,29 @@ internal static partial class SemanticModelValidator
             _ => false
         };
 
+        static bool IsAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
+            authorization is SemanticPolicyReference reference &&
+            policies.Any(policy => policy.Name == reference.Name && policy.Condition is SemanticAnonymousCondition);
+
+        static bool ReferencesAnonymous(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) => authorization switch
+        {
+            SemanticPolicyReference => IsAnonymous(authorization, policies),
+            SemanticLogicalAuthorization logical => ReferencesAnonymous(logical.Left, policies) || ReferencesAnonymous(logical.Right, policies),
+            _ => false
+        };
+
+        static bool RequiresCaller(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies) =>
+            authorization is not null && !IsAnonymous(authorization, policies);
+
         void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
             {
                 case SemanticOpaquePolicyCondition when allowOpaque: break;
+                case SemanticAnonymousCondition when !_semanticVersion.IsAtLeast(SemanticVersion.V31):
+                    throw new InvalidSemanticContract("The anonymous policy condition requires ESM v31.");
+                case SemanticAnonymousCondition when allowOpaque: break;
+                case SemanticAnonymousCondition: throw new InvalidSemanticContract("An anonymous policy condition must be the whole policy condition.");
                 case SemanticAuthenticatedCondition: break;
                 case SemanticNotPolicyCondition not when _semanticVersion.IsAtLeast(SemanticVersion.V7):
                     ValidatePolicyCondition(not.Operand, false);
@@ -44,6 +62,16 @@ internal static partial class SemanticModelValidator
                     break;
                 default: throw new InvalidSemanticContract("Invalid policy condition.");
             }
+        }
+
+        void ValidateEffectiveAuthorization(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies, IEnumerable<SemanticProperty> properties)
+        {
+            if (ReferencesAnonymous(authorization, policies) && !IsAnonymous(authorization, policies))
+            {
+                throw new InvalidSemanticContract("An anonymous policy must be the whole effective authorization of a command or query.");
+            }
+
+            ValidateAuthorization(authorization, policies, properties);
         }
 
         void ValidateAuthorization(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies, IEnumerable<SemanticProperty> properties)
@@ -115,18 +143,18 @@ internal static partial class SemanticModelValidator
             }
             foreach (var slice in AllSlices(application))
             {
-                foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties);
+                foreach (var command in slice.Commands) ValidateEffectiveAuthorization(command.Authorization, application.Policies, command.Properties);
                 foreach (var query in slice.Queries)
                 {
-                    ValidateAuthorization(
+                    ValidateEffectiveAuthorization(
                         query.Authorization,
                         application.Policies,
                         SemanticQueryArguments.KeyProperties(query));
                 }
                 foreach (var specification in slice.Specifications)
                 {
-                    var authorizedCommand = specification.When is not null && slice.Commands.Any(command => command.Id == specification.When.Command && command.Authorization is not null);
-                    var authorizedQuery = specification.ThenQueries.Any(result => slice.Queries.Any(query => query.Id == result.Query && query.Authorization is not null));
+                    var authorizedCommand = specification.When is not null && slice.Commands.Any(command => command.Id == specification.When.Command && RequiresCaller(command.Authorization, application.Policies));
+                    var authorizedQuery = specification.ThenQueries.Any(result => slice.Queries.Any(query => query.Id == result.Query && RequiresCaller(query.Authorization, application.Policies)));
                     if ((authorizedCommand || authorizedQuery) && specification.GivenCaller is null)
                     {
                         throw new InvalidSemanticContract("An authorized specification requires an explicit caller.");

@@ -144,8 +144,9 @@ Without a release baseline, choose `eventNeverPersisted: true` only when the cur
 generation has never been stored, or choose `newGeneration: true` to keep the old
 shape and append one new generation. With a baseline, unadmitted current revisions
 default to an in-place edit; admitted revisions require explicit `newGeneration`
-and refuse `eventNeverPersisted`. Historical generations cannot be edited;
-extract inline events first. New generations require a transformation before
+and refuse `eventNeverPersisted`. Historical generations cannot be edited.
+Extract inline events first, except for a removal with `newGeneration`, which
+extracts the event in the same proposal. New generations require a transformation before
 Chronicle deployment, which Screenplay does not yet express.
 
 Review the required `property.generations` array in the proposal and in
@@ -199,7 +200,9 @@ for unadmitted revisions. `eventNeverPersisted`
 edits the highest generation in place; `newGeneration` appends the current shape
 plus the property as N+1. For the RegisterProject v2 model, these mean editing
 generation 2 or appending generation 3. Both keep ESM v4; a new generation reports
-`deployableWithoutTransformation: false` and `esmVersionChange: null`.
+`deployableWithoutTransformation: false`, `evolutionDraft: true` and `esmVersionChange: null`.
+A removal with `newGeneration` may also select an inline event's property: the same
+proposal extracts the event and lists it in `extractedInlineEvents`.
 
 Use `CanonicalizeTouchedDocuments` for structural additions. Review `changed`
 (`added` and `fixtureAdded`), `chainCandidates` and `generations` with `read-proposal`,

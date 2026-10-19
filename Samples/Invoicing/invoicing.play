@@ -231,6 +231,12 @@ policy IsAuthenticated
   description "Only signed-in callers may enter the invoicing workflow"
   require authenticated
 
+// Every caller passes, signed in or not. An anonymous policy is the whole condition and
+// the whole gate of what it authorizes - see the PublicVerification module.
+policy Anyone
+  description "Open to everyone, signed in or not"
+  require anonymous
+
 policy IsPerson
   require authenticated and not role "Service" and not claim "actorKind" matches "service"
 
@@ -278,6 +284,10 @@ persona InvoiceDraftCreator
   description "Starts invoice drafts as invoice management staff"
   policy IsAuthenticated
   policy CanManageInvoice
+
+persona Visitor
+  description "Anyone checking an invoice number, signed in or not"
+  policy Anyone
 
 persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
@@ -3525,6 +3535,49 @@ module Invoicing
         then InvoiceSentPublished
           sentAt  = "2026-09-01T09:00:00Z"
           channel = "sent"
+
+// ============================================================
+// A public module - no sign-in needed
+// ============================================================
+
+module PublicVerification
+  description "Lets anyone confirm an invoice number is genuine, signed in or not"
+
+  // The anonymous policy is the only gate on the path: nothing on a feature, a query or a
+  // command below adds another, so the model and a public endpoint agree.
+  authorize Anyone
+
+  feature InvoiceVerification
+    slice StateView VerifyingAnInvoice
+      description "Confirms an invoice number was issued, without revealing what it bills"
+
+      readmodel InvoiceVerificationReadModel
+        invoiceNumber InvoiceNumber
+        issued        Bool
+
+      query VerifyInvoice => InvoiceVerificationReadModel optional
+        by invoiceNumber InvoiceNumber
+        performer
+          ```csharp
+          return await invoiceRegistry.Verify(context.Arguments.InvoiceNumber);
+          ```
+
+      screen InvoiceVerification
+        data InvoiceVerificationReadModel via query VerifyInvoice
+        summary InvoiceVerificationReadModel
+          field invoiceNumber label "Invoice number"
+          field issued        label "Issued"
+
+      // A query gated only by an anonymous policy runs without a caller, so no 'given caller'.
+      specification VerifyingWithoutSigningIn
+        given readmodel InvoiceVerificationReadModel
+          invoiceNumber = "INV-000042"
+          issued        = true
+        when query VerifyInvoice
+          invoiceNumber = "INV-000042"
+        then result
+          invoiceNumber = "INV-000042"
+          issued        = true
 
 // ------------------------------------------------------------
 // Seed data - the starting state, declared as events
