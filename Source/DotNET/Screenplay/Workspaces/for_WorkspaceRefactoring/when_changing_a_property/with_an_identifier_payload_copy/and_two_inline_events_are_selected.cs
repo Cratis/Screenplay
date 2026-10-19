@@ -11,7 +11,7 @@ public class and_two_inline_events_are_selected : given.an_identifier_payload_co
 
     void Because() => Result = Workspace.ProposeProperty(Request() with
     {
-        AlsoRemove = [new(WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is Syntax.PropertySyntax { Name: "projectId" } && entry.Address!.Parts.Any(part => part.Key == "Archived")).Handle, "projectId")]
+        AlsoRemove = [new(Property(Workspace, "projectId", eventName: "Archived").Handle, "projectId")]
     });
 
     [Fact] void should_refuse() => Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidOperation);

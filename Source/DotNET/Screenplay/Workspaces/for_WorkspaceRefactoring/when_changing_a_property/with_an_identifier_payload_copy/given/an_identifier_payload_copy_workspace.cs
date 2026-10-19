@@ -29,11 +29,11 @@ public class an_identifier_payload_copy_workspace : Specification
 
     protected WorkspaceSyntaxEntry Copy(ScreenplayWorkspace workspace) => Property(workspace, "projectId");
 
-    protected static WorkspaceSyntaxEntry Property(ScreenplayWorkspace workspace, string name, uint generation = 1)
+    protected static WorkspaceSyntaxEntry Property(ScreenplayWorkspace workspace, string name, uint generation = 1, string eventName = "Renamed")
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         return index.Entries.Single(entry => entry.Node is PropertySyntax property && property.Name == name &&
-            entry.Parent is { } parent && index.Find(parent)?.Node is EventSyntax @event && @event.Generation == generation);
+            entry.Parent is { } parent && index.Find(parent)?.Node is EventSyntax @event && @event.Name == eventName && @event.Generation == generation);
     }
 
     protected WorkspacePropertyRequest Request() => new()

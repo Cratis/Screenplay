@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_changing_a_
 
 public class and_a_projection_reads_the_copy : given.an_identifier_payload_copy_workspace
 {
-    void Establish() => Create(InlineSource + "      readmodel Names\n        projectId Uuid\n      projection Names => Names\n        from Renamed\n          projectId = projectId\n");
+    void Establish() => Create(InlineSource + "    slice StateView Lookup\n      readmodel Name\n        projectId Uuid\n      projection Names => Name\n        from Renamed\n          projectId = projectId\n      query Names => Name[]\n");
 
     void Because() => Result = Workspace.ProposeProperty(Request());
 
