@@ -64,7 +64,26 @@ static class McpWorkspaceTransport
 
     internal static byte[] ExportBytes(ScreenplayWorkspace workspace) => _admittedExports.GetValue(workspace, AdmitExport);
 
+    /// <summary>
+    /// Restores a workspace transport; when it is exactly the export of <paramref name="known"/>, returns that workspace instead of compiling it again.
+    /// </summary>
+    /// <param name="json">The workspace transport.</param>
+    /// <param name="known">A workspace whose canonical export may equal the transport, or null.</param>
+    /// <returns>The restored workspace.</returns>
+    internal static ScreenplayWorkspace Restore(string json, ScreenplayWorkspace? known)
+    {
+        Admit(json);
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return known is not null && bytes.AsSpan().SequenceEqual(ExportBytes(known)) ? known : ScreenplayWorkspaceSerializer.Deserialize(bytes);
+    }
+
     internal static ScreenplayWorkspace Restore(string json)
+    {
+        Admit(json);
+        return ScreenplayWorkspaceSerializer.Deserialize(Encoding.UTF8.GetBytes(json));
+    }
+
+    static void Admit(string json)
     {
         if (Encoding.UTF8.GetByteCount(json) > 2 * McpRoot.MaximumBytes)
         {
@@ -84,7 +103,6 @@ static class McpWorkspaceTransport
             PortablePlayPath.Parse(document.GetProperty("path").GetString()!),
             document.GetProperty("bytes").GetBytesFromBase64())).ToImmutableArray();
         McpRoot.CheckDocuments(admitted, allowEmpty: true);
-        return ScreenplayWorkspaceSerializer.Deserialize(Encoding.UTF8.GetBytes(json));
     }
 
     static byte[] AdmitExport(ScreenplayWorkspace workspace)
