@@ -94,3 +94,4 @@
 | [0097](0097-a-performer-query-is-an-opaque-read-not-a-refusal.md) | A performer query is an opaque read, not a refusal of the application | proposed | none | — | — |
 | [0098](0098-admit-the-constructs-the-acme-commerce-sample-is-blocked-on.md) | Admit the constructs the Acme Commerce sample is blocked on (exception to the freeze) | accepted | none | 2026-10-18 | Einar (owner) |
 | [0099](0099-trace-lineage-reports-hops-as-a-paged-tree-with-closed-break-statuses.md) | The lineage report pages hops as a tree with closed roles and break statuses | proposed | none | — | — |
+| [0101](0101-a-given-without-an-event-source-belongs-to-the-event-source-the-specification-acts-on.md) | A given without an event source belongs to the event source the specification acts on | accepted | none | 2026-10-19 | einari (owner) |
