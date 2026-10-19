@@ -22,7 +22,7 @@ public sealed record WorkspaceMoveRequest
     public required CatalogRevision ExpectedCatalogRevision { get; init; }
 
     /// <summary>
-    /// Gets the logical subtree to move.
+    /// Gets the logical subtree, or the single slice-level declaration, to move.
     /// </summary>
     public required SemanticAddress Target { get; init; }
 
@@ -44,6 +44,12 @@ public sealed record WorkspaceMoveRequest
     /// <summary>
     /// Gets the formatting policy; no fallback to canonical printing is permitted.
     /// </summary>
+    /// <summary>
+    /// Gets the specifications of the source slice that move with a single declaration, because they cover only it.
+    /// </summary>
+    /// <remarks>Only valid when <see cref="Target"/> is a declaration inside a slice and <see cref="NewParent"/> is a slice.</remarks>
+    public ImmutableArray<SemanticAddress> CarriedSpecifications { get; init; } = [];
+
     public WorkspaceAuthoringFormatting Formatting { get; init; } = WorkspaceAuthoringFormatting.PreserveTrivia;
 
     /// <summary>
@@ -85,4 +91,9 @@ public sealed record WorkspaceMoveReport(
     /// Gets the empty retirement set; any identity loss refuses a move.
     /// </summary>
     public ImmutableArray<SemanticAddress> Retired => [];
+
+    /// <summary>
+    /// Gets the current addresses of the specifications that moved with a single declaration.
+    /// </summary>
+    public ImmutableArray<SemanticAddress> SpecificationsCarried { get; init; } = [];
 }

@@ -93,25 +93,26 @@ internal sealed partial class WorkspaceRefactoring
 
     static bool EmptyWrapper(JsonNode node) => node is JsonObject value && value.All(pair => _moveWrapperMembers.Contains(pair.Key, StringComparer.Ordinal) || pair.Value is null or JsonArray { Count: 0 });
 
-    static Dictionary<string, JsonNode> ExecutableContents(ScreenplayWorkspace source)
+    static Dictionary<string, JsonNode> ExecutableContents(ScreenplayWorkspace source, bool declarationMembership)
     {
         var root = JsonNode.Parse(SemanticModelCanonicalJson.Serialize(source.Compilation.Value!.Model))!;
         var contents = new Dictionary<string, JsonNode>(StringComparer.Ordinal);
-        void Container(JsonNode node)
+        void Container(JsonNode node, bool slice)
         {
             foreach (var member in new[] { "modules", "features", "slices" })
             {
                 if (node[member] is not JsonArray children) continue;
-                foreach (var child in children.ToArray()) Container(child!);
+                foreach (var child in children.ToArray()) Container(child!, member == "slices");
                 ((JsonObject)node).Remove(member);
             }
+            if (declarationMembership && slice) SliceDeclarations((JsonObject)node, contents);
             contents.Add(node["id"]!.GetValue<string>(), node.DeepClone());
         }
-        Container(root["application"]!);
+        Container(root["application"]!, slice: false);
         return contents;
     }
 
-    static void RequireExecutableMoveContinuity(ScreenplayWorkspace before, ScreenplayWorkspace after)
+    static void RequireExecutableMoveContinuity(ScreenplayWorkspace before, ScreenplayWorkspace after, bool declarationMembership)
     {
         if (!before.Compilation.Success)
         {
@@ -119,15 +120,28 @@ internal sealed partial class WorkspaceRefactoring
             return;
         }
         if (!after.Compilation.Success) throw new InvalidWorkspaceAuthoring("The move made the executable model unavailable: " + string.Join(" | ", after.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Message)));
-        var original = ExecutableContents(before);
-        var candidate = ExecutableContents(after);
+        var original = ExecutableContents(before, declarationMembership);
+        var candidate = ExecutableContents(after, declarationMembership);
         var differences = original.Keys.Union(candidate.Keys).Where(id => !original.TryGetValue(id, out var old) || !candidate.TryGetValue(id, out var current) || !JsonNode.DeepEquals(old, current)).ToArray();
         if (differences.Length > 0) throw new InvalidWorkspaceAuthoring("Executable model differs beyond ownership addresses (including inherited authorize): " + string.Join(", ", differences));
     }
 
     static ApplicationSyntax Merged(WorkspaceSyntaxIndex index) => PlayFolderMerge.Merge([.. index.Entries.Where(entry => entry.Parent is null).Select(entry => new CompilationResult<ApplicationSyntax>((ApplicationSyntax)entry.Node, []))]).Value ?? throw new InvalidWorkspaceAuthoring("Logical fragments cannot be merged for continuity validation.");
 
-    static Dictionary<string, string> InheritedBehavior(WorkspaceSyntaxIndex index, WorkspaceMoveRequest? migration = null)
+    static MoveRehome Rehome(SemanticAddress previous, SemanticAddress current, bool declaration = false) =>
+        new(string.Join('.', previous.Parts.Skip(1).Select(part => part.Key)), string.Join('.', current.Parts.Skip(1).Select(part => part.Key)), declaration ? previous : null);
+
+    static string Rehomed(string path, IReadOnlyList<MoveRehome> rehomes, Func<SemanticAddress, bool> applies)
+    {
+        foreach (var (prefix, replacement, declaration) in rehomes)
+        {
+            if (declaration is not null && !applies(declaration)) continue;
+            if ((declaration is not null && path == prefix) || path.StartsWith(prefix + ".", StringComparison.Ordinal)) return replacement + path[prefix.Length..];
+        }
+        return path;
+    }
+
+    static Dictionary<string, string> InheritedBehavior(WorkspaceSyntaxIndex index, IReadOnlyList<MoveRehome>? rehomes = null)
     {
         var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         var targets = new Dictionary<SyntaxNode, List<string>>(ReferenceEqualityComparer.Instance);
@@ -139,13 +153,13 @@ internal sealed partial class WorkspaceRefactoring
             if (!targets.TryGetValue(owner, out var values)) targets[owner] = values = [];
             var target = binding.Target;
             var path = target is null ? binding.Reference.Text : string.Join('.', target.Scope.Segments.Append(target.Name));
-            if (migration is not null && target?.Entry is not null)
+            if (rehomes is not null && target?.Entry is not null)
             {
-                var prefix = string.Join('.', migration.Target.Parts.Skip(1).Select(part => part.Key));
-                var replacement = string.Join('.', MovedAddress(migration.Target, migration).Parts.Skip(1).Select(part => part.Key));
-                if (path.StartsWith(prefix + ".", StringComparison.Ordinal))
+                var declared = target.Entry.Address;
+                var rehomed = Rehomed(path, rehomes, address => address.Equals(declared));
+                if (!ReferenceEquals(rehomed, path))
                 {
-                    path = replacement + path[prefix.Length..];
+                    path = rehomed;
                     var reference = binding.Reference;
                     if (reference.Text.Contains('.'))
                     {
@@ -203,17 +217,15 @@ internal sealed partial class WorkspaceRefactoring
         _ => []
     };
 
-    static void RequireInheritedBehavior(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceMoveRequest request)
+    static void RequireInheritedBehavior(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, IReadOnlyList<MoveRehome> rehomes)
     {
-        var previous = InheritedBehavior(before, request);
+        var previous = InheritedBehavior(before, rehomes);
         var current = InheritedBehavior(after);
-        var prefix = string.Join('.', request.Target.Parts.Skip(1).Select(part => part.Key));
-        var replacement = string.Join('.', MovedAddress(request.Target, request).Parts.Skip(1).Select(part => part.Key));
         foreach (var (key, value) in previous)
         {
             var separator = key.IndexOf(':');
             var path = key[(separator + 1)..];
-            var migrated = path.StartsWith(prefix + ".", StringComparison.Ordinal) ? key[..(separator + 1)] + replacement + path[prefix.Length..] : key;
+            var migrated = key[..(separator + 1)] + Rehomed(path, rehomes, _ => true);
             if (current.GetValueOrDefault(migrated) != value)
             {
                 throw new InvalidWorkspaceAuthoring($"Inherited authorize or screen on/uses interaction bindings differ at '{path}' -> '{migrated}': previous [{value}], current [{current.GetValueOrDefault(migrated)}].");
@@ -225,10 +237,11 @@ internal sealed partial class WorkspaceRefactoring
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         if (index.Entries.Count(entry => entry.Parent is null) != workspace.Documents.Length) throw new InvalidWorkspaceAuthoring("Every document must parse and have resolved placement before moving.");
+        if (request.Target is not null && _movableDeclarations.Contains(request.Target.Kind)) return MoveDeclaration(request, index);
         if (request.Target is null || request.NewParent is null || request.Target.Kind is not (SemanticKind.Slice or SemanticKind.Feature) ||
             (request.Target.Kind == SemanticKind.Slice ? request.NewParent.Kind != SemanticKind.Feature : request.NewParent.Kind is not (SemanticKind.Module or SemanticKind.Feature)))
         {
-            throw new InvalidWorkspaceAuthoring("A slice destination must be a feature; a feature destination must be a module or feature. Declaration moves between slices are deferred.");
+            throw new InvalidWorkspaceAuthoring("A slice destination must be a feature; a feature destination must be a module or feature; a command, event, read model, projection, query, reaction or capture destination must be a slice.");
         }
         var fragments = index.Entries.Where(entry => request.Target.Equals(entry.Address)).ToArray();
         var destinations = index.Entries.Where(entry => request.NewParent.Equals(entry.Address)).ToArray();
@@ -309,21 +322,26 @@ internal sealed partial class WorkspaceRefactoring
             if (node.Parent is JsonArray && EmptyWrapper(node) && index.Entries.Count(entry => ancestor.Address!.Equals(entry.Address) && nodes[entry.Handle].Parent is not null) > 1) Detach(node);
         }
 
-        var operations = touched.Select(document => (WorkspaceOperation)new ReplaceWorkspaceSyntaxDocument(document, WorkspaceSyntaxMutation.Syntax(roots[document]))).ToImmutableArray();
-        var semanticRenames = workspace.IdentityCatalog.Semantics.Where(assignment => migrations.ContainsKey(assignment.Address)).Select(assignment => new SemanticIdentityRename(assignment.Address, migrations[assignment.Address])).ToImmutableArray();
-        var eventRenames = workspace.IdentityCatalog.EventContracts.Where(assignment => migrations.ContainsKey(assignment.Address)).Select(assignment => new EventContractIdentityRename(assignment.Address, migrations[assignment.Address])).ToImmutableArray();
-        var locations = NodeLocations(roots);
+        return CompleteMove(new(request, index, bindings, roots, nodes, touched, repairs, migrations, [.. fragments.Select(fragment => fragment.Handle)], [Rehome(request.Target, currentAddress)], DeclarationMove: false));
+    }
+
+    WorkspaceAuthoringResult CompleteMove(MovePlan plan)
+    {
+        var operations = plan.Touched.Select(document => (WorkspaceOperation)new ReplaceWorkspaceSyntaxDocument(document, WorkspaceSyntaxMutation.Syntax(plan.Roots[document]))).ToImmutableArray();
+        var semanticRenames = workspace.IdentityCatalog.Semantics.Where(assignment => plan.Migrations.ContainsKey(assignment.Address)).Select(assignment => new SemanticIdentityRename(assignment.Address, plan.Migrations[assignment.Address])).ToImmutableArray();
+        var eventRenames = workspace.IdentityCatalog.EventContracts.Where(assignment => plan.Migrations.ContainsKey(assignment.Address)).Select(assignment => new EventContractIdentityRename(assignment.Address, plan.Migrations[assignment.Address])).ToImmutableArray();
+        var locations = NodeLocations(plan.Roots);
         var lineage = new Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)>();
-        foreach (var entry in index.Entries.Where(entry => touched.Contains(entry.Handle.Document)))
+        foreach (var entry in plan.Index.Entries.Where(entry => plan.Touched.Contains(entry.Handle.Document)))
         {
-            if (locations.TryGetValue(nodes[entry.Handle], out var location)) lineage[(entry.Handle.Document, entry.Handle.Path)] = location;
+            if (locations.TryGetValue(plan.Nodes[entry.Handle], out var location)) lineage[(entry.Handle.Document, entry.Handle.Path)] = location;
         }
-        var result = new WorkspaceAuthoringTransaction(workspace, migrations, movedOccurrences: lineage).Propose(new()
+        var result = new WorkspaceAuthoringTransaction(workspace, plan.Migrations, movedOccurrences: lineage).Propose(new()
         {
-            ExpectedRevision = request.ExpectedRevision,
-            ExpectedCatalogRevision = request.ExpectedCatalogRevision,
-            Formatting = request.Formatting,
-            Validation = request.Validation,
+            ExpectedRevision = plan.Request.ExpectedRevision,
+            ExpectedCatalogRevision = plan.Request.ExpectedCatalogRevision,
+            Formatting = plan.Request.Formatting,
+            Validation = plan.Request.Validation,
             Documents = operations,
             SemanticRenames = semanticRenames,
             EventRenames = eventRenames
@@ -332,14 +350,14 @@ internal sealed partial class WorkspaceRefactoring
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
         var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeInteractions: true);
         candidateBindings.RequireNoCollisions();
-        RequireMoveReferences(candidateIndex, bindings, candidateBindings, locations, nodes, migrations);
-        foreach (var container in index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax).Select(entry => entry.Address!).Distinct())
+        RequireMoveReferences(candidateIndex, plan.Bindings, candidateBindings, locations, plan.Nodes, plan.Migrations);
+        foreach (var container in plan.Index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax).Select(entry => entry.Address!).Distinct())
         {
-            var expected = migrations.GetValueOrDefault(container) ?? container;
+            var expected = plan.Migrations.GetValueOrDefault(container) ?? container;
             if (!candidateIndex.Entries.Any(entry => expected.Equals(entry.Address))) throw new InvalidWorkspaceAuthoring($"The move lost logical parent '{MoveAddress(container)}'.");
         }
-        RequireInheritedBehavior(index, candidateIndex, request);
-        RequireExecutableMoveContinuity(workspace, result.Workspace!);
+        RequireInheritedBehavior(plan.Index, candidateIndex, plan.Rehomes);
+        RequireExecutableMoveContinuity(workspace, result.Workspace!, plan.DeclarationMove);
         if (workspace.IdentityCatalog.Semantics.Any(old => !result.Workspace!.IdentityCatalog.Semantics.Any(current => current.Id == old.Id)) ||
             workspace.IdentityCatalog.EventContracts.Any(old => !result.Workspace!.IdentityCatalog.EventContracts.Any(current => current.Id == old.Id)))
         {
@@ -350,8 +368,11 @@ internal sealed partial class WorkspaceRefactoring
             MoveReport = new(
                 [.. semanticRenames.Select(rename => new WorkspaceMoveIdentityMigration("semantic", workspace.IdentityCatalog.Semantics.Single(assignment => assignment.Address.Equals(rename.PreviousAddress)).Id.ToString(), rename.PreviousAddress, rename.CurrentAddress)),
                  .. eventRenames.Select(rename => new WorkspaceMoveIdentityMigration("event", workspace.IdentityCatalog.EventContracts.Single(assignment => assignment.Address.Equals(rename.PreviousAddress)).Id.ToString(), rename.PreviousAddress, rename.CurrentAddress))],
-                repairs.ToImmutable(),
-                [.. fragments.Select(fragment => fragment.Handle)])
+                plan.Repairs.ToImmutable(),
+                plan.Moved)
+            {
+                SpecificationsCarried = plan.Carried
+            }
         };
     }
 
