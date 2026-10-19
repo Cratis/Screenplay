@@ -55,9 +55,28 @@ internal sealed partial class McpWorkspaces
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
         };
         Root.Verify(workspace);
-        var result = workspace.ProposeMove(request);
-        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
+        if (!McpDeclarationMove.Applies(request.Target, request.NewParent))
+        {
+            var moved = workspace.ProposeMove(request);
+            return moved.Accepted ? Store(new McpAuthoringProposal(workspace, moved, request.Validation), arguments) : Rejected(moved);
+        }
+        var before = McpWorkspaceAnalysis.For(workspace).Source;
+        var (carried, refusal) = McpDeclarationMove.Carried(before, request.Target);
+        if (refusal is not null) return MoveRefused(request, refusal);
+        var result = workspace.ProposeMove(request with { CarriedSpecifications = carried });
+        if (!result.Accepted) return Rejected(result);
+        refusal = McpDeclarationMove.Obligations(before, McpWorkspaceAnalysis.For(result.Workspace!).Source, result.MoveReport!.IdentityMigrations);
+        return refusal is null ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : MoveRefused(request, refusal);
     }
+
+    static object MoveRefused(WorkspaceMoveRequest request, string reason) => McpJson.ToolResult(new
+    {
+        success = false,
+        failureKind = "InvalidOperation",
+        conflicts = new[] { new { kind = nameof(WorkspaceConflictKind.InvalidOperation), message = $"Move '{MovePath(request.Target)}' to '{MovePath(request.NewParent)}' refused: {reason}" } }
+    }, true);
+
+    static string MovePath(SemanticAddress address) => $"{address.Kind}:{string.Join('.', address.Parts.Skip(1).Select(part => part.Key))}";
 
     internal object Rename(JsonElement arguments)
     {
