@@ -1,27 +1,71 @@
 // Storefront's OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop (not copied from a blueprint).
+//
+// A template is a SHAPE with a designed first draft: the slots it declares and how they share the space, and the stock components it seeds them with. A screen that
+// uses a template fills the slots it has something to say in (authored slot content REPLACES the seed of that slot; a slot the screen leaves out keeps it), so the template
+// editor draws a real product grid and a real summary layout, and a screen shows its own data in the same places.
 module Shop
-  // OWN screen templates, created "from current": the shop's own page shapes, categorised under Shop.
-  // ProductGrid: header, filters and the products (a table of product rows). The slot is not called "grid": inside an arrangement `grid` is the layout kind, so a slot of that name is never placed.
+  // ProductGrid: a responsive grid of product cards - picture, name, price and an add-to-basket button - with a filters rail beside it. The slot is not called "grid":
+  // inside an arrangement `grid` is the layout kind, so a slot of that name is never placed. The cards page and search themselves (the list's own pager and `productsq` address
+  // key), so the template needs no pagination slot; the filter rail narrows the cards through the filter builder's value.
   screen template ProductGrid
+    display "Product grid"
+    description "A responsive grid of product cards - picture, name, price, add to basket - with a filters rail"
     category Shop
     scopes slice stateview
     fits slot content
+    outlet quickView
 
     header
     filters
     products
 
     arrangement flow
-      column gap 12
+      column gap 16
         header
-        filters
-        products grow
+        row gap 24
+          filters width 260
+          products grow
 
-  // SideSummary: the main region with a narrow summary beside it (the basket shows its lines left and the totals right).
+      when width compact
+        column gap 12
+          header
+          filters
+          products
+
+    content header
+      component Cratis.Blueprint.Default.pageHeader gridHeader
+        property title = "Products"
+        property subtitle = "Everything in the shop, one card each"
+
+    content filters
+      component Cratis.Blueprint.Default.filterBuilder gridFilters
+        id "gridFilters"
+        property fields = [{"name":"category","label":"Category","type":"select","options":["Kitchen","Office","Trail"]},{"name":"displayPrice","label":"Price","type":"number"},{"name":"title","label":"Name","type":"text"}]
+
+    content products
+      component Cratis.Blueprint.Default.dataList gridCards
+        id "gridCards"
+        property variant = "cards"
+        property idField = "id"
+        property titleField = "title"
+        property imageField = "imageUrl"
+        property pageSize = 8
+        property label = "Products"
+        property rowActions = ["Add to basket"]
+        property rowActionStyle = "buttons"
+        property filter from component "gridFilters".value
+        property columns = [{"field":"category","header":"Category"},{"field":"displayPrice","header":"Price","kind":"currency","currency":"NOK"}]
+        property rows = [{"id":"seed-mug","title":"Enamel mug","category":"Kitchen","displayPrice":49,"imageUrl":"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23FDE7D5'/%3E%3Crect x='110' y='60' width='90' height='84' rx='10' fill='%23C2410C'/%3E%3Cpath d='M200 80h20a18 18 0 0 1 0 36h-20' fill='none' stroke='%23C2410C' stroke-width='10'/%3E%3C/svg%3E"},{"id":"seed-lamp","title":"Desk lamp","category":"Office","displayPrice":399,"imageUrl":"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23E0ECFA'/%3E%3Cpath d='M160 40l50 100h-100z' fill='%231D4ED8'/%3E%3Crect x='150' y='140' width='20' height='24' fill='%231E3A8A'/%3E%3C/svg%3E"},{"id":"seed-notebook","title":"Dotted notebook","category":"Office","displayPrice":79,"imageUrl":"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23E5F4E8'/%3E%3Crect x='108' y='46' width='104' height='116' rx='8' fill='%2315803D'/%3E%3Crect x='122' y='64' width='76' height='6' fill='%23BBF7D0'/%3E%3Crect x='122' y='80' width='60' height='6' fill='%23BBF7D0'/%3E%3C/svg%3E"},{"id":"seed-backpack","title":"Day backpack","category":"Trail","displayPrice":899,"imageUrl":"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23F3E8FF'/%3E%3Crect x='112' y='56' width='96' height='110' rx='26' fill='%237E22CE'/%3E%3Crect x='132' y='86' width='56' height='30' rx='6' fill='%23E9D5FF'/%3E%3C/svg%3E"}]
+
+  // SideSummary: the main region with a narrow summary beside it - line items on the left, the totals and the one thing to do next on the right (the basket shows its lines left
+  // and the totals right; checkout and order tracking the same).
   screen template SideSummary
+    display "Side summary"
+    description "Line items beside a narrow summary: totals and the call to action"
     category Shop
-    scopes slice stateview
+    scopes slice
     fits slot content
+    outlet details
 
     header
     main
@@ -42,3 +86,32 @@ module Shop
           main
           summary
           actions
+
+    content header
+      component Cratis.Blueprint.Default.pageHeader summaryHeader
+        property title = "Summary"
+        property subtitle = "What is in it, and what it comes to"
+
+    content main
+      component Cratis.Blueprint.Default.dataList summaryLines
+        id "summaryLines"
+        property idField = "sku"
+        property titleField = "title"
+        property label = "Lines"
+        property columns = [{"field":"title","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"},{"field":"lineTotal","header":"Line total","kind":"currency","currency":"NOK"}]
+        property rows = [{"sku":"ACM-1000","title":"Enamel mug","quantity":2,"unitPrice":49,"lineTotal":98},{"sku":"ACM-2000","title":"Desk lamp","quantity":1,"unitPrice":399,"lineTotal":399},{"sku":"ACM-3000","title":"Dotted notebook","quantity":3,"unitPrice":79,"lineTotal":237}]
+
+    content summary
+      component Cratis.Blueprint.Default.statCard summaryLineCount
+        property label = "Lines"
+        property value = 3
+      component Cratis.Blueprint.Default.statCard summaryTotal
+        property label = "Total"
+        property value = 734
+        property format = "currency"
+        property currency = "NOK"
+
+    content actions
+      component Cratis.Blueprint.Default.actionButton summaryAction
+        property label = "Continue"
+        property emphasis = "primary"

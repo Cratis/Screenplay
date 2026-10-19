@@ -79,13 +79,13 @@ module Shop
             component Cratis.Blueprint.Default.pageHeader browseHeader
               property title = "Shop"
               property subtitle = "For the kitchen, the living room, the office and the trail"
-          filters
-            data ListedProduct[] via query SearchListedProducts
           products
+            data ListedProduct[] via query SearchListedProducts
             data ListedProduct[] via query AllListedProducts
             component Cratis.Blueprint.Default.dataList productList
               id "productList"
               property rows from query AllListedProducts
+              property filter from component "gridFilters".value
               property variant = "cards"
               property idField = "id"
               property titleField = "title"

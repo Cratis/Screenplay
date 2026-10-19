@@ -433,21 +433,25 @@ Screens fill [templates](templates.md). The sample uses the foundation blueprint
 | `WizardScreen` | 2 | Storefront checkout and Purchasing "New purchase order" |
 | `SideSheet` | 1 | Purchasing goods receipt |
 | `MasterDetailScreen` | 1 | Purchasing suppliers |
-| own `ProductGrid`, `SideSummary` | 1 each | Storefront browse and basket |
+| own `ProductGrid`, `SideSummary` | 1 and 3 | Storefront browse; basket, product page and order tracking |
 
 Command input is a [form](forms.md) declared once and found by its command (`form DescribeProductForm for DescribeProduct`),
 with a two-column layout where it helps.
 
 ### The domain's own templates
 
-Storefront does not borrow a blueprint shape for the two pages that define the shop. It declares its own templates, created from
-the current screen and categorised under Shop:
+Storefront does not borrow a blueprint shape for the pages that define the shop. It declares its own templates, created from
+the current screen and categorised under Shop. A template is a *shape with a designed first draft*: the slots it declares, how
+they share the space, and the stock components (`Cratis.Blueprint.Default`) it seeds each slot with, so the template editor
+draws a real product grid and a real summary layout - not an empty place:
 
 ```text
 screen template ProductGrid
+  display "Product grid"
   category Shop
   scopes slice stateview
   fits slot content
+  outlet quickView
 
   header
   filters
@@ -455,11 +459,26 @@ screen template ProductGrid
 
   arrangement flow
     ...
+
+  content filters
+    component Cratis.Blueprint.Default.filterBuilder gridFilters
+      ...
+  content products
+    component Cratis.Blueprint.Default.dataList gridCards
+      property variant = "cards"
+      property rowActions = ["Add to basket"]
+      ...
 ```
 
-`ProductGrid` is a header, filters and the products (its slot is not called `grid`: in an arrangement `grid` is the layout kind); `SideSummary` is the main region with a narrow summary beside it (the
-basket shows its lines left and the totals right) and rearranges for a compact width. See
-[layout arrangement](layout-arrangement.md).
+- `ProductGrid` is a responsive grid of product cards (picture, name, price, an add-to-basket button) with a filters rail beside it
+  (its slot is not called `grid`: in an arrangement `grid` is the layout kind). The filter builder's value narrows the cards, and the list pages and
+  searches itself. `Browse` uses it and fills `products` with the live cards; it leaves `filters` to the template, so the rail is the template's.
+- `SideSummary` is the main region with a narrow summary beside it: line items left, the totals and the one thing to do next right. It
+  rearranges for a compact width. `Basket`, `ProductPage` and `OrderTracking` use it and fill all four slots.
+- Authored slot content **replaces** the seed of that slot; a slot a screen leaves out keeps its seed. That is why a screen that uses
+  `SideSummary` fills every slot - a slot left out would show the template's sample lines.
+
+See [layout arrangement](layout-arrangement.md).
 
 ## Custom components: `@acme/scene.commerce`
 
