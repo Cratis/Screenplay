@@ -1,0 +1,57 @@
+// ============================================================
+// Storefront: the shop's OWN shell - a customer-facing root template, not the back-office AppShell.
+//
+// A bar across the top: the brand at the start (it goes home), the topbar navigation (Browse, Basket, My orders) in the middle, and at the end the search
+// box, the BASKET indicator with the live number of items and the account menu. The basket count is a query result of the basket read model
+// (`BasketSize.lineCount`): it follows what AddToBasket does, in Preview from the sample data and in Play from the running read model.
+//
+// The profile selects this template with `root template StorefrontShell` (shell.play). It declares `scopes application`, so it is the shell and not a
+// page inside one; what it fills in a slot (the topbar, the footer) wins over the host's default chrome.
+// ============================================================
+
+module Shop
+  screen template StorefrontShell
+    description "The shop's own shell: brand, navigation, search, basket and account across the top"
+    category Shell
+    scopes application
+
+    topbar
+    content
+    footer
+
+    arrangement flow
+      column
+        topbar height 64
+        content grow
+        footer height 48
+
+    content topbar
+      // The count the basket indicator shows is read through this query; naming the read model lets a preview draw it from the sample pack
+      data BasketSize[] via query AllBasketSizes
+      component Cratis.Blueprint.Default.bar shopBar
+        outlet start
+          component Cratis.Blueprint.Default.logo shopBrand
+            property label = "Acme Shop"
+            property initials = "A"
+            property lightImageUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGOTczMTYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDMjQxMEMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xOSAyNWgyNmwyLjIgMjFhMyAzIDAgMCAxLTMgMy4zSDE5LjhhMyAzIDAgMCAxLTMtMy4zeiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNC41IDI4di00YTcuNSA3LjUgMCAwIDEgMTUgMHY0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMjYgMzYuNXE2IDUuMiAxMiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNDMjQxMEMiIHN0cm9rZS13aWR0aD0iMi44IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4K"
+            property targetScreen = "Browse"
+        outlet end
+          component Cratis.Blueprint.Default.globalSearch shopSearch
+            property label = "Search the shop"
+            property placeholder = "Search products"
+            property urlKey = "productsq"
+          component Cratis.Blueprint.Default.indicatorButton shopBasket
+            property icon = "cart"
+            property label = "Basket"
+            property count from query AllBasketSizes.0.lineCount
+            on click
+              navigate to Basket
+          component Cratis.Blueprint.Default.userMenu shopAccount
+            property name = "Ada Lovelace"
+            property role = "Shopper"
+            property initials = "AL"
+            property items = [{"label":"Your account","icon":"pi pi-user","targetScreen":"Account"},{"label":"My orders","icon":"pi pi-box","targetScreen":"MyOrders"}]
+
+    content footer
+      component Cratis.Blueprint.Default.footer shopFooter
+        property text = "Acme Shop - free delivery over 500 NOK, 30 days to change your mind"

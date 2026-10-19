@@ -144,18 +144,24 @@ module Shop
       // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
       readmodel BasketSize
         description "How many lines a basket holds"
-        id         BasketId key
+        basketId   BasketId key
         lineCount  Int
         addedValue Money optional
 
       query GetBasketSize => BasketSize optional
-        by id BasketId
+        by basketId BasketId
 
       query GetBasketContents => BasketContents optional
         by basketId BasketId
 
+      // What the shop's topbar counts: the basket indicator reads the line count of the shopper's own basket (the basket the session acts as)
+      query AllBasketSizes => observable BasketSize[]
+        description "Every open basket's size, or the one basket asked for"
+        filter basketId BasketId optional
+
       query AllBaskets => observable BasketContents[]
-        description "Every open basket (a screen shows the shopper's own)"
+        description "Every open basket, or the one basket asked for (a screen shows the shopper's own)"
+        filter basketId BasketId optional
 
       projection BasketSizeProjection => BasketSize
         from BasketLineAdded
@@ -169,10 +175,11 @@ module Shop
         no automap
         from BasketLineAdded
         children lines identified by sku
-          from BasketLineAdded
+          from BasketLineAdded key sku
+            sku       = sku
             quantity  = quantity
             unitPrice = unitPrice
-          from BasketLineQuantityChanged
+          from BasketLineQuantityChanged key sku
             quantity = quantity
           remove with BasketLineRemoved
         remove with BasketCleared
@@ -181,23 +188,36 @@ module Shop
         description "The basket: lines beside a summary"
         template SideSummary
           header
-            title "Your basket"
+            component Cratis.Blueprint.Default.pageHeader basketHeader
+              property title = "Your basket"
+              property subtitle = "Change a quantity or remove a line, then check out"
           main
-            data BasketContents via query GetBasketContents by basketId
-            table BasketLine
-              column sku       label "Product"
-              column quantity  label "Qty"
-              column unitPrice label "Unit price"
+            data BasketContents via query AllBaskets
+            component Cratis.Blueprint.Default.dataList basketLines
+              id "basketLines"
+              property rows from query AllBaskets.0.lines
+              property idField = "sku"
+              property titleField = "sku"
+              property selectionMode = "single"
+              property label = "Basket lines"
+              property columns = [{"field":"sku","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
+              on select
+                navigate to Basket
+                  with sku from component.basketLines.value
           summary
-            data BasketSize via query GetBasketSize by id
+            data BasketSize via query AllBasketSizes
             summary BasketSize
               field lineCount label "Lines"
               field addedValue label "Added value"
           actions
             action ChangeBasketQuantity
+              label "Change quantity"
             action RemoveFromBasket
+              label "Remove line"
             toolbar basketActions
-              button checkout title "Check out" slice Shop.Checkout.CheckOut emphasis primary icon shopping-cart
+              item checkout navigate to Checkout
+                label "Check out"
+                icon shopping-cart
 
       specification SummingUpABasket
         given caller
@@ -214,6 +234,6 @@ module Shop
           quantity  = 1
           unitPrice = 899
         then readmodel BasketSize
-          id         = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           lineCount  = 2
           addedValue = 997
