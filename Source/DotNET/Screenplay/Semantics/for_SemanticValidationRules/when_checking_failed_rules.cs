@@ -28,5 +28,6 @@ public class when_checking_failed_rules : given.rule_examples
         "A value must contain 'Ab'.",
         "A value must not contain 'Ab'.",
         "A value must start with 'Ab'.",
-        "A value must end with 'Ab'."]);
+        "A value must end with 'Ab'.",
+        "A value must have at most 2 decimal places."]);
 }

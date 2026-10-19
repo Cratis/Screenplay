@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 /// Parses the <c>button</c> lines of a <c>toolbar</c> - buttons that invoke State Change slices.
 /// </summary>
 /// <remarks>
-/// A button is <c>button &lt;id&gt; title "..." [slice &lt;Slice&gt;] [emphasis primary|secondary|quiet] [icon X]</c>. The parser reads
+/// A button is <c>button &lt;id&gt; title "..." [slice &lt;Slice&gt;] [emphasis primary|secondary|quiet] [icon X]</c>, optionally followed by an indented <c>authorize</c> line. The parser reads
 /// the grammar only; whether the slice exists and is a State Change slice is checked by <see cref="ToolbarButtonValidator"/>.
 /// </remarks>
 internal static partial class ToolbarButtonParser
@@ -117,13 +117,21 @@ internal static partial class ToolbarButtonParser
             context.Error(DiagnosticCodes.InvalidToolbarButton, $"Toolbar button '{id}' has no title - expected 'button {id} title \"<text>\"'", line.Location);
         }
 
-        if (context.TryPeekChild(line.Indent, out _))
+        AuthorizeSyntax? authorize = null;
+        while (context.TryPeekChild(line.Indent, out var child))
         {
-            context.Error(DiagnosticCodes.InvalidToolbarButton, $"Unexpected block under toolbar button '{id}' - a button is one line", line.Location);
-            context.SkipBlock(line.Indent);
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "authorize" && authorize is null)
+            {
+                authorize = AuthorizeParser.Parse(context, child);
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidToolbarButton, $"Unexpected '{child.Content}' under toolbar button '{id}' - a button takes one 'authorize' line and nothing else", child.Location);
+            context.SkipBlock(child.Indent);
         }
 
-        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon };
+        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon, Authorize = authorize };
     }
 
     static ToolbarEmphasis? ParseEmphasis(string value) => value switch

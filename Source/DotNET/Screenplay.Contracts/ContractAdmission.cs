@@ -85,6 +85,37 @@ static class ContractAdmission
               event Recorded
         """;
 
+    internal const string AcmeAdmissions = """
+        concept Money : Decimal
+          validate
+            decimals <= 2
+        concept OrderId : Uuid
+        concept MovementId : Uuid
+        module M
+          feature F
+            slice StateChange S
+              event Recorded
+                amount Money
+                movementId MovementId
+              command Record
+                id String identifier
+                orderId OrderId
+                amount Money
+                produces Recorded
+                  for id
+                  amount = amount
+                  movementId = orderId
+            slice StateView T
+              readmodel Total
+                id String key
+                total Money optional
+              query Find => Total optional
+                by id String
+              projection Build => Total
+                from Recorded
+                  add total by amount * 2
+        """;
+
     internal const string ProtectedReads = """
         command reads protected
         module M
@@ -169,7 +200,8 @@ static class ContractAdmission
                 CommandDateComparisons.Replace("end >= start", "end >= today", StringComparison.Ordinal),
                 CommandUuidComparisons,
                 CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy < requestedBy", StringComparison.Ordinal),
-                CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy != raw", StringComparison.Ordinal)
+                CommandUuidComparisons.Replace("approvedBy != requestedBy", "approvedBy != raw", StringComparison.Ordinal),
+                AcmeAdmissions
             ]),
         new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
         new(

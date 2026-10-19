@@ -69,8 +69,21 @@ internal sealed partial class SemanticScopedProjection
             return null;
         }
 
+        var product = number.Value;
+        if (mapping.Factor is not null)
+        {
+            if (Evaluate(mapping.Factor, fact) is not SemanticNumberValue factor)
+            {
+                Fail($"Projection '{projection.Name}' arithmetic on '{property.Name}' needs a numeric factor.");
+                return null;
+            }
+
+            // The product of both operands is taken exactly (decimal), then converted to the target type like any operand.
+            product = number.Value * factor.Value;
+        }
+
         var left = Coerce(current is SemanticNumberValue value ? value.Value : 0m, whole);
-        var right = Coerce(number.Value, whole);
+        var right = Coerce(product, whole);
         return SemanticValue.Number(mapping.Operation is SemanticProjectionOperation.Add or SemanticProjectionOperation.Increment ? left + right : left - right);
     }
 

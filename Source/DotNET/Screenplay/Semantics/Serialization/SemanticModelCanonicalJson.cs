@@ -852,6 +852,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.NotContains => "notContains",
         SemanticValidationRuleKind.StartsWith => "startsWith",
         SemanticValidationRuleKind.EndsWith => "endsWith",
+        SemanticValidationRuleKind.DecimalPlaces => "decimalPlaces",
         SemanticValidationRuleKind.RulePredicate => "rulePredicate",
         SemanticValidationRuleKind.CodeValidation => "codeValidation",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)

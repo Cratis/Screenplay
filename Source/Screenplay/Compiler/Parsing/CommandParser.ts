@@ -41,7 +41,7 @@ const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
-const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|not contains|contains|starts with|ends with|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
+const operandPattern = pattern('^(not empty|length ==|decimals <=|all >=|all >|matches|not contains|contains|starts with|ends with|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
 const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
@@ -56,6 +56,7 @@ const operandKinds: Record<string, ValidationRuleKind> = {
     '==': 'Equal',
     '!=': 'NotEqual',
     'length ==': 'Length',
+    'decimals <=': 'DecimalPlaces',
     matches: 'Matches',
     contains: 'Contains',
     'not contains': 'NotContains',

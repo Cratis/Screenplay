@@ -149,6 +149,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         VisitExpression(syntax.Value);
+        if (syntax.Factor is not null) VisitExpression(syntax.Factor);
     }
 
     /// <summary>
@@ -159,5 +160,6 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         VisitExpression(syntax.Value);
+        if (syntax.Factor is not null) VisitExpression(syntax.Factor);
     }
 }

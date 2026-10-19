@@ -33,6 +33,7 @@ public sealed partial class SemanticModelBinder
     internal static SemanticVersion RequiredConceptVersion(SemanticConcept concept, bool generates)
     {
         var application = new SemanticApplication(default, "ConceptCheck", [concept], [], []);
+        if (SemanticModelValidator.UsesAcmeAdmissions(application)) return SemanticVersion.V29;
         if (SemanticModelValidator.UsesTextRules(application)) return SemanticVersion.V24;
         if (SemanticModelValidator.UsesPhase3Generation(application)) return SemanticVersion.V21;
         if (generates && !concept.Validations.IsEmpty) return SemanticVersion.V20;

@@ -104,7 +104,12 @@ public enum ValidationRuleKind
     /// <summary>
     /// The text must end with the literal operand, compared ordinally.
     /// </summary>
-    EndsWith = 18
+    EndsWith = 18,
+
+    /// <summary>
+    /// A decimal value must have at most the operand's number of decimal places.
+    /// </summary>
+    DecimalPlaces = 19
 }
 
 /// <summary>

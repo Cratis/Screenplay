@@ -60,7 +60,13 @@ public record CountMappingSyntax(string Property, SourceLocation Location) : Map
 /// <param name="Property">The dotted target property path on the read model.</param>
 /// <param name="Value">The <see cref="ExpressionSyntax"/> to add.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record AddMappingSyntax(string Property, ExpressionSyntax Value, SourceLocation Location) : MappingSyntax(Property, Location);
+public record AddMappingSyntax(string Property, ExpressionSyntax Value, SourceLocation Location) : MappingSyntax(Property, Location)
+{
+    /// <summary>
+    /// Gets the second factor of <c>add &lt;property&gt; by &lt;value&gt; * &lt;factor&gt;</c>, or <see langword="null"/> when the value is added as it is.
+    /// </summary>
+    public ExpressionSyntax? Factor { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>subtract &lt;property&gt; by &lt;expression&gt;</c> mapping.
@@ -68,4 +74,10 @@ public record AddMappingSyntax(string Property, ExpressionSyntax Value, SourceLo
 /// <param name="Property">The dotted target property path on the read model.</param>
 /// <param name="Value">The <see cref="ExpressionSyntax"/> to subtract.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SubtractMappingSyntax(string Property, ExpressionSyntax Value, SourceLocation Location) : MappingSyntax(Property, Location);
+public record SubtractMappingSyntax(string Property, ExpressionSyntax Value, SourceLocation Location) : MappingSyntax(Property, Location)
+{
+    /// <summary>
+    /// Gets the second factor of <c>subtract &lt;property&gt; by &lt;value&gt; * &lt;factor&gt;</c>, or <see langword="null"/> when the value is subtracted as it is.
+    /// </summary>
+    public ExpressionSyntax? Factor { get; init; }
+}

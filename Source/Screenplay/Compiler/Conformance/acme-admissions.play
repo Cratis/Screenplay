@@ -1,0 +1,44 @@
+// The Acme Commerce admissions of decision 0098 - the C# and TypeScript compilers read them the same way.
+policy IsBuyer
+  require role "buyer"
+
+concept Money : Decimal
+  validate
+    >= 0
+    decimals <= 2 message "Money has at most two decimals"
+concept OrderId : Uuid
+concept MovementId : Uuid
+
+module Shop
+  feature Basket
+    slice StateChange PutInBasket
+      command PutInBasket
+        basketId Uuid identifier
+        unitPrice Money
+        surcharge Decimal
+        quantity Int
+        orderId OrderId
+        validate
+          surcharge decimals <= 3
+        produces LineAdded
+          for basketId
+          unitPrice = unitPrice
+          quantity = quantity
+          movementId = orderId
+      event LineAdded
+        unitPrice Money
+        quantity Int
+        movementId MovementId
+    slice StateView BasketLookup
+      readmodel Basket
+        basketId Uuid key
+        total Money optional
+        discount Money optional
+      projection BasketProjection => Basket
+        from LineAdded
+          add total by unitPrice * quantity
+          subtract discount by unitPrice * 0.5
+      screen BasketScreen
+        toolbar actions
+          button put title "Put in basket" slice Shop.Basket.PutInBasket emphasis primary
+            authorize IsBuyer

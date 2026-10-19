@@ -18,6 +18,8 @@ public static partial class SemanticValidationRules
             SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
                 SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual =>
                 rule.Operand is SemanticNumberValue && value is SemanticNullValue or SemanticNumberValue,
+            SemanticValidationRuleKind.DecimalPlaces =>
+                rule.Operand is SemanticNumberValue { Value: >= 0 and <= 28 } && value is SemanticNullValue or SemanticNumberValue,
             SemanticValidationRuleKind.Length =>
                 rule.Operand is SemanticNumberValue && value is SemanticNullValue or SemanticTextValue,
             SemanticValidationRuleKind.Matches or SemanticValidationRuleKind.Checksum or

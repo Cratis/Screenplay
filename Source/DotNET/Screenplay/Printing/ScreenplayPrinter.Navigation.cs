@@ -33,6 +33,11 @@ public sealed partial class ScreenplayPrinter
             {
                 WriteNavigationItemNode(writer, item);
             }
+
+            foreach (var button in region.Buttons)
+            {
+                WriteToolbarButton(writer, button);
+            }
         }
     }
 

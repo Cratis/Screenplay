@@ -8,8 +8,10 @@ import {
     ScreenNavigateSyntax, ScreenNavigationParameterSyntax, ScreenSectionSyntax, ScreenSlotSyntax, ScreenSummarySyntax, ScreenSyntax, ScreenTableSyntax,
     ScreenTemplateReferenceSyntax, ScreenTitleSyntax, ScreenToolbarSyntax, ToolbarButtonSyntax, ToolbarEmphasis, ToolbarItemKind, ToolbarItemSyntax,
 } from '../Syntax/Screens';
+import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
+import { parseAuthorize } from './AuthorizeParser';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
 import { parseDescription } from './DescriptionParser';
@@ -473,13 +475,19 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
     if (buttonTitle === undefined && valid) {
         context.error(DiagnosticCodes.InvalidToolbarButton, `Toolbar button '${id}' has no title - expected 'button ${id} title "<text>"'`, locationOf(line));
     }
-    if (context.peekChild(line.indent) !== undefined) {
-        context.error(DiagnosticCodes.InvalidToolbarButton, `Unexpected block under toolbar button '${id}' - a button is one line`, locationOf(line));
-        context.skipBlock(line.indent);
+    let authorize: AuthorizeSyntax | null = null;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        if (firstWord(child.content) === 'authorize' && authorize === null) {
+            authorize = parseAuthorize(context, child);
+            continue;
+        }
+        context.error(DiagnosticCodes.InvalidToolbarButton, `Unexpected '${child.content}' under toolbar button '${id}' - a button takes one 'authorize' line and nothing else`, locationOf(child));
+        context.skipBlock(child.indent);
     }
     return {
         kind: 'ToolbarButtonSyntax', id, title: buttonTitle ?? '',
-        ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}),
+        ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}), ...(authorize !== null ? { authorize } : {}),
         location: locationOf(line),
     };
 }

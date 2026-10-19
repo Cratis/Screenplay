@@ -266,6 +266,7 @@ Declarative validation covers the common cases without code:
 | `== <value>` | `currency == "NOK"` |
 | `!= <value>` | `status != "draft"` |
 | `length == <n>` | `currency length == 3` |
+| `decimals <= <n>` | `price decimals <= 2` |
 | `contains "<text>"` | `reference contains "INV"` |
 | `not contains "<text>"` | `reference not contains " "` |
 | `starts with "<text>"` | `reference starts with "INV-"` |
@@ -281,6 +282,8 @@ Declarative validation covers the common cases without code:
 `matches "<regex>"` uses the [portable match dialect](#portable-match-dialect): a restricted, flagless JavaScript regular expression. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at authoring. The reference evaluator runs Screenplay's own Thompson automaton, not a platform regular-expression engine. Each input code unit visits at most the automaton's states; there is no timeout or host-specific engine limit. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
 
 The four literal text rules `contains`, `not contains`, `starts with` and `ends with` compare UTF-16 code units ordinally: case, accents, whitespace and Unicode normalization are not changed. They require one non-enumerated text value and a quoted text operand, not a collection, property reference or regular expression. An absent optional value passes; add `not empty` to require presence. Empty operands are admitted: `contains ""`, `starts with ""` and `ends with ""` always pass, while `not contains ""` always fails for present text. First-class text rules select their own executable-model version; models using none keep their existing version and bytes.
+
+`decimals <= <n>` limits how many places a `Decimal` value has after the decimal point. The operand is a whole number from 0 to 28, and the subject is one `Decimal` property or a `Decimal` concept, not a collection, a whole number or text. Trailing zeros do not count, so `19.990` has two places. An absent optional value passes. A rule that fails is a validation rejection with the rule's message. The rule selects language/semantic `29.0`; models using none keep their existing version and bytes. It is checked by the reference evaluator, Stage and every generated application the same way, so a price with three decimals is refused where it enters rather than rounded where it is stored.
 
 ### Portable match dialect
 
@@ -625,6 +628,29 @@ produces InvoiceRegistered
   for invoiceId
   invoiceNumber = invoiceNumber
 ```
+
+### Mapping one concept to another
+
+A mapping may assign a value of one concept to a property of a different concept, or between a concept and its primitive, when both sit over the same primitive. This is how an identifier crosses a context boundary and keeps its own concept on each side:
+
+```screenplay
+concept OrderId : Uuid
+concept MovementId : Uuid
+
+module Stock
+  feature Moves
+    slice StateChange MoveStock
+      command MoveStock
+        id String identifier
+        orderId OrderId
+        produces StockMoved
+          for id
+          movementId = orderId    // OrderId becomes MovementId
+      event StockMoved
+        movementId MovementId
+```
+
+The mapping is admitted when all of these hold: both concepts are over the same primitive, neither is an enumeration, the source is not optional when the target is required, and the target concept declares no rule the source concept does not also declare, so the value is already proved. A personal-data or secret classification on the source must be repeated on the target. Anything else is still the type mismatch error. The check applies to every property mapping: `produces`, reaction productions and invocations, and projections. A model that needs the conversion selects language/semantic `29.0`; models using none keep their existing version and bytes.
 
 ### Mapping sources
 

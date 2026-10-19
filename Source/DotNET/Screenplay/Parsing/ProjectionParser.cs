@@ -637,9 +637,10 @@ internal static partial class ProjectionParser
         {
             var property = Unescape(arithmetic.Groups[2].Value);
             var value = ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[3], line);
+            var factor = arithmetic.Groups[4].Success ? ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[4], line) : null;
             return arithmetic.Groups[1].Value == "add"
-                ? new AddMappingSyntax(property, value, line.Location)
-                : new SubtractMappingSyntax(property, value, line.Location);
+                ? new AddMappingSyntax(property, value, line.Location) { Factor = factor }
+                : new SubtractMappingSyntax(property, value, line.Location) { Factor = factor };
         }
 
         var set = SetRegex().Match(line.Content);
@@ -702,7 +703,7 @@ internal static partial class ProjectionParser
     [GeneratedRegex(@"^(increment|decrement|count|clear)\s+(@?[$\w.]+)$", RegexOptions.NonBacktracking)]
     private static partial Regex KeywordMappingRegex();
 
-    [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+?)(?:\s+\*\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ArithmeticRegex();
 
     [GeneratedRegex(@"^set\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]

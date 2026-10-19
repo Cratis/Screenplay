@@ -51,6 +51,7 @@ internal static partial class SemanticModelRead
         ["notContains"] = SemanticValidationRuleKind.NotContains,
         ["startsWith"] = SemanticValidationRuleKind.StartsWith,
         ["endsWith"] = SemanticValidationRuleKind.EndsWith,
+        ["decimalPlaces"] = SemanticValidationRuleKind.DecimalPlaces,
         ["rulePredicate"] = SemanticValidationRuleKind.RulePredicate,
         ["codeValidation"] = SemanticValidationRuleKind.CodeValidation
     });

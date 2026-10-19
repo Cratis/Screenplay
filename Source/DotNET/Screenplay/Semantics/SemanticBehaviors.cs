@@ -117,7 +117,12 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// Scalar text must end with the literal operand using ordinal UTF-16 comparison.
     /// </summary>
-    EndsWith = 19
+    EndsWith = 19,
+
+    /// <summary>
+    /// A decimal number must have at most the operand's number of decimal places. The operand is a non-negative whole number.
+    /// </summary>
+    DecimalPlaces = 20
 }
 
 /// <summary>

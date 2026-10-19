@@ -22,7 +22,7 @@ internal static partial class NavigationParser
     /// <summary>
     /// What a navigation region body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "logo image \"<path>\" title \"<text>\" or item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]";
+    public const string Expected = "logo image \"<path>\" title \"<text>\" or item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>]] [slot <name>], or (topbar) button <id> title \"<text>\" slice <Slice>";
 
     /// <summary>
     /// Determines whether a line inside a layout opens a navigation region rather than declaring a slot named <c>navigation</c>.
@@ -59,6 +59,7 @@ internal static partial class NavigationParser
         }
 
         var items = new List<NavigationItemSyntax>();
+        var buttons = new List<ToolbarButtonSyntax>();
         NavigationLogoSyntax? logo = null;
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -84,6 +85,18 @@ internal static partial class NavigationParser
                     }
 
                     break;
+                case "button":
+                    if (region == NavigationRegionKind.Sidebar)
+                    {
+                        context.Error(DiagnosticCodes.InvalidNavigationItem, "A 'button' belongs in the 'navigation topbar' region - the sidebar holds items", child.Location);
+                        context.SkipBlock(child.Indent);
+                    }
+                    else if (ToolbarButtonParser.Parse(context, child) is { } button)
+                    {
+                        buttons.Add(button);
+                    }
+
+                    break;
                 default:
                     context.Error(DiagnosticCodes.InvalidNavigationItem, $"Unexpected '{child.Content}' in a navigation region - expected {Expected}", child.Location);
                     context.SkipBlock(child.Indent);
@@ -91,7 +104,7 @@ internal static partial class NavigationParser
             }
         }
 
-        return new(region, mode, items, header.Location) { Logo = logo };
+        return new(region, mode, items, header.Location) { Logo = logo, Buttons = buttons };
     }
 
     static NavigationLogoSyntax? ParseLogo(ParserContext context, SourceLine line)

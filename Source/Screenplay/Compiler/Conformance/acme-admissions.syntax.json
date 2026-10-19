@@ -1,0 +1,379 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Money",
+      "type": "Decimal",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "OrderId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "MovementId",
+      "type": "Uuid",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Basket",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "PutInBasket",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "LineAdded",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "basketId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "unitPrice",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "unitPrice"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "quantity",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "quantity"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "movementId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "orderId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "basketId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitPrice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "surcharge",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "OrderId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "surcharge",
+                          "rule": "DecimalPlaces",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 3
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "LineAdded",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "unitPrice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantity",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "movementId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MovementId"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "PutInBasket",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "BasketLookup",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "LineAdded"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "AddMappingSyntax",
+                          "factor": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "quantity"
+                          },
+                          "property": "total"
+                        },
+                        {
+                          "kind": "SubtractMappingSyntax",
+                          "factor": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 0.5
+                          },
+                          "property": "discount"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "BasketProjection",
+                  "readModel": "Basket",
+                  "sequence": null
+                }
+              ],
+              "queries": [],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Basket",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "basketId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "total",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Money"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "discount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Money"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenToolbarSyntax",
+                      "buttons": [
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "authorize": {
+                            "kind": "AuthorizeSyntax",
+                            "requirement": {
+                              "kind": "PolicyReferenceSyntax",
+                              "name": "IsBuyer"
+                            }
+                          },
+                          "emphasis": "Primary",
+                          "id": "put",
+                          "slice": "Shop.Basket.PutInBasket",
+                          "title": "Put in basket"
+                        }
+                      ],
+                      "items": [],
+                      "name": "actions"
+                    }
+                  ],
+                  "name": "BasketScreen"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

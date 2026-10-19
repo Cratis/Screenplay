@@ -71,6 +71,12 @@ public record NavigationRegionSyntax(
     /// Gets the application logo declared in this region block, or <c>null</c>. Application level only.
     /// </summary>
     public NavigationLogoSyntax? Logo { get; init; }
+
+    /// <summary>
+    /// Gets the application-level toolbar buttons of a topbar region - <c>button &lt;id&gt; title "..." slice &lt;Slice&gt;</c>, each
+    /// optionally gated by an <c>authorize</c> line. They follow the same inherit, extend and override modes as the items.
+    /// </summary>
+    public IEnumerable<ToolbarButtonSyntax> Buttons { get; init; } = [];
 }
 
 /// <summary>
