@@ -10,8 +10,10 @@ public class and_it_is_refused : given.a_workspace_with_two_slices_to_move_betwe
     protected override string DestinationMembers => """
               command Register
                 projectId ProjectId identifier
+                name      ProjectName
                 produces ProjectRegistered
                   for projectId
+                  name = name
         """;
 
     SemanticAddress Source => Slice("Source", "Registration");

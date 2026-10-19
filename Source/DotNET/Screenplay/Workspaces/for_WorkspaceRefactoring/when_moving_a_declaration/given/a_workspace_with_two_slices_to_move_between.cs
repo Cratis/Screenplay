@@ -65,7 +65,7 @@ public class a_workspace_with_two_slices_to_move_between : for_WorkspaceRefactor
                   name = "B"
             slice StateView Listing
               readmodel ProjectView
-                projectId ProjectId
+                projectId ProjectId key
                 name ProjectName
               query AllProjects => ProjectView[]
               projection ProjectList => ProjectView
