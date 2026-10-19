@@ -94,7 +94,10 @@ public sealed partial class SemanticModelBinder
             var typedDestination = productions.Any(value => value.For is PathExpressionSyntax source &&
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
-            var routed = produced.Where(value => value.Route is null).Select(value => value.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
+            var routedDestinations = produced.Where(value => value.Route is null).Select(value => value.Destination).OfType<SemanticResolvedExpression>().ToArray();
+
+            // With several event sources the command's own identifier stays the default destination.
+            var routed = routedDestinations.FirstOrDefault(value => properties.Any(property => property.Id == value.Target && property.IsIdentifier)) ?? routedDestinations.FirstOrDefault();
             var allocatedProduction = properties.Any(property => property.IsGenerated && property.IsIdentifier) && produced.Any(value => value.Destination is null);
             var defaultDestination = !allocatedProduction && routed is not null && (typedDestination || UsesV2 || UsesV7)
                 ? properties.FirstOrDefault(property => property.IsGenerated && property.IsIdentifier) ??
@@ -203,10 +206,14 @@ public sealed partial class SemanticModelBinder
             var when = produced.When is null ? null : BindCondition(produced.When, commandProperties, position: "produces when");
             var tags = BindTags(produced.Tags);
 
-            if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty) &&
-                ((produced.Stream is null && !targetProperty.IsIdentifier && !commandProperties.Values.Any(property => property.IsGenerated && property.IsIdentifier)) || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
+            if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty))
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event destination '{path.Path}' must be the command's required scalar identifier; fan-out to another source is not admitted.", produced.For.Location);
+                // From ESM v30 a command appends to several event sources: 'for' may name any required scalar command property
+                // (decision 0098), and the events of one accepted command are appended together.
+                if (targetProperty.Type.IsCollection || targetProperty.Type.IsOptional)
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event destination '{path.Path}' must be a required scalar command property.", produced.For.Location);
+                }
             }
 
             var destination = produced.For is null

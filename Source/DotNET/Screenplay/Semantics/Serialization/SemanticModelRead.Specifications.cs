@@ -116,7 +116,8 @@ internal static partial class SemanticModelRead
             .Add("thenErrors", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenErrors = Array(ref reader, SpecificationError, property))
             .Add("thenDenied", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenDenied = OnlyTrue(ref reader, property, "specification"))
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
-            .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property));
+            .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
+            .Add("givenGenerated", 30, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property));
 
         public ImmutableArray<SemanticSpecificationEvent> GivenEvents { get; set; }
 
@@ -171,6 +172,7 @@ internal static partial class SemanticModelRead
                 ThenAbsentReadModels = SchemaVersion >= 5 ? ThenAbsentReadModels : [],
                 GivenClock = Automation.GivenClock,
                 GivenCaptures = Automation.GivenCaptures,
+                GivenGenerated = Automation.GivenGenerated,
                 WhenClock = Automation.WhenClock,
                 WhenTrigger = Automation.WhenTrigger,
                 WhenCapture = Automation.WhenCapture

@@ -118,7 +118,7 @@ module Buying
       description "Drafts a one-line purchase order for a SKU from its preferred supplier; one open replenishment order per SKU"
 
       command CreateReplenishmentPurchaseOrder
-        purchaseOrderId PurchaseOrderId identifier
+        purchaseOrderId PurchaseOrderId generated identifier
         sku             Sku
         quantity        Quantity
         reads SkuSourcing as sourcing by sku
@@ -135,9 +135,16 @@ module Buying
         produces ReplenishmentOrderPlaced
           for purchaseOrderId
           sku = sku
+        // One decision, two event sources: the order is the purchase order's, and the SKU remembers that it is being replenished
+        produces SkuReplenishmentStarted
+          for sku
+          purchaseOrderId = purchaseOrderId
 
       event ReplenishmentOrderPlaced
         sku Sku
+
+      event SkuReplenishmentStarted
+        purchaseOrderId PurchaseOrderId
 
       constraint OneOpenReplenishmentOrderPerSku
         unique sku on ReplenishmentOrderPlaced
@@ -146,7 +153,7 @@ module Buying
         message "An open purchase order already covers that SKU"
 
       example Replenish : CreateReplenishmentPurchaseOrder
-        purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+        for "c0ffee00-0000-4000-8000-000000000001"
         sku             = "ACM-1000"
         quantity        = 40
 
@@ -172,6 +179,9 @@ module Buying
         then ReplenishmentOrderPlaced
           for "c0ffee00-0000-4000-8000-000000000001"
           sku = "ACM-1000"
+        then SkuReplenishmentStarted
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
 
       specification NoPreferredSupplierNoOrder
         given caller
@@ -193,11 +203,9 @@ module Buying
         description "Skips when an open purchase order already covers the SKU; reports a block when no supplier is preferred"
         runs as system role "Buyer"
         when ReplenishmentRequested
-          purchaseOrderId
           sku
           quantity
           invokes CreateReplenishmentPurchaseOrder
-            purchaseOrderId = purchaseOrderId
             sku             = sku
             quantity        = quantity
             on refused by constraint OneOpenReplenishmentOrderPerSku
@@ -210,6 +218,7 @@ module Buying
         reason String
 
       specification AutoReplenishDraftsAnOrderForThePreferredSupplier
+        given generated CreateReplenishmentPurchaseOrder.purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
         given SupplierRegistered
           for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
           name         = "Nordic Ceramics AS"
@@ -223,7 +232,6 @@ module Buying
           currency   = "NOK"
         when append ReplenishmentRequested
           for "ACM-1000"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
           sku          = "ACM-1000"
           quantity     = 40
           onHand       = 4
@@ -240,8 +248,12 @@ module Buying
         then ReplenishmentOrderPlaced
           for "c0ffee00-0000-4000-8000-000000000001"
           sku = "ACM-1000"
+        then SkuReplenishmentStarted
+          for "ACM-1000"
+          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
 
       specification AutoReplenishSkipsWhenAnOpenOrderCoversTheSku
+        given generated CreateReplenishmentPurchaseOrder.purchaseOrderId = "c0ffee00-0000-4000-8000-000000000003"
         given SupplierRegistered
           for "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
           name         = "Nordic Ceramics AS"
@@ -262,7 +274,6 @@ module Buying
           sku = "ACM-1000"
         when append ReplenishmentRequested
           for "ACM-1000"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000003"
           sku          = "ACM-1000"
           quantity     = 40
           onHand       = 3
@@ -270,9 +281,9 @@ module Buying
         then no events
 
       specification AutoReplenishReportsAMissingPreferredSupplier
+        given generated CreateReplenishmentPurchaseOrder.purchaseOrderId = "c0ffee00-0000-4000-8000-000000000002"
         when append ReplenishmentRequested
           for "ACM-1001"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000002"
           sku          = "ACM-1001"
           quantity     = 24
           onHand       = 2
@@ -307,7 +318,7 @@ module Buying
           add onHand by 0
           add reorderPoint by 0
           status = "blocked"
-        from ReplenishmentOrderPlaced key sku
+        from SkuReplenishmentStarted
           add quantity by 0
           add onHand by 0
           add reorderPoint by 0
@@ -330,7 +341,6 @@ module Buying
       specification ARequestWaitsInTheQueue
         given ReplenishmentRequested
           for "ACM-1000"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
           sku          = "ACM-1000"
           quantity     = 40
           onHand       = 4
@@ -391,8 +401,7 @@ module Buying
       query AllOpenDemand => observable DemandRow[]
 
       projection DemandRowProjection => DemandRow
-        from DemandRecorded
-          sku       = $eventSourceId
+        from DemandRecorded key sku
           add demanded by quantity
           add delivered by 0
         from PurchaseOrderGoodsReceived key sku

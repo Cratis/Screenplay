@@ -58,8 +58,12 @@ public class when_lowering_inline_events : given.a_semantic_binder
         Bind(Inline.Replace("projectId Uuid identifier", "projectId Uuid", StringComparison.Ordinal)).Success.ShouldBeFalse();
 
     [Fact]
-    void should_keep_cross_source_execution_fail_closed() =>
-        Bind(Inline.Replace("        name String\n", "        name String\n        otherId Uuid\n", StringComparison.Ordinal).Replace("          tag audit", "          for otherId\n          tag audit", StringComparison.Ordinal)).Success.ShouldBeFalse();
+    void should_bind_another_required_event_source_from_esm_v30() =>
+        Bind(Inline.Replace("        name String\n", "        name String\n        otherId Uuid\n", StringComparison.Ordinal).Replace("          tag audit", "          for otherId\n          tag audit", StringComparison.Ordinal)).Success.ShouldBeTrue();
+
+    [Fact]
+    void should_keep_an_optional_event_source_refused() =>
+        Bind(Inline.Replace("        name String\n", "        name String\n        otherId Uuid optional\n", StringComparison.Ordinal).Replace("          tag audit", "          for otherId\n          tag audit", StringComparison.Ordinal)).Success.ShouldBeFalse();
 
     [Fact]
     void should_not_bind_an_inline_default_onto_a_plain_omission()

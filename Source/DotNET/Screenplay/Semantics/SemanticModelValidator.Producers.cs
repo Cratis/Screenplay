@@ -28,9 +28,10 @@ internal static partial class SemanticModelValidator
     }
 
     internal static SemanticTypeReference? ProducedEventSourceType(SemanticCommand command, SemanticProducedEvent produced) =>
-        (produced.Route is not null || command.Properties.Any(property => property.IsGenerated && property.IsIdentifier)) &&
-        produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route
-            ? command.Properties.SingleOrDefault(property => property.Id == route.Target)?.Type
+        produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route &&
+        command.Properties.SingleOrDefault(property => property.Id == route.Target) is { } destination &&
+        (produced.Route is not null || !destination.IsIdentifier || command.Properties.Any(property => property.IsGenerated && property.IsIdentifier))
+            ? destination.Type
             : command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type;
 
     static List<SemanticTypeReference> ProducerTypes(ProducerSources sources, SemanticId eventContract, HashSet<SemanticId> visited)

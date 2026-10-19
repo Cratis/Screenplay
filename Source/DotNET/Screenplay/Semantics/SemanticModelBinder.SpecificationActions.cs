@@ -53,6 +53,32 @@ public sealed partial class SemanticModelBinder
             return null;
         }
 
+        SemanticSpecificationGeneratedValue? BindSpecificationGenerated(SpecificationGeneratedValueSyntax pinned)
+        {
+            UsesV30 = true;
+            var commands = AllSlices().SelectMany(entry => entry.Slice.Commands.Where(command => command.Name == ShortName(pinned.Command)).Select(command => (entry, command))).ToArray();
+            if (commands.Length != 1)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Pinned generated value names '{pinned.Command}', which is not one declared command.", pinned.Location);
+                return null;
+            }
+
+            var (entry, command) = commands[0];
+            var slice = SemanticAddress.ForSlice(_applicationIdentity, entry.Module, entry.FeaturePath, entry.Slice.Name);
+            var commandAddress = SemanticAddress.ForCommand(slice, command.Name);
+            if (command.Properties.SingleOrDefault(candidate => candidate.Name == pinned.Property && candidate.IsGenerated) is not { } syntaxProperty)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"'{pinned.Command}.{pinned.Property}' is not a generated command property, so no value can be pinned for it.", pinned.Location);
+                return null;
+            }
+
+            // The command and its property were resolved where they are declared; resolving them again would register a second source span.
+            var commandId = documents.IdentityCatalog.ResolveSemanticAssignment(commandAddress).Id;
+            var propertyId = documents.IdentityCatalog.ResolveSemanticAssignment(SemanticAddress.ForProperty(commandAddress, syntaxProperty.Name)).Id;
+            var property = new SemanticProperty(propertyId, syntaxProperty.Name, BindTypeReference(syntaxProperty.Type), syntaxProperty.IsIdentifier) with { IsGenerated = true };
+            return BindGeneratedValue(pinned.Source, property) is { } value ? new(commandId, propertyId, value) : null;
+        }
+
         SemanticSpecificationCapture? BindSpecificationCapture(SpecificationCaptureSyntax presented)
         {
             UsesV6 = true;

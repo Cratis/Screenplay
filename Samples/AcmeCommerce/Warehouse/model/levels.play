@@ -26,8 +26,25 @@ module Stock
         sku  = "ACM-1000"
         name = "Acme mug"
 
-      // The accepted path cascades into a public event: it is specified in RegisterSkuFromCatalog (a command specification cannot list a
-      // cascaded public event, and an exact fact count would fail).
+      // The accepted path states everything the registration sets going, down to the public event Storefront listens to.
+      specification RegisteringASkuByHand
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Mug
+        then events in any order
+        then SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 0
+          available = 0
+        then StockLevelChanged
+          sku       = "ACM-1000"
+          onHand    = 0
+          available = 0
 
       specification ASkuNeedsThePrefix
         given caller

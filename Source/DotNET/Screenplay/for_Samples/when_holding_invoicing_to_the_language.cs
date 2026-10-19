@@ -31,6 +31,7 @@ public class when_holding_invoicing_to_the_language : Specification
     [
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
+        (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
         (typeof(TemplateOutletSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),

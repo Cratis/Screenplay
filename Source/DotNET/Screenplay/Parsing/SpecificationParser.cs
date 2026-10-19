@@ -111,6 +111,7 @@ internal static partial class SpecificationParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         SpecificationClockSyntax? givenClock = null;
         var givenCaptures = new List<SpecificationCaptureSyntax>();
+        var givenGenerated = new List<SpecificationGeneratedValueSyntax>();
         SpecificationClockSyntax? whenClock = null;
         SpecificationTriggerSyntax? whenTrigger = null;
         SpecificationCaptureSyntax? whenCapture = null;
@@ -157,6 +158,13 @@ internal static partial class SpecificationParser
                         else
                         {
                             givenClock = ParseClock(context, line, "given");
+                        }
+                    }
+                    else if (GivenGeneratedPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (ParseGivenGenerated(context, line) is { } pinned)
+                        {
+                            givenGenerated.Add(pinned);
                         }
                     }
                     else if (KeywordRegex("given", "capture").IsMatch(line.Content))
@@ -360,6 +368,7 @@ internal static partial class SpecificationParser
             ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
             GivenCaptures = givenCaptures,
+            GivenGenerated = givenGenerated,
             WhenClock = whenClock,
             WhenTrigger = whenTrigger,
             WhenCapture = whenCapture,

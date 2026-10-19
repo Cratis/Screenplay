@@ -412,6 +412,23 @@ internal static partial class SemanticModelValidator
                 }
             }
 
+            RequireObjects(specification.GivenGenerated, nameof(specification.GivenGenerated), "pinned generated value");
+            if (!specification.GivenGenerated.IsDefaultOrEmpty && !_semanticVersion.IsAtLeast(SemanticVersion.V30))
+            {
+                throw new InvalidSemanticContract($"Specification '{specification.Name}' pins generated values, which requires ESM v30.");
+            }
+
+            foreach (var pinned in specification.GivenGenerated)
+            {
+                if (!_commands.TryGetValue(pinned.Command, out var pinnedCommand) ||
+                    pinnedCommand.Properties.SingleOrDefault(property => property.Id == pinned.Property) is not { IsGenerated: true } generated)
+                {
+                    throw new InvalidSemanticContract($"Specification '{specification.Name}' pins a value for something that is not a generated command property.");
+                }
+
+                ValidateValue(pinned.Value, generated.Type, "pinned generated value");
+            }
+
             RequireObjects(specification.GivenCaptures, nameof(specification.GivenCaptures), "given capture record");
             var seen = new HashSet<(SemanticId, SemanticValue)>();
             foreach (var record in specification.GivenCaptures)

@@ -81,30 +81,24 @@ module Stock
       description "Sales confirmed an order line; the warehouse is asked to reserve stock for it"
       direction inbound
 
-      // The order id is read twice in the warehouse's language: as the order the parcel is for and as the movement the reservation is
+      // Sales publishes the whole confirmed order. The order id is read twice in the warehouse's language: as the order the parcel is
+      // for and as the movement the reservation is (MovementId, a concept of its own over the same Uuid)
       event OrderConfirmedAtWarehouse from "Sales"
-        orderId  Uuid
-        sku      Sku
-        quantity Quantity
+        orderId Uuid
+        lines   StockLine[]
 
-      // Keyed by SKU, because the reservation lands on the SKU's stock. Sales publishes one event per confirmed line (orderId repeats across
-      // the lines of one order, sku repeats across orders), so a repeat for the same SKU is told apart by its order.
+      // One reservation per line, found by its SKU: a repeat delivery adds nothing, a delivery with one more line adds only that line
       capture SalesConfirmationFeed
         source events
           from OrderConfirmedAtWarehouse
-        key sku
-        append ReservationRequested
-          when added
-            orderId    = $.orderId
-            sku        = $.sku
-            quantity   = $.quantity
-            movementId = $.orderId
-        append ReservationRequested
-          when orderId
-            orderId    = $.orderId
-            sku        = $.sku
-            quantity   = $.quantity
-            movementId = $.orderId
+        key orderId
+        children lines identified by sku
+          append ReservationRequested
+            when added
+              orderId    = $.orderId
+              sku        = $.sku
+              quantity   = $.quantity
+              movementId = $.orderId
 
       // The confirmation travels all the way: reserve, plan the parcel, snapshot and publish
       specification ReservingAConfirmedOrderLine
@@ -119,12 +113,11 @@ module Stock
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
         when append OrderConfirmedAtWarehouse
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":3}]
         then events in any order
         then ReservationRequested
-          for "ACM-1000"
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku        = "ACM-1000"
           quantity   = 3
@@ -165,16 +158,14 @@ module Stock
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
         given OrderConfirmedAtWarehouse
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines   = [{"sku":"ACM-1000","quantity":3}]
         when append OrderConfirmedAtWarehouse
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          sku      = "ACM-1000"
-          quantity = 5
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines   = [{"sku":"ACM-1000","quantity":5}]
         then events in any order
         then ReservationRequested
-          for "ACM-1000"
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           sku        = "ACM-1000"
           quantity   = 5

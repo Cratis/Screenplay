@@ -153,6 +153,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V29 = new(29, 0);
 
     /// <summary>
+    /// Gets the language version admitting the second Acme Commerce constructs of decision 0098.
+    /// </summary>
+    public static readonly LanguageVersion V30 = new(30, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -326,6 +331,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting the Acme Commerce constructs of decision 0098.
     /// </summary>
     public static readonly SemanticVersion V29 = new(29, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting the second Acme Commerce constructs of decision 0098.
+    /// </summary>
+    public static readonly SemanticVersion V30 = new(30, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1146,7 +1156,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV29Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV30Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1159,7 +1169,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV29Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV30Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

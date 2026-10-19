@@ -16,6 +16,11 @@ layout AcmeNavigation
     item sales title "Sales" target Orders
     item purchasing title "Purchasing" target Buying
     item warehouse title "Warehouse" target Stock
+    // Application-level buttons: always at hand, whichever page the user is on, and only for who may use them
+    button newProduct title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+      authorize CanCurateCatalog
+    button registerSku title "Register SKU" slice Stock.Levels.RegisterSku emphasis secondary icon box
+      authorize IsWarehouseClerk
 
   navigation sidebar
     item shop title "Shop" icon shopping-cart target Shop

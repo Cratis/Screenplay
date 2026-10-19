@@ -58,6 +58,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationCapture(capture);
         }
 
+        foreach (var generated in syntax.GivenGenerated)
+        {
+            VisitSpecificationGeneratedValue(generated);
+        }
+
         if (syntax.WhenAppended is not null)
         {
             VisitSpecificationEvent(syntax.WhenAppended);
@@ -298,6 +303,16 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationGeneratedValueSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationGeneratedValueSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationGeneratedValue(SpecificationGeneratedValueSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitExpression(syntax.Source);
     }
 
     /// <summary>
