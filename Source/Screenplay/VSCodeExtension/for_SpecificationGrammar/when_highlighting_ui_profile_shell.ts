@@ -22,6 +22,10 @@ describe('when highlighting the ui profile shell lines', () => {
     it('scopes the accent keyword', () => capturedBy('    accent "#4f46e5"', '1')?.should.equal('accent'));
     it('scopes the color scheme keyword', () => capturedBy('    color scheme dark', '1')?.should.equal('color scheme'));
     it('scopes the color scheme value', () => capturedBy('    color scheme dark', '2')?.should.equal('dark'));
+    it('scopes the corners keyword', () => capturedBy('    corners round', '1')?.should.equal('corners'));
+    it('scopes the font keyword', () => capturedBy('    font inter', '1')?.should.equal('font'));
+    it('scopes the logo keyword and kind', () => capturedBy('    logo image "data:image/svg+xml;base64,AAAA"', '2')?.should.equal('image'));
+    it('scopes the show name keyword', () => capturedBy('    show name false', '1')?.should.equal('show name'));
     it('scopes the new screens keyword', () => capturedBy('  new screens use template Sheet', '1')?.should.equal('new screens use template'));
     it('does not scope a property that merely starts with the word', () => (capturedBy('    optionality String', '1') === undefined).should.be.true);
 });

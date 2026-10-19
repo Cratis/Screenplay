@@ -179,7 +179,7 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0796` | `blueprint` | text | yes | The blueprint the template comes from. | — |
 | `PLAY0796` | `option` | text | no | The option name. | — |
 | `PLAY0797` | `profile` | text | no | The ui profile whose appearance is invalid. | — |
-| `PLAY0797` | `value` | text | no | The color scheme or accent as authored. | — |
+| `PLAY0797` | `value` | text | no | The color scheme, accent, corners or identity value as authored. | — |
 | `PLAY0799` | `profile` | text | no | The ui profile that names the template. | — |
 | `PLAY0799` | `template` | text | no | The template that cannot start a screen in a feature. | — |
 | `PLAY0799` | `blueprint` | text | yes | The blueprint the template comes from. | — |
@@ -806,7 +806,7 @@ Sample data is design and preview time only: it has no repair, and binding repor
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0788` | Error | A `root template` or `new screens use template` line is not `[blueprint <Blueprint>] <Name> [version "<range>"]` (a version range on an own template is reported here), has a block under a `new screens use template`, a line under `root template` is not `option <name> <value>`, an option is set twice, or a profile declares `new screens use template` more than once. |
-| `PLAY0789` | Error | A line in a `ui profile` `appearance` block is not `color scheme <word>` or `accent "<colour>"`, a line is repeated, or a profile declares more than one `appearance` block. |
+| `PLAY0789` | Error | A line in a `ui profile` `identity` or `appearance` block is not one the block accepts (`color scheme <word>`, `accent "<colour>"`, `corners <word>`, `font <id>`, `name "<text>"`, `logo initials|icon|image <value>`, `show name <true|false>`), a line is repeated, or a profile declares more than one `identity` or `appearance` block. |
 | `PLAY0798` | Error | A `ui profile` declares more than one `root template`. |
 | `PLAY0790` | Error | A `ui profile`'s `root template` or `new screens use template` names an own template the document does not declare - or, checked against the installed catalog, a template its blueprint does not ship. |
 | `PLAY0791` | Warning | A `ui profile` selects its shell with the legacy `layout <Name>` line. Write `root template <Name>`; the quick fix rewrites it. When a `root template` is also present the `layout` line is ignored. |
@@ -815,7 +815,7 @@ Sample data is design and preview time only: it has no repair, and binding repor
 | `PLAY0794` | Error | The root template cannot be the application's shell: it is a dialog template, a screen template that does not declare `scopes application`, a screen template that fits a slot, a layout whose `scopes` leave out `application`, or a layout of a content `type`. |
 | `PLAY0795` | Error | The root template declares no `content` slot, so no screen can be placed in it. |
 | `PLAY0796` | Warning | A `root template` sets an `option` the shell does not expose. An own shell exposes the properties of its `exposure for <Shell>`; a shell that exposes nothing has no options. A blueprint's options are checked against the installed catalog. |
-| `PLAY0797` | Error | The `appearance` `color scheme` is not `light`, `dark` or `system`, or the `accent` is not a `#RGB`, `#RRGGBB` or `#RRGGBBAA` colour. |
+| `PLAY0797` | Error | The `appearance` `color scheme` is not `light`, `dark` or `system`, the `accent` is not a `#RGB`, `#RRGGBB` or `#RRGGBBAA` colour, the `corners` are not `sharp`, `default` or `round`, or an `identity` value is outside Scene's rules (a blank name, a logo of initials longer than two characters, an unknown logo icon, or an image that is not a PNG, JPG, SVG or WebP data URI of at most 400 KB). |
 | `PLAY0799` | Error | The `new screens use template` default cannot start a screen in a feature: it is a layout, an application-scope root template, or a template (a dialog template included) whose `scopes` leave out `feature`. |
 
 A `version` range that is not one Scene understands is `PLAY0721`, as for any template reference. Whether the root template exists, can be the shell and exposes its options is checked by the validator (`PLAY0790` to `PLAY0799`); what a blueprint ships is checked by `UiProfileShellBinder.Bind` against the host's installed catalog.

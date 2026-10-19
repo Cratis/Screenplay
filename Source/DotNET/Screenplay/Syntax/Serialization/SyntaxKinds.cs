@@ -240,6 +240,7 @@ internal static class SyntaxKinds
         typeof(SpecificationEventSyntax),
         typeof(NewScreenTemplateSyntax),
         typeof(ProfileAppearanceSyntax),
+        typeof(ProfileIdentitySyntax),
         typeof(RootTemplateSyntax),
         typeof(SampleDataBindingSyntax),
         typeof(ShellOptionSyntax),

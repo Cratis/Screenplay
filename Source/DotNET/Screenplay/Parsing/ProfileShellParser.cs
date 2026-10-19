@@ -101,13 +101,19 @@ internal static partial class ProfileShellParser
 
         string? colorScheme = null;
         string? accent = null;
+        string? corners = null;
+        string? font = null;
         SourceLocation? colorSchemeLocation = null;
         SourceLocation? accentLocation = null;
+        SourceLocation? cornersLocation = null;
+        SourceLocation? fontLocation = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             var schemeMatch = ColorSchemeRegex().Match(line.Content);
             var accentMatch = AccentRegex().Match(line.Content);
+            var cornersMatch = CornersRegex().Match(line.Content);
+            var fontMatch = FontRegex().Match(line.Content);
             if (schemeMatch.Success)
             {
                 if (colorScheme is not null)
@@ -130,14 +136,122 @@ internal static partial class ProfileShellParser
                 accent = StringLiteral.Unescape(accentMatch.Groups[1].Value);
                 accentLocation = line.Location;
             }
+            else if (cornersMatch.Success)
+            {
+                if (corners is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidProfileAppearance, "This appearance block already declares corners - at most one is allowed", line.Location);
+                    continue;
+                }
+
+                corners = cornersMatch.Groups[1].Value;
+                cornersLocation = line.Location;
+            }
+            else if (fontMatch.Success)
+            {
+                if (font is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidProfileAppearance, "This appearance block already declares a font - at most one is allowed", line.Location);
+                    continue;
+                }
+
+                font = fontMatch.Groups[1].Value;
+                fontLocation = line.Location;
+            }
             else
             {
-                context.Error(DiagnosticCodes.InvalidProfileAppearance, $"Invalid appearance line '{line.Content}' - expected 'color scheme <light|dark|system>' or 'accent \"<#hex>\"'", line.Location);
+                context.Error(DiagnosticCodes.InvalidProfileAppearance, $"Invalid appearance line '{line.Content}' - expected 'color scheme <light|dark|system>', 'accent \"<#hex>\"', 'corners <sharp|default|round>' or 'font <font id>'", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
 
-        return new(colorScheme, accent, header.Location) { ColorSchemeLocation = colorSchemeLocation, AccentLocation = accentLocation };
+        return new(colorScheme, accent, header.Location)
+        {
+            ColorSchemeLocation = colorSchemeLocation,
+            AccentLocation = accentLocation,
+            Corners = corners,
+            CornersLocation = cornersLocation,
+            Font = font,
+            FontLocation = fontLocation
+        };
+    }
+
+    /// <summary>
+    /// Parses an <c>identity</c> block.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="header">The <c>identity</c> line.</param>
+    /// <returns>The parsed <see cref="ProfileIdentitySyntax"/>.</returns>
+    public static ProfileIdentitySyntax ParseIdentity(ParserContext context, SourceLine header)
+    {
+        if (header.Content != "identity")
+        {
+            context.Error(DiagnosticCodes.InvalidProfileAppearance, $"Invalid identity line '{header.Content}' - expected 'identity' followed by an indented block", header.Location);
+        }
+
+        string? name = null;
+        string? logoKind = null;
+        string? logoValue = null;
+        bool? showName = null;
+        SourceLocation? nameLocation = null;
+        SourceLocation? logoLocation = null;
+        SourceLocation? showNameLocation = null;
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            var nameMatch = IdentityNameRegex().Match(line.Content);
+            var logoMatch = LogoRegex().Match(line.Content);
+            var showNameMatch = ShowNameRegex().Match(line.Content);
+            if (nameMatch.Success)
+            {
+                if (name is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidProfileAppearance, "This identity block already declares a name - at most one is allowed", line.Location);
+                    continue;
+                }
+
+                name = StringLiteral.Unescape(nameMatch.Groups[1].Value);
+                nameLocation = line.Location;
+            }
+            else if (logoMatch.Success)
+            {
+                if (logoKind is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidProfileAppearance, "This identity block already declares a logo - at most one is allowed", line.Location);
+                    continue;
+                }
+
+                logoKind = logoMatch.Groups[1].Value;
+                logoValue = logoMatch.Groups[2].Success ? StringLiteral.Unescape(logoMatch.Groups[2].Value) : logoMatch.Groups[3].Value;
+                logoLocation = line.Location;
+            }
+            else if (showNameMatch.Success)
+            {
+                if (showName is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidProfileAppearance, "This identity block already declares 'show name' - at most one is allowed", line.Location);
+                    continue;
+                }
+
+                showName = showNameMatch.Groups[1].Value == "true";
+                showNameLocation = line.Location;
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidProfileAppearance, $"Invalid identity line '{line.Content}' - expected 'name \"<text>\"', 'logo initials \"<AB>\"', 'logo icon <icon>', 'logo image \"<data URI>\"' or 'show name <true|false>'", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+        }
+
+        return new(name, header.Location)
+        {
+            NameLocation = nameLocation,
+            LogoKind = logoKind,
+            LogoValue = logoValue,
+            LogoLocation = logoLocation,
+            ShowName = showName,
+            ShowNameLocation = showNameLocation
+        };
     }
 
     static (string? Blueprint, string Name, string? Version)? ReadReference(ParserContext context, SourceLine line, int keywordLength, string form)
@@ -218,4 +332,19 @@ internal static partial class ProfileShellParser
 
     [GeneratedRegex("^accent\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex AccentRegex();
+
+    [GeneratedRegex(@"^corners\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex CornersRegex();
+
+    [GeneratedRegex(@"^font\s+([A-Za-z0-9][A-Za-z0-9-]*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex FontRegex();
+
+    [GeneratedRegex("^name\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
+    private static partial Regex IdentityNameRegex();
+
+    [GeneratedRegex("^logo\\s+(initials|icon|image)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex LogoRegex();
+
+    [GeneratedRegex(@"^show\s+name\s+(true|false)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ShowNameRegex();
 }

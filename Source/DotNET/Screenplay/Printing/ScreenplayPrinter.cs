@@ -87,6 +87,9 @@ public sealed partial class ScreenplayPrinter :
         hasContent = true;
     }
 
+    static bool IsIconWord(string text) =>
+        text.Length > 0 && (char.IsAsciiLetter(text[0]) || text[0] == '_') && text.All(character => char.IsAsciiLetterOrDigit(character) || character is '_' or '-');
+
     static string ThemeReference(string name) => IsIdentifierName(name) ? name : StringLiteral.Quote(name);
 
     static bool IsIdentifierName(string text) =>
@@ -308,6 +311,30 @@ public sealed partial class ScreenplayPrinter :
             }
         }
 
+        if (uiProfile.Identity is { } identity)
+        {
+            BlankBetween(writer, ref hasContent);
+            writer.Line("identity", identity);
+            using (writer.Indent())
+            {
+                if (identity.Name is not null)
+                {
+                    writer.Line($"name {StringLiteral.Quote(identity.Name)}");
+                }
+
+                if (identity.LogoKind is not null)
+                {
+                    var value = identity.LogoKind == "icon" && identity.LogoValue is { } icon && IsIconWord(icon) ? icon : StringLiteral.Quote(identity.LogoValue ?? string.Empty);
+                    writer.Line($"logo {identity.LogoKind} {value}");
+                }
+
+                if (identity.ShowName is { } showName)
+                {
+                    writer.Line($"show name {(showName ? "true" : "false")}");
+                }
+            }
+        }
+
         if (uiProfile.Appearance is { } appearance)
         {
             BlankBetween(writer, ref hasContent);
@@ -322,6 +349,16 @@ public sealed partial class ScreenplayPrinter :
                 if (appearance.Accent is not null)
                 {
                     writer.Line($"accent {StringLiteral.Quote(appearance.Accent)}");
+                }
+
+                if (appearance.Corners is not null)
+                {
+                    writer.Line($"corners {appearance.Corners}");
+                }
+
+                if (appearance.Font is not null)
+                {
+                    writer.Line($"font {appearance.Font}");
                 }
             }
         }

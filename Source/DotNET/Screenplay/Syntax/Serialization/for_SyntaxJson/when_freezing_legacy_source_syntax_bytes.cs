@@ -83,6 +83,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal)
                 .Replace("\"appearance\":null,", string.Empty, StringComparison.Ordinal)
+                .Replace("\"identity\":null,", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"newScreenTemplate\":null", string.Empty, StringComparison.Ordinal)
                 .Replace("],\"root\":null,\"theme\"", "],\"theme\"", StringComparison.Ordinal)
                 .Replace("],\"root\":null}", "]}", StringComparison.Ordinal);
@@ -342,7 +343,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
         // The root template, appearance and new screen default have their own parser, printer and compiler specs;
         // the frozen bytes predate them and spell the shell the legacy way, as a layout.
-        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null, Layout = profile.Layout ?? profile.Root?.Name, Root = null, Appearance = null, NewScreenTemplate = null }),
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null, Layout = profile.Layout ?? profile.Root?.Name, Root = null, Identity = null, Appearance = null, NewScreenTemplate = null }),
         Exposures = [],
         InstanceContributions = [],
 
