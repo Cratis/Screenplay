@@ -853,48 +853,56 @@ sample data AcmeNordic
       offerCount = 1
   shape SupplierOffer
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f01"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
       sku          = "ACM-1000"
       price        = 62
       currency     = "NOK"
       leadTimeDays = 14
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f02"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
       sku          = "ACM-1001"
       price        = 41
       currency     = "NOK"
       leadTimeDays = 14
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f03"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
       sku          = "ACM-1002"
       price        = 33
       currency     = "NOK"
       leadTimeDays = 10
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f04"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c03"
       sku          = "ACM-1003"
       price        = 118
       currency     = "NOK"
       leadTimeDays = 21
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f05"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c04"
       sku          = "ACM-1004"
       price        = 75
       currency     = "NOK"
       leadTimeDays = 7
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f06"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c05"
       sku          = "ACM-1005"
       price        = 54
       currency     = "NOK"
       leadTimeDays = 5
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f07"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c06"
       sku          = "ACM-1006"
       price        = 12
       currency     = "NOK"
       leadTimeDays = 3
     row
+      offerId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4f08"
       supplierId   = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c02"
       sku          = "ACM-1000"
       price        = 66

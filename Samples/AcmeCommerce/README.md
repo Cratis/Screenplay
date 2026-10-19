@@ -56,6 +56,10 @@ OpsAdmin sees administration and dashboards in every domain.
 - **A read model's first event creates it.** Every required property is set there (literal defaults); otherwise every
   specification of the application becomes "unsupported".
 
+- **Single-value keys only.** No read model has a composite key (`key` with several parts): Stage refuses those (STAGE-ESM-048) until
+  Chronicle ships composite lookups (Chronicle#4265), and they block rendering and Play. Purchasing's supplier offers are keyed by a
+  generated `SupplierOfferId` instead of supplier + SKU (see `Purchasing/README.md`); composite keys return when Chronicle#4265 ships.
+
 ## Public events (the contracts)
 
 P1 `ProductPublished`, P2 `ProductPriceChanged`, P3 `ProductRetired` (Catalog); P4 `OrderPlaced` (Storefront); P5
