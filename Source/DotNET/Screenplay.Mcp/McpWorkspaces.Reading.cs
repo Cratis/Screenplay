@@ -317,6 +317,7 @@ internal sealed partial class McpWorkspaces
         hintCount = requirement.Hints.Length,
         provisional = requirement.IsProvisional,
         ambiguous = requirement.IsAmbiguous,
+        queryShape = DescribeQueryShape(requirement.QueryShape),
         owner = McpSemanticAddresses.Describe(requirement.Owner),
         requirement.Member,
         requirement.Language,

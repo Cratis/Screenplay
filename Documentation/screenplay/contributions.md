@@ -1,3 +1,8 @@
+---
+title: "Contributions"
+description: "Let many Screenplay features each add one entry to a shared collection such as a NavBar, with contribute to and named slots."
+---
+
 # Contributions
 
 A NavBar needs its entries from wherever they are declared - a dozen features scattered across a dozen modules, each adding the one link it owns. A slot on its own is the wrong tool for this: a slot is one parent placing one block of content into one region, not many children contributing into a shared collection. `contribute to` is the many-to-one counterpart.

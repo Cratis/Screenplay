@@ -1,3 +1,8 @@
+---
+title: "Theme"
+description: "Declare a Screenplay theme and have the compiler check it against the component packages of a ui profile."
+---
+
 # Theme
 
 A [ui profile](ui-profile.md)'s `packages` list says which component packages a build draws widgets from - but a theme is only meaningful relative to a specific set of those packages. Pairing an arbitrary theme with an arbitrary package can silently produce unstyled or broken components. `theme` makes that relationship a declared, checked one instead of an assumed one.

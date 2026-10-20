@@ -643,6 +643,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         sealed record BoundReadModel(
             ReadModelSyntax Syntax,
             SemanticReadModel Model,
-            Dictionary<string, SemanticProperty> Properties);
+            Dictionary<string, SemanticProperty> Properties)
+        {
+            /// <summary>Gets the declared read model's address; null when the bound shape is a public event.</summary>
+            public SemanticAddress? Address { get; init; }
+        }
     }
 }

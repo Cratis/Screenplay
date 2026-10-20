@@ -1,3 +1,8 @@
+---
+title: "Compiler and CLI"
+description: "Install the Screenplay compiler CLI to verify every .play file in a folder, check released events and report model questions."
+---
+
 # Compiler and CLI
 
 You have a folder of `.play` files and want to know they are valid before anything consumes them. The Screenplay compiler ships in two forms: a .NET library you can embed, and a command line tool that verifies every `.play` file in a directory tree and prints any problems in a readable, compiler style format.

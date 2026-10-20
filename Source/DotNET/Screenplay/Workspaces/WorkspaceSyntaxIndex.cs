@@ -3,6 +3,7 @@
 
 using System.Collections;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Parsing;
@@ -75,6 +76,8 @@ public sealed record WorkspaceSyntaxEntry
 /// </summary>
 public sealed class WorkspaceSyntaxIndex
 {
+    static readonly ConditionalWeakTable<ScreenplayWorkspace, WorkspaceSyntaxIndex> _indexes = [];
+
     // Retain the original typed-property traversal order, but let the wire descriptors
     // decide membership and names (including the reserved kind/syntaxKind distinction).
     static readonly Dictionary<Type, SyntaxMember[]> _children = SyntaxKinds.All.ToDictionary(
@@ -185,6 +188,17 @@ public sealed class WorkspaceSyntaxIndex
     /// <param name="handle">The snapshot handle.</param>
     /// <returns>The entry, or null for an unknown or stale handle.</returns>
     public WorkspaceSyntaxEntry? Find(WorkspaceNodeHandle handle) => _handles.GetValueOrDefault(handle);
+
+    /// <summary>
+    /// Gets the index of a workspace revision, built once and shared by the internal steps that only read it.
+    /// </summary>
+    /// <remarks>
+    /// Its nodes must never be handed to a caller or compared by reference with caller-supplied nodes; authoring
+    /// infers lineage partly from node identity, so those steps use a fresh <see cref="Create"/> instead.
+    /// </remarks>
+    /// <param name="workspace">The workspace revision.</param>
+    /// <returns>The shared occurrence index.</returns>
+    internal static WorkspaceSyntaxIndex Shared(ScreenplayWorkspace workspace) => _indexes.GetValue(workspace, Create);
 
     internal static ImmutableArray<WorkspaceSyntaxEntry> ForSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog catalog)
     {

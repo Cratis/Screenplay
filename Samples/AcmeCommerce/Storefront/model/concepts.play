@@ -21,4 +21,4 @@ type BasketLine
   description "A product in a basket with how many and at what price"
   sku       Sku
   quantity  Quantity
-  unitPrice Money
+  unitPrice Money optional

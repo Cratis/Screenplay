@@ -247,3 +247,20 @@ it('retains unknown Apply and refuses automatic retry while allowing read-only s
     expect(await session.inspectState()).toHaveProperty('recovery');
     expect(calls.filter(name => name === 'apply')).toHaveLength(1);
 });
+it('refuses a checking open-workspace while a review is retained, discarding nothing and leaving apply possible', async () => {
+    const choices = (await session.discover()).choices;
+    const preview = await session.preview(choices[0].token);
+    const before = calls.length;
+    await expect(session.readTool('open-workspace', {})).rejects.toMatchObject({ kind: 'SessionBusy' });
+    expect(calls.slice(before)).toEqual([]);
+    expect(calls).not.toContain('discard-proposal');
+    expect(await session.readTool('read-workspace', { view: 'documents', offset: 0 })).toBeDefined();
+    await session.apply(preview.token);
+    expect(calls.filter(name => name === 'apply')).toHaveLength(1);
+});
+it('allows a checking open-workspace when nothing is open, and refuses it during a running discovery', async () => {
+    await expect(session.readTool('open-workspace', {})).resolves.toMatchObject({ revision: 'base' });
+    const discovery = session.discover();
+    await expect(session.readTool('open-workspace', {})).rejects.toMatchObject({ kind: 'SessionBusy' });
+    await discovery;
+});

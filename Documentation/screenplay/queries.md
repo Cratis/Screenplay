@@ -1,3 +1,8 @@
+---
+title: "Queries"
+description: "Declare Screenplay queries, the read-side entry points: return type, one-shot or observable, parameter sources and performance."
+---
+
 # Queries
 
 Queries are read-side entry points. A query maps to a return type — a read model, or a collection of read models with `[]` — and says what it is for, whether it answers once or keeps answering, where each of its parameters comes from, and, when it needs to, how it is performed.
@@ -275,6 +280,8 @@ Inside a performer, `context` is the [`QueryContext`](context.md) — the query'
 ### A query a performer answers is an opaque read
 
 The code decides what a performer returns, so no declarative shape can be executed or specified. Binding does not refuse the application for it. The query is listed as code the model needs (`QueryPerformer`), reported as `PLAY0270` information (`Query '<name>' is performed by code`), and left out of the executable model: it takes no part in the plan and no specification can assert it. A specification whose `then query` names a performer query is left out of the executable specifications with the same information; every other declaration and specification of the application keeps running with `screenplay test`. Everything else about the query — its read model, the screen bound to it, its authorization — is unchanged.
+
+The `QueryPerformer` requirement carries the query's shape, so a host can render the query without running it: the read model it returns (name, semantic identity and address), its cardinality (`One`, `ZeroOrOne` or `Many`, as for any other query), whether it is observable (`Live`) or a snapshot, and its caller-supplied arguments — each `by` key and key part, then each filter, with its type and whether it is optional. Arguments sourced with `from` are filled by the host, so they are not listed. The shape lives only on the requirement: it is not part of the executable model, so it changes neither the canonical model bytes nor its version.
 
 A read model a performer composes therefore sits next to projected read models without making the application `unbound`. Specify the declarative part (the events that feed it) as usual; the performer's own logic is realization metadata that a test of the real code covers.
 

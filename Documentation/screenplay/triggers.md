@@ -1,3 +1,8 @@
+---
+title: "Triggers"
+description: "Declare what can cause a Screenplay reaction to run, from built-in domain events and the clock to your own registered triggers."
+---
+
 # Triggers
 
 A trigger is something that can cause a [reaction](reactions.md) to run. Domain events and the clock are

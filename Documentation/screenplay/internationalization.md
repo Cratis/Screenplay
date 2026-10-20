@@ -1,3 +1,8 @@
+---
+title: "Internationalization"
+description: "Keep user-facing text out of Screenplay behavior by referencing strings by key and supplying each locale in a .strings file."
+---
+
 # Internationalization
 
 User-facing text — validation messages, screen titles, labels — should not be welded into the declaration of behavior. Screenplay separates the two: the `.play` file references strings by key, and the text per locale lives in companion `.strings` files next to it.

@@ -1,6 +1,6 @@
 ---
 title: Interactions
-description: What happens when a user does something — behaviors, the on clauses that start them, the closed set of actions they run, and the continuations that chain those actions together.
+description: "Declare what happens when a user acts in Screenplay: behaviors, the on clauses that start them, the closed set of actions and their continuations."
 ---
 
 A document can say what a screen looks like. This page is about the other half: what happens when someone clicks something.

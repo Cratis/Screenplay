@@ -31,6 +31,13 @@ metadata ("a query is complete without a performer") and the executable model ha
 5. No new construct, ESM version or diagnostic code, and no ESM byte change: the freeze of 0092 is respected. The
    change is a bug fix of the binder's admission scope.
 
+## Amendment — 2026-10-19
+
+The `QueryPerformer` requirement carries the query's shape (returned read model, cardinality, delivery and caller-supplied
+`by` keys and filters with their types and optionality), so a host can render the query without executing it
+(Cratis/Screenplay#981). The shape lives only on the requirement: no ESM byte or version change, and it does not affect
+`attachmentManifestRevision`.
+
 ## Options considered
 
 - Keep refusing. Rejected: it makes a documented construct unusable in any executable application.
@@ -39,4 +46,4 @@ metadata ("a query is complete without a performer") and the executable model ha
 
 ## Related issues
 
-Cratis/Screenplay#862; decisions 0004, 0092.
+Cratis/Screenplay#862, Cratis/Screenplay#981; decisions 0004, 0092.

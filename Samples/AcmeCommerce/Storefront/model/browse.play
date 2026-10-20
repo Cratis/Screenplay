@@ -73,22 +73,30 @@ module Shop
         remove with ProductDelisted
 
       screen Browse
-        description "The shop window: a grid of product cards"
+        description "The shop window: product cards with picture, name, price and stock; the search box in the topbar narrows them"
         template ProductGrid
           header
-            title "Shop"
-          filters
-            data ListedProduct[] via query SearchListedProducts
+            component Cratis.Blueprint.Default.pageHeader browseHeader
+              property title = "Shop"
+              property subtitle = "For the kitchen, the living room, the office and the trail"
           products
             data ListedProduct[] via query AllListedProducts
-            table ListedProduct
-              column title        label "Product"
-              column category     label "Category"
-              column displayPrice label "Price"
-              column available    label "In stock"
+            component Cratis.Blueprint.Default.dataList productList
+              id "productList"
+              property rows from query AllListedProducts
+              property filter from component "gridFilters".value
+              property variant = "cards"
+              property idField = "id"
+              property titleField = "title"
+              property imageField = "imageUrl"
+              property selectionMode = "single"
+              property pageSize = 12
+              property urlKey = "products"
+              property label = "Products"
+              property columns = [{"field":"category","header":"Category"},{"field":"displayPrice","header":"Price","kind":"currency","currency":"NOK"},{"field":"available","header":"In stock","kind":"number"}]
               on select
                 navigate to ProductPage
-                  with sku from item.sku
+                  with sku from component.productList.value
 
       specification ListingAProductThenChangingItsPrice
         given caller
@@ -130,7 +138,7 @@ module Shop
         available        StockQuantity
         priceChanges     Int
 
-      query ProductPageBySku => ProductPageEntry optional
+      query ProductPageBySku => observable ProductPageEntry[]
         by sku Sku
 
       projection ProductPageProjection => ProductPageEntry
@@ -152,21 +160,37 @@ module Shop
         remove with ProductDelisted
 
       screen ProductPage
-        description "One product, full width"
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+        description "One product: its picture and name, the price and stock beside it, and the way to add it to the basket"
+        template SideSummary
           header
             component Cratis.Blueprint.Default.pageHeader productPageHeader
-              property title = "Product"
-              property subtitle = "Everything about this product, and add it to your basket"
+              property title from query ProductPageBySku.0.title
+              property subtitle from query ProductPageBySku.0.shortDescription
+          main
+            data ProductPageEntry[] via query ProductPageBySku by sku
+            component Cratis.Blueprint.Default.dataList productCard
+              id "productCard"
+              property rows from query ProductPageBySku
+              property variant = "cards"
+              property idField = "sku"
+              property titleField = "title"
+              property imageField = "imageUrl"
+              property pageSize = 1
+              property label = "Product"
+              property columns = [{"field":"category","header":"Category"}]
           summary
-            data ProductPageEntry via query ProductPageBySku by sku
-            summary ProductPageEntry
-              field title label "Product"
-              field category label "Category"
-              field displayPrice label "Price"
-              field available label "In stock"
-          related
+            component Cratis.Blueprint.Default.statCard productPrice
+              property label = "Price"
+              property value from query ProductPageBySku.0.displayPrice
+              property format = "currency"
+              property currency = "NOK"
+            component Cratis.Blueprint.Default.statCard productStock
+              property label = "In stock"
+              property value from query ProductPageBySku.0.available
+          actions
             action AddToBasket
+              label "Add to basket"
+              navigate to Basket
 
       specification ShowingAvailabilityOnTheProductPage
         given caller

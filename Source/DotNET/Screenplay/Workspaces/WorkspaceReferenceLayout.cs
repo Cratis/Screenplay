@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -9,12 +10,17 @@ namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceReferenceLayout
 {
+    // A workspace is an immutable revision, so its normalized layout is compiled once per workspace.
+    static readonly ConditionalWeakTable<ScreenplayWorkspace, StrongBox<ApplicationSyntax?>> _layouts = [];
+
     internal static bool Equivalent(ScreenplayWorkspace before, ScreenplayWorkspace after)
     {
-        var previous = Merge(before);
-        var current = Merge(after);
-        return previous is not null && current is not null && SyntaxJson.StructurallyEqual(Normalize(previous), Normalize(current));
+        var previous = Layout(before);
+        var current = Layout(after);
+        return previous is not null && current is not null && SyntaxJson.StructurallyEqual(previous, current);
     }
+
+    static ApplicationSyntax? Layout(ScreenplayWorkspace workspace) => _layouts.GetValue(workspace, workspace => new(Merge(workspace) is { } merged ? Normalize(merged) : null)).Value;
 
     static ApplicationSyntax? Merge(ScreenplayWorkspace workspace)
     {

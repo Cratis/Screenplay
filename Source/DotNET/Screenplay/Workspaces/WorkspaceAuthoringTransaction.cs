@@ -374,7 +374,7 @@ sealed class WorkspaceAuthoringTransaction(
         List<ReplaceWorkspaceSyntaxDocument> replacements,
         IReadOnlyDictionary<SemanticAddress, SemanticAddress>? renames)
     {
-        var after = WorkspaceSyntaxIndex.Create(candidate);
+        var after = WorkspaceSyntaxIndex.Shared(candidate);
         var provenance = new WorkspaceEditProvenance();
         var replaced = replacements.Select(replacement => replacement.Document).ToHashSet();
         var survivors = candidate.Documents.Select(document => document.Id).ToHashSet();
