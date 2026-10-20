@@ -28,7 +28,7 @@ explicit capability checks, not a claim that every downstream surface already pe
 
 ## See your event model
 
-[Open the board in VS Code, an AI chat, your Arc app, the CLI, or Studio](https://cratis.io/screenplay/see-your-event-model/).
+[Open the board in VS Code, an AI chat, your Arc app, the CLI, or Studio](https://www.cratis.io/screenplay/see-your-event-model/).
 Start with `code --install-extension cratis.screenplay`, then open a `.play` file.
 The board visualizes the model; it does not execute it.
 
@@ -238,6 +238,6 @@ Everything Cratis publishes today is MIT licensed and free to use.
 
 <div align="center">
 
-*Part of the [Cratis](https://cratis.io) platform · Licensed under the [MIT license](LICENSE)*
+*Part of the [Cratis](https://www.cratis.io) platform · Licensed under the [MIT license](LICENSE)*
 
 </div>

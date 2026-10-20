@@ -43,7 +43,7 @@ def prepare(publish, output, version, rid):
     manifest = {
         "manifest_version": "0.3", "name": "cratis-screenplay", "display_name": "Screenplay",
         "version": version, "description": "Explore and author local Screenplay models with reviewed changes and an event model board.",
-        "author": {"name": "Cratis", "url": "https://cratis.io"},
+        "author": {"name": "Cratis", "url": "https://www.cratis.io"},
         "homepage": "https://github.com/Cratis/Screenplay", "license": "MIT", "icon": "icon.png",
         # No root argument and no user_config: the server binds its workspace dynamically from the
         # host's MCP roots, the working directory, or an explicit open-workspace call.
