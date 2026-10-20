@@ -3530,7 +3530,7 @@ public static class DiagnosticCodes
     public const string InvalidProfileRootTemplate = "PLAY0788";
 
     /// <summary>
-    /// A ui profile appearance block is malformed: a line in it is not color scheme &lt;word&gt; or accent "&lt;colour&gt;", a line is repeated, or the profile declares the block more than once.
+    /// A line in a ui profile identity or appearance block is not one the block accepts (color scheme &lt;word&gt;, accent "&lt;colour&gt;", corners &lt;word&gt;, font &lt;id&gt;, name "&lt;text&gt;", logo initials|icon|image &lt;value&gt;, show name &lt;true|false&gt;), a line is repeated, or a profile declares more than one identity or appearance block.
     /// </summary>
     public const string InvalidProfileAppearance = "PLAY0789";
 
@@ -3582,9 +3582,9 @@ public static class DiagnosticCodes
     public const string UnknownShellOption = "PLAY0796";
 
     /// <summary>
-    /// A ui profile appearance block has a color scheme that is not light, dark or system, or an accent that is not a hex colour.
+    /// The appearance color scheme is not light, dark or system, the accent is not a hex colour, the corners are not sharp, default or round, or an identity value is outside Scene's rules (a blank name, a logo of initials longer than two characters, an unknown logo icon, or an image that is not a PNG, JPG, SVG or WebP data URI of at most 400 KB).
     /// </summary>
-    [DiagnosticArgumentDefinitions("profile:text;The ui profile whose appearance is invalid.", "value:text;The color scheme or accent as authored.")]
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile whose appearance is invalid.", "value:text;The color scheme, accent, corners or identity value as authored.")]
     public const string InvalidAppearanceValue = "PLAY0797";
 
     /// <summary>

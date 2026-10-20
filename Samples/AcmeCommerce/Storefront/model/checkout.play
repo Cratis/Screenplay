@@ -261,18 +261,28 @@ module Shop
 
       screen OrderTracking
         description "Where one order stands: received, approved, shipped, delivered"
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+        template SideSummary
           header
             component Cratis.Blueprint.Default.pageHeader orderTrackingHeader
               property title = "Track your order"
               property subtitle = "Where this order is on its way to you"
-          summary
+          main
             data MyOrder via query GetMyOrder by orderId
             summary MyOrder
               field orderId        label "Order"
               field status         label "Status"
               field deliveryMethod label "Delivery"
-              field total          label "Total"
+          summary
+            component Cratis.Blueprint.Default.statCard orderTotal
+              property label = "Total"
+              property value from query GetMyOrder.0.total
+              property format = "currency"
+              property currency = "NOK"
+          actions
+            component Cratis.Blueprint.Default.actionButton backToMyOrders
+              property label = "My orders"
+              on click
+                navigate to MyOrders
 
     // AUTOMATION: a reaction that invokes a command when an event occurs
     slice Automation EmptyBasketAfterCheckout

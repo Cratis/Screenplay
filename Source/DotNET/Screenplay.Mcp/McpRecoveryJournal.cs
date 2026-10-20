@@ -14,7 +14,7 @@ internal sealed partial class McpRecoveryJournal
     readonly McpManagedFiles _files;
     readonly byte[] _bytes;
 
-    McpRecoveryJournal(McpRoot root, McpRecoveryRecord record, byte[] bytes)
+    McpRecoveryJournal(McpRoot root, McpRecoveryRecord record, byte[] bytes, IMcpProposal? known = null)
     {
         _root = root;
         _files = new(root);
@@ -26,8 +26,8 @@ internal sealed partial class McpRecoveryJournal
             throw new McpFailure("Unsupported or invalid recovery journal.");
         }
 
-        Before = McpWorkspaceTransport.Restore(record.BeforeWorkspace);
-        After = McpWorkspaceTransport.Restore(record.AfterWorkspace);
+        Before = McpWorkspaceTransport.Restore(record.BeforeWorkspace, known?.Before);
+        After = McpWorkspaceTransport.Restore(record.AfterWorkspace, known?.Workspace);
         foreach (var document in Before.Documents.Concat(After.Documents))
         {
             _ = root.PathFor(document.Path);
@@ -122,7 +122,7 @@ internal sealed partial class McpRecoveryJournal
             throw new McpFailure("Recovery journal exceeds the bounded 64 MiB operation envelope; choose a smaller workspace.");
         }
 
-        var journal = new McpRecoveryJournal(root, record, bytes);
+        var journal = new McpRecoveryJournal(root, record, bytes, proposal);
         files.Verify(McpState.FileName, state.Before);
         journal.VerifyNotes(applied: false);
         journal.VerifyReleaseBaseline(applied: false);

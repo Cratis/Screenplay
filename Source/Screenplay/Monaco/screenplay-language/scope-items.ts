@@ -130,7 +130,8 @@ export const uiProfileItems: CompletionEntry[] = [
     { label: 'theme (package-provided)', insertText: 'theme "${1:Scene Default Light}"', documentation: 'The theme of the profile, named by the quoted display name of a theme a component package provides.' },
     { label: 'root template', insertText: 'root template ${1:Template}\n    option ${2:navigationMode} ${3:slim}', documentation: 'The template the whole application is drawn in: an own template, or `blueprint <Blueprint> <Name> [version "<range>"]`, with the options the shell exposes.' },
     { label: 'root template blueprint', insertText: 'root template blueprint ${1:Blueprint} ${2:Template} version "${3:^1.0}"', documentation: 'A root template a blueprint package ships, pinned to a semver range.' },
-    { label: 'appearance', insertText: 'appearance\n    color scheme ${1|light,dark,system|}\n    accent "${2:#4f46e5}"', documentation: 'How the application looks regardless of the shell: colour scheme and accent colour.' },
+    { label: 'identity', insertText: 'identity\n    name "${1:Name}"\n    logo ${2|initials "AB",icon box,image "data:image/svg+xml;base64,..."|}\n    show name ${3|true,false|}', documentation: 'What the application calls itself and the mark it wears: `name`, `logo initials|icon|image` and `show name`.' },
+    { label: 'appearance', insertText: 'appearance\n    color scheme ${1|light,dark,system|}\n    accent "${2:#4f46e5}"\n    corners ${3|sharp,default,round|}\n    font ${4:inter}', documentation: 'How the application looks regardless of the shell: colour scheme, accent colour, corners and font.' },
     { label: 'new screens use template', insertText: 'new screens use template ${1:Template}', documentation: 'The template a new screen starts from in the designer.' },
     { label: 'sample data', insertText: 'sample data\n    active ${1:Pack}', documentation: 'The sample data the whole application previews with, chosen once here.' },
 ];
@@ -142,6 +143,16 @@ export const profileRootTemplateItems: CompletionEntry[] = [
 export const profileAppearanceItems: CompletionEntry[] = [
     { label: 'color scheme', insertText: 'color scheme ${1|light,dark,system|}', documentation: 'The colour scheme of the application: light, dark or follow the system.' },
     { label: 'accent', insertText: 'accent "${1:#4f46e5}"', documentation: 'The accent colour of the application.' },
+    { label: 'corners', insertText: 'corners ${1|sharp,default,round|}', documentation: 'How rounded the application\'s corners are: sharp, default or round.' },
+    { label: 'font', insertText: 'font ${1|inter,ibm-plex-sans,source-serif-4,system-ui|}', documentation: 'The font of the application, an id from Scene\'s font catalog.' },
+];
+
+export const profileIdentityItems: CompletionEntry[] = [
+    { label: 'name', insertText: 'name "${1:Name}"', documentation: 'What the application calls itself in its shell; leave it out to take the application\'s own name.' },
+    { label: 'logo initials', insertText: 'logo initials "${1:AB}"', documentation: 'A logo drawn from one or two characters.' },
+    { label: 'logo icon', insertText: 'logo icon ${1|box,layers,home,users,receipt,package,database,palette|}', documentation: 'A logo drawn from one of Scene\'s logo icons.' },
+    { label: 'logo image', insertText: 'logo image "data:image/svg+xml;base64,${1}"', documentation: 'A logo image (PNG, JPG, SVG or WebP, up to 400 KB) as a base64 data URI.' },
+    { label: 'show name', insertText: 'show name ${1|true,false|}', documentation: 'Whether the name is drawn beside the logo.' },
 ];
 
 export const profileSampleDataItems: CompletionEntry[] = [

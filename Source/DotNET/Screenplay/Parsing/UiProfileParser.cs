@@ -36,6 +36,7 @@ internal static partial class UiProfileParser
         SampleDataSelectionSyntax? sampleData = null;
         RootTemplateSyntax? root = null;
         ProfileAppearanceSyntax? appearance = null;
+        ProfileIdentitySyntax? identity = null;
         NewScreenTemplateSyntax? newScreenTemplate = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
@@ -136,6 +137,17 @@ internal static partial class UiProfileParser
                     appearance = parsedAppearance;
                     directiveLocations["appearance"] = line.Location;
                     break;
+                case "identity":
+                    var parsedIdentity = ProfileShellParser.ParseIdentity(context, line);
+                    if (identity is not null)
+                    {
+                        context.Error(DiagnosticCodes.InvalidProfileAppearance, "This ui profile already declares an identity block - a profile can have at most one", line.Location);
+                        break;
+                    }
+
+                    identity = parsedIdentity;
+                    directiveLocations["identity"] = line.Location;
+                    break;
                 case "new":
                     var parsedNewScreenTemplate = ProfileShellParser.ParseNewScreenTemplate(context, line);
                     if (parsedNewScreenTemplate is null)
@@ -164,13 +176,13 @@ internal static partial class UiProfileParser
                     directiveLocations["sample data"] = line.Location;
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, icons, theme, layout, root template, appearance, new screens use template or sample data", line.Location);
+                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, icons, theme, layout, root template, identity, appearance, new screens use template or sample data", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons, SampleData = sampleData, Root = root, Appearance = appearance, NewScreenTemplate = newScreenTemplate };
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons, SampleData = sampleData, Root = root, Identity = identity, Appearance = appearance, NewScreenTemplate = newScreenTemplate };
     }
 
     static void ParseRoot(ParserContext context, SourceLine line, ref RootTemplateSyntax? root, Dictionary<string, SourceLocation> directiveLocations)

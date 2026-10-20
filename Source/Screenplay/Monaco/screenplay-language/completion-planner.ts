@@ -103,7 +103,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'persona':
             return scope.personaItems;
         case 'identity':
-            return items.identityItems;
+            return chain.includes('ui') ? scope.profileIdentityItems : items.identityItems;
         case 'authentication':
             return scope.authenticationItems;
         case 'seed':
