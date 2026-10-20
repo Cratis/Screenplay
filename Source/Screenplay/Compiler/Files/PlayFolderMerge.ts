@@ -88,6 +88,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
+        ...presentOnly('stickyNotes', applications.flatMap(application => application.stickyNotes ?? [])),
         ...presentOnly('exposures', applications.flatMap(application => application.exposures ?? [])),
         ...presentOnly('instanceContributions', applications.flatMap(application => application.instanceContributions ?? [])),
         location: applications[0]?.location ?? { line: 1, column: 1 },
@@ -105,7 +106,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0) return true;
+    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

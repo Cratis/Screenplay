@@ -33,10 +33,12 @@ policy IsMember
 
 persona Librarian
   description "Runs the catalog and signs up members"
+  goal "Keep the catalog and the member list correct"
   policy IsLibrarian
 
 persona Member
   description "Borrows and returns books"
+  goal "Borrow and return books without a queue"
   policy IsMember
 
 module Lending
@@ -477,3 +479,17 @@ module Lending
         then readmodel Loan
           bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
           status = "returned"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: members borrow on the way past; the librarian works the desk."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Question: how many books may a member borrow at once?"
+  position 380 490
+  size 250 150

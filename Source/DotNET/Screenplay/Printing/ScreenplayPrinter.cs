@@ -197,6 +197,7 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Purposes, WritePurpose);
         WriteSection(writer, application.Policies, WritePolicy);
         WriteSection(writer, application.Personas ?? [], WritePersona);
+        WriteSection(writer, application.StickyNotes, WriteStickyNote);
     }
 
     void WriteApplicationExperience(ScreenplayWriter writer, ApplicationSyntax application)
@@ -646,11 +647,48 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, persona.Description, persona);
 
+            var goals = persona.Goals.ToList();
+            for (var index = 0; index < goals.Count; index++)
+            {
+                writer.DirectiveLine($"goal {StringLiteral.Quote(goals[index])}", persona, DirectiveLocationKeys.ForValue("goal", goals, index));
+            }
+
             var policies = persona.Policies.ToList();
             for (var index = 0; index < policies.Count; index++)
             {
                 writer.DirectiveLine($"policy {policies[index]}", persona, DirectiveLocationKeys.ForValue("policy", policies, index));
             }
+
+            WriteCanvasPlacement(writer, persona.X, persona.Y, persona.Width, persona.Height);
+        }
+    }
+
+    void WriteStickyNote(ScreenplayWriter writer, StickyNoteSyntax note)
+    {
+        using var anchor = writer.Anchor(note);
+        writer.Line("sticky note on personas");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, note.Text, note);
+            if (note.Colour is not null)
+            {
+                writer.Line($"colour {note.Colour}");
+            }
+
+            WriteCanvasPlacement(writer, note.X, note.Y, note.Width, note.Height);
+        }
+    }
+
+    static void WriteCanvasPlacement(ScreenplayWriter writer, int? x, int? y, int? width, int? height)
+    {
+        if (x is not null && y is not null)
+        {
+            writer.Line($"position {x} {y}");
+        }
+
+        if (width is not null && height is not null)
+        {
+            writer.Line($"size {width} {height}");
         }
     }
 

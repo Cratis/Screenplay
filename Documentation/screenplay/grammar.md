@@ -27,7 +27,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -294,7 +294,15 @@ ClaimTarget    = "subject"
 
 PersonaDecl    = "persona", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | "policy", Ident, NL },
+                   { DescriptionDecl | "goal", String, NL | "policy", Ident, NL
+                   | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
+                 DEDENT ;
+
+(* Authoring metadata for the personas canvas; never part of the executable model. *)
+StickyNoteDecl = "sticky", "note", "on", "personas", NL,
+                 INDENT,
+                   { DescriptionDecl | "colour", ( "yellow" | "pink" | "green" | "blue" ), NL
+                   | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)

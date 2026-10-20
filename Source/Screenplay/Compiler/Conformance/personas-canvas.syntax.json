@@ -1,0 +1,76 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Browse",
+          "slices": []
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Browses the catalog and buys",
+      "goals": [
+        "Find the right product quickly",
+        "Check out in \"under\" a minute"
+      ],
+      "height": 180,
+      "name": "Shopper",
+      "policies": [
+        "CanShop"
+      ],
+      "width": 320,
+      "x": 40,
+      "y": -20
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Orders stock",
+      "name": "Buyer",
+      "policies": []
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": "pink",
+      "height": 140,
+      "text": "Pain point: the checkout asks for too much",
+      "width": 220,
+      "x": 400,
+      "y": 40
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": null,
+      "height": null,
+      "text": "Context: works mostly on a phone,\noften in a hurry",
+      "width": null,
+      "x": 400,
+      "y": 220
+    }
+  ],
+  "systems": [],
+  "types": []
+}

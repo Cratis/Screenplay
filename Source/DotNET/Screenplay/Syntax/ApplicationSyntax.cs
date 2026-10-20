@@ -83,6 +83,11 @@ public record ApplicationSyntax(
     public IEnumerable<InstanceContributionsSyntax> InstanceContributions { get; init; } = [];
 
     /// <summary>
+    /// Gets the sticky notes placed on the personas canvas: authoring metadata around the personas, never part of the executable model.
+    /// </summary>
+    public IEnumerable<StickyNoteSyntax> StickyNotes { get; init; } = [];
+
+    /// <summary>
     /// Gets the application-scoped specification examples.
     /// </summary>
     public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];

@@ -1,0 +1,30 @@
+// ============================================================
+// Purchasing: the personas canvas - the thinking around the personas who work here.
+//
+// Goals live on the personas themselves (Shared/access.play); what sits around them is on sticky notes: the context they work in,
+// what gets in their way, what success looks like and what is still open. Authoring metadata only: it never reaches the running application.
+// The personas are laid out by the canvas in a grid, so the notes sit below them: blue for context, pink for pain, green for success, yellow for questions.
+// ============================================================
+
+sticky note on personas
+  description "Context: plans replenishment once a week and orders from a short list of trusted suppliers."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: low-stock signals arrive as emails. Wants them as a worklist."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: a purchase order goes out the same day stock falls below its reorder point."
+  colour green
+  position 650 490
+  size 250 150
+
+sticky note on personas
+  description "Question: do suppliers confirm a purchase order, or do we assume they received it?"
+  position 920 490
+  size 250 150

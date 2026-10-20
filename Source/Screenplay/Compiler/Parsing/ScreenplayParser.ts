@@ -13,7 +13,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
-import { PersonaSyntax } from '../Syntax/Authorization';
+import { PersonaSyntax, StickyNoteSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
@@ -56,6 +56,10 @@ const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@?\\w+)
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
 const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
+const personaGoalPattern = pattern(`^goal\\s+"(${stringBodyPattern})"$`);
+const stickyNotePattern = pattern('^sticky\\s+note\\s+on\\s+personas$');
+const stickyNoteColourPattern = pattern('^colour\\s+(yellow|pink|green|blue)$');
+const canvasPairPattern = pattern('^(position|size)\\s+(-?\\d+)\\s+(-?\\d+)$');
 const tabIndentPattern = /^[ ]*\t/;
 const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];
 
@@ -88,6 +92,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
+    const stickyNotes: StickyNoteSyntax[] = [];
     const policies: PolicySyntax[] = [];
     const purposes: PurposeSyntax[] = [];
     const seeds: SeedSyntax[] = [];
@@ -166,6 +171,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             modules.push(parseModule(context, line));
         } else if (keyword === 'persona') {
             personas.push(parsePersona(context, line));
+        } else if (keyword === 'sticky') {
+            const stickyNote = parseStickyNote(context, line);
+            if (stickyNote !== null) stickyNotes.push(stickyNote);
         } else if (keyword === 'seed') {
             seeds.push(parseSeed(context.valueContext, line));
         } else if (keyword === 'purpose' && placedBody !== undefined) {
@@ -201,7 +209,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -214,7 +222,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
         return isDocumentPlacement(placement);
     }
     if (keyword === 'identity') return line.content === 'identity';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -240,7 +248,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
+            : ' - expected domain, import, concept, type, policy, persona, sticky note on personas, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);
@@ -353,11 +361,25 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
     }
     let description: string | null = null;
     const policies: string[] = [];
+    const goals: string[] = [];
+    let position: readonly [number, number] | null = null;
+    let size: readonly [number, number] | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Persona '${name}'`);
+        } else if (keyword === 'goal') {
+            const goal = personaGoalPattern.exec(child.content);
+            if (goal === null) {
+                context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid goal '${child.content}' - expected 'goal "<text>"'`, locationOf(child));
+            } else {
+                goals.push(unescapeString(goal[1]));
+            }
+        } else if (keyword === 'position') {
+            position = parseCanvasPair(context, child, 'position', 'x', 'y', position, true) ?? position;
+        } else if (keyword === 'size') {
+            size = parseCanvasPair(context, child, 'size', 'width', 'height', size, false) ?? size;
         } else if (keyword === 'policy') {
             const policy = personaPolicyPattern.exec(child.content);
             if (policy === null) {
@@ -366,9 +388,73 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
                 policies.push(policy[1]);
             }
         } else {
-            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in persona body - expected description or policy`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in persona body - expected description, goal, policy, position or size`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'PersonaSyntax', name, description, policies, location: locationOf(line) };
+    return {
+        kind: 'PersonaSyntax', name, description, policies,
+        ...(goals.length > 0 ? { goals } : {}),
+        ...(position === null ? {} : { x: position[0], y: position[1] }),
+        ...(size === null ? {} : { width: size[0], height: size[1] }),
+        location: locationOf(line),
+    };
+}
+
+// 'sticky note on personas' with the text it carries, an optional colour and where it sits on the personas canvas - the port of the C# ParseStickyNote.
+function parseStickyNote(context: ParserContext, line: SourceLine): StickyNoteSyntax | null {
+    if (!stickyNotePattern.test(line.content)) {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid sticky note declaration '${line.content}' - expected 'sticky note on personas'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return null;
+    }
+    let text: string | null = null;
+    let colour: string | null = null;
+    let position: readonly [number, number] | null = null;
+    let size: readonly [number, number] | null = null;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        const keyword = firstWord(child.content);
+        if (keyword === 'description') {
+            text = parseDescription(context, child, text, 'A sticky note');
+        } else if (keyword === 'colour') {
+            const match = stickyNoteColourPattern.exec(child.content);
+            if (match === null) {
+                context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid colour '${child.content}' - expected 'colour yellow', 'colour pink', 'colour green' or 'colour blue'`, locationOf(child));
+            } else {
+                colour = match[1];
+            }
+        } else if (keyword === 'position') {
+            position = parseCanvasPair(context, child, 'position', 'x', 'y', position, true) ?? position;
+        } else if (keyword === 'size') {
+            size = parseCanvasPair(context, child, 'size', 'width', 'height', size, false) ?? size;
+        } else {
+            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in sticky note body - expected description, colour, position or size`, locationOf(child));
+            context.skipBlock(child.indent);
+        }
+    }
+    if (text === null || position === null) {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, 'A sticky note needs a description (the text on it) and a position', locationOf(line));
+        return null;
+    }
+    return { kind: 'StickyNoteSyntax', text, colour, x: position[0], y: position[1], width: size === null ? null : size[0], height: size === null ? null : size[1], location: locationOf(line) };
+}
+
+// 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
+function parseCanvasPair(context: ParserContext, line: SourceLine, keyword: string, first: string, second: string, existing: readonly [number, number] | null, allowNegative: boolean): readonly [number, number] | null {
+    const match = canvasPairPattern.exec(line.content);
+    const firstValue = match === null ? Number.NaN : Number.parseInt(match[2], 10);
+    const secondValue = match === null ? Number.NaN : Number.parseInt(match[3], 10);
+    const valid = match !== null && match[1] === keyword && Number.isSafeInteger(firstValue) && Number.isSafeInteger(secondValue)
+        && firstValue >= -2147483648 && firstValue <= 2147483647 && secondValue >= -2147483648 && secondValue <= 2147483647
+        && (allowNegative || (firstValue >= 0 && secondValue >= 0));
+    if (!valid) {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid ${keyword} '${line.content}' - expected '${keyword} <${first}> <${second}>' with whole numbers${allowNegative ? '' : ' that are not negative'}`, locationOf(line));
+        return null;
+    }
+    if (existing !== null) {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `The ${keyword} is already declared - at most one is allowed`, locationOf(line));
+        return null;
+    }
+    return [firstValue, secondValue];
 }

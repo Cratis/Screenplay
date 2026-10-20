@@ -13,8 +13,8 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
-    'a domain': ['domain Catalog\n  ', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'the root': ['', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'a domain': ['domain Catalog\n  ', ['identity', 'authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'navigation sidebar extends', 'on', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
@@ -26,7 +26,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'on', 'populate from item', 'populate via query', 'uses']],
     'a contribution': ['module M\n  contribute to Navigation\n    ', ['label', 'navigate to', 'order']],
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
-    'a persona': ['persona P\n  ', ['description', 'policy']],
+    'a persona': ['persona P\n  ', ['description', 'goal', 'policy', 'position', 'size']],
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
     'a seed': ['seed\n  ', ['for']],
     'a theme': ['theme T\n  ', ['compatible with']],

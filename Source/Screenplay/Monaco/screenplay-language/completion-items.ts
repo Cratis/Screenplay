@@ -56,6 +56,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
     { label: 'domain', insertText: 'domain ${1:Name}', documentation: 'The domain the file belongs to — optional, at most one per file, before everything else.' },
+    { label: 'sticky', insertText: 'sticky note on personas\n    description "${1:what the note says}"\n    position ${2:0} ${3:0}', documentation: 'A sticky note on the personas canvas.' },
     { label: 'persona', insertText: 'persona ${1:Name}\n    description "${2:who they are}"', documentation: 'A named role interacting with the application, with the policies it holds.' },
     { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}\n        ${2:setting} ${3:value}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
     { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },

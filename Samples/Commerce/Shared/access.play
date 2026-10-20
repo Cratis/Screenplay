@@ -24,22 +24,30 @@ policy CanCancelOrder
 
 persona Customer
   description "Shops the storefront, places orders and follows them to the door"
+  goal "Find and buy what they came for"
+  goal "Follow an order until it arrives"
   policy IsAuthenticated
   policy IsCustomer
   policy CanCancelOrder
 
 persona Merchandiser
   description "Curates the catalog - registers products, prices them and retires them"
+  goal "Keep the catalog complete and priced"
+  goal "Retire products cleanly"
   policy IsAuthenticated
   policy IsMerchandiser
 
 persona WarehouseClerk
   description "Packs paid orders and hands them to a carrier"
+  goal "Pack paid orders correctly"
+  goal "Hand every order to a carrier on time"
   policy IsAuthenticated
   policy IsWarehouseClerk
 
 persona SupportAgent
   description "Answers customers about their orders and cancels on their behalf"
+  goal "Answer questions about an order at once"
+  goal "Cancel on the customer's behalf when asked"
   policy IsAuthenticated
   policy IsSupportAgent
   policy CanCancelOrder
@@ -47,3 +55,24 @@ persona SupportAgent
 authentication
   provider EntraId
   provider OpenId name Storefront
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: the customer shops on a phone and expects the order status without calling anyone."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: support cannot see where a parcel is, so every call becomes a question to the warehouse."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: nobody has to ask where an order is."
+  colour green
+  position 650 490
+  size 250 150

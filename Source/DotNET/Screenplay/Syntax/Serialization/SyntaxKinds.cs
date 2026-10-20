@@ -157,6 +157,7 @@ internal static class SyntaxKinds
         typeof(PathExpressionSyntax),
         typeof(PerformerSyntax),
         typeof(PersonaSyntax),
+        typeof(StickyNoteSyntax),
         typeof(PlaceSyntax),
         typeof(PolicyReferenceSyntax),
         typeof(PolicySyntax),

@@ -4340,6 +4340,33 @@
             ]
         },
         {
+            "name": "invalid personas canvas declarations",
+            "source": [
+                "persona Shopper",
+                "  goal Find things",
+                "  position 10",
+                "  size -5 20",
+                "  position 1 2",
+                "  position 3 4",
+                "  shape round",
+                "sticky note on personas",
+                "  colour purple",
+                "  description \"No position\"",
+                "sticky note somewhere",
+                "  position 0 0"
+            ],
+            "diagnostics": [
+                "PLAY0030@2",
+                "PLAY0030@3",
+                "PLAY0030@4",
+                "PLAY0030@6",
+                "PLAY0032@7",
+                "PLAY0030@9",
+                "PLAY0030@8",
+                "PLAY0030@11"
+            ]
+        },
+        {
             "name": "invalid persona policy reference",
             "source": [
                 "persona Clerk",

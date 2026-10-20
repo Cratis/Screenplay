@@ -1,0 +1,30 @@
+policy CanShop
+  require role "Shopper"
+
+persona Shopper
+  description "Browses the catalog and buys"
+  goal "Find the right product quickly"
+  goal "Check out in \"under\" a minute"
+  policy CanShop
+  position 40 -20
+  size 320 180
+
+persona Buyer
+  description "Orders stock"
+
+sticky note on personas
+  description "Pain point: the checkout asks for too much"
+  colour pink
+  position 400 40
+  size 220 140
+
+sticky note on personas
+  description
+    ```text
+    Context: works mostly on a phone,
+    often in a hurry
+    ```
+  position 400 220
+
+module Shop
+  feature Browse

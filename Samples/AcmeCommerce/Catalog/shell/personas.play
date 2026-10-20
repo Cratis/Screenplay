@@ -1,0 +1,30 @@
+// ============================================================
+// Catalog: the personas canvas - the thinking around the personas who work here.
+//
+// Goals live on the personas themselves (Shared/access.play); what sits around them is on sticky notes: the context they work in,
+// what gets in their way, what success looks like and what is still open. Authoring metadata only: it never reaches the running application.
+// The personas are laid out by the canvas in a grid, so the notes sit below them: blue for context, pink for pain, green for success, yellow for questions.
+// ============================================================
+
+sticky note on personas
+  description "Context: works at a desk with the supplier's price list open. Publishes a handful of products a day, in bursts around a new season."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: re-typing the same description for every colour variant. Wants to copy a draft instead of starting over."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: a product is published with a price and a description on the day it is drafted."
+  colour green
+  position 650 490
+  size 250 150
+
+sticky note on personas
+  description "Question: can a withdrawn product come back? Today it cannot - ask the merchandisers."
+  position 920 490
+  size 250 150

@@ -34,4 +34,22 @@ export interface PersonaSyntax extends SyntaxNode {
     readonly name: string;
     readonly description: string | null;
     readonly policies: readonly string[];
+
+    // Authoring metadata for the personas canvas, written only when present.
+    readonly goals?: readonly string[];
+    readonly x?: number;
+    readonly y?: number;
+    readonly width?: number;
+    readonly height?: number;
+}
+
+// 'sticky note on personas' - a free-standing note placed on the personas canvas. Authoring metadata, never executable.
+export interface StickyNoteSyntax extends SyntaxNode {
+    readonly kind: 'StickyNoteSyntax';
+    readonly text: string;
+    readonly colour: string | null;
+    readonly x: number;
+    readonly y: number;
+    readonly width: number | null;
+    readonly height: number | null;
 }

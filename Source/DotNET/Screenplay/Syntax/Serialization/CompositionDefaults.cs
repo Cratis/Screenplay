@@ -27,7 +27,8 @@ static class CompositionDefaults
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
-        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty },
+        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty },
+        [typeof(PersonaSyntax)] = new(StringComparer.Ordinal) { ["goals"] = Default.Empty, ["x"] = Default.Null, ["y"] = Default.Null, ["width"] = Default.Null, ["height"] = Default.Null },
         [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty },
         [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["outlet"] = Default.Null },
         [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["destination"] = Default.Null },

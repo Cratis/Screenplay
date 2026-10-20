@@ -26,6 +26,8 @@ policy IsTechnician
 
 persona Technician
   description "Plans and does maintenance work: takes work orders, logs time and parts and closes them"
+  goal "Take a work order and close it with time and parts logged"
+  goal "Know which parts are in the van"
   policy IsTechnician
 
 layout AppShell
@@ -316,3 +318,24 @@ module WorkOrders
         then readmodel ScheduleItems
           workOrderId  = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
           number       = "WO-3108"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: works on site with a tablet and patchy coverage."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: parts used but not logged, found at invoicing time."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: a closed work order is a billable work order."
+  colour green
+  position 650 490
+  size 250 150

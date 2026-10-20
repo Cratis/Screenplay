@@ -9,7 +9,7 @@ import { ClaimIdentitySourceSyntax } from './ClaimIdentitySourceSyntax';
 import { QueryIdentitySourceSyntax } from './QueryIdentitySourceSyntax';
 import { CodeIdentitySourceSyntax } from './CodeIdentitySourceSyntax';
 import { FileIdentitySourceSyntax } from './FileIdentitySourceSyntax';
-import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from './Authorization';
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax, StickyNoteSyntax } from './Authorization';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -57,6 +57,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
+        syntax.stickyNotes?.forEach(node => this.visitStickyNote(node));
         syntax.exposures?.forEach(node => {
             this.visitNode(node);
             node.properties.forEach(property => this.visitNode(property));
@@ -139,6 +140,10 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitPersona(syntax: PersonaSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitStickyNote(syntax: StickyNoteSyntax): void {
         this.visitNode(syntax);
     }
 
