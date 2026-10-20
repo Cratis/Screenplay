@@ -95,14 +95,15 @@ module Merchandising
               property subtitle = "Products by status - set a price to make one ready"
           board
             data PricedProduct[] via query AllPricedProducts
-            table PricedProduct
-              column sku    label "SKU"
-              column name   label "Product"
-              column price  label "Price"
-              column status label "Status"
-              on double click
-                navigate to ProductPage
-                  with productId from item.productId
+            component Cratis.Blueprint.Default.kanbanBoard pricingBoard
+              id "pricingBoard"
+              property columns = [{"id":"draft","label":"Draft"},{"id":"approved","label":"Approved"},{"id":"withdrawn","label":"Withdrawn"}]
+              property cards from query AllPricedProducts
+              property cardId = "productId"
+              property cardTitle = "name"
+              property cardColumn = "status"
+              property cardFields = [{"field":"sku","label":"SKU"},{"field":"price","label":"Price"}]
+              property label = "Products by status"
 
       specification TheBoardFollowsTheStatus
         given ProductDrafted

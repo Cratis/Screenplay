@@ -498,13 +498,15 @@ module Stock
               label "Cancel shipment"
           board
             data PickingCard[] via query AllPickingCards
-            table PickingCard
-              column id             label "Order"
-              column sku            label "SKU"
-              column quantity       label "Qty"
-              column status         label "Status"
-              column carrier        label "Carrier"
-              column trackingNumber label "Tracking"
+            component Cratis.Blueprint.Default.kanbanBoard pickingBoard
+              id "pickingBoard"
+              property columns = [{"id":"toPick","label":"To pick"},{"id":"picking","label":"Picking"},{"id":"packed","label":"Packed"},{"id":"dispatched","label":"Dispatched"}]
+              property cards from query AllPickingCards
+              property cardId = "id"
+              property cardTitle = "id"
+              property cardColumn = "status"
+              property cardFields = [{"field":"sku","label":"SKU"},{"field":"quantity","label":"Qty"},{"field":"carrier","label":"Carrier"}]
+              property label = "Parcels by stage"
 
       specification AParcelMovesAcrossTheBoard
         given ShipmentPlanned
