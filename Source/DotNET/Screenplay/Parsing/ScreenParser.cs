@@ -122,6 +122,26 @@ internal static partial class ScreenParser
         return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
     }
 
+    internal static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
+    {
+        var name = line.Content["toolbar".Length..].Trim();
+        var items = new List<ToolbarItemSyntax>();
+        var buttons = new List<ToolbarButtonSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "button")
+            {
+                if (ToolbarButtonParser.Parse(context, child) is { } button) buttons.Add(button);
+                continue;
+            }
+
+            if (ParseToolbarItem(context, child) is { } item) items.Add(item);
+        }
+
+        return new(name, items, line.Location) { Buttons = buttons };
+    }
+
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
     {
         var match = ContributionRegex().Match(line.Content);
@@ -506,26 +526,6 @@ internal static partial class ScreenParser
     {
         var name = line.Content["outlet".Length..].Trim();
         return new(name, ParseDirectiveBlock(context, line), line.Location);
-    }
-
-    internal static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
-    {
-        var name = line.Content["toolbar".Length..].Trim();
-        var items = new List<ToolbarItemSyntax>();
-        var buttons = new List<ToolbarButtonSyntax>();
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "button")
-            {
-                if (ToolbarButtonParser.Parse(context, child) is { } button) buttons.Add(button);
-                continue;
-            }
-
-            if (ParseToolbarItem(context, child) is { } item) items.Add(item);
-        }
-
-        return new(name, items, line.Location) { Buttons = buttons };
     }
 
     static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
