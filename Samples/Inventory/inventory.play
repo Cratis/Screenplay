@@ -54,8 +54,6 @@ policy IsWarehouseClerk
 
 persona WarehouseClerk
   description "Keeps the warehouse in order: registers items, checks them in and out and adjusts the stock when a count disagrees"
-  goal "Know what is on the shelf"
-  goal "Fix the count when it disagrees with the system"
   policy IsWarehouseClerk
 
 layout AppShell
@@ -661,18 +659,3 @@ module Inventory
           summaryId   = "global"
           unitsOnHand = 6
           itemCount   = 1
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: counts stock on a handheld device, aisle by aisle."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Pain point: adjustments without a reason are hard to audit later."
-  colour pink
-  position 380 490
-  size 250 150

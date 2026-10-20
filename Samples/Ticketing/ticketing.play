@@ -54,8 +54,6 @@ policy IsAgent
 
 persona Agent
   description "Works the queue: assigns, answers, escalates and merges tickets, and keeps the knowledge base current"
-  goal "Clear the queue in order of urgency"
-  goal "Keep the knowledge base current"
   policy IsAgent
 
 layout AppShell
@@ -655,24 +653,3 @@ module Support
         then readmodel SupportFigures
           summaryId   = "global"
           openTickets = 1
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: works the queue in shifts; handover between shifts matters."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Pain point: tickets that bounce between agents without an owner."
-  colour pink
-  position 380 490
-  size 250 150
-
-sticky note on personas
-  description "Success: nobody is asked the same question twice."
-  colour green
-  position 650 490
-  size 250 150

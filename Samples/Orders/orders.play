@@ -40,8 +40,6 @@ policy IsSales
 
 persona Sales
   description "Takes orders from customers, follows them through picking and shipping and tells customers when to expect them"
-  goal "Take an order without re-typing the customer"
-  goal "Tell the customer when to expect it"
   policy IsSales
 
 layout AppShell
@@ -318,18 +316,3 @@ module Orders
         then readmodel DeliveryEvents
           orderId  = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0101"
           delivery = "2026-10-19"
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: orders arrive by phone and by mail, mostly before lunch."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Pain point: customers ask for status and nobody can answer quickly."
-  colour pink
-  position 380 490
-  size 250 150

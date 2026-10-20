@@ -57,9 +57,6 @@ policy IsHrManager
 
 persona HrManager
   description "Looks after the people of the company: keeps the directory, answers time-off requests and walks new hires through their first weeks"
-  goal "Keep the directory current"
-  goal "Answer time-off requests quickly"
-  goal "Walk new hires through their first weeks"
   policy IsHrManager
 
 layout AppShell
@@ -736,17 +733,3 @@ module Hr
         then readmodel Onboardings
           onboardingId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
           name         = "Emil Johansen"
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: handles requests in a weekly rhythm, with peaks before the holidays."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Question: how long may a time-off request wait before it is escalated?"
-  position 380 490
-  size 250 150

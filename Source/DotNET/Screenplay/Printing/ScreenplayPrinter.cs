@@ -87,6 +87,19 @@ public sealed partial class ScreenplayPrinter :
         hasContent = true;
     }
 
+    static void WriteCanvasPlacement(ScreenplayWriter writer, int? x, int? y, int? width, int? height)
+    {
+        if (x is not null && y is not null)
+        {
+            writer.Line($"position {x} {y}");
+        }
+
+        if (width is not null && height is not null)
+        {
+            writer.Line($"size {width} {height}");
+        }
+    }
+
     static bool IsIconWord(string text) =>
         text.Length > 0 && (char.IsAsciiLetter(text[0]) || text[0] == '_') && text.All(character => char.IsAsciiLetterOrDigit(character) || character is '_' or '-');
 
@@ -676,19 +689,6 @@ public sealed partial class ScreenplayPrinter :
             }
 
             WriteCanvasPlacement(writer, note.X, note.Y, note.Width, note.Height);
-        }
-    }
-
-    static void WriteCanvasPlacement(ScreenplayWriter writer, int? x, int? y, int? width, int? height)
-    {
-        if (x is not null && y is not null)
-        {
-            writer.Line($"position {x} {y}");
-        }
-
-        if (width is not null && height is not null)
-        {
-            writer.Line($"size {width} {height}");
         }
     }
 

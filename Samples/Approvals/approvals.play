@@ -45,8 +45,6 @@ policy IsEmployee
 
 persona Employee
   description "Asks for things, decides what is waiting for them and follows what they asked for"
-  goal "Ask for something and know who has to decide"
-  goal "See what is waiting for them"
   policy IsEmployee
 
 layout AppShell
@@ -351,18 +349,3 @@ module Approvals
         then readmodel Types
           typeId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2002"
           name   = "Expense"
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: asks for approvals a few times a month and decides on others in between."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Pain point: not knowing who is holding a request up."
-  colour pink
-  position 380 490
-  size 250 150

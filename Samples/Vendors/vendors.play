@@ -27,8 +27,6 @@ policy IsPurchasingManager
 
 persona PurchasingManager
   description "Onboards and reviews vendors and follows what is bought from them"
-  goal "Know which vendors are approved"
-  goal "See what is bought from each vendor"
   policy IsPurchasingManager
 
 layout AppShell
@@ -308,17 +306,3 @@ module Vendors
         then readmodel PerformanceItems
           vendorId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
           name         = "Hartwell Supply"
-
-// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
-// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
-
-sticky note on personas
-  description "Context: reviews a vendor once, then relies on the approval for a year."
-  colour blue
-  position 110 490
-  size 250 150
-
-sticky note on personas
-  description "Question: who may suspend a vendor with open purchase orders?"
-  position 380 490
-  size 250 150
