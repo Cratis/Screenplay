@@ -59,11 +59,12 @@ relative model folder in registered Git worktrees of its repository.
 that relative model folder) or its exact model directory. Git's shared directory
 and registration back-pointer must agree by physical identity. Unrelated roots,
 unregistered pointers and different model folders return `RootChangeRefused`;
-missing or malformed metadata also refuses switching. A startup root that holds no
-model (no `.play` files at its top or one level down, no `.screenplay` state or
-pending journal) also lets `open-workspace.path` name a direct child of the root or
-of its parent that is missing, empty, or holds its own `.play` files or `.screenplay`
-state; links and the parent itself stay refused. A valid worktree without
+missing or malformed metadata also refuses switching. A startup root named `Source` or
+`src` that holds no model (no `.play` files at its top or one level down, no
+`.screenplay` state or pending journal) also lets `open-workspace.path` and
+`semantic-diff` paths name a folder beside it that is missing, empty, or holds its own
+`.play` files or `.screenplay` state; links, the parent and folders inside the root
+stay refused. A valid worktree without
 the corresponding model directory reports the missing relative folder.
 Submodules and `--separate-git-dir` checkouts cannot switch roots because they
 lack linked-worktree `commondir` metadata; serve their model through a separate
