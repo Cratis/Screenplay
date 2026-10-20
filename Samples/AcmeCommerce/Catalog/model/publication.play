@@ -64,16 +64,6 @@ module Merchandising
             component Cratis.Blueprint.Default.pageHeader publicationHeader
               property title = "Publication"
               property subtitle = "Described and priced products ready to approve"
-          toolbar
-            data ProductReadiness[] via query AllProductReadiness
-            action "Approve for sale"
-              when item.status == "draft" and item.described == true and item.priced == true execute ApproveProductForSale
-                with productId from item.id
-              otherwise hidden
-            action "Withdraw"
-              when item.status == "approved" execute WithdrawProduct
-                with productId from item.id
-              otherwise hidden
           list
             data ProductReadiness[] via query AllProductReadiness
             table ProductReadiness
