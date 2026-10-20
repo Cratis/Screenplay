@@ -6,6 +6,12 @@ module Merchandising
   feature Publication
     description "Which products the shop may sell"
 
+    // The feature adds these to the toolbar of every screen it has: each runs one of its commands. Withdrawing asks first.
+    toolbar actions
+      button approve title "Approve product" slice Merchandising.Publication.ApproveProductForSale emphasis primary icon check
+      button withdraw title "Withdraw product" slice Merchandising.Publication.WithdrawProduct emphasis quiet icon ban
+        confirm "Take this product off sale?"
+
     // The decision to approve is made against what we know about the product: it must be described and priced first.
     slice StateView ReadyForApproval
       description "Which products are described and priced, and so ready to be approved"

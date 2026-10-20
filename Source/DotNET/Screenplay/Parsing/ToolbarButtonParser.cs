@@ -118,6 +118,7 @@ internal static partial class ToolbarButtonParser
         }
 
         AuthorizeSyntax? authorize = null;
+        string? confirm = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -127,11 +128,17 @@ internal static partial class ToolbarButtonParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidToolbarButton, $"Unexpected '{child.Content}' under toolbar button '{id}' - a button takes one 'authorize' line and nothing else", child.Location);
+            if (confirm is null && ConfirmRegex().Match(child.Content) is { Success: true } confirmMatch)
+            {
+                confirm = confirmMatch.Groups[1].Success ? StringLiteral.Unescape(confirmMatch.Groups[1].Value) : confirmMatch.Groups[2].Value;
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidToolbarButton, $"Unexpected '{child.Content}' under toolbar button '{id}' - a button takes one 'authorize' line, one 'confirm' line and nothing else", child.Location);
             context.SkipBlock(child.Indent);
         }
 
-        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon, Authorize = authorize };
+        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon, Authorize = authorize, Confirm = confirm };
     }
 
     static ToolbarEmphasis? ParseEmphasis(string value) => value switch
@@ -168,4 +175,7 @@ internal static partial class ToolbarButtonParser
 
     [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]
     private static partial Regex SliceRegex();
+
+    [GeneratedRegex("^confirm\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex ConfirmRegex();
 }

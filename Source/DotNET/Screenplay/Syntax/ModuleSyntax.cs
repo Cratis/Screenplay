@@ -84,6 +84,11 @@ public record ModuleSyntax(
     /// Gets the navigation regions this module changes. A region it does not declare inherits the application's.
     /// </summary>
     public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
+
+    /// <summary>
+    /// Gets the toolbars this module adds to the <c>toolbar</c> slot of the screens beneath it, each button linked to a command or a State Change slice.
+    /// </summary>
+    public IEnumerable<ScreenToolbarSyntax> Toolbars { get; init; } = [];
 }
 
 /// <summary>
@@ -155,4 +160,9 @@ public record FeatureSyntax(
     /// Gets the processing purposes covering this feature and its descendants.
     /// </summary>
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the toolbars this feature adds to the <c>toolbar</c> slot of its screens - and of its sub features' - each button linked to a command of the feature.
+    /// </summary>
+    public IEnumerable<ScreenToolbarSyntax> Toolbars { get; init; } = [];
 }
