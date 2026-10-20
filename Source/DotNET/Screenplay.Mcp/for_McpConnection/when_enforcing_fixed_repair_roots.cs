@@ -33,6 +33,9 @@ public class when_enforcing_fixed_repair_roots : given.a_connection
         var path = Path.Combine(RootPath, "ApprovedRoot");
         var alias = Path.Combine(RootPath, "APPROVEDROOT");
         Directory.CreateDirectory(path);
+
+        // A root holding a model never gives way to a new model folder beside it, so only identity can admit the alias.
+        File.WriteAllText(Path.Combine(path, "application.play"), Source);
         var approved = new McpRoot(path);
         var workspaces = new McpWorkspaces(approved);
         _ = workspaces.Open(JsonSerializer.SerializeToElement(new { }));
