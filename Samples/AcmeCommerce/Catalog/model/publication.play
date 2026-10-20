@@ -58,6 +58,16 @@ module Merchandising
             component Cratis.Blueprint.Default.pageHeader publicationHeader
               property title = "Publication"
               property subtitle = "Described and priced products ready to approve"
+          toolbar
+            data ProductReadiness[] via query AllProductReadiness
+            action "Approve for sale"
+              when item.status == "draft" and item.described == true and item.priced == true execute ApproveProductForSale
+                with productId from item.id
+              otherwise hidden
+            action "Withdraw"
+              when item.status == "approved" execute WithdrawProduct
+                with productId from item.id
+              otherwise hidden
           list
             data ProductReadiness[] via query AllProductReadiness
             table ProductReadiness
@@ -127,6 +137,13 @@ module Merchandising
         imageUrl String
         price    Money
         currency CurrencyCode
+
+      screen ApproveProductForSaleDialog
+        description "Approve the product for sale"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ApproveProductForSale
+              navigate to ReadyForApproval
 
       // The constraint lives in the slice whose command appends the event; `released by` names another slice's event
       constraint OneApprovalPerProduct
@@ -249,6 +266,13 @@ module Merchandising
 
       event ProductWithdrawn
         sku Sku
+
+      screen WithdrawProductDialog
+        description "Take the product off sale"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action WithdrawProduct
+              navigate to ReadyForApproval
 
       // The accepted path is specified in PublishRetirement for the same reason; here the denial is.
       specification WithdrawingAnUnknownProductIsRejected

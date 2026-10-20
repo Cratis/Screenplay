@@ -6,61 +6,6 @@ module Merchandising
   feature Pricing
     description "What each product costs"
 
-    slice StateChange SetProductPrice
-      description "Sets the selling price of a product; a price below zero is refused by the Money concept"
-      command SetProductPrice
-        productId ProductId identifier
-        price     Money
-        currency  CurrencyCode
-        effectiveFrom Date
-        produces ProductPriceSet
-          for productId
-          price    = price
-          currency = currency
-          effectiveFrom = effectiveFrom
-
-      event ProductPriceSet
-        price    Money
-        currency CurrencyCode
-        effectiveFrom Date
-
-      // The accepted path states the public event the price change is published as (PublishPriceChange translates it).
-      specification SettingAPriceIsPublished
-        given caller
-          authenticated
-          role "Merchandiser"
-        given ProductDrafted
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku      = "ACM-1000"
-          name     = "Acme mug"
-          category = "Kitchen"
-        when SetProductPrice
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          price     = 59
-          currency  = "NOK"
-          effectiveFrom = "2026-03-01"
-        then ProductPriceSet
-          price    = 59
-          currency = "NOK"
-          effectiveFrom = "2026-03-01"
-        then ProductPriceChanged
-          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku           = "ACM-1000"
-          newPrice      = 59
-          currency      = "NOK"
-          effectiveFrom = "2026-03-01"
-
-      specification APriceBelowZeroIsRejected
-        given caller
-          authenticated
-          role "Merchandiser"
-        when SetProductPrice
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          price     = -1
-          currency  = "NOK"
-          effectiveFrom = "2026-03-01"
-        then error "An amount cannot be negative"
-
     slice StateView PricingBoard
       description "Products as cards in columns by status"
 
@@ -116,3 +61,65 @@ module Merchandising
         then readmodel PricedProduct
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           status    = "withdrawn"
+
+    slice StateChange SetProductPrice
+      description "Sets the selling price of a product; a price below zero is refused by the Money concept"
+      command SetProductPrice
+        productId ProductId identifier
+        price     Money
+        currency  CurrencyCode
+        effectiveFrom Date
+        produces ProductPriceSet
+          for productId
+          price    = price
+          currency = currency
+          effectiveFrom = effectiveFrom
+
+      event ProductPriceSet
+        price    Money
+        currency CurrencyCode
+        effectiveFrom Date
+
+      screen SetProductPriceDialog
+        description "Set the selling price"
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action SetProductPrice
+              navigate to PricingBoard
+
+      // The accepted path states the public event the price change is published as (PublishPriceChange translates it).
+      specification SettingAPriceIsPublished
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when SetProductPrice
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price     = 59
+          currency  = "NOK"
+          effectiveFrom = "2026-03-01"
+        then ProductPriceSet
+          price    = 59
+          currency = "NOK"
+          effectiveFrom = "2026-03-01"
+        then ProductPriceChanged
+          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku           = "ACM-1000"
+          newPrice      = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-03-01"
+
+      specification APriceBelowZeroIsRejected
+        given caller
+          authenticated
+          role "Merchandiser"
+        when SetProductPrice
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          price     = -1
+          currency  = "NOK"
+          effectiveFrom = "2026-03-01"
+        then error "An amount cannot be negative"

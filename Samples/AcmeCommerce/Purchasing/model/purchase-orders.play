@@ -177,6 +177,12 @@ module Buying
         when Mugs quantity = 0
         then error "A quantity is at least one"
 
+      screen AddPurchaseOrderLineDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AddPurchaseOrderLine
+              navigate to PurchaseOrders
+
     slice StateChange SubmitPurchaseOrder
       description "Sends a purchase order to the supplier; it gets its number now and can only be submitted once"
 
@@ -286,8 +292,10 @@ module Buying
               label "Receive goods"
             action CancelPurchaseOrder
               label "Cancel order"
-            action ArchivePurchaseOrder
-              label "Archive"
+            action "Archive"
+              when item.status == "received" or item.status == "cancelled" execute ArchivePurchaseOrder
+                with purchaseOrderId from item.id
+              otherwise hidden
 
     slice StateChange ReceivePurchaseOrderGoods
       description "Books goods that arrived against a submitted purchase order; one receipt is one line, so partial deliveries are just several receipts"
@@ -377,6 +385,12 @@ module Buying
         when GoodsReceipt quantity = 0
         then error "A quantity is at least one"
 
+      screen ReceivePurchaseOrderGoodsDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ReceivePurchaseOrderGoods
+              navigate to PurchaseOrders
+
     slice StateChange CancelPurchaseOrder
       description "Cancels a purchase order that has not been received in full"
 
@@ -405,6 +419,12 @@ module Buying
           for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
           reason = "Supplier discontinued the product"
 
+      screen CancelPurchaseOrderDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CancelPurchaseOrder
+              navigate to PurchaseOrders
+
     slice StateChange ArchivePurchaseOrder
       description "Removes a closed purchase order from the working list"
 
@@ -430,3 +450,9 @@ module Buying
           purchaseOrderId = "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
         then PurchaseOrderArchived
           for "7b1c2d3e-4f50-4a61-8b72-9c0d1e2f3a01"
+
+      screen ArchivePurchaseOrderDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ArchivePurchaseOrder
+              navigate to PurchaseOrders

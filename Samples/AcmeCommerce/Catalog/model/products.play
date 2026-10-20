@@ -9,39 +9,6 @@ module Merchandising
   feature Products
     description "The catalogue of everything we sell"
 
-    slice StateChange DescribeProduct
-      description "Adds the selling text and the picture"
-      command DescribeProduct
-        productId ProductId identifier
-        details   String
-        imageUrl  String
-        produces ProductDescribed
-          for productId
-          details  = details
-          imageUrl = imageUrl
-
-      event ProductDescribed
-        details  String
-        imageUrl String
-
-      specification DescribingAProduct
-        given caller
-          authenticated
-          role "Merchandiser"
-        given ProductDrafted
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku      = "ACM-1000"
-          name     = "Acme mug"
-          category = "Kitchen"
-        when DescribeProduct
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          details   = "A sturdy mug for the morning"
-          imageUrl  = "/images/mug.png"
-        then ProductDescribed
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          details  = "A sturdy mug for the morning"
-          imageUrl = "/images/mug.png"
-
     slice StateView ProductCatalog
       description "Every product with its status; the merchandiser's work list"
 
@@ -79,6 +46,15 @@ module Merchandising
           toolbar
             toolbar actions
               button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+            data ProductRow[] via query AllProducts
+            action "Approve for sale"
+              when item.status == "draft" execute ApproveProductForSale
+                with productId from item.productId
+              otherwise hidden
+            action "Withdraw"
+              when item.status == "approved" or item.status == "published" execute WithdrawProduct
+                with productId from item.productId
+              otherwise hidden
           list
             data ProductRow[] via query AllProducts
             table ProductRow
@@ -181,8 +157,14 @@ module Merchandising
             data ProductDetail via query ProductById by productId
             action DescribeProduct
             action SetProductPrice
-            action ApproveProductForSale
-            action WithdrawProduct
+            action "Approve for sale"
+              when item.status == "draft" execute ApproveProductForSale
+                with productId from item.productId
+              otherwise hidden
+            action "Withdraw"
+              when item.status == "approved" or item.status == "published" execute WithdrawProduct
+                with productId from item.productId
+              otherwise hidden
       specification TheProductPageCollectsEverything
         given ProductDrafted
           for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
@@ -197,6 +179,46 @@ module Merchandising
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           details   = "A sturdy mug for the morning"
           status    = "draft"
+
+    slice StateChange DescribeProduct
+      description "Adds the selling text and the picture"
+      command DescribeProduct
+        productId ProductId identifier
+        details   String
+        imageUrl  String
+        produces ProductDescribed
+          for productId
+          details  = details
+          imageUrl = imageUrl
+
+      event ProductDescribed
+        details  String
+        imageUrl String
+
+      screen DescribeProductDialog
+        description "Write the selling text and pick the picture"
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action DescribeProduct
+              navigate to ProductCatalog
+
+      specification DescribingAProduct
+        given caller
+          authenticated
+          role "Merchandiser"
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku      = "ACM-1000"
+          name     = "Acme mug"
+          category = "Kitchen"
+        when DescribeProduct
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details   = "A sturdy mug for the morning"
+          imageUrl  = "/images/mug.png"
+        then ProductDescribed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          details  = "A sturdy mug for the morning"
+          imageUrl = "/images/mug.png"
 
     slice StateChange DraftProduct
       description "A merchandiser starts a new product with its SKU, name and category"
