@@ -297,6 +297,12 @@ module Buying
                 with purchaseOrderId from item.id
               otherwise hidden
 
+      screen SubmitPurchaseOrderDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action SubmitPurchaseOrder
+              navigate to PurchaseOrders
+
     slice StateChange ReceivePurchaseOrderGoods
       description "Books goods that arrived against a submitted purchase order; one receipt is one line, so partial deliveries are just several receipts"
 
