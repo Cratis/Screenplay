@@ -15,7 +15,8 @@ static class McpModelLocation
     static readonly HashSet<string> _skipped = new(StringComparer.OrdinalIgnoreCase) { "node_modules", "bin", "obj", "artifacts", "dist", "out", "packages" };
 
     /// <summary>
-    /// Finds the model inside a project: the folder holding its .play files, else Source or src, else a Screenplay folder.
+    /// Finds the model inside a project: the folder holding its .play files, else a Source or src folder that already
+    /// holds .play files or a .screenplay folder, else a Screenplay folder.
     /// </summary>
     /// <param name="project">The project directory.</param>
     /// <returns>The directory to serve, without creating it.</returns>
@@ -30,7 +31,9 @@ static class McpModelLocation
         {
             var candidate = Directory.EnumerateDirectories(project).FirstOrDefault(directory =>
                 string.Equals(Path.GetFileName(directory), name, StringComparison.OrdinalIgnoreCase));
-            if (candidate is not null && !IsLink(candidate))
+
+            // A source folder is only the model when it already holds one; otherwise it is the project's code.
+            if (candidate is not null && !IsLink(candidate) && HoldsModel(candidate))
             {
                 return candidate;
             }
@@ -85,6 +88,9 @@ static class McpModelLocation
 
         return directories.Count == 0 ? null : CommonAncestor(directories);
     }
+
+    static bool HoldsModel(string directory) =>
+        Directory.Exists(Path.Combine(directory, ".screenplay")) || Directory.EnumerateFiles(directory, "*.play").Any();
 
     static string CommonAncestor(List<string> directories)
     {

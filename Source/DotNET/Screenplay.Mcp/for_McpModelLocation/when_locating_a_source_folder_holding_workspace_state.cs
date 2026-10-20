@@ -3,13 +3,13 @@
 
 namespace Cratis.Screenplay.Mcp.for_McpModelLocation;
 
-public class when_locating_without_a_model_but_with_a_source_folder : given_a_project
+public class when_locating_a_source_folder_holding_workspace_state : given_a_project
 {
     string _located = null!;
 
-    void Establish() => Directory.CreateDirectory(PathOf("src"));
+    void Establish() => Directory.CreateDirectory(PathOf("src/.screenplay"));
 
     void Because() => _located = McpModelLocation.Project(Project);
 
-    [Fact] void should_build_from_the_source_folder() => _located.ShouldEqual(PathOf("src"));
+    [Fact] void should_keep_serving_the_source_folder() => _located.ShouldEqual(PathOf("src"));
 }
