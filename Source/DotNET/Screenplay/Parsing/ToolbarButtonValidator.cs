@@ -24,6 +24,12 @@ internal static class ToolbarButtonValidator
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     public static void Validate(ApplicationSyntax application, ParserContext context)
     {
+        foreach (var module in application.Modules)
+        {
+            ValidateScope(module.Toolbars, SlicesIn(module.Features, [module.Name]).Select(entry => entry.Slice), "module", module.Name, context);
+            ValidateFeatures(module.Features, context);
+        }
+
         var collector = new ToolbarCollector();
         collector.VisitApplication(application);
         if (collector.Toolbars.Count == 0 && collector.RegionButtons.Count == 0)
@@ -48,6 +54,35 @@ internal static class ToolbarButtonValidator
                 }
 
                 ValidateButtonSlice(button, $"the navigation {RegionName(region)}", slices, context);
+            }
+        }
+    }
+
+    static void ValidateFeatures(IEnumerable<FeatureSyntax> features, ParserContext context)
+    {
+        foreach (var feature in features)
+        {
+            ValidateScope(feature.Toolbars, feature.Slices.Concat(SlicesIn(feature.Features, [feature.Name]).Select(entry => entry.Slice)), "feature", feature.Name, context);
+            ValidateFeatures(feature.Features, context);
+        }
+    }
+
+    /// <summary>
+    /// A toolbar of a feature or a module links commands of that feature or module: an item that names another is reported.
+    /// </summary>
+    static void ValidateScope(IEnumerable<ScreenToolbarSyntax> toolbars, IEnumerable<SliceSyntax> slices, string scope, string scopeName, ParserContext context)
+    {
+        var commands = default(HashSet<string>);
+        foreach (var toolbar in toolbars)
+        {
+            foreach (var item in toolbar.Items.Where(item => item.Kind == ToolbarItemKind.Action))
+            {
+                commands ??= [.. slices.SelectMany(slice => slice.Commands).Select(command => command.Name)];
+                var name = item.Target.Split('.')[^1];
+                if (!commands.Contains(name))
+                {
+                    context.Warning(DiagnosticCodes.FeatureToolbarCommandNotFound, $"Toolbar item '{item.Name}' of {scope} '{scopeName}' links command '{item.Target}', which no slice of the {scope} declares", item.Location);
+                }
             }
         }
     }

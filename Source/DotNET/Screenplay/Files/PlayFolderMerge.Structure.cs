@@ -68,6 +68,7 @@ internal static partial class PlayFolderMerge
                 $"module '{group.Key}'"),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Navigation = [.. parts.SelectMany(part => part.Navigation)],
+            Toolbars = [.. parts.SelectMany(part => part.Toolbars)],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"module '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"module '{group.Key}'", context),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)
@@ -100,6 +101,7 @@ internal static partial class PlayFolderMerge
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Toolbars = [.. parts.SelectMany(part => part.Toolbars)],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context),

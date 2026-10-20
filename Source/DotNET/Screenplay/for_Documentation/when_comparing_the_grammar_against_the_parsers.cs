@@ -58,6 +58,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["specification"] = ("SpecificationDecl", "specifications.md"),
             ["system"] = ("SystemDecl", "grammar.md"),
             ["template"] = ("TemplateRef", "templates.md"),
+            ["toolbar"] = ("ToolbarDecl", "screens.md"),
             ["theme"] = ("ThemeDecl", "theme.md"),
             ["trigger"] = ("TriggerDecl", "triggers.md"),
             ["type"] = ("TypeDecl", "types.md"),
