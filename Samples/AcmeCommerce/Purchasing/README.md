@@ -46,7 +46,7 @@ buyer already works in.
 | Screen | Template | Reached from |
 | --- | --- | --- |
 | `PurchaseOrders` list, button New purchase order | `ListScreen` | Purchasing / Purchase orders |
-| `NewPurchaseOrder` (supplier -> lines -> review, one CommandForm per step) | `WizardScreen` | button "New purchase order" |
+| `NewPurchaseOrder` (the supplier only: the order's id is generated, the order's page follows) | `QuickCreateDialog` | button "New purchase order" |
 | `PurchaseOrderPage` (record), actions: Add line, Submit, Receive goods, Cancel, Archive | `RecordPage` | row click |
 | `Suppliers` (master list, offers as detail), button Register supplier, action Offer product; `SupplierPage` | `MasterDetailScreen`, `RecordPage` | Purchasing / Suppliers |
 | `PreferredSuppliers`, actions: Choose supplier, Clear supplier | `ListScreen` | Purchasing / Preferred suppliers (feature `Sourcing`) |

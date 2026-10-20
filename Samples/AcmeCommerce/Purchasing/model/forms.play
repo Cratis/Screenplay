@@ -52,11 +52,11 @@ module Buying
       place unitPrice  row 2 column 1
       place currency   row 2 column 2
 
-  // The new-purchase-order wizard: one small form per step (supplier, lines, review).
+  // A new purchase order asks for its supplier only: the order's id is generated, the page of the new order follows
   form PurchaseOrderSupplierForm for CreatePurchaseOrder
     generation manual
     field supplierId label "Supplier"
-    on submit navigate to NewPurchaseOrder
+    on submit navigate to PurchaseOrderPage by purchaseOrderId
 
   form PurchaseOrderLineForm for AddPurchaseOrderLine
     generation manual
@@ -71,7 +71,6 @@ module Buying
       place sku       row 1 column 1
       place quantity  row 1 column 2
       place unitPrice row 1 column 3
-    on submit navigate to NewPurchaseOrder
 
   form SubmitPurchaseOrderForm for SubmitPurchaseOrder
     generation manual
@@ -82,17 +81,14 @@ module Buying
     generation manual
     field sku        label "SKU"
     field quantity   label "Units delivered"
-    field receiptId  label "Delivery note"
     field receivedAt label "Received at"
     layout
       column 1 width 1fr
       column 2 width 1fr
       columnGap 24px
-      rowGap 16px
       place sku        row 1 column 1
       place quantity   row 1 column 2
-      place receiptId  row 2 column 1
-      place receivedAt row 2 column 2
+      place receivedAt row 2 column 1 columnSpan 2
 
   // The actions on a purchase order's page and the buyer's lists ask only for what the page does not already say
   form CancelPurchaseOrderForm for CancelPurchaseOrder
