@@ -462,6 +462,7 @@ Module         = "module", Ident, NL,
                    | FormDecl
                    | ContributionDecl
                    | NavigationRegionDecl
+                   | ToolbarDecl                      (* added to its screens' toolbar slot *)
                    | InteractionBinding
                    | UsesBehaviorDecl
                    | ExampleDecl
@@ -718,6 +719,7 @@ Feature        = "feature", Ident, NL,
                    | SliceDecl
                    | ExampleDecl
                    | ContributionDecl
+                   | ToolbarDecl                      (* added to its screens' toolbar slot *)
                    | InteractionBinding
                    | UsesBehaviorDecl },
                  DEDENT ;
@@ -1533,12 +1535,18 @@ ToolbarDecl    = "toolbar", Ident, NL,
                  [ INDENT, { ToolbarItem | ToolbarButton }, DEDENT ] ;
 
 ToolbarItem    = "item", Ident, ( "action" | "dialog" ), QualifiedName, NL,
+                 [ INDENT, { "label", LocalizableString, NL
+                           | "icon", ( Ident | String ), NL
+                           | ToolbarConfirm }, DEDENT ]
                | "item", Ident, "navigate", "to", QualifiedName, NL ;
 
 ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
                  [ "slice", QualifiedName ],
                  [ "emphasis", ( "primary" | "secondary" | "quiet" ) ],
-                 [ "icon", ( Ident | String ) ], NL ;
+                 [ "icon", ( Ident | String ) ], NL,
+                 [ INDENT, { AuthorizeDecl | ToolbarConfirm }, DEDENT ] ;
+
+ToolbarConfirm = "confirm", LocalizableString, NL ;   (* asked before the command runs or the dialog opens *)
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;

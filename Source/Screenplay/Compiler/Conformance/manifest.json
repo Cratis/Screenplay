@@ -76,6 +76,7 @@
         { "name": "anonymous-policies", "path": "Source/Screenplay/Compiler/Conformance/anonymous-policies.play" },
         { "name": "acme-admissions", "path": "Source/Screenplay/Compiler/Conformance/acme-admissions.play" },
         { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
-        { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" }
+        { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" },
+        { "name": "feature-toolbars", "path": "Source/Screenplay/Compiler/Conformance/feature-toolbars.play" }
     ]
 }
