@@ -57,7 +57,12 @@
     }
   ],
   "fileImports": [],
-  "imports": [],
+  "imports": [
+    {
+      "kind": "ImportSyntax",
+      "qualifiedName": "Catalog.ProductDrafted"
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

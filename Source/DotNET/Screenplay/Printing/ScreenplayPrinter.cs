@@ -551,6 +551,8 @@ public sealed partial class ScreenplayPrinter :
                     }
                 }
             }
+
+            WriteCanvasPlacement(writer, seed.X, seed.Y, null, null);
         }
     }
 

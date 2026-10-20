@@ -17,4 +17,8 @@ export interface SeedGroupSyntax extends SyntaxNode {
 export interface SeedSyntax extends SyntaxNode {
     readonly kind: 'SeedSyntax';
     readonly groups: readonly SeedGroupSyntax[];
+
+    // Authoring metadata for the seed data canvas, written only when present.
+    readonly x?: number;
+    readonly y?: number;
 }

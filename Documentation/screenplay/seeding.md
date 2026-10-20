@@ -17,12 +17,15 @@ seed
       ...
     ...
   ...
+  [position <x> <y>]
 ```
 
 - `seed` — top level, alongside concepts, policies and modules. Multiple `seed` blocks are allowed; they accumulate.
 - `for "<event source id>"` — one group per event source id, holding the events to seed for it. The id is a quoted string.
 - `<EventType>` — an event declared in the document or made available through an `import`. Referencing an unknown event is reported as a warning.
 - `<property> = <value>` — property values using the same expression grammar as `produces` mappings and specification events.
+
+`position <x> <y>` — two whole numbers (negative allowed), at most once: where Studio draws this seed data on the seed data canvas. Authoring metadata only, never part of the executable model; a seed block without one is laid out by the canvas.
 
 An empty `seed` block — one without any `for` group — is a compile error.
 

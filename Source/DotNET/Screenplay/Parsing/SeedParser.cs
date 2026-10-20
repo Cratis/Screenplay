@@ -29,9 +29,16 @@ internal static partial class SeedParser
         }
 
         var groups = new List<SeedGroupSyntax>();
+        (int X, int Y)? position = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "position")
+            {
+                position = ScreenplayParser.ParseCanvasPair(context, line, "position", "x", "y", position, allowNegative: true) ?? position;
+                continue;
+            }
+
             var match = ForRegex().Match(line.Content);
             if (!match.Success)
             {
@@ -43,7 +50,7 @@ internal static partial class SeedParser
             groups.Add(new(StringLiteral.Unescape(match.Groups[1].Value), ParseEvents(context, line), line.Location));
         }
 
-        return new(groups, header.Location);
+        return new(groups, header.Location) { X = position?.X, Y = position?.Y };
     }
 
     static List<SeedEventSyntax> ParseEvents(ParserContext context, SourceLine group)

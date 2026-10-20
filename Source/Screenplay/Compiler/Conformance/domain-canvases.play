@@ -1,3 +1,5 @@
+import Catalog.ProductDrafted
+
 concept ProductId : Uuid
 concept CustomerId : Uuid
 
@@ -10,6 +12,12 @@ eventsource Product
 
 eventsource Customer
   identifier CustomerId
+
+seed
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+    ProductDrafted
+      sku = "ACM-1000"
+  position 20 400
 
 sticky note on personas
   description "Persona question"

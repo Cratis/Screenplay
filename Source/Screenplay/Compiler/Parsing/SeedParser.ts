@@ -6,7 +6,9 @@ import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { SeedEventSyntax, SeedGroupSyntax, SeedSyntax } from '../Syntax/Seeds';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { nativePattern as pattern } from '../Text/patterns';
+import { parseCanvasPair } from './CanvasPlacement';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -22,8 +24,13 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
         context.skipOpaqueBlock(header.indent);
         return { kind: 'SeedSyntax', groups, location: locationOf(header) };
     }
+    let position: readonly [number, number] | null = null;
     for (let group = context.peekChild(header.indent); group !== undefined; group = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        if (firstWord(group.content) === 'position') {
+            position = parseCanvasPair(context, group, 'position', 'x', 'y', position, true) ?? position;
+            continue;
+        }
         const match = forPattern.exec(group.content);
         if (match === null) {
             context.error(DiagnosticCodes.InvalidSeedGroup, `Invalid seed group '${group.content}' - expected 'for "<event source id>"'`, locationOf(group));
@@ -49,5 +56,5 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
         }
         groups.push({ kind: 'SeedGroupSyntax', eventSourceId: unescapeString(match[1]), events, location: locationOf(group) });
     }
-    return { kind: 'SeedSyntax', groups, location: locationOf(header) };
+    return { kind: 'SeedSyntax', groups, ...(position === null ? {} : { x: position[0], y: position[1] }), location: locationOf(header) };
 }

@@ -9,6 +9,8 @@ public class when_printing_the_domain_canvases : given.a_printer
 {
     const string Source =
         """
+        import Catalog.ProductDrafted
+
         eventsource Product
           description "One product in the catalogue"
           identifier ProductId
@@ -51,6 +53,12 @@ public class when_printing_the_domain_canvases : given.a_printer
         module Shop
 
           feature Browse
+
+        seed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+            ProductDrafted
+              sku = "ACM-1000"
+          position 20 400
         """;
 
     RoundTripResult _roundtrip;
@@ -68,6 +76,7 @@ public class when_printing_the_domain_canvases : given.a_printer
     [Fact] void should_print_exactly_what_was_written() => _roundtrip.Printed.TrimEnd().ShouldEqual(Source.Replace("\r\n", "\n").TrimEnd());
     [Fact] void should_keep_the_position_of_an_event_source() => (Product.X, Product.Y).ShouldEqual((110, -150));
     [Fact] void should_leave_an_unplaced_event_source_without_a_position() => Customer.X.ShouldBeNull();
+    [Fact] void should_keep_the_position_of_the_seed_data() => (Application.Seeds!.First().X, Application.Seeds!.First().Y).ShouldEqual((20, 400));
     [Fact] void should_keep_every_note() => Notes.Count().ShouldEqual(4);
     [Fact] void should_keep_the_canvas_of_each_note() => Notes.Select(note => note.Canvas).ShouldContainOnly("personas", "eventsources", "givencontexts", "seeddata");
     [Fact] void should_keep_the_colour_and_size_of_a_note() => (Notes.ElementAt(1).Colour, Notes.ElementAt(1).Width, Notes.ElementAt(1).Height).ShouldEqual(("pink", 240, 140));
