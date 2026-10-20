@@ -472,11 +472,13 @@ screen template ProductGrid
 
 - `ProductGrid` is a responsive grid of product cards (picture, name, price, an add-to-basket button) with a filters rail beside it
   (its slot is not called `grid`: in an arrangement `grid` is the layout kind). The filter builder's value narrows the cards, and the list pages and
-  searches itself. `Browse` uses it and fills `products` with the live cards; it leaves `filters` to the template, so the rail is the template's.
+  searches itself. `Browse` uses it: a heading, the filter rail and the live cards.
 - `SideSummary` is the main region with a narrow summary beside it: line items left, the totals and the one thing to do next right. It
   rearranges for a compact width. `Basket`, `ProductPage` and `OrderTracking` use it and fill all four slots.
-- Authored slot content **replaces** the seed of that slot; a slot a screen leaves out keeps its seed. That is why a screen that uses
-  `SideSummary` fills every slot - a slot left out would show the template's sample lines.
+- The template's content is the *designed first draft* the template editor draws. A screen that uses the template fills every slot it
+  shows: what a screen puts in a slot is what is drawn there, and a screen preview draws only what the screen filled - a slot the screen
+  leaves out is not drawn from the template's draft. `Browse` therefore fills `filters` (the same filter builder as the template's) as well as
+  `header` and `products`, and `Basket`, `ProductPage` and `OrderTracking` fill all four slots of `SideSummary`.
 
 See [layout arrangement](layout-arrangement.md).
 
