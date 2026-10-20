@@ -20,7 +20,7 @@ public class when_discovering_workspace_location_guidance : given.a_connection
     }
 
     [Fact] void should_prioritize_an_explicit_path() => _description.ShouldContain("an explicit path wins, then the client's single project root");
-    [Fact] void should_explain_nested_model_discovery() => _description.ShouldContain("discovers nested .play files, else Source or src, else a new Screenplay folder");
+    [Fact] void should_explain_nested_model_discovery() => _description.ShouldContain("discovers nested .play files, else a Source or src folder already holding .play files or a .screenplay folder, else a new Screenplay folder");
     [Fact] void should_preserve_existing_workspace_state_roots() => _description.ShouldContain("Existing identity or pending-journal state along that discovery path preserves its workspace root");
     [Fact] void should_require_a_path_for_multiple_client_roots() => _description.ShouldContain("With multiple client roots, pass path to choose one");
     [Fact] void should_condition_the_working_directory_fallback_on_model_content() => _description.ShouldContain("the working directory when it holds .play files or a .screenplay folder");

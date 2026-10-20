@@ -189,7 +189,10 @@ first time it needs one:
 2. The folder your MCP client offers through its workspace roots, when the client
    offers exactly one. That folder is the project, not necessarily the model: the
    server serves the folder already holding the project's `.play` files, else its
-   `Source` or `src` folder, else a `Screenplay` folder in the project. Discovery
+   `Source` or `src` folder when that folder already holds `.play` files or a
+   `.screenplay` folder (the Cratis application layout), else a `Screenplay` folder
+   in the project. A `src` folder of ordinary code, such as a Java project's, is
+   never chosen for a new model. Discovery
    does not create that folder; the first write does. Existing workspaces keep their
    root: if `.screenplay/identities.json` or
    `.screenplay/pending.json` exists at the offered folder or along the directory
@@ -228,6 +231,11 @@ worktrees. The root may be missing if its parent exists: reads see an empty mode
 and the first managed write creates the root and its `.screenplay` state.
 `open-workspace.path` accepts the same physical directory or the
 corresponding model folder in a registered worktree of the same repository.
+When the root holds no model yet - no `.play` files at its top or one level down
+and no `.screenplay` state - `open-workspace.path` may also name a direct child of
+the root or of its parent that is missing, empty, or already holds `.play` files or
+`.screenplay` state. This lets a server started on a project's code folder, such as
+a Java project's `src`, open `Screenplay` beside it.
 Unrelated repositories and other model folders return `RootChangeRefused`.
 Case aliases require physical directory identity; symbolic links and reparse
 points remain rejected. Without Git worktree metadata, only the original root

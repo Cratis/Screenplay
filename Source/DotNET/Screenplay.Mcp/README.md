@@ -173,7 +173,7 @@ The arguments are just `mcp`. `screenplay mcp ROOT` still requires an existing r
 `mcp --create-root DIRECTORY` creates one. `screenplay mcp` with no root starts a dynamic server that binds a
 root on first use: `open-workspace` `path`, then the client's single `roots/list` root (re-read on
 `notifications/roots/list_changed`; the server serves the model inside that project: its `.play` files,
-else `Source`/`src`, else a new `Screenplay` folder), then the working directory when it holds `.play`
+else `Source`/`src` when it already holds `.play` files or `.screenplay`, else a new `Screenplay` folder), then the working directory when it holds `.play`
 files or `.screenplay`, and finally `Documents/Screenplay` in the user's home folder, created on demand.
 Existing `.screenplay/identities.json` or `.screenplay/pending.json` between the offered
 project and discovered model folder (inclusive) keeps its state directory as the root,
