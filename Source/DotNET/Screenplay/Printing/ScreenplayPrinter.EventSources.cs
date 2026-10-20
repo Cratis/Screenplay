@@ -49,6 +49,7 @@ public sealed partial class ScreenplayPrinter
             if (source.Id is not null) writer.DirectiveLine($"id {StringLiteral.Quote(source.Id)}", source, "id");
             if (source.Identifier is not null) writer.DirectiveLine($"identifier {ScreenplaySyntaxText.TypeRef(source.Identifier)}", source, "identifier");
             foreach (var stream in source.Streams) WriteEventStream(writer, stream);
+            WriteCanvasPlacement(writer, source.X, source.Y, null, null);
         }
     }
 

@@ -44,7 +44,7 @@ it sits (`position <x> <y>`) and how big it is (`size <width> <height>`). Both a
 negative, `size` may not. Placement is authoring metadata: a persona without a `position` is laid out by the canvas.
 
 Notes that talk about the personas without being one - a pain point, the context somebody works in, a question - are
-**sticky notes** on the same canvas. They are top-level declarations of their own:
+**sticky notes** on the same canvas. They are top-level declarations of their own (the same note exists for the event source, given context and seed data canvases: `sticky note on eventsources`, `sticky note on givencontexts`, `sticky note on seeddata`, see [event sources](event-sources.md)):
 
 ```screenplay
 persona Shopper

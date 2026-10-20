@@ -8,6 +8,7 @@ import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { sourceStreamPattern } from '../Text/SourceStreamNames';
+import { parseCanvasPair } from './CanvasPlacement';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -27,17 +28,19 @@ export function parseEventSource(context: ParserContext, header: SourceLine): Ev
     let identifier: TypeRefSyntax | null = null;
     let description: string | null = null;
     let id: string | null = null;
+    let position: readonly [number, number] | null = null;
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
+            case 'position': position = parseCanvasPair(context, child, 'position', 'x', 'y', position, true) ?? position; break;
             case 'stream': streams.push(parseEventStream(context, child)); break;
             case 'identifier': identifier = parseType(context, child, 'identifier', identifier); break;
             case 'description': description = parseDescription(context, child, description, `Event source '${name}'`, true); break;
             case 'id': id = parsePin(context, child, name, id); break;
-            default: invalid(context, child, 'An event source accepts description, id, identifier and stream declarations.'); context.skipBlock(child.indent); break;
+            default: invalid(context, child, 'An event source accepts description, id, identifier, position and stream declarations.'); context.skipBlock(child.indent); break;
         }
     }
-    return { kind: 'EventSourceSyntax', name, streams, identifier, description, id, location: locationOf(header) };
+    return { kind: 'EventSourceSyntax', name, streams, identifier, description, id, ...(position === null ? {} : { x: position[0], y: position[1] }), location: locationOf(header) };
 }
 
 function parseEventStream(context: ParserContext, header: SourceLine): EventStreamSyntax {

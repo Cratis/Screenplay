@@ -43,6 +43,7 @@ import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
+import { parseCanvasPair } from './CanvasPlacement';
 import { parseEventSource } from './EventSourceParser';
 import { parseExposure, parseInstance } from './CompositionParser';
 import { ExposureSyntax, InstanceContributionsSyntax } from '../Syntax/CompositionSyntax';
@@ -57,9 +58,8 @@ const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
 const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 const personaGoalPattern = pattern(`^goal\\s+"(${stringBodyPattern})"$`);
-const stickyNotePattern = pattern('^sticky\\s+note\\s+on\\s+personas$');
+const stickyNotePattern = pattern('^sticky\\s+note\\s+on\\s+(personas|eventsources|givencontexts|seeddata)$');
 const stickyNoteColourPattern = pattern('^colour\\s+(yellow|pink|green|blue)$');
-const canvasPairPattern = pattern('^(position|size)\\s+(-?\\d+)\\s+(-?\\d+)$');
 const tabIndentPattern = /^[ ]*\t/;
 const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];
 
@@ -248,7 +248,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, sticky note on personas, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
+            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);
@@ -401,10 +401,11 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
     };
 }
 
-// 'sticky note on personas' with the text it carries, an optional colour and where it sits on the personas canvas - the port of the C# ParseStickyNote.
+// 'sticky note on <canvas>' with the text it carries, an optional colour and where it sits on that canvas - the port of the C# ParseStickyNote.
 function parseStickyNote(context: ParserContext, line: SourceLine): StickyNoteSyntax | null {
-    if (!stickyNotePattern.test(line.content)) {
-        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid sticky note declaration '${line.content}' - expected 'sticky note on personas'`, locationOf(line));
+    const canvasMatch = stickyNotePattern.exec(line.content);
+    if (canvasMatch === null) {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid sticky note declaration '${line.content}' - expected 'sticky note on personas', 'sticky note on eventsources', 'sticky note on givencontexts' or 'sticky note on seeddata'`, locationOf(line));
         context.skipBlock(line.indent);
         return null;
     }
@@ -437,24 +438,6 @@ function parseStickyNote(context: ParserContext, line: SourceLine): StickyNoteSy
         context.error(DiagnosticCodes.InvalidPersonaDeclaration, 'A sticky note needs a description (the text on it) and a position', locationOf(line));
         return null;
     }
-    return { kind: 'StickyNoteSyntax', text, colour, x: position[0], y: position[1], width: size === null ? null : size[0], height: size === null ? null : size[1], location: locationOf(line) };
+    return { kind: 'StickyNoteSyntax', canvas: canvasMatch[1] as StickyNoteSyntax['canvas'], text, colour, x: position[0], y: position[1], width: size === null ? null : size[0], height: size === null ? null : size[1], location: locationOf(line) };
 }
 
-// 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
-function parseCanvasPair(context: ParserContext, line: SourceLine, keyword: string, first: string, second: string, existing: readonly [number, number] | null, allowNegative: boolean): readonly [number, number] | null {
-    const match = canvasPairPattern.exec(line.content);
-    const firstValue = match === null ? Number.NaN : Number.parseInt(match[2], 10);
-    const secondValue = match === null ? Number.NaN : Number.parseInt(match[3], 10);
-    const valid = match !== null && match[1] === keyword && Number.isSafeInteger(firstValue) && Number.isSafeInteger(secondValue)
-        && firstValue >= -2147483648 && firstValue <= 2147483647 && secondValue >= -2147483648 && secondValue <= 2147483647
-        && (allowNegative || (firstValue >= 0 && secondValue >= 0));
-    if (!valid) {
-        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid ${keyword} '${line.content}' - expected '${keyword} <${first}> <${second}>' with whole numbers${allowNegative ? '' : ' that are not negative'}`, locationOf(line));
-        return null;
-    }
-    if (existing !== null) {
-        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `The ${keyword} is already declared - at most one is allowed`, locationOf(line));
-        return null;
-    }
-    return [firstValue, secondValue];
-}

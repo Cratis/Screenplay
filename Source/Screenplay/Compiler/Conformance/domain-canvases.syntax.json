@@ -1,0 +1,128 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ProductId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "CustomerId",
+      "type": "Uuid",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": "One product in the catalogue",
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "ProductId"
+      },
+      "name": "Product",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": "Drafting, pricing and approval of one product",
+          "id": null,
+          "name": "Lifecycle",
+          "streamId": null,
+          "streamIdParts": []
+        }
+      ],
+      "x": 110,
+      "y": -150
+    },
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "CustomerId"
+      },
+      "name": "Customer",
+      "streams": []
+    }
+  ],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Browse",
+          "slices": []
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop"
+    }
+  ],
+  "personas": [],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": null,
+      "height": null,
+      "text": "Persona question",
+      "width": null,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "eventsources",
+      "colour": "pink",
+      "height": 140,
+      "text": "Open question: one stream per market?",
+      "width": 240,
+      "x": 480,
+      "y": 150
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "givencontexts",
+      "colour": "green",
+      "height": null,
+      "text": "A paid order is the common start,\nreuse it in every specification",
+      "width": null,
+      "x": -40,
+      "y": 80
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "seeddata",
+      "colour": "blue",
+      "height": 160,
+      "text": "Seed the catalogue before the first sale",
+      "width": 300,
+      "x": 20,
+      "y": 400
+    }
+  ],
+  "systems": [],
+  "types": []
+}

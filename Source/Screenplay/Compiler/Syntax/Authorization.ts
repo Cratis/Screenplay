@@ -43,9 +43,10 @@ export interface PersonaSyntax extends SyntaxNode {
     readonly height?: number;
 }
 
-// 'sticky note on personas' - a free-standing note placed on the personas canvas. Authoring metadata, never executable.
+// 'sticky note on <canvas>' - a free-standing note placed on a domain canvas. Authoring metadata, never executable.
 export interface StickyNoteSyntax extends SyntaxNode {
     readonly kind: 'StickyNoteSyntax';
+    readonly canvas: 'personas' | 'eventsources' | 'givencontexts' | 'seeddata';
     readonly text: string;
     readonly colour: string | null;
     readonly x: number;

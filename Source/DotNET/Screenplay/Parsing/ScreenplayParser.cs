@@ -394,7 +394,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note on personas, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
+                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
@@ -701,12 +701,13 @@ internal static partial class ScreenplayParser
         };
     }
 
-    // 'sticky note on personas' with the text it carries, an optional colour and where it sits on the personas canvas.
+    // 'sticky note on <canvas>' with the text it carries, an optional colour and where it sits on that canvas.
     static StickyNoteSyntax? ParseStickyNote(ParserContext context, SourceLine line)
     {
-        if (!StickyNoteRegex().IsMatch(line.Content))
+        var canvasMatch = StickyNoteRegex().Match(line.Content);
+        if (!canvasMatch.Success)
         {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid sticky note declaration '{line.Content}' - expected 'sticky note on personas'", line.Location);
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid sticky note declaration '{line.Content}' - expected 'sticky note on personas', 'sticky note on eventsources', 'sticky note on givencontexts' or 'sticky note on seeddata'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -761,11 +762,11 @@ internal static partial class ScreenplayParser
             return null;
         }
 
-        return new(text, colour, position.Value.X, position.Value.Y, size?.Width, size?.Height, line.Location) { DirectiveLocations = directiveLocations };
+        return new(canvasMatch.Groups[1].Value, text, colour, position.Value.X, position.Value.Y, size?.Width, size?.Height, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     // 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
-    static (int First, int Second)? ParseCanvasPair(ParserContext context, SourceLine line, string keyword, string first, string second, (int, int)? existing, bool allowNegative)
+    internal static (int First, int Second)? ParseCanvasPair(ParserContext context, SourceLine line, string keyword, string first, string second, (int, int)? existing, bool allowNegative)
     {
         var match = CanvasPairRegex().Match(line.Content);
         if (!match.Success
@@ -830,7 +831,7 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^goal\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaGoalRegex();
 
-    [GeneratedRegex(@"^sticky\s+note\s+on\s+personas$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^sticky\s+note\s+on\s+(personas|eventsources|givencontexts|seeddata)$", RegexOptions.NonBacktracking)]
     private static partial Regex StickyNoteRegex();
 
     [GeneratedRegex(@"^colour\s+(yellow|pink|green|blue)$", RegexOptions.NonBacktracking)]

@@ -12,4 +12,8 @@ export interface EventSourceSyntax extends SyntaxNode {
     readonly streams: readonly EventStreamSyntax[];
     readonly description: string | null;
     readonly id: string | null;
+
+    // Authoring metadata for the event source canvas, written only when present.
+    readonly x?: number;
+    readonly y?: number;
 }

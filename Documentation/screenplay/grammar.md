@@ -119,7 +119,7 @@ SystemDecl     = "system", Ident, NL,
 
 EventSourceDecl = "eventsource", Ident, NL,
                   [ INDENT, { EventDescriptionDecl | EventIdDecl
-                            | SourceIdentifierDecl | EventStreamDecl }, DEDENT ] ;
+                            | SourceIdentifierDecl | EventStreamDecl | "position", Integer, Integer, NL }, DEDENT ] ;
 SourceIdentifierDecl = "identifier", QualifiedName, NL ;
 EventStreamDecl = "stream", Ident, NL,
                   [ INDENT, { EventDescriptionDecl | EventIdDecl | StreamIdentifierDecl | StreamIdPartsDecl }, DEDENT ] ;
@@ -298,8 +298,8 @@ PersonaDecl    = "persona", Ident, NL,
                    | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
                  DEDENT ;
 
-(* Authoring metadata for the personas canvas; never part of the executable model. *)
-StickyNoteDecl = "sticky", "note", "on", "personas", NL,
+(* Authoring metadata for the domain canvases; never part of the executable model. *)
+StickyNoteDecl = "sticky", "note", "on", ( "personas" | "eventsources" | "givencontexts" | "seeddata" ), NL,
                  INDENT,
                    { DescriptionDecl | "colour", ( "yellow" | "pink" | "green" | "blue" ), NL
                    | "position", Integer, Integer, NL | "size", Integer, Integer, NL },

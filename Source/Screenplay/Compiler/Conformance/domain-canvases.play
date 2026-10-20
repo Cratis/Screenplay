@@ -1,0 +1,40 @@
+concept ProductId : Uuid
+concept CustomerId : Uuid
+
+eventsource Product
+  description "One product in the catalogue"
+  identifier ProductId
+  stream Lifecycle
+    description "Drafting, pricing and approval of one product"
+  position 110 -150
+
+eventsource Customer
+  identifier CustomerId
+
+sticky note on personas
+  description "Persona question"
+  position 0 0
+
+sticky note on eventsources
+  description "Open question: one stream per market?"
+  colour pink
+  position 480 150
+  size 240 140
+
+sticky note on givencontexts
+  description
+    ```text
+    A paid order is the common start,
+    reuse it in every specification
+    ```
+  colour green
+  position -40 80
+
+sticky note on seeddata
+  description "Seed the catalogue before the first sale"
+  colour blue
+  position 20 400
+  size 300 160
+
+module Shop
+  feature Browse

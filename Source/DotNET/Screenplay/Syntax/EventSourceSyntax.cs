@@ -22,6 +22,12 @@ public record EventSourceSyntax(string Name, SourceLocation Location) : SyntaxNo
     /// <summary>Gets the optional description.</summary>
     public string? Description { get; init; }
 
+    /// <summary>Gets where the event source sits on the event source canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored. Authoring metadata, never part of the executable model.</summary>
+    public int? X { get; init; }
+
+    /// <summary>Gets where the event source sits on the event source canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored.</summary>
+    public int? Y { get; init; }
+
     /// <summary>Gets the old stored name retained only for a rename, not a semantic id.</summary>
     public string? Id { get; init; }
 }

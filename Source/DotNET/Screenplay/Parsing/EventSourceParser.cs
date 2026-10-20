@@ -19,12 +19,16 @@ internal static partial class EventSourceParser
         TypeRefSyntax? identifier = null;
         string? description = null;
         string? id = null;
+        (int X, int Y)? position = null;
         var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var child))
         {
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "position":
+                    position = ScreenplayParser.ParseCanvasPair(context, child, "position", "x", "y", position, allowNegative: true) ?? position;
+                    break;
                 case "stream":
                     streams.Add(ParseStream(context, child));
                     break;
@@ -39,13 +43,13 @@ internal static partial class EventSourceParser
                     id = ParsePin(context, child, name, id, locations);
                     break;
                 default:
-                    Invalid(context, child, "An event source accepts description, id, identifier and stream declarations.");
+                    Invalid(context, child, "An event source accepts description, id, identifier, position and stream declarations.");
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, header.Location) { Identifier = identifier, Streams = streams, Description = description, Id = id, DirectiveLocations = locations };
+        return new(name, header.Location) { Identifier = identifier, Streams = streams, Description = description, Id = id, X = position?.X, Y = position?.Y, DirectiveLocations = locations };
     }
 
     internal static CommandStreamSyntax ParseRoute(ParserContext context, SourceLine header, PropertySyntax candidate, bool ambiguous)

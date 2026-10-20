@@ -23,6 +23,11 @@ public class when_parsing_invalid_canvas_declarations : Specification
 
         sticky note somewhere
           position 0 0
+
+        eventsource Product
+          position 1
+          position 1 2
+          position 3 4
         """;
 
     ScreenplayCompiler _compiler;
@@ -32,6 +37,6 @@ public class when_parsing_invalid_canvas_declarations : Specification
 
     void Because() => _codes = [.. _compiler.Compile(Source).Diagnostics.Select(diagnostic => diagnostic.Code)];
 
-    [Fact] void should_report_the_invalid_goal_position_and_size() => _codes.Count(code => code == DiagnosticCodes.InvalidPersonaDeclaration).ShouldEqual(7);
+    [Fact] void should_report_the_invalid_goal_position_and_size() => _codes.Count(code => code == DiagnosticCodes.InvalidPersonaDeclaration).ShouldEqual(9);
     [Fact] void should_report_the_unknown_persona_directive() => _codes.ShouldContain(DiagnosticCodes.UnknownPersonaDirective);
 }
