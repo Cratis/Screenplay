@@ -101,8 +101,8 @@ internal sealed class MemoryPlayDocuments
         /// <inheritdoc/>
         public string Read(string path) => source.Read(path);
 
+        // An ancestor of the document-set root contains every supplied document.
         static bool IsBeneath(string folder, string path) =>
-            // An ancestor of the document-set root contains every supplied document.
             folder.Length == 0 || folder.Split('/').All(segment => segment == "..") || path.StartsWith($"{folder}/", StringComparison.Ordinal);
     }
 }
