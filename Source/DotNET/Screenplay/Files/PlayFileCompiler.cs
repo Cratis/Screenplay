@@ -76,6 +76,29 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
         return Assemble(source, [file.RelativePath]);
     }
 
+    /// <inheritdoc/>
+    public ApplicationCompilation<ApplicationSyntax> CompileFolder(IEnumerable<PlayFileContent> documents)
+    {
+        var folder = new MemoryPlayDocuments(documents);
+        return Assemble(folder.Source, folder.Source.FilesBeneath(string.Empty), folder.File);
+    }
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<TApplication> CompileFolder<TApplication>(IEnumerable<PlayFileContent> documents, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        Visit(CompileFolder(documents), visitor);
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<ApplicationSyntax> CompileApplication(string path, IEnumerable<PlayFileContent> documents)
+    {
+        var entry = MemoryPlayDocuments.NormalizePath(path);
+        var folder = new MemoryPlayDocuments(documents, entry);
+        return Assemble(folder.Source, [System.IO.Path.GetFileName(entry)], folder.File);
+    }
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<TApplication> CompileApplication<TApplication>(string path, IEnumerable<PlayFileContent> documents, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        Visit(CompileApplication(path, documents), visitor);
+
     static ApplicationCompilation<TApplication> Visit<TApplication>(
         ApplicationCompilation<ApplicationSyntax> compilation,
         IApplicationSyntaxVisitor<TApplication> visitor) =>
@@ -91,11 +114,14 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
         return new(full, System.IO.Path.GetFileName(full));
     }
 
-    ApplicationCompilation<ApplicationSyntax> Assemble(DiskPlayDocumentSource source, IEnumerable<string> roots)
+    ApplicationCompilation<ApplicationSyntax> Assemble(DiskPlayDocumentSource source, IEnumerable<string> roots) =>
+        Assemble(source, roots, source.File);
+
+    ApplicationCompilation<ApplicationSyntax> Assemble(IPlayDocumentSource source, IEnumerable<string> roots, Func<string, PlayFile> file)
     {
         var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source, _languages, out var timeline);
         Timeline = timeline;
-        return new([.. documents.Select(document => new PlayFileSource(source.File(document.Path), document.Source))], result);
+        return new([.. documents.Select(document => new PlayFileSource(file(document.Path), document.Source))], result);
     }
 
     PlayFileCompilation Compile(PlayFile file)
