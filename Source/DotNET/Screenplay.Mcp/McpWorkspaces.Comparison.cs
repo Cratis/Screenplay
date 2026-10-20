@@ -58,7 +58,19 @@ internal sealed partial class McpWorkspaces
         }
 
         // Check the approved root before touching an old worktree that may have been removed.
-        return McpDirectoryIdentity.Same(_configuredRoot, requested)
-            ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requested);
+        if (McpDirectoryIdentity.Same(_configuredRoot, requested))
+        {
+            return _configuredRoot;
+        }
+
+        try
+        {
+            return McpWorktreeRoots.Resolve(_configuredRoot, requested);
+        }
+        catch (McpFailure) when (AdmitsModelFolder(_configuredRoot, requested))
+        {
+            // A failing check inside the filter counts as not admitted, so the worktree refusal stands.
+            return requested;
+        }
     }
 }
