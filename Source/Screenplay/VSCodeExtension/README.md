@@ -13,12 +13,12 @@ emitted by the command. Newer versions focus the board on the open file's slices
 2. Open your model's folder, then a `.play` file to see the board.
 3. Choose **Show Source** to edit beside the board and watch it redraw.
 
-[See your event model](https://cratis.io/screenplay/see-your-event-model/) ·
-[VS Code guide](https://cratis.io/screenplay/vscode/) ·
-[Language documentation](https://cratis.io/screenplay/)
+[See your event model](https://www.cratis.io/screenplay/see-your-event-model/) ·
+[VS Code guide](https://www.cratis.io/screenplay/vscode/) ·
+[Language documentation](https://www.cratis.io/screenplay/)
 
 The board visualizes the model; it does not execute commands or specifications.
-Use the [compiler](https://cratis.io/screenplay/tool/) to validate your model;
+Use the [compiler](https://www.cratis.io/screenplay/tool/) to validate your model;
 a board that draws is not proof that every semantic check passes.
 
 ## Features

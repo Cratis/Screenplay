@@ -51,10 +51,10 @@ The board parses and draws; it does not execute commands or specifications.
 Run the compiler to check validity, and read diagnostics rather than treating a
 partial board as success.
 
-[See your event model](https://cratis.io/screenplay/see-your-event-model/) ·
-[Install and configure MCP](https://cratis.io/screenplay/mcp/install/) ·
-[MCP board guide](https://cratis.io/screenplay/mcp/view/) ·
-[Compiler reference](https://cratis.io/screenplay/tool/)
+[See your event model](https://www.cratis.io/screenplay/see-your-event-model/) ·
+[Install and configure MCP](https://www.cratis.io/screenplay/mcp/install/) ·
+[MCP board guide](https://www.cratis.io/screenplay/mcp/view/) ·
+[Compiler reference](https://www.cratis.io/screenplay/tool/)
 
 ## Record declared processing purposes
 
