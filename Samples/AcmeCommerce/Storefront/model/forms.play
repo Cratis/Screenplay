@@ -8,12 +8,10 @@ module Shop
     field method label "How should we deliver?"
     on submit navigate to Checkout
 
-  // The review step: the draft the first two steps built pre-fills the order.
+  // The review step: the draft the first steps built (address, delivery, the basket's lines and total) is submitted as it stands; the shopper adds where the receipt goes.
   form CheckOutForm for CheckOut
     populate via query GetCheckoutDraft by basketId
-    field shipTo label "Deliver to"
-    field method label "Delivery"
-    field total label "Total"
+    field email label "Email for your receipt"
     on submit navigate to MyOrders
 
   form RegisterCustomerForm for RegisterCustomer

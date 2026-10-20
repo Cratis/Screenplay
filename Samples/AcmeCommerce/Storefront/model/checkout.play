@@ -54,19 +54,33 @@ module Shop
     slice StateView CheckoutProgress
       description "The address and delivery method chosen so far, per basket"
 
+      // The draft is also what the review step submits: the lines and the total come from the basket the same events built
       readmodel CheckoutDraft
         basketId BasketId key
         shipTo   PostalAddress optional
         method   DeliveryMethod optional
+        lines    BasketLine[]
+        total    Money optional
 
       query GetCheckoutDraft => CheckoutDraft optional
         by basketId BasketId
 
       projection CheckoutDraftProjection => CheckoutDraft
+        no automap
         from ShippingAddressEntered
-          shipTo   = shipTo
+          shipTo = shipTo
         from DeliveryMethodChosen
-          method   = method
+          method = method
+        from BasketLineAdded
+          add total by unitPrice * quantity
+        children lines identified by sku
+          from BasketLineAdded key sku
+            sku       = sku
+            quantity  = quantity
+            unitPrice = unitPrice
+          from BasketLineQuantityChanged key sku
+            quantity = quantity
+          remove with BasketLineRemoved
         remove with BasketCleared
 
       screen Checkout
@@ -83,8 +97,11 @@ module Shop
               field method label "Delivery"
           actions
             action EnterShippingAddress
+              label "Enter delivery address"
             action ChooseDeliveryMethod
+              label "Choose delivery"
             action CheckOut
+              label "Place order"
               navigate to MyOrders
 
       specification TheDraftFollowsTheSteps
@@ -101,20 +118,40 @@ module Shop
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method   = "express"
 
+      specification TheDraftCarriesWhatTheBasketHolds
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-1000"
+          quantity  = 2
+          unitPrice = 49
+        given DeliveryMethodChosen
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method = "standard"
+        then readmodel CheckoutDraft
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          method   = "standard"
+          total    = 98
+          lines    = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+
     // Step 3: review and confirm
     slice StateChange CheckOut
       description "Wizard step 3: the shopper confirms the order"
 
+      // A guest checkout: the order gets its own identity, the shopper is the session, and what the order holds - lines, address, delivery, total - is what the
+      // draft gathered. The shopper adds the one thing the draft cannot know: where the receipt goes.
       command CheckOut
-        orderId    OrderId identifier
+        orderId    OrderId generated identifier
         basketId   BasketId
         customerId CustomerId
+        email      EmailAddress
         lines      OrderLine[]
         shipTo     PostalAddress
         method     DeliveryMethod
         total      Money
         reads BasketSize by basketId
-        reads CustomerAccount by customerId
 
         validate
           lines not empty  message "An order needs at least one line"
@@ -126,7 +163,7 @@ module Shop
           orderId        = orderId
           basketId       = basketId
           customerId     = customerId
-          email          = CustomerAccount.email
+          email          = email
           lines          = lines
           shipTo         = shipTo
           deliveryMethod = method
@@ -144,14 +181,50 @@ module Shop
         total          Money
 
 
+      specification PlacingAnOrder
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku       = "ACM-1000"
+          quantity  = 2
+          unitPrice = 49
+        when CheckOut
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
+          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          method     = "standard"
+          total      = 98
+        // the order, and what it sets going: the basket is emptied and the public event tells Sales
+        then events in any order
+        then CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        then BasketCleared
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+        then OrderPlaced
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
+          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          total      = 98
+
       specification RejectingAnEmptyBasket
         given caller
           authenticated
           role "Shopper"
-        given CustomerRegistered
-          for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-          name  = "Ada Lovelace"
-          email = "ada@example.com"
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku       = "ACM-1000"
@@ -160,16 +233,11 @@ module Shop
         given BasketLineRemoved
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku = "ACM-1000"
-        given ShippingAddressEntered
-          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-        given DeliveryMethodChosen
-          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          method = "standard"
         when CheckOut
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
           lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
           shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           method     = "standard"
@@ -181,9 +249,10 @@ module Shop
           authenticated
           role "Shopper"
         when CheckOut
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email      = "ada@example.com"
           lines      = []
           shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           method     = "standard"
@@ -192,18 +261,28 @@ module Shop
 
       screen OrderTracking
         description "Where one order stands: received, approved, shipped, delivered"
-        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+        template SideSummary
           header
             component Cratis.Blueprint.Default.pageHeader orderTrackingHeader
               property title = "Track your order"
               property subtitle = "Where this order is on its way to you"
-          summary
+          main
             data MyOrder via query GetMyOrder by orderId
             summary MyOrder
               field orderId        label "Order"
               field status         label "Status"
               field deliveryMethod label "Delivery"
-              field total          label "Total"
+          summary
+            component Cratis.Blueprint.Default.statCard orderTotal
+              property label = "Total"
+              property value from query GetMyOrder.0.total
+              property format = "currency"
+              property currency = "NOK"
+          actions
+            component Cratis.Blueprint.Default.actionButton backToMyOrders
+              property label = "My orders"
+              on click
+                navigate to MyOrders
 
     // AUTOMATION: a reaction that invokes a command when an event occurs
     slice Automation EmptyBasketAfterCheckout

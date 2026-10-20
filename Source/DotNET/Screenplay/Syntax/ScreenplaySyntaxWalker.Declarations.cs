@@ -190,6 +190,11 @@ public abstract partial class ScreenplaySyntaxWalker
             }
         }
 
+        if (syntax.Identity is { } identity)
+        {
+            VisitNode(identity);
+        }
+
         if (syntax.Appearance is { } appearance)
         {
             VisitNode(appearance);

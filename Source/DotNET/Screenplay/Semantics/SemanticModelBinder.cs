@@ -588,6 +588,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                     var bound = BindQuery(sliceAddress, query);
                     if (bound is null)
                     {
+                        if (query.Performer is not null)
+                        {
+                            AuthorizePerformedQuery(query, module, featurePath);
+                        }
+
                         continue;
                     }
 
@@ -643,6 +648,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         sealed record BoundReadModel(
             ReadModelSyntax Syntax,
             SemanticReadModel Model,
-            Dictionary<string, SemanticProperty> Properties);
+            Dictionary<string, SemanticProperty> Properties)
+        {
+            /// <summary>Gets the declared read model's address; null when the bound shape is a public event.</summary>
+            public SemanticAddress? Address { get; init; }
+        }
     }
 }

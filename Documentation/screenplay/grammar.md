@@ -327,7 +327,7 @@ CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
                    { TargetPlatformDecl | TargetSizeDecl | PackagesBlock
-                   | ProfileLayoutDecl | ProfileThemeDecl | ProfileRootDecl | ProfileAppearanceDecl
+                   | ProfileLayoutDecl | ProfileThemeDecl | ProfileRootDecl | ProfileIdentityDecl | ProfileAppearanceDecl
                    | NewScreensDecl | ProfileSampleDataDecl },
                  DEDENT ;
 
@@ -353,8 +353,23 @@ ShellOptionDecl = "option", Ident, ShellOptionValue, NL ;
 
 ShellOptionValue = Ident | StringLiteral | Number | "true" | "false" ;
 
+ProfileIdentityDecl = "identity", NL,
+                 INDENT, { IdentityNameDecl | LogoDecl | ShowNameDecl }, DEDENT ;
+
+IdentityNameDecl = "name", StringLiteral, NL ;
+
+LogoDecl       = "logo", ( "initials", StringLiteral
+                         | "icon", Ident
+                         | "image", StringLiteral ), NL ;
+
+ShowNameDecl   = "show", "name", ( "true" | "false" ), NL ;
+
 ProfileAppearanceDecl = "appearance", NL,
-                 INDENT, { ColorSchemeDecl | AccentDecl }, DEDENT ;
+                 INDENT, { ColorSchemeDecl | AccentDecl | CornersDecl | FontDecl }, DEDENT ;
+
+CornersDecl    = "corners", ( "sharp" | "default" | "round" ), NL ;
+
+FontDecl       = "font", FontId, NL ;
 
 ColorSchemeDecl = "color", "scheme", ( "light" | "dark" | "system" ), NL ;
 
@@ -388,8 +403,9 @@ BlueprintPackId = Lower, { Lower | Digit | ".", "_", "-" } ;
    uses (an own template by name, or "blueprint <Blueprint> <Name> [version
    <range>]"), naming the shell the whole application is drawn in; its
    "option" lines set what that shell exposes, each name once. "layout" stays
-   readable beside it. "appearance" holds at most one "color scheme" and one
-   "accent"; "new screens use template" is the template a new screen starts
+   readable beside it. "identity" holds at most one "name", one "logo" and one
+   "show name"; "appearance" holds at most one "color scheme", "accent",
+   "corners" and "font"; "new screens use template" is the template a new screen starts
    from. The "sample data" block is where the whole application's active
    sample data pack is chosen, once; "active" and "shape ... maps to ..." may
    each appear as often as it is distinct, "active" at most once.            *)

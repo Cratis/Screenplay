@@ -452,8 +452,22 @@
                     }
                 },
                 {
-                    "match": "^\\s*(root\\s+template|new\\s+screens\\s+use\\s+template|appearance|accent|option)(?=\\s|$)",
+                    "match": "^\\s*(root\\s+template|new\\s+screens\\s+use\\s+template|appearance|accent|corners|font|option)(?=\\s|$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(logo)\\s+(initials|icon|image)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "constant.language.screenplay" }
+                    }
+                },
+                {
+                    "match": "^\\s*(show\\s+name)\\s+(true|false)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "constant.language.screenplay" }
+                    }
                 },
                 {
                     "match": "^\\s*(color\\s+scheme)\\s+(light|dark|system)\\b",

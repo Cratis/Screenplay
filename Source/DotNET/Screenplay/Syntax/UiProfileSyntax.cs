@@ -41,7 +41,12 @@ public record UiProfileSyntax(
     public RootTemplateSyntax? Root { get; init; }
 
     /// <summary>
-    /// Gets the <c>appearance</c> block (colour scheme and accent), or <c>null</c> for none.
+    /// Gets the <c>identity</c> block (name, logo and whether the name is shown), or <c>null</c> for none.
+    /// </summary>
+    public ProfileIdentitySyntax? Identity { get; init; }
+
+    /// <summary>
+    /// Gets the <c>appearance</c> block (colour scheme, accent, corners and font), or <c>null</c> for none.
     /// </summary>
     public ProfileAppearanceSyntax? Appearance { get; init; }
 

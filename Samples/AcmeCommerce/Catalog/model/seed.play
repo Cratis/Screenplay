@@ -1,0 +1,137 @@
+// ============================================================
+// Catalog: the events a PLAYED catalog starts with (Stage appends a seed once, when the sandbox starts with an empty log).
+// Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the same products arrive as events and the
+// catalogue is never empty: most are approved for sale, two are still drafts. Keep the two in step.
+// ============================================================
+
+seed
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+    ProductDrafted
+      sku      = "ACM-1000"
+      name     = "Acme krus"
+      category = "Kjøkken"
+    ProductDescribed
+      details  = "Emaljekrus som tåler både bål og oppvaskmaskin"
+      imageUrl = "/images/krus.png"
+    ProductPriceSet
+      price         = 149
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-1000"
+      name     = "Acme krus"
+      category = "Kjøkken"
+      details  = "Emaljekrus som tåler både bål og oppvaskmaskin"
+      imageUrl = "/images/krus.png"
+      price    = 149
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1002"
+    ProductDrafted
+      sku      = "ACM-1001"
+      name     = "Acme tallerken"
+      category = "Kjøkken"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
+    ProductDrafted
+      sku      = "ACM-1002"
+      name     = "Acme kaffekanne"
+      category = "Kjøkken"
+    ProductDescribed
+      details  = "Kaffekanne i rustfritt stål med tett lokk"
+      imageUrl = "/images/kaffekanne.png"
+    ProductPriceSet
+      price         = 349
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-1002"
+      name     = "Acme kaffekanne"
+      category = "Kjøkken"
+      details  = "Kaffekanne i rustfritt stål med tett lokk"
+      imageUrl = "/images/kaffekanne.png"
+      price    = 349
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1004"
+    ProductDrafted
+      sku      = "ACM-2000"
+      name     = "Acme ullteppe"
+      category = "Bolig"
+    ProductDescribed
+      details  = "Ullteppe i norsk ull, 130 x 180 cm"
+      imageUrl = "/images/ullteppe.png"
+    ProductPriceSet
+      price         = 899
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-2000"
+      name     = "Acme ullteppe"
+      category = "Bolig"
+      details  = "Ullteppe i norsk ull, 130 x 180 cm"
+      imageUrl = "/images/ullteppe.png"
+      price    = 899
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1005"
+    ProductDrafted
+      sku      = "ACM-2001"
+      name     = "Acme lysestake"
+      category = "Bolig"
+    ProductDescribed
+      details  = "Lysestake i støpejern for kronelys"
+      imageUrl = "/images/lysestake.png"
+    ProductPriceSet
+      price         = 199
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-2001"
+      name     = "Acme lysestake"
+      category = "Bolig"
+      details  = "Lysestake i støpejern for kronelys"
+      imageUrl = "/images/lysestake.png"
+      price    = 199
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1006"
+    ProductDrafted
+      sku      = "ACM-2002"
+      name     = "Acme pute"
+      category = "Bolig"
+    ProductDescribed
+      details  = "Pute med dun- og fjærfyll, 50 x 50 cm"
+      imageUrl = "/images/pute.png"
+    ProductPriceSet
+      price         = 299
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-2002"
+      name     = "Acme pute"
+      category = "Bolig"
+      details  = "Pute med dun- og fjærfyll, 50 x 50 cm"
+      imageUrl = "/images/pute.png"
+      price    = 299
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1007"
+    ProductDrafted
+      sku      = "ACM-3000"
+      name     = "Acme hageskje"
+      category = "Hage"
+    ProductDescribed
+      details  = "Hageskje i herdet stål med treskaft"
+      imageUrl = "/images/hageskje.png"
+    ProductPriceSet
+      price         = 129
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+    ProductApprovedForSale
+      sku      = "ACM-3000"
+      name     = "Acme hageskje"
+      category = "Hage"
+      details  = "Hageskje i herdet stål med treskaft"
+      imageUrl = "/images/hageskje.png"
+      price    = 129
+      currency = "NOK"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1008"
+    ProductDrafted
+      sku      = "ACM-3001"
+      name     = "Acme vanningskanne"
+      category = "Hage"

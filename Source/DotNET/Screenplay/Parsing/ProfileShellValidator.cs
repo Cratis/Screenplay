@@ -19,7 +19,16 @@ internal static partial class ProfileShellValidator
 {
     internal const string ApplicationScope = "application";
     internal const string FeatureScope = "feature";
+    const int MaximumInitials = 2;
+    const int MaximumImageBytes = 400 * 1024;
+
     static readonly string[] _colorSchemes = ["light", "dark", "system"];
+    static readonly string[] _cornerStyles = ["sharp", "default", "round"];
+    static readonly string[] _logoKinds = ["initials", "icon", "image"];
+
+    // Scene's logo icons (ProfileIdentityResolver.LogoIcons): the closed set an icon logo can use.
+    static readonly string[] _logoIcons = ["box", "layers", "home", "users", "receipt", "package", "database", "palette"];
+
     static readonly string[] _contentTypes = ["Workspace", "List", "Detail", "Form"];
 
     /// <summary>
@@ -36,6 +45,7 @@ internal static partial class ProfileShellValidator
             if (catalog is null)
             {
                 ValidateLegacyLayout(profile, application, context);
+                ValidateIdentity(profile, context);
                 ValidateAppearance(profile, context);
             }
 
@@ -167,6 +177,70 @@ internal static partial class ProfileShellValidator
             DiagnosticArguments.Empty.With("profile", DiagnosticArgument.Text(profile.Name)).With("template", DiagnosticArgument.Text(layout)));
     }
 
+    static void ValidateIdentity(UiProfileSyntax profile, ParserContext context)
+    {
+        if (profile.Identity is not { } identity)
+        {
+            return;
+        }
+
+        void Refuse(string message, string value, SourceLocation? location) =>
+            context.Error(
+                DiagnosticCodes.InvalidAppearanceValue,
+                message,
+                location ?? identity.Location,
+                DiagnosticArguments.Empty.With("profile", DiagnosticArgument.Text(profile.Name)).With("value", DiagnosticArgument.Text(value.Length > 40 ? value[..40] : value)));
+
+        if (identity.Name is { } name && string.IsNullOrWhiteSpace(name))
+        {
+            Refuse($"The identity name of ui profile '{profile.Name}' is blank - leave 'name' out to take the application's name", name, identity.NameLocation);
+        }
+
+        if (identity.LogoKind is not { } kind || identity.LogoValue is not { } value)
+        {
+            return;
+        }
+
+        if (!_logoKinds.Contains(kind, StringComparer.Ordinal))
+        {
+            Refuse($"The logo '{kind}' of ui profile '{profile.Name}' is not one of initials, icon or image", kind, identity.LogoLocation);
+            return;
+        }
+
+        switch (kind)
+        {
+            case "initials" when value.Trim().EnumerateRunes().Count() is 0 or > MaximumInitials:
+                Refuse($"The logo initials '{value}' of ui profile '{profile.Name}' must be 1 to {MaximumInitials} characters", value, identity.LogoLocation);
+                break;
+            case "icon" when !_logoIcons.Contains(value, StringComparer.Ordinal):
+                Refuse($"The logo icon '{value}' of ui profile '{profile.Name}' is not one of {string.Join(", ", _logoIcons)}", value, identity.LogoLocation);
+                break;
+            case "image":
+                var image = LogoImage().Match(value);
+                if (!image.Success || DecodedSize(image.Groups["data"].Value) < 0)
+                {
+                    Refuse($"The logo image of ui profile '{profile.Name}' must be a PNG, JPG, SVG or WebP as a base64 data URI", "image", identity.LogoLocation);
+                }
+                else if (DecodedSize(image.Groups["data"].Value) > MaximumImageBytes)
+                {
+                    Refuse($"The logo image of ui profile '{profile.Name}' is larger than {MaximumImageBytes / 1024} KB", "image", identity.LogoLocation);
+                }
+
+                break;
+        }
+    }
+
+    static int DecodedSize(string base64)
+    {
+        if (base64.Length % 4 != 0)
+        {
+            return -1;
+        }
+
+        var padding = base64.TakeLast(2).Count(character => character == '=');
+        return (base64.Length / 4 * 3) - padding;
+    }
+
     static void ValidateAppearance(UiProfileSyntax profile, ParserContext context)
     {
         if (profile.Appearance is not { } appearance)
@@ -181,6 +255,15 @@ internal static partial class ProfileShellValidator
                 $"The color scheme '{scheme}' of ui profile '{profile.Name}' is not one of light, dark or system",
                 appearance.ColorSchemeLocation ?? appearance.Location,
                 DiagnosticArguments.Empty.With("profile", DiagnosticArgument.Text(profile.Name)).With("value", DiagnosticArgument.Text(scheme)));
+        }
+
+        if (appearance.Corners is { } corners && !_cornerStyles.Contains(corners, StringComparer.Ordinal))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidAppearanceValue,
+                $"The corners '{corners}' of ui profile '{profile.Name}' are not one of sharp, default or round",
+                appearance.CornersLocation ?? appearance.Location,
+                DiagnosticArguments.Empty.With("profile", DiagnosticArgument.Text(profile.Name)).With("value", DiagnosticArgument.Text(corners)));
         }
 
         if (appearance.Accent is { } accent && !HexColor().IsMatch(accent))
@@ -354,4 +437,7 @@ internal static partial class ProfileShellValidator
 
     [GeneratedRegex("^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$", RegexOptions.NonBacktracking)]
     private static partial Regex HexColor();
+
+    [GeneratedRegex(@"^data:image/(?:png|jpeg|jpg|svg\+xml|webp);base64,(?<data>[A-Za-z0-9+/]*={0,2})$", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking)]
+    private static partial Regex LogoImage();
 }

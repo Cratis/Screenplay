@@ -83,7 +83,10 @@ public sealed partial class SemanticModelBinder
             return new(
                 readModel,
                 new(id, readModel.Name, properties),
-                properties.ToDictionary(_ => _.Name, StringComparer.Ordinal));
+                properties.ToDictionary(_ => _.Name, StringComparer.Ordinal))
+            {
+                Address = address
+            };
         }
 
         SemanticKeyedQuery? BindQuery(SemanticAddress slice, QuerySyntax query)
@@ -104,7 +107,7 @@ public sealed partial class SemanticModelBinder
                 // A query a performer answers is an opaque read: the code decides what it returns, so no declarative
                 // shape can be executed. It stays listed as code the model needs and is excluded from the executable
                 // model and from specifications, instead of refusing every other declaration of the application.
-                RequireImplementation(SemanticImplementationRole.QueryPerformer, SemanticAddress.ForQuery(slice, query.Name), query.Performer.File, query.Performer.Code);
+                RequirePerformedQuery(slice, query);
                 _opaqueQueries.Add(query);
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' is performed by code: it is an opaque read, so it is realization metadata and no specification can execute it.", query.Location);
                 return null;

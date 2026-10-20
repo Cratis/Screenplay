@@ -1,14 +1,11 @@
 // Sales: what a customer bought. Module skeleton (features are filled by the Sales slices).
-// The module EXTENDS the application's sidebar with its own child.
 module Orders
   description "Order intake, approval, fulfilment and reporting"
   authorize CanWorkOrders
 
-  navigation sidebar extends
-    item reports title "Reports" icon chart target Orders.Reporting
-
   feature Intake
   feature Approval
+  feature Decision
   feature Fulfilment
   feature Lookup
   feature Cancellations

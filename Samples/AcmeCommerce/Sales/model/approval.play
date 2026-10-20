@@ -49,65 +49,6 @@ module Orders
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           status  = "approved"
 
-    slice StateChange ApproveOrder
-      description "A sales manager approves an order that waits for a decision"
-
-      command ApproveOrder
-        orderId OrderId identifier
-        reads OrderStateEntry by orderId
-        authorize IsSalesManager
-
-        validate
-          require OrderStateEntry.status == "received"
-            message "Only a received order can be approved"
-
-        produces OrderApproved
-          for orderId
-          orderId = orderId
-
-      event OrderApproved
-        orderId OrderId
-
-      // The accepting scenario is ASmallOrderApprovesItself / PublishOrderStatus; this is the denied path.
-      specification ARepCannotApprove
-        given caller
-          authenticated
-          role "SalesRep"
-        when ApproveOrder
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then denied
-
-      specification AnApprovedOrderCannotBeApprovedAgain
-        given caller
-          authenticated
-          role "SalesManager"
-        given OrderReceived
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
-          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
-          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-          email       = "ada@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-          market      = "NO"
-          quotedTotal = 899
-        given OrderRejected
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
-          reason = "Address could not be verified"
-        when ApproveOrder
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
-        then error "OrderStateEntry '0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09' does not exist."
-
-      screen Decision
-        description "Approve or reject the order, with the consequence spelled out"
-        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
-          actions
-            action ApproveOrder
-              navigate to ApprovalInbox
-            action RejectOrder
-              navigate to ApprovalInbox
-            action ApplyLargeDiscount
-              navigate to ApprovalInbox
-
     slice StateChange RejectOrder
       description "A sales manager turns an order down, with a reason the shopper sees"
 
@@ -312,3 +253,65 @@ module Orders
         when ConfirmOrder
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
         then error "Only an approved order can be confirmed"
+
+  // The decision lives in its own feature on purpose: the menu item "Approval inbox" targets the feature Orders.Approval, and a feature opens on one of its screens.
+  // Decision is reached from the inbox (double click an order), never from the menu, so it must not be a screen of the feature the menu opens.
+  feature Decision
+    slice StateChange ApproveOrder
+      description "A sales manager approves an order that waits for a decision"
+
+      command ApproveOrder
+        orderId OrderId identifier
+        reads OrderStateEntry by orderId
+        authorize IsSalesManager
+
+        validate
+          require OrderStateEntry.status == "received"
+            message "Only a received order can be approved"
+
+        produces OrderApproved
+          for orderId
+          orderId = orderId
+
+      event OrderApproved
+        orderId OrderId
+
+      // The accepting scenario is ASmallOrderApprovesItself / PublishOrderStatus; this is the denied path.
+      specification ARepCannotApprove
+        given caller
+          authenticated
+          role "SalesRep"
+        when ApproveOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then denied
+
+      specification AnApprovedOrderCannotBeApprovedAgain
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 899
+        given OrderRejected
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+          reason = "Address could not be verified"
+        when ApproveOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+        then error "OrderStateEntry '0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09' does not exist."
+
+      screen Decision
+        description "Approve or reject the order, with the consequence spelled out"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ApproveOrder
+              navigate to ApprovalInbox
+            action RejectOrder
+              navigate to ApprovalInbox
+            action ApplyLargeDiscount
+              navigate to ApprovalInbox

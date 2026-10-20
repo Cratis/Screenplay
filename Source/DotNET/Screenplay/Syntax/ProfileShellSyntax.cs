@@ -76,6 +76,68 @@ public record ProfileAppearanceSyntax(string? ColorScheme, string? Accent, Sourc
     /// Gets the location of the <c>accent</c> line, or <c>null</c> when not declared.
     /// </summary>
     public SourceLocation? AccentLocation { get; init; }
+
+    /// <summary>
+    /// Gets the <c>corners</c> word (<c>sharp</c>, <c>default</c> or <c>round</c>), or <c>null</c> when not declared.
+    /// </summary>
+    public string? Corners { get; init; }
+
+    /// <summary>
+    /// Gets the location of the <c>corners</c> line, or <c>null</c> when not declared.
+    /// </summary>
+    public SourceLocation? CornersLocation { get; init; }
+
+    /// <summary>
+    /// Gets the <c>font</c> id from Scene's font catalog (<c>inter</c>, <c>source-serif-4</c>), or <c>null</c> when not declared.
+    /// </summary>
+    public string? Font { get; init; }
+
+    /// <summary>
+    /// Gets the location of the <c>font</c> line, or <c>null</c> when not declared.
+    /// </summary>
+    public SourceLocation? FontLocation { get; init; }
+}
+
+/// <summary>
+/// Represents the <c>identity</c> block of a <see cref="UiProfileSyntax"/>: what the application calls itself and the mark it wears.
+/// </summary>
+/// <param name="Name">The display name text, or <c>null</c> to take the application's own name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// <c>name "&lt;text&gt;"</c>, <c>logo initials "&lt;1-2 characters&gt;"</c>, <c>logo icon &lt;icon&gt;</c> or <c>logo image "&lt;data:image/...;base64,...&gt;"</c>,
+/// and <c>show name true|false</c>. Every line is optional; each at most once.
+/// </remarks>
+public record ProfileIdentitySyntax(string? Name, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the location of the <c>name</c> line, or <c>null</c> when not declared.
+    /// </summary>
+    public SourceLocation? NameLocation { get; init; }
+
+    /// <summary>
+    /// Gets the kind of the logo (<c>initials</c>, <c>icon</c> or <c>image</c>), or <c>null</c> when the profile declares no logo.
+    /// </summary>
+    public string? LogoKind { get; init; }
+
+    /// <summary>
+    /// Gets the logo's value as authored: the initials, the icon id, or the image as a base64 data URI. <c>null</c> when the profile declares no logo.
+    /// </summary>
+    public string? LogoValue { get; init; }
+
+    /// <summary>
+    /// Gets the location of the <c>logo</c> line, or <c>null</c> when not declared.
+    /// </summary>
+    public SourceLocation? LogoLocation { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the name is drawn beside the logo, or <c>null</c> when the profile does not say (it is shown).
+    /// </summary>
+    public bool? ShowName { get; init; }
+
+    /// <summary>
+    /// Gets the location of the <c>show name</c> line, or <c>null</c> when not declared.
+    /// </summary>
+    public SourceLocation? ShowNameLocation { get; init; }
 }
 
 /// <summary>
