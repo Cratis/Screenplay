@@ -1,0 +1,223 @@
+// ============================================================
+// Sales: the events a PLAYED order desk starts with (Stage appends a seed once, when the sandbox starts with an empty log).
+// Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
+// ============================================================
+
+seed
+  for "ACM-1000"
+    PriceListUpdated
+      price         = 149
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1001"
+    PriceListUpdated
+      price         = 89
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1002"
+    PriceListUpdated
+      price         = 349
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1003"
+    PriceListUpdated
+      price         = 79
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1004"
+    PriceListUpdated
+      price         = 599
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1005"
+    PriceListUpdated
+      price         = 899
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1006"
+    PriceListUpdated
+      price         = 249
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1007"
+    PriceListUpdated
+      price         = 199
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1008"
+    PriceListUpdated
+      price         = 329
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1009"
+    PriceListUpdated
+      price         = 499
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1010"
+    PriceListUpdated
+      price         = 129
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "ACM-1013"
+    PriceListUpdated
+      price         = 399
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email       = "ada@example.com"
+      lines       = [{"sku":"ACM-1005","quantity":1,"unitPrice":899}]
+      shipTo      = {"street":"Analytical Way 12","city":"Oslo","postalCode":"0150","country":"NO"}
+      market      = "NO"
+      quotedTotal = 899
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email       = "grace@example.com"
+      lines       = [{"sku":"ACM-1004","quantity":2,"unitPrice":599},{"sku":"ACM-1002","quantity":1,"unitPrice":349}]
+      shipTo      = {"street":"Compiler Road 3","city":"Bergen","postalCode":"5003","country":"NO"}
+      market      = "NO"
+      quotedTotal = 1547
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email       = "alan@example.com"
+      lines       = [{"sku":"ACM-1009","quantity":1,"unitPrice":499},{"sku":"ACM-1006","quantity":2,"unitPrice":249}]
+      shipTo      = {"street":"Enigma Street 7","city":"Trondheim","postalCode":"7011","country":"NO"}
+      market      = "NO"
+      quotedTotal = 997
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email       = "edsger@example.com"
+      lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":149}]
+      shipTo      = {"street":"Semaphore Lane 1","city":"Stavanger","postalCode":"4006","country":"NO"}
+      market      = "NO"
+      quotedTotal = 298
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email       = "barbara@example.com"
+      lines       = [{"sku":"ACM-1005","quantity":1,"unitPrice":899},{"sku":"ACM-1007","quantity":2,"unitPrice":199}]
+      shipTo      = {"street":"Liskov Plass 5","city":"Oslo","postalCode":"0182","country":"NO"}
+      market      = "NO"
+      quotedTotal = 1297
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email       = "margaret@example.com"
+      lines       = [{"sku":"ACM-1013","quantity":3,"unitPrice":399}]
+      shipTo      = {"street":"Apollo Allé 11","city":"Tromsø","postalCode":"9008","country":"NO"}
+      market      = "NO"
+      quotedTotal = 1197
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+    OrderConfirmationIssued
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      lines       = [{"sku":"ACM-1013","quantity":3,"unitPrice":399}]
+      shipTo      = {"street":"Apollo Allé 11","city":"Tromsø","postalCode":"9008","country":"NO"}
+      market      = "NO"
+      quotedTotal = 1197
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email       = "ada@example.com"
+      lines       = [{"sku":"ACM-1004","quantity":1,"unitPrice":599},{"sku":"ACM-1008","quantity":1,"unitPrice":329}]
+      shipTo      = {"street":"Analytical Way 12","city":"Oslo","postalCode":"0150","country":"NO"}
+      market      = "NO"
+      quotedTotal = 928
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+    OrderPutOnHold
+      sku     = "ACM-1004"
+      shortBy = 2
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      email       = "grace@example.com"
+      lines       = [{"sku":"ACM-1002","quantity":1,"unitPrice":349},{"sku":"ACM-1003","quantity":4,"unitPrice":79}]
+      shipTo      = {"street":"Compiler Road 3","city":"Bergen","postalCode":"5003","country":"NO"}
+      market      = "NO"
+      quotedTotal = 665
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+    OrderConfirmationIssued
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      lines       = [{"sku":"ACM-1002","quantity":1,"unitPrice":349},{"sku":"ACM-1003","quantity":4,"unitPrice":79}]
+      shipTo      = {"street":"Compiler Road 3","city":"Bergen","postalCode":"5003","country":"NO"}
+      market      = "NO"
+      quotedTotal = 665
+    OrderShipmentRecorded
+      shipmentId     = "5a1f0000-0000-4000-8000-000000000008"
+      carrier        = "dhl"
+      trackingNumber = "RR000000008NO"
+      dispatchedAt   = "2026-10-18T09:30:00Z"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c03"
+      email       = "alan@example.com"
+      lines       = [{"sku":"ACM-1010","quantity":5,"unitPrice":129}]
+      shipTo      = {"street":"Enigma Street 7","city":"Trondheim","postalCode":"7011","country":"NO"}
+      market      = "NO"
+      quotedTotal = 645
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+    OrderConfirmationIssued
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      lines       = [{"sku":"ACM-1010","quantity":5,"unitPrice":129}]
+      shipTo      = {"street":"Enigma Street 7","city":"Trondheim","postalCode":"7011","country":"NO"}
+      market      = "NO"
+      quotedTotal = 645
+    OrderShipmentRecorded
+      shipmentId     = "5a1f0000-0000-4000-8000-000000000009"
+      carrier        = "posten"
+      trackingNumber = "RR000000009NO"
+      dispatchedAt   = "2026-10-10T09:30:00Z"
+    OrderFulfilled
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c04"
+      email       = "edsger@example.com"
+      lines       = [{"sku":"ACM-1001","quantity":6,"unitPrice":89}]
+      shipTo      = {"street":"Semaphore Lane 1","city":"Stavanger","postalCode":"4006","country":"NO"}
+      market      = "NO"
+      quotedTotal = 534
+    OrderCancelled
+      reason = "The customer changed their mind"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c05"
+      email       = "barbara@example.com"
+      lines       = [{"sku":"ACM-1006","quantity":1,"unitPrice":249}]
+      shipTo      = {"street":"Liskov Plass 5","city":"Oslo","postalCode":"0182","country":"NO"}
+      market      = "NO"
+      quotedTotal = 249
+    OrderRejected
+      reason = "The delivery address is outside our markets"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+    OrderReceived
+      orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c06"
+      email       = "margaret@example.com"
+      lines       = [{"sku":"ACM-1005","quantity":2,"unitPrice":899}]
+      shipTo      = {"street":"Apollo Allé 11","city":"Tromsø","postalCode":"9008","country":"NO"}
+      market      = "NO"
+      quotedTotal = 1798
+    OrderApproved
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
