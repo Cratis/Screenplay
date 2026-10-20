@@ -9,7 +9,10 @@ public class when_describing_performed_query_shapes : given.a_connection
 {
     const string PerformedSource =
         """
+        policy Accountants
+          require claim "role" matches "accountant"
         module Billing
+          authorize Accountants
           feature Invoices
             slice StateChange RecordInvoice
               event InvoiceRecorded
@@ -50,5 +53,7 @@ public class when_describing_performed_query_shapes : given.a_connection
     [Fact] void should_report_the_filter_kind() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("kind").GetString().ShouldEqual("Filter");
     [Fact] void should_report_the_filter_type() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("type").GetProperty("primitive").GetString().ShouldEqual("Text");
     [Fact] void should_report_the_filter_as_optional() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("optional").GetBoolean().ShouldBeTrue();
+    [Fact] void should_report_the_policy_that_gates_the_query() => Performed.GetProperty("queryShape").GetProperty("authorization").GetProperty("name").GetString().ShouldEqual("Accountants");
+    [Fact] void should_report_the_authorization_kind() => Performed.GetProperty("queryShape").GetProperty("authorization").GetProperty("kind").GetString().ShouldEqual("policy");
     [Fact] void should_report_no_shape_for_other_roles() => Handler.GetProperty("queryShape").ValueKind.ShouldEqual(JsonValueKind.Null);
 }

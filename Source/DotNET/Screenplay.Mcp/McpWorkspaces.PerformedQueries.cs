@@ -15,6 +15,7 @@ internal sealed partial class McpWorkspaces
             semanticId = shape.ReadModel?.ToString(),
             address = shape.ReadModelAddress is null ? null : McpSemanticAddresses.Describe(shape.ReadModelAddress)
         },
+        authorization = DescribeQueryAuthorization(shape.Authorization),
         cardinality = shape.Cardinality.ToString(),
         delivery = shape.Delivery.ToString(),
         arguments = shape.Arguments.Select(argument => new
@@ -24,5 +25,14 @@ internal sealed partial class McpWorkspaces
             type = DescribeModelType(argument.Type),
             optional = argument.IsOptional
         })
+    };
+
+    // The policies that gate a performed query, as names into the application's policies: a consumer decides what each one means (a claim, a role, anonymous access).
+    static object? DescribeQueryAuthorization(SemanticAuthorization? authorization) => authorization switch
+    {
+        null => null,
+        SemanticPolicyReference reference => new { kind = "policy", name = reference.Name },
+        SemanticLogicalAuthorization logical => new { kind = logical.Operator.ToString(), left = DescribeQueryAuthorization(logical.Left), right = DescribeQueryAuthorization(logical.Right) },
+        _ => new { kind = authorization.GetType().Name }
     };
 }

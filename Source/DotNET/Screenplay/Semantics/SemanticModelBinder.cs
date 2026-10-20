@@ -588,6 +588,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                     var bound = BindQuery(sliceAddress, query);
                     if (bound is null)
                     {
+                        if (query.Performer is not null)
+                        {
+                            AuthorizePerformedQuery(query, module, featurePath);
+                        }
+
                         continue;
                     }
 
