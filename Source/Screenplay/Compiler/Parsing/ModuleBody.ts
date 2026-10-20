@@ -6,6 +6,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { ScreenToolbarSyntax } from '../Syntax/Screens';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
@@ -15,6 +16,7 @@ import { parseDocumentation } from './DocumentationParser';
 import { parseDependsOn } from './DependsOnParser';
 import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
+import { parseToolbar } from './ScreenParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { parseExample } from './SpecificationExampleParser';
@@ -28,7 +30,7 @@ export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, navigation, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, toolbar, navigation, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.
@@ -38,6 +40,7 @@ export class ModuleBody {
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
+    readonly #toolbars: ScreenToolbarSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -73,6 +76,9 @@ export class ModuleBody {
             case 'example':
                 this.#examples.push(parseExample(context, line));
                 return true;
+            case 'toolbar':
+                this.#toolbars.push(parseToolbar(context, line));
+                return true;
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
@@ -106,6 +112,7 @@ export class ModuleBody {
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
+            ...(this.#toolbars.length > 0 ? { toolbars: this.#toolbars } : {}),
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

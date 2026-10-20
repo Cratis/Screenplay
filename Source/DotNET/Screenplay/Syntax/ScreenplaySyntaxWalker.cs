@@ -248,6 +248,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitNavigationRegion(region);
         }
 
+        foreach (var toolbar in syntax.Toolbars)
+        {
+            VisitScreenToolbar(toolbar);
+        }
+
         foreach (var feature in syntax.Features)
         {
             VisitFeature(feature);
@@ -626,6 +631,11 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var contribution in syntax.Contributions ?? [])
         {
             VisitContribution(contribution);
+        }
+
+        foreach (var toolbar in syntax.Toolbars)
+        {
+            VisitScreenToolbar(toolbar);
         }
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);

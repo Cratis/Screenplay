@@ -3452,6 +3452,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateToolbarButton = "PLAY0765";
 
+    /// <summary>
+    /// A toolbar item of a feature or module links a command that no slice of that feature or module declares.
+    /// </summary>
+    public const string FeatureToolbarCommandNotFound = "PLAY0808";
+
     // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
 
     /// <summary>

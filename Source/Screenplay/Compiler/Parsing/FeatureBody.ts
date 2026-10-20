@@ -6,6 +6,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, SliceSyntax } from '../Syntax/Structure';
+import { ScreenToolbarSyntax } from '../Syntax/Screens';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
@@ -19,6 +20,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseExample } from './SpecificationExampleParser';
+import { parseToolbar } from './ScreenParser';
 import { parseSlice } from './SliceParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -28,7 +30,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, toolbar, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
@@ -39,6 +41,7 @@ export class FeatureBody {
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
+    readonly #toolbars: ScreenToolbarSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -71,6 +74,9 @@ export class FeatureBody {
             case 'import':
                 parseFileImport(context, line, this.#fileImports);
                 return true;
+            case 'toolbar':
+                this.#toolbars.push(parseToolbar(context, line));
+                return true;
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
@@ -99,6 +105,7 @@ export class FeatureBody {
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
+            ...(this.#toolbars.length > 0 ? { toolbars: this.#toolbars } : {}),
             features: this.#features,
             slices: this.#slices,
             examples: this.#examples,

@@ -703,6 +703,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
         AddSeparatedMembers(members, writer, module.Navigation, 10, WriteNavigationRegion);
+        AddMembers(members, module.Toolbars, 11, toolbar => WriteScreenToolbar(writer, toolbar));
         WriteMembers(members, module);
     }
 
@@ -923,6 +924,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, feature.Features, 5, WriteFeature);
         AddSeparatedMembers(members, writer, feature.Slices, 6, WriteSlice);
         AddSeparatedMembers(members, writer, feature.Contributions ?? [], 7, WriteContribution);
+        AddMembers(members, feature.Toolbars, 8, toolbar => WriteScreenToolbar(writer, toolbar));
         WriteMembers(members, feature);
     }
 

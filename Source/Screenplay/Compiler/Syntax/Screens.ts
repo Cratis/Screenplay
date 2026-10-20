@@ -206,6 +206,7 @@ export interface ToolbarItemSyntax extends SyntaxNode {
     readonly target: string;
     readonly label: string | null;
     readonly icon: string | null;
+    readonly confirm?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
     readonly presentation: readonly PresentationValueSyntax[];
 }
@@ -221,6 +222,7 @@ export interface ToolbarButtonSyntax extends SyntaxNode {
     readonly emphasis?: ToolbarEmphasis | null;
     readonly icon?: string | null;
     readonly authorize?: AuthorizeSyntax | null;
+    readonly confirm?: string | null;
 }
 
 export interface ScreenToolbarSyntax extends SyntaxNode {

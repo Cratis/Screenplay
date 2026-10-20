@@ -1,0 +1,27 @@
+// Feature and module toolbars: buttons added to the toolbar slot of the feature's screens, each linked to a command of the feature.
+// The C# and TypeScript compilers read them the same way.
+module Shop
+  toolbar shell
+    button help title "Help" slice Shop.Orders.PlaceOrder emphasis quiet
+  feature Orders
+    toolbar actions
+      item cancel action CancelOrder
+        label "Cancel order"
+        icon trash
+        confirm "Cancel this order?"
+      button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+        confirm $strings.orders.confirmPlace
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        produces OrderPlaced
+          orderId = orderId
+      event OrderPlaced
+        orderId Uuid
+    slice StateChange CancelOrder
+      command CancelOrder
+        orderId Uuid identifier
+        produces OrderCancelled
+          orderId = orderId
+      event OrderCancelled
+        orderId Uuid
