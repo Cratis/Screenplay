@@ -9,7 +9,7 @@ public class and_the_set_is_empty : given.documents_in_memory
 {
     ApplicationCompilation<ApplicationSyntax> _compilation;
 
-    void Because() => _compilation = _compiler.CompileFolder(Array.Empty<PlayFileContent>());
+    void Because() => _compilation = _compiler.CompileFolder([]);
 
     [Fact] void should_succeed_like_an_empty_disk_folder() => _compilation.Result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _compilation.Result.Diagnostics.ShouldBeEmpty();

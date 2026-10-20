@@ -12,5 +12,5 @@ public class and_the_entry_is_invalid : Specification
     [InlineData("/rooted.play")]
     [InlineData("missing.play")]
     void should_reject_an_invalid_or_missing_entry(string? path) =>
-        Catch.Exception(() => new PlayFileCompiler().CompileApplication(path!, Array.Empty<PlayFileContent>())).ShouldBeOfExactType<ArgumentException>();
+        Catch.Exception(() => new PlayFileCompiler().CompileApplication(path!, [])).ShouldBeOfExactType<ArgumentException>();
 }

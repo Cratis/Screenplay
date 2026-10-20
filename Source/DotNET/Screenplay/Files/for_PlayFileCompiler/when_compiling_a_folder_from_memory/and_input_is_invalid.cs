@@ -20,7 +20,7 @@ public class and_input_is_invalid : Specification
         Catch.Exception(() => new PlayFileCompiler().CompileFolder([new PlayFileContent(path!, "")])).ShouldBeOfExactType<ArgumentException>();
 
     [Fact] void should_reject_a_null_set() => Catch.Exception(() => new PlayFileCompiler().CompileFolder((IEnumerable<PlayFileContent>)null!)).ShouldBeOfExactType<ArgumentNullException>();
-    [Fact] void should_reject_null_documents() => Catch.Exception(() => new PlayFileCompiler().CompileFolder(new PlayFileContent[] { null! })).ShouldBeOfExactType<ArgumentException>();
+    [Fact] void should_reject_null_documents() => Catch.Exception(() => new PlayFileCompiler().CompileFolder([null!])).ShouldBeOfExactType<ArgumentException>();
     [Fact] void should_reject_null_source_text() => Catch.Exception(() => new PlayFileCompiler().CompileFolder([new PlayFileContent("a.play", null!)])).ShouldBeOfExactType<ArgumentException>();
     [Fact] void should_reject_duplicate_paths() => Catch.Exception(() => new PlayFileCompiler().CompileFolder([new PlayFileContent("a.play", ""), new PlayFileContent("a.play", "")])).ShouldBeOfExactType<ArgumentException>();
     [Fact] void should_reject_duplicate_normalized_paths() => Catch.Exception(() => new PlayFileCompiler().CompileFolder([new PlayFileContent("a/b.play", ""), new PlayFileContent("a\\b.play", "")])).ShouldBeOfExactType<ArgumentException>();
