@@ -28,7 +28,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
     'a persona': ['persona P\n  ', ['description', 'goal', 'policy', 'position', 'size']],
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
-    'a seed': ['seed\n  ', ['for']],
+    'a seed': ['seed\n  ', ['for', 'position']],
     'a theme': ['theme T\n  ', ['compatible with']],
     'a ui profile': ['ui profile P\n  ', ['appearance', 'identity', 'layout', 'new screens use template', 'packages', 'root template', 'root template blueprint', 'sample data', 'target platform', 'target size', 'theme', 'theme (package-provided)']],
     'a ui profile root template': ['ui profile P\n  root template T\n    ', ['option']],
