@@ -1,0 +1,264 @@
+// ============================================================
+// Warehouse: the events a PLAYED warehouse starts with (Stage appends a seed once, when the sandbox starts with an empty log).
+// Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
+// ============================================================
+
+seed
+  for "ACM-1000"
+    SkuRegistered
+      sku  = "ACM-1000"
+      name = "Acme krus"
+    StockReceived
+      sku             = "ACM-1000"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000001"
+      quantity        = 140
+      receivedAt      = "2026-10-10T08:00:00Z"
+    StockDecreased
+      sku        = "ACM-1000"
+      movementId = "6a7b0000-0000-4000-8000-000000000001"
+      quantity   = 3
+      reason     = "damaged"
+    StockIncreased
+      sku        = "ACM-1000"
+      movementId = "6a7b0000-0000-4000-8000-000000000002"
+      quantity   = 5
+      reason     = "found"
+    StockCounted
+      counted = 142
+    ReservationMade
+      sku        = "ACM-1000"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      quantity   = 12
+      movementId = "6a7b0000-0000-4000-8000-000000000003"
+  for "ACM-1001"
+    SkuRegistered
+      sku  = "ACM-1001"
+      name = "Acme tallerken"
+    StockReceived
+      sku             = "ACM-1001"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000002"
+      quantity        = 60
+      receivedAt      = "2026-10-11T08:00:00Z"
+    StockDecreased
+      sku        = "ACM-1001"
+      movementId = "6a7b0000-0000-4000-8000-000000000004"
+      quantity   = 2
+      reason     = "damaged"
+    ReservationMade
+      sku        = "ACM-1001"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+      quantity   = 8
+      movementId = "6a7b0000-0000-4000-8000-000000000005"
+  for "ACM-1002"
+    SkuRegistered
+      sku  = "ACM-1002"
+      name = "Acme kaffekanne"
+    StockReceived
+      sku             = "ACM-1002"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000003"
+      quantity        = 35
+      receivedAt      = "2026-10-12T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1002"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+      quantity   = 5
+      movementId = "6a7b0000-0000-4000-8000-000000000006"
+  for "ACM-1003"
+    SkuRegistered
+      sku  = "ACM-1003"
+      name = "Acme kopp"
+    StockReceived
+      sku             = "ACM-1003"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000004"
+      quantity        = 200
+      receivedAt      = "2026-10-13T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1003"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+      quantity   = 20
+      movementId = "6a7b0000-0000-4000-8000-000000000007"
+  for "ACM-1004"
+    SkuRegistered
+      sku  = "ACM-1004"
+      name = "Acme kokkekniv"
+    ReorderPointSet
+      reorderPoint    = 10
+      reorderQuantity = 50
+    StockReceived
+      sku             = "ACM-1004"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000001"
+      quantity        = 9
+      receivedAt      = "2026-10-14T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1004"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      quantity   = 2
+      movementId = "6a7b0000-0000-4000-8000-000000000008"
+    ReorderPointCrossed
+      crossingId        = "6a7b0000-0000-4000-8000-000000000097"
+      onHand            = 9
+      reorderPoint      = 10
+      suggestedQuantity = 50
+  for "ACM-1005"
+    SkuRegistered
+      sku  = "ACM-1005"
+      name = "Acme ullteppe"
+    StockReceived
+      sku             = "ACM-1005"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000002"
+      quantity        = 18
+      receivedAt      = "2026-10-15T08:00:00Z"
+    StockDecreased
+      sku        = "ACM-1005"
+      movementId = "6a7b0000-0000-4000-8000-000000000009"
+      quantity   = 1
+      reason     = "damaged"
+    ReservationMade
+      sku        = "ACM-1005"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+      quantity   = 3
+      movementId = "6a7b0000-0000-4000-8000-000000000010"
+  for "ACM-1006"
+    SkuRegistered
+      sku  = "ACM-1006"
+      name = "Acme pute"
+    ReorderPointSet
+      reorderPoint    = 10
+      reorderQuantity = 50
+    StockReceived
+      sku             = "ACM-1006"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000003"
+      quantity        = 6
+      receivedAt      = "2026-10-16T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1006"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+      quantity   = 1
+      movementId = "6a7b0000-0000-4000-8000-000000000011"
+  for "ACM-1007"
+    SkuRegistered
+      sku  = "ACM-1007"
+      name = "Acme lysestake"
+    StockReceived
+      sku             = "ACM-1007"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000004"
+      quantity        = 48
+      receivedAt      = "2026-10-17T08:00:00Z"
+    StockDecreased
+      sku        = "ACM-1007"
+      movementId = "6a7b0000-0000-4000-8000-000000000012"
+      quantity   = 2
+      reason     = "damaged"
+    ReservationMade
+      sku        = "ACM-1007"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      quantity   = 10
+      movementId = "6a7b0000-0000-4000-8000-000000000013"
+  for "ACM-1008"
+    SkuRegistered
+      sku  = "ACM-1008"
+      name = "Acme vase"
+    ReorderPointSet
+      reorderPoint    = 10
+      reorderQuantity = 50
+    StockReceived
+      sku             = "ACM-1008"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000001"
+      quantity        = 4
+      receivedAt      = "2026-10-18T08:00:00Z"
+    ReorderPointCrossed
+      crossingId        = "6a7b0000-0000-4000-8000-000000000095"
+      onHand            = 4
+      reorderPoint      = 10
+      suggestedQuantity = 50
+  for "ACM-1010"
+    SkuRegistered
+      sku  = "ACM-1010"
+      name = "Acme notatbok"
+    StockReceived
+      sku             = "ACM-1010"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000002"
+      quantity        = 320
+      receivedAt      = "2026-10-10T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1010"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      quantity   = 30
+      movementId = "6a7b0000-0000-4000-8000-000000000014"
+  for "ACM-1013"
+    SkuRegistered
+      sku  = "ACM-1013"
+      name = "Acme termos"
+    StockReceived
+      sku             = "ACM-1013"
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000003"
+      quantity        = 22
+      receivedAt      = "2026-10-11T08:00:00Z"
+    ReservationMade
+      sku        = "ACM-1013"
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      quantity   = 4
+      movementId = "6a7b0000-0000-4000-8000-000000000015"
+  for "A-01"
+    LocationRegistered
+      code  = "A-01"
+      label = "Aisle A, shelf 1"
+  for "A-02"
+    LocationRegistered
+      code  = "A-02"
+      label = "Aisle A, shelf 2"
+  for "B-01"
+    LocationRegistered
+      code  = "B-01"
+      label = "Aisle B, shelf 1"
+  for "DOCK"
+    LocationRegistered
+      code  = "DOCK"
+      label = "Receiving dock"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+    ShipmentPlanned
+      sku      = "ACM-1004"
+      quantity = 1
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b06"
+    ShipmentPlanned
+      sku      = "ACM-1008"
+      quantity = 2
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b07"
+    ShipmentPlanned
+      sku      = "ACM-1005"
+      quantity = 3
+    ShipmentPickingStarted
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b08"
+    ShipmentPlanned
+      sku      = "ACM-1002"
+      quantity = 4
+    ShipmentPickingStarted
+    ShipmentPacked
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+    ShipmentPlanned
+      sku      = "ACM-1000"
+      quantity = 5
+    ShipmentPickingStarted
+    ShipmentPacked
+    ShipmentHandedToCarrier
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
+      shipmentId     = "5a1f0000-0000-4000-8000-000000000025"
+      carrier        = "posten"
+      trackingNumber = "TRK00000005"
+      sku            = "ACM-1000"
+      quantity       = 5
+      dispatchedAt   = "2026-10-15T10:00:00Z"
+  for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+    ShipmentPlanned
+      sku      = "ACM-1007"
+      quantity = 6
+    ShipmentPickingStarted
+    ShipmentPacked
+    ShipmentHandedToCarrier
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b10"
+      shipmentId     = "5a1f0000-0000-4000-8000-000000000026"
+      carrier        = "dhl"
+      trackingNumber = "TRK00000006"
+      sku            = "ACM-1007"
+      quantity       = 6
+      dispatchedAt   = "2026-10-16T10:00:00Z"

@@ -1,0 +1,331 @@
+// ============================================================
+// Purchasing: the events a PLAYED purchasing desk starts with (Stage appends a seed once, when the sandbox starts with an empty log).
+// Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
+// ============================================================
+
+seed
+  for "5b2e0000-0000-4000-8000-000000000001"
+    SupplierRegistered
+      name         = "Nordic Ceramics AS"
+      taxId        = "NO-914263781"
+      contactEmail = "sales@nordicceramics.example"
+      country      = "NO"
+  for "5b2e0000-0000-4000-8000-000000000002"
+    SupplierRegistered
+      name         = "Fjord Glassverk"
+      taxId        = "NO-927118305"
+      contactEmail = "orders@fjordglass.example"
+      country      = "NO"
+  for "5b2e0000-0000-4000-8000-000000000003"
+    SupplierRegistered
+      name         = "Baltic Textiles SIA"
+      taxId        = "LV-40103218745"
+      contactEmail = "buy@baltictextiles.example"
+      country      = "LV"
+  for "5b2e0000-0000-4000-8000-000000000004"
+    SupplierRegistered
+      name         = "Hanse Haushalt GmbH"
+      taxId        = "DE-812345679"
+      contactEmail = "einkauf@hanse.example"
+      country      = "DE"
+  for "5b2e0000-0000-4000-8000-000000000005"
+    SupplierRegistered
+      name         = "Kaffekompaniet AB"
+      taxId        = "SE-556677889901"
+      contactEmail = "order@kaffekompaniet.example"
+      country      = "SE"
+  for "5b2e0000-0000-4000-8000-000000000006"
+    SupplierRegistered
+      name         = "Oresund Packaging ApS"
+      taxId        = "DK-31245678"
+      contactEmail = "sales@oresundpack.example"
+      country      = "DK"
+  for "5c3d0000-0000-4000-8000-000000000001"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000001"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000001"
+      sku          = "ACM-1000"
+      price        = 62
+      currency     = "NOK"
+      leadTimeDays = 14
+  for "5b2e0000-0000-4000-8000-000000000001"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000001"
+      offerId    = "5c3d0000-0000-4000-8000-000000000001"
+  for "5c3d0000-0000-4000-8000-000000000002"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000002"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000001"
+      sku          = "ACM-1001"
+      price        = 41
+      currency     = "NOK"
+      leadTimeDays = 14
+  for "5b2e0000-0000-4000-8000-000000000001"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000001"
+      offerId    = "5c3d0000-0000-4000-8000-000000000002"
+  for "5c3d0000-0000-4000-8000-000000000003"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000003"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000002"
+      sku          = "ACM-1007"
+      price        = 33
+      currency     = "NOK"
+      leadTimeDays = 10
+  for "5b2e0000-0000-4000-8000-000000000002"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000002"
+      offerId    = "5c3d0000-0000-4000-8000-000000000003"
+  for "5c3d0000-0000-4000-8000-000000000004"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000004"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000003"
+      sku          = "ACM-1005"
+      price        = 118
+      currency     = "NOK"
+      leadTimeDays = 21
+  for "5b2e0000-0000-4000-8000-000000000003"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000003"
+      offerId    = "5c3d0000-0000-4000-8000-000000000004"
+  for "5c3d0000-0000-4000-8000-000000000005"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000005"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000003"
+      sku          = "ACM-1006"
+      price        = 75
+      currency     = "NOK"
+      leadTimeDays = 7
+  for "5b2e0000-0000-4000-8000-000000000003"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000003"
+      offerId    = "5c3d0000-0000-4000-8000-000000000005"
+  for "5c3d0000-0000-4000-8000-000000000006"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000006"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000004"
+      sku          = "ACM-1004"
+      price        = 270
+      currency     = "NOK"
+      leadTimeDays = 12
+  for "5b2e0000-0000-4000-8000-000000000004"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000004"
+      offerId    = "5c3d0000-0000-4000-8000-000000000006"
+  for "5c3d0000-0000-4000-8000-000000000007"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000007"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000005"
+      sku          = "ACM-1002"
+      price        = 160
+      currency     = "NOK"
+      leadTimeDays = 9
+  for "5b2e0000-0000-4000-8000-000000000005"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000005"
+      offerId    = "5c3d0000-0000-4000-8000-000000000007"
+  for "5c3d0000-0000-4000-8000-000000000008"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000008"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000005"
+      sku          = "ACM-1013"
+      price        = 180
+      currency     = "NOK"
+      leadTimeDays = 9
+  for "5b2e0000-0000-4000-8000-000000000005"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000005"
+      offerId    = "5c3d0000-0000-4000-8000-000000000008"
+  for "5c3d0000-0000-4000-8000-000000000009"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000009"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000006"
+      sku          = "ACM-1010"
+      price        = 12
+      currency     = "NOK"
+      leadTimeDays = 3
+  for "5b2e0000-0000-4000-8000-000000000006"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000006"
+      offerId    = "5c3d0000-0000-4000-8000-000000000009"
+  for "5c3d0000-0000-4000-8000-000000000010"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000010"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000002"
+      sku          = "ACM-1008"
+      price        = 110
+      currency     = "NOK"
+      leadTimeDays = 10
+  for "5b2e0000-0000-4000-8000-000000000002"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000002"
+      offerId    = "5c3d0000-0000-4000-8000-000000000010"
+  for "5c3d0000-0000-4000-8000-000000000011"
+    SupplierProductOffered
+      offerId      = "5c3d0000-0000-4000-8000-000000000011"
+      supplierId   = "5b2e0000-0000-4000-8000-000000000001"
+      sku          = "ACM-1003"
+      price        = 30
+      currency     = "NOK"
+      leadTimeDays = 10
+  for "5b2e0000-0000-4000-8000-000000000001"
+    SupplierOfferAdded
+      supplierId = "5b2e0000-0000-4000-8000-000000000001"
+      offerId    = "5c3d0000-0000-4000-8000-000000000011"
+  for "5d4e0000-0000-4000-8000-000000000001"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000001"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000001"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1000"
+      quantity  = 60
+      unitPrice = 62
+    PurchaseOrderLineAdded
+      sku       = "ACM-1001"
+      quantity  = 40
+      unitPrice = 41
+  for "5d4e0000-0000-4000-8000-000000000002"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000002"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000003"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1005"
+      quantity  = 20
+      unitPrice = 118
+    PurchaseOrderSubmitted
+      purchaseOrderNumber = "PO-2026-000101"
+  for "5d4e0000-0000-4000-8000-000000000003"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000003"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000005"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1002"
+      quantity  = 50
+      unitPrice = 160
+    PurchaseOrderLineAdded
+      sku       = "ACM-1013"
+      quantity  = 30
+      unitPrice = 180
+    PurchaseOrderSubmitted
+      purchaseOrderNumber = "PO-2026-000102"
+    PurchaseOrderGoodsReceived
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000003"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000005"
+      receiptId       = "5e5f0000-0000-4000-8000-000000000003"
+      sku             = "ACM-1002"
+      quantity        = 35
+      receivedAt      = "2026-10-15T08:15:00Z"
+  for "5d4e0000-0000-4000-8000-000000000004"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000004"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000004"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1004"
+      quantity  = 24
+      unitPrice = 270
+    PurchaseOrderSubmitted
+      purchaseOrderNumber = "PO-2026-000103"
+    PurchaseOrderGoodsReceived
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000004"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000004"
+      receiptId       = "5e5f0000-0000-4000-8000-000000000004"
+      sku             = "ACM-1004"
+      quantity        = 24
+      receivedAt      = "2026-10-15T08:15:00Z"
+  for "5d4e0000-0000-4000-8000-000000000005"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000005"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000002"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1007"
+      quantity  = 80
+      unitPrice = 33
+    PurchaseOrderSubmitted
+      purchaseOrderNumber = "PO-2026-000104"
+  for "5d4e0000-0000-4000-8000-000000000006"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000006"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000006"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1010"
+      quantity  = 200
+      unitPrice = 12
+  for "ACM-1000"
+    PreferredSupplierChosen
+      supplierId = "5b2e0000-0000-4000-8000-000000000001"
+      unitPrice  = 62
+      currency   = "NOK"
+  for "ACM-1002"
+    PreferredSupplierChosen
+      supplierId = "5b2e0000-0000-4000-8000-000000000005"
+      unitPrice  = 160
+      currency   = "NOK"
+  for "ACM-1005"
+    PreferredSupplierChosen
+      supplierId = "5b2e0000-0000-4000-8000-000000000003"
+      unitPrice  = 118
+      currency   = "NOK"
+  for "ACM-1004"
+    PreferredSupplierChosen
+      supplierId = "5b2e0000-0000-4000-8000-000000000004"
+      unitPrice  = 270
+      currency   = "NOK"
+  for "ACM-1001"
+    ReplenishmentRequested
+      sku          = "ACM-1001"
+      quantity     = 50
+      onHand       = 6
+      reorderPoint = 10
+  for "ACM-1007"
+    ReplenishmentRequested
+      sku          = "ACM-1007"
+      quantity     = 60
+      onHand       = 3
+      reorderPoint = 10
+  for "ACM-1008"
+    ReplenishmentRequested
+      sku          = "ACM-1008"
+      quantity     = 40
+      onHand       = 2
+      reorderPoint = 8
+  for "ACM-1010"
+    ReplenishmentRequested
+      sku          = "ACM-1010"
+      quantity     = 100
+      onHand       = 0
+      reorderPoint = 10
+    ReplenishmentBlocked
+      reason = "No preferred supplier chosen"
+  for "ACM-1006"
+    ReplenishmentRequested
+      sku          = "ACM-1006"
+      quantity     = 50
+      onHand       = 4
+      reorderPoint = 10
+    SkuReplenishmentStarted
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000005"
+  for "ACM-1005"
+    DemandRecorded
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      sku      = "ACM-1005"
+      quantity = 12
+  for "ACM-1004"
+    DemandRecorded
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+      sku      = "ACM-1004"
+      quantity = 8
+  for "ACM-1002"
+    DemandRecorded
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b03"
+      sku      = "ACM-1002"
+      quantity = 15
+  for "ACM-1000"
+    DemandRecorded
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b04"
+      sku      = "ACM-1000"
+      quantity = 30
+  for "ACM-1013"
+    DemandRecorded
+      orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
+      sku      = "ACM-1013"
+      quantity = 10
