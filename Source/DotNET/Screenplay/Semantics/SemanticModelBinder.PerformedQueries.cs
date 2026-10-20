@@ -10,6 +10,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly Dictionary<QuerySyntax, int> _performedQueryRequirements = new(ReferenceEqualityComparer.Instance);
+
         void RequirePerformedQuery(SemanticAddress slice, QuerySyntax query)
         {
             var requirement = RequireImplementation(SemanticImplementationRole.QueryPerformer, SemanticAddress.ForQuery(slice, query.Name), query.Performer!.File, query.Performer.Code);
@@ -17,6 +19,18 @@ public sealed partial class SemanticModelBinder
 
             // RequireImplementation appends the requirement it returns; attach the shape to that same entry.
             _implementationRequirements[^1] = requirement with { QueryShape = PerformedQueryShape(query) };
+            _performedQueryRequirements[query] = _implementationRequirements.Count - 1;
+        }
+
+        void AuthorizePerformedQuery(QuerySyntax query, string module, ImmutableArray<string> featurePath)
+        {
+            if (!_performedQueryRequirements.TryGetValue(query, out var index) || _implementationRequirements[index].QueryShape is not { } shape) return;
+
+            // Policies read the query's 'by' arguments only (filters are named in the diagnostic), exactly as for a query that is bound.
+            var keys = shape.Arguments.Where(argument => argument is { Kind: SemanticPerformedQueryArgumentKind.Key, Type: not null })
+                .Select(argument => new SemanticProperty(default, argument.Name, argument.Type!, false));
+            var authorization = EffectiveAuthorization(query.Authorize, keys, module, featurePath, queryFilterNames: query.Filters.Select(filter => filter.Name));
+            _implementationRequirements[index] = _implementationRequirements[index] with { QueryShape = shape with { Authorization = authorization } };
         }
 
         SemanticPerformedQueryShape PerformedQueryShape(QuerySyntax query)

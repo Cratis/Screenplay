@@ -51,11 +51,23 @@ public sealed record SemanticPerformedQueryShape(
     SemanticQueryDelivery Delivery,
     ImmutableArray<SemanticPerformedQueryArgument> Arguments)
 {
+    /// <summary>
+    /// Gets who may call the query, resolved exactly as <see cref="SemanticKeyedQuery.Authorization"/> resolves it for a bound query: the policies the module,
+    /// the feature path and the query itself require, combined with and. Policy references are by name into <c>SemanticApplication.Policies</c>, so
+    /// a policy that is anonymous access (<c language="csharp">require anonymous</c>, ESM v31) is recognizable there.
+    /// </summary>
+    /// <remarks>
+    /// <see langword="null"/> means that no policy applies to the query, as it does for an unrestricted bound query. An unresolved policy
+    /// reference is a binding error, so a shape that exists never hides one.
+    /// </remarks>
+    public SemanticAuthorization? Authorization { get; init; }
+
     /// <inheritdoc />
     public bool Equals(SemanticPerformedQueryShape? other) => other is not null &&
         ReadModelName == other.ReadModelName && ReadModel == other.ReadModel &&
         EqualityComparer<SemanticAddress?>.Default.Equals(ReadModelAddress, other.ReadModelAddress) &&
-        Cardinality == other.Cardinality && Delivery == other.Delivery && Arguments.SequenceEqual(other.Arguments);
+        Cardinality == other.Cardinality && Delivery == other.Delivery && Arguments.SequenceEqual(other.Arguments) &&
+        EqualityComparer<SemanticAuthorization?>.Default.Equals(Authorization, other.Authorization);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -64,6 +76,7 @@ public sealed record SemanticPerformedQueryShape(
         hash.Add(ReadModelName);
         hash.Add(ReadModel);
         hash.Add(ReadModelAddress);
+        hash.Add(Authorization);
         hash.Add(Cardinality);
         hash.Add(Delivery);
         foreach (var argument in Arguments) hash.Add(argument);
