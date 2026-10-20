@@ -128,6 +128,7 @@ public interface IPlayFileCompiler
     /// Only supplied documents can be imported. Diagnostics and source relative paths are relative to the
     /// entry document's folder, just like <see cref="CompileApplication(string)"/>; source file paths retain
     /// their normalized document-set paths. Unreachable documents are not compiled.
+    /// Glob imports discover only documents beneath the glob's folder within the supplied set.
     /// </remarks>
     /// <exception cref="ArgumentException">The entry path is invalid or is not in the document set.</exception>
     ApplicationCompilation<ApplicationSyntax> CompileApplication(string path, IEnumerable<PlayFileContent> documents) =>

@@ -14,7 +14,7 @@ internal sealed class MemoryPlayDocuments
     {
         ArgumentNullException.ThrowIfNull(documents);
         var contents = ReadDocuments(documents);
-        var folder = Array.Empty<string>();
+        string[] folder = [];
         if (entry is not null)
         {
             var path = NormalizePath(entry);
@@ -34,10 +34,10 @@ internal sealed class MemoryPlayDocuments
             sources.Add(relative, content);
         }
 
-        Source = new(sources);
+        Source = new MemoryDocumentSource(new(sources), _paths, string.Join('/', folder));
     }
 
-    public InMemoryPlayDocumentSource Source { get; }
+    public IPlayDocumentSource Source { get; }
 
     public PlayFile File(string path) => new(_paths[path], path);
 
@@ -87,5 +87,22 @@ internal sealed class MemoryPlayDocuments
         }
 
         return string.Join('/', Enumerable.Repeat("..", folder.Length - shared).Concat(segments.Skip(shared)));
+    }
+
+    sealed class MemoryDocumentSource(InMemoryPlayDocumentSource source, IReadOnlyDictionary<string, string> paths, string entryFolder) : IPlayDocumentSource
+    {
+        /// <inheritdoc/>
+        public IEnumerable<string> FilesBeneath(string folder)
+        {
+            var resolved = PlayGlob.Normalize($"{entryFolder}/{folder}");
+            return paths.Where(pair => IsBeneath(resolved, pair.Value)).Select(pair => pair.Key);
+        }
+
+        /// <inheritdoc/>
+        public string Read(string path) => source.Read(path);
+
+        static bool IsBeneath(string folder, string path) =>
+            // An ancestor of the document-set root contains every supplied document.
+            folder.Length == 0 || folder.Split('/').All(segment => segment == "..") || path.StartsWith($"{folder}/", StringComparison.Ordinal);
     }
 }
