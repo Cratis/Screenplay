@@ -533,7 +533,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
     {
         using var anchor = writer.Anchor(seed);
-        writer.Line("seed");
+        writer.Line(seed.Name is null ? "seed" : $"seed {StringLiteral.Quote(seed.Name)}");
         using (writer.Indent())
         {
             foreach (var group in seed.Groups)

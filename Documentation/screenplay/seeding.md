@@ -10,7 +10,7 @@ A running application often needs a known starting state — reference data, dem
 ## Syntax
 
 ```screenplay
-seed
+seed ["<name>"]
   for "<event source id>"
     <EventType>
       <property> = <value>
@@ -20,7 +20,7 @@ seed
   [position <x> <y>]
 ```
 
-- `seed` — top level, alongside concepts, policies and modules. Multiple `seed` blocks are allowed; they accumulate.
+- `seed` — top level, alongside concepts, policies and modules. Multiple `seed` blocks are allowed; they accumulate. A block can carry a name, `seed "Starter catalogue"`: tools that keep seed data as named collections (Studio does, one card each on its seed data canvas) keep the name through a round trip. Blocks of the same name are one collection; an unnamed block is one collection of the tool's choosing.
 - `for "<event source id>"` — one group per event source id, holding the events to seed for it. The id is a quoted string.
 - `<EventType>` — an event declared in the document or made available through an `import`. Referencing an unknown event is reported as a warning.
 - `<property> = <value>` — property values using the same expression grammar as `produces` mappings and specification events.

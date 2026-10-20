@@ -18,7 +18,7 @@ describe('when parsing the domain canvases', () => {
             '  position 110 -150',
             'eventsource Customer',
             '  identifier CustomerId',
-            'seed',
+            'seed "Starter catalogue"',
             '  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"',
             '    ProductDrafted',
             '      sku = "ACM-1000"',
@@ -43,6 +43,7 @@ describe('when parsing the domain canvases', () => {
     it('should succeed without diagnostics', () => result.diagnostics.map(diagnostic => diagnostic.message).should.deep.equal([]));
     it('should keep where an event source sits', () => [result.value!.eventSources![0].x, result.value!.eventSources![0].y].should.deep.equal([110, -150]));
     it('should leave an unplaced event source without a position', () => (result.value!.eventSources![1].x === undefined).should.be.true);
+    it('should keep the name of the seed data', () => result.value!.seeds![0].name!.should.equal('Starter catalogue'));
     it('should keep where the seed data sits', () => [result.value!.seeds![0].x, result.value!.seeds![0].y].should.deep.equal([20, 400]));
     it('should keep the canvas of every note', () => result.value!.stickyNotes!.map(note => note.canvas).should.deep.equal(['eventsources', 'givencontexts', 'seeddata', 'personas']));
     it('should keep the colour and size of a note', () => {

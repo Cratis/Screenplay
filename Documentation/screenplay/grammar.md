@@ -1358,7 +1358,7 @@ SpecificationQueryDirective = "arguments", NL,
 (* Event seeding                                                   *)
 (* -------------------------------------------------------------- *)
 
-SeedDecl       = "seed", NL,
+SeedDecl       = "seed", [ StringLiteral ], NL,
                  INDENT, { SeedGroup | "position", Integer, Integer, NL }, DEDENT ;
 
 SeedGroup      = "for", StringLiteral, NL,

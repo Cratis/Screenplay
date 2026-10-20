@@ -21,9 +21,10 @@ internal static partial class SeedParser
     /// <returns>The parsed <see cref="SeedSyntax"/>.</returns>
     public static SeedSyntax Parse(ParserContext context, SourceLine header)
     {
-        if (header.Content != "seed")
+        var headerMatch = HeaderRegex().Match(header.Content);
+        if (!headerMatch.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSeedDeclaration, $"Invalid seed declaration '{header.Content}' - expected 'seed'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSeedDeclaration, $"Invalid seed declaration '{header.Content}' - expected 'seed' or 'seed \"<name>\"'", header.Location);
             context.SkipBlock(header.Indent);
             return new([], header.Location);
         }
@@ -50,7 +51,7 @@ internal static partial class SeedParser
             groups.Add(new(StringLiteral.Unescape(match.Groups[1].Value), ParseEvents(context, line), line.Location));
         }
 
-        return new(groups, header.Location) { X = position?.X, Y = position?.Y };
+        return new(groups, header.Location) { Name = headerMatch.Groups[1].Success ? StringLiteral.Unescape(headerMatch.Groups[1].Value) : null, X = position?.X, Y = position?.Y };
     }
 
     static List<SeedEventSyntax> ParseEvents(ParserContext context, SourceLine group)
@@ -90,6 +91,9 @@ internal static partial class SeedParser
 
         return properties;
     }
+
+    [GeneratedRegex("^seed(?:\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.NonBacktracking)]
+    private static partial Regex HeaderRegex();
 
     [GeneratedRegex("^for\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex ForRegex();

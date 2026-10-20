@@ -12,6 +12,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
+const headerPattern = new RegExp(`^seed(?:\\s+"(${stringBodyPattern})")?$`, 'u');
 const forPattern = new RegExp(`^for\\s+"(${stringBodyPattern})"$`, 'u');
 const eventPattern = pattern('^[A-Z]\\w*$');
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
@@ -19,8 +20,9 @@ const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 export function parseSeed(context: ParserContext, header: SourceLine): SeedSyntax {
     const groups: SeedGroupSyntax[] = [];
     context = context.valueContext;
-    if (header.content !== 'seed') {
-        context.error(DiagnosticCodes.InvalidSeedDeclaration, `Invalid seed declaration '${header.content}' - expected 'seed'`, locationOf(header));
+    const headerMatch = headerPattern.exec(header.content);
+    if (headerMatch === null) {
+        context.error(DiagnosticCodes.InvalidSeedDeclaration, `Invalid seed declaration '${header.content}' - expected 'seed' or 'seed "<name>"'`, locationOf(header));
         context.skipOpaqueBlock(header.indent);
         return { kind: 'SeedSyntax', groups, location: locationOf(header) };
     }
@@ -56,5 +58,5 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
         }
         groups.push({ kind: 'SeedGroupSyntax', eventSourceId: unescapeString(match[1]), events, location: locationOf(group) });
     }
-    return { kind: 'SeedSyntax', groups, ...(position === null ? {} : { x: position[0], y: position[1] }), location: locationOf(header) };
+    return { kind: 'SeedSyntax', groups, ...(headerMatch[1] === undefined ? {} : { name: unescapeString(headerMatch[1]) }), ...(position === null ? {} : { x: position[0], y: position[1] }), location: locationOf(header) };
 }
