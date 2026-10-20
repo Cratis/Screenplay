@@ -15,7 +15,7 @@ about products, stock and order status arrives as a PUBLIC event and is translat
 
 Screens: `Browse` (own template `ProductGrid`: a card grid with a filters rail), `Basket`, `ProductPage` and `OrderTracking` (own template `SideSummary`: lines beside a summary),
 `Checkout` (blueprint `WizardScreen`: a stepper is what a wizard is), `MyOrders` (`ListScreen`). Both own templates live in `model/templates.play` and carry content: the
-stock components each slot is seeded with, which a screen's own slot content replaces.
+stock components each slot is seeded with - the draft the template editor draws. A screen fills the slots it shows; a screen preview draws only what the screen filled.
 
 Language notes (see the Acme Commerce epic): the basket carries `addedValue` (what its lines were worth when they were added: `add addedValue by unitPrice * quantity`);
 `CheckOut` is not rejected for an out-of-stock *line* (a command cannot read per element of a collection) - `AddToBasket` refuses sold-out products instead.
