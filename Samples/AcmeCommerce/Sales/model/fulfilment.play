@@ -45,6 +45,12 @@ module Orders
           reason  = "Too late"
         then error "A shipped order cannot be cancelled"
 
+      screen CancelOrderDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CancelOrder
+              navigate to OrderList
+
     slice StateChange ReleaseHold
       description "Takes an order off hold once the stock is there"
 
@@ -103,6 +109,12 @@ module Orders
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
         then error "Only an order on hold can be released"
 
+      screen ReleaseHoldDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ReleaseHold
+              navigate to OrderList
+
     slice StateChange MarkOrderFulfilled
       description "Closes an order once the shopper has it"
 
@@ -137,3 +149,9 @@ module Orders
         when MarkOrderFulfilled
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
         then error "Only a shipped order can be fulfilled"
+
+      screen MarkOrderFulfilledDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action MarkOrderFulfilled
+              navigate to OrderList

@@ -134,6 +134,13 @@ module Merchandising
         price    Money
         currency CurrencyCode
 
+      screen ApproveProductForSaleDialog
+        description "Approve the product for sale"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ApproveProductForSale
+              navigate to ReadyForApproval
+
       // The constraint lives in the slice whose command appends the event; `released by` names another slice's event
       constraint OneApprovalPerProduct
         unique event ProductApprovedForSale
@@ -255,6 +262,13 @@ module Merchandising
 
       event ProductWithdrawn
         sku Sku
+
+      screen WithdrawProductDialog
+        description "Take the product off sale"
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action WithdrawProduct
+              navigate to ReadyForApproval
 
       // The accepted path is specified in PublishRetirement for the same reason; here the denial is.
       specification WithdrawingAnUnknownProductIsRejected

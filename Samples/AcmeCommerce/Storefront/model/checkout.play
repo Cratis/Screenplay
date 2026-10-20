@@ -25,6 +25,12 @@ module Shop
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
 
+      screen EnterShippingAddressDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action EnterShippingAddress
+              navigate to Checkout
+
     // Step 2: how to deliver
     slice StateChange ChooseDeliveryMethod
       description "Wizard step 2: how the order is delivered"
@@ -49,6 +55,12 @@ module Shop
         then DeliveryMethodChosen
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method = "express"
+
+      screen ChooseDeliveryMethodDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChooseDeliveryMethod
+              navigate to Checkout
 
     // What the wizard has gathered so far
     slice StateView CheckoutProgress

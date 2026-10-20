@@ -274,12 +274,17 @@ module Orders
               field carrier        label "Carrier"
               field trackingNumber label "Tracking"
           related
+            data OrderDetail via query GetOrderDetail by orderId
             action ApplyDiscount
               label "Give discount"
-            action ReleaseHold
-              label "Release hold"
-            action MarkOrderFulfilled
-              label "Mark fulfilled"
+            action "Release hold"
+              when item.status == "onHold" execute ReleaseHold
+                with orderId from item.orderId
+              otherwise hidden
+            action "Mark fulfilled"
+              when item.status == "shipped" execute MarkOrderFulfilled
+                with orderId from item.orderId
+              otherwise hidden
             action CancelOrder
               label "Cancel order"
           aside

@@ -69,6 +69,12 @@ module Shop
         when Mug
         then error "That product is out of stock"
 
+      screen AddToBasketDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AddToBasket
+              navigate to Basket
+
     slice StateChange ChangeBasketQuantity
       description "Changes how many of a product the basket holds"
 
@@ -108,6 +114,12 @@ module Shop
           quantity = 0
         then error "A quantity is at least one"
 
+      screen ChangeBasketQuantityDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChangeBasketQuantity
+              navigate to Basket
+
     slice StateChange RemoveFromBasket
       description "Takes a product out of the basket"
 
@@ -131,6 +143,12 @@ module Shop
         then BasketLineRemoved
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku = "ACM-1000"
+
+      screen RemoveFromBasketDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action RemoveFromBasket
+              navigate to Basket
 
     // The basket as the shopper sees it: lines on the left, totals on the right (own template SideSummary)
     slice StateView BasketView
