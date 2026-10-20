@@ -54,6 +54,40 @@ Submit.play(7,9): warning PLAY0166: Unknown event 'InvoiceRegistered' - declare 
 
 None of those are real. `CompileFolder` reports nothing, because none of them are missing - they are just in another file. Both calls remain available: reach for `CompileIn` only when the files genuinely are separate documents that happen to share a folder.
 
+### Compiling documents in memory
+
+An editor or generator can compile a folder without writing temporary files. Pass the
+same relative paths and source texts that would be stored on disk:
+
+```csharp
+using Cratis.Screenplay.Files;
+
+IPlayFileCompiler compiler = new PlayFileCompiler();
+PlayFileContent[] documents =
+[
+    new("application.play", "import \"concepts/*.play\""),
+    new("concepts/InvoiceId.play", "concept InvoiceId : Uuid")
+];
+var folder = compiler.CompileFolder(documents);
+var application = compiler.CompileApplication("application.play", documents);
+```
+
+`CompileFolder` merges all supplied documents, regardless of their input order.
+`CompileApplication` compiles only the entry document and the documents its imports reach.
+Both use the disk APIs' import, merge and cross-file validation rules; imports can only
+resolve to supplied documents. Both also accept a visitor, which runs only on success.
+
+Paths must be relative `.play` paths within the document set. Backslashes and `.` segments
+are normalized to portable `/` paths; rooted paths, paths escaping the set, duplicate
+normalized paths, and null source texts throw `ArgumentException`. A null document set
+throws `ArgumentNullException`. An empty folder succeeds with no sources or diagnostics;
+an entry path not in the set throws `ArgumentException`.
+
+`Sources` retains each document's text and its normalized document-set path in
+`File.Path`, without inventing a disk location. `File.RelativePath` and diagnostic paths
+are relative to the document-set root for a folder, or to the entry document's folder
+for an application, matching the corresponding disk API.
+
 ### Declared dependencies across files
 
 [Module and feature dependencies](slices.md#declared-dependencies) accumulate on the same owner in ordinal file-path order, regardless of import presentation order. Repeated resolved targets are kept once with `PLAY0555` on each repeat; unresolved repeats compare by text. Target resolution uses the merged inventory, so a target may be declared in another file. Layout expansion writes dependencies only in the owner's own file and strips them from restated ancestor headers, like `description`.

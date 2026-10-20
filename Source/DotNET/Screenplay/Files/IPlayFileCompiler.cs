@@ -91,4 +91,57 @@ public interface IPlayFileCompiler
     /// <see cref="CompileFile(string)"/> does, as one application of one document.
     /// </remarks>
     ApplicationCompilation<ApplicationSyntax> CompileApplication(string path) => new PlayFileCompiler().CompileApplication(path);
+
+    /// <summary>
+    /// Compiles documents held in memory as one folder, resolving references across all documents.
+    /// </summary>
+    /// <param name="documents">The relative paths and source texts of the folder's documents.</param>
+    /// <returns>The compilation of the merged application.</returns>
+    /// <remarks>
+    /// Paths use portable <c>/</c> separators after normalization and must name <c>.play</c> files within the
+    /// folder. Duplicate normalized paths, rooted paths and paths escaping the folder are rejected with
+    /// <see cref="ArgumentException"/>. An empty set compiles successfully, just like an empty disk folder.
+    /// No files are read from disk. Source file paths and diagnostic paths are relative to this folder.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">The document set is null.</exception>
+    /// <exception cref="ArgumentException">A document has an invalid path, null content or a duplicate path.</exception>
+    ApplicationCompilation<ApplicationSyntax> CompileFolder(IEnumerable<PlayFileContent> documents) =>
+        new PlayFileCompiler().CompileFolder(documents);
+
+    /// <summary>
+    /// Compiles a folder held in memory and drives a visitor over its merged syntax tree, only on success.
+    /// </summary>
+    /// <typeparam name="TApplication">The type the visitor produces.</typeparam>
+    /// <param name="documents">The documents accepted by <see cref="CompileFolder(IEnumerable{PlayFileContent})"/>.</param>
+    /// <param name="visitor">The visitor to drive.</param>
+    /// <returns>The visitor result and compilation diagnostics.</returns>
+    ApplicationCompilation<TApplication> CompileFolder<TApplication>(IEnumerable<PlayFileContent> documents, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        new PlayFileCompiler().CompileFolder(documents, visitor);
+
+    /// <summary>
+    /// Compiles an entry document and its imports from documents held in memory.
+    /// </summary>
+    /// <param name="path">The entry document's path relative to the document set's root.</param>
+    /// <param name="documents">The documents accepted by <see cref="CompileFolder(IEnumerable{PlayFileContent})"/>.</param>
+    /// <returns>The compilation of the entry document and all documents its imports reach.</returns>
+    /// <remarks>
+    /// Only supplied documents can be imported. Diagnostics and source relative paths are relative to the
+    /// entry document's folder, just like <see cref="CompileApplication(string)"/>; source file paths retain
+    /// their normalized document-set paths. Unreachable documents are not compiled.
+    /// Glob imports discover only documents beneath the glob's folder within the supplied set.
+    /// </remarks>
+    /// <exception cref="ArgumentException">The entry path is invalid or is not in the document set.</exception>
+    ApplicationCompilation<ApplicationSyntax> CompileApplication(string path, IEnumerable<PlayFileContent> documents) =>
+        new PlayFileCompiler().CompileApplication(path, documents);
+
+    /// <summary>
+    /// Compiles an entry document and its imports in memory, then drives a visitor only on success.
+    /// </summary>
+    /// <typeparam name="TApplication">The type the visitor produces.</typeparam>
+    /// <param name="path">The entry document's path relative to the document set's root.</param>
+    /// <param name="documents">The documents accepted by <see cref="CompileFolder(IEnumerable{PlayFileContent})"/>.</param>
+    /// <param name="visitor">The visitor to drive.</param>
+    /// <returns>The visitor result and compilation diagnostics.</returns>
+    ApplicationCompilation<TApplication> CompileApplication<TApplication>(string path, IEnumerable<PlayFileContent> documents, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        new PlayFileCompiler().CompileApplication(path, documents, visitor);
 }
