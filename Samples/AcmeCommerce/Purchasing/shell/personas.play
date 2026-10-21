@@ -9,22 +9,22 @@
 sticky note on personas
   description "Context: plans replenishment once a week and orders from a short list of trusted suppliers."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: low-stock signals arrive as emails. Wants them as a worklist."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: a purchase order goes out the same day stock falls below its reorder point."
   colour green
-  position 650 490
+  position 650 650
   size 250 150
 
 sticky note on personas
   description "Question: do suppliers confirm a purchase order, or do we assume they received it?"
-  position 920 490
+  position 920 650
   size 250 150

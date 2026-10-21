@@ -9,22 +9,22 @@
 sticky note on personas
   description "Context: works at a desk with the supplier's price list open. Publishes a handful of products a day, in bursts around a new season."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: re-typing the same description for every colour variant. Wants to copy a draft instead of starting over."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: a product is published with a price and a description on the day it is drafted."
   colour green
-  position 650 490
+  position 650 650
   size 250 150
 
 sticky note on personas
   description "Question: can a withdrawn product come back? Today it cannot - ask the merchandisers."
-  position 920 490
+  position 920 650
   size 250 150

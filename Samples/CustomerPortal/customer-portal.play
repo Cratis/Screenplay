@@ -429,11 +429,11 @@ module Portal
 sticky note on personas
   description "Context: a contact at the customer who checks in a few times a month, mostly before an invoice falls due."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: finding the invoice that belongs to an order."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150

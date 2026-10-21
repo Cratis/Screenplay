@@ -486,10 +486,10 @@ module Lending
 sticky note on personas
   description "Context: members borrow on the way past; the librarian works the desk."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Question: how many books may a member borrow at once?"
-  position 380 490
+  position 380 650
   size 250 150

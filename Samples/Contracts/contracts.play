@@ -290,10 +290,10 @@ module Contracts
 sticky note on personas
   description "Context: reviews contracts in batches before each quarter."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Question: who signs a renewal above the agreed limit?"
-  position 380 490
+  position 380 650
   size 250 150

@@ -358,11 +358,11 @@ module Approvals
 sticky note on personas
   description "Context: asks for approvals a few times a month and decides on others in between."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: not knowing who is holding a request up."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150

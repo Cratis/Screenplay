@@ -413,17 +413,17 @@ module Bookings
 sticky note on personas
   description "Context: books on the way to a meeting, often for the same hour."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: double bookings that are only discovered at the door."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: nobody turns up to a resource that is taken."
   colour green
-  position 650 490
+  position 650 650
   size 250 150

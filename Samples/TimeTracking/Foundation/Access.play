@@ -51,17 +51,17 @@ authentication
 sticky note on personas
   description "Context: the consultant logs hours on the train; the manager approves on Monday morning."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: late timesheets hold up payroll for everyone."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: payroll runs on the first try."
   colour green
-  position 650 490
+  position 650 650
   size 250 150
