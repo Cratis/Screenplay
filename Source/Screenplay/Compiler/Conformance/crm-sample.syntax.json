@@ -7099,10 +7099,46 @@
     {
       "kind": "PersonaSyntax",
       "description": "Works leads, keeps contacts and companies up to date and moves deals through the pipeline",
+      "goals": [
+        "Move deals through the pipeline",
+        "Never forget a follow-up"
+      ],
       "name": "SalesRep",
       "policies": [
         "IsSalesRep"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: works twenty open deals at a time, mostly from the phone.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: leads that go cold because nobody is reminded.",
+      "width": 250,
+      "x": 380,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "green",
+      "height": 150,
+      "text": "Success: every lead gets an answer within a day.",
+      "width": 250,
+      "x": 650,
+      "y": 650
     }
   ],
   "systems": [],

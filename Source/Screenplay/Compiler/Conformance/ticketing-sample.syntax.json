@@ -4026,10 +4026,46 @@
     {
       "kind": "PersonaSyntax",
       "description": "Works the queue: assigns, answers, escalates and merges tickets, and keeps the knowledge base current",
+      "goals": [
+        "Clear the queue in order of urgency",
+        "Keep the knowledge base current"
+      ],
       "name": "Agent",
       "policies": [
         "IsAgent"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: works the queue in shifts; handover between shifts matters.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: tickets that bounce between agents without an owner.",
+      "width": 250,
+      "x": 380,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "green",
+      "height": 150,
+      "text": "Success: nobody is asked the same question twice.",
+      "width": 250,
+      "x": 650,
+      "y": 650
     }
   ],
   "systems": [],

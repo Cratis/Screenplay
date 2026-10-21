@@ -2498,10 +2498,46 @@
     {
       "kind": "PersonaSyntax",
       "description": "Books rooms, equipment and vehicles and keeps track of what is booked",
+      "goals": [
+        "Book a room, a vehicle or equipment in a minute",
+        "See what is already booked"
+      ],
       "name": "Employee",
       "policies": [
         "IsEmployee"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: books on the way to a meeting, often for the same hour.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: double bookings that are only discovered at the door.",
+      "width": 250,
+      "x": 380,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "green",
+      "height": 150,
+      "text": "Success: nobody turns up to a resource that is taken.",
+      "width": 250,
+      "x": 650,
+      "y": 650
     }
   ],
   "systems": [],

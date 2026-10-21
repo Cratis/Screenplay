@@ -2832,10 +2832,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Plans and does the work of a team: starts projects, adds tasks and moves them across the board until they are done",
+      "goals": [
+        "Know what to work on next",
+        "Move a task across the board without ceremony"
+      ],
       "name": "TeamMember",
       "policies": [
         "IsTeamMember"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: a team of five, standing meeting every morning.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: tasks without an owner sit in the backlog for weeks.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

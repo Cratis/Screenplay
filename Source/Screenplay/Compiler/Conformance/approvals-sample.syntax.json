@@ -1887,10 +1887,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Asks for things, decides what is waiting for them and follows what they asked for",
+      "goals": [
+        "Ask for something and know who has to decide",
+        "See what is waiting for them"
+      ],
       "name": "Employee",
       "policies": [
         "IsEmployee"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: asks for approvals a few times a month and decides on others in between.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: not knowing who is holding a request up.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

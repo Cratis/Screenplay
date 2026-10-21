@@ -4243,10 +4243,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Keeps the warehouse in order: registers items, checks them in and out and adjusts the stock when a count disagrees",
+      "goals": [
+        "Know what is on the shelf",
+        "Fix the count when it disagrees with the system"
+      ],
       "name": "WarehouseClerk",
       "policies": [
         "IsWarehouseClerk"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: counts stock on a handheld device, aisle by aisle.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: adjustments without a reason are hard to audit later.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

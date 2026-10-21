@@ -4793,10 +4793,37 @@
     {
       "kind": "PersonaSyntax",
       "description": "Looks after the people of the company: keeps the directory, answers time-off requests and walks new hires through their first weeks",
+      "goals": [
+        "Keep the directory current",
+        "Answer time-off requests quickly",
+        "Walk new hires through their first weeks"
+      ],
       "name": "HrManager",
       "policies": [
         "IsHrManager"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: handles requests in a weekly rhythm, with peaks before the holidays.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": null,
+      "height": 150,
+      "text": "Question: how long may a time-off request wait before it is escalated?",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],
