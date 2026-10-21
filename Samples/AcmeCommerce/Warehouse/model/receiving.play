@@ -54,6 +54,12 @@ module Stock
         when Delivery quantity = 0
         then error "A quantity is at least one"
 
+      screen ReceiveStockDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ReceiveStock
+              navigate to ReceivingLog
+
     slice StateView ReceivingLog
       description "Every delivery that reached the dock, per purchase order and SKU"
 

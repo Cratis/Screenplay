@@ -345,11 +345,19 @@ public partial class ScreenplayPrinter
         if (button.Emphasis is { } emphasis) line += $" emphasis {emphasis.ToString().ToLowerInvariant()}";
         if (button.Icon is not null) line += $" icon {WriteItemValue(button.Icon)}";
         writer.Line(line, button);
-        if (button.Authorize is not null)
+        if (button.Authorize is not null || button.Confirm is not null)
         {
             using (writer.Indent())
             {
-                WriteAuthorize(writer, button.Authorize);
+                if (button.Confirm is not null)
+                {
+                    writer.Line($"confirm {ScreenplaySyntaxText.LocalizableString(button.Confirm)}");
+                }
+
+                if (button.Authorize is not null)
+                {
+                    WriteAuthorize(writer, button.Authorize);
+                }
             }
         }
     }
@@ -374,6 +382,11 @@ public partial class ScreenplayPrinter
             if (item.Icon is not null)
             {
                 writer.Line($"icon {item.Icon}");
+            }
+
+            if (item.Confirm is not null)
+            {
+                writer.Line($"confirm {ScreenplaySyntaxText.LocalizableString(item.Confirm)}");
             }
 
             foreach (var parameter in item.Parameters)

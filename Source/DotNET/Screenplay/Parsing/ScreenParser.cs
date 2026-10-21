@@ -122,6 +122,26 @@ internal static partial class ScreenParser
         return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
     }
 
+    internal static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
+    {
+        var name = line.Content["toolbar".Length..].Trim();
+        var items = new List<ToolbarItemSyntax>();
+        var buttons = new List<ToolbarButtonSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "button")
+            {
+                if (ToolbarButtonParser.Parse(context, child) is { } button) buttons.Add(button);
+                continue;
+            }
+
+            if (ParseToolbarItem(context, child) is { } item) items.Add(item);
+        }
+
+        return new(name, items, line.Location) { Buttons = buttons };
+    }
+
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
     {
         var match = ContributionRegex().Match(line.Content);
@@ -508,26 +528,6 @@ internal static partial class ScreenParser
         return new(name, ParseDirectiveBlock(context, line), line.Location);
     }
 
-    static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
-    {
-        var name = line.Content["toolbar".Length..].Trim();
-        var items = new List<ToolbarItemSyntax>();
-        var buttons = new List<ToolbarButtonSyntax>();
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "button")
-            {
-                if (ToolbarButtonParser.Parse(context, child) is { } button) buttons.Add(button);
-                continue;
-            }
-
-            if (ParseToolbarItem(context, child) is { } item) items.Add(item);
-        }
-
-        return new(name, items, line.Location) { Buttons = buttons };
-    }
-
     static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
     {
         var match = ToolbarItemRegex().Match(line.Content);
@@ -547,6 +547,7 @@ internal static partial class ScreenParser
         var item = new ToolbarItemSyntax(match.Groups[1].Value, kind, match.Groups[3].Value, line.Location);
         string? label = null;
         string? icon = null;
+        string? confirm = null;
         var parameters = new List<ScreenNavigationParameterSyntax>();
         var presentation = new List<PresentationValueSyntax>();
 
@@ -557,6 +558,13 @@ internal static partial class ScreenParser
             if (labelMatch.Success)
             {
                 label = OperandText(labelMatch, 1);
+                continue;
+            }
+
+            var confirmMatch = ConfirmRegex().Match(child.Content);
+            if (confirmMatch.Success)
+            {
+                confirm = OperandText(confirmMatch, 1);
                 continue;
             }
 
@@ -579,10 +587,10 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, parameter or presentation", child.Location);
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, parameter or presentation", child.Location);
         }
 
-        return item with { Label = label, Icon = icon, Parameters = parameters, Presentation = presentation };
+        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation };
     }
 
     static PresentationValueSyntax? ParsePresentation(ParserContext context, SourceLine line)
@@ -611,6 +619,9 @@ internal static partial class ScreenParser
 
     [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex LabelRegex();
+
+    [GeneratedRegex("^confirm\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex ConfirmRegex();
 
     [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex NavigateRegex();

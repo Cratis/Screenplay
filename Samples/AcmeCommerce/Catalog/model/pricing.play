@@ -6,6 +6,63 @@ module Merchandising
   feature Pricing
     description "What each product costs"
 
+    slice StateView PricingBoard
+      description "Products as cards in columns by status"
+
+      readmodel PricedProduct
+        productId ProductId
+        sku       Sku
+        name      ProductName
+        price     Money
+        status    ProductStatus
+
+      query AllPricedProducts => observable PricedProduct[]
+
+      projection PricedProductProjection => PricedProduct
+        from ProductDrafted
+          productId = $eventSourceId
+          sku       = sku
+          name      = name
+          price     = 0
+          status    = "draft"
+        from ProductPriceSet
+          price = price
+        from ProductApprovedForSale
+          status = "approved"
+        from ProductWithdrawn
+          status = "withdrawn"
+
+      screen PricingBoard
+        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pricingHeader
+              property title = "Pricing"
+              property subtitle = "Products by status - set a price to make one ready"
+          board
+            data PricedProduct[] via query AllPricedProducts
+            component Cratis.Blueprint.Default.kanbanBoard pricingBoard
+              id "pricingBoard"
+              property columns = [{"id":"draft","label":"Draft"},{"id":"approved","label":"Approved"},{"id":"withdrawn","label":"Withdrawn"}]
+              property cards from query AllPricedProducts
+              property cardId = "productId"
+              property cardTitle = "name"
+              property cardColumn = "status"
+              property cardFields = [{"field":"sku","label":"SKU"},{"field":"price","label":"Price"}]
+              property label = "Products by status"
+
+      specification TheBoardFollowsTheStatus
+        given ProductDrafted
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku         = "ACM-1000"
+          name        = "Acme mug"
+          category    = "Kitchen"
+        given ProductWithdrawn
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku = "ACM-1000"
+        then readmodel PricedProduct
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          status    = "withdrawn"
+
     slice StateChange SetProductPrice
       description "Sets the selling price of a product; a price below zero is refused by the Money concept"
       command SetProductPrice
@@ -23,6 +80,13 @@ module Merchandising
         price    Money
         currency CurrencyCode
         effectiveFrom Date
+
+      screen SetProductPriceDialog
+        description "Set the selling price"
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action SetProductPrice
+              navigate to PricingBoard
 
       // The accepted path states the public event the price change is published as (PublishPriceChange translates it).
       specification SettingAPriceIsPublished
@@ -60,59 +124,3 @@ module Merchandising
           currency  = "NOK"
           effectiveFrom = "2026-03-01"
         then error "An amount cannot be negative"
-
-    slice StateView PricingBoard
-      description "Products as cards in columns by status"
-
-      readmodel PricedProduct
-        productId ProductId
-        sku       Sku
-        name      ProductName
-        price     Money
-        status    ProductStatus
-
-      query AllPricedProducts => observable PricedProduct[]
-
-      projection PricedProductProjection => PricedProduct
-        from ProductDrafted
-          productId = $eventSourceId
-          sku       = sku
-          name      = name
-          price     = 0
-          status    = "draft"
-        from ProductPriceSet
-          price = price
-        from ProductApprovedForSale
-          status = "approved"
-        from ProductWithdrawn
-          status = "withdrawn"
-
-      screen PricingBoard
-        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
-          header
-            component Cratis.Blueprint.Default.pageHeader pricingHeader
-              property title = "Pricing"
-              property subtitle = "Products by status - set a price to make one ready"
-          board
-            data PricedProduct[] via query AllPricedProducts
-            table PricedProduct
-              column sku    label "SKU"
-              column name   label "Product"
-              column price  label "Price"
-              column status label "Status"
-              on double click
-                navigate to ProductPage
-                  with productId from item.productId
-
-      specification TheBoardFollowsTheStatus
-        given ProductDrafted
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku         = "ACM-1000"
-          name        = "Acme mug"
-          category    = "Kitchen"
-        given ProductWithdrawn
-          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku = "ACM-1000"
-        then readmodel PricedProduct
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          status    = "withdrawn"

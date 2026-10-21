@@ -118,14 +118,16 @@ module Orders
             title "Orders pipeline"
           board
             data PipelineOrder[] via query AllPipelineOrders
-            table PipelineOrder
-              column orderId     label "Order"
-              column market      label "Market"
-              column quotedTotal label "Total"
-              column status      label "Status"
-              on double click
-                navigate to OrderPage
-                  with orderId from item.orderId
+            component Cratis.Blueprint.Default.kanbanBoard ordersPipeline
+              id "ordersPipeline"
+              property columns = [{"id":"received","label":"Received"},{"id":"approved","label":"Approved"},{"id":"onHold","label":"On hold"},{"id":"confirmed","label":"Confirmed"},{"id":"shipped","label":"Shipped"},{"id":"fulfilled","label":"Fulfilled"},{"id":"rejected","label":"Rejected"},{"id":"cancelled","label":"Cancelled"}]
+              property cards from query AllPipelineOrders
+              property cardId = "orderId"
+              property cardTitle = "orderId"
+              property cardColumn = "status"
+              property cardFields = [{"field":"market","label":"Market"},{"field":"quotedTotal","label":"Total"}]
+              property totalField = "quotedTotal"
+              property label = "Orders by status"
 
       specification AnOrderMovesAcrossTheBoard
         given caller
@@ -274,12 +276,17 @@ module Orders
               field carrier        label "Carrier"
               field trackingNumber label "Tracking"
           related
+            data OrderDetail via query GetOrderDetail by orderId
             action ApplyDiscount
               label "Give discount"
-            action ReleaseHold
-              label "Release hold"
-            action MarkOrderFulfilled
-              label "Mark fulfilled"
+            action "Release hold"
+              when item.status == "onHold" execute ReleaseHold
+                with orderId from item.orderId
+              otherwise hidden
+            action "Mark fulfilled"
+              when item.status == "shipped" execute MarkOrderFulfilled
+                with orderId from item.orderId
+              otherwise hidden
             action CancelOrder
               label "Cancel order"
           aside

@@ -1,0 +1,256 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Orders",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "PlaceOrder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "OrderPlaced",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "orderId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "orderId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderPlaced",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "PlaceOrder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "CancelOrder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "OrderCancelled",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "orderId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "orderId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderCancelled",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "CancelOrder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ],
+          "toolbars": [
+            {
+              "kind": "ScreenToolbarSyntax",
+              "buttons": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "confirm": "$strings.orders.confirmPlace",
+                  "emphasis": "Primary",
+                  "icon": "plus",
+                  "id": "place",
+                  "slice": "Shop.Orders.PlaceOrder",
+                  "title": "Place order"
+                }
+              ],
+              "items": [
+                {
+                  "kind": "ToolbarItemSyntax",
+                  "confirm": "Cancel this order?",
+                  "icon": "trash",
+                  "label": "Cancel order",
+                  "name": "cancel",
+                  "parameters": [],
+                  "presentation": [],
+                  "syntaxKind": "Action",
+                  "target": "CancelOrder"
+                }
+              ],
+              "name": "actions"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop",
+      "toolbars": [
+        {
+          "kind": "ScreenToolbarSyntax",
+          "buttons": [
+            {
+              "kind": "ToolbarButtonSyntax",
+              "emphasis": "Quiet",
+              "id": "help",
+              "slice": "Shop.Orders.PlaceOrder",
+              "title": "Help"
+            }
+          ],
+          "items": [],
+          "name": "shell"
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

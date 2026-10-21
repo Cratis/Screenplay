@@ -37,6 +37,12 @@ module Buying
           unitPrice  = 62
           currency   = "NOK"
 
+      screen ChoosePreferredSupplierDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ChoosePreferredSupplier
+              navigate to PreferredSuppliers
+
     slice StateChange ClearPreferredSupplier
       description "Forgets the preferred supplier of a SKU; replenishment is blocked until a new one is chosen"
 
@@ -60,6 +66,12 @@ module Buying
           sku = "ACM-1000"
         then PreferredSupplierCleared
           for "ACM-1000"
+
+      screen ClearPreferredSupplierDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action ClearPreferredSupplier
+              navigate to PreferredSuppliers
 
     slice StateView PreferredSuppliers
       description "Which supplier replenishment orders go to, per SKU"
@@ -189,6 +201,12 @@ module Buying
           role "Buyer"
         when Replenish
         then error "SkuSourcing 'ACM-1000' does not exist."
+
+      screen DraftReplenishmentOrderDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CreateReplenishmentPurchaseOrder
+              navigate to ReplenishmentQueue
 
     slice Automation DraftReplenishmentOrder
       description "A low-stock request becomes a draft purchase order with the preferred supplier"
@@ -384,6 +402,12 @@ module Buying
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku      = "ACM-1000"
           quantity = 3
+
+      screen RecordManualDemandDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RecordManualDemand
+              navigate to OpenDemand
 
     slice StateView OpenDemand
       description "Units ordered by customers per SKU, less what suppliers have delivered"

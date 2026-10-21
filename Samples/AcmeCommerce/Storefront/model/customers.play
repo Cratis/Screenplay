@@ -57,6 +57,12 @@ module Shop
           email      = "grace.example.com"
         then error "An email address contains @"
 
+      screen RegisterCustomerDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterCustomer
+              navigate to Account
+
     slice StateChange CloseCustomerAccount
       description "A shopper closes their account (their registration is forgotten)"
 
@@ -75,6 +81,12 @@ module Shop
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
         then CustomerAccountClosed
           for "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+
+      screen CloseCustomerAccountDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CloseCustomerAccount
+              navigate to Account
 
     slice StateView CustomerAccounts
       description "Who is registered, by customer"

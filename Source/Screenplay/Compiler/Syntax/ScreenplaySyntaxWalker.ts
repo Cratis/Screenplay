@@ -199,6 +199,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        syntax.toolbars?.forEach(node => this.visitScreenDirective(node));
         syntax.features.forEach(node => this.visitFeature(node));
     }
 
@@ -211,6 +212,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
         syntax.slices.forEach(node => this.visitSlice(node));
+        syntax.toolbars?.forEach(node => this.visitScreenDirective(node));
     }
 
     visitSlice(syntax: SliceSyntax): void {

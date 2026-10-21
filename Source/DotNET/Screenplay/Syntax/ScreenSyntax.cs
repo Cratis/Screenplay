@@ -354,6 +354,11 @@ public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Locati
     /// Gets the policies a caller must satisfy to see the button, or <c>null</c> when everyone who reaches the toolbar sees it.
     /// </summary>
     public AuthorizeSyntax? Authorize { get; init; }
+
+    /// <summary>
+    /// Gets the text the user confirms before the button opens its slice, or <c>null</c> when it opens at once.
+    /// </summary>
+    public string? Confirm { get; init; }
 }
 
 /// <summary>
@@ -374,6 +379,11 @@ public record ToolbarItemSyntax(string Name, ToolbarItemKind Kind, string Target
     /// Gets the icon shown for the item.
     /// </summary>
     public string? Icon { get; init; }
+
+    /// <summary>
+    /// Gets the text the user confirms before the item runs its command, or <c>null</c> when it runs at once.
+    /// </summary>
+    public string? Confirm { get; init; }
 
     /// <summary>
     /// Gets navigation or action parameters supplied by the item.

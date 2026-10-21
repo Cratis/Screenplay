@@ -230,6 +230,7 @@ static class ContractAdmission
         new("public", Slice + "      public event Recorded\n        value String\n"),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
+        new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
         new("theme", "theme Theme\n  compatible with Cratis.Components\n"),
@@ -305,6 +306,7 @@ static class ContractAdmission
         new("dialog", "module M\n  dialog template Dialog\n    body\n    actions\n"),
         new("form", Slice + Event + Command + "  form Input for Record\n    field value\n", [Slice + Event + Command + "  form Input for Record\n    description \"Form intent\"\n    field value\n"]),
         new("contribute", "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n"),
+        new("toolbar", "module M\n  feature F\n    toolbar actions\n      item record action Record\n        label \"Record\"\n        confirm \"Record it?\"\n    slice StateChange S\n" + Event + Command),
         new("navigation", "layout Shell\n  content\n  navigation sidebar\n    item home title \"Home\" target M\nmodule M\n  navigation sidebar extends\n    item reports title \"Reports\" target M.F\n  feature F\n    slice StateView S\n      screen Screen\n"),
     ];
 

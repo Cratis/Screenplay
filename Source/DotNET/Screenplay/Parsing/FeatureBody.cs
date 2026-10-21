@@ -17,7 +17,7 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, toolbar, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];
@@ -29,6 +29,7 @@ internal sealed class FeatureBody(string name)
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
+    readonly List<ScreenToolbarSyntax> _toolbars = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
     string? _description;
     string? _documentation;
@@ -87,6 +88,9 @@ internal sealed class FeatureBody(string name)
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
+            case "toolbar":
+                _toolbars.Add(ScreenParser.ParseToolbar(context, line));
+                return true;
             case "template":
                 if (TemplateAssignmentParser.Parse(context, line) is { } template)
                 {
@@ -118,6 +122,7 @@ internal sealed class FeatureBody(string name)
             FileImports = _fileImports,
             IsPlacement = isPlacement,
             Templates = _templates,
-            Purposes = _purposes
+            Purposes = _purposes,
+            Toolbars = _toolbars
         };
 }

@@ -61,6 +61,12 @@ module Stock
         when ShelfA1 locationCode = ""
         then error "A location needs a code"
 
+      screen RegisterLocationDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterLocation
+              navigate to StockLevels
+
     slice StateChange PutStockInLocation
       description "Notes that some of a SKU's units sit in a location"
       command PutStockInLocation
@@ -90,6 +96,12 @@ module Stock
           for "ACM-1000"
           locationCode = "A-01-01"
           quantity     = 20
+
+      screen PutStockInLocationDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action PutStockInLocation
+              navigate to StockLevels
 
     // ONE read model composed from many events and one join: the item with its numbers, the shelves it sits on and what each shelf is called
     slice StateView ItemPage

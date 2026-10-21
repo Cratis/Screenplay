@@ -166,6 +166,42 @@ module Shop
 
 Buttons sit beside `item` entries; the printer writes the items first, then the buttons, each in authored order. The C# compiler checks buttons (`PLAY0761`-`PLAY0765`); the TypeScript compiler reads them into the same syntax tree and reports a malformed line with `PLAY0760`. Renaming or moving a slice that a button names is refused with an explicit message - rename or move it together with the button's `slice` in coordinated typed edits. Like every screen construct, buttons are authoring syntax: the executable model does not carry them.
 
+## Feature and module toolbars
+
+A template declares a `toolbar` slot; a **feature** (or a module) adds buttons to it once, for every screen beneath it, instead of repeating the same buttons on each screen. Each entry is linked to a command of the feature: an `item … action <Command>` opens the command's form dialog (or runs it after the confirmation), a `button … slice <Slice>` does the same through the State Change slice.
+
+```screenplay
+module Shop
+  feature Orders
+    toolbar actions
+      item cancel action CancelOrder
+        label "Cancel order"
+        icon trash
+        confirm "Cancel this order?"
+      button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        produces OrderPlaced
+          orderId = orderId
+      event OrderPlaced
+        orderId Uuid
+    slice StateChange CancelOrder
+      command CancelOrder
+        orderId Uuid identifier
+        produces OrderCancelled
+          orderId = orderId
+      event OrderCancelled
+        orderId Uuid
+```
+
+- `toolbar <name>` is allowed in a `feature` and a `module` body and takes the same `item` and `button` lines as a screen toolbar.
+- `confirm "<text>"` (or a `$strings.<key>` token) is an optional child line of an `item` and of a `button`: the user confirms before the command runs or the dialog opens. A button's dialog is its own confirmation, so `confirm` on a button asks first and then opens it.
+- The entries are contributed to the `toolbar` slot of every screen of the feature - its sub features' included - whose template declares one, after the screen's own entries. A module toolbar reaches every screen of the module the same way; the nearer toolbar comes later.
+- An `item … action <Command>` must name a command that a slice of the feature (or module) declares; otherwise `PLAY0808` warns. Ids are unique within the toolbar and shared with the buttons (`PLAY0765`); a button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`).
+
+Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.
+
 ## Package components and typed bindings
 
 Use `component` when a package supplies the widget, but the authored screen still needs a lossless Screenplay representation for Studio, Stage and MCP tools.

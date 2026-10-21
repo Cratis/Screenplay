@@ -47,6 +47,7 @@ const componentPropertyBinding = pattern('^property\\s+([\\w.]+)\\s+from\\s+(.+)
 const componentPropertyLiteral = pattern('^property\\s+([\\w.]+)\\s*=\\s+(.+)$');
 const exposes = pattern('^exposes\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const presentation = pattern(`^presentation\\s+([A-Za-z_]\\w*)\\s+${operand}$`);
+const confirmPattern = pattern(`^confirm\\s+${operand}$`);
 const toolbarItem = pattern('^item\\s+([A-Za-z_]\\w*)\\s+(action|navigate|dialog)(?:\\s+to)?\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const toolbarButton = pattern(`^button\\s+(?:"(${stringBodyPattern})"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$`);
 const toolbarButtonPart = new RegExp(pattern(`\\s*(title|slice|emphasis|icon)\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
@@ -397,7 +398,7 @@ function parsePresentationValue(context: ParserContext, line: SourceLine, values
     values.push({ kind: 'PresentationValueSyntax', name: match[1], value: operandText(match, 2), location: locationOf(line) });
 }
 
-function parseToolbar(context: ParserContext, line: SourceLine): ScreenToolbarSyntax {
+export function parseToolbar(context: ParserContext, line: SourceLine): ScreenToolbarSyntax {
     const name = line.content.substring('toolbar'.length).trim();
     const items: ToolbarItemSyntax[] = [];
     const buttons: ToolbarButtonSyntax[] = [];
@@ -476,18 +477,24 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
         context.error(DiagnosticCodes.InvalidToolbarButton, `Toolbar button '${id}' has no title - expected 'button ${id} title "<text>"'`, locationOf(line));
     }
     let authorize: AuthorizeSyntax | null = null;
+    let buttonConfirm: string | undefined;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (firstWord(child.content) === 'authorize' && authorize === null) {
             authorize = parseAuthorize(context, child);
             continue;
         }
-        context.error(DiagnosticCodes.InvalidToolbarButton, `Unexpected '${child.content}' under toolbar button '${id}' - a button takes one 'authorize' line and nothing else`, locationOf(child));
+        const confirmMatch = buttonConfirm === undefined ? confirmPattern.exec(child.content) : null;
+        if (confirmMatch !== null) {
+            buttonConfirm = operandText(confirmMatch, 1);
+            continue;
+        }
+        context.error(DiagnosticCodes.InvalidToolbarButton, `Unexpected '${child.content}' under toolbar button '${id}' - a button takes one 'authorize' line, one 'confirm' line and nothing else`, locationOf(child));
         context.skipBlock(child.indent);
     }
     return {
         kind: 'ToolbarButtonSyntax', id, title: buttonTitle ?? '',
-        ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}), ...(authorize !== null ? { authorize } : {}),
+        ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}), ...(authorize !== null ? { authorize } : {}), ...(buttonConfirm !== undefined ? { confirm: buttonConfirm } : {}),
         location: locationOf(line),
     };
 }
@@ -501,6 +508,7 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
     }
     let itemLabel = null;
     let icon = null;
+    let itemConfirm: string | undefined;
     const parameters: ScreenNavigationParameterSyntax[] = [];
     const presentationValues: PresentationValueSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -508,6 +516,11 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
         const labelMatch = label.exec(child.content);
         if (labelMatch !== null) {
             itemLabel = operandText(labelMatch, 1);
+            continue;
+        }
+        const confirmMatch = confirmPattern.exec(child.content);
+        if (confirmMatch !== null) {
+            itemConfirm = operandText(confirmMatch, 1);
             continue;
         }
         const parameterMatch = parameter.exec(child.content);
@@ -522,7 +535,7 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
         parsePresentationValue(context, child, presentationValues);
     }
     const syntaxKind: ToolbarItemKind = match[2] === 'navigate' ? 'Navigate' : match[2] === 'dialog' ? 'Dialog' : 'Action';
-    return { kind: 'ToolbarItemSyntax', name: match[1], syntaxKind, target: match[3], label: itemLabel, icon, parameters, presentation: presentationValues, location: locationOf(line) };
+    return { kind: 'ToolbarItemSyntax', name: match[1], syntaxKind, target: match[3], label: itemLabel, icon, ...(itemConfirm !== undefined ? { confirm: itemConfirm } : {}), parameters, presentation: presentationValues, location: locationOf(line) };
 }
 
 function parseUiBindingValue(context: ParserContext, text: string, line: SourceLine) {
