@@ -118,6 +118,7 @@ export const authenticationItems: CompletionEntry[] = [
 
 export const seedItems: CompletionEntry[] = [
     { label: 'for', insertText: 'for ${1:"event-source-id"}\n    ${2:EventType}\n        ${3:property} = ${4:value}', documentation: 'Events to seed for one event source id.' },
+    { label: 'position', insertText: 'position ${1:0} ${2:0}', documentation: 'Where the seed data sits on the seed data canvas.' },
 ];
 
 export const themeItems: CompletionEntry[] = [

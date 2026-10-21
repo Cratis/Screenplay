@@ -17,4 +17,9 @@ export interface SeedGroupSyntax extends SyntaxNode {
 export interface SeedSyntax extends SyntaxNode {
     readonly kind: 'SeedSyntax';
     readonly groups: readonly SeedGroupSyntax[];
+
+    // The name of the seed data (`seed "<name>"`) and, for the seed data canvas, where it sits - written only when present.
+    readonly name?: string;
+    readonly x?: number;
+    readonly y?: number;
 }

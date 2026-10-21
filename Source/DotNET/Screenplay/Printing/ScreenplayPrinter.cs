@@ -533,7 +533,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
     {
         using var anchor = writer.Anchor(seed);
-        writer.Line("seed");
+        writer.Line(seed.Name is null ? "seed" : $"seed {StringLiteral.Quote(seed.Name)}");
         using (writer.Indent())
         {
             foreach (var group in seed.Groups)
@@ -551,6 +551,8 @@ public sealed partial class ScreenplayPrinter :
                     }
                 }
             }
+
+            WriteCanvasPlacement(writer, seed.X, seed.Y, null, null);
         }
     }
 
@@ -679,7 +681,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteStickyNote(ScreenplayWriter writer, StickyNoteSyntax note)
     {
         using var anchor = writer.Anchor(note);
-        writer.Line("sticky note on personas");
+        writer.Line($"sticky note on {note.Canvas}");
         using (writer.Indent())
         {
             WriteDescription(writer, note.Text, note);

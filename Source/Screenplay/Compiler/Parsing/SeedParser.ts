@@ -6,10 +6,13 @@ import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { SeedEventSyntax, SeedGroupSyntax, SeedSyntax } from '../Syntax/Seeds';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { nativePattern as pattern } from '../Text/patterns';
+import { parseCanvasPair } from './CanvasPlacement';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
+const headerPattern = new RegExp(`^seed(?:\\s+"(${stringBodyPattern})")?$`, 'u');
 const forPattern = new RegExp(`^for\\s+"(${stringBodyPattern})"$`, 'u');
 const eventPattern = pattern('^[A-Z]\\w*$');
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
@@ -17,13 +20,19 @@ const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 export function parseSeed(context: ParserContext, header: SourceLine): SeedSyntax {
     const groups: SeedGroupSyntax[] = [];
     context = context.valueContext;
-    if (header.content !== 'seed') {
-        context.error(DiagnosticCodes.InvalidSeedDeclaration, `Invalid seed declaration '${header.content}' - expected 'seed'`, locationOf(header));
+    const headerMatch = headerPattern.exec(header.content);
+    if (headerMatch === null) {
+        context.error(DiagnosticCodes.InvalidSeedDeclaration, `Invalid seed declaration '${header.content}' - expected 'seed' or 'seed "<name>"'`, locationOf(header));
         context.skipOpaqueBlock(header.indent);
         return { kind: 'SeedSyntax', groups, location: locationOf(header) };
     }
+    let position: readonly [number, number] | null = null;
     for (let group = context.peekChild(header.indent); group !== undefined; group = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        if (firstWord(group.content) === 'position') {
+            position = parseCanvasPair(context, group, 'position', 'x', 'y', position, true) ?? position;
+            continue;
+        }
         const match = forPattern.exec(group.content);
         if (match === null) {
             context.error(DiagnosticCodes.InvalidSeedGroup, `Invalid seed group '${group.content}' - expected 'for "<event source id>"'`, locationOf(group));
@@ -49,5 +58,5 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
         }
         groups.push({ kind: 'SeedGroupSyntax', eventSourceId: unescapeString(match[1]), events, location: locationOf(group) });
     }
-    return { kind: 'SeedSyntax', groups, location: locationOf(header) };
+    return { kind: 'SeedSyntax', groups, ...(headerMatch[1] === undefined ? {} : { name: unescapeString(headerMatch[1]) }), ...(position === null ? {} : { x: position[0], y: position[1] }), location: locationOf(header) };
 }

@@ -21,17 +21,25 @@ internal static partial class SeedParser
     /// <returns>The parsed <see cref="SeedSyntax"/>.</returns>
     public static SeedSyntax Parse(ParserContext context, SourceLine header)
     {
-        if (header.Content != "seed")
+        var headerMatch = HeaderRegex().Match(header.Content);
+        if (!headerMatch.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSeedDeclaration, $"Invalid seed declaration '{header.Content}' - expected 'seed'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSeedDeclaration, $"Invalid seed declaration '{header.Content}' - expected 'seed' or 'seed \"<name>\"'", header.Location);
             context.SkipBlock(header.Indent);
             return new([], header.Location);
         }
 
         var groups = new List<SeedGroupSyntax>();
+        (int X, int Y)? position = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "position")
+            {
+                position = ScreenplayParser.ParseCanvasPair(context, line, "position", "x", "y", position, allowNegative: true) ?? position;
+                continue;
+            }
+
             var match = ForRegex().Match(line.Content);
             if (!match.Success)
             {
@@ -43,7 +51,7 @@ internal static partial class SeedParser
             groups.Add(new(StringLiteral.Unescape(match.Groups[1].Value), ParseEvents(context, line), line.Location));
         }
 
-        return new(groups, header.Location);
+        return new(groups, header.Location) { Name = headerMatch.Groups[1].Success ? StringLiteral.Unescape(headerMatch.Groups[1].Value) : null, X = position?.X, Y = position?.Y };
     }
 
     static List<SeedEventSyntax> ParseEvents(ParserContext context, SourceLine group)
@@ -83,6 +91,9 @@ internal static partial class SeedParser
 
         return properties;
     }
+
+    [GeneratedRegex("^seed(?:\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.NonBacktracking)]
+    private static partial Regex HeaderRegex();
 
     [GeneratedRegex("^for\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex ForRegex();

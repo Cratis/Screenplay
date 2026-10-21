@@ -17836,6 +17836,7 @@
   "stickyNotes": [
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": "blue",
       "height": 150,
       "text": "Context: invoices pass through drafting, approval and payment; every step is audited.",
@@ -17845,6 +17846,7 @@
     },
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": "pink",
       "height": 150,
       "text": "Pain point: payments that cannot be matched to an invoice.",

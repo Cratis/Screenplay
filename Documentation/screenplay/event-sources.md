@@ -21,6 +21,23 @@ Name the business classification of an event source and its streams, then refere
 | `description` | No | Quoted text or an existing text/Markdown description fence |
 | `id "OldName"` | No | Retains an old stored name during a deliberate rename |
 
+An event source can also say where it sits on the event source canvas Studio draws: `position <x> <y>`, two whole numbers (negative allowed), at most once, anywhere in the source body. Like a sticky note it is authoring metadata - it never enters the executable model and a source without one is laid out by the canvas.
+
+```screenplay
+eventsource Product
+  description "One product in the catalogue"
+  identifier ProductId
+  position 110 150
+
+sticky note on eventsources
+  description "Open question: should a product have one stream per market?"
+  colour pink
+  position 480 150
+  size 240 140
+```
+
+`sticky note on <canvas>` is the free-standing note of a domain canvas. `<canvas>` is `personas`, `eventsources`, `givencontexts` or `seeddata`; a note needs a `description` and a `position`, takes an optional `colour` (`yellow` is the default and never printed, `pink`, `green`, `blue`) and `size`, and is never part of the executable model.
+
 Known stream-id types are `String`, `Uuid`, their nominal concepts and integer-backed concepts. Bare `Int`, enums, optional values, collections and other known value types are rejected. An imported type with an unavailable shape remains unresolved; tooling does not guess its primitive. Executable routes use the same portable formatter as authoring validation.
 
 ## Composite stream ids

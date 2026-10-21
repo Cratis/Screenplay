@@ -2856,6 +2856,7 @@
   "stickyNotes": [
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": "blue",
       "height": 150,
       "text": "Context: members borrow on the way past; the librarian works the desk.",
@@ -2865,6 +2866,7 @@
     },
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": null,
       "height": 150,
       "text": "Question: how many books may a member borrow at once?",

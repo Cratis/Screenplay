@@ -54,6 +54,7 @@
   "stickyNotes": [
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": "pink",
       "height": 140,
       "text": "Pain point: the checkout asks for too much",
@@ -63,6 +64,7 @@
     },
     {
       "kind": "StickyNoteSyntax",
+      "canvas": "personas",
       "colour": null,
       "height": null,
       "text": "Context: works mostly on a phone,\noften in a hurry",

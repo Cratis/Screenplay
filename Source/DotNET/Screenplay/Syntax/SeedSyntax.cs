@@ -11,7 +11,23 @@ namespace Cratis.Screenplay.Syntax;
 /// </summary>
 /// <param name="Groups">The <see cref="SeedGroupSyntax">groups</see> in the block, one per event source id.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SeedSyntax(IEnumerable<SeedGroupSyntax> Groups, SourceLocation Location) : SyntaxNode(Location);
+public record SeedSyntax(IEnumerable<SeedGroupSyntax> Groups, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the name of the seed data (<c>seed "&lt;name&gt;"</c>) - what a tool that keeps named collections of seed data calls this one - or <see langword="null"/> for an unnamed block.
+    /// </summary>
+    public string? Name { get; init; }
+
+    /// <summary>
+    /// Gets where the seed data sits on the seed data canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored. Authoring metadata, never part of the executable model.
+    /// </summary>
+    public int? X { get; init; }
+
+    /// <summary>
+    /// Gets where the seed data sits on the seed data canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored.
+    /// </summary>
+    public int? Y { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>for</c> group within a <c>seed</c> block - the events to seed for one event source id.
