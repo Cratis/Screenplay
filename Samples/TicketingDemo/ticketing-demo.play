@@ -1,0 +1,377 @@
+// ============================================================
+// Ticketing Demo - the smallest help desk worth showing
+//
+// Requesters open tickets, agents assign them and close them. Five slices,
+// two personas, nothing complete - small enough to build by hand in Studio
+// in half an hour (see README.md and the build-it-yourself tutorial).
+// Screens come from the Default blueprint (Cratis.Blueprint.Default): a list,
+// a record page, a quick-create dialog and a confirm dialog.
+//
+// Verify it with:  screenplay --warnaserror Samples/TicketingDemo
+// ============================================================
+
+concept TicketId    : Uuid
+concept Title       : String
+concept Description : String
+concept AgentName   : String
+concept TicketStatus : String
+
+policy IsRequester
+  require role "Requester"
+
+policy IsAgent
+  require role "Agent"
+
+persona Requester
+  description "Someone who needs help."
+  goal "Get a quick answer"
+  policy IsRequester
+
+persona Agent
+  description "Works the queue."
+  goal "See what is open now"
+  policy IsAgent
+
+layout AppShell
+  category Shell
+  topbar
+  navigation contributes Navigation
+  content
+  footer
+
+  navigation topbar
+    logo image "/assets/support.svg" title "Ticketing Demo"
+    item support title "Ticketing Demo" target Support
+  navigation sidebar
+    item queue title "Open tickets" icon inbox target Support.Queue
+
+  arrangement flow
+    column
+      topbar height 56
+      row
+        navigation width 240
+        content grow
+      footer height 32
+
+    when width compact
+      column
+        topbar height 48
+        content grow
+        navigation height 64
+
+ui profile Desktop
+  target platform web
+  target size regular
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+  root template AppShell
+
+  sample data
+    active TicketingDemo
+
+module Support
+  description "Tickets, and the people who open and work them"
+
+  form OpenTicketForm for OpenTicket
+    generation manual
+    field title       label "What is wrong?"
+    field description label "Details"
+
+  form AssignTicketForm for AssignTicket
+    generation manual
+    field ticketId label "Ticket"
+    field agent    label "Agent"
+
+  form CloseTicketForm for CloseTicket
+    generation manual
+    field ticketId label "Ticket"
+
+  feature Handling
+    description "A requester opens a ticket; an agent assigns it and closes it"
+
+    slice StateChange OpenTicket
+      description "A requester opens a ticket; the id is created when the command runs"
+
+      command OpenTicket
+        ticketId    TicketId generated identifier
+        title       Title
+        description Description
+
+        produces TicketOpened
+          for ticketId
+          title       = title
+          description = description
+
+      event TicketOpened
+        title       Title
+        description Description
+
+      screen NewTicket
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action OpenTicket
+              navigate to OpenTickets
+
+      specification OpeningATicket
+        given caller
+          authenticated
+          role "Requester"
+        given generated OpenTicket.ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+        when OpenTicket
+          title       = "Printer jams"
+          description = "Tray 2"
+        then TicketOpened
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title       = "Printer jams"
+          description = "Tray 2"
+
+    slice StateChange AssignTicket
+      description "An agent takes a ticket"
+
+      command AssignTicket
+        ticketId TicketId identifier
+        agent    AgentName
+
+        produces TicketAssigned
+          for ticketId
+          agent = agent
+
+      event TicketAssigned
+        agent AgentName
+
+      screen AssignTicketDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AssignTicket
+              navigate to OpenTickets
+
+
+      specification AssigningATicket
+        given caller
+          authenticated
+          role "Agent"
+        given TicketOpened
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title       = "Printer jams"
+          description = "Tray 2"
+        when AssignTicket
+          ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          agent    = "Amelia"
+        then TicketAssigned
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          agent = "Amelia"
+
+    slice StateChange CloseTicket
+      description "An agent closes a ticket"
+
+      command CloseTicket
+        ticketId TicketId identifier
+
+        produces TicketClosed
+          for ticketId
+
+      event TicketClosed
+
+      screen CloseTicketDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CloseTicket
+              navigate to OpenTickets
+
+      specification ClosingATicket
+        given caller
+          authenticated
+          role "Agent"
+        given TicketOpened
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title       = "Printer jams"
+          description = "Tray 2"
+        when CloseTicket
+          ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+        then TicketClosed
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+
+  feature Queue
+    description "What is open, and one ticket in detail"
+
+    slice StateView ListOpenTickets
+      description "Every ticket that is not closed yet"
+
+      readmodel OpenTickets
+        ticketId TicketId
+        title    Title
+        status   TicketStatus
+        agent    AgentName
+
+      query AllOpenTickets => observable OpenTickets[]
+        authorize IsAgent
+
+      projection OpenTicketsProjection => OpenTickets
+        from TicketOpened
+          ticketId = $eventSourceId
+          title    = title
+          status   = "Open"
+          agent    = ""
+        from TicketAssigned
+          status = "Assigned"
+          agent  = agent
+        remove with TicketClosed
+
+      screen OpenTickets
+        description "What the agents work from"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader openTicketsHeader
+              property title = "Open tickets"
+              property subtitle = "Everything that is not closed yet"
+          list
+            toolbar actions
+              button open title "Open a ticket" slice Support.Handling.OpenTicket emphasis primary icon plus
+            data OpenTickets[] via query AllOpenTickets
+            table OpenTickets
+              column title  label "Ticket"
+              column status label "Status"
+              column agent  label "Agent"
+              on double click
+                navigate to Ticket
+                  with ticketId from item.ticketId
+
+      specification ListingAnOpenTicket
+        given caller
+          authenticated
+          role "Agent"
+        given TicketOpened
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title       = "Printer jams"
+          description = "Tray 2"
+        then readmodel OpenTickets
+          ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title    = "Printer jams"
+          status   = "Open"
+
+    slice StateView ShowTicket
+      description "One ticket, with the buttons an agent needs"
+
+      readmodel TicketDetails
+        ticketId    TicketId
+        title       Title
+        description Description
+        status      TicketStatus
+        agent       AgentName
+
+      query GetTicket => TicketDetails optional
+        by ticketId TicketId
+        authorize IsAgent
+
+      projection TicketDetailsProjection => TicketDetails
+        from TicketOpened
+          ticketId    = $eventSourceId
+          title       = title
+          description = description
+          status      = "Open"
+          agent       = ""
+        from TicketAssigned
+          status = "Assigned"
+          agent  = agent
+        from TicketClosed
+          status = "Closed"
+
+      screen Ticket
+        description "One ticket, with the buttons an agent needs"
+        template blueprint Cratis.Blueprint.Default RecordPage version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader ticketHeader
+              property title = "Ticket"
+              property subtitle = "What was asked and who has it"
+          summary
+            data TicketDetails via query GetTicket by ticketId
+            summary TicketDetails
+              field title       label "Ticket"
+              field description label "Details"
+              field status      label "Status"
+              field agent       label "Agent"
+          related
+            toolbar actions
+              button assign title "Assign" slice Support.Handling.AssignTicket icon user
+              button close title "Close ticket" slice Support.Handling.CloseTicket icon check
+
+      specification ViewingATicket
+        given caller
+          authenticated
+          role "Agent"
+        given TicketOpened
+          for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title       = "Printer jams"
+          description = "Tray 2"
+        then readmodel TicketDetails
+          ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          title    = "Printer jams"
+          status   = "Open"
+
+// What a PLAYED help desk starts with: Stage appends this once, when the sandbox starts with an empty log.
+seed "Help desk starting data"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3001"
+    TicketOpened
+      title       = "Printer jams"
+      description = "Tray 2 jams on every second page"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3002"
+    TicketOpened
+      title       = "Cannot sign in"
+      description = "The password reset mail never arrives"
+    TicketAssigned
+      agent = "Amelia"
+  for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3003"
+    TicketOpened
+      title       = "Need a second monitor"
+      description = "For the new desk by the window"
+
+// What a PREVIEW draws: the sample-data pack. Design and preview time only - a production build never sees it.
+sample data TicketingDemo
+  title "Ticketing Demo"
+  locale en-GB
+
+  shape OpenTickets
+    row
+      ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3001"
+      title    = "Printer jams"
+      status   = "Open"
+      agent    = ""
+    row
+      ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3002"
+      title    = "Cannot sign in"
+      status   = "Assigned"
+      agent    = "Amelia"
+    row
+      ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3003"
+      title    = "Need a second monitor"
+      status   = "Open"
+      agent    = ""
+
+  shape TicketDetails
+    row
+      ticketId    = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3001"
+      title       = "Printer jams"
+      description = "Tray 2 jams on every second page"
+      status      = "Open"
+      agent       = ""
+    row
+      ticketId    = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e3002"
+      title       = "Cannot sign in"
+      description = "The password reset mail never arrives"
+      status      = "Assigned"
+      agent       = "Amelia"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green.
+// Authoring metadata only - none of this reaches the running application.
+sticky note on personas
+  description "Context: a requester wants a quick answer and does not know who works the queue."
+  colour blue
+  position 110 650
+  size 250 150
+
+sticky note on personas
+  description "Pain point: an agent has to see at a glance what is open right now."
+  colour pink
+  position 380 650
+  size 250 150
