@@ -51,6 +51,8 @@ policy IsAdministrator
 
 persona Administrator
   description "Looks after who may use the application: invites people, decides what each role may do, keeps the organization settings and reads the audit log"
+  goal "Invite people and decide what each role may do"
+  goal "Read the audit log when something looks wrong"
   policy IsAdministrator
 
 layout AppShell
@@ -526,3 +528,18 @@ module Admin
         then readmodel AuditEntries
           entryId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
           actor   = "Amelia Hart"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: acts rarely but consequentially - every change is audited."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: finding out who changed a role, and when."
+  colour pink
+  position 380 490
+  size 250 150

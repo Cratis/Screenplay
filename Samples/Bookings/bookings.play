@@ -32,6 +32,8 @@ policy IsEmployee
 
 persona Employee
   description "Books rooms, equipment and vehicles and keeps track of what is booked"
+  goal "Book a room, a vehicle or equipment in a minute"
+  goal "See what is already booked"
   policy IsEmployee
 
 layout AppShell
@@ -404,3 +406,24 @@ module Bookings
           fromValue    = "09:00"
           untilValue   = "11:00"
           status       = "checkedIn"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: books on the way to a meeting, often for the same hour."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: double bookings that are only discovered at the door."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: nobody turns up to a resource that is taken."
+  colour green
+  position 650 490
+  size 250 150

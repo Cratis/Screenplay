@@ -32,6 +32,8 @@ policy IsCustomer
 
 persona Customer
   description "A customer's contact who follows their orders and invoices and asks for help"
+  goal "See orders and invoices without phoning anyone"
+  goal "Ask for help in one step"
   policy IsCustomer
 
 layout AppShell
@@ -420,3 +422,18 @@ module Portal
         then readmodel ProfileItems
           portalOrderId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
           number       = "SO-1042"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: a contact at the customer who checks in a few times a month, mostly before an invoice falls due."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: finding the invoice that belongs to an order."
+  colour pink
+  position 380 490
+  size 250 150

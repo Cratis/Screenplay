@@ -47,6 +47,8 @@ policy IsTeamMember
 
 persona TeamMember
   description "Plans and does the work of a team: starts projects, adds tasks and moves them across the board until they are done"
+  goal "Know what to work on next"
+  goal "Move a task across the board without ceremony"
   policy IsTeamMember
 
 layout AppShell
@@ -475,3 +477,18 @@ module Projects
           projectId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
           title     = "Website relaunch"
           lane      = "Amelia Hart"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: a team of five, standing meeting every morning."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: tasks without an owner sit in the backlog for weeks."
+  colour pink
+  position 380 490
+  size 250 150
