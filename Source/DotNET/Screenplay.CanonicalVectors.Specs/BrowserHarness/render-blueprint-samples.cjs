@@ -8,18 +8,26 @@
 // usage: node render-blueprint-samples.cjs <node_modules directory> <package suffix> <export name> <output file>
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { dirname, join } = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const [modules, suffix, exportName, output] = process.argv.slice(2);
 if (!output) throw new Error('usage: node render-blueprint-samples.cjs <node_modules> <package suffix> <export name> <output file>');
 
 const name = `@cratis/scene.blueprint.${suffix}`;
-const published = require(join(modules, name));
-const manifest = published[`${exportName}Manifest`];
-if (!manifest) throw new Error(`${name} does not export ${exportName}Manifest`);
+const packageJson = require(join(modules, name, 'package.json'));
 
-mkdirSync(dirname(output), { recursive: true });
-writeFileSync(output, `${JSON.stringify({
-    version: 1,
-    packages: [{ manifest, module: { npm: name, version: require(join(modules, name, 'package.json')).version, export: exportName, styles: [] } }],
-}, null, 2)}\n`);
-console.log(`${manifest.name} ${manifest.version} <- ${name}: ${manifest.screenTemplates.length} screen templates, ${manifest.dialogTemplates.length} dialog templates`);
+// The package is loaded as the ES module it publishes: the components it builds on are published as ES modules only, so its CommonJS
+// build cannot be required once they are.
+(async () => {
+    const entry = packageJson.exports?.['.']?.import ?? packageJson.module ?? packageJson.main;
+    const published = await import(pathToFileURL(join(modules, name, entry)).href);
+    const manifest = published[`${exportName}Manifest`];
+    if (!manifest) throw new Error(`${name} does not export ${exportName}Manifest`);
+
+    mkdirSync(dirname(output), { recursive: true });
+    writeFileSync(output, `${JSON.stringify({
+        version: 1,
+        packages: [{ manifest, module: { npm: name, version: packageJson.version, export: exportName, styles: [] } }],
+    }, null, 2)}\n`);
+    console.log(`${manifest.name} ${manifest.version} <- ${name}: ${manifest.screenTemplates.length} screen templates, ${manifest.dialogTemplates.length} dialog templates`);
+})().catch(error => { console.error(error); process.exit(1); });

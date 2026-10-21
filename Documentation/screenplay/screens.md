@@ -198,6 +198,7 @@ module Shop
 - `toolbar <name>` is allowed in a `feature` and a `module` body and takes the same `item` and `button` lines as a screen toolbar.
 - `confirm "<text>"` (or a `$strings.<key>` token) is an optional child line of an `item` and of a `button`: the user confirms before the command runs or the dialog opens. A button's dialog is its own confirmation, so `confirm` on a button asks first and then opens it.
 - The entries are contributed to the `toolbar` slot of every screen of the feature - its sub features' included - whose template declares one, after the screen's own entries. A module toolbar reaches every screen of the module the same way; the nearer toolbar comes later.
+- A `toolbar <name>` with no entry is valid: it is the lane a feature or module was given before any button was put in it (Studio's *Add toolbar*), and it is printed back as it was written. Add one through the typed edits as an `add` of a `ScreenToolbarSyntax` to the `toolbars` member of a `FeatureSyntax` or `ModuleSyntax`, then add buttons to its `buttons`.
 - An `item … action <Command>` must name a command that a slice of the feature (or module) declares; otherwise `PLAY0808` warns. Ids are unique within the toolbar and shared with the buttons (`PLAY0765`); a button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`).
 
 Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.

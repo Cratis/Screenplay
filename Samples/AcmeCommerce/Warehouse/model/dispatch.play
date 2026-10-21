@@ -4,6 +4,9 @@
 
 module Stock
   feature Dispatch
+    // Goods leave: the clerk dispatches from the shipments list.
+    toolbar actions
+      button dispatch title "Dispatch shipment" slice Stock.Dispatch.DispatchShipment emphasis primary icon send
 
     slice StateChange DispatchShipment
       description "Hands a packed parcel to the carrier. A shipment is dispatched once"
