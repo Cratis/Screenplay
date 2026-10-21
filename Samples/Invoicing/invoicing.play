@@ -3640,7 +3640,6 @@ sticky note on eventsources
 
 sticky note on eventsources
   description "Question: do refunds become their own stream, or events on Transactions?"
-  colour yellow
   position 500 350
   size 260 170
 
