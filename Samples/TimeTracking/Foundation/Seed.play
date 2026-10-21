@@ -2,7 +2,7 @@
 // one internal one, a consultant staffed on the first, and a week with a day
 // already recorded. Seeded events flow through projections and reducers.
 
-seed
+seed "A week of engagements"
   for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
     EngagementOpened
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
@@ -46,3 +46,16 @@ seed
       activity     = "DEV-01"
       billing      = "billable"
       note         = "Data mapping workshop"
+  position 110 150
+
+sticky note on seeddata
+  description "One billable and one internal engagement, so billable and non-billable time both show up in the reports."
+  colour blue
+  position 560 150
+  size 260 170
+
+sticky note on seeddata
+  description "Assumption: a consultant records time against an engagement, never against a client directly."
+  colour green
+  position 560 350
+  size 260 170

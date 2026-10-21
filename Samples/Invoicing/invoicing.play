@@ -118,6 +118,7 @@ eventsource Payment
     streamId
       invoice InvoiceId
       payment PaymentId
+  position 110 150
 
 concept PersonName : String pii
   pii reason "The name identifies the person to contact about an invoice."
@@ -3597,7 +3598,7 @@ module PublicVerification
 // Seed data - the starting state, declared as events
 // ------------------------------------------------------------
 
-seed
+seed "Customers and a draft invoice"
   for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     CustomerRegistered
       customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
@@ -3608,11 +3609,13 @@ seed
       invoiceNumber = "INV-000042"
       currency      = "NOK"
       status        = "draft"
+  position 110 150
 
-seed
+seed "A second customer"
   for "7d1e5f3a-2b4c-4e6f-8a9b-0c1d2e3f4a5b"
     CustomerRegistered
       name = "Globex"
+  position 560 150
 
 // The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
 // The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
@@ -3628,3 +3631,22 @@ sticky note on personas
   colour pink
   position 380 830
   size 250 150
+
+sticky note on eventsources
+  description "Payment has two streams on purpose: Transactions is keyed by the invoice, Audit by invoice and payment together."
+  colour green
+  position 500 150
+  size 260 170
+
+sticky note on eventsources
+  description "Question: do refunds become their own stream, or events on Transactions?"
+  colour yellow
+  position 500 350
+  size 260 170
+
+sticky note on seeddata
+  description "The two customers are the ones every specification of the invoice flow starts from."
+  colour blue
+  position 1000 150
+  size 260 170
+

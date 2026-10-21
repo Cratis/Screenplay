@@ -1,0 +1,30 @@
+// ============================================================
+// Sales: the thinking around the event sources, the given contexts and the seed data - sticky notes on their canvases.
+//
+// A note says what a decision was, what is still open, what we assume and what could go wrong, beside the cards it is about.
+// Colours: green decision, yellow question, blue assumption, pink risk. Authoring metadata only: it never reaches the running application.
+// ============================================================
+
+sticky note on eventsources
+  description "[DECISION] The price list is the single source of price for an order. Catalog's price is a suggestion, Sales' price is what the customer is charged."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on eventsources
+  description "[QUESTION] Do we keep every price a product ever had, or only the one in force? Refunds need the old one."
+  colour yellow
+  position 1210 360
+  size 270 190
+
+sticky note on givencontexts
+  description "[DECISION] A price in the price list is its own reusable context so a discount specification starts from a known, valid price."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on seeddata
+  description "[ASSUMPTION] The seed price list is one currency (NOK) and one price per product. A second currency is a second price list, not a second field."
+  colour blue
+  position 560 150
+  size 270 190

@@ -3,7 +3,7 @@
 // Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
 // ============================================================
 
-seed
+seed "Order desk starting data"
   for "ACM-1000"
     PriceListUpdated
       price         = 149
@@ -221,3 +221,4 @@ seed
       quotedTotal = 1798
     OrderApproved
       orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b12"
+  position 110 150

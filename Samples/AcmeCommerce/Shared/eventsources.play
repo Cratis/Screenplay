@@ -10,6 +10,7 @@
 eventsource Product
   description "One product in the catalogue"
   identifier ProductId
+  position 110 150
 
 // ---- Storefront ----------------------------------------------------------------------------------------------
 eventsource Customer
@@ -17,12 +18,14 @@ eventsource Customer
   identifier CustomerId
   stream Lifecycle
     description "Registration and profile of one customer"
+  position 470 150
 
 eventsource Basket
   description "A shopper's basket before checkout"
   identifier BasketId
   stream Contents
     description "What is added to and removed from one basket"
+  position 830 150
 
 // ---- Sales ---------------------------------------------------------------------------------------------------
 eventsource Order
@@ -30,6 +33,7 @@ eventsource Order
   identifier OrderId
   stream Lifecycle
     description "Intake, approval, confirmation and status of one order"
+  position 110 910
 
 // ---- Purchasing ----------------------------------------------------------------------------------------------
 eventsource Supplier
@@ -37,16 +41,19 @@ eventsource Supplier
   identifier SupplierId
   stream Lifecycle
     description "Registration and offers of one supplier"
+  position 470 910
 
 eventsource PurchaseOrder
   description "One purchase order to a supplier"
   identifier PurchaseOrderId
   stream Lifecycle
     description "Creation, submission and receipt of one purchase order"
+  position 830 910
 
 eventsource SupplierOffer
   description "One product a supplier sells, with its price and lead time (an offer has one id; supplier + SKU would be a composite key, which waits for Chronicle#4265)"
   identifier SupplierOfferId
+  position 110 1670
 
 // ---- Warehouse -----------------------------------------------------------------------------------------------
 eventsource StockItem
@@ -54,15 +61,18 @@ eventsource StockItem
   identifier Sku
   stream Movements
     description "Every movement of one SKU: registration, reservation, receipt, adjustment"
+  position 470 1670
 
 eventsource Shipment
   description "The parcel that leaves for one order"
   identifier OrderId
   stream Handling
     description "Picking, packing and dispatch of one order"
+  position 830 1670
 
 eventsource Location
   description "A shelf or bin in the warehouse"
   identifier LocationCode
   stream Lifecycle
     description "Everything that happens to one location"
+  position 110 2430
