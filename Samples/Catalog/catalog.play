@@ -31,6 +31,8 @@ policy IsCatalogManager
 
 persona CatalogManager
   description "Keeps the catalog: publishes products, prices them and groups them in categories"
+  goal "Publish products with a price and a category"
+  goal "Keep the catalog free of stale entries"
   policy IsCatalogManager
 
 layout AppShell
@@ -321,3 +323,18 @@ module Catalog
         then readmodel OverviewItems
           productId    = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
           sku          = "FIT-210"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: publishes in bursts when a new supplier list arrives."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: finding which products still lack a category."
+  colour pink
+  position 380 490
+  size 250 150

@@ -28,6 +28,8 @@ policy IsAccountant
 
 persona Accountant
   description "Bills customers, records the payments that come in and chases what is overdue"
+  goal "Bill customers on time"
+  goal "Chase what is overdue"
   policy IsAccountant
 
 layout AppShell
@@ -371,3 +373,17 @@ module Invoicing
         then readmodel DueDatesItems
           invoiceId    = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0011"
           number       = "INV-2041"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: bills at month end and chases at the start of the next."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Question: when does an overdue invoice go to collection?"
+  position 380 490
+  size 250 150
