@@ -17869,7 +17869,7 @@
     {
       "kind": "StickyNoteSyntax",
       "canvas": "eventsources",
-      "colour": "yellow",
+      "colour": null,
       "height": 170,
       "text": "Question: do refunds become their own stream, or events on Transactions?",
       "width": 260,

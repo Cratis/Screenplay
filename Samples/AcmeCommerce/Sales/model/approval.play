@@ -1,5 +1,11 @@
 module Orders
   feature Approval
+    // What the person who decides reaches for from the approval inbox: a rejection (asks first) and a discount.
+    toolbar actions
+      button reject title "Reject order" slice Orders.Approval.RejectOrder emphasis quiet icon times
+        confirm "Reject this order?"
+      button discount title "Apply discount" slice Orders.Approval.ApplyDiscount emphasis secondary icon percentage
+
     // AUTOMATION driven by a policy: small orders approve themselves. The reaction runs as a sales manager (the role ApproveOrder demands).
     // "Customer not flagged" has no home yet: nothing in the model flags a customer (open question on the Sales board).
     slice Automation AutoApproveSmallOrders
