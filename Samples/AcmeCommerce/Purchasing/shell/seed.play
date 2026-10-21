@@ -250,6 +250,16 @@ seed
       sku       = "ACM-1010"
       quantity  = 200
       unitPrice = 12
+  for "5d4e0000-0000-4000-8000-000000000007"
+    PurchaseOrderCreated
+      purchaseOrderId = "5d4e0000-0000-4000-8000-000000000007"
+      supplierId      = "5b2e0000-0000-4000-8000-000000000002"
+    PurchaseOrderLineAdded
+      sku       = "ACM-1011"
+      quantity  = 30
+      unitPrice = 54
+    PurchaseOrderCancelled
+      reason = "Supplier discontinued the product"
   for "ACM-1000"
     PreferredSupplierChosen
       supplierId = "5b2e0000-0000-4000-8000-000000000001"

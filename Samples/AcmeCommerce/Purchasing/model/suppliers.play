@@ -262,3 +262,9 @@ module Buying
               field name    label "Supplier"
               field taxId   label "Tax id"
               field country label "Country"
+
+      screen OfferSupplierProductDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action OfferSupplierProduct
+              navigate to Suppliers

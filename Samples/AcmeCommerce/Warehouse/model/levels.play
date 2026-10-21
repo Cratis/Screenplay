@@ -214,6 +214,12 @@ module Stock
         then SkuBlockedForReceiving
           for "ACM-1000"
 
+      screen BlockSkuDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action BlockSku
+              navigate to StockLevels
+
     slice StateChange SetReorderPoint
       description "Sets when a SKU counts as running out and how much to suggest buying when it does"
       command SetReorderPoint
@@ -255,6 +261,12 @@ module Stock
         when Reorder reorderQuantity = 0
         then error "A quantity is at least one"
 
+      screen SetReorderPointDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action SetReorderPoint
+              navigate to StockLevels
+
     slice StateChange CountStock
       description "Records what the clerk counted on the shelf. The count changes nothing by itself: a difference is settled with AdjustStock"
       command CountStock
@@ -290,6 +302,12 @@ module Stock
           role "WarehouseClerk"
         when ShelfCount counted = -1
         then error "Stock cannot be negative"
+
+      screen CountStockDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CountStock
+              navigate to StockAdjustments
 
     slice StateChange AdjustStock
       description "Adds to or takes from the shelf for a stated reason (found, returned, damaged, count, correction)"
@@ -355,6 +373,12 @@ module Stock
           role "SalesRep"
         when FoundMugs
         then denied
+
+      screen AdjustStockDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AdjustStock
+              navigate to StockAdjustments
 
   feature Adjustments
     description "Corrections of the shelf and the reasons for them"

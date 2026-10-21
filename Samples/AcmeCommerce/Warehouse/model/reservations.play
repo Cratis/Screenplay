@@ -41,6 +41,12 @@ module Stock
         when PhoneOrder quantity = 0
         then error "A quantity is at least one"
 
+      screen RequestReservationDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RequestReservation
+              navigate to Reservations
+
     // AUTOMATION with two outcomes: the stock is promised or the shortage is reported (and published, P7/P8)
     slice Automation ReserveStock
       event ReservationFailed
@@ -392,6 +398,12 @@ module Stock
         when Pick
         then error "The order is not waiting to be picked"
 
+      screen PickOrderDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action PickOrder
+              navigate to PickingQueue
+
     slice StateChange PackShipment
       description "The picker has collected everything and packed the parcel"
       command PackShipment
@@ -433,6 +445,12 @@ module Stock
         when Pack
         then error "The order is not being picked"
 
+      screen PackShipmentDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action PackShipment
+              navigate to PickingQueue
+
     slice StateChange CancelShipment
       description "The order was cancelled before it left: the parcel is dropped from the picking queue"
       command CancelShipment
@@ -450,6 +468,12 @@ module Stock
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
         then ShipmentCancelled
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      screen CancelShipmentDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CancelShipment
+              navigate to PickingQueue
 
     slice StateView PickingQueue
       description "Parcels in columns by where they are: to pick, picking, packed, dispatched"
@@ -490,21 +514,30 @@ module Stock
               property title = "Picking"
               property subtitle = "Parcels from planned to picked, packed and dispatched"
           toolbar
-            action PickOrder
-              label "Pick order"
-            action PackShipment
-              label "Pack"
-            action CancelShipment
-              label "Cancel shipment"
+            data PickingCard[] via query AllPickingCards
+            action "Pick order"
+              when item.status == "toPick" execute PickOrder
+                with orderId from item.id
+              otherwise hidden
+            action "Pack"
+              when item.status == "picking" execute PackShipment
+                with orderId from item.id
+              otherwise hidden
+            action "Cancel shipment"
+              when item.status == "toPick" or item.status == "picking" execute CancelShipment
+                with orderId from item.id
+              otherwise hidden
           board
             data PickingCard[] via query AllPickingCards
-            table PickingCard
-              column id             label "Order"
-              column sku            label "SKU"
-              column quantity       label "Qty"
-              column status         label "Status"
-              column carrier        label "Carrier"
-              column trackingNumber label "Tracking"
+            component Cratis.Blueprint.Default.kanbanBoard pickingBoard
+              id "pickingBoard"
+              property columns = [{"id":"toPick","label":"To pick"},{"id":"picking","label":"Picking"},{"id":"packed","label":"Packed"},{"id":"dispatched","label":"Dispatched"}]
+              property cards from query AllPickingCards
+              property cardId = "id"
+              property cardTitle = "id"
+              property cardColumn = "status"
+              property cardFields = [{"field":"sku","label":"SKU"},{"field":"quantity","label":"Qty"},{"field":"carrier","label":"Carrier"}]
+              property label = "Parcels by stage"
 
       specification AParcelMovesAcrossTheBoard
         given ShipmentPlanned

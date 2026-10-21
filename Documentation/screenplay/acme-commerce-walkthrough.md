@@ -423,8 +423,8 @@ Screens fill [templates](templates.md). The sample uses the foundation blueprint
 
 | Template | Screens | Used for |
 | --- | --- | --- |
-| `QuickCreateDialog` | 35 | the input surface of a command: new product, add line, adjust stock, ... |
-| `ConfirmDialog` | 14 | a command that needs only a yes or no: confirm, cancel or fulfil an order, clear a basket, pack a parcel |
+| `QuickCreateDialog` | 30 | the input surface of a command: new product, add line, adjust stock, ... |
+| `ConfirmDialog` | 13 | a command that needs only a yes or no: approve or withdraw a product, release a hold, fulfil an order, pick or pack a parcel |
 | `ListScreen` | 12 | work lists: the product catalogue, the approval inbox, purchase orders, shipments, stock levels |
 | `RecordPage` | 9 | one thing in full: product page, order page, purchase order page, supplier page, stock item |
 | `DashboardScreen` | 4 | the dashboards of Catalog, Sales, Purchasing and Warehouse |
@@ -437,6 +437,23 @@ Screens fill [templates](templates.md). The sample uses the foundation blueprint
 
 Command input is a [form](forms.md) declared once and found by its command (`form DescribeProductForm for DescribeProduct`),
 with a two-column layout where it helps.
+
+### Every command has its own screen
+
+A command's slice owns the screen the person sees when they run it: a `QuickCreateDialog` for a command that asks for input, a `ConfirmDialog`
+for one that only needs a yes. The board draws it under the persona who may run the command, and the slice previews and plays on its own.
+Only the commands a reaction invokes on its own (confirm an order, clear a basket after checkout, take dispatched stock, snapshot the stock level,
+raise the reorder alarm, reserve stock units, plan a shipment) have no screen: nobody runs them.
+
+The screen where the persona works reaches the command, in the way that fits it:
+
+| Surface | Example | Written as |
+| --- | --- | --- |
+| toolbar button that opens the command's dialog | Catalog "New product", Purchasing "New purchase order", "Register supplier", Warehouse "Register SKU" | `button new title "New product" slice Merchandising.Products.DraftProduct` |
+| action on the selected row of a list | Warehouse "Adjust stock", "Count", "Dispatch"; Purchasing "Choose supplier" | `action AdjustStock label "Adjust stock"` under a `toolbar` |
+| state-dependent action on the selected row | Catalog "Approve for sale" and "Withdraw" on the product lists; Warehouse "Pick order", "Pack", "Cancel shipment" | `action "Approve for sale"` with `when item.status == "draft" execute ApproveProductForSale` and `otherwise hidden` |
+| state-dependent action on a record page | product page, order page ("Release hold" only while on hold, "Mark fulfilled" once shipped), purchase order ("Archive" once received or cancelled) | the same guarded `action`, beside the `data` of the one record |
+| reaction | confirm an order after approval, clear the basket after checkout | `reaction ... invokes Command` |
 
 ### The domain's own templates
 

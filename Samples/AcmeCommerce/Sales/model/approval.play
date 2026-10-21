@@ -78,6 +78,12 @@ module Orders
           reason  = "Address could not be verified"
         then denied
 
+      screen RejectOrderDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RejectOrder
+              navigate to ApprovalInbox
+
     // A rep may give up to 15%; anything larger is a manager's decision (two commands, one event)
     slice StateChange ApplyDiscount
       description "A sales rep gives a discount of at most 15 percent"
@@ -125,6 +131,12 @@ module Orders
           discount = 20
         then error "A sales rep can give at most 15%"
 
+      screen ApplyDiscountDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApplyDiscount
+              navigate to OrderList
+
     slice StateChange ApplyLargeDiscount
       description "A sales manager gives a discount above the rep's limit"
 
@@ -164,6 +176,12 @@ module Orders
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           discount = 20
         then denied
+
+      screen ApplyLargeDiscountDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action ApplyLargeDiscount
+              navigate to ApprovalInbox
 
     // AUTOMATION: an approved order is confirmed
     slice Automation ConfirmApprovedOrder
