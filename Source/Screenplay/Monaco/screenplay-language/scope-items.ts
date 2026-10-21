@@ -105,7 +105,10 @@ export const outcomeItems: CompletionEntry[] = [
 
 export const personaItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:who they are}"', documentation: 'A human-readable description.' },
+    { label: 'goal', insertText: 'goal "${1:what they want to achieve}"', documentation: 'A goal of this persona.' },
     { label: 'policy', insertText: 'policy ${1:PolicyName}', documentation: 'A policy this persona holds.' },
+    { label: 'position', insertText: 'position ${1:0} ${2:0}', documentation: 'Where the persona sits on the personas canvas.' },
+    { label: 'size', insertText: 'size ${1:300} ${2:180}', documentation: 'How big the persona is on the personas canvas.' },
 ];
 
 export const authenticationItems: CompletionEntry[] = [

@@ -282,15 +282,18 @@ policy IsWithinCreditLimit
 // personas below include negation or ownership and keep explicit callers.
 persona InvoiceDraftCreator
   description "Starts invoice drafts as invoice management staff"
+  goal "Start a draft in seconds"
   policy IsAuthenticated
   policy CanManageInvoice
 
 persona Visitor
   description "Anyone checking an invoice number, signed in or not"
+  goal "Check an invoice number without signing in"
   policy Anyone
 
 persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
+  goal "Register invoices and keep them moving"
   policy IsAuthenticated
   policy IsPerson
   policy IsInvoicingStaff
@@ -298,6 +301,7 @@ persona InvoiceManager
 
 persona Accountant
   description "Keeps the books, approves invoices and records payments"
+  goal "Approve invoices and record payments"
   policy IsAuthenticated
   policy IsPerson
   policy IsInvoicingStaff
@@ -311,6 +315,7 @@ persona FinanceController
     Owns credit risk for the finance department.
     The only one who writes off what will not be paid.
     ```
+  goal "See what is outstanding and why"
   policy IsAuthenticated
   policy IsPerson
   policy IsInvoicingStaff
@@ -319,6 +324,7 @@ persona FinanceController
 
 persona Customer
   description "Sees and pays their own invoices in the customer portal"
+  goal "See and pay their own invoices"
   policy IsAuthenticated
   policy IsPerson
   policy IsCustomer
@@ -328,6 +334,7 @@ persona Customer
 
 persona Auditor
   description "Reviews what happened, never changes it"
+  goal "Review what happened without changing it"
   policy IsAuthenticated
   policy IsPerson
   policy IsAuditor
@@ -3606,3 +3613,18 @@ seed
   for "7d1e5f3a-2b4c-4e6f-8a9b-0c1d2e3f4a5b"
     CustomerRegistered
       name = "Globex"
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: invoices pass through drafting, approval and payment; every step is audited."
+  colour blue
+  position 110 830
+  size 250 150
+
+sticky note on personas
+  description "Pain point: payments that cannot be matched to an invoice."
+  colour pink
+  position 380 830
+  size 250 150

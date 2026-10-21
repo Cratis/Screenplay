@@ -16,4 +16,30 @@ public record PersonaSyntax(
     string Name,
     string? Description,
     IEnumerable<string> Policies,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets what the persona is trying to achieve, one entry per <c>goal</c> line. Authoring metadata, never part of the executable model.
+    /// </summary>
+    public IEnumerable<string> Goals { get; init; } = [];
+
+    /// <summary>
+    /// Gets where the persona sits on the personas canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored.
+    /// </summary>
+    public int? X { get; init; }
+
+    /// <summary>
+    /// Gets where the persona sits on the personas canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored.
+    /// </summary>
+    public int? Y { get; init; }
+
+    /// <summary>
+    /// Gets the width of the persona on the personas canvas (<c>size &lt;width&gt; &lt;height&gt;</c>), or <see langword="null"/> when the canvas decides.
+    /// </summary>
+    public int? Width { get; init; }
+
+    /// <summary>
+    /// Gets the height of the persona on the personas canvas (<c>size &lt;width&gt; &lt;height&gt;</c>), or <see langword="null"/> when the canvas decides.
+    /// </summary>
+    public int? Height { get; init; }
+}

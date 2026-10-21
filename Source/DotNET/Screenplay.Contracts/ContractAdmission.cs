@@ -230,6 +230,7 @@ static class ContractAdmission
         new("public", Slice + "      public event Recorded\n        value String\n"),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
+        new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
         new("theme", "theme Theme\n  compatible with Cratis.Components\n"),

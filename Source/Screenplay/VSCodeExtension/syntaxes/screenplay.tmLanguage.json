@@ -446,7 +446,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|identity|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|sticky|authentication|identity|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }

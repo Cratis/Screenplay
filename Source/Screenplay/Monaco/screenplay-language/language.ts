@@ -26,6 +26,7 @@ export const constructKeywords = [
     'policy',
     'purpose',
     'persona',
+    'sticky',
     'authentication',
     'identity',
     'module',
@@ -69,6 +70,10 @@ export const constructKeywords = [
 export const typeModifierKeywords = ['optional'];
 
 export const clauseKeywords = [
+    'goal',
+    'colour',
+    'position',
+    'size',
     'protected',
     'batches',
     'atomic',

@@ -1,0 +1,30 @@
+// ============================================================
+// Sales: the personas canvas - the thinking around the personas who work here.
+//
+// Goals live on the personas themselves (Shared/access.play); what sits around them is on sticky notes: the context they work in,
+// what gets in their way, what success looks like and what is still open. Authoring metadata only: it never reaches the running application.
+// The personas are laid out by the canvas in a grid, so the notes sit below them: blue for context, pink for pain, green for success, yellow for questions.
+// ============================================================
+
+sticky note on personas
+  description "Context: works the inbox of new orders from 08:00. Handles 30-40 orders a day, most of them routine."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: orders that need a manager's approval look just like the rest of the list."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: the approval queue is clear before lunch; only the unusual orders land with the manager."
+  colour green
+  position 650 490
+  size 250 150
+
+sticky note on personas
+  description "Question: which threshold sends an order to a manager - value, customer or both?"
+  position 920 490
+  size 250 150

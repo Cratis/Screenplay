@@ -22,19 +22,46 @@ policy IsFinanceDepartment
 
 persona Consultant
   description "Records the hours worked on each engagement and submits a timesheet every week"
+  goal "Record hours as they are worked"
+  goal "Submit the timesheet on Friday without chasing"
   policy HasWorkspaceAccess
   policy IsConsultant
 
 persona EngagementManager
   description "Opens engagements, staffs them with consultants, and approves the hours logged against them"
+  goal "Staff engagements with the right people"
+  goal "Approve hours without opening every sheet"
   policy HasWorkspaceAccess
   policy IsEngagementManager
 
 persona PayrollOfficer
   description "Turns approved hours into payroll runs and hands them to the external payroll provider"
+  goal "Turn approved hours into a payroll run"
+  goal "Hand the run to the payroll provider"
   policy HasWorkspaceAccess
   policy IsPayrollOfficer
   policy IsFinanceDepartment
 
 authentication
   provider EntraId
+
+// The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
+// The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
+
+sticky note on personas
+  description "Context: the consultant logs hours on the train; the manager approves on Monday morning."
+  colour blue
+  position 110 490
+  size 250 150
+
+sticky note on personas
+  description "Pain point: late timesheets hold up payroll for everyone."
+  colour pink
+  position 380 490
+  size 250 150
+
+sticky note on personas
+  description "Success: payroll runs on the first try."
+  colour green
+  position 650 490
+  size 250 150

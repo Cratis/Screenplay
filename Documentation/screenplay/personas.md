@@ -12,7 +12,10 @@ Personas name the roles that interact with the application — the vocabulary of
 ```screenplay
 persona <Name>
   [description "<text>"]
+  [goal "<text>"]*
   [policy <PolicyName>]*
+  [position <x> <y>]
+  [size <width> <height>]
 ```
 
 ## Example
@@ -33,6 +36,33 @@ persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
   policy CanManageInvoice
 ```
+
+## The personas canvas
+
+A persona can say what it is trying to achieve with `goal` lines and, for tools that draw the personas as cards on a canvas, where
+it sits (`position <x> <y>`) and how big it is (`size <width> <height>`). Both are whole numbers in canvas units; `position` may be
+negative, `size` may not. Placement is authoring metadata: a persona without a `position` is laid out by the canvas.
+
+Notes that talk about the personas without being one - a pain point, the context somebody works in, a question - are
+**sticky notes** on the same canvas. They are top-level declarations of their own:
+
+```screenplay
+persona Shopper
+  description "Browses the catalog and buys"
+  goal "Find the right product quickly"
+  position 0 0
+  size 300 180
+
+sticky note on personas
+  description "Pain point: the checkout asks for too much"
+  colour pink
+  position 340 0
+  size 220 140
+```
+
+A sticky note needs a `description` (the text on it, a quoted line or a fenced block) and a `position`; `colour` is one of `yellow`
+(the default and never printed), `pink`, `green` or `blue`, and `size` is optional. Goals, positions, sizes and notes never enter the
+executable semantic model: its bytes and revision are unchanged by them.
 
 ## Rules
 

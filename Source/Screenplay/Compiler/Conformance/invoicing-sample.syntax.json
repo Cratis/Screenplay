@@ -17672,6 +17672,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Starts invoice drafts as invoice management staff",
+      "goals": [
+        "Start a draft in seconds"
+      ],
       "name": "InvoiceDraftCreator",
       "policies": [
         "IsAuthenticated",
@@ -17681,6 +17684,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Anyone checking an invoice number, signed in or not",
+      "goals": [
+        "Check an invoice number without signing in"
+      ],
       "name": "Visitor",
       "policies": [
         "Anyone"
@@ -17689,6 +17695,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Registers invoices and manages their lifecycle",
+      "goals": [
+        "Register invoices and keep them moving"
+      ],
       "name": "InvoiceManager",
       "policies": [
         "IsAuthenticated",
@@ -17700,6 +17709,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Keeps the books, approves invoices and records payments",
+      "goals": [
+        "Approve invoices and record payments"
+      ],
       "name": "Accountant",
       "policies": [
         "IsAuthenticated",
@@ -17713,6 +17725,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Owns credit risk for the finance department.\nThe only one who writes off what will not be paid.",
+      "goals": [
+        "See what is outstanding and why"
+      ],
       "name": "FinanceController",
       "policies": [
         "IsAuthenticated",
@@ -17725,6 +17740,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Sees and pays their own invoices in the customer portal",
+      "goals": [
+        "See and pay their own invoices"
+      ],
       "name": "Customer",
       "policies": [
         "IsAuthenticated",
@@ -17738,6 +17756,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Reviews what happened, never changes it",
+      "goals": [
+        "Review what happened without changing it"
+      ],
       "name": "Auditor",
       "policies": [
         "IsAuthenticated",
@@ -17812,6 +17833,26 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: invoices pass through drafting, approval and payment; every step is audited.",
+      "width": 250,
+      "x": 110,
+      "y": 830
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: payments that cannot be matched to an invoice.",
+      "width": 250,
+      "x": 380,
+      "y": 830
+    }
+  ],
   "systems": [],
   "types": [
     {

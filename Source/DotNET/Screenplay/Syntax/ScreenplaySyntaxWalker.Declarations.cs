@@ -101,6 +101,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitPersona(PersonaSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="StickyNoteSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="StickyNoteSyntax"/> to visit.</param>
+    public virtual void VisitStickyNote(StickyNoteSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="ReadModelSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="ReadModelSyntax"/> to visit.</param>

@@ -2832,6 +2832,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Runs the catalog and signs up members",
+      "goals": [
+        "Keep the catalog and the member list correct"
+      ],
       "name": "Librarian",
       "policies": [
         "IsLibrarian"
@@ -2840,6 +2843,9 @@
     {
       "kind": "PersonaSyntax",
       "description": "Borrows and returns books",
+      "goals": [
+        "Borrow and return books without a queue"
+      ],
       "name": "Member",
       "policies": [
         "IsMember"
@@ -2847,6 +2853,26 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: members borrow on the way past; the librarian works the desk.",
+      "width": 250,
+      "x": 110,
+      "y": 490
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "colour": null,
+      "height": 150,
+      "text": "Question: how many books may a member borrow at once?",
+      "width": 250,
+      "x": 380,
+      "y": 490
+    }
+  ],
   "systems": [],
   "types": []
 }

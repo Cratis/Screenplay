@@ -56,6 +56,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["seed"] = ("SeedDecl", "seeding.md"),
             ["slice"] = ("SliceDecl", "slices.md"),
             ["specification"] = ("SpecificationDecl", "specifications.md"),
+            ["sticky"] = ("StickyNoteDecl", "personas.md"),
             ["system"] = ("SystemDecl", "grammar.md"),
             ["template"] = ("TemplateRef", "templates.md"),
             ["toolbar"] = ("ToolbarDecl", "screens.md"),

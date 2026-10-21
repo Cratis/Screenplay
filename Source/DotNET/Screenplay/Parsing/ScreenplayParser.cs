@@ -50,6 +50,7 @@ internal static partial class ScreenplayParser
         var policies = new List<PolicySyntax>();
         var purposes = new List<PurposeSyntax>();
         var personas = new List<PersonaSyntax>();
+        var stickyNotes = new List<StickyNoteSyntax>();
         var modules = new List<ModuleSyntax>();
         var seeds = new List<SeedSyntax>();
         var uiProfiles = new List<UiProfileSyntax>();
@@ -163,6 +164,13 @@ internal static partial class ScreenplayParser
                 case "persona":
                     personas.Add(ParsePersona(context, line));
                     break;
+                case "sticky":
+                    if (ParseStickyNote(context, line) is { } stickyNote)
+                    {
+                        stickyNotes.Add(stickyNote);
+                    }
+
+                    break;
                 case "identity":
                     identity = IdentityParser.Parse(context, line, identity);
                     break;
@@ -239,6 +247,7 @@ internal static partial class ScreenplayParser
             CommandReadMode = commandReadMode,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
+            StickyNotes = stickyNotes,
             Examples = examples,
             Systems = systems,
             SampleDataPacks = sampleDataPacks,
@@ -385,7 +394,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
+                : " - expected domain, import, concept, type, policy, persona, sticky note on personas, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
@@ -625,6 +634,9 @@ internal static partial class ScreenplayParser
         var name = match.Groups[1].Value;
         string? description = null;
         var policies = new List<string>();
+        var goals = new List<string>();
+        (int X, int Y)? position = null;
+        (int Width, int Height)? size = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -632,6 +644,24 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "goal":
+                    if (PersonaGoalRegex().Match(child.Content) is { Success: true } goal)
+                    {
+                        goals.Add(StringLiteral.Unescape(goal.Groups[1].Value));
+                        directiveLocations[DirectiveLocationKeys.ForValue("goal", goals, goals.Count - 1)] = child.Location;
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid goal '{child.Content}' - expected 'goal \"<text>\"'", child.Location);
+                    }
+
+                    break;
+                case "position":
+                    position = ParseCanvasPair(context, child, "position", "x", "y", position, allowNegative: true) ?? position;
+                    break;
+                case "size":
+                    size = ParseCanvasPair(context, child, "size", "width", "height", size, allowNegative: false) ?? size;
+                    break;
                 case "description":
                     var previousDescription = description;
                     description = DescriptionParser.Parse(context, child, description, $"Persona '{name}'");
@@ -654,13 +684,107 @@ internal static partial class ScreenplayParser
 
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description or policy", child.Location);
+                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description, goal, policy, position or size", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, description, policies, line.Location) { DirectiveLocations = directiveLocations };
+        return new(name, description, policies, line.Location)
+        {
+            DirectiveLocations = directiveLocations,
+            Goals = goals,
+            X = position?.X,
+            Y = position?.Y,
+            Width = size?.Width,
+            Height = size?.Height
+        };
+    }
+
+    // 'sticky note on personas' with the text it carries, an optional colour and where it sits on the personas canvas.
+    static StickyNoteSyntax? ParseStickyNote(ParserContext context, SourceLine line)
+    {
+        if (!StickyNoteRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid sticky note declaration '{line.Content}' - expected 'sticky note on personas'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        string? text = null;
+        string? colour = null;
+        (int X, int Y)? position = null;
+        (int Width, int Height)? size = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "description":
+                    var previous = text;
+                    text = DescriptionParser.Parse(context, child, text, "A sticky note");
+                    if (previous is null && text is not null)
+                    {
+                        directiveLocations["description"] = child.Location;
+                    }
+
+                    break;
+                case "colour":
+                    if (StickyNoteColourRegex().Match(child.Content) is { Success: true } colourMatch)
+                    {
+                        colour = colourMatch.Groups[1].Value;
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid colour '{child.Content}' - expected 'colour yellow', 'colour pink', 'colour green' or 'colour blue'", child.Location);
+                    }
+
+                    break;
+                case "position":
+                    position = ParseCanvasPair(context, child, "position", "x", "y", position, allowNegative: true) ?? position;
+                    break;
+                case "size":
+                    size = ParseCanvasPair(context, child, "size", "width", "height", size, allowNegative: false) ?? size;
+                    break;
+                default:
+                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in sticky note body - expected description, colour, position or size", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        if (text is null || position is null)
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, "A sticky note needs a description (the text on it) and a position", line.Location);
+            return null;
+        }
+
+        return new(text, colour, position.Value.X, position.Value.Y, size?.Width, size?.Height, line.Location) { DirectiveLocations = directiveLocations };
+    }
+
+    // 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
+    static (int First, int Second)? ParseCanvasPair(ParserContext context, SourceLine line, string keyword, string first, string second, (int, int)? existing, bool allowNegative)
+    {
+        var match = CanvasPairRegex().Match(line.Content);
+        if (!match.Success
+            || match.Groups[1].Value != keyword
+            || !int.TryParse(match.Groups[2].Value, out var firstValue)
+            || !int.TryParse(match.Groups[3].Value, out var secondValue)
+            || (!allowNegative && (firstValue < 0 || secondValue < 0)))
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid {keyword} '{line.Content}' - expected '{keyword} <{first}> <{second}>' with whole numbers{(allowNegative ? string.Empty : " that are not negative")}", line.Location);
+            return null;
+        }
+
+        if (existing is not null)
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"The {keyword} is already declared - at most one is allowed", line.Location);
+            return null;
+        }
+
+        return (firstValue, secondValue);
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)
@@ -702,6 +826,18 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaPolicyRegex();
+
+    [GeneratedRegex(@"^goal\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
+    private static partial Regex PersonaGoalRegex();
+
+    [GeneratedRegex(@"^sticky\s+note\s+on\s+personas$", RegexOptions.NonBacktracking)]
+    private static partial Regex StickyNoteRegex();
+
+    [GeneratedRegex(@"^colour\s+(yellow|pink|green|blue)$", RegexOptions.NonBacktracking)]
+    private static partial Regex StickyNoteColourRegex();
+
+    [GeneratedRegex(@"^(position|size)\s+(-?\d+)\s+(-?\d+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex CanvasPairRegex();
 
     [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ModuleRegex();

@@ -117,6 +117,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitBehavior(behavior);
         }
 
+        foreach (var note in syntax.StickyNotes)
+        {
+            VisitStickyNote(note);
+        }
+
         foreach (var exposure in syntax.Exposures)
         {
             VisitExposure(exposure);
