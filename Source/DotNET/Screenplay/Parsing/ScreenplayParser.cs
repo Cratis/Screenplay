@@ -327,6 +327,29 @@ internal static partial class ScreenplayParser
         return body.Build(line.Location);
     }
 
+    // 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
+    internal static (int First, int Second)? ParseCanvasPair(ParserContext context, SourceLine line, string keyword, string first, string second, (int, int)? existing, bool allowNegative)
+    {
+        var match = CanvasPairRegex().Match(line.Content);
+        if (!match.Success
+            || match.Groups[1].Value != keyword
+            || !int.TryParse(match.Groups[2].Value, out var firstValue)
+            || !int.TryParse(match.Groups[3].Value, out var secondValue)
+            || (!allowNegative && (firstValue < 0 || secondValue < 0)))
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid {keyword} '{line.Content}' - expected '{keyword} <{first}> <{second}>' with whole numbers{(allowNegative ? string.Empty : " that are not negative")}", line.Location);
+            return null;
+        }
+
+        if (existing is not null)
+        {
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"The {keyword} is already declared - at most one is allowed", line.Location);
+            return null;
+        }
+
+        return (firstValue, secondValue);
+    }
+
     static void SkipDiscoveryBlock(ParserContext context, int parentIndent)
     {
         while (context.TryPeekChild(parentIndent, out var child))
@@ -763,29 +786,6 @@ internal static partial class ScreenplayParser
         }
 
         return new(canvasMatch.Groups[1].Value, text, colour, position.Value.X, position.Value.Y, size?.Width, size?.Height, line.Location) { DirectiveLocations = directiveLocations };
-    }
-
-    // 'position <x> <y>' or 'size <width> <height>' - two whole numbers in canvas units; a second line is a mistake.
-    internal static (int First, int Second)? ParseCanvasPair(ParserContext context, SourceLine line, string keyword, string first, string second, (int, int)? existing, bool allowNegative)
-    {
-        var match = CanvasPairRegex().Match(line.Content);
-        if (!match.Success
-            || match.Groups[1].Value != keyword
-            || !int.TryParse(match.Groups[2].Value, out var firstValue)
-            || !int.TryParse(match.Groups[3].Value, out var secondValue)
-            || (!allowNegative && (firstValue < 0 || secondValue < 0)))
-        {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid {keyword} '{line.Content}' - expected '{keyword} <{first}> <{second}>' with whole numbers{(allowNegative ? string.Empty : " that are not negative")}", line.Location);
-            return null;
-        }
-
-        if (existing is not null)
-        {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"The {keyword} is already declared - at most one is allowed", line.Location);
-            return null;
-        }
-
-        return (firstValue, secondValue);
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)
