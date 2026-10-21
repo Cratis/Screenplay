@@ -1,7 +1,9 @@
 // ============================================================
 // Catalog: the events a PLAYED catalog starts with (Stage appends a seed once, when the sandbox starts with an empty log).
 // Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the same products arrive as events and the
-// catalogue is never empty: most are approved for sale, two are still drafts. Keep the two in step.
+// catalogue is never empty: most are approved for sale, two are still drafts. The plate (ACM-1001) is described and priced, so
+// Approve for sale works on it; the watering can (ACM-3001) is not, so approving it is refused with the readiness messages.
+// Keep the two in step.
 // ============================================================
 
 seed "Starter catalogue"
@@ -30,6 +32,13 @@ seed "Starter catalogue"
       sku      = "ACM-1001"
       name     = "Acme tallerken"
       category = "Kjøkken"
+    ProductDescribed
+      details  = "Tallerken i keramikk, tåler oppvaskmaskin"
+      imageUrl = "/img/acm-1001.png"
+    ProductPriceSet
+      price         = 89
+      currency      = "NOK"
+      effectiveFrom = "2026-01-01"
   for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1003"
     ProductDrafted
       sku      = "ACM-1002"
