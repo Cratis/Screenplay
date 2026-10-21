@@ -13,7 +13,8 @@ import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseConcrete } from './SpecificationResponseParser';
 
-const caseHeader = new RegExp(pattern('^case\\s+([A-Za-z_]\\w*)(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?$').source, 'du');
+// No 'd' (hasIndices) flag: another extension in the shared VS Code extension host can patch RegExp and fail on it.
+const caseHeader = pattern('^case\\s+([A-Za-z_]\\w*)(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?$');
 const assignment = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const reference = pattern('^case\\.([a-z_]\\w*)$');
 
@@ -55,6 +56,7 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
         return null;
     }
     const values: PropertyMappingSyntax[] = [];
+    const inlinePropertyColumn = line.content.indexOf(match.groups?.property ?? '', line.content.indexOf(match[1], 'case'.length) + match[1].length);
     const add = (property: string, text: string, owner: SourceLine) => {
         const location = locationOf(owner);
         const valueLocation = { ...location, column: location.column + owner.content.indexOf(text, owner.content.indexOf('=') + 1) };
@@ -63,7 +65,7 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
             return;
         }
         const source = parseConcrete(context, text, valueLocation, DiagnosticCodes.InvalidSpecificationCaseValue);
-        if (source !== null) values.push({ kind: 'PropertyMappingSyntax', property, source, location: owner === line ? { ...location, column: location.column + match.indices!.groups!.property[0] } : location });
+        if (source !== null) values.push({ kind: 'PropertyMappingSyntax', property, source, location: owner === line ? { ...location, column: location.column + inlinePropertyColumn } : location });
     };
     if (match.groups?.property !== undefined) add(match.groups.property, match.groups.value, line);
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
