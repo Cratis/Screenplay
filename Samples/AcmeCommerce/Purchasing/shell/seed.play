@@ -3,7 +3,7 @@
 // Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
 // ============================================================
 
-seed
+seed "Supplier starting data"
   for "5b2e0000-0000-4000-8000-000000000001"
     SupplierRegistered
       name         = "Nordic Ceramics AS"
@@ -339,3 +339,4 @@ seed
       orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b05"
       sku      = "ACM-1013"
       quantity = 10
+  position 110 150

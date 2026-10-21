@@ -4,7 +4,7 @@
 // Keep the two in step: shell/sampledata.play shape ListedProduct is the source of these rows.
 // ============================================================
 
-seed
+seed "Storefront listing"
   for "ACM-1000"
     ProductListed
       productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1000"
@@ -258,3 +258,4 @@ seed
       currency         = "NOK"
       imageUrl         = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20240%20160'%3E%3Crect%20width='240'%20height='160'%20fill='%23FCE7F3'/%3E%3Ccircle%20cx='200'%20cy='30'%20r='44'%20fill='%23BE185D'%20fill-opacity='0.12'/%3E%3Ctext%20x='120'%20y='92'%20font-size='30'%20font-family='Helvetica,Arial,sans-serif'%20font-weight='700'%20text-anchor='middle'%20fill='%23BE185D'%3Enattlys%3C/text%3E%3Ctext%20x='120'%20y='122'%20font-size='14'%20font-family='Helvetica,Arial,sans-serif'%20text-anchor='middle'%20fill='%23BE185D'%20fill-opacity='0.7'%3EBelysning%3C/text%3E%3C/svg%3E"
       available        = 52
+  position 110 150

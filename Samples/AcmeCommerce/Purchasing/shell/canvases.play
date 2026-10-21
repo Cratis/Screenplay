@@ -1,0 +1,30 @@
+// ============================================================
+// Purchasing: the thinking around the event sources, the given contexts and the seed data - sticky notes on their canvases.
+//
+// A note says what a decision was, what is still open, what we assume and what could go wrong, beside the cards it is about.
+// Colours: green decision, yellow question, blue assumption, pink risk. Authoring metadata only: it never reaches the running application.
+// ============================================================
+
+sticky note on eventsources
+  description "[DECISION] Supplier and PurchaseOrder are separate event sources: a supplier outlives every order placed with it."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on eventsources
+  description "[QUESTION] Can an order be split between two suppliers, or is that two orders?"
+  colour yellow
+  position 1210 360
+  size 270 190
+
+sticky note on givencontexts
+  description "[DECISION] A registered supplier is the only precondition every purchasing specification shares. Orders add their own events on top."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on seeddata
+  description "[ASSUMPTION] Nordic Ceramics is the supplier of the whole starter catalogue. A second supplier arrives with the first real order."
+  colour blue
+  position 560 150
+  size 270 190

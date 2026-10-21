@@ -3,7 +3,7 @@
 // Preview draws the sample-data pack (shell/sampledata.play); Play has no pack, so the lists, boards and dashboard are filled by these events.
 // ============================================================
 
-seed
+seed "Warehouse starting stock"
   for "ACM-1000"
     SkuRegistered
       sku  = "ACM-1000"
@@ -262,3 +262,4 @@ seed
       sku            = "ACM-1007"
       quantity       = 6
       dispatchedAt   = "2026-10-16T10:00:00Z"
+  position 110 150

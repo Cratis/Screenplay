@@ -1,0 +1,30 @@
+// ============================================================
+// Storefront: the thinking around the event sources, the given contexts and the seed data - sticky notes on their canvases.
+//
+// A note says what a decision was, what is still open, what we assume and what could go wrong, beside the cards it is about.
+// Colours: green decision, yellow question, blue assumption, pink risk. Authoring metadata only: it never reaches the running application.
+// ============================================================
+
+sticky note on eventsources
+  description "[DECISION] Basket and Order are separate event sources: a basket is thrown away freely, an order never is. Checkout is the only place one turns into the other."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on eventsources
+  description "[QUESTION] Does a returning shopper's basket follow them across devices? That would make the shopper, not the basket, the event source."
+  colour yellow
+  position 1210 360
+  size 270 190
+
+sticky note on givencontexts
+  description "[DECISION] A product on sale is the starting point of every browsing and basket specification. It is listed with a price and stock, never an unapproved product."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on seeddata
+  description "[ASSUMPTION] Storefront lists what Catalog approved and Warehouse has on the shelf. The seed carries only the listing, never prices of its own."
+  colour blue
+  position 560 150
+  size 270 190

@@ -1,0 +1,42 @@
+// ============================================================
+// Catalog: the thinking around the event sources, the given contexts and the seed data - sticky notes on their canvases.
+//
+// A note says what a decision was, what is still open, what we assume and what could go wrong, beside the cards it is about.
+// Colours: green decision, yellow question, blue assumption, pink risk. Authoring metadata only: it never reaches the running application.
+// ============================================================
+
+sticky note on eventsources
+  description "[DECISION] Product is the one event source of the catalog. Every price, approval and withdrawal is an event on a product's own stream, so the history of one product reads top to bottom."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on eventsources
+  description "[QUESTION] Should a product keep one stream per market (NO, SE, DK) once Sales prices per market? Today there is one Lifecycle stream and the market is a field."
+  colour yellow
+  position 1210 360
+  size 270 190
+
+sticky note on givencontexts
+  description "[DECISION] One reusable context for 'a product that can be sold', so no specification repeats the drafting, pricing and approval events by hand."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on givencontexts
+  description "[ASSUMPTION] A product is always priced before it is approved. A specification that needs an unpriced product states its own events instead of reusing this context."
+  colour blue
+  position 1210 360
+  size 270 190
+
+sticky note on seeddata
+  description "[DECISION] The starter catalogue is the same eight products Storefront and Warehouse show in Preview, so a played application and the drawn screens agree."
+  colour green
+  position 560 150
+  size 270 190
+
+sticky note on seeddata
+  description "[QUESTION] Do we seed approved products only, or also a draft and a withdrawn one to show the lifecycle?"
+  colour yellow
+  position 560 360
+  size 270 190

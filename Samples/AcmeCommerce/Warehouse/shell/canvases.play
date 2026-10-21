@@ -1,0 +1,30 @@
+// ============================================================
+// Warehouse: the thinking around the event sources, the given contexts and the seed data - sticky notes on their canvases.
+//
+// A note says what a decision was, what is still open, what we assume and what could go wrong, beside the cards it is about.
+// Colours: green decision, yellow question, blue assumption, pink risk. Authoring metadata only: it never reaches the running application.
+// ============================================================
+
+sticky note on eventsources
+  description "[DECISION] Stock is kept per SKU, not per product: one product can have several SKUs (colour, size), and only the SKU can be counted on a shelf."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on eventsources
+  description "[QUESTION] Who owns a stock correction made during a count: the person who counted, or the person who approves it?"
+  colour yellow
+  position 1210 360
+  size 270 190
+
+sticky note on givencontexts
+  description "[DECISION] 'Stock on the shelf' registers the SKU and receives a delivery. Picking, dispatch and returns all start from it."
+  colour green
+  position 1210 150
+  size 270 190
+
+sticky note on seeddata
+  description "[ASSUMPTION] The seed receives one delivery of 140 units. Numbers from a real count replace it, they are never mixed into it."
+  colour blue
+  position 560 150
+  size 270 190

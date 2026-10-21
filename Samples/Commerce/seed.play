@@ -2,7 +2,7 @@
 // RegisterProduct slice produces, so seeded products flow through every
 // projection exactly like registered ones.
 
-seed
+seed "Starter products"
   for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
     ProductRegistered
       sku    = "MUG-0042"
@@ -15,3 +15,16 @@ seed
       name   = "Organic cotton tee"
       price  = 24
       weight = 0.2
+  position 110 150
+
+sticky note on seeddata
+  description "Three products are enough to browse, fill a basket and check out in the played application."
+  colour blue
+  position 560 150
+  size 260 170
+
+sticky note on seeddata
+  description "Question: add a product that is out of stock to show the empty state?"
+  colour yellow
+  position 560 350
+  size 260 170

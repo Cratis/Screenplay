@@ -4,7 +4,7 @@
 // catalogue is never empty: most are approved for sale, two are still drafts. Keep the two in step.
 // ============================================================
 
-seed
+seed "Starter catalogue"
   for "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
     ProductDrafted
       sku      = "ACM-1000"
@@ -135,3 +135,4 @@ seed
       sku      = "ACM-3001"
       name     = "Acme vanningskanne"
       category = "Hage"
+  position 110 150
