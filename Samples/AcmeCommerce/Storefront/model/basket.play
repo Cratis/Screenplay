@@ -15,14 +15,16 @@ module Shop
 
         produces BasketLineAdded
           for basketId
-          sku       = sku
-          quantity  = quantity
-          unitPrice = ListedProduct.displayPrice
+          sku         = sku
+          productName = ListedProduct.title
+          quantity    = quantity
+          unitPrice   = ListedProduct.displayPrice
 
       event BasketLineAdded
-        sku       Sku
-        quantity  Quantity
-        unitPrice Money
+        sku         Sku
+        productName ProductName
+        quantity    Quantity
+        unitPrice   Money
 
       example Mug : AddToBasket
         basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
@@ -47,9 +49,16 @@ module Shop
         when Mug
         then BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-1000"
-          quantity  = 2
-          unitPrice = 49
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
+        then readmodel BasketContents
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
+        then readmodel CheckoutDraft
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
 
       specification RejectingAProductThatIsOutOfStock
         given caller
@@ -103,6 +112,31 @@ module Shop
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku      = "ACM-1000"
           quantity = 3
+
+      specification ChangingAQuantityKeepsTheProductName
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
+        when ChangeBasketQuantity
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+          quantity = 3
+        then BasketLineQuantityChanged
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku      = "ACM-1000"
+          quantity = 3
+        then readmodel BasketContents
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":3,"unitPrice":49}]
+        then readmodel CheckoutDraft
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":3,"unitPrice":49}]
 
       specification RejectingAZeroQuantity
         given caller
@@ -194,9 +228,10 @@ module Shop
         from BasketLineAdded
         children lines identified by sku
           from BasketLineAdded key sku
-            sku       = sku
-            quantity  = quantity
-            unitPrice = unitPrice
+            sku         = sku
+            productName = productName
+            quantity    = quantity
+            unitPrice   = unitPrice
           from BasketLineQuantityChanged key sku
             quantity = quantity
           remove with BasketLineRemoved
@@ -215,10 +250,10 @@ module Shop
               id "basketLines"
               property rows from query AllBaskets.0.lines
               property idField = "sku"
-              property titleField = "sku"
+              property titleField = "productName"
               property selectionMode = "single"
               property label = "Basket lines"
-              property columns = [{"field":"sku","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
+              property columns = [{"field":"productName","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
               on select
                 navigate to Basket
                   with sku from component.basketLines.value
@@ -243,15 +278,20 @@ module Shop
           role "Shopper"
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-1000"
-          quantity  = 2
-          unitPrice = 49
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-2000"
-          quantity  = 1
-          unitPrice = 899
+          sku         = "ACM-2000"
+          productName = "Acme backpack"
+          quantity    = 1
+          unitPrice   = 899
         then readmodel BasketSize
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           lineCount  = 2
           addedValue = 997
+        then readmodel BasketContents
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49},{"sku":"ACM-2000","productName":"Acme backpack","quantity":1,"unitPrice":899}]
