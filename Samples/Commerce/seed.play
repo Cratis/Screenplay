@@ -25,6 +25,5 @@ sticky note on seeddata
 
 sticky note on seeddata
   description "Question: add a product that is out of stock to show the empty state?"
-  colour yellow
   position 560 350
   size 260 170

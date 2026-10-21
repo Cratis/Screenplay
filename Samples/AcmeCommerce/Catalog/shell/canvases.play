@@ -13,7 +13,6 @@ sticky note on eventsources
 
 sticky note on eventsources
   description "[QUESTION] Should a product keep one stream per market (NO, SE, DK) once Sales prices per market? Today there is one Lifecycle stream and the market is a field."
-  colour yellow
   position 1210 360
   size 270 190
 
@@ -37,6 +36,5 @@ sticky note on seeddata
 
 sticky note on seeddata
   description "[QUESTION] Do we seed approved products only, or also a draft and a withdrawn one to show the lifecycle?"
-  colour yellow
   position 560 360
   size 270 190
