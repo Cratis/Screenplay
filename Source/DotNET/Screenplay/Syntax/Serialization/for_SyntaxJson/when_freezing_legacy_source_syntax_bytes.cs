@@ -135,6 +135,7 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         Purposes = [],
         StickyNotes = [],
+        Seeds = application.Seeds?.Select(seed => seed with { Name = null, X = null, Y = null }),
         Personas = application.Personas?.Select(persona => persona with { Goals = [], X = null, Y = null, Width = null, Height = null }),
         Policies = application.Policies.Select(policy => policy with { Description = null }),
         Concepts = application.Concepts.Select(concept => concept with
