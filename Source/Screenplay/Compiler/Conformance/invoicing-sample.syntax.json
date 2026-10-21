@@ -393,7 +393,9 @@
             }
           ]
         }
-      ]
+      ],
+      "x": 110,
+      "y": 150
     }
   ],
   "exposures": [
@@ -17842,7 +17844,7 @@
       "text": "Context: invoices pass through drafting, approval and payment; every step is audited.",
       "width": 250,
       "x": 110,
-      "y": 830
+      "y": 1130
     },
     {
       "kind": "StickyNoteSyntax",
@@ -17852,7 +17854,37 @@
       "text": "Pain point: payments that cannot be matched to an invoice.",
       "width": 250,
       "x": 380,
-      "y": 830
+      "y": 1130
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "eventsources",
+      "colour": "green",
+      "height": 170,
+      "text": "Payment has two streams on purpose: Transactions is keyed by the invoice, Audit by invoice and payment together.",
+      "width": 260,
+      "x": 500,
+      "y": 150
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "eventsources",
+      "colour": "yellow",
+      "height": 170,
+      "text": "Question: do refunds become their own stream, or events on Transactions?",
+      "width": 260,
+      "x": 500,
+      "y": 350
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "seeddata",
+      "colour": "blue",
+      "height": 170,
+      "text": "The two customers are the ones every specification of the invoice flow starts from.",
+      "width": 260,
+      "x": 1000,
+      "y": 150
     }
   ],
   "systems": [],

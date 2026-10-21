@@ -535,11 +535,11 @@ module Admin
 sticky note on personas
   description "Context: acts rarely but consequentially - every change is audited."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: finding out who changed a role, and when."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150

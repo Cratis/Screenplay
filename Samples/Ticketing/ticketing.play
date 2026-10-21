@@ -662,17 +662,17 @@ module Support
 sticky note on personas
   description "Context: works the queue in shifts; handover between shifts matters."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: tickets that bounce between agents without an owner."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: nobody is asked the same question twice."
   colour green
-  position 650 490
+  position 650 650
   size 250 150

@@ -330,11 +330,11 @@ module Catalog
 sticky note on personas
   description "Context: publishes in bursts when a new supplier list arrives."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: finding which products still lack a category."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150

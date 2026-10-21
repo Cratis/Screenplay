@@ -743,10 +743,10 @@ module Hr
 sticky note on personas
   description "Context: handles requests in a weekly rhythm, with peaks before the holidays."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Question: how long may a time-off request wait before it is escalated?"
-  position 380 490
+  position 380 650
   size 250 150

@@ -1708,10 +1708,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Onboards and reviews vendors and follows what is bought from them",
+      "goals": [
+        "Know which vendors are approved",
+        "See what is bought from each vendor"
+      ],
       "name": "PurchasingManager",
       "policies": [
         "IsPurchasingManager"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: reviews a vendor once, then relies on the approval for a year.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": null,
+      "height": 150,
+      "text": "Question: who may suspend a vendor with open purchase orders?",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

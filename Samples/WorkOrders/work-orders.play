@@ -325,17 +325,17 @@ module WorkOrders
 sticky note on personas
   description "Context: works on site with a tablet and patchy coverage."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: parts used but not logged, found at invoicing time."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: a closed work order is a billable work order."
   colour green
-  position 650 490
+  position 650 650
   size 250 150

@@ -1737,10 +1737,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Takes orders from customers, follows them through picking and shipping and tells customers when to expect them",
+      "goals": [
+        "Take an order without re-typing the customer",
+        "Tell the customer when to expect it"
+      ],
       "name": "Sales",
       "policies": [
         "IsSales"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: orders arrive by phone and by mail, mostly before lunch.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: customers ask for status and nobody can answer quickly.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

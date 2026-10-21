@@ -3620,11 +3620,11 @@ seed
 sticky note on personas
   description "Context: invoices pass through drafting, approval and payment; every step is audited."
   colour blue
-  position 110 830
+  position 110 1130
   size 250 150
 
 sticky note on personas
   description "Pain point: payments that cannot be matched to an invoice."
   colour pink
-  position 380 830
+  position 380 1130
   size 250 150

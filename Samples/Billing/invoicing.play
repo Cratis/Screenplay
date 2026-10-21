@@ -380,10 +380,10 @@ module Invoicing
 sticky note on personas
   description "Context: bills at month end and chases at the start of the next."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Question: when does an overdue invoice go to collection?"
-  position 380 490
+  position 380 650
   size 250 150

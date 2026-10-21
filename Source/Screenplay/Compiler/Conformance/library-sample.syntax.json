@@ -2862,7 +2862,7 @@
       "text": "Context: members borrow on the way past; the librarian works the desk.",
       "width": 250,
       "x": 110,
-      "y": 490
+      "y": 650
     },
     {
       "kind": "StickyNoteSyntax",
@@ -2872,7 +2872,7 @@
       "text": "Question: how many books may a member borrow at once?",
       "width": 250,
       "x": 380,
-      "y": 490
+      "y": 650
     }
   ],
   "systems": [],

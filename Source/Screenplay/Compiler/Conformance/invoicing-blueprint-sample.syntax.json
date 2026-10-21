@@ -2195,10 +2195,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Bills customers, records the payments that come in and chases what is overdue",
+      "goals": [
+        "Bill customers on time",
+        "Chase what is overdue"
+      ],
       "name": "Accountant",
       "policies": [
         "IsAccountant"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: bills at month end and chases at the start of the next.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": null,
+      "height": 150,
+      "text": "Question: when does an overdue invoice go to collection?",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

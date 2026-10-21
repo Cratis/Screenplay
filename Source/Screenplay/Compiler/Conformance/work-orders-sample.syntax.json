@@ -1797,10 +1797,46 @@
     {
       "kind": "PersonaSyntax",
       "description": "Plans and does maintenance work: takes work orders, logs time and parts and closes them",
+      "goals": [
+        "Take a work order and close it with time and parts logged",
+        "Know which parts are in the van"
+      ],
       "name": "Technician",
       "policies": [
         "IsTechnician"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: works on site with a tablet and patchy coverage.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: parts used but not logged, found at invoicing time.",
+      "width": 250,
+      "x": 380,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "green",
+      "height": 150,
+      "text": "Success: a closed work order is a billable work order.",
+      "width": 250,
+      "x": 650,
+      "y": 650
     }
   ],
   "systems": [],

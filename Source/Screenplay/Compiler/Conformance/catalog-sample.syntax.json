@@ -1844,10 +1844,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Keeps the catalog: publishes products, prices them and groups them in categories",
+      "goals": [
+        "Publish products with a price and a category",
+        "Keep the catalog free of stale entries"
+      ],
       "name": "CatalogManager",
       "policies": [
         "IsCatalogManager"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: publishes in bursts when a new supplier list arrives.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: finding which products still lack a category.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

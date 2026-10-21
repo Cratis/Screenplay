@@ -1550,10 +1550,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Drafts, reviews and renews the contracts the company is bound by",
+      "goals": [
+        "Know which contracts expire soon",
+        "Keep every renewal decision on record"
+      ],
       "name": "ContractManager",
       "policies": [
         "IsContractManager"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: reviews contracts in batches before each quarter.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": null,
+      "height": 150,
+      "text": "Question: who signs a renewal above the agreed limit?",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

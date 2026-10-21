@@ -1065,17 +1065,17 @@ module Crm
 sticky note on personas
   description "Context: works twenty open deals at a time, mostly from the phone."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: leads that go cold because nobody is reminded."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: every lead gets an answer within a day."
   colour green
-  position 650 490
+  position 650 650
   size 250 150

@@ -9,22 +9,22 @@
 sticky note on personas
   description "Context: on the floor with a handheld scanner and one hand free. Screens must be readable at arm's length."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: picking cards arrive in the order they were placed, not in shelf order."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
 
 sticky note on personas
   description "Success: every paid order is dispatched the day it is paid."
   colour green
-  position 650 490
+  position 650 650
   size 250 150
 
 sticky note on personas
   description "Question: who handles a delivery that does not match its purchase order?"
-  position 920 490
+  position 920 650
   size 250 150

@@ -484,11 +484,11 @@ module Projects
 sticky note on personas
   description "Context: a team of five, standing meeting every morning."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: tasks without an owner sit in the backlog for weeks."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150

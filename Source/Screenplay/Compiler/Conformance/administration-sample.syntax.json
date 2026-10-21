@@ -3310,10 +3310,36 @@
     {
       "kind": "PersonaSyntax",
       "description": "Looks after who may use the application: invites people, decides what each role may do, keeps the organization settings and reads the audit log",
+      "goals": [
+        "Invite people and decide what each role may do",
+        "Read the audit log when something looks wrong"
+      ],
       "name": "Administrator",
       "policies": [
         "IsAdministrator"
       ]
+    }
+  ],
+  "stickyNotes": [
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "blue",
+      "height": 150,
+      "text": "Context: acts rarely but consequentially - every change is audited.",
+      "width": 250,
+      "x": 110,
+      "y": 650
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "personas",
+      "colour": "pink",
+      "height": 150,
+      "text": "Pain point: finding out who changed a role, and when.",
+      "width": 250,
+      "x": 380,
+      "y": 650
     }
   ],
   "systems": [],

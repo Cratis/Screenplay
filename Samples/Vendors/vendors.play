@@ -315,10 +315,10 @@ module Vendors
 sticky note on personas
   description "Context: reviews a vendor once, then relies on the approval for a year."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Question: who may suspend a vendor with open purchase orders?"
-  position 380 490
+  position 380 650
   size 250 150

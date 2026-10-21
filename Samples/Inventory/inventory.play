@@ -668,11 +668,11 @@ module Inventory
 sticky note on personas
   description "Context: counts stock on a handheld device, aisle by aisle."
   colour blue
-  position 110 490
+  position 110 650
   size 250 150
 
 sticky note on personas
   description "Pain point: adjustments without a reason are hard to audit later."
   colour pink
-  position 380 490
+  position 380 650
   size 250 150
