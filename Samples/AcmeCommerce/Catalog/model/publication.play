@@ -4,6 +4,7 @@
 
 module Merchandising
   feature Publication
+    template blueprint Cratis.Blueprint.Default ListScreen version "^1"
     description "Which products the shop may sell"
 
     // The feature adds these to the toolbar of every screen it has: each runs one of its commands. Withdrawing asks first.
@@ -280,6 +281,7 @@ module Merchandising
         then error "ProductReadiness '6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1099' does not exist."
 
   feature Reporting
+    template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"
     description "How the catalogue stands"
 
     slice StateView CatalogDashboard

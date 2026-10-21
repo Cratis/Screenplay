@@ -8,5 +8,7 @@ module Buying
   feature Sourcing
   feature Replenishment
   feature PurchaseOrders
+    template blueprint Cratis.Blueprint.Default ListScreen version "^1"
   feature Demand
   feature Overview
+    template blueprint Cratis.Blueprint.Default DashboardScreen version "^1"

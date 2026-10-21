@@ -499,6 +499,35 @@ screen template ProductGrid
 
 See [layout arrangement](layout-arrangement.md).
 
+### Blueprint templates at the feature level
+
+Both flavours show on the boards. Next to the domain's own templates, five features are framed by a **blueprint template**: an assignment of
+a template of `Cratis.Blueprint.Default` (the blueprint every Stage ships, pinned `^1`) at feature scope. The board's template header under the feature
+shows it, and its picker (*Blueprints*, *Browse all...*) switches it to any other template that fits - a domain blueprint's included, for a Preview.
+
+```text
+feature Publication
+  template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+```
+
+| Domain | Feature | Template | Why it fits |
+| --- | --- | --- | --- |
+| Catalog | Publication | `ListScreen` | the approval list and its feature toolbar (Approve product, Withdraw product): `ListScreen` has the `toolbar` slot |
+| Catalog | Pricing | `BoardScreen` | the pricing board |
+| Catalog | Reporting | `DashboardScreen` | the catalogue dashboard |
+| Purchasing | PurchaseOrders | `ListScreen` | the purchase orders list |
+| Purchasing | Overview | `DashboardScreen` | the purchasing dashboard |
+
+The levels nest by `fits slot`: `ListScreen`, `BoardScreen` and `DashboardScreen` fit the shell's `content` slot, `MasterDetailScreen` fits
+`WorkspaceScreen.moduleContent`. A module template of `WorkspaceScreen` therefore turns every feature below it that fits `content` into an orange "Not available"
+header, so the sample frames features with templates that fit the shell and leaves the modules without one.
+
+**Why no domain blueprint** (`Cratis.Blueprint.Crm`, `.Approvals`, `.Inventory`, ...): their screens are drawn from blueprint-shaped queries
+(`ProductColumns`, `ProductFilterFields`, `InboxRequests`, quick-create sections, ...) that only the blueprint's own sample-data pack answers, and a live Stage
+serves none of that pack. A domain blueprint's list therefore draws "Nothing here yet" in Play and its quick-create dialog has no fields (verified on a live Stage with the
+package approved). The foundation templates take the screen's own data, so a screen built from them plays with the real read models and commands.
+Choosing a domain blueprint's template from the picker is a Preview of that blueprint.
+
 ## Custom components: `@acme/scene.commerce`
 
 The `Acme.Commerce` package is plain ES modules with React left external, so the host's own React is used and there is no build
