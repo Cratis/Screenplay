@@ -6,17 +6,19 @@ namespace Cratis.Screenplay.Semantics;
 internal static partial class SemanticModelValidator
 {
     internal static SemanticTypeReference DeclaredEventSourceType(IEnumerable<SemanticCommand> commands, SemanticId eventContract) =>
-        DeclaredEventSourceType(commands, [], [], eventContract);
+        DeclaredEventSourceType(commands, [], [], [], eventContract);
 
     // Since ESM v6 a reaction or a capture can append an event too: a reaction to the event source its 'for' names, or
-    // to that of the event that set it off, and a capture to the one its record key names.
+    // to that of the event that set it off, and a capture to the one its record key names. An event projection
+    // publishes to the event source of the private facts it folds, preserving their typed context.
     internal static SemanticTypeReference DeclaredEventSourceType(
         IEnumerable<SemanticCommand> commands,
         IEnumerable<SemanticReaction> reactions,
         IEnumerable<SemanticCapture> captures,
+        IEnumerable<SemanticProjection> projections,
         SemanticId eventContract)
     {
-        var sources = new ProducerSources([.. commands], [.. reactions], [.. captures]);
+        var sources = new ProducerSources([.. commands], [.. reactions], [.. captures], [.. projections]);
         var producerTypes = ProducerTypes(sources, eventContract, [])
             .Distinct().ToArray();
         if (producerTypes.Length != 1)
@@ -49,6 +51,16 @@ internal static partial class SemanticModelValidator
         types.AddRange(sources.Captures.SelectMany(CaptureAppends)
             .Where(append => append.EventContract == eventContract)
             .Select(append => append.EventSourceType));
+        foreach (var source in sources.Projections
+            .Where(projection => projection.Target == SemanticProjectionTargetKind.Event && projection.ReadModel == eventContract && projection.Scope is not null)
+            .SelectMany(projection => projection.Scope!.From))
+        {
+            if (!visited.Contains(source.EventContract))
+            {
+                types.AddRange(ProducerTypes(sources, source.EventContract, visited));
+            }
+        }
+
         return types;
     }
 
@@ -79,5 +91,5 @@ internal static partial class SemanticModelValidator
             .Concat(capture.Children.SelectMany(children => children.Appends))
             .Concat(capture.Nested.SelectMany(nested => nested.Appends));
 
-    sealed record ProducerSources(SemanticCommand[] Commands, SemanticReaction[] Reactions, SemanticCapture[] Captures);
+    sealed record ProducerSources(SemanticCommand[] Commands, SemanticReaction[] Reactions, SemanticCapture[] Captures, SemanticProjection[] Projections);
 }
