@@ -1,0 +1,28 @@
+concept OrderId : Uuid
+module Sales
+  feature Orders
+    slice Translate ReceiveOrders
+      direction inbound
+      event OrderPlaced from "storefront"
+        orderId OrderId
+      event OrderReceived
+        orderId OrderId
+      capture OrderIntake
+        source events
+          from OrderPlaced
+        key orderId
+        append OrderReceived
+          orderId = $.orderId
+      specification AReceivedOrderHasItsTypedIdentity
+        given OrderReceived
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then readmodel OrderStateEntry
+          orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    slice StateView OrderState
+      readmodel OrderStateEntry
+        orderId OrderId key
+      projection OrderStateProjection => OrderStateEntry
+        from OrderReceived
+          key $eventSourceId
+          orderId = $eventSourceId

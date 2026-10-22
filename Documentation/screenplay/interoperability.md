@@ -150,11 +150,13 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 29.0 | The Acme Commerce admissions of decision 0098: `decimals <= N` rules, `add`/`subtract` by a product, mapping between concepts over one primitive, application toolbar buttons, and command specifications stating published events | 29 | [0098](https://github.com/Cratis/Screenplay/blob/main/decisions/0098-admit-the-constructs-the-acme-commerce-sample-is-blocked-on.md) | `full-esm-v29.json` | `AcmeAdmissionsCorpus.V29` |
 | 30.0 | Commands that append to several event sources (`for` any required scalar property) and `given generated <Command>.<property> = <value>` pinned values for reaction-invoked commands (released in Screenplay v4.226.0) | 30 | [0098](https://github.com/Cratis/Screenplay/blob/main/decisions/0098-admit-the-constructs-the-acme-commerce-sample-is-blocked-on.md) | `full-esm-v30.json` | `AcmeSecondAdmissionsCorpus.V30` |
 
+| 31.0 | The `anonymous` policy condition (`require anonymous`): a policy every caller satisfies, with or without an identity, as the whole authorization of a command or query (released in Screenplay v4.240.6) | 31 | [0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md), [0092](https://github.com/Cratis/Screenplay/blob/main/decisions/0092-the-language-is-frozen-at-esm-v28.md) | `full-esm-v31.json` | `AnonymousPoliciesCorpus.V31` |
+
 #### Claimed, unreleased version
 
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
-| 31.0 | The `anonymous` policy condition (`require anonymous`): a policy every caller satisfies, with or without an identity, as the whole authorization of a command or query; an exception to the v28 freeze | 31 | [0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md), [0092](https://github.com/Cratis/Screenplay/blob/main/decisions/0092-the-language-is-frozen-at-esm-v28.md) | `full-esm-v31.json` | `AnonymousPoliciesCorpus.V31` |
+| 32.0 | Typed event capture keys preserve the agreed source-property identity on capture appends and specification fixtures | 32 | [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) | `full-esm-v32.json` | `EsmGoldenVectors.Get(32)` |
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.
 
@@ -368,3 +370,5 @@ An extension catalog describes interoperability options. It is documentation, no
 Clearly labeled ecosystem examples include the Vogen source adapter in Screenplay Generation, the [Critter Stack source adapter](/screenplay/ecosystem-examples/critter-stack/) as a framework-specific integration, and the Cratis artifact render planner in Stage. Ecosystem-specific adapters and renderers are owned separately from the core extension contracts. Catalog membership documents an integration; it does not imply admission to or support by the Cratis CLI.
 
 The Cratis CLI currently uses a static, reviewed renderer-target roster. A renderer appearing in this catalog, being installed beside a workspace, or implementing `IArtifactRenderPlanner` does not admit it to that roster. CLI support requires a separate orchestration change, explicit profile construction, publication wiring, and verification.
+
+Typed event capture keys select ESM v32 only when their inferred identities change; see [Typed event capture keys](captures/typed-event-keys.md) for fallback rules, canonical effects and consumer admission.
