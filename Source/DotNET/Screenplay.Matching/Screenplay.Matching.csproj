@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Matching</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Matching</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <Description>Portable linear-time pattern matching for Screenplay applications</Description>
+        <PackageTags>cratis;screenplay;matching;validation</PackageTags>
+        <!-- This new package has no published baseline. Keep package validation enabled. -->
+        <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Cratis.Screenplay" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.Matching.Specs" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.CanonicalVectors.Specs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="README.md" />
+        <None Include="README.md" Pack="true" PackagePath="/" />
+        <None Remove="../../../README.md" />
+    </ItemGroup>
+</Project>

@@ -346,6 +346,28 @@ A pattern has at most 1,000 UTF-16 code units and 3,000 expanded nodes. Each lit
 
 These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode spaces, so `matches email` rejects `a<U+00A0>@b.co`; dot rejects CR and U+2028/U+2029; `\w` rejects U+0130. Older ESM documents keep their authored pattern bytes and load even when the current parser classifies the pattern as invalid or outside the dialect. Except for the exact Studio text-rule shapes below, either case produces plan-time `UnsupportedValidation` and deterministic generation Unproven, naming the construct. Re-authoring reports `PLAY0367` for invalid syntax or `PLAY0699` for a construct outside the dialect. The matcher has the same behavior on every supported target framework; platform regex settings cannot change a verdict.
 
+#### Matching in generated .NET applications
+
+Use `Cratis.Screenplay.Matching` at the same version as the compiler that admitted the pattern.
+This BCL-only package targets .NET 8, 9 and 10 and contains the compiler's own portable parser and
+linear matcher, without a dependency on the compiler, diagnostics or context contracts.
+
+```csharp
+using Cratis.Screenplay.Matching;
+
+var matcher = PortableMatcher.Compile("^[A-Z]{3}$");
+var valid = matcher.IsMatch("ABC");
+```
+
+Compile once per concept, then reuse the immutable, thread-safe matcher for each value. A refused
+or invalid pattern throws `InvalidPortableMatchPattern`; its message is the compiler's admission
+reason. Deprecated Studio lookaround text rules must first be converted to the equivalent ordinal
+rule, not passed to the matcher.
+
+Do not substitute .NET `RegexOptions.NonBacktracking`: its construction-time automaton limit can
+reject an admitted pattern such as `^(a{2996}b)+$`. Portable admission limits bound this package's
+linear machine, not a platform engine's automaton estimate. No platform regex setting is required.
+
 ### Deprecated Studio text-rule patterns
 
 Studio's exact escaped-literal lookaround shapes report warning `PLAY0787`, not `PLAY0699`. The syntax tree keeps the original `matches` text; executable binding stores the equivalent ordinal rule. The editor quick fix and MCP `propose-repair` migrate the source while preserving the rule's message and severity.

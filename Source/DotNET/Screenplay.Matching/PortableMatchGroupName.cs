@@ -5,7 +5,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 // RegExpIdentifierName uses Unicode identifiers, even in flagless JavaScript.
 // Valid names beyond the portable ASCII spelling are refused, not syntax errors.

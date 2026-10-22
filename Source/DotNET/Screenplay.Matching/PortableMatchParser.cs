@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 // Decision 0084: this parser, not the host regex engine, decides dialect admission.
 internal sealed partial class PortableMatchParser(string pattern)

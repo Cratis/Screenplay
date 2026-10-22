@@ -12,6 +12,7 @@
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
         <ProjectReference Include="../Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="TargetFramework" />
         <ProjectReference Include="../Screenplay.Contexts/Screenplay.Contexts.csproj" />
+        <ProjectReference Include="../Screenplay.Matching/Screenplay.Matching.csproj" />
         <InternalsVisibleTo Include="Cratis.Screenplay.Mcp" />
         <InternalsVisibleTo Include="Cratis.Screenplay.CanonicalVectors.Specs" />
     </ItemGroup>
