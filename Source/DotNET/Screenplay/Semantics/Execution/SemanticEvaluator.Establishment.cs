@@ -141,7 +141,7 @@ public sealed partial class SemanticEvaluator
 
         return plan.Events[fact.EventContract].Origin is not null
             ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
-            : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, fact.EventContract);
+            : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, plan.Projections.Values, fact.EventContract);
     }
 
     static void ValidateEventSource(SemanticValueValidator validator, SemanticEventContext context, SemanticTypeReference requiredType)
