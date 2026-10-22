@@ -26,14 +26,6 @@ internal static class WorkspaceDeclarationMove
     };
 
     /// <summary>
-    /// Whether the request moves one slice-level declaration to a slice.
-    /// </summary>
-    /// <param name="target">The move target.</param>
-    /// <param name="newParent">The move destination.</param>
-    /// <returns>True for a declaration move.</returns>
-    internal static bool Applies(SemanticAddress target, SemanticAddress newParent) => _kinds.ContainsKey(target.Kind) && newParent.Kind == SemanticKind.Slice;
-
-    /// <summary>
     /// Finds the specifications of the source slice that cover only the moved declaration.
     /// </summary>
     /// <param name="snapshot">The workspace before the move.</param>

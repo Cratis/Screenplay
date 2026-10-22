@@ -65,7 +65,7 @@ internal sealed partial class WorkspaceRefactoring
             ?? destinations.FirstOrDefault(entry => entry.Handle.Document == target.Handle.Document)
             ?? (destinations.Length == 1 ? destinations[0] : throw new InvalidWorkspaceAuthoring($"Destination slice '{MoveAddress(request.NewParent)}' has fragments in several documents; name one with newParentHandle."));
 
-        var (specifications, refusal) = WorkspaceDeclarationMove.Carried(new AuthoringSnapshot(workspace.Documents), request.Target);
+        var (specifications, refusal) = WorkspaceDeclarationMove.Carried(WorkspaceAuthoringAnalysis.For(workspace).Source, request.Target);
         if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
         WorkspaceSyntaxEntry Specification(SemanticAddress carried)
         {

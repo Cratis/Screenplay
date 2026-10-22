@@ -349,11 +349,6 @@ internal sealed partial class WorkspaceRefactoring
             EventRenames = eventRenames
         });
         if (!result.Accepted) return result;
-        if (plan.DeclarationMove)
-        {
-            var refusal = WorkspaceDeclarationMove.Obligations(new AuthoringSnapshot(workspace.Documents), new AuthoringSnapshot(result.Workspace!.Documents), plan.Migrations);
-            if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
-        }
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
         var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeInteractions: true);
         candidateBindings.RequireNoCollisions();
@@ -365,6 +360,11 @@ internal sealed partial class WorkspaceRefactoring
         }
         RequireInheritedBehavior(plan.Index, candidateIndex, plan.Rehomes);
         RequireExecutableMoveContinuity(workspace, result.Workspace!, plan.DeclarationMove);
+        if (plan.DeclarationMove)
+        {
+            var refusal = WorkspaceDeclarationMove.Obligations(WorkspaceAuthoringAnalysis.For(workspace).Source, WorkspaceAuthoringAnalysis.For(result.Workspace!).Source, plan.Migrations);
+            if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
+        }
         if (workspace.IdentityCatalog.Semantics.Any(old => !result.Workspace!.IdentityCatalog.Semantics.Any(current => current.Id == old.Id)) ||
             workspace.IdentityCatalog.EventContracts.Any(old => !result.Workspace!.IdentityCatalog.EventContracts.Any(current => current.Id == old.Id)))
         {
