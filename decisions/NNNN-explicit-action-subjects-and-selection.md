@@ -42,6 +42,10 @@ A command button next to a list usually acts on the selected row. Screenplay has
 - Screen constructs are authoring syntax; the executable model does not carry them (`screens.md`, toolbar section). New
   members follow the AST rules in `ast-compatibility.md:28`: init-only, left out of JSON when absent.
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 This record is allowed by the record that lifts the freeze (0105 on branch `screenplay-1035-typed-capture-key`).
 
 ## Decision
@@ -62,20 +66,23 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
    an identifier input binds in this order:
    1. an explicit `with <input> from item.<path>`;
    2. a subject field of the same name;
-   3. the subject read model's key, when the input's concept equals the key's concept.
+   3. the subject read model's **declared key**, when the input's concept equals the key's concept.
 
    If the third step finds more than one candidate, the compiler reports an ambiguity and binds nothing. Names are never
-   matched by words.
+   matched by words. A foreign key that a row carries (a property of another entity's key concept) is never a candidate
+   in step 3. To target through a foreign key, write `with <input> from item.<path>` (step 1).
 3. **Selection and visibility are different.** A `for item` action with no item is **disabled**, with the text "Select a
    row first". It is not hidden. A guarded action keeps hiding when it has no item (0029). A hiding guard is for
    business conditions; it is not a way to ask for a selection.
 4. **The default when nothing is written.** The compiler decides, from types only. The action is item-scoped when all of
    these hold:
    - the nearest `data` is a collection;
-   - the command has a required `identifier` input that is not `generated`;
-   - the collection's read model has a key, or a property, of that input's concept.
+   - the command has exactly one required `identifier` input that is not `generated` and whose concept equals the
+     concept of the collection read model's **declared key**.
 
-   Otherwise it is screen-scoped. The compiler reports what it inferred, as information, with a repair that writes `for
+   Inference never uses a property that is not the declared key. A foreign key carried by a row never makes the action
+   item-scoped, and a command with two identifier inputs of the key's concept is not inferred (the match is not
+   unambiguous). Otherwise it is screen-scoped. The compiler reports what it inferred, as information, with a repair that writes `for
    item` or `for screen`. Existing guarded actions are unchanged.
 5. **Boards.** On a board, the selected card is the `item`, with the same rule.
 6. **Click time.** The subject is the item displayed when the action is clicked (`screens.md:99`). A guard hides or
@@ -115,7 +122,8 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
 - Existing `.play` files keep working: no clause means the compiler-inferred default, which matches the documented
   Acme behaviour without the false positives of #693.
 - A list whose read model reuses another entity's key concept as a foreign key (an opportunity row carrying an
-  organization id) is the main risk. The subject read model's own key wins; a remaining tie is reported.
+  organization id) is the main risk. Only the subject read model's declared key can infer the subject, so such a foreign key never does; an action that
+  targets the other entity writes `with x from item.<path>` or a subject explicitly.
 
 ## Open points
 

@@ -42,6 +42,10 @@ What exists today:
 This record is allowed by the record that lifts the freeze (0105 on branch `screenplay-1035-typed-capture-key`).
 Decision 0004 and 0066 still apply: changed canonical bytes need a new ESM version.
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 ## Decision
 
 1. **Two operands.**
@@ -56,19 +60,31 @@ Decision 0004 and 0066 still apply: changed canonical bytes need a new ESM versi
    - `N` is a literal in this record; a typed argument as `N` belongs to record 3.
 3. **Which calendar.** One rule, resolved on the server, never from the browser, the caller's locale or a request
    value.
-   - The application root may declare `time zone "<IANA id>"`, in the preamble position of `numbers exact`. The id is
-     validated at compile time. An unknown id is a compile error.
-   - Without the declaration, the application calendar is UTC. This keeps 0087 item 7's meaning for every model that
-     does not opt in.
-   - A command or a query may override the calendar for its own conditions with a `calendar` line. The operand is a
-     literal IANA id, or a typed value that the host supplies from trusted server-side context. A request value is never
-     such a source. The declaration of host-supplied context values is out of scope for this record (open point 1).
-   - An invalid configured zone fails visibly. It is never replaced by UTC.
+   - **Application zone.** The application root may declare `time zone "<IANA id>"`, in the preamble position of
+     `numbers exact`. The id is validated at compile time. An unknown id is a compile error. Without the declaration the
+     application zone is UTC, which keeps 0087 item 7's meaning for every model that does not opt in.
+   - **Configurable zone.** The declaration may add `configurable`, as in `time zone configurable default
+     "Europe/Berlin"`. Only then may the deployment set the zone through host configuration (SoloCRM's `App__TimeZone`).
+     Without `configurable`, host configuration never changes the zone. An invalid configured zone fails visibly; it is
+     never replaced by UTC.
+   - **Per query or command.** A query or a command may declare `calendar "<IANA id>"` (a literal) or
+     `calendar from $context.<member>`. The member is a member of a typed context (decision 0012) whose type is a time
+     zone, which the host supplies and trusts. A request value is never such a source.
+   - **Precedence**, first that applies:
+     1. the query's or command's own `calendar`;
+     2. the deployment-configured application zone, only when the declaration is `configurable`;
+     3. the declared application zone;
+     4. UTC.
+   - **Specifications** pin the zone. They use the model's declared zone, or UTC when none is declared. A specification
+     may say `given time zone "<IANA id>"`, or supply a context member through the existing context givens. Deployment
+     configuration never affects a specification.
    - `now` does not depend on any calendar.
 4. **One instant per evaluation.** The evaluation instant is the receipt instant, as in 0087 item 7. Nothing reads the
-   clock again during evaluation. The operand's `Date` is derived from that instant and the effective calendar. Both
-   the instant and the zone are inputs: a specification supplies them with `given clock` (the zone comes from the
-   model, or from the `calendar` line).
+   clock again during evaluation. The operand's `Date` is derived from that instant and the effective zone. Both the
+   instant and the zone are inputs: a specification supplies them with `given clock` and the zone rules of item 3.
+   - For a command or a reaction, the zone is the one in effect when it is evaluated. A reaction that is redelivered
+     reuses the original occurrence instant (0087 item 7) and resolves the zone again. If the zone changed in between,
+     the answer can differ. This is accepted because zones change rarely; open point 4.
 5. **Types and comparison.** `today` is a `Date` and compares with a `Date`. `now` is a `DateTime` and compares with a
    `DateTime`. Mixing them stays refused, as 0087 item 1 says. To compare a `DateTime` property with a day, write the
    conversion explicitly: `date of <DateTime operand>` yields the `Date` of that instant in the effective calendar. There
@@ -78,8 +94,9 @@ Decision 0004 and 0066 still apply: changed canonical bytes need a new ESM versi
    How absence is tested, and what a comparison with an absent value does, is stated by the construct that holds the
    comparison (records 2 and 3). This record admits no new null semantics.
 7. **ESM.** The version is the next free ESM version, allocated at admission per 0025. It is selected only by a model
-   that declares `time zone`, uses a clock operand, or declares a `calendar`. Every other model keeps its bytes and
-   version. The application carries `timeZone` (default `"UTC"` when only operands are used). Operands carry
+   that declares `time zone` (with or without `configurable`), uses a clock operand, or declares a `calendar`. Every other model keeps its bytes and
+   version. The application carries `timeZone` (default `"UTC"` when only operands are used) and a `configurable` flag.
+   A `calendar` carries either a literal id or a context member reference. Operands carry
    `{ kind: today|now, offset }`. Records 2 and 3 admit the positions; they share this version when admitted together.
 8. **Amendment of 0087.** Item 7 of 0087 changes in one word: `today` is the date of the receipt instant in the
    application calendar, which is UTC when none is declared. Everything else in item 7 stays: the reaction instant rule,
@@ -117,13 +134,16 @@ Decision 0004 and 0066 still apply: changed canonical bytes need a new ESM versi
 
 ## Open points
 
-1. How a host declares a trusted typed context value (for example `businessTimeZone`) that a `calendar` line can name.
-   Until then, a `calendar` line takes a literal id only.
-2. Whether a per-tenant zone is needed now. The first increment is a model-declared zone, overridable by deployment
-   configuration; the Arc abstraction leaves room for a tenant value.
+1. How a host declares and trusts a typed context member of a time-zone type (for example `businessTimeZone`) that
+   `calendar from $context.<member>` can name; decision 0012 gives the descriptor, and a time-zone type has to be
+   admitted there. Until then, a `calendar` line takes a literal id only.
+2. Whether a per-tenant zone is needed now. The first increment is a model-declared zone, which a deployment may
+   override when it is `configurable`; the Arc abstraction leaves room for a tenant value.
 3. Whether the zone may differ between tenants of one running application when a model declares `time zone`.
+4. Whether a redelivered reaction should keep the zone of its first evaluation instead of resolving it again. Today the
+   zone is resolved again.
 
 ## Related
 
-Decisions 0004, 0006, 0009, 0025, 0066 and 0087; Screenplay #824; the record that lifts the freeze (0105 on branch
+Decisions 0004, 0006, 0009, 0012, 0025, 0066 and 0087; Screenplay #824; the record that lifts the freeze (0105 on branch
 `screenplay-1035-typed-capture-key`).

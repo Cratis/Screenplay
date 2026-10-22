@@ -33,6 +33,10 @@ Stage already carries the receipt instant for commands (`CommandReceiptTimeRende
 `Documentation/guides/build-renderer-target.md:378`). Arc exposes it as `CommandContext.ReceivedAt`
 (`CommandContext.cs:63`).
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 ## Decision
 
 1. **Where.** `today` and `now`, with the arithmetic and calendar rules of the application calendar record, are
@@ -48,9 +52,14 @@ Stage already carries the receipt instant for commands (`CommandReceiptTimeRende
    - A command received from a client uses its receipt instant.
    - A command invoked by a reaction uses the instant of the occurrence that triggered the reaction: the event's
      occurred time, the scheduled time of a clock trigger, or the received time of an application trigger.
-   - Redelivery reuses that instant, so the answer never changes. The reference evaluator forwards the scenario
-     clock on redelivery today; it moves to the triggering instant with this record, with conformance tests.
-3. **Absence.** An optional property never takes part in a condition comparison (0087 item 5). In a validation rule an
+   - Redelivery reuses that instant, so for a fixed zone the answer does not change. The zone in effect is resolved
+     again on redelivery (application calendar record, item 3), so a changed zone can change the answer. This is
+     accepted because zones change rarely; open point 3.
+   - The reference evaluator forwards the scenario clock on redelivery today; it moves to the triggering instant with
+     this record, with conformance tests.
+3. **Absence.** Optional operands stay refused in command conditions (`require`, `produces when`), as 0087 item 5
+   says; this record does not extend them. The query predicates record's absence rule (missing and authored null match
+   no ordinary comparison, `== null` matches authored null only) applies to queries, not here. In a validation rule an
    absent value passes every rule except `not empty`, so `dueDate >= today` does not fail an absent `dueDate`.
 4. **Clients.** Clients never evaluate a clock operand. Client-side validators omit any rule that contains one, as
    0087 item 8 does for date ordering. The server stays authoritative.
@@ -86,6 +95,7 @@ Stage already carries the receipt instant for commands (`CommandReceiptTimeRende
 1. Whether reaction `where` may later use the occurrence instant consistently.
 2. Whether a command needs `calendar` overrides beyond the application calendar; the syntax is the one in the
    calendar record.
+3. Whether a redelivered reaction should keep the zone of its first evaluation instead of resolving it again.
 
 ## Related
 

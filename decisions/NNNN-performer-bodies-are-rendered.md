@@ -35,6 +35,10 @@ record). The live Host keeps treating a performer as opaque, so in Play a perfor
 
 This record is allowed by the record that lifts the freeze (0105 on branch `screenplay-1035-typed-capture-key`).
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 ## Decision
 
 1. **Render the body.** A performer body that is resolved and verified is rendered as the method body, with typed

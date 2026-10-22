@@ -32,18 +32,25 @@ A screen has no title of its own.
   (`screenTitle.ts:14`, `:29`), lowercases every word after the first (`stageFormSchema.ts:120-123`) and keeps the
   `Screen` suffix. A section title can become the navigation label of a screen, and `RegisterSKU` becomes "Register sku".
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 ## Decision
 
-1. **The screen title.** A `title` directive written directly in the screen body, not inside a section or slot, is the
-   screen's title. A screen has at most one; a second is a warning. The compiler exposes it as an effective
+1. **The screen title.** One extraction rule: only a `title` directive that is a direct child of the screen body, not
+   inside a section, slot or any other container, is the screen's title. The first such directive wins; each later one
+   is a warning. The compiler exposes it as an effective
    `ScreenSyntax.Title`, and Scene gets an init-only `Screen.Title` (a string; `$strings` allowed). It is used for
    navigation, breadcrumbs, the window title and reports. An explicit navigation `label` still wins for navigation. No new
    keyword.
 2. **One fallback rule**, documented in `internationalization.md` and shared by Studio, Stage and the Arc generator,
    for any name shown to a person when no text is authored:
    1. split the PascalCase name into words;
-   2. for a screen, drop a trailing `Screen`, `Page` or `Dialog`;
-   3. keep a run of capitals as written (`RegisterSKU` becomes "Register SKU");
+   2. for a screen, drop a trailing `Screen`, `Page` or `Dialog`; if the name is empty afterwards (a screen named
+      `Screen`), keep the name without that step;
+   3. keep a run of capitals as written, and split before the last capital of a run that is followed by a lowercase
+      letter (`RegisterSKU` becomes "Register SKU"; `SKUList` becomes "SKU list");
    4. write the result in sentence case: only the first word is capitalized.
 
    Fallbacks are not localized. Authors write `$strings` where that matters.
@@ -51,8 +58,11 @@ A screen has no title of its own.
    applied to authored text, to `description`, or to a semantic name used as an identity.
 4. **Keep the words.** `title` stays for screens, buttons, navigation and dialogs. `label` stays for actions, fields and
    columns. `description` stays report-only. The documentation says which each construct uses.
-5. **Consumers read the effective title.** Stage reads `Screen.Title` once Scene has it, and until then reads only
-   top-level `title` elements of the screen body and prefers the main content slot over slot order.
+5. **Consumers read the effective title.** Stage reads `Screen.Title` once Scene has it. Until then, Stage reads the
+   top-level `title` of the screen body by the same rule as item 1.
+
+   Interim implementation note for Stage only (not part of this contract): until Scene carries `Screen.Title`, Stage may
+   prefer the main content slot over slot order when it locates that top-level title.
 6. **No ESM change.** Screen syntax is outside the executable model; `Title` follows `ast-compatibility.md:28`.
 
 ## Options considered
@@ -79,7 +89,7 @@ A screen has no title of its own.
 
 1. Whether a screen may carry a navigation label separate from its title beyond today's `contribute to Navigation`
    `label`.
-2. Whether acronym detection needs an exception list. The first rule is runs of capitals.
+2. Whether acronym detection needs an exception list. The first rule is runs of capitals, split as in item 2.
 3. Whether an authored `emphasis` or `presentation placement` always wins over Stage's "first adjacent action is
    primary" default; this was not verified.
 

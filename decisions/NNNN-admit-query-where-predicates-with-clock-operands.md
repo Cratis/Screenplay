@@ -36,12 +36,16 @@ Facts that shape the decision:
   and the local day of the last activity, with a missing stage status counted as open. The product specification asks
   for an adjustable threshold (`requirements/solocrm/docs/SPEC.md:360-362`); the code fixes it at seven
   (`TodayRules.cs:20-21`).
-- Chronicle `IReadModels.Observe<T>(filter)` compiles the filter once (`ReadModels/IReadModels.cs:82-90`). A clock
+- Chronicle `IReadModels.Observe<T>(filter)` compiles the filter once (`IReadModels.cs:79`, `:82`; `ReadModels.cs:319-322`). A clock
   value captured in it would freeze, which record 4 handles.
 - Decision 0010 orders by one field and pages by page number; the reference evaluator answers live queries with a
   snapshot (0069).
 - A stored `isOverdue` property goes stale, because time passing writes no event. A "task became overdue" event per
   item needs a per-instance due time that 0006 deferred, and puts zone-dependent noise into the immutable log.
+
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
 
 This record is allowed by the record that lifts the freeze (0105 on branch `screenplay-1035-typed-capture-key`). It
 uses the clock operands and the application calendar of the application calendar record.
@@ -69,10 +73,28 @@ uses the clock operands and the application calendar of the application calendar
 3. **Combination.** `by` selects, then caller filters narrow, then `where` narrows. All combine by conjunction. `where` is
    allowed on a single-result query, where it is a narrower selection; an instance that fails it counts as absent.
    Filtering happens before paging and ordering (0010).
-4. **Absence is explicit.** `x == null` and `x != null` test absence. Any other comparison with an absent operand is
-   false, except `!=`, which is true. `not` negates the result. There is no third value. Optional properties therefore
-   need no special form, and the dormancy example above states each case it intends. A missing stage status is eligible
-   only because the model says `stageStatus == null`.
+4. **Absence.** A missing value (the member is not there) is not an authored null (the member is there and null). This
+   follows 0029 (line 24: "comparisons are false, except `== null`, which matches only null. Missing is not an
+   authored null value") and the Stage guard specification that already implements it.
+   - `x == null` matches an authored null only.
+   - `x != null` matches a present, non-null value only.
+   - Every other comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) with a missing or an authored-null operand is false. In
+     particular `!=` is false for both; it is not the negation of `==`.
+   - A missing value matches neither `x == null` nor `x != null`.
+   - `not` negates the result of the comparison it wraps. `not (x == 5)` is therefore true for a missing `x`. Authors
+     who mean "present and not 5" write `x != null and x != 5`.
+   - Optional property-to-property comparisons (`a <= b`, either side optional) are admitted, with the same rule: false
+     when either side is missing or null. This replaces the earlier refusal.
+   - Validation rules keep their own rule (0087 item 5): an absent optional value passes every rule except `not empty`.
+     This record does not change it.
+   - Optional operands in command conditions (`require`, `produces when`) stay refused, as 0087 item 5 says. The
+     command clock record does not extend them.
+   - Generated C# and Chronicle predicates need explicit presence checks for each rule above. A lifted `!=` on a
+     nullable value is true for a null and is wrong here.
+
+   A row whose stage status is missing is not matched by `stageStatus == null`. SoloCRM counts a missing stage status
+   as open (`TodayRules.cs:40-58`), so the read model must carry an authored null for it, or the model needs an explicit
+   test for a missing member; open point 4.
 5. **Dates and times.** A `Date` property compares with `today`-based `Date` values. A `DateTime` property compares
    with `now`-based `DateTime` values, or is converted with `date of` to compare with a `Date`. `today - N days` is
    calendar arithmetic and `now - N hours` is elapsed time. "At least N calendar days" is `<= today - N days`;
@@ -125,7 +147,10 @@ uses the clock operands and the application calendar of the application calendar
 1. The spelling of typed arguments (`argument`, or reuse of a `by`/`filter` style line). The semantics above hold for
    any spelling.
 2. Whether a query `calendar` line (calendar record) belongs in this record's syntax example; it is the same line.
-3. Optional operands in comparisons between two properties stay refused; revisit if a real model needs them.
+3. Whether a read model with an optional property stores an authored null or leaves the member out is a projection and
+   storage question. The language keeps the two apart (item 4).
+4. SoloCRM's "missing stage status counts as open" needs either an authored null in the read model or a test for a
+   missing member, such as `is missing`. This record specifies none; decide with the first SoloCRM binding.
 
 ## Related
 

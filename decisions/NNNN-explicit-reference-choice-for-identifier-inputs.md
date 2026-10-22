@@ -40,6 +40,10 @@ the command's own target are three different things.
 
 This record is allowed by the record that lifts the freeze (0105 on branch `screenplay-1035-typed-capture-key`).
 
+Evidence revisions: Screenplay `b65b3fd8`, Stage `f83af8fb`, Scene `fe5dd7d`, Arc `776ce82e4`, Chronicle `a4a1b7e26b`,
+cli `accfd41`; 0105 as on branch `screenplay-1035-typed-capture-key` at `971012f4`. File and line references in this
+record are to these revisions.
+
 ## Decision
 
 1. **Explicit choice on a form field.**
@@ -55,6 +59,10 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
    - `show <path>` is the property path shown to the person. It may be left out when a display property is declared
      (item 3).
    - `choose none` forces a plain input.
+   - The query must be invocable with no arguments, or with arguments that a `with <argument> from <field>` line binds
+     from other fields of the same form:
+     `field stageId choose from StagesOfPipeline with pipelineId from pipelineId`. Every other argument must be optional
+     or have a default. Otherwise the compiler reports an error. Until a bound field has a value the picker is disabled.
    - The stored value is always the identifier, never the shown text.
 2. **Choice never replaces server checks.** The picker shows what the caller may read. Membership in the list is not
    authorization or relationship validation; the command still validates.
@@ -65,9 +73,12 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
      name           OrganizationName display
    ```
    Pickers, table cells that show a reference and breadcrumbs use it. At most one property per read model carries it.
+   A read model with no `display` property, and a field with no `show`, shows the key. The compiler reports information
+   naming the read model.
 4. **A default choice, declared once.** A model may declare, for an identifier concept, the default choice query. A field
    without `choose` then uses it, for every form and for generated forms. The compiler never selects a query by
-   itself: not from the concept alone, not from a `*Id` name, not from a matching key. Where no default and no `choose`
+   itself: not from the concept alone, not from a `*Id` name, not from a matching key. Two defaults for the same concept
+   are a compiler error. Where no default and no `choose`
    exist, the field is a plain input and the compiler reports information naming the candidate queries, with a repair
    that writes the explicit form.
 5. **Collections.** An input of type `X[]` becomes a multiple choice.
