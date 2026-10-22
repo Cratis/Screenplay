@@ -15,7 +15,7 @@ internal static class MatchExpressionWriter
         MatchSequenceExpression sequence => string.Concat(sequence.Items.Select(DotNet)),
         MatchChoiceExpression choice => "(?:" + string.Join('|', choice.Alternatives.Select(DotNet)) + ")",
         MatchRepeatExpression repeat => "(?:" + DotNet(repeat.Body) + ")" + Quantifier(repeat),
-        _ => throw new InvalidPortableMatchPattern("Unknown portable match expression.")
+        _ => throw new InvalidOperationException("Unknown portable match expression.")
     };
 
     static string CharacterClass(MatchCharacterSet characters)

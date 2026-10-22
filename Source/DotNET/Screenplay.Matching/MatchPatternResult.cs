@@ -10,7 +10,7 @@ internal sealed record MatchPatternResult(string JavaScriptPattern, MatchExpress
     internal int ExpandedSize { get; init; }
 
     // An on-demand renderer export, never the reference matcher's execution path.
-    internal string NormalizedDotNetPattern => Expression is { } node ? MatchExpressionWriter.DotNet(node) : throw new InvalidPortableMatchPattern("A refused match pattern has no normalized form.");
+    internal string NormalizedDotNetPattern => Expression is { } node ? MatchExpressionWriter.DotNet(node) : throw new InvalidOperationException("A refused match pattern has no normalized form.");
 
     internal string Description => $"{Construct} at offset {Offset}. {Suggestion}".TrimEnd();
 }

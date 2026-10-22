@@ -27,7 +27,7 @@ internal sealed class MatchAutomatonBuilder
         MatchSequenceExpression sequence => Sequence(sequence, next),
         MatchChoiceExpression choice => Choice(choice, next),
         MatchRepeatExpression repeat => Repeat(repeat, next),
-        _ => throw new InvalidPortableMatchPattern("Unknown portable match expression.")
+        _ => throw new InvalidOperationException("Unknown portable match expression.")
     };
 
     int Sequence(MatchSequenceExpression sequence, int next)

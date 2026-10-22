@@ -23,4 +23,12 @@
         <EmbeddedResource Include="**/*.strings" WithCulture="false" />
         <EmbeddedResource Include="Semantics/Serialization/Golden/*.json" WithCulture="false" />
     </ItemGroup>
+    <!-- The compiler consumes Matching internals, so its package must resolve the same release. -->
+    <Target Name="PinMatchingPackageDependency" AfterTargets="_GetProjectReferenceVersions">
+        <ItemGroup>
+            <_ProjectReferencesWithVersions Update="@(_ProjectReferencesWithVersions)" Condition="'%(_ProjectReferencesWithVersions.Filename)' == 'Screenplay.Matching'">
+                <ProjectVersion>[$(PackageVersion)]</ProjectVersion>
+            </_ProjectReferencesWithVersions>
+        </ItemGroup>
+    </Target>
 </Project>
