@@ -1,7 +1,8 @@
 ---
 id: 0092
 title: The language is frozen at ESM v28
-status: accepted
+status: superseded
+superseded-by: 0105
 stage: none
 decided: 2026-10-17
 decider: Sindre Wilting (delegated to the L0 coordinator)
