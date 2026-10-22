@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
@@ -348,6 +349,11 @@ internal sealed partial class WorkspaceRefactoring
             EventRenames = eventRenames
         });
         if (!result.Accepted) return result;
+        if (plan.DeclarationMove)
+        {
+            var refusal = WorkspaceDeclarationMove.Obligations(new AuthoringSnapshot(workspace.Documents), new AuthoringSnapshot(result.Workspace!.Documents), plan.Migrations);
+            if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
+        }
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
         var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeInteractions: true);
         candidateBindings.RequireNoCollisions();

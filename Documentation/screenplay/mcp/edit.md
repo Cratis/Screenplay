@@ -263,7 +263,10 @@ which specifications travel with it.
 ```
 
 The specifications of the source slice that cover only the moved declaration move
-with it and are listed in the report's `specificationsCarried`. A specification
+with it and are listed in the report's `specificationsCarried`. The C# core API,
+`ScreenplayWorkspace.ProposeMove`, computes the same set and enforces the same refusals.
+Its optional `CarriedSpecifications` request property can assert that set: leave it
+empty to compute automatically; a nonempty value must equal the computed set. A specification
 covers a declaration when it meets one of that declaration's
 [specification obligations](reference.md#logical-parent-moves) or its `when` step
 names it; coverage comes from nothing else. The move refuses when a

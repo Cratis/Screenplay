@@ -10,13 +10,13 @@ namespace Cratis.Screenplay.Mcp.for_McpDeclarationMove.when_checking_obligations
 
 public class and_every_obligation_keeps_its_status : Specification
 {
-    static McpSnapshot Snapshot(string source) => new([WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source))]);
+    static Cratis.Screenplay.Indexing.AuthoringSnapshot Snapshot(string source) => new([WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source))]);
 
     string? _refusal;
 
     void Because()
     {
-        _refusal = McpDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(a_declaration_move_connection.Model), new Dictionary<SemanticAddress, SemanticAddress>());
+        _refusal = WorkspaceDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(a_declaration_move_connection.Model), new Dictionary<SemanticAddress, SemanticAddress>());
     }
 
     [Fact] void should_not_refuse() => _refusal.ShouldBeNull();

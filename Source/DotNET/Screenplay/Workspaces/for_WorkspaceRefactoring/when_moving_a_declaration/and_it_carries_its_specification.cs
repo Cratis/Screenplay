@@ -16,7 +16,7 @@ public class and_it_carries_its_specification : given.a_workspace_with_two_slice
     {
         var source = Slice("Source", "Registration");
         _moved = SemanticAddress.ForCommand(Slice("Destination", "Intake"), "Register");
-        _result = Workspace.ProposeMove(Request(SemanticAddress.ForCommand(source, "Register"), Slice("Destination", "Intake"), SemanticAddress.ForSpecification(source, "Registering")));
+        _result = Workspace.ProposeMove(Request(SemanticAddress.ForCommand(source, "Register"), Slice("Destination", "Intake")));
     }
 
     WorkspaceSyntaxEntry[] Entries => [.. WorkspaceSyntaxIndex.Create(_result.Workspace).Entries];

@@ -2,17 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Text.Json;
+using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Workspaces;
 
 /// <summary>
 /// Decides which specifications travel with a single declaration moved between slices, and refuses a move that
 /// breaks specification obligations (decision 0102).
 /// </summary>
-static class McpDeclarationMove
+internal static class WorkspaceDeclarationMove
 {
     static readonly Dictionary<SemanticKind, string> _kinds = new()
     {
@@ -24,8 +24,6 @@ static class McpDeclarationMove
         [SemanticKind.Reaction] = "Reaction",
         [SemanticKind.Capture] = "Capture"
     };
-
-    static readonly JsonElement _everything = JsonDocument.Parse("{}").RootElement;
 
     /// <summary>
     /// Whether the request moves one slice-level declaration to a slice.
@@ -41,7 +39,7 @@ static class McpDeclarationMove
     /// <param name="snapshot">The workspace before the move.</param>
     /// <param name="target">The declaration to move.</param>
     /// <returns>The specifications to carry; a refusal when a covering specification also covers a staying declaration.</returns>
-    internal static (ImmutableArray<SemanticAddress> Carried, string? Refusal) Carried(McpSnapshot snapshot, SemanticAddress target)
+    internal static (ImmutableArray<SemanticAddress> Carried, string? Refusal) Carried(AuthoringSnapshot snapshot, SemanticAddress target)
     {
         var index = snapshot.Index;
         var path = Path(target);
@@ -49,7 +47,7 @@ static class McpDeclarationMove
         var members = index.Declarations.Where(declaration => string.Join('.', declaration.Scope) == slice).ToArray();
         var moved = members.Where(declaration => declaration.Address == path && declaration.Kind == _kinds[target.Kind]).ToArray();
         if (moved.Length != 1) return ([], null);
-        var obligations = McpSpecificationObligations.Evaluate(snapshot, _everything);
+        var obligations = SpecificationObligations.Evaluate(snapshot);
         var sliceAddress = SemanticAddress.FromCanonical(SemanticKind.Slice, target.Parts[..^1]);
         var carried = ImmutableArray.CreateBuilder<SemanticAddress>();
         foreach (var specification in members.Where(declaration => declaration.Syntax is SpecificationSyntax))
@@ -75,7 +73,7 @@ static class McpDeclarationMove
     /// <param name="after">The candidate workspace.</param>
     /// <param name="migrations">Every logical address the move rewrites, previous to current.</param>
     /// <returns>A refusal, or null when every obligation keeps its status.</returns>
-    internal static string? Obligations(McpSnapshot before, McpSnapshot after, IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations)
+    internal static string? Obligations(AuthoringSnapshot before, AuthoringSnapshot after, IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations)
     {
         var moved = migrations.Where(migration => _kinds.ContainsKey(migration.Key.Kind))
             .ToDictionary(migration => (_kinds[migration.Key.Kind], Path(migration.Key)), migration => Path(migration.Value));
@@ -88,12 +86,12 @@ static class McpDeclarationMove
             : "The move would leave specification obligations unmet: " + string.Join("; ", broken.Select(key => $"{key.RuleId} of {key.Kind} '{key.Address}' ({key.Subject})")) + ". Move the covering specifications with the declaration, or write them first.";
     }
 
-    static Dictionary<(string RuleId, string Kind, string Address, string Subject), bool> Status(McpSnapshot snapshot, Func<string, string, string> address) =>
-        McpSpecificationObligations.Evaluate(snapshot, _everything)
+    static Dictionary<(string RuleId, string Kind, string Address, string Subject), bool> Status(AuthoringSnapshot snapshot, Func<string, string, string> address) =>
+        SpecificationObligations.Evaluate(snapshot)
             .GroupBy(obligation => (obligation.RuleId, obligation.Declaration.Kind, Address: address(obligation.Declaration.Kind, obligation.Declaration.Address), obligation.Subject))
             .ToDictionary(group => group.Key, group => group.Any(obligation => obligation.Met));
 
-    static bool Drives(McpSyntaxIndex index, McpDeclaration specification, McpDeclaration member)
+    static bool Drives(AuthoringIndex index, AuthoredDeclaration specification, AuthoredDeclaration member)
     {
         var syntax = (SpecificationSyntax)specification.Syntax;
         (string? Name, string Kind)[] subjects =
@@ -101,7 +99,7 @@ static class McpDeclarationMove
             (syntax.When?.CommandType, "Command"), (syntax.WhenAppended?.EventType, "Event"), (syntax.WhenRedelivered?.Reaction, "Reaction"),
             (syntax.WhenTrigger?.Trigger, "Trigger"), (syntax.WhenCapture?.Capture, "Capture"), (syntax.WhenQuery?.Query, "Query")
         ];
-        return subjects.Any(subject => subject.Name is not null && subject.Kind == member.Kind && McpReviewSelection.Resolves(index, specification, subject.Name, subject.Kind, member));
+        return subjects.Any(subject => subject.Name is not null && subject.Kind == member.Kind && SpecificationObligations.Resolves(index, specification, subject.Name, subject.Kind, member));
     }
 
     static string Path(SemanticAddress address) => string.Join('.', address.Parts.Skip(1).Select(part => part.Key));

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
+using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
@@ -64,14 +65,20 @@ internal sealed partial class WorkspaceRefactoring
             ?? destinations.FirstOrDefault(entry => entry.Handle.Document == target.Handle.Document)
             ?? (destinations.Length == 1 ? destinations[0] : throw new InvalidWorkspaceAuthoring($"Destination slice '{MoveAddress(request.NewParent)}' has fragments in several documents; name one with newParentHandle."));
 
-        var moved = new List<WorkspaceSyntaxEntry> { target };
-        foreach (var carried in request.CarriedSpecifications.Distinct())
+        var (specifications, refusal) = WorkspaceDeclarationMove.Carried(new AuthoringSnapshot(workspace.Documents), request.Target);
+        if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
+        WorkspaceSyntaxEntry Specification(SemanticAddress carried)
         {
             if (carried.Kind != SemanticKind.Specification) throw new InvalidWorkspaceAuthoring($"Carried '{MoveAddress(carried)}' is not a specification.");
             var specification = SingleSliceMember(index, carried, null, "carried specification");
             if (!Ancestors(specification, index).Any(ancestor => ancestor.Node is SliceSyntax && source.Address!.Equals(ancestor.Address))) throw new InvalidWorkspaceAuthoring($"Carried specification '{MoveAddress(carried)}' is not declared in source slice '{MoveAddress(source.Address)}'.");
-            moved.Add(specification);
+            return specification;
         }
+        foreach (var carried in request.CarriedSpecifications) Specification(carried);
+        if (!request.CarriedSpecifications.IsDefaultOrEmpty && !request.CarriedSpecifications.ToHashSet().SetEquals(specifications))
+            throw new InvalidWorkspaceAuthoring("Caller-supplied carried specifications must equal the specifications computed for this declaration move.");
+        var moved = new List<WorkspaceSyntaxEntry> { target };
+        moved.AddRange(specifications.Select(Specification));
 
         var handles = moved.Select(entry => entry.Handle).ToHashSet();
         var subtree = index.Entries.Where(entry => handles.Contains(entry.Handle) || Ancestors(entry, index).Any(ancestor => handles.Contains(ancestor.Handle))).ToArray();
