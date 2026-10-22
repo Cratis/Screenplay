@@ -50,3 +50,9 @@ changed canonical bytes under a new version.
 
 Language fixes can proceed without freeze exceptions. Consumers must still admit each new
 ESM version explicitly; unsupported versions remain a visible refusal.
+
+Records and issues parked because of the freeze go back to triage.
+
+A language construct counts as delivered only once Stage either admits it or refuses it with a typed refusal.
+
+Each change that alters canonical bytes gets one new ESM version, unless several such changes ship in the same release, in which case they may share one.
