@@ -60,9 +60,6 @@ record are to these revisions.
    columns. `description` stays report-only. The documentation says which each construct uses.
 5. **Consumers read the effective title.** Stage reads `Screen.Title` once Scene has it. Until then, Stage reads the
    top-level `title` of the screen body by the same rule as item 1.
-
-   Interim implementation note for Stage only (not part of this contract): until Scene carries `Screen.Title`, Stage may
-   prefer the main content slot over slot order when it locates that top-level title.
 6. **No ESM change.** Screen syntax is outside the executable model; `Title` follows `ast-compatibility.md:28`.
 
 ## Options considered

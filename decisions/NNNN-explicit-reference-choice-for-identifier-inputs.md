@@ -123,7 +123,8 @@ record are to these revisions.
 1. Whether the ESM writer ignores an unknown read-model syntax member such as `display`. This must be checked before the
    marker is implemented; if it does not, the marker is carried outside the read-model JSON.
 2. The spelling of the default-choice declaration (an application-level line naming the concept and the query).
-3. Dependent choices (a list narrowed by another field) and search are follow-ups.
+3. Search within a choice list, and narrowing a list by anything other than arguments bound from other fields of the
+   same form, are follow-ups.
 4. The keywords `choose from`, `value` and `show` are open to taste; the semantics are fixed.
 
 ## Related

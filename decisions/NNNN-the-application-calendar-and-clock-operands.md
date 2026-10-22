@@ -134,9 +134,10 @@ record are to these revisions.
 
 ## Open points
 
-1. How a host declares and trusts a typed context member of a time-zone type (for example `businessTimeZone`) that
-   `calendar from $context.<member>` can name; decision 0012 gives the descriptor, and a time-zone type has to be
-   admitted there. Until then, a `calendar` line takes a literal id only.
+1. The typed-context contract for a time-zone member (for example `businessTimeZone`) that
+   `calendar from $context.<member>` names. Decision 0012 gives the descriptor; admitting a time-zone type there is a
+   prerequisite for admitting the `calendar from $context.<member>` form, and both are admitted together. The form is
+   decided here, and so is its meaning.
 2. Whether a per-tenant zone is needed now. The first increment is a model-declared zone, which a deployment may
    override when it is `configurable`; the Arc abstraction leaves room for a tenant value.
 3. Whether the zone may differ between tenants of one running application when a model declares `time zone`.
