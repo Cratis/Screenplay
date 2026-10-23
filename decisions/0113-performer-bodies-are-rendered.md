@@ -59,6 +59,14 @@ record are to these revisions.
    host. The meaning of `Occurred` is kept, or an explicit alias to receipt time is provided.
 3. **A binding contract that is versioned.** The contract names language, argument names and types, result cardinality,
    delivery, cancellation, context and read access. Stage does not silently redefine what `readModels` is.
+   - **Name and record.** The version is the pair already carried by every implementation requirement:
+     `ContextVersion` (the typed context) and `ResultVersion` (the result shape), both 1 today. It is recorded on the
+     requirement in the executable model (`SemanticImplementationRequirement`) and is part of the requirement's
+     identity. Stage copies it onto each implementation gap (`ArtifactImplementationGap`).
+   - **Changes.** Either number changes only through a decision record.
+   - **Existing renders.** A host that does not support a requirement's version, or a body verified against another
+     version, renders that query as a gap under item 1. The warning names both versions, and nothing else in the
+     render is affected. The author migrates by updating the body and verifying it again; the next render picks it up.
 4. **Observable performers own their stream.** Lifetime and dependencies belong to the body. The automatic clock refresh
    of live answers does not apply to arbitrary code. Until a host can bind a body that owns its stream, an observable
    performer is rendered as a gap under item 1. It is never presented as a body-owned stream.
@@ -80,14 +88,15 @@ runnable' marker; never abort or crash." This replaces the earlier wording of it
 runnable result and a throwing skeleton was allowed only in an explicitly incomplete scaffold. The intent is unchanged:
 output must never pretend to be runnable. The means change: instead of producing no output, the render produces
 everything it can and marks every gap explicitly. A silent throwing stub is still not allowed. The rule covers any part
-of a model that a host cannot render, not only performer bodies.
+of a model that a host cannot render, not only performer bodies. Stage applies it to performer bodies first (Stage
+#743). The other paths that can still abort a whole render are tracked in
+[Stage #761](https://github.com/Cratis/Stage/issues/761).
 
 ## Options considered
 
 - **Refuse the whole render when one body is unusable.** Rejected by the amendment: one gap must not hide everything
   else that renders.
 - **Silent throwing stub.** Rejected: it looks runnable and fails only at runtime.
-
 - **Hand-edit generated methods or use partial classes.** Rejected: `cratis render` refuses changed files.
 - **Force all logic into the language.** Rejected: it creates an unbounded language.
 - **Run arbitrary code in the live Host by default.** Rejected: isolation and deployment are separate decisions.
