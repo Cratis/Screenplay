@@ -95,13 +95,28 @@ slice Translate TrackShipments
       orderId = "order-42"
 ```
 
-One capture reads one origin: all its `from` events must have the exact same origin string (`PLAY0687`); split events from different origins into separate captures. Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form selects ESM v9 and binds to an executable capture over events, or ESM v32 when a [typed event key](captures/typed-event-keys.md) changes the captured identity. Present the declared event through `given <Event>` or `when append <Event>`; its fields are typed by that event. `given capture` and `when capture` over events are compile errors (`PLAY0701`), with a repair only when there is exactly one `from` event. A fixture's optional `for` identifies the foreign event source as opaque, non-empty text, not the capture's key. Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
+One capture reads one origin: all its `from` events must have the exact same origin string (`PLAY0687`); split events from different origins into separate captures. Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form selects ESM v9 and binds to an executable capture over events, ESM v32 when a [typed event key](captures/typed-event-keys.md) changes the captured identity, or ESM v33 when the key is marked as the event source. Present the declared event through `given <Event>` or `when append <Event>`; its fields are typed by that event. `given capture` and `when capture` over events are compile errors (`PLAY0701`), with a repair only when there is exactly one `from` event. Unless the key is marked, a fixture's optional `for` identifies the foreign event source as opaque, non-empty text, not the capture's key; see [Keying by the event source](#keying-by-the-event-source). Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
 
 The key must be a required property of every `from` event (`PLAY0700`), never a context key. Each incoming event overlays its own top-level properties onto remembered state for that key; absent properties retain earlier values, while objects and lists replace whole values. Givens fold in authored order without appending. Keys come from the incoming event, not remembered state: empty or whitespace-only text fails execution with a contract rejection naming the capture, event and key, including before the action when a given has an empty key. Non-text, non-numeric keys are Unsupported; numeric and text keys stay distinct.
 
 The first event is `added`, not a field modification. An unchanged overlay appends nothing. Field, `and`/`or` and transition guards hold only on modifications; `when added` holds only on the first event, and root `when removed` never holds. An append without `when` holds on any change; expression guards evaluate the after state only on a change. Maps apply to both states, and `$.field` reads the mapped merged state. `$context.occurred` is the incoming occurrence, supplied by the scenario's `given clock`; other context members are not admitted.
 
 Delivery follows the fact's settled reactions, in capture semantic-identity order. Each capture append settles its own cascade before the next; the 1,000-fact scenario budget includes those appends. `children` and `nested` over events are executed: see [Lists and objects in public events](#lists-and-objects-in-public-events). Composite and list values used as scalars or watched by guards remain Unsupported. The reference stores no new capture state across specifications and does not prove redelivery deduplication, observer ordering, retry safety or context propagation. Stage must still reject event-capture forms Chronicle cannot realize, including maps, expression guards and an append without `when`.
+
+### Keying by the event source
+
+`key <property> is event source` promises that every captured event is sourced by its key: the foreign event's source is the value of the key property. Only a `source events` capture with a single property key can declare it (`PLAY0809`; the diagnostic has no repair). The marker is part of the `key` line, so an unmarked capture is unchanged.
+
+```screenplay
+capture CarrierDispatchFeed
+  source events
+    from ParcelDispatchAnnounced
+  key orderId is event source
+  append CarrierDispatchRecorded
+    orderId = $.orderId
+```
+
+When a fixture states a `for`, the reference compares it with the key: a `for` that differs from the key's value fails the run with a contract rejection naming the capture, the event and both values. A fixture without `for` takes the key as its source. A marked capture selects ESM v33 and serializes `keyIsEventSource` on the capture's `sourceEvents`; a capture without the marker serializes exactly as before. Stage admits v33 before rendering, and may narrow the inbox read by the key.
 
 ### Lists and objects in public events
 
@@ -155,6 +170,7 @@ module Warehouse
 | `source events` | Reads the public events of another application instead of an external system; each `from <Event>` line names one consumed event. |
 | `source api` / `source webhook` / `source message` | Where the captured data comes from, with source-specific settings (`api`/`route`/`poll` for `api`, `path` for `webhook`, `topic` for `message`). |
 | `key <property>` | Which source property identifies an instance. |
+| `key <property> is event source` | On `source events`, promises every captured event is sourced by its key (ESM v33, `PLAY0809`). |
 | `map` | Maps, splits and translates source values before events are appended. |
 | `<property> = <source>` | Renames a source value onto a property, or assigns a `` `template` `` built from source values. |
 | `translate` | Maps source values to Screenplay values (`"utkast" => draft`). |

@@ -156,6 +156,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
 | 32.0 | Typed event capture keys preserve the agreed source-property identity on capture appends and specification fixtures | 32 | [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) | `full-esm-v32.json` | `EsmGoldenVectors.Get(32)` |
+| 33.0 | An events capture keyed by its event source (`key <property> is event source`) | 33 | [0114](https://github.com/Cratis/Screenplay/blob/main/decisions/0114-events-capture-keys-by-event-source.md) | `full-esm-v33.json` | `EsmGoldenVectors.Get(33)` |
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.
 
@@ -370,4 +371,4 @@ Clearly labeled ecosystem examples include the Vogen source adapter in Screenpla
 
 The Cratis CLI currently uses a static, reviewed renderer-target roster. A renderer appearing in this catalog, being installed beside a workspace, or implementing `IArtifactRenderPlanner` does not admit it to that roster. CLI support requires a separate orchestration change, explicit profile construction, publication wiring, and verification.
 
-Typed event capture keys select ESM v32 only when their inferred identities change; see [Typed event capture keys](captures/typed-event-keys.md) for fallback rules, canonical effects and consumer admission.
+An events capture that declares `key <property> is event source` selects ESM v33 and serializes `keyIsEventSource`; see [Keying by the event source](captures.md#keying-by-the-event-source). Typed event capture keys select ESM v32 only when their inferred identities change; see [Typed event capture keys](captures/typed-event-keys.md) for fallback rules, canonical effects and consumer admission.
