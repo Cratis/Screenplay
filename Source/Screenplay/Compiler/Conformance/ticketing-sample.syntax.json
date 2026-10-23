@@ -3795,7 +3795,7 @@
               "captures": [],
               "commands": [],
               "constraints": [],
-              "description": "How many tickets are open and how many are waiting",
+              "description": "Which tickets are open, counted by the dashboard",
               "events": [],
               "name": "SupportDashboard",
               "operations": [],
@@ -3815,11 +3815,11 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "summaryId"
+                          "property": "ticketId"
                         },
                         {
-                          "kind": "IncrementMappingSyntax",
-                          "property": "openTickets"
+                          "kind": "SetMappingSyntax",
+                          "property": "subject"
                         }
                       ]
                     }
@@ -3864,24 +3864,24 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
-                      "name": "summaryId",
+                      "name": "ticketId",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
                         "isOptional": false,
-                        "name": "String"
+                        "name": "TicketId"
                       }
                     },
                     {
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
-                      "name": "openTickets",
+                      "name": "subject",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
                         "isOptional": false,
-                        "name": "Int"
+                        "name": "String"
                       }
                     }
                   ]
@@ -3985,18 +3985,18 @@
                       "properties": [
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "summaryId",
+                          "property": "ticketId",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": "global"
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
                           }
                         },
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "openTickets",
+                          "property": "subject",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": 1
+                            "value": "Cannot sign in after password reset"
                           }
                         }
                       ]

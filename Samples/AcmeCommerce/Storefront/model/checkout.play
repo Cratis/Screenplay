@@ -87,9 +87,10 @@ module Shop
           add total by unitPrice * quantity
         children lines identified by sku
           from BasketLineAdded key sku
-            sku       = sku
-            quantity  = quantity
-            unitPrice = unitPrice
+            sku         = sku
+            productName = productName
+            quantity    = quantity
+            unitPrice   = unitPrice
           from BasketLineQuantityChanged key sku
             quantity = quantity
           remove with BasketLineRemoved
@@ -107,6 +108,13 @@ module Shop
             summary CheckoutDraft
               field shipTo label "Deliver to"
               field method label "Delivery"
+            component Cratis.Blueprint.Default.dataList checkoutLines
+              id "checkoutLines"
+              property rows from query GetCheckoutDraft.0.lines
+              property idField = "sku"
+              property titleField = "productName"
+              property label = "Checkout lines"
+              property columns = [{"field":"productName","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
           actions
             action EnterShippingAddress
               label "Enter delivery address"
@@ -136,9 +144,10 @@ module Shop
           role "Shopper"
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-1000"
-          quantity  = 2
-          unitPrice = 49
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         given DeliveryMethodChosen
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method = "standard"
@@ -146,7 +155,7 @@ module Shop
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method   = "standard"
           total    = 98
-          lines    = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          lines    = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
 
     // Step 3: review and confirm
     slice StateChange CheckOut
@@ -199,9 +208,10 @@ module Shop
           role "Shopper"
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-1000"
-          quantity  = 2
-          unitPrice = 49
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         when CheckOut
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
@@ -239,9 +249,10 @@ module Shop
           role "Shopper"
         given BasketLineAdded
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          sku       = "ACM-1000"
-          quantity  = 2
-          unitPrice = 49
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         given BasketLineRemoved
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku = "ACM-1000"

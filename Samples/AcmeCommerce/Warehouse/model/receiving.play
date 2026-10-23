@@ -4,6 +4,9 @@
 
 module Stock
   feature Receiving
+    // Goods arrive: the clerk books them from the receiving log.
+    toolbar actions
+      button receive title "Receive shipment" slice Stock.Receiving.ReceiveStock emphasis primary icon download
 
     slice StateChange ReceiveStock
       description "Books delivered goods onto the shelf. Normally the purchasing public event does it (see ReceiveStockFromPurchasing); by hand for a delivery nobody announced"

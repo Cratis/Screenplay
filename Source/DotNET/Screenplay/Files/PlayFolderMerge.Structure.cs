@@ -67,6 +67,7 @@ internal static partial class PlayFolderMerge
                 context,
                 $"module '{group.Key}'"),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Templates = TemplatesOnce(parts.SelectMany(part => part.Templates)),
             Navigation = [.. parts.SelectMany(part => part.Navigation)],
             Toolbars = [.. parts.SelectMany(part => part.Toolbars)],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"module '{group.Key}'", context),
@@ -74,6 +75,11 @@ internal static partial class PlayFolderMerge
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)
         };
     }
+
+    // A template assignment is written once on its owner, in whichever file says it. The same reference restated in a second file is one
+    // assignment; two different ones stay, in path order, so the compiler judges them as it would in a single document.
+    static IReadOnlyList<TemplateAssignmentSyntax> TemplatesOnce(IEnumerable<TemplateAssignmentSyntax> assignments) =>
+        [.. assignments.DistinctBy(assignment => (assignment.Name, assignment.Blueprint, assignment.Version))];
 
     static IReadOnlyList<FeatureSyntax> MergeFeatures(IEnumerable<FeatureSyntax> features, ParserContext context) =>
         [.. features.GroupBy(feature => feature.Name, StringComparer.Ordinal).Select(group => Combine(group, context))];
@@ -101,6 +107,7 @@ internal static partial class PlayFolderMerge
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Templates = TemplatesOnce(parts.SelectMany(part => part.Templates)),
             Toolbars = [.. parts.SelectMany(part => part.Toolbars)],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),

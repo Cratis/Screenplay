@@ -4,6 +4,7 @@
 
 module Merchandising
   feature Pricing
+    template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
     description "What each product costs"
 
     slice StateView PricingBoard

@@ -3956,7 +3956,7 @@
               "captures": [],
               "commands": [],
               "constraints": [],
-              "description": "How much is in stock and how many items the warehouse holds",
+              "description": "How much of each item is in stock, added up by the dashboard",
               "events": [],
               "name": "InventoryDashboard",
               "operations": [],
@@ -3976,15 +3976,11 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "summaryId"
+                          "property": "itemId"
                         },
                         {
-                          "kind": "AddMappingSyntax",
+                          "kind": "SetMappingSyntax",
                           "property": "unitsOnHand"
-                        },
-                        {
-                          "kind": "IncrementMappingSyntax",
-                          "property": "itemCount"
                         }
                       ]
                     }
@@ -4029,24 +4025,12 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
-                      "name": "summaryId",
+                      "name": "itemId",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
                         "isOptional": false,
-                        "name": "String"
-                      }
-                    },
-                    {
-                      "kind": "PropertySyntax",
-                      "isGenerated": false,
-                      "isIdentifier": false,
-                      "name": "itemCount",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Int"
+                        "name": "ItemId"
                       }
                     },
                     {
@@ -4194,10 +4178,10 @@
                       "properties": [
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "summaryId",
+                          "property": "itemId",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": "global"
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
                           }
                         },
                         {
@@ -4206,14 +4190,6 @@
                           "source": {
                             "kind": "LiteralExpressionSyntax",
                             "value": 6
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "itemCount",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 1
                           }
                         }
                       ]
