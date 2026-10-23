@@ -108,12 +108,18 @@ Delivery follows the fact's settled reactions, in capture semantic-identity orde
 `key <property> is event source` promises that every captured event is sourced by its key: the foreign event's source is the value of the key property. Only a `source events` capture with a single property key can declare it (`PLAY0809`; the diagnostic has no repair). The marker is part of the `key` line, so an unmarked capture is unchanged.
 
 ```screenplay
-capture CarrierDispatchFeed
-  source events
-    from ParcelDispatchAnnounced
-  key orderId is event source
-  append CarrierDispatchRecorded
-    orderId = $.orderId
+slice Translate ReceiveDispatches
+  direction inbound
+  event ParcelDispatched from "carrier"
+    orderId String
+  event DispatchRecorded
+    orderId String
+  capture DispatchFeed
+    source events
+      from ParcelDispatched
+    key orderId is event source
+    append DispatchRecorded
+      orderId = $.orderId
 ```
 
 When a fixture states a `for`, the reference compares it with the key: a `for` that differs from the key's value fails the run with a contract rejection naming the capture, the event and both values. A fixture without `for` takes the key as its source. A marked capture selects ESM v33 and serializes `keyIsEventSource` on the capture's `sourceEvents`; a capture without the marker serializes exactly as before. Stage admits v33 before rendering, and may narrow the inbox read by the key.

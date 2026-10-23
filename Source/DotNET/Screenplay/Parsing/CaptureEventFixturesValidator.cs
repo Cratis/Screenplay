@@ -9,8 +9,6 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static class CaptureEventFixturesValidator
 {
-    static bool IsPropertyKey(string? key) => !string.IsNullOrEmpty(key) && !key.StartsWith('$') && !key.Contains('.');
-
     internal static void ValidateEventSourceKeys(SliceSyntax slice, ParserContext context)
     {
         foreach (var capture in slice.Captures.Where(capture => capture.KeyIsEventSource && !(capture.Source is { } source && CaptureEventsSource.IsEvents(source) && IsPropertyKey(capture.Key))))
@@ -47,4 +45,6 @@ internal static class CaptureEventFixturesValidator
             }
         }
     }
+
+    static bool IsPropertyKey(string? key) => !string.IsNullOrEmpty(key) && !key.StartsWith('$') && !key.Contains('.');
 }

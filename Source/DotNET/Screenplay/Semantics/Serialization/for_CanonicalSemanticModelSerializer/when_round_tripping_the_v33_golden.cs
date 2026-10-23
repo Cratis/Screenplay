@@ -29,7 +29,7 @@ public class when_round_tripping_the_v33_golden : Specification
     {
         foreach (var version in EsmSchemaV32Support.SemanticVersions)
         {
-            var json = Encoding.UTF8.GetString(_bytes).Replace("\"schemaVersion\":32", $"\"schemaVersion\":{version.Major}", StringComparison.Ordinal).Replace("\"32.0\"", $"\"{version}\"", StringComparison.Ordinal);
+            var json = Encoding.UTF8.GetString(_bytes).Replace("\"schemaVersion\":33", $"\"schemaVersion\":{version.Major}", StringComparison.Ordinal).Replace("\"33.0\"", $"\"{version}\"", StringComparison.Ordinal);
             var error = Catch.Exception(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(json)));
             error.ShouldBeOfExactType<InvalidSemanticContract>();
             error.Message.Contains("revision", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
