@@ -226,7 +226,8 @@ module Sales
 ```
 
 Read [references/application-shell.md](references/application-shell.md) before writing any of it: the inherit/extend/override
-choice, item target and slot, the module-only target rule (`PLAY0750`), buttons, blueprint ranges, sample data, MCP editing
+choice, item target and slot, the module-only target rule (`PLAY0750`), buttons, feature and module toolbars (`toolbar` in a
+`feature` or `module`, `confirm`), blueprint ranges, sample data, MCP editing
 and the review checklist. `contribute to Navigation` stays the flat contribution; a new application uses regions.
 
 ## Interactions — what a click does
@@ -270,6 +271,44 @@ precedence, PLAY0485 and examples.
 
 A `ui profile` selects the application shell with `root template` (an own layout or application-scope screen template, or `blueprint <B> <Name>` with an optional `version` pin), its shell `option` lines, an `appearance` block (`color scheme`, `accent`), the template new screens start from (`new screens use template`), the theme and the `packages`, listed in override-priority order (a later package shadows an earlier one); `target platform` and `target size` accept any identifier, so a typo is silent. The legacy `layout <Name>` line inside a profile still reads but warns `PLAY0791`: write `root template`. `PLAY0790` to `PLAY0799` check the shell. Read [references/ui-profile-and-theme.md](references/ui-profile-and-theme.md) when writing a profile or theme, or fixing a shell diagnostic.
 
+## A deliverable app declares its identity, titles and labels
+
+Symptom: a rendered app titled "Cratis Stage" whose buttons and dialogs show raw command names. The renderer
+defaults to those when the model is silent, so declare, in every deliverable app:
+
+- the layout's `logo image "<path>" title "<text>"` inside `navigation topbar` or `navigation sidebar` (the
+  application title the shell shows; `logo initials` is only valid in a profile's `identity`);
+- a `ui profile` with `root template`, shell `option` lines such as `option showFooter false`, and an `identity`
+  block (`name`, `logo initials`);
+- a `title "<text>"` in each screen and a navigation `item <id> title "<text>" target <Module.Feature>` per screen;
+- `label "<text>"` on **every** `action`.
+
+```screenplay excerpt
+layout AppShell
+  category application
+  content
+
+  navigation sidebar
+    logo image "/assets/solocrm.svg" title "SoloCRM"
+    item organizations title "Organizations" target Crm.Organizations
+
+ui profile Desktop
+  target platform web
+  root template AppShell
+    option showFooter false
+  identity
+    name "SoloCRM"
+    logo initials "SC"
+```
+
+```screenplay excerpt
+screen Organizations
+  data OrganizationOverview[] via query AllOrganizations
+  title "Organizations"
+  action RegisterOrganization
+    label "New organization"
+```
+
 ## Localized strings
 
 Localized text lives in companion `.strings` files and is referenced unquoted as `$strings.<dotted.key>`. Read [references/localized-strings.md](references/localized-strings.md) when localizing messages, labels or titles.
@@ -294,11 +333,13 @@ Localized text lives in companion `.strings` files and is referenced unquoted as
 - [ ] Every theme a profile selects is `compatible with` one of its packages.
 - [ ] `target platform` and `target size` values are spelled correctly; nothing
       checks them.
+- [ ] A deliverable app declares layout `logo ... title`, a `ui profile` with `option` lines and `identity`,
+      a `title` per screen and a `label` on every `action`.
 - [ ] User-visible text is `$strings.` where the application is localized.
 - [ ] No `file` reference is doing work the declaration should be doing.
 - [ ] Every click, submit and screen entry that does something has an `on` or
       `uses`; continuations sit only on actions that can fail.
-- [ ] Navigation regions, slice buttons, blueprint references and sample data follow `references/application-shell.md`: each module's mode is deliberate, no module item targets another module, every button names a State Change slice, every template has a `category`, and the active sample data pack is chosen once in the `ui profile`.
+- [ ] Navigation regions, slice buttons, blueprint references and sample data follow `references/application-shell.md`: each module's mode is deliberate, no module item targets another module, every button names a State Change slice, buttons shared by a feature's screens sit in a feature `toolbar` linked to its commands (`confirm` on destructive ones), every template has a `category`, and the active sample data pack is chosen once in the `ui profile`.
 - [ ] Component bindings, exposed template values, manual form columns, toolbar items, outlets and routes all trace to typed data; no runtime fallback counts as delivery. Report authoring acceptance, executable admission and runtime
       implementation separately.
 

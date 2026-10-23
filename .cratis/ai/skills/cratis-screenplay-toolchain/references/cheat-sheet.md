@@ -3,6 +3,7 @@
 
 ## Contents
 
+- Validation commands and the gate file
 - Samples and preview fixtures
 - Lexical and structural rules
 - Exact numeric source mode
@@ -29,8 +30,8 @@ keeping the capture in Translate. No automatic split.
 Requires Screenplay 4.176.0 or later; older compilers leave that shape unchecked.
 Read
 [public contracts](../../cratis-screenplay-automations-and-translations/references/public-events-and-direction.md).
-View properties use trailing `key`; multipart `by` query/read blocks remain
-PLAY0268, not v10. Read [named keys](../../cratis-screenplay-read-surface/references/named-keys.md).
+View properties use trailing `key`; several parts select v27 (not v10), with a `by` block on
+an optional single-instance query and equality filters on lists. Read [named keys](../../cratis-screenplay-read-surface/references/named-keys.md).
 Production `stream Source.Stream` overrides and reaction/reducer `from Source[.Stream]`
 select released v10: [routes and filters](production-routes-and-filters.md).
 Qualifying non-route Double literals select v11;
@@ -57,6 +58,20 @@ by `for_Documentation/when_comparing_the_grammar_against_the_parsers.cs`),
 `projections/grammar.md`, `captures/grammar.md`. Documentation examples compile in
 Screenplay CI (`when_compiling_every_example.cs`) against repository main: the standalone
 compiler; the compiler bundled in `cratis` can be older and lack the newest ESM versions.
+
+## Validation commands and the gate file
+
+```shell
+screenplay <root> --warnaserror --no-color      # V1; also reads <root>/screenplay.json
+screenplay <root> --print-gate                  # effective gate and each value's source, no compile
+screenplay <root> --format json                 # one JSON report: diagnostics, gate, exitCode
+screenplay <root> --no-gate-file --check all    # bypass the file for one run
+screenplay test <root>                          # V4
+```
+
+`screenplay.json` (authored, beside `.screenplay/`) holds `validation.checks`, `warningsAsErrors`, `scope`
+and `openQuestions`; unknown keys or check names are refused (exit 2), never ignored. Details and
+precedence: [verdicts](verdicts.md).
 
 ## Samples and preview fixtures
 
@@ -152,7 +167,7 @@ processing or runtime retention. See command-surface `references/compliance.md`.
 `subjectIsEventSourceId`, `observationState` (unstable on replay). `causation` and `tags` are
 collections (path below them: PLAY0297 E). Unknown member: PLAY0295/0296 W.
 `$eventSourceId` is the short form used in mappings. `occurred.Week` compiles but does not bind
-(PLAY0273: derived value). Any `$eventContext` path other than `eventSourceId` binds, but the execution plan refuses it ("An event-context value other than the event source identity needs occurrence context that ESM v1 facts do not carry"), so a model that must run uses `$context.occurred` in the command `produces` instead (it executes when the scenario has `given clock`). Catalogue: `Documentation/screenplay/projections/event-context.md`.
+(PLAY0273: derived value). Any `$eventContext` path other than `eventSourceId` binds, but the reference runner refuses it for the specifications that reach that projection ("An event-context value other than the event source identity needs occurrence context that ESM v1 facts do not carry"), so a model that must run uses `$context.occurred` in the command `produces` instead (it executes when the scenario has `given clock`). Catalogue: `Documentation/screenplay/projections/event-context.md`.
 
 ## PDL quick reference (most forms are compiled in `pdl-example.md` or `cheat-sheet-example.md`; `remove via join` and `$eventContext.occurred` are not)
 - Header `projection Name => ReadModel`; variant group `projection Name` + `variant RM` /
@@ -166,7 +181,7 @@ collections (path below them: PLAY0297 E). Unknown member: PLAY0295/0296 W.
   property; the label is decoration; joins never create instances).
 - `children prop identified by k` + `from E key k` + `remove with E key k`; `nested prop` +
   `from` + `clear with E`.
-- Removal: `remove with Event`; `remove via join on Event` is compile-only and bind-only: at projection level it blocks the whole reference execution plan (`UnsupportedProjectionBlock`), so no specification runs.
+- Removal: `remove with Event`; `remove via join on Event` is compile-only and bind-only: at projection level it makes only the specifications that reach that projection unsupported (`UnsupportedProjectionBlock`); the others run (Screenplay 4.213.2 or later; earlier compilers refuse the whole plan).
 - Keys: only on `from` (a projection-level `key` routes nothing: PLAY0381 W).
 - One `every`/`all` block per level for the executable model (else PLAY0268).
 - Templates (`` `${a}` ``) and `$causedBy` parse but do not bind (PLAY0268).
@@ -197,7 +212,7 @@ generated source destinations need freshness. Read
 [Stage admission](../../cratis-stage-rendering-and-sandbox/references/admission.md)
 for v21 admission, all-Proven unpinned specs and the separate prerequisites for
 warning/info rules, checksum validation and pattern/random rendering.
-`generate rule` remains STAGE-ESM-028. Reference binding is not rendering.
+`generate rule` renders from Stage 4.136.0 (STAGE-ESM-028 in the Host). Reference binding is not rendering.
 
 ## Specification forms
 Full list with semantics: `Documentation/screenplay/specifications.md`. Compiled in the
