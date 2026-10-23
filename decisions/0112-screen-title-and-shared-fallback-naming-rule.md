@@ -1,12 +1,11 @@
 ---
 id: 0112
 title: A top-level `title` is the screen title, and names fall back through one shared rule
-status: accepted
+status: proposed
 stage: none
-decided: 2026-10-23
-decider: woksin
 class: contract
 reversibility: cheap
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/**

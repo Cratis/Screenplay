@@ -1,12 +1,11 @@
 ---
 id: 0109
 title: A live answer that reads the clock follows the clock
-status: accepted
+status: proposed
 stage: none
-decided: 2026-10-23
-decider: woksin
 class: contract
 reversibility: costly
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/Semantics/**
   - Source/DotNET/Screenplay.CanonicalVectors.Specs/**

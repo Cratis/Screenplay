@@ -1,12 +1,11 @@
 ---
 id: 0110
 title: Actions name their subject explicitly, and selection is separate from visibility
-status: accepted
+status: proposed
 stage: none
-decided: 2026-10-23
-decider: woksin
 class: contract
 reversibility: costly
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/**

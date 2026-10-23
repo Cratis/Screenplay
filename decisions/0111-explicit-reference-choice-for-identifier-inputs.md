@@ -1,12 +1,11 @@
 ---
 id: 0111
 title: A reference input chooses from a declared query; defaults are declared once
-status: accepted
+status: proposed
 stage: none
-decided: 2026-10-23
-decider: woksin
 class: contract
 reversibility: costly
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/**

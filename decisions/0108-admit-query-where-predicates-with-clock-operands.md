@@ -1,12 +1,11 @@
 ---
 id: 0108
 title: Admit fixed query `where` predicates with clock operands
-status: accepted
+status: proposed
 stage: none
-decided: 2026-10-23
-decider: woksin
 class: contract
 reversibility: costly
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/DotNET/Screenplay.CanonicalCorpus/**
