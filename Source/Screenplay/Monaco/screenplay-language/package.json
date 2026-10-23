@@ -12,6 +12,8 @@
         "dsl",
         "language-service"
     ],
+    "homepage": "https://www.cratis.io/screenplay/",
+    "author": "Cratis",
     "license": "MIT",
     "repository": {
         "type": "git",
