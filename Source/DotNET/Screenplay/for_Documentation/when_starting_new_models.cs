@@ -36,10 +36,15 @@ public class when_starting_new_models : Specification
             if (json.RootElement.ValueKind != JsonValueKind.Array) continue;
             foreach (var document in json.RootElement.EnumerateArray().Where(document => document.TryGetProperty("operation", out var operation) && operation.GetString() == "create-document"))
             {
-                if (document.TryGetProperty("source", out var source)) AddSource("propose-source", source.GetString()!);
-                if (document.TryGetProperty("node", out var node)) _examples.Add("propose-ast", (ApplicationSyntax)SyntaxJson.Deserialize(node));
+                AddDocument(document);
             }
         }
+    }
+
+    void AddDocument(JsonElement document)
+    {
+        if (document.TryGetProperty("source", out var source)) AddSource("propose-source", source.GetString()!);
+        if (document.TryGetProperty("node", out var node)) _examples.Add("propose-ast", (ApplicationSyntax)SyntaxJson.Deserialize(node));
     }
 
     void AddSource(string path, string source)

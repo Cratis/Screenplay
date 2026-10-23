@@ -33,7 +33,7 @@ public class when_checking_protected_reads_in_the_samples : given.the_samples
             .Select(diagnostic => $"{name}: {diagnostic.Code} {diagnostic.Message}"));
         if (compilation.Result.Value is not { } application) return;
         var (baseline, candidate) = Bind(name, compilation.Sources, application);
-        if (name is "Library" or "TimeTracking")
+        if (name == "Library" || name == "TimeTracking")
         {
             if (application.CommandReadMode is null) _legacySamples.Add(name);
             _refusals.AddRange(candidate.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnprotectableDecisionRead)
@@ -51,8 +51,10 @@ public class when_checking_protected_reads_in_the_samples : given.the_samples
         string name, IEnumerable<PlayFileSource> sources, ApplicationSyntax application)
     {
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create(name));
-        var documents = SemanticDocumentSet.Create([.. sources.Select(source => SemanticSourceDocument.Create(
-            catalog.ResolveDocument(source.File.RelativePath.Replace('/', '_')), source.File.RelativePath.Replace('/', '_'), source.File.RelativePath, source.Source))], catalog);
+        var documents = SemanticDocumentSet.Create(
+            [.. sources.Select(source => SemanticSourceDocument.Create(
+                catalog.ResolveDocument(source.File.RelativePath.Replace('/', '_')), source.File.RelativePath.Replace('/', '_'), source.File.RelativePath, source.Source))],
+            catalog);
         var binder = new SemanticModelBinder();
         return (binder.Bind(name, application with { CommandReadMode = null }, documents),
             binder.Bind(name, application with { CommandReadMode = CommandReadMode.Protected }, documents));
@@ -63,6 +65,6 @@ public class when_checking_protected_reads_in_the_samples : given.the_samples
     [Fact] void should_opt_in_every_admissible_sample() => _missingPreambles.ShouldBeEmpty();
     [Fact] void should_not_introduce_executable_errors() => _newErrors.ShouldBeEmpty();
     [Fact] void should_leave_the_inadmissible_samples_legacy() => _legacySamples.ShouldEqual(new[] { "Library", "TimeTracking" });
-    [Fact] void should_refuse_library_without_a_removal_handler() => _refusals.Any(refusal => refusal.Sample == "Library" && refusal.Reason == DiagnosticArgument.Keyword("no-removal")).ShouldBeTrue();
-    [Fact] void should_refuse_time_tracking_composite_reads() => _refusals.Any(refusal => refusal.Sample == "TimeTracking" && refusal.Reason == DiagnosticArgument.Keyword("by-parts")).ShouldBeTrue();
+    [Fact] void should_refuse_library_without_a_removal_handler() => _refusals.Exists(refusal => refusal.Sample == "Library" && refusal.Reason == DiagnosticArgument.Keyword("no-removal")).ShouldBeTrue();
+    [Fact] void should_refuse_time_tracking_composite_reads() => _refusals.Exists(refusal => refusal.Sample == "TimeTracking" && refusal.Reason == DiagnosticArgument.Keyword("by-parts")).ShouldBeTrue();
 }
