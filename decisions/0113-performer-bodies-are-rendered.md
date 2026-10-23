@@ -1,8 +1,9 @@
 ---
 id: 0113
 title: Performer bodies are rendered, with a documented typed context
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
 class: contract
 reversibility: cheap
 decider: Sindre Alstad Wilting
