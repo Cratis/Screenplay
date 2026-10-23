@@ -102,9 +102,9 @@
 | [0105](0105-lift-the-screenplay-language-freeze.md) | Lift the Screenplay language freeze | accepted | none | 2026-10-22 | woksin |
 | [0106](0106-the-application-calendar-and-clock-operands.md) | The application calendar and clock operands `today` and `now` | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
 | [0107](0107-admit-today-and-now-in-command-conditions.md) | Admit `today` and `now` in command conditions | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
-| [0108](0108-admit-query-where-predicates-with-clock-operands.md) | Admit fixed query `where` predicates with clock operands | proposed | none | — | — |
-| [0109](0109-live-answers-follow-the-clock.md) | A live answer that reads the clock follows the clock | proposed | none | — | — |
+| [0108](0108-admit-query-where-predicates-with-clock-operands.md) | Admit fixed query `where` predicates with clock operands | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
+| [0109](0109-live-answers-follow-the-clock.md) | A live answer that reads the clock follows the clock | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
 | [0110](0110-explicit-action-subjects-and-selection.md) | Actions name their subject explicitly, and selection is separate from visibility | proposed | none | — | — |
-| [0111](0111-explicit-reference-choice-for-identifier-inputs.md) | A reference input chooses from a declared query; defaults are declared once | proposed | none | — | — |
+| [0111](0111-explicit-reference-choice-for-identifier-inputs.md) | A reference input chooses from a declared query; defaults are declared once | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
 | [0112](0112-screen-title-and-shared-fallback-naming-rule.md) | A top-level `title` is the screen title, and names fall back through one shared rule | proposed | none | — | — |
 | [0113](0113-performer-bodies-are-rendered.md) | Performer bodies are rendered, with a documented typed context | proposed | none | — | — |
