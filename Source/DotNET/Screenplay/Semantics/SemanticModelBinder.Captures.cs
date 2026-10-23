@@ -93,7 +93,7 @@ public sealed partial class SemanticModelBinder
                 events.Add(@event.Contract.Id);
             }
 
-            return events.Count == 0 ? null : new(events.ToImmutable());
+            return events.Count == 0 ? null : new(events.ToImmutable()) { KeyIsEventSource = capture.KeyIsEventSource };
         }
 
         ImmutableArray<SemanticCaptureMap> BindCaptureMap(string capture, IEnumerable<CaptureMapOperationSyntax> operations)

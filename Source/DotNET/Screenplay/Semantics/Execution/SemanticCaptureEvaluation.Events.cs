@@ -24,6 +24,22 @@ internal static partial class SemanticCaptureEvaluation
         return key;
     }
 
+    // A marked capture promises that the key is the event source. A fixture with no source takes the key; only a
+    // source that differs from the key is a contract failure. Returns the differing source, or null.
+    internal static string? KeyDisagreesWithSource(SemanticFact fact, SemanticValue key)
+    {
+        if (fact.Destination is SemanticNullValue) return null;
+        var source = KeyText(fact.Destination);
+        return string.Equals(source, KeyText(key), StringComparison.Ordinal) ? null : source;
+    }
+
+    internal static string KeyText(SemanticValue value) => value switch
+    {
+        SemanticTextValue text => text.Value,
+        SemanticNumberValue number => number.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        _ => value.ToString() ?? string.Empty
+    };
+
     internal static SemanticCaptureRecord Overlay(SemanticCaptureRecord? previous, SemanticCaptureRecord current)
     {
         var fields = previous is null ? new Dictionary<string, SemanticCaptureField>(StringComparer.Ordinal) : Fields(previous);

@@ -168,6 +168,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticCaptureChildren> children = default;
         ImmutableArray<SemanticCaptureNested> nested = default;
         SemanticCaptureEventsSource? eventsSource = null;
+        var keyIsEventSource = false;
         while (NextProperty(ref reader, seen, "capture") is { } property)
         {
             switch (property)
@@ -182,9 +183,14 @@ internal static partial class SemanticModelRead
                 case "sourceEvents" when schemaVersion >= LanguageVersion.V9.Major:
                     eventsSource = new([.. StringArray(ref reader, property).Select(SemanticId.Parse)]);
                     break;
+                case "keyIsEventSource" when schemaVersion >= LanguageVersion.V33.Major:
+                    keyIsEventSource = Boolean(ref reader, property);
+                    break;
                 default: throw Unknown(property, "capture");
             }
         }
+
+        if (keyIsEventSource) eventsSource = (eventsSource ?? throw new InvalidSemanticContract("A capture declares 'keyIsEventSource' without 'sourceEvents'.")) with { KeyIsEventSource = true };
 
         Required(id.IsSet && name is not null && key is not null && !map.IsDefault && !appends.IsDefault && !children.IsDefault && !nested.IsDefault, "capture");
         return new(id, name!, key!, map, appends) { Children = children, Nested = nested, EventsSource = eventsSource };

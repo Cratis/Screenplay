@@ -67,6 +67,7 @@ internal static partial class CaptureParser
         var nested = new List<CaptureNestedSyntax>();
         SourceLocation? keyLocation = null;
         SourceLocation? mapLocation = null;
+        var keyIsEventSource = false;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -78,6 +79,12 @@ internal static partial class CaptureParser
                     break;
                 case "key":
                     key = line.Content["key".Length..].Trim();
+                    if (EventSourceKeyRegex().Match(key) is { Success: true } marker)
+                    {
+                        key = key[..marker.Index];
+                        keyIsEventSource = true;
+                    }
+
                     keyLocation = line.Location;
                     break;
                 case "map":
@@ -115,6 +122,7 @@ internal static partial class CaptureParser
         return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location)
         {
             SourceOptions = context.SourceOptions,
+            KeyIsEventSource = keyIsEventSource,
             DirectiveLocations = MapLocations(keyLocation, mapLocation)
         };
     }
@@ -506,6 +514,9 @@ internal static partial class CaptureParser
 
         return (map, appends, mapLocation);
     }
+
+    [GeneratedRegex(@"\s+is\s+event\s+source$", RegexOptions.NonBacktracking)]
+    private static partial Regex EventSourceKeyRegex();
 
     [GeneratedRegex(@"^capture\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();

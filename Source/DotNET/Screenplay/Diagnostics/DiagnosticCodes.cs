@@ -3457,6 +3457,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string FeatureToolbarCommandNotFound = "PLAY0808";
 
+    /// <summary>
+    /// A capture declares <c>is event source</c> on its key, but is not a <c>source events</c> capture with a single property key.
+    /// </summary>
+    public const string CaptureEventSourceKeyOutsideEvents = "PLAY0809";
+
     // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
 
     /// <summary>
