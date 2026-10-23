@@ -3,7 +3,7 @@ title: Notation conventions
 description: "The symbols Screenplay keeps on purpose, such as Type[], the three arrows, the concept colon and the @ escape, and where each is admitted."
 ---
 
-This page is a reference for the notation in Screenplay that looks like programming-language syntax. Each entry says where the notation is accepted, shows one real example and gives the reason it is kept. The language is frozen (decision 0092), so none of this changes spelling; readable alternatives are recorded as parked in [decision 0100](https://github.com/Cratis/Screenplay/blob/main/decisions/0100-retain-notation-conventions-and-park-readable-alternatives.md). The audit that produced this page is [#350](https://github.com/Cratis/Screenplay/issues/350), which [decision 0023](https://github.com/Cratis/Screenplay/blob/main/decisions/0023-command-production-model.md) left open as question 2. The [grammar](grammar.md) is the normative source; this page explains it.
+This page is a reference for the notation in Screenplay that looks like programming-language syntax. Each entry says where the notation is accepted, shows one real example and gives the reason it is kept. None of this changes spelling: decision [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) lifted the language freeze, but a new spelling still needs its own decision and ESM version. Readable alternatives are recorded as parked in [decision 0100](https://github.com/Cratis/Screenplay/blob/main/decisions/0100-retain-notation-conventions-and-park-readable-alternatives.md). The audit that produced this page is [#350](https://github.com/Cratis/Screenplay/issues/350), which [decision 0023](https://github.com/Cratis/Screenplay/blob/main/decisions/0023-command-production-model.md) left open as question 2. The [grammar](grammar.md) is the normative source; this page explains it.
 
 Examples come from `Samples/` unless they say otherwise.
 
@@ -187,7 +187,7 @@ Source: `Samples/Invoicing/invoicing.play:3416`.
 
 The C# binder parses the guard and admits exactly this set: field names, string, number, boolean and `null` literals, the comparisons `==`, `!=`, `<`, `<=`, `>` and `>=`, and `&&`, `||`, `!` and parentheses. Ordering compares numbers only. A guard outside that set is reported as `PLAY0268`. The TypeScript compiler checks only that the closing backtick is present. [Captures](captures.md#in-the-executable-semantic-model) gives the semantics.
 
-Reason: the executable model admits this grammar for captures today, so removing `&&` and `||` would change ESM semantics, which the freeze forbids. A guard written with `and` and `or` is a separate, parked proposal in decision 0100; it changes meaning rather than spelling.
+Reason: the executable model admits this grammar for captures today, so removing `&&` and `||` would change ESM semantics and needs its own decision and ESM version. A guard written with `and` and `or` is a separate, parked proposal in decision 0100; it changes meaning rather than spelling.
 
 ## Composite key braces
 
@@ -195,4 +195,4 @@ Braces around a composite projection key are optional. The canonical printer wri
 
 ## What this page does not change
 
-No grammar, keyword or ESM change comes from this page. For each convention above, decision 0100 records the readable alternative that was considered, what it would cost and why it is parked. If a spelling changes after the freeze, the old spelling keeps working, gets an Information diagnostic and a repair, and ESM bytes stay the same.
+No grammar, keyword or ESM change comes from this page. For each convention above, decision 0100 records the readable alternative that was considered, what it would cost and why it is parked. If a spelling changes, the old spelling keeps working, gets an Information diagnostic and a repair, and ESM bytes stay the same.
