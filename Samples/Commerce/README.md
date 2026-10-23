@@ -76,7 +76,7 @@ Commerce/
       Tracking.play            feature: parcels on their way to the door
       TrackCarrierDeliveries.play   Translate (inbound): a carrier scan is captured as ParcelDeliveryScanned
       MarkShipmentDelivered.play    Automation: ParcelDeliveryScanned becomes ShipmentDelivered
-      ReceiveCarrierDispatches.play Translate (inbound): a carrier's public dispatch event, keyed by its event source, becomes CarrierDispatchRecorded
+      ReceiveCarrierDispatches.play Translate (inbound): a carrier's public dispatch event becomes CarrierDispatchRecorded
       NotifyCustomerOfDispatch.play Automation: the customer hears their parcel shipped
       HandleReturnedParcels.play    Automation on a trigger: a returned parcel is recorded
 ```

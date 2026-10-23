@@ -16,7 +16,7 @@ slice Translate ReceiveCarrierDispatches
   capture CarrierDispatchFeed
     source events
       from ParcelDispatchAnnounced
-    key orderId is event source
+    key orderId
     append CarrierDispatchRecorded
       orderId        = $.orderId
       trackingNumber = $.trackingNumber
