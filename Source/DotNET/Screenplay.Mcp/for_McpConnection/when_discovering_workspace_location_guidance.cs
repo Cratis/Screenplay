@@ -19,6 +19,7 @@ public class when_discovering_workspace_location_guidance : given.a_connection
             .GetProperty("description").GetString()!;
     }
 
+    [Fact] void should_start_new_models_with_protected_command_reads() => _description.ShouldContain("command reads protected");
     [Fact] void should_prioritize_an_explicit_path() => _description.ShouldContain("an explicit path wins, then the client's single project root");
     [Fact] void should_explain_nested_model_discovery() => _description.ShouldContain("discovers nested .play files, else a Source or src folder already holding .play files or a .screenplay folder, else a new Screenplay folder");
     [Fact] void should_preserve_existing_workspace_state_roots() => _description.ShouldContain("Existing identity or pending-journal state along that discovery path preserves its workspace root");

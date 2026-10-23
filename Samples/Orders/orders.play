@@ -17,6 +17,8 @@
 
 domain Cratis.Orders
 
+command reads protected
+
 concept OrderId     : Uuid
 concept OrderNumber : String
 concept CustomerName : String

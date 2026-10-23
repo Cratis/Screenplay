@@ -42,9 +42,12 @@ public sealed record WorkspaceMoveRequest
     public WorkspaceNodeHandle? NewParentHandle { get; init; }
 
     /// <summary>
-    /// Gets the specifications of the source slice that move with a single declaration, because they cover only it.
+    /// Gets an optional assertion of the source-slice specifications to carry. The core computes them from coverage.
     /// </summary>
-    /// <remarks>Only valid when <see cref="Target"/> is a declaration inside a slice and <see cref="NewParent"/> is a slice.</remarks>
+    /// <remarks>
+    /// Only valid when <see cref="Target"/> is a declaration inside a slice and <see cref="NewParent"/> is a slice.
+    /// Empty means compute automatically; a nonempty value must equal the computed set.
+    /// </remarks>
     public ImmutableArray<SemanticAddress> CarriedSpecifications { get; init; } = [];
 
     /// <summary>

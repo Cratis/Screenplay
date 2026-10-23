@@ -18,6 +18,8 @@
 
 domain Cratis.Ticketing
 
+command reads protected
+
 concept TicketId  : Uuid
 concept CustomerId : Uuid
 concept ArticleId : Uuid

@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
@@ -359,6 +360,11 @@ internal sealed partial class WorkspaceRefactoring
         }
         RequireInheritedBehavior(plan.Index, candidateIndex, plan.Rehomes);
         RequireExecutableMoveContinuity(workspace, result.Workspace!, plan.DeclarationMove);
+        if (plan.DeclarationMove)
+        {
+            var refusal = WorkspaceDeclarationMove.Obligations(WorkspaceAuthoringAnalysis.For(workspace).Source, WorkspaceAuthoringAnalysis.For(result.Workspace!).Source, plan.Migrations);
+            if (refusal is not null) throw new InvalidWorkspaceAuthoring(refusal);
+        }
         if (workspace.IdentityCatalog.Semantics.Any(old => !result.Workspace!.IdentityCatalog.Semantics.Any(current => current.Id == old.Id)) ||
             workspace.IdentityCatalog.EventContracts.Any(old => !result.Workspace!.IdentityCatalog.EventContracts.Any(current => current.Id == old.Id)))
         {

@@ -61,6 +61,8 @@
   href: projections/toc.yml
 - name: Captures
   href: captures.md
+- name: Typed event capture keys
+  href: captures/typed-event-keys.md
 - name: Capture grammar (EBNF)
   href: captures/grammar.md
 - name: Specifications

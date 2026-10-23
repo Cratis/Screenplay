@@ -31,12 +31,17 @@ yarn dev
 
 ## Model a slice
 
-Clear the editor and start a bounded context. Begin your new model's root file with `reaction batches atomic`, so reactions you add use all-or-none production batches rather than legacy per-fact production; see [Atomic production batches](reactions.md#atomic-production-batches). The declaration selects ESM v22 or later even before the model has a reaction, so the targets you render to must admit that version.
+Clear the editor and start a bounded context. Begin your new model's root file
+with `command reads protected` for [protected command reads](commands.md#what-reads-guarantees)
+and `reaction batches atomic` for [atomic production batches](reactions.md#atomic-production-batches).
+Together these select ESM v25 or later, so the targets you render to must admit
+that version. Existing models retain their mode unless you explicitly opt in.
 
 A `.play` file is indentation-based — structure follows the offside rule, and a construct owns everything indented beneath it. Type the outline of a module with one feature and one slice:
 
 ```screenplay
 reaction batches atomic
+command reads protected
 
 module Library
 

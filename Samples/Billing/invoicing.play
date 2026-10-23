@@ -12,6 +12,8 @@
 
 domain Cratis.Invoicing
 
+command reads protected
+
 concept InvoiceId : Uuid
 concept PaymentId : Uuid
 concept Money : Decimal

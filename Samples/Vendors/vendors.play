@@ -12,6 +12,8 @@
 
 domain Cratis.Vendors
 
+command reads protected
+
 concept VendorId : Uuid
 concept Money : Decimal
 

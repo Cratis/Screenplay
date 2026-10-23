@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Indexing;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -23,12 +24,8 @@ static class McpReviewSelection
         return [.. all.Where(declaration => scope is null || declaration.Address == scope || declaration.Hierarchy.Any(owner => owner.Address == scope))];
     }
 
-    internal static bool Resolves(McpSyntaxIndex index, McpDeclaration from, string name, string kind, McpDeclaration target)
-    {
-        var candidates = index.Resolve(new(name, [kind], from.Scope, from.Location, "review", from.Owner));
-
-        return candidates is [var candidate] && candidate.Address == target.Address && candidate.Kind == target.Kind;
-    }
+    internal static bool Resolves(McpSyntaxIndex index, McpDeclaration from, string name, string kind, McpDeclaration target) =>
+        SpecificationObligations.Resolves(index, from, name, kind, target);
 
     internal static object Page(McpSnapshot snapshot, IEnumerable<object> items, JsonElement arguments, string coverage) => new
     {

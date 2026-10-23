@@ -1,6 +1,6 @@
 # Copyright (c) Cratis. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for full license information.
-"""Assert the Release NuGet package stays slim and the compiler depends on it.
+"""Assert the Release runtime packages stay slim and the compiler depends on them.
 
 Run after `dotnet pack -c Release -o <directory> -p:Version=<version>`:
     python3 Source/DotNET/Screenplay.Contexts/verify-package.py <directory> <version>
@@ -23,7 +23,7 @@ def inspect(package):
         metadata = ET.fromstring(archive.read(f"{package}.nuspec")).find("{*}metadata")
         groups = metadata.find("{*}dependencies").findall("{*}group")
         dependencies = {
-            group.attrib["targetFramework"]: {dep.attrib["id"] for dep in group.findall("{*}dependency")}
+            group.attrib["targetFramework"]: {dep.attrib["id"]: dep.attrib["version"] for dep in group.findall("{*}dependency")}
             for group in groups
         }
     assert set(dependencies) == frameworks, dependencies
@@ -33,11 +33,18 @@ def inspect(package):
 contexts_files, contexts_deps = inspect("Cratis.Screenplay.Contexts")
 for framework in frameworks:
     assert f"lib/{framework}/Cratis.Screenplay.Contexts.dll" in contexts_files
-    assert contexts_deps[framework] == set(), contexts_deps
+    assert contexts_deps[framework] == {}, contexts_deps
 assert not any("Cratis.Screenplay.dll" in name or "Specs.dll" in name for name in contexts_files)
+
+matching_files, matching_deps = inspect("Cratis.Screenplay.Matching")
+for framework in frameworks:
+    assert f"lib/{framework}/Cratis.Screenplay.Matching.dll" in matching_files
+    assert matching_deps[framework] == {}, matching_deps
+assert not any("Cratis.Screenplay.dll" in name or "Specs.dll" in name for name in matching_files)
 
 compiler_files, compiler_deps = inspect("Cratis.Screenplay")
 for framework in frameworks:
     assert f"lib/{framework}/Cratis.Screenplay.dll" in compiler_files
     assert "Cratis.Screenplay.Contexts" in compiler_deps[framework]
-print("All context package content and dependency assertions passed")
+    assert compiler_deps[framework]["Cratis.Screenplay.Matching"] == f"[{version}]", compiler_deps[framework]
+print("All context and matching package content and dependency assertions passed (3 frameworks each)")

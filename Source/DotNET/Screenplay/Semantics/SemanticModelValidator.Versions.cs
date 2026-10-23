@@ -7,6 +7,16 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesTypedCaptureKeys(SemanticApplication application)
+    {
+        var slices = SlicesOf(application).ToArray();
+        var produced = slices.SelectMany(slice => slice.Commands).SelectMany(command => command.Produces).Select(value => value.EventContract).ToHashSet();
+        var text = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text);
+        return slices.SelectMany(slice => slice.Captures).Where(capture => capture.EventsSource is not null)
+            .SelectMany(capture => capture.Appends.Concat(capture.Children.SelectMany(child => child.Appends)).Concat(capture.Nested.SelectMany(nested => nested.Appends)))
+            .Any(append => !produced.Contains(append.EventContract) && append.EventSourceType != text);
+    }
+
     internal static bool UsesCompositeReadModelKeys(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.ReadModels).Any(model => model.Properties.Count(property => property.IsIdentifier) > 1);
 
@@ -81,6 +91,14 @@ internal static partial class SemanticModelValidator
 
     internal static bool UsesAnonymousPolicies(SemanticApplication application) =>
         application.Policies.Any(policy => policy.Condition is SemanticAnonymousCondition);
+
+    static void ValidateTypedCaptureKeyVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesTypedCaptureKeys(application),
+            version,
+            SemanticVersion.V32,
+            "An ESM v32 model must declare a typed event capture key.",
+            "Typed event capture keys require ESM schema v32.");
 
     static void ValidateAnonymousPolicyVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

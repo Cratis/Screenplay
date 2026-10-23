@@ -19,7 +19,7 @@ public class an_inbound_translation : given.a_public_events_model
         _roundTripped = SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(_result.Value!.Model));
     }
 
-    [Fact] void should_claim_esm_v9() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V9);
+    [Fact] void should_claim_esm_v32() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V32);
     [Fact] void should_bind_the_origin() => _slice.Events.Single(@event => @event.Name == "ShipmentDispatched").Origin.ShouldEqual("shipping");
     [Fact] void should_mark_the_foreign_event_public() => _slice.Events.Single(@event => @event.Name == "ShipmentDispatched").Visibility.ShouldEqual(SemanticEventVisibility.Public);
     [Fact] void should_keep_the_local_event_private() => _slice.Events.Single(@event => @event.Name == "OrderDispatched").Visibility.ShouldEqual(SemanticEventVisibility.Private);

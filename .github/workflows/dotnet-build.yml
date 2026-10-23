@@ -34,6 +34,8 @@ env:
       {"name":"compiler","projects":["Source/DotNET/Screenplay/Screenplay.csproj"]},
       {"name":"mcp","projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
       {"name":"contracts-tool-vectors","projects":[
+        "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
+        "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
         "Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj",
         "Source/DotNET/Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj",
         "Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj",
