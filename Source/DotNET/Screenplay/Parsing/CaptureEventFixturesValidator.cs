@@ -11,13 +11,16 @@ internal static class CaptureEventFixturesValidator
 {
     static bool IsPropertyKey(string? key) => !string.IsNullOrEmpty(key) && !key.StartsWith('$') && !key.Contains('.');
 
-    internal static void Validate(ApplicationSyntax application, SliceSyntax slice, DeclarationScope scope, AuthoringProductionResolver events, ParserContext context)
+    internal static void ValidateEventSourceKeys(SliceSyntax slice, ParserContext context)
     {
         foreach (var capture in slice.Captures.Where(capture => capture.KeyIsEventSource && !(capture.Source is { } source && CaptureEventsSource.IsEvents(source) && IsPropertyKey(capture.Key))))
         {
             context.Error(DiagnosticCodes.CaptureEventSourceKeyOutsideEvents, $"Capture '{capture.Name}' declares 'is event source' on its key; only a 'source events' capture with a single property key can.", capture.Location);
         }
+    }
 
+    internal static void Validate(ApplicationSyntax application, SliceSyntax slice, DeclarationScope scope, AuthoringProductionResolver events, ParserContext context)
+    {
         foreach (var capture in slice.Captures.Where(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source)))
         {
             if (capture.Key?.StartsWith('$') == true)

@@ -36,7 +36,7 @@ public class with_an_event_source_key : for_SemanticSpecificationRunner.given.a_
                     append Translated
                       id = $.id
                   specification S
-                    given Arrived
+                    when append Arrived
                       for "{{source}}"
                       id = "parcel"
                     then Translated
