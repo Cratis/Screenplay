@@ -88,8 +88,10 @@ record are to these revisions.
 - **Arc:** supplies the receipt instant and the zone abstraction.
 - **Samples:** Invoicing and Library move deliberately from "refused" to "admitted".
 - **Scene, Chronicle:** none. **CLI:** bundles the versions. **AI corpus:** stops saying `today` cannot be modelled.
-- A backdated business value is not an execution time. Rules that compare against `today` apply to the receipt
-  instant, not to the event's occurred time, and authors choose accordingly.
+- A backdated business value is not an execution time. In a command received from a client, rules that compare
+  against `today` apply to the receipt instant, not to a business date the command carries or to the occurred time of
+  an earlier event, and authors choose accordingly. A command invoked by a reaction uses the triggering instant
+  (item 2), which for an event trigger is that event's occurred time.
 
 ## Open points
 
