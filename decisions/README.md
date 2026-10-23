@@ -88,7 +88,7 @@
 | [0089](0089-expose-the-reference-evaluators-decide-commit-split-to-hosts.md) | Expose the reference evaluator's decide/commit split to hosts and publish protected-read race vectors | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0090](0090-admit-uuid-equality-in-command-conditions.md) | Admit Uuid equality in command conditions | accepted | none | 2026-10-16 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0091](0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md) | Protected reads treat keys the event store refuses as missing | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
-| [0092](0092-the-language-is-frozen-at-esm-v28.md) | The language is frozen at ESM v28 | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0092](0092-the-language-is-frozen-at-esm-v28.md) | The language is frozen at ESM v28 | superseded | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0093](0093-give-containers-identities-before-the-model-binds.md) | Give applications, modules, features and slices identities before the model binds | accepted | none | 2026-10-17 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0094](0094-report-enum-numeric-identity-changes-in-model-comparison.md) | Report enum numeric identity changes in model comparison | accepted | none | 2026-10-18 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0097](0097-a-performer-query-is-an-opaque-read-not-a-refusal.md) | A performer query is an opaque read, not a refusal of the application | proposed | none | — | — |
@@ -99,3 +99,4 @@
 | [0102](0102-move-a-declaration-between-slices.md) | Move a single declaration between slices, carrying the specifications that cover only it | accepted | none | 2026-10-18 | woksin |
 | [0103](0103-admit-the-anonymous-policy-condition-in-esm-v31.md) | Admit the anonymous policy condition in ESM v31 (exception to the freeze) | accepted | none | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0104](0104-show-csharp-completeness-verdicts-in-vscode.md) | Show the C# completeness verdicts in VS Code through the repair bridge | accepted | none | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
+| [0105](0105-lift-the-screenplay-language-freeze.md) | Lift the Screenplay language freeze | accepted | none | 2026-10-22 | woksin |

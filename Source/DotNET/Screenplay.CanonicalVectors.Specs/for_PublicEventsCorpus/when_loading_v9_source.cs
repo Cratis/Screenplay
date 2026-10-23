@@ -12,7 +12,7 @@ public class when_loading_v9_source : Specification
     readonly CanonicalCorpusVector _vector = PublicEventsCorpus.V9;
 
     [Fact] void should_pin_the_source_backed_revision() => _vector.SemanticRevision.ToString().ShouldEqual("rev1:8ffa4d7ac03bf38338c7aedb16187229c6ab8139ecfdb0039524e801ea956c2f");
-    [Fact] void should_bind_the_source_to_the_pinned_canonical_bytes()
+    [Fact] void should_rebind_the_typed_capture_source_to_v32_without_rewriting_the_v9_vector()
     {
         var form = _vector.SourceForms.Single();
         var catalog = SemanticIdentityCatalogSerializer.Deserialize(form.IdentityCatalogBytes.AsSpan());
@@ -20,9 +20,12 @@ public class when_loading_v9_source : Specification
         var result = new SemanticModelCompiler().Compile(_vector.ApplicationName, SemanticDocumentSet.Create([.. documents], catalog));
         result.Success.ShouldBeTrue();
         var model = result.Value!.Model;
-        model.SemanticVersion.ShouldEqual(SemanticVersion.V9);
-        model.Revision.ShouldEqual(_vector.SemanticRevision);
-        SemanticModelSerializer.Serialize(model).SequenceEqual(_vector.EsmBytes).ShouldBeTrue();
+        model.SemanticVersion.ShouldEqual(SemanticVersion.V32);
+        (model.Revision == _vector.SemanticRevision).ShouldBeFalse();
+        var type = SemanticTypeReference.ForConcept(model.Application.Concepts.Single(concept => concept.Name == "OrderId").Id);
+        model.Application.Modules.Single().Features.Single().Slices.Single(slice => slice.Name == "TrackShipments")
+            .Captures.Single().Appends.Single().EventSourceType.ShouldEqual(type);
+        SemanticModelSerializer.Serialize(model).SequenceEqual(_vector.EsmBytes).ShouldBeFalse();
     }
 
     [Fact] void should_run_the_publication_specification()
