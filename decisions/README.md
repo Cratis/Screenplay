@@ -100,8 +100,8 @@
 | [0103](0103-admit-the-anonymous-policy-condition-in-esm-v31.md) | Admit the anonymous policy condition in ESM v31 (exception to the freeze) | accepted | none | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0104](0104-show-csharp-completeness-verdicts-in-vscode.md) | Show the C# completeness verdicts in VS Code through the repair bridge | accepted | none | 2026-10-19 | Sindre Wilting (delegated to the L0 coordinator) |
 | [0105](0105-lift-the-screenplay-language-freeze.md) | Lift the Screenplay language freeze | accepted | none | 2026-10-22 | woksin |
-| [0106](0106-the-application-calendar-and-clock-operands.md) | The application calendar and clock operands `today` and `now` | accepted | none | 2026-10-23 | woksin |
-| [0107](0107-admit-today-and-now-in-command-conditions.md) | Admit `today` and `now` in command conditions | accepted | none | 2026-10-23 | woksin |
+| [0106](0106-the-application-calendar-and-clock-operands.md) | The application calendar and clock operands `today` and `now` | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
+| [0107](0107-admit-today-and-now-in-command-conditions.md) | Admit `today` and `now` in command conditions | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
 | [0108](0108-admit-query-where-predicates-with-clock-operands.md) | Admit fixed query `where` predicates with clock operands | proposed | none | — | — |
 | [0109](0109-live-answers-follow-the-clock.md) | A live answer that reads the clock follows the clock | proposed | none | — | — |
 | [0110](0110-explicit-action-subjects-and-selection.md) | Actions name their subject explicitly, and selection is separate from visibility | proposed | none | — | — |

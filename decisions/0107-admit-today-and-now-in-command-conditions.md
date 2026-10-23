@@ -4,7 +4,7 @@ title: Admit `today` and `now` in command conditions
 status: accepted
 stage: none
 decided: 2026-10-23
-decider: woksin
+decider: L0 (delegated by woksin)
 class: contract
 reversibility: costly
 amends: 0087
