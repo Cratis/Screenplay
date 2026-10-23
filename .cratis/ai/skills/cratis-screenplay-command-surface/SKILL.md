@@ -106,8 +106,11 @@ fix to migrate. `--warnaserror` does not reject information diagnostics.
 properties, `reads`, `authorize`, `validate`, `produces`/`handler`, `concurrency`.
 Keep to it.
 
-A file/code `handler` cannot coexist with `produces` and still fails binding
-with PLAY0268. A pending `handler implementation` beside unconditional `produces`
+A file/code `handler` cannot coexist with `produces` and fails binding
+with PLAY0800 (`CommandHandlerRequiresAttachment`): gap-fill the slice in code
+with a constrained implementation attachment, not by waiting for a new ESM version.
+Read the required typed `subject` argument for the command, never parse the message.
+Requires Screenplay 4.210.0 (`screenplay --version`) for PLAY0800; older binders use PLAY0268 for this refusal. A pending `handler implementation` beside unconditional `produces`
 is a described command (ESM v23): the body owns payload values only. Prefer plain
 `produces` for declarative logic. Read [described handlers](references/described-handlers.md)
 when logic needs prose, for the result contract, PLAY0695–0698, Unsupported
@@ -152,12 +155,13 @@ view name when that view is read once.
 Opt eligible state reads into application-root `command reads protected` (v25).
 Absence rejects; matching intervening facts conflict. Read [protected reads](references/protected-reads.md)
 for strict admission, paths and PLAY0780–0786. Legacy reads stay unprotected;
-reads/concurrency cannot combine (PLAY0783). The Cratis C# renderer refuses protected reads (STAGE-ESM-044), not v25 itself;
-semantic Host/executor support is separate.
+reads/concurrency cannot combine (PLAY0783). Semantic Host/executor support is separate.
+Requires Stage 4.138.0 to render protected reads as Arc read protection (shapes it cannot preserve stay STAGE-ESM-044); `cratis render` gets it from the first CLI that bundles it, and CLI 3.75.0 refuses every protected read with STAGE-ESM-044.
 Uniqueness still uses a constraint; reference success is not target realization.
 
-Do not use `reads` to fetch data the caller could supply. A composite-key view's `by` block is
-`PLAY0268` (read-surface `references/named-keys.md`).
+Do not use `reads` to fetch data the caller could supply. A composite-key view's `by` block in a
+command read is `PLAY0271`, or `PLAY0781` reason `by-parts` under `command reads protected`
+(read-surface `references/named-keys.md`).
 
 ## `validate`
 
@@ -183,7 +187,12 @@ Requires Screenplay 4.199.0 (ESM v26; `screenplay --version`) for Date/DateTime
 comparisons; older binders report PLAY0268. Read [date comparisons](references/date-comparisons.md)
 when ordering a retention window with `require to >= from`, comparing instants
 across offsets, or rejecting offset-less inputs before rules. It covers admitted
-positions, PLAY0268/0273, ordinal `then` matching and Stage's v26 refusal.
+positions, PLAY0268/0273, ordinal `then` matching and Stage's STAGE-ESM-046 renderer refusal.
+
+Requires Screenplay 4.205.0 (ESM v28; `screenplay --version`) for `==`/`!=` between Uuid
+values (properties, concepts, identities, canonical literals, and read paths in `require`);
+older binders report PLAY0268. Read [Uuid equality](references/uuid-equality.md) for the same-concept
+rule, PLAY0268/0273 and the refused shapes (ordering, Uuid validation rules, Uuid concept rules).
 
 **Rules whose logic is code.** A bare `rule <Name>` has no portable meaning (`PLAY0268`) and a bodied rule binds only as
 opaque code. Read [references/validate-rules.md](references/validate-rules.md) when a rule's logic must live in a `file`
@@ -264,7 +273,7 @@ Chronicle's constraints enforce **uniqueness only**; use one when two concurrent
 ## `policy` and `persona`
 
 A policy has **exactly one** `require` line (`PLAY0441`) **or** one implementation, never both (`PLAY0440`). Read [references/policy-persona-seed.md](references/policy-persona-seed.md) when
-declaring a policy, a persona, or a `seed` block.
+declaring a policy (including `require anonymous` for a deliberately public command or query), a persona, or a `seed` block.
 
 ## Event data subject
 

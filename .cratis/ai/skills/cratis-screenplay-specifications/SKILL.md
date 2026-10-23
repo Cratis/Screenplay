@@ -35,6 +35,24 @@ Requires Screenplay 4.145.0 or later (`screenplay --version`) for `run-specifica
 
 Read [source notes](references/source-notes.md) for the retained inline-fact and action-syntax evidence; run the changed examples at the standalone pin.
 
+## State every property
+
+A `when` command and each `then` event list **every** property, including `optional`
+ones, with a concrete value; omitting one is PLAY0524. Only a read-model property may be `null` (PLAY0350).
+This model fails with PLAY0524 on both `when` and `then` until `note = "none"` is added:
+
+```screenplay excerpt
+event TaskOpened
+  note String optional
+specification Opening
+  when OpenTask
+    taskId = "t1"
+    title = "Write"
+  then TaskOpened
+    for "t1"
+    title = "Write"
+```
+
 ## Reference execution — what actually runs
 
 Screenplay's reference runner executes specifications against an immutable
@@ -45,8 +63,8 @@ Binding is not plan admission. Read model-authoring's
 [language reference](../cratis-screenplay-model-authoring/references/language-reference.md)
 when distinguishing executable declarations, refused projection shapes and opaque
 code. Reached opaque code is **unsupported**, never passed; portable denial may
-still execute before it. Unsupported declarative constructs block the whole plan,
-not just the specifications that touch them.
+still execute before it. An unadmitted projection makes unsupported only the specifications that reach it
+(Screenplay 4.213.2 or later); other unsupported declarative constructs block the whole plan.
 
 Read [reactions and cascades](references/reactions-and-cascades.md) when testing
 ESM v6 actions; older compilers fail reaction/capture binding with PLAY0268.
@@ -176,8 +194,9 @@ Use `when append <PrivateEvent>` then `then <PublicEvent>`, not `then readmodel`
 follow-up events are exhaustive and ordered. Read
 [publication and fold cases](../cratis-screenplay-automations-and-translations/references/public-events-and-direction.md)
 when specifying outbound facts or event-source captures: it owns the minimum
-compiler, PLAY0700/0701, key folding and Unsupported boundaries. Composite view
-fixtures remain unadmitted; see read-surface `references/named-keys.md`.
+compiler, PLAY0700/0701, key folding and Unsupported boundaries. Composite-keyed
+view fixtures state every key part (Requires Screenplay 4.204.0, ESM v27); see
+`references/vocabulary.md` and read-surface `references/named-keys.md`.
 
 ## Reusable fixtures, routes and recovery intent
 
@@ -238,7 +257,10 @@ For command specifications:
 - [ ] `given caller` is present whenever the command is authorized, with a
       `then denied` case for a caller who must be refused.
 - [ ] `then` contains **either** events **or** an error, never both.
-- [ ] A collision between two event sources uses `for` on the `given` event.
+- [ ] A collision between two event sources uses `for` on the `given` event. A `given` without
+      `for` belongs to the event source the specification acts on; state `for` when the command
+      appends to several event sources or an assertion depends on it (see
+      [examples and routes](references/examples-and-routes.md#givens-without-an-event-source)).
 - [ ] Error cases test business rules; each concept rule has one rejection
       specification through one command, not one per use.
 - [ ] A localized rejection is pinned by its quoted `$strings` key.
@@ -248,7 +270,8 @@ For command specifications:
 For view specifications:
 
 - [ ] A view a `performer` composes is specified with `given readmodel`,
-      `when query` and `then result` or `then no result`.
+      `when query` and `then result` or `then no result`; the reference runner leaves such a
+      spec out (`PLAY0270` information), so it is design intent, not executed proof.
 - [ ] `given readmodel` is a complete instance with its identifier.
 - [ ] `then readmodel` states the identifier and the properties that matter; add
       `exactly` only when extra properties must fail the assertion.

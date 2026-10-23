@@ -75,7 +75,7 @@ protection and unrecovered code. A pattern is not a gapless/sequential allocator
 or secret; check digits detect typos, not forgery. Low-entropy payload codes need
 uniqueness separate from source freshness. Arc recovery does not imply rendering:
 Requires Stage 4.118.0 for checksum validation and 4.119.0 for pattern/random;
-older renderers refuse them. `generate rule` still refuses STAGE-ESM-028.
+older renderers refuse them. `generate rule` renders from Stage 4.136.0; the Host and legacy syntax engine still refuse it with STAGE-ESM-028.
 Report missing pins, withheld productions/scenarios and version caps
 as losses, not successful recovery. Sources: Arc
 `Documentation/backend/csharp/generating-a-screenplay.md`;
@@ -180,5 +180,8 @@ resolved adapter version, diagnostic, retained/withheld form and open question:
 with SP0073 and dependent values/responses/mappings with SP0052; pins against them
 withhold scenarios with SP0039. Below v7 responses/return expectations are withheld.
 A cap describes less behavior, not an equivalent implementation. Handler references
-compile but refuse executable binding (PLAY0268); record that verdict separately.
+compile but refuse executable binding (PLAY0800 for file/inline command handlers);
+record that verdict separately and gap-fill the slice with a constrained implementation
+attachment, not by waiting for ESM admission.
+Requires Screenplay 4.210.0 (`screenplay --version`); older binders use PLAY0268 for these handlers.
 Never remove protection, required payloads or loss rows to obtain a green result.

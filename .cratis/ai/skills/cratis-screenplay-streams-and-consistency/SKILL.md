@@ -101,7 +101,9 @@ Unattended work takes the conservative option and marks it `ASSUMED` in model
 ## Rules
 **Compiler contracts** (diagnostics; capability per tool in the toolchain `references/executable-subset.md`)
 - `identifier` on an event property is PLAY0019; the source id is never payload by declaration.
-  Copying it as a payload value is PLAY0469 (information, warning for inline events).
+  Copying it as a payload value is PLAY0469 (information, warning for inline events);
+  for a possibly stored contract, retire it as an evolution draft with `propose-property`
+  `remove` + `newGeneration: true`, not by editing the event in place (model-authoring [property planning](../cratis-screenplay-model-authoring/references/property-links.md#remove-from-an-inline-event)).
 - In the executable model a production's `for` must resolve to the command's scalar identifier:
   one command writes one stream declaratively; described handlers bind v23 but
   their payload-only contract does not grant arbitrary destinations.
@@ -115,14 +117,14 @@ Unattended work takes the conservative option and marks it `ASSUMED` in model
   conflict. Legacy reads remain PLAY0271/PLAY0268; `concurrency` remains unbound and
   combining it with protected reads is PLAY0783. Read
   [protected reads](../cratis-screenplay-command-surface/references/protected-reads.md)
-  for admission and the Cratis C# renderer's STAGE-ESM-044 protected-read refusal (the v25 pair itself is admitted). `description` text never reaches rendered code: a rule that lives only in prose is
+  for admission and protected-read rendering (Stage 4.138.0; STAGE-ESM-044 otherwise; the v25 pair itself is admitted). `description` text never reaches rendered code: a rule that lives only in prose is
   unenforced there.
 - `pii` and `secret` bind as ESM v13;
   enum/identity compliance and protected events with explicit subject marks still
   refuse PLAY0268 (command-surface `references/compliance.md`). Legacy markers are
   deprecated (PLAY0565). Never remove protection to pass a tool. PLAY0515 also refuses
   scalar/composite stream-id types and route mapping sources, including nested paths.
-- Stream-id literals must be nonempty NFC text; composite ids use at least two named scalar parts; PLAY0504 is an error for route/destination type mismatch; a stored stream name exactly `All` refuses binding with PLAY0273 (rename via `propose-rename`). Read [references/stream-id-rules.md](references/stream-id-rules.md) when choosing stream-id types, literals, composite ids or renaming a stream.
+- Stream-id literals must be nonempty NFC text; composite ids use at least two named scalar parts; PLAY0504 is an error for route/destination type mismatch; a stored stream name exactly `All` (and a stored source name exactly `Default`) is refused with PLAY0802, including via an `id` pin (rename via `propose-rename`; a pin away from `All` is valid). Read [references/stream-id-rules.md](references/stream-id-rules.md) when choosing stream-id types, literals, composite ids or renaming a stream.
 
 - Chronicle limits: before 19.59.6 (InMemory: 19.59.3) the SQL and InMemory providers do not settle unique claims (see the Requires line below);
   index updates run after commit and may fail silently; composite values can
@@ -139,6 +141,8 @@ Requires Chronicle 19.59.6 or later (19.59.3 for the InMemory provider) for the 
 
 **Modeling defaults** (deviate with a recorded reason)
 - One business identity per stream; cross-stream references are payload properties.
+- A read model's key is not a stream identity. Read [references/read-model-keys.md](references/read-model-keys.md)
+  when choosing one id, flat composite key parts (v27) or a composite-typed key.
 - Copy the source id into the payload only when a consumer needs it as a value.
 - Give each invariant an authoritative atomic decision point and inspect every path that could
   violate it. A constraint violation rejects that command's whole append set; a reaction cascade
@@ -146,7 +150,7 @@ Requires Chronicle 19.59.6 or later (19.59.3 for the InMemory provider) for the 
 - New models declare `reaction batches atomic`: direct productions per trigger
   occurrence and each selected refusal branch are separate batches; invoked commands
   stay independent. Legacy absence retains per-fact appends. Stage refuses v22
-  with STAGE-ESM-016 and atomic mode in admitted v23–v25 with STAGE-ESM-043. Read
+  with STAGE-ESM-016 and atomic mode in admitted v23–v27 with STAGE-ESM-043. Read
   [atomic boundaries](../cratis-screenplay-captures-and-reactions/references/atomic-batches-and-source-mappings.md)
   when defining failure rollback; batching is not redelivery deduplication.
 - Match duplicate protection to scope. A property constraint lets a source re-claim its own

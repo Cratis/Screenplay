@@ -43,8 +43,8 @@ Start new models with application-root `reaction batches atomic` (ESM v22 or lat
 Each trigger occurrence's direct productions and each selected refusal branch are
 separate all-or-none batches; invoked commands remain independent. Absence retains
 legacy per-fact behavior even at later versions. Assert no failed-batch facts and
-unchanged views, not only `then error`. Stage refuses v22 (STAGE-ESM-016) and
-atomic mode in admitted v23/v24 models (STAGE-ESM-043); keep the semantics as gap-fill.
+unchanged views, not only `then error`. Requires Stage 4.139.0 for v22 admission
+(older: -016); atomic mode stays STAGE-ESM-043. Keep as gap-fill.
 Read [atomic batches and source mappings](../cratis-screenplay-captures-and-reactions/references/atomic-batches-and-source-mappings.md)
 when choosing these boundaries or mapping an invoked identifier from `$eventSourceId`
 (or `$eventContext.eventSourceId`) instead of copying it into event payload.
@@ -172,7 +172,7 @@ or actor that nobody confirmed. Read `references/worked-integration.md` when you
   separate binder check.
 - A trigger with `reads` that `produces` directly fails binding: decide in a command.
   Command reads can protect with `command reads protected` and admitted shapes (v25);
-  trigger reads cannot. The Cratis C# renderer refuses protected reads (STAGE-ESM-044);
+  trigger reads cannot. Stage 4.138.0 renders protected reads as Arc read protection (`cratis render` gets it from the first CLI that bundles it; CLI 3.75.0 refuses them with STAGE-ESM-044);
   semantic execution is separate from generated-app protection.
 - An authorized command exercised in a spec without `given caller` is PLAY0389 at binding.
 - A list query (`=> Item[]`) binds (a snapshot list is not rendered, `STAGE-ESM-010`);
