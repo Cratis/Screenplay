@@ -6856,15 +6856,11 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "summaryId"
+                          "property": "dealId"
                         },
                         {
-                          "kind": "AddMappingSyntax",
+                          "kind": "SetMappingSyntax",
                           "property": "openPipeline"
-                        },
-                        {
-                          "kind": "IncrementMappingSyntax",
-                          "property": "dealCount"
                         }
                       ]
                     }
@@ -6909,12 +6905,12 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
-                      "name": "summaryId",
+                      "name": "dealId",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
                         "isOptional": false,
-                        "name": "String"
+                        "name": "DealId"
                       }
                     },
                     {
@@ -6927,18 +6923,6 @@
                         "isCollection": false,
                         "isOptional": false,
                         "name": "Amount"
-                      }
-                    },
-                    {
-                      "kind": "PropertySyntax",
-                      "isGenerated": false,
-                      "isIdentifier": false,
-                      "name": "dealCount",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": false,
-                        "name": "Int"
                       }
                     }
                   ]
@@ -7050,10 +7034,10 @@
                       "properties": [
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "summaryId",
+                          "property": "dealId",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": "global"
+                            "value": "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0004"
                           }
                         },
                         {
@@ -7062,14 +7046,6 @@
                           "source": {
                             "kind": "LiteralExpressionSyntax",
                             "value": 48000
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "dealCount",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 1
                           }
                         }
                       ]
