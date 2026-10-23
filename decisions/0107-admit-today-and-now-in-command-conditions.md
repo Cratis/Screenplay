@@ -1,11 +1,12 @@
 ---
 id: 0107
 title: Admit `today` and `now` in command conditions
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: woksin
 class: contract
 reversibility: costly
-decider: Sindre Alstad Wilting
 amends: 0087
 applies-to:
   - Source/DotNET/Screenplay/Semantics/**

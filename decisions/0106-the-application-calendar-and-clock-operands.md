@@ -1,11 +1,12 @@
 ---
 id: 0106
 title: The application calendar and clock operands `today` and `now`
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: woksin
 class: contract
 reversibility: costly
-decider: Sindre Alstad Wilting
 amends: 0087
 applies-to:
   - Source/DotNET/Screenplay/**
