@@ -2,13 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_moving_a_declaration;
 
-// Commands, events, read models and queries resolve by unique short name across the application, so moving one
-// never changes what an unqualified reference names. A reaction resolves innermost scope first: once 'Notify'
-// leaves Listing, the redelivery's unqualified 'Notify' would silently bind to the sibling slice's reaction.
-public class and_a_reference_to_it_is_unqualified : for_WorkspaceRefactoring.given.a_refactoring_workspace
+public class and_its_reaction_specification_uses_an_unqualified_reference : for_WorkspaceRefactoring.given.a_refactoring_workspace
 {
     WorkspaceAuthoringResult _result = null!;
 
@@ -47,8 +45,7 @@ public class and_a_reference_to_it_is_unqualified : for_WorkspaceRefactoring.giv
         });
     }
 
-    string Refusal => string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message));
-
-    [Fact] void should_refuse() => _result.Accepted.ShouldBeFalse();
-    [Fact] void should_ask_to_qualify_the_reference_first() => Assert.True(Refusal.Contains("qualify the reference to 'Notify' as 'Projects.Source.Listing.Notify' first", StringComparison.Ordinal), Refusal);
+    [Fact] void should_accept() => Assert.True(_result.Accepted, string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message)));
+    [Fact] void should_carry_the_specification() => _result.MoveReport!.SpecificationsCarried.Select(address => address.Name).ShouldContainOnly("Redelivery");
+    [Fact] void should_keep_the_unqualified_reference() => WorkspaceSyntaxIndex.Create(_result.Workspace!).Entries.Select(entry => entry.Node).OfType<SpecificationSyntax>().Single().WhenRedelivered!.Reaction.ShouldEqual("Notify");
 }

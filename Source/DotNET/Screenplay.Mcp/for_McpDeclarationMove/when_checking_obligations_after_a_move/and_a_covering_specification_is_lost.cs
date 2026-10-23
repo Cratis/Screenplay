@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Mcp.for_McpDeclarationMove.when_checking_obligations
 
 public class and_a_covering_specification_is_lost : Specification
 {
-    static McpSnapshot Snapshot(string source) => new([WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source))]);
+    static Cratis.Screenplay.Indexing.AuthoringSnapshot Snapshot(string source) => new([WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source))]);
 
     string? _refusal;
 
@@ -19,7 +19,7 @@ public class and_a_covering_specification_is_lost : Specification
         var start = a_declaration_move_connection.Model.IndexOf("      specification Registering", StringComparison.Ordinal);
         var end = a_declaration_move_connection.Model.IndexOf("    slice StateView Listing", StringComparison.Ordinal);
         var after = a_declaration_move_connection.Model.Remove(start, end - start);
-        _refusal = McpDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(after), new Dictionary<SemanticAddress, SemanticAddress>());
+        _refusal = WorkspaceDeclarationMove.Obligations(Snapshot(a_declaration_move_connection.Model), Snapshot(after), new Dictionary<SemanticAddress, SemanticAddress>());
     }
 
     [Fact] void should_refuse_naming_the_unmet_obligation() => _refusal!.ShouldContain("SPEC001 of Command 'Projects.Source.Registration.Register' (success)");

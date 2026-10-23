@@ -3,7 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
 /// <summary>
 /// One specification obligation of a declaration and the specifications that meet it.
@@ -15,7 +15,7 @@ namespace Cratis.Screenplay.Mcp;
 /// <param name="Description">What a matching specification looks like.</param>
 /// <param name="Reason">Why the obligation is informational only, when it is.</param>
 /// <param name="MetBy">The specifications that meet the obligation.</param>
-sealed record McpSpecificationObligation(string RuleId, McpReadOwner Declaration, SourceLocation Location, string Subject, string Description, string? Reason, McpReadOwner[] MetBy)
+internal sealed record SpecificationObligation(string RuleId, ReadOwner Declaration, SourceLocation Location, string Subject, string Description, string? Reason, ReadOwner[] MetBy)
 {
     /// <summary>
     /// Gets a value indicating whether at least one specification meets the obligation.
