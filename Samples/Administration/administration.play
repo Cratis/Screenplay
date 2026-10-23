@@ -17,6 +17,8 @@
 
 domain Cratis.Admin
 
+command reads protected
+
 concept UserId       : Uuid
 concept RoleId       : Uuid
 concept SettingsId   : Uuid

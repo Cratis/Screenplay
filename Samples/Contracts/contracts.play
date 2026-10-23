@@ -12,6 +12,8 @@
 
 domain Cratis.Contracts
 
+command reads protected
+
 concept ContractId : Uuid
 concept Money : Decimal
 

@@ -12,6 +12,8 @@
 
 domain Cratis.Bookings
 
+command reads protected
+
 concept BookingId : Uuid
 concept ResourceId : Uuid
 

@@ -12,6 +12,8 @@
 
 domain Cratis.Catalog
 
+command reads protected
+
 concept ProductId : Uuid
 concept CategoryId : Uuid
 concept Money : Decimal
