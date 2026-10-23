@@ -20,6 +20,7 @@ import { locationOf, SourceLine } from './SourceLine';
 const grammar = (source: string): { legacy: RegExp; native: RegExp } => ({ legacy: legacyPattern(source), native: pattern(source) });
 const headerRules = grammar('^capture\\s+([A-Za-z_]\\w*)$');
 const eventNameRules = /^[A-Za-z_][\w.]*$/;
+const eventSourceKeyRules = /\s+is\s+event\s+source$/;
 const appendRules = grammar('^append\\s+([A-Z]\\w*)$');
 const childrenRules = grammar('^children\\s+([a-z_]\\w*)\\s+identified\\s+by\\s+([\\w.]+)$');
 const nestedRules = grammar('^nested\\s+([\\w.]+)$');
@@ -41,6 +42,7 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
     if (name === '' && context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.InvalidCaptureDeclaration, `Invalid capture declaration '${line.content}' - expected 'capture <Name>'`, locationOf(line));
     let source: CaptureSourceSyntax | null = null;
     let key: string | null = null;
+    let keyIsEventSource = false;
     const map: CaptureMapOperationSyntax[] = [];
     const appends: CaptureAppendSyntax[] = [];
     const children: CaptureChildrenSyntax[] = [];
@@ -49,7 +51,12 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
             case 'source': source = parseSource(context, child, owner); break;
-            case 'key': key = child.content.substring('key'.length).trim(); break;
+            case 'key': {
+                key = child.content.substring('key'.length).trim();
+                const marker = eventSourceKeyRules.exec(key);
+                if (marker !== null) { key = key.substring(0, marker.index); keyIsEventSource = true; }
+                break;
+            }
             case 'map': map.push(...parseMap(context, child)); break;
             case 'append': pushAppend(context, child, appends); break;
             case 'children': {
@@ -71,7 +78,7 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
                 context.skipOpaqueBlock(child.indent);
         }
     }
-    return { kind: 'CaptureSyntax', sourceOptions: context.sourceOptions, name, source, key, map, appends, children, nested, location: locationOf(line) };
+    return { kind: 'CaptureSyntax', sourceOptions: context.sourceOptions, name, source, key, ...(keyIsEventSource ? { keyIsEventSource } : {}), map, appends, children, nested, location: locationOf(line) };
 }
 
 function parseSource(context: ParserContext, line: SourceLine, owner: ParserContext): CaptureSourceSyntax {

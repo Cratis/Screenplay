@@ -53,6 +53,7 @@ export const DiagnosticCodes = {
     DescribedCommandWithoutProductions: 'PLAY0696', // C# only
     DescribedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only
     CaptureEventsKeyNotRequired: 'PLAY0700',
+    CaptureEventSourceKeyOutsideEvents: 'PLAY0809',
     CaptureEventsRecordFixture: 'PLAY0701',
     RefutedGeneratedConceptRule: 'PLAY0688',
     UnprovenGeneratedConceptRule: 'PLAY0689',

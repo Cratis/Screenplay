@@ -14,14 +14,17 @@ import { TranslationDirection } from '../Syntax/TranslationDirection';
 import { ParserContext } from './ParserContext';
 import { PublicEventUsageCollector } from './PublicEventUsageCollector';
 import { validatePublicEventMetadata } from './PublicEventMetadataValidator';
-import { validateCaptureEventFixtures } from './CaptureEventFixturesValidator';
+import { validateCaptureEventFixtures, validateEventSourceKeys } from './CaptureEventFixturesValidator';
 
 /** Validates public contract boundaries against the complete assembled declaration inventory. */
 export function validatePublicEventUsage(application: ApplicationSyntax, context: ParserContext): void {
     validatePublicEventMetadata(application, context);
     const resolver = new AuthoringProductionResolver(application);
     const events = new AuthoringProductionResolver(application, resolver.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Event));
-    for (const { slice, scope } of resolver.slices) validateOwnCaptureReactions(application, slice, scope, events, context);
+    for (const { slice, scope } of resolver.slices) {
+        validateOwnCaptureReactions(application, slice, scope, events, context);
+        validateEventSourceKeys(slice, context);
+    }
     if (!resolver.declarations.some(declaration => declaration.node.kind === 'EventSyntax' && ((declaration.node as EventSyntax).visibility === EventVisibility.Public || (declaration.node as EventSyntax).origin != null)) &&
         !application.imports.some(imported => imported.visibility === EventVisibility.Public || imported.origin != null) &&
         !resolver.slices.some(({ slice }) => slice.direction != null || usesEventSource(slice) || targetsEvent(slice, resolver))) return;

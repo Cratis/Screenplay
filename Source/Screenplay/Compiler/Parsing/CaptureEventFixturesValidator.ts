@@ -9,6 +9,16 @@ import { EventVisibility } from '../Syntax/EventVisibility';
 import { SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 
+export function validateEventSourceKeys(slice: SliceSyntax, context: ParserContext): void {
+    for (const capture of slice.captures.filter(value => value.keyIsEventSource === true && !(value.source != null && isEventsSource(value.source) && isPropertyKey(value.key)))) {
+        context.error(DiagnosticCodes.CaptureEventSourceKeyOutsideEvents, `Capture '${capture.name}' declares 'is event source' on its key; only a 'source events' capture with a single property key can.`, capture.location);
+    }
+}
+
+function isPropertyKey(key: string | null): boolean {
+    return key != null && key !== '' && !key.startsWith('$') && !key.includes('.');
+}
+
 export function validateCaptureEventFixtures(slice: SliceSyntax, scope: readonly string[], events: AuthoringProductionResolver, context: ParserContext): void {
     const captures = slice.captures.filter(capture => capture.source != null && isEventsSource(capture.source));
     for (const capture of captures) {
