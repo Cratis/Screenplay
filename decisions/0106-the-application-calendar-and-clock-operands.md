@@ -97,7 +97,7 @@ record are to these revisions.
    that declares `time zone` (with or without `configurable`), uses a clock operand, or declares a `calendar`. Every other model keeps its bytes and
    version. The application carries `timeZone` (default `"UTC"` when only operands are used) and a `configurable` flag.
    A `calendar` carries either a literal id or a context member reference. Operands carry
-   `{ kind: today|now, offset }`. Records 2 and 3 admit the positions; they share this version when admitted together.
+   `{ kind: today|now, offset }`. Decisions 0107 and 0108 admit the positions; they share this version when admitted together.
 8. **Amendment of 0087.** Item 7 of 0087 changes in one word: `today` is the date of the receipt instant in the
    application calendar, which is UTC when none is declared. Everything else in item 7 stays: the reaction instant rule,
    clients never evaluate it, `given clock`, and the refusal in reaction `where` and concept rules.
