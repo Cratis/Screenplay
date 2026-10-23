@@ -11,6 +11,7 @@
 domain Commerce
 
 reaction batches atomic
+command reads protected
 
 // What the whole application shares: values, shapes, and who may do what.
 import "Shared/*.play"

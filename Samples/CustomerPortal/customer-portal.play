@@ -12,6 +12,8 @@
 
 domain Cratis.CustomerPortal
 
+command reads protected
+
 concept PortalOrderId : Uuid
 concept PortalInvoiceId : Uuid
 concept Money : Decimal

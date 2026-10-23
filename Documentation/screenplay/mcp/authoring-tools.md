@@ -25,6 +25,10 @@ production is legacy behavior retained only for existing models; never rewrite
 those models automatically. The declaration selects ESM v22 or later even before
 the model has a reaction; targets must admit that version.
 
+Also declare `command reads protected` once at the application root for
+[protected command reads](../commands.md#what-reads-guarantees) (ESM v25 or later). Existing
+models retain their mode; opening a workspace never adds the preamble.
+
 Retain the returned `revision` and `catalogRevision`. They describe the exact
 snapshot you are editing. Do not reuse them after applying changes.
 
@@ -57,7 +61,7 @@ valid source-only model without building typed JSON:
     "operation": "create-document",
     "stableKey": "application",
     "path": "application.play",
-    "source": "reaction batches atomic\n\nconcept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n"
+    "source": "reaction batches atomic\ncommand reads protected\n\nconcept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n"
   }
 ]
 ```
@@ -264,6 +268,7 @@ Use the following complete value for the `documents` argument of `propose-ast`:
     "path": "application.play",
     "node": {
       "kind": "ApplicationSyntax",
+      "commandReadMode": "Protected",
       "modules": [
         {
           "kind": "ModuleSyntax",

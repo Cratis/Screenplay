@@ -17,6 +17,8 @@
 
 domain Cratis.Projects
 
+command reads protected
+
 concept ProjectId    : Uuid
 concept TaskId       : Uuid
 

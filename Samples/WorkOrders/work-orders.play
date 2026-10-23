@@ -12,6 +12,8 @@
 
 domain Cratis.WorkOrders
 
+command reads protected
+
 concept WorkOrderId : Uuid
 
 concept WorkOrderStatus : Enum

@@ -17,6 +17,8 @@
 
 domain Cratis.Inventory
 
+command reads protected
+
 concept ItemId       : Uuid
 concept MovementId   : Uuid
 concept SupplierId   : Uuid

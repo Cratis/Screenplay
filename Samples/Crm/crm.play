@@ -18,6 +18,8 @@
 
 domain Cratis.Crm
 
+command reads protected
+
 concept LeadId     : Uuid
 concept ContactId  : Uuid
 concept CompanyId  : Uuid

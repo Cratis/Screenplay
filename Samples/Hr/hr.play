@@ -17,6 +17,8 @@
 
 domain Cratis.Hr
 
+command reads protected
+
 concept EmployeeId   : Uuid
 concept TimeOffRequestId : Uuid
 concept BalanceId    : Uuid

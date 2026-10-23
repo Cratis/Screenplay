@@ -19,6 +19,8 @@
 
 domain Cratis.Approvals
 
+command reads protected
+
 concept RequestId     : Uuid
 concept TypeId        : Uuid
 
