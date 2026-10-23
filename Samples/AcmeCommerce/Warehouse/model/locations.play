@@ -91,6 +91,10 @@ module Stock
         given caller
           authenticated
           role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
         when PutAway
         then StockPlaced
           for "ACM-1000"
