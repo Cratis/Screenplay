@@ -1,5 +1,5 @@
 ---
-id: NNNN
+id: 0108
 title: Admit fixed query `where` predicates with clock operands
 status: proposed
 stage: none
@@ -37,7 +37,7 @@ Facts that shape the decision:
   for an adjustable threshold (`requirements/solocrm/docs/SPEC.md:360-362`); the code fixes it at seven
   (`TodayRules.cs:20-21`).
 - Chronicle `IReadModels.Observe<T>(filter)` compiles the filter once (`IReadModels.cs:79`, `:82`; `ReadModels.cs:319-322`). A clock
-  value captured in it would freeze, which record 4 handles.
+  value captured in it would freeze, which decision 0109 handles.
 - Decision 0010 orders by one field and pages by page number; the reference evaluator answers live queries with a
   snapshot (0069).
 - A stored `isOverdue` property goes stale, because time passing writes no event. A "task became overdue" event per
@@ -132,7 +132,7 @@ uses the clock operands and the application calendar of the application calendar
 ## Consequences
 
 - **Stage:** a snapshot query computes the clock once from the receipt instant and the calendar and applies the
-  condition. An observable query must not push the condition into `Observe<T>(filter)`; record 4 gives the rule. The
+  condition. An observable query must not push the condition into `Observe<T>(filter)`; decision 0109 gives the rule. The
   live Host evaluates `where` in the reference evaluator.
 - **Arc:** supplies the receipt instant, the calendar and, for live answers, the boundaries.
 - **Scene:** none; data still arrives through `data ... via query`.

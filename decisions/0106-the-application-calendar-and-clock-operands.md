@@ -1,5 +1,5 @@
 ---
-id: NNNN
+id: 0106
 title: The application calendar and clock operands `today` and `now`
 status: proposed
 stage: none
@@ -57,7 +57,7 @@ record are to these revisions.
    - `now + D` and `now - D`, with `D` as `N minutes`, `N hours` or `N days`, are exact elapsed time on an instant.
      In `now`-arithmetic a day is 24 hours. The result is a `DateTime`.
    - `today - 7 days` and `now - 7 days` differ on purpose: the first is a calendar day, the second 168 elapsed hours.
-   - `N` is a literal in this record; a typed argument as `N` belongs to record 3.
+   - `N` is a literal in this record; a typed argument as `N` belongs to decision 0108.
 3. **Which calendar.** One rule, resolved on the server, never from the browser, the caller's locale or a request
    value.
    - **Application zone.** The application root may declare `time zone "<IANA id>"`, in the preamble position of
@@ -92,7 +92,7 @@ record are to these revisions.
    UTC.
 6. **Absence.** An optional operand is never converted or compared implicitly. `date of x` on an absent `x` is absent.
    How absence is tested, and what a comparison with an absent value does, is stated by the construct that holds the
-   comparison (records 2 and 3). This record admits no new null semantics.
+   comparison (decisions 0107 and 0108). This record admits no new null semantics.
 7. **ESM.** The version is the next free ESM version, allocated at admission per 0025. It is selected only by a model
    that declares `time zone` (with or without `configurable`), uses a clock operand, or declares a `calendar`. Every other model keeps its bytes and
    version. The application carries `timeZone` (default `"UTC"` when only operands are used) and a `configurable` flag.
@@ -123,7 +123,7 @@ record are to these revisions.
   admits the new ESM version or refuses it with a typed refusal. Specifications map `given clock` to a fake
   `TimeProvider`.
 - **Arc:** needs an application time-zone abstraction with a default from options and a tenant hook, plus the
-  `TimeProvider` boundaries of record 4, one at every change of the local date in either direction, including the
+  `TimeProvider` boundaries of decision 0109, one at every change of the local date in either direction, including the
   backward change in a daylight-saving overlap. That is an Arc decision.
 - **Chronicle:** none; stored instants stay UTC.
 - **CLI:** bundles the new Screenplay and Stage versions.

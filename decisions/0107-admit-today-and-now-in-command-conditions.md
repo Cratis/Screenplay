@@ -1,5 +1,5 @@
 ---
-id: NNNN
+id: 0107
 title: Admit `today` and `now` in command conditions
 status: proposed
 stage: none

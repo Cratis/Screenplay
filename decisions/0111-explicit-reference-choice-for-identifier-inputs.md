@@ -1,5 +1,5 @@
 ---
-id: NNNN
+id: 0111
 title: A reference input chooses from a declared query; defaults are declared once
 status: proposed
 stage: none
