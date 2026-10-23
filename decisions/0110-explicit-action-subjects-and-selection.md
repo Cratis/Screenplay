@@ -84,6 +84,21 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
    item-scoped, and a command with two identifier inputs of the key's concept is not inferred (the match is not
    unambiguous). Otherwise it is screen-scoped. The compiler reports what it inferred, as information, with a repair that writes `for
    item` or `for screen`. Existing guarded actions are unchanged.
+
+   **Migration warning.** Stage used to pick an action's row by scanning rows and matching names (item 8). An existing
+   action without a subject clause can therefore bind differently once Stage drops that. The Screenplay compiler
+   reports a new warning (a new `PLAY` code, numbered at implementation) for a plain or toolbar action that meets all
+   of these:
+   - it has no `for item` or `for screen` clause;
+   - its nearest `data` is a collection;
+   - the old name rule and the type rule of this item disagree. The old name rule binds when a command input has the
+     same name as a property of the collection's row, case-insensitively; the type rule binds only through the
+     declared key.
+
+   The warning says which scope the compiler now infers and which row property the old name rule would have used. Its
+   repair writes `for item` (plus `with <input> from item.<path>` when the old binding went through a non-key property)
+   or `for screen`. When both rules agree, only the information diagnostic above is reported. A model with the warning
+   still compiles and keeps its inferred meaning. Samples carry the explicit clause, so they raise no warning.
 5. **Boards.** On a board, the selected card is the `item`, with the same rule.
 6. **Click time.** The subject is the item displayed when the action is clicked (`screens.md:99`). A guard hides or
    disables the control; it is never authorization.
@@ -114,7 +129,7 @@ This record is allowed by the record that lifts the freeze (0105 on branch `scre
 ## Consequences
 
 - **Screenplay:** parser, printer, syntax JSON (`ScreenActionSyntax.Subject` and `Inputs`), validation, the inference
-  diagnostic and repair, `screens.md` and the walkthrough.
+  diagnostic and repair, the migration warning and its repair, `screens.md` and the walkthrough.
 - **Scene:** model, wire schema, TypeScript model, runtime evaluation of `core:action`, conformance fixtures.
 - **Stage:** `ScreenDirectiveConverter`, `ScreenplaySceneVisitor`, `StageSceneDocument`, `StageCommandForm`,
   `stageComponents`. Fixes #693 and the parity gap in #745.
