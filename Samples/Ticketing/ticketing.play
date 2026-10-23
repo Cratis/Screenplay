@@ -623,20 +623,19 @@ module Support
     description "How the queue is doing right now"
 
     slice StateView SupportDashboard
-      description "How many tickets are open and how many are waiting"
+      description "Which tickets are open, counted by the dashboard"
 
       readmodel SupportFigures
-        summaryId   String
-        openTickets Int
+        ticketId    TicketId
+        subject     String
 
       query CurrentFigures => observable SupportFigures[]
         authorize IsAgent
 
       projection SupportFiguresProjection => SupportFigures
         from TicketOpened
-          key "global"
-          summaryId = "global"
-          increment openTickets
+          ticketId = $eventSourceId
+          subject  = subject
 
       screen Dashboard
         template blueprint Cratis.Blueprint.Ticketing SupportDashboard version "^1.0"
@@ -653,8 +652,8 @@ module Support
           priority  = "urgent"
           channel   = "email"
         then readmodel SupportFigures
-          summaryId   = "global"
-          openTickets = 1
+          ticketId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          subject  = "Cannot sign in after password reset"
 
 // The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
 // The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.

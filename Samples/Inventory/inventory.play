@@ -622,11 +622,10 @@ module Inventory
     description "How the stock is doing"
 
     slice StateView InventoryDashboard
-      description "How much is in stock and how many items the warehouse holds"
+      description "How much of each item is in stock, added up by the dashboard"
 
       readmodel InventoryFigures
-        summaryId   String
-        itemCount   Int
+        itemId      ItemId
         unitsOnHand Int
 
       query CurrentFigures => observable InventoryFigures[]
@@ -634,10 +633,8 @@ module Inventory
 
       projection InventoryFiguresProjection => InventoryFigures
         from ItemRegistered
-          key "global"
-          summaryId = "global"
-          add unitsOnHand by quantity
-          increment itemCount
+          itemId      = $eventSourceId
+          unitsOnHand = quantity
 
       screen Dashboard
         template blueprint Cratis.Blueprint.Inventory InventoryDashboard version "^1.0"
@@ -658,9 +655,8 @@ module Inventory
           status       = "inStock"
           supplier     = "Hartley Industrial"
         then readmodel InventoryFigures
-          summaryId   = "global"
+          itemId      = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e0001"
           unitsOnHand = 6
-          itemCount   = 1
 
 // The thinking around the personas, on the personas canvas: context in blue, pain in pink, success in green, questions in yellow.
 // The personas are laid out by the canvas; the notes sit below them. Authoring metadata only - none of this reaches the running application.
