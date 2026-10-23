@@ -104,6 +104,12 @@ module Shop
         given caller
           authenticated
           role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         when ChangeBasketQuantity
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku      = "ACM-1000"
@@ -171,6 +177,12 @@ module Shop
         given caller
           authenticated
           role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
         when RemoveFromBasket
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           sku      = "ACM-1000"
