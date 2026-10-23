@@ -3,7 +3,7 @@
 
 using System.Globalization;
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 internal sealed partial class PortableMatchParser
 {

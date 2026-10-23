@@ -3,7 +3,7 @@
 
 using System.Globalization;
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 // Export for renderer conformance only. Screenplay never runs this text through a platform engine.
 internal static class MatchExpressionWriter
@@ -15,7 +15,7 @@ internal static class MatchExpressionWriter
         MatchSequenceExpression sequence => string.Concat(sequence.Items.Select(DotNet)),
         MatchChoiceExpression choice => "(?:" + string.Join('|', choice.Alternatives.Select(DotNet)) + ")",
         MatchRepeatExpression repeat => "(?:" + DotNet(repeat.Body) + ")" + Quantifier(repeat),
-        _ => throw new InvalidSemanticContract("Unknown portable match expression.")
+        _ => throw new InvalidOperationException("Unknown portable match expression.")
     };
 
     static string CharacterClass(MatchCharacterSet characters)

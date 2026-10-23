@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 // Pike VM without captures. State arrays are immutable; each call owns its two sparse work sets.
 internal sealed class PortableMatchMachine(MatchInstruction[] states, int start)

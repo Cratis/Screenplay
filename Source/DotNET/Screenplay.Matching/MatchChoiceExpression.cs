@@ -3,6 +3,6 @@
 
 using System.Collections.Immutable;
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
-internal sealed record MatchSequenceExpression(ImmutableArray<MatchExpression> Items) : MatchExpression;
+internal sealed record MatchChoiceExpression(ImmutableArray<MatchExpression> Alternatives) : MatchExpression;

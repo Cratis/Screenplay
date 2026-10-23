@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Semantics;
+namespace Cratis.Screenplay.Matching;
 
 // Thompson construction in continuation order. No input-dependent backtracking or determinization.
 // For expanded size S, Build adds at most S states: one per character/assertion and choice point,
@@ -27,7 +27,7 @@ internal sealed class MatchAutomatonBuilder
         MatchSequenceExpression sequence => Sequence(sequence, next),
         MatchChoiceExpression choice => Choice(choice, next),
         MatchRepeatExpression repeat => Repeat(repeat, next),
-        _ => throw new InvalidSemanticContract("Unknown portable match expression.")
+        _ => throw new InvalidOperationException("Unknown portable match expression.")
     };
 
     int Sequence(MatchSequenceExpression sequence, int next)

@@ -153,6 +153,7 @@ files pleasant:
 | **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index.mdx) |
 | **Samples** | Hand-written applications, from a one-file starter to multi-module folders — every construct in use, all verified by the specs | [`Samples`](Samples) |
 | **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
+| **`Cratis.Screenplay.Matching`** | BCL-only portable linear matcher for generated .NET applications | [`Source/DotNET/Screenplay.Matching`](Source/DotNET/Screenplay.Matching) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies `.play` files and exposes syntax and workspace tools over MCP | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`cratis/screenplay`** | The same CLI and MCP server as a Docker image — `docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model` | [`Dockerfile`](Dockerfile) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |

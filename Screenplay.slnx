@@ -4,6 +4,8 @@
         <Project Path="Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj" />
         <Project Path="Source/DotNET/Screenplay/Screenplay.csproj" />
         <Project Path="Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj" />
+        <Project Path="Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj" />
+        <Project Path="Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj" />
         <Project Path="Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj" />
         <Project Path="Source/DotNET/Tool/Tool.csproj" />
         <Project Path="Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj" />

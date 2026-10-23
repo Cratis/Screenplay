@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Matching.Specs</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Matching.Specs</RootNamespace>
+        <IsTestProject>true</IsTestProject>
+        <IsPackable>false</IsPackable>
+        <DedicatedSpecsProject>true</DedicatedSpecsProject>
+        <EnablePackageValidation>false</EnablePackageValidation>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay.Matching/Screenplay.Matching.csproj" />
+        <PackageReference Include="Cratis.Specifications" PrivateAssets="all" />
+        <PackageReference Include="Cratis.Specifications.XUnit" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+        <PackageReference Include="xunit" PrivateAssets="all" />
+        <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="../../Screenplay/Compiler/Conformance/portable-match-*.json" Link="Vectors/%(Filename)%(Extension)" WithCulture="false" />
+    </ItemGroup>
+</Project>
