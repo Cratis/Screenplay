@@ -123,7 +123,8 @@ record are to these revisions.
   admits the new ESM version or refuses it with a typed refusal. Specifications map `given clock` to a fake
   `TimeProvider`.
 - **Arc:** needs an application time-zone abstraction with a default from options and a tenant hook, plus the
-  `TimeProvider` boundaries of record 4. That is an Arc decision.
+  `TimeProvider` boundaries of record 4, one at every change of the local date in either direction, including the
+  backward change in a daylight-saving overlap. That is an Arc decision.
 - **Chronicle:** none; stored instants stay UTC.
 - **CLI:** bundles the new Screenplay and Stage versions.
 - **AI corpus:** teaches `time zone`, the operands and `date of`.

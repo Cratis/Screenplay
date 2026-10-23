@@ -46,12 +46,16 @@ record are to these revisions.
 2. **Evaluation epochs.** A snapshot uses one evaluation instant per request. A live query uses one instant per
    evaluation epoch. A new epoch starts on a data change, a setting change that affects the calendar, or a clock
    boundary. The receipt instant of the subscription is kept as metadata and is not reused as a moving clock.
-3. **Boundaries for `today`.** The next boundary in a zone is the first instant at or after the start of the next local
-   calendar date. It is not "24 hours from now".
+3. **Boundaries for `today`.** A boundary is every instant at which the local calendar date in the zone changes, in
+   either direction. It is not "24 hours from now", and it is not only the start of the next date: in a daylight-saving
+   overlap the local date can go backwards and then forward again, and `today` is re-evaluated at each change. For
+   example, in `America/St_Johns` on 1987-10-25 the local date is October 25 at 02:30Z, October 24 again at 02:31Z and
+   October 25 again at 03:30Z, so there are three boundaries.
    - In a daylight-saving gap the start of a date can be a skipped local time; the boundary is the first valid instant
      of that date.
    - If a whole local date is skipped, the boundary is the start of the next existing date.
-   - On an overlap (a local time that occurs twice), the boundary is the earliest instant.
+   - On an overlap (a local time that occurs twice), each instant at which the local date changes is a boundary; when
+     the date does not change, the overlap adds none.
 
    After a wake or resume the query evaluates at the current instant and arms the next boundary.
 4. **Boundaries for `now`.** For `now +/- D` compared with a stored instant `s`, the boundary is the earliest future
@@ -84,6 +88,7 @@ record are to these revisions.
 8. **Specifications.** No new syntax. Snapshot specifications at two `given clock` instants pin the semantics. A
    Stage and Arc conformance vector pins the boundary emission with a fake `TimeProvider`. Conformance vectors cover at
    least: a skipped midnight (a zone whose date starts in a gap, and one whose whole date is skipped), a DST overlap,
+   an overlap where the local date goes backwards (`America/St_Johns` 1987-10-25: 02:30Z, 02:31Z and 03:30Z),
    strict against inclusive comparisons (`<` against `<=`, `>` against `>=`), and equality with its second transition.
 9. **Settings.** A change of the calendar either invalidates affected live queries or requires a new subscription. The
    choice is stated by the Arc decision.
