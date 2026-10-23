@@ -51,7 +51,10 @@ record are to these revisions.
       `Screen`), keep the name without that step;
    3. keep a run of capitals as written, and split before the last capital of a run that is followed by a lowercase
       letter (`RegisterSKU` becomes "Register SKU"; `SKUList` becomes "SKU list");
-   4. write the result in sentence case: only the first word is capitalized.
+   4. write the result in sentence case: the first word starts with a capital, every later word is lower case, and a
+      run of two or more capitals kept by step 3 stays as written wherever it stands (`postalCode` becomes "Postal
+      code", `RegisterSKU` "Register SKU", `SKUList` "SKU list", `ExportToPDF` "Export to PDF"). A single capital
+      letter is an ordinary word (`MakeAChoice` becomes "Make a choice").
 
    Fallbacks are not localized. Authors write `$strings` where that matters.
 3. **Authored text always wins:** a localized label or title, then a literal one, then the fallback. The fallback is never
@@ -76,7 +79,10 @@ record are to these revisions.
 
 - **Screenplay:** the effective title, the duplicate-title warning and documentation.
 - **Scene:** `Screen.Title` in .NET and TypeScript. **Stage:** `ScreenDirectiveConverter` fills it; the title lookup
-  reads it; `humanize` follows the shared rule. The Stage batch (#736 to #740) is amended for this.
+  reads it; `humanize` follows the shared rule. The Stage batch (#736 to #740) is amended for this. The front-end
+  `humanize` and `humanizeScreenName` on the #736 branch already follow item 2. Stage's C# fallbacks for synthesized
+  scene content and command form schemas do not yet: they capitalize every word and do not split a run of capitals
+  before a lowercase word (`postalCode` gives "Postal Code", `SKUList` stays "SKUList"), and move to the shared rule.
 - **Arc, Chronicle, CLI:** none. **AI corpus:** states which word to use where.
 - Models that already write `title` get correct navigation labels with no edit.
 - Duplicate headings (navigation, window title and a content title showing the same text) are the main risk.
