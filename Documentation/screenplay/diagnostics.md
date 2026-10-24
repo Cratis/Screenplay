@@ -1622,6 +1622,7 @@ The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-butto
 | `PLAY0764` | Error | A toolbar button's `slice` matches slices in more than one feature; qualify it with the feature or module. |
 | `PLAY0765` | Error | Two buttons, or a button and an item, of one toolbar share an id. |
 | `PLAY0808` | Warning | A toolbar item of a feature or module links a command that no slice of that feature or module declares. |
+| `PLAY0809` | Error | A capture declares `is event source` on its key but is not a `source events` capture with a single property key. |
 
 ## Specification case tables
 

@@ -102,6 +102,7 @@ public static partial class SemanticModelCanonicalJson
             output.WriteEndObject();
         });
         if (capture.EventsSource is { } source) WriteStringArray(writer, "sourceEvents", [.. source.Events.Select(id => id.ToString())]);
+        if (capture.EventsSource is { KeyIsEventSource: true }) writer.WriteBoolean("keyIsEventSource", true);
         writer.WriteEndObject();
     }
 

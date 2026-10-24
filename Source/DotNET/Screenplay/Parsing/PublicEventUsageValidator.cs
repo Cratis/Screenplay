@@ -20,6 +20,7 @@ internal static class PublicEventUsageValidator
         foreach (var (slice, scope) in slices)
         {
             ValidateOwnCaptureReactions(application, slice, scope, events, context);
+            CaptureEventFixturesValidator.ValidateEventSourceKeys(slice, context);
         }
         if (!HasPublicContracts(resolver, application, slices))
         {

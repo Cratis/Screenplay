@@ -5,6 +5,8 @@ description: "ESM v32 preserves the type of an incoming event key on captured id
 
 # Typed event capture keys
 
+A key can also be marked `is event source`, which selects ESM v33 instead; see [Keying by the event source](../captures.md#keying-by-the-event-source).
+
 A capture over `source events` can obtain its event-source identity type from its `key`.
 When every consumed event declares exactly one required, scalar property of that name,
 and all captures appending the same event agree on its type, the appended event uses that

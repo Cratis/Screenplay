@@ -807,7 +807,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
-                    "match": "\\b(source|events|from|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed)\\b",
+                    "match": "\\b(source|events|from|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed|is|event)\\b",
                     "name": "keyword.other.cdl.screenplay"
                 },
                 { "include": "#common" }
