@@ -7,6 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
+[PerFactSpecificationLifecycle]
 public class when_exposing_source_stream_authoring : given.an_authoring_connection
 {
     const string Source = "concept Month : Int\neventsource Account\n  description \"Customer account\"\n  stream Transactions\n    streamId Month\nmodule Banking\n  feature Deposits\n    slice StateChange Deposit\n      command Deposit\n        month Month\n        stream Account.Transactions\n          streamId = month\n";

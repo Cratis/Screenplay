@@ -7,6 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_repairing_command_productions;
 
+[PerFactSpecificationLifecycle]
 public class and_the_destination_is_omitted : given.a_producing_workspace
 {
     ScreenplayWorkspace _candidate;

@@ -7,6 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
+[PerFactSpecificationLifecycle]
 public class when_authoring_responses : given.an_authoring_connection
 {
     const string ResponseSource = "concept ProjectId : Uuid\nmodule Projects\n  feature Registration\n    slice StateChange Register\n      command RegisterProject\n        projectId ProjectId generated identifier // keep identity\n        receiptId ProjectId generated\n        name String\n        produces event ProjectRegistered // keep event\n          name String = name\n        returns // keep response\n          result = receiptId // keep field\n      specification Registered\n        when RegisterProject\n          for \"11111111-1111-1111-1111-111111111111\"\n          generated receiptId = \"22222222-2222-2222-2222-222222222222\"\n          name = \"Apollo\"\n        then returns\n          result = \"22222222-2222-2222-2222-222222222222\"\n";

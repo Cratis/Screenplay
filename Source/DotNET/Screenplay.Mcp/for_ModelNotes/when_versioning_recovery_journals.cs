@@ -6,6 +6,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_ModelNotes;
 
+[PerFactSpecificationLifecycle]
 public class when_versioning_recovery_journals : given.a_notes_workspace
 {
     McpRecoveryRecord _record = null!;
