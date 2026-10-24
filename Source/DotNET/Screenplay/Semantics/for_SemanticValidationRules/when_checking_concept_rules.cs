@@ -23,7 +23,7 @@ public class when_checking_concept_rules : Specification
 
     void Because() => _results = SemanticValidationRules.Check(_concept, SemanticValue.Null);
 
-    [Fact] void should_return_every_rule_in_order() => _results.Select(check => check.Rule).ShouldEqual(_concept.Validations);
+    [Fact] void should_return_every_rule_in_order() => _results.Select(check => check.Rule).ToArray().ShouldEqual(_concept.Validations.ToArray());
     [Fact] void should_keep_the_concept_identity() => _results.ShouldEachConformTo(check => check.Concept == _concept.Id);
     [Fact] void should_use_the_concept_presence_message() => _results[0].Message.ShouldEqual("A required concept value is empty.");
     [Fact] void should_preserve_string_keys_without_resolving_them() => _results[1].Message.ShouldEqual("$strings.codeLength");
