@@ -1,0 +1,18 @@
+// Syntax-only decisions 0106/0107: the binder refuses these forms with PLAY0268.
+time zone configurable default "Europe/Oslo"
+module Clocks
+  feature Scheduling
+    slice StateChange Schedule
+      command ScheduleAppointment
+        dueDate Date
+        occurred DateTime
+        calendar from $context.zone
+        produces when dueDate >= today - 7 days
+          AppointmentScheduled
+        produces when date of occurred <= date of now + 2 hours
+          AppointmentScheduled
+        produces when now - 30 minutes < occurred
+          AppointmentScheduled
+      event AppointmentScheduled
+      specification InOslo
+        given time zone "Europe/Oslo"

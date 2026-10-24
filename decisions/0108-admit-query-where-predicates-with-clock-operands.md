@@ -1,11 +1,12 @@
 ---
 id: 0108
 title: Admit fixed query `where` predicates with clock operands
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: L0 (delegated by woksin)
 class: contract
 reversibility: costly
-decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/DotNET/Screenplay.CanonicalCorpus/**
@@ -99,7 +100,8 @@ uses the clock operands and the application calendar of the application calendar
    with `now`-based `DateTime` values, or is converted with `date of` to compare with a `Date`. `today - N days` is
    calendar arithmetic and `now - N hours` is elapsed time. "At least N calendar days" is `<= today - N days`;
    "more than N" is `< today - N days`. The boundary is written by the author, not decided by the language.
-6. **Typed arguments for thresholds.** A query may declare `argument <name> <Type> [default <literal>]`. An argument is
+6. **Typed arguments for thresholds.** A query may declare `argument <name> <Type> [default <literal>]`, one line per
+   argument, beside its `by` and `filter` lines. `argument` is the spelling; it follows the `filter` line shape. An argument is
    supplied by the caller, typed, optional only with a default, and usable as the `N` of day arithmetic and as an
    operand in `where`. It is not a filter: it does not narrow by name. A policy never reads it (as 0069 says for
    filters). Specifications name arguments as they name filters.
@@ -113,8 +115,16 @@ uses the clock operands and the application calendar of the application calendar
     instant. A query specification needs `given clock` when `where` reads the clock; without it the Contract outcome for
     a missing occurrence applies. Specifications compare rows without regard to order (0069).
 11. **ESM.** The next free ESM version, allocated at admission per 0025. A query gains an optional `condition`, the
-    same node as command conditions, after `filters`, and an optional `arguments` array. Models without `where` keep
-    their bytes and version.
+    same node as command conditions, after `filters`, and an optional `arguments` array. Both change canonical bytes, so
+    either one selects the new version (0105):
+    - `where` writes `condition`, including any clock operand, `date of` and day arithmetic in it.
+    - Each declared `argument` writes one entry in `arguments`, in declaration order as filters are: its identity, name,
+      type and default literal when present. A query with arguments and no `where` still selects the new version.
+    - A query with neither keeps its bytes and version, and so does a model whose queries have neither, unless another
+      construct (such as a `calendar` line or a clock operand elsewhere, application calendar record item 7) selects
+      it.
+    - Caller filters, `by`, ordering and paging are unchanged by this record. Argument values supplied by a caller are
+      request data, not model bytes.
 
 ## Options considered
 
@@ -144,8 +154,8 @@ uses the clock operands and the application calendar of the application calendar
 
 ## Open points
 
-1. The spelling of typed arguments (`argument`, or reuse of a `by`/`filter` style line). The semantics above hold for
-   any spelling.
+1. Settled: typed arguments are spelled `argument` (item 6). Reusing a `by` or `filter` line was not taken, because an
+   argument does not select or narrow by name.
 2. Whether a query `calendar` line (calendar record) belongs in this record's syntax example; it is the same line.
 3. Whether a read model with an optional property stores an authored null or leaves the member out is a projection and
    storage question. The language keeps the two apart (item 4).

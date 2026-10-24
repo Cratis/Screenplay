@@ -35,7 +35,7 @@ const revisions = new Map<string, ReturnType<typeof analyze>>();
 
 function authoringSource(lines: string[], headers: readonly string[]) {
     const fences = fenceMap(lines);
-    const roots = lines.flatMap((line, index) => !fences[index] && indentOf(line) === 0 && /^\w/.test(line) && !/^(?:reaction\s+batches\b|command\s+reads\s+(?!\/\/)\S+)/.test(line) ? [line.split(/\s+/)[0]] : []);
+    const roots = lines.flatMap((line, index) => !fences[index] && indentOf(line) === 0 && /^\w/.test(line) && !/^(?:time\s+zone\b|reaction\s+batches\b|command\s+reads\s+(?!\/\/)\S+)/.test(line) ? [line.split(/\s+/)[0]] : []);
     if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'operation', 'reaction', 'specification'].includes(root))) {
         return { source: lines.join('\n'), locations: lines.map((_, index) => ({ line: index + 1, column: 0 })) };
     }
@@ -44,7 +44,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona|identity|reaction\s+batches|command\s+reads(?=\s+(?!\/\/)\S))\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona|identity|time\s+zone|reaction\s+batches|command\s+reads(?=\s+(?!\/\/)\S))\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;

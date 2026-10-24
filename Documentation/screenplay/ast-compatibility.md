@@ -9,6 +9,20 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Clock operand authoring additions
+
+Decisions 0106/0107 add optional `ApplicationSyntax.TimeZone`, `CommandSyntax.Calendar`,
+`SpecificationSyntax.GivenTimeZone` and `ComparisonConditionSyntax.LeftExpression` members.
+They are omitted from JSON when absent, so legacy syntax vectors retain their bytes.
+The comparison's existing string `Left` remains unchanged for paths; for a clock operand
+it contains canonical text and `LeftExpression` holds the structured expression.
+`ClockOffsetExpressionSyntax` and `DateOfExpressionSyntax` may appear on either side.
+A bare `today` or `now` is still a path, not a globally reserved keyword.
+
+These additions are syntax-only. Binding them reports `PLAY0268` naming decisions
+0106/0107; ESM versions and executable payloads are unchanged. See
+[commands](commands.md#calendar-and-clock-operands--syntax-only).
+
 ## What the tree is
 
 Every node is a positional `record` deriving from `SyntaxNode`, which carries a `SourceLocation`. Nodes are immutable, compare by value, and support `with` expressions. A construct with several forms - an expression, a policy condition, a projection block, a screen directive, a projection mapping, a projection key, a validation block, a constraint - is an abstract base record with a concrete record per form.

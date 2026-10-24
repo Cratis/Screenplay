@@ -75,6 +75,7 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileImport(import);
         }
 
+        if (syntax.TimeZone is not null) VisitTimeZone(syntax.TimeZone);
         foreach (var system in syntax.Systems) VisitSystem(system);
         foreach (var source in syntax.EventSources) VisitEventSource(source);
 
@@ -164,6 +165,12 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSampleDataPack(pack);
         }
     }
+
+    /// <summary>
+    /// Visits a <see cref="TimeZoneSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="TimeZoneSyntax"/> to visit.</param>
+    public virtual void VisitTimeZone(TimeZoneSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="DomainSyntax"/> node.

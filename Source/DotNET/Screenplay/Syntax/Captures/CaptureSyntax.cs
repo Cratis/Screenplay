@@ -30,6 +30,11 @@ public record CaptureSyntax(
     /// Gets the immutable options retained when this capture is extracted as a document.
     /// </summary>
     public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+
+    /// <summary>
+    /// Gets whether the capture declared <c>key &lt;property&gt; is event source</c>: every captured event is sourced by its key.
+    /// </summary>
+    public bool KeyIsEventSource { get; init; }
 }
 
 /// <summary>

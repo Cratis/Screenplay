@@ -34,6 +34,7 @@ export * from './Reactions';
 export * from './ReactionIdentitySyntax';
 export * from './ReactionProductionMode';
 export * from './CommandReadMode';
+export * from './Calendar';
 export * from './InvocationRefusalSyntax';
 export * from './ReadsSyntax';
 export * from './ConcurrencySyntax';

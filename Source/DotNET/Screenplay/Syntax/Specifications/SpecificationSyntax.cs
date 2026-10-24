@@ -112,6 +112,11 @@ public record SpecificationSyntax(
     public SpecificationClockSyntax? GivenClock { get; init; }
 
     /// <summary>
+    /// Gets the time zone the scenario runs in, stated with <c>given time zone</c>, or <c>null</c> when it states none.
+    /// </summary>
+    public SpecificationTimeZoneSyntax? GivenTimeZone { get; init; }
+
+    /// <summary>
     /// Gets the earlier records of a capture's source, stated with <c>given capture</c>, in authored order.
     /// </summary>
     public IEnumerable<SpecificationCaptureSyntax> GivenCaptures { get; init; } = [];

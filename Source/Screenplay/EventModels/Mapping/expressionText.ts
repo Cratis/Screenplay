@@ -19,6 +19,8 @@ export function expressionText(expression: ExpressionSyntax): string {
         case 'EventContextExpressionSyntax': return `$eventContext.${expression.path}`;
         case 'CausedByExpressionSyntax': return expression.property === null ? '$causedBy' : `$causedBy.${expression.property}`;
         case 'TemplateExpressionSyntax': return `\`${expression.parts.map(part => part.kind === 'TemplateTextSyntax' ? part.text : `\${${expressionText(part.expression)}}`).join('')}\``;
+        case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;
+        case 'DateOfExpressionSyntax': return `date of ${expressionText(expression.operand)}`;
         case 'RawExpressionSyntax': return expression.text;
         case 'ListExpressionSyntax': return `[${expression.items.map(expressionText).join(', ')}]`;
         case 'ObjectExpressionSyntax': return `{ ${expression.members.map(member => `${JSON.stringify(member.name)}: ${expressionText(member.value)}`).join(', ')} }`;

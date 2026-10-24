@@ -9,6 +9,8 @@ export type ComparisonOperator = 'Equal' | 'NotEqual' | 'GreaterThan' | 'Greater
 export interface ComparisonConditionSyntax extends SyntaxNode {
     readonly kind: 'ComparisonConditionSyntax';
     readonly left: string;
+    // Set when the left operand is a clock or 'date of' expression; 'left' then holds its text.
+    readonly leftExpression?: ExpressionSyntax | null;
     readonly operator: ComparisonOperator;
     readonly right: ExpressionSyntax;
 }

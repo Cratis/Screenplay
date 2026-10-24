@@ -1,11 +1,12 @@
 ---
 id: 0109
 title: A live answer that reads the clock follows the clock
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: L0 (delegated by woksin)
 class: contract
 reversibility: costly
-decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/Semantics/**
   - Source/DotNET/Screenplay.CanonicalVectors.Specs/**
@@ -44,8 +45,8 @@ record are to these revisions.
    the clock is re-evaluated on the server at every instant where time alone can change its answer. A change set is sent
    only when the answer changed.
 2. **Evaluation epochs.** A snapshot uses one evaluation instant per request. A live query uses one instant per
-   evaluation epoch. A new epoch starts on a data change, a setting change that affects the calendar, or a clock
-   boundary. The receipt instant of the subscription is kept as metadata and is not reused as a moving clock.
+   evaluation epoch. A new epoch starts on a data change or a clock boundary. A change of the calendar setting does not
+   start an epoch in a running subscription; item 9 gives the rule. The receipt instant of the subscription is kept as metadata and is not reused as a moving clock.
 3. **Boundaries for `today`.** A boundary is every instant at which the local calendar date in the zone changes, in
    either direction. It is not "24 hours from now", and it is not only the start of the next date: in a daylight-saving
    overlap the local date can go backwards and then forward again, and `today` is re-evaluated at each change. For
@@ -90,13 +91,16 @@ record are to these revisions.
    least: a skipped midnight (a zone whose date starts in a gap, and one whose whole date is skipped), a DST overlap,
    an overlap where the local date goes backwards (`America/St_Johns` 1987-10-25: 02:30Z, 02:31Z and 03:30Z),
    strict against inclusive comparisons (`<` against `<=`, `>` against `>=`), and equality with its second transition.
-9. **Settings.** A change of the calendar either invalidates affected live queries or requires a new subscription. The
-   choice is stated by the Arc decision.
+9. **Settings.** A live subscription keeps the zone it resolved when it started, for its whole lifetime (Arc decision
+   0012). A changed application zone takes effect after a restart, because options are bound at start. A changed
+   tenant zone applies to new subscriptions and to reconnects. A running subscription is not re-evaluated when the
+   calendar setting changes, so until it reconnects its answer equals the snapshot answer at the same instant in the
+   zone it resolved, not in the changed one. This qualifies item 1.
 10. **No ESM change.** This record adds no bytes beyond the query predicates record.
 
 ## Options considered
 
-- **Stay stale until resubscription.** Rejected: it contradicts 0010 and is what SoloCRM has.
+- **Stay stale across clock boundaries until resubscription.** Rejected: it contradicts 0010 and is what SoloCRM has.
 - **A client `interval` refresh** (Scene `IntervalInteractionTrigger`, `IntervalInteractionTrigger.cs:14`). Rejected: it
   puts the clock on the client, costs load per client, and is stale between ticks.
 - **A Chronicle clock reaction that rewrites read models at midnight.** Rejected: it writes derived state, and Stage
@@ -105,6 +109,9 @@ record are to these revisions.
 - **Periodic polling for everything.** An explicit fallback only; it gives no exact boundary semantics.
 - **Domain tick events.** Rejected: freshness of a list is not domain history.
 - **A durable scheduler per subscriber.** Rejected: invalidation is subscription-local and can be ephemeral.
+- **A new epoch on a calendar-setting change.** Rejected with Arc decision 0012: it needs an Arc change signal and
+  invalidation fan-out to every affected subscription, for a setting that rarely changes. Reconnecting picks up the
+  new zone.
 
 ## Consequences
 

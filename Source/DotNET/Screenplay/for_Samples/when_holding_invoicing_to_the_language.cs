@@ -23,6 +23,8 @@ public class when_holding_invoicing_to_the_language : Specification
 
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
+        ("`time zone`, `calendar`, `given time zone`, clock offsets and `date of`", 824,
+            [("Documentation/screenplay/fixtures/clock-preview.play", [typeof(TimeZoneSyntax), typeof(CommandCalendarSyntax), typeof(SpecificationTimeZoneSyntax), typeof(ClockOffsetExpressionSyntax), typeof(DateOfExpressionSyntax)])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])])
     ];

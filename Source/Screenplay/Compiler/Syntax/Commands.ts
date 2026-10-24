@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { CommandCalendarSyntax } from './Calendar';
 import { AuthorizeSyntax } from './Authorization';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
@@ -55,6 +56,7 @@ export interface CommandSyntax extends SyntaxNode {
     readonly produces: readonly ProducesSyntax[];
     readonly response?: CommandResponseSyntax | null;
     readonly stream?: CommandStreamSyntax | null;
+    readonly calendar?: CommandCalendarSyntax | null;
     // Rejected headers own their property candidates; none selects an authoritative route.
     readonly streamCandidates?: readonly CommandStreamSyntax[];
     readonly handler?: HandlerSyntax | null;

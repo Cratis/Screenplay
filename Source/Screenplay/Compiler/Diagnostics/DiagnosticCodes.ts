@@ -53,6 +53,7 @@ export const DiagnosticCodes = {
     DescribedCommandWithoutProductions: 'PLAY0696', // C# only
     DescribedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only
     CaptureEventsKeyNotRequired: 'PLAY0700',
+    CaptureEventSourceKeyOutsideEvents: 'PLAY0809',
     CaptureEventsRecordFixture: 'PLAY0701',
     RefutedGeneratedConceptRule: 'PLAY0688',
     UnprovenGeneratedConceptRule: 'PLAY0689',
@@ -439,6 +440,9 @@ export const DiagnosticCodes = {
     ReducerIdentityMismatch: 'PLAY0690',
     InvalidReactionBatchesDeclaration: 'PLAY0693',
     InvalidCommandReadsDeclaration: 'PLAY0780',
+    InvalidTimeZoneDeclaration: 'PLAY0812',
+    InvalidCommandCalendar: 'PLAY0813',
+    InvalidSpecificationTimeZone: 'PLAY0814',
     GenerationSupportBudgetExceeded: 'PLAY0691',
     EmptyGenerationSupport: 'PLAY0692', // C# only: conservative nominal producer identity comparison.
     MixedEnumerationNumbering: 'PLAY0667',
