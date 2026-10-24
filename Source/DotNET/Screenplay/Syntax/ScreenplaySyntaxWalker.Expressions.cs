@@ -70,6 +70,12 @@ public abstract partial class ScreenplaySyntaxWalker
             case TemplateExpressionSyntax template:
                 VisitTemplateExpression(template);
                 break;
+            case ClockOffsetExpressionSyntax clockOffset:
+                VisitClockOffsetExpression(clockOffset);
+                break;
+            case DateOfExpressionSyntax dateOf:
+                VisitDateOfExpression(dateOf);
+                break;
             default:
                 VisitNode(syntax);
                 break;
@@ -189,6 +195,22 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="CausedByExpressionSyntax"/> to visit.</param>
     public virtual void VisitCausedByExpression(CausedByExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="ClockOffsetExpressionSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ClockOffsetExpressionSyntax"/> to visit.</param>
+    public virtual void VisitClockOffsetExpression(ClockOffsetExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="DateOfExpressionSyntax"/> node and its operand.
+    /// </summary>
+    /// <param name="syntax">The <see cref="DateOfExpressionSyntax"/> to visit.</param>
+    public virtual void VisitDateOfExpression(DateOfExpressionSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitExpression(syntax.Operand);
+    }
 
     /// <summary>
     /// Visits a <see cref="TemplateExpressionSyntax"/> node and its children.

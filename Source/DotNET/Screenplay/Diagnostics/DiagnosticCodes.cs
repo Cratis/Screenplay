@@ -3607,4 +3607,19 @@ public static class DiagnosticCodes
     /// An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin.
     /// </summary>
     public const string ReservedStoredName = "PLAY0802";
+
+    /// <summary>
+    /// A <c>time zone</c> declaration is repeated, malformed or outside the application root.
+    /// </summary>
+    public const string InvalidTimeZoneDeclaration = "PLAY0812";
+
+    /// <summary>
+    /// A command <c>calendar</c> declaration is repeated or malformed.
+    /// </summary>
+    public const string InvalidCommandCalendar = "PLAY0813";
+
+    /// <summary>
+    /// A specification <c>given time zone</c> declaration is repeated or malformed.
+    /// </summary>
+    public const string InvalidSpecificationTimeZone = "PLAY0814";
 }

@@ -385,6 +385,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var applicationId = Resolve(applicationAddress, syntax.Location);
 
             ValidateComplianceAdmission();
+            ValidateClockOperandAdmission();
+            RefuseApplicationTimeZone();
+
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
             RegisterEventDeclarations();

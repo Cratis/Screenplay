@@ -63,6 +63,11 @@ public record ApplicationSyntax(
     public CommandReadMode? CommandReadMode { get; init; }
 
     /// <summary>
+    /// Gets the application <c>time zone</c> declaration (decisions 0106/0107); absence leaves the application calendar undeclared.
+    /// </summary>
+    public TimeZoneSyntax? TimeZone { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];

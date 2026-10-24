@@ -110,6 +110,7 @@ internal static partial class SpecificationParser
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         SpecificationClockSyntax? givenClock = null;
+        SpecificationTimeZoneSyntax? givenTimeZone = null;
         var givenCaptures = new List<SpecificationCaptureSyntax>();
         var givenGenerated = new List<SpecificationGeneratedValueSyntax>();
         SpecificationClockSyntax? whenClock = null;
@@ -158,6 +159,18 @@ internal static partial class SpecificationParser
                         else
                         {
                             givenClock = ParseClock(context, line, "given");
+                        }
+                    }
+                    else if (GivenTimeZonePrefixRegex().IsMatch(line.Content))
+                    {
+                        var parsedZone = ParseTimeZone(context, line);
+                        if (givenTimeZone is not null || parsedZone is null)
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationTimeZone, "A specification states its time zone at most once, as 'given time zone \"<id>\"'.", line.Location);
+                        }
+                        else
+                        {
+                            givenTimeZone = parsedZone;
                         }
                     }
                     else if (GivenGeneratedPrefixRegex().IsMatch(line.Content))
@@ -367,6 +380,7 @@ internal static partial class SpecificationParser
             ThenEventsInAnyOrder = eventsInAnyOrder,
             ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
+            GivenTimeZone = givenTimeZone,
             GivenCaptures = givenCaptures,
             GivenGenerated = givenGenerated,
             WhenClock = whenClock,
@@ -430,6 +444,13 @@ internal static partial class SpecificationParser
         }
 
         return new(match.Groups[2].Value, line.Location);
+    }
+
+    static SpecificationTimeZoneSyntax? ParseTimeZone(ParserContext context, SourceLine line)
+    {
+        var match = GivenTimeZoneRegex().Match(line.Content);
+        SkipBody(context, line.Indent);
+        return match.Success ? new(StringLiteral.Unescape(match.Groups[1].Value), line.Location) : null;
     }
 
     static SpecificationRedeliverySyntax? ParseRedelivery(ParserContext context, SourceLine line)
@@ -987,6 +1008,12 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^given\s+clock\b", RegexOptions.NonBacktracking)]
     private static partial Regex GivenClockPrefixRegex();
+
+    [GeneratedRegex(@"^given\s+time\s+zone\b", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenTimeZonePrefixRegex();
+
+    [GeneratedRegex("^given\\s+time\\s+zone\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenTimeZoneRegex();
 
     [GeneratedRegex(@"^given\s+capture\b", RegexOptions.NonBacktracking)]
     private static partial Regex GivenCapturePrefixRegex();

@@ -439,6 +439,9 @@ export const DiagnosticCodes = {
     ReducerIdentityMismatch: 'PLAY0690',
     InvalidReactionBatchesDeclaration: 'PLAY0693',
     InvalidCommandReadsDeclaration: 'PLAY0780',
+    InvalidTimeZoneDeclaration: 'PLAY0812',
+    InvalidCommandCalendar: 'PLAY0813',
+    InvalidSpecificationTimeZone: 'PLAY0814',
     GenerationSupportBudgetExceeded: 'PLAY0691',
     EmptyGenerationSupport: 'PLAY0692', // C# only: conservative nominal producer identity comparison.
     MixedEnumerationNumbering: 'PLAY0667',

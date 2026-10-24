@@ -21,7 +21,7 @@ internal static class SpecificationStepPositions
             .Concat(specification.ThenReadModels ?? []).Concat(specification.ThenQueries)
             .Concat(specification.ThenResults).Concat(specification.ThenAbsentReadModels)
             .Concat(specification.ThenErrors).Concat(specification.ThenOperations).Concat(specification.ThenCompensated);
-        SyntaxNode?[] singular = [specification.GivenCaller, specification.GivenCallerPersona, specification.GivenClock,
+        SyntaxNode?[] singular = [specification.GivenCaller, specification.GivenCallerPersona, specification.GivenClock, specification.GivenTimeZone,
             specification.When, specification.WhenAppended, specification.WhenRedelivered, specification.WhenClock,
             specification.WhenTrigger, specification.WhenCapture, specification.WhenQuery, specification.ThenDenied,
             specification.ThenNoResult, specification.ThenReturns];

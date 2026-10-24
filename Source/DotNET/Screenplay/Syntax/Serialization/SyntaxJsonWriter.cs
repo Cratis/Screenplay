@@ -45,12 +45,15 @@ internal static class SyntaxJsonWriter
             if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
             if (member.Name == "dependsOn" && member.ElementType == typeof(DependsOnSyntax) && value is IEnumerable<DependsOnSyntax> dependencies && !dependencies.Any()) continue;
-            if (CompositionDefaults.Omit(node, member.Name, value)) continue;
+            if (OmitDefaults(node, member.Name, value)) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 
         return result;
     }
+
+    static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
+        ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value);
 
     static object? WriteMember(SyntaxMember member, object? value, string path, int depth)
     {

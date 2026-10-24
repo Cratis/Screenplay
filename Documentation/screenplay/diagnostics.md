@@ -1623,6 +1623,16 @@ The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-butto
 | `PLAY0765` | Error | Two buttons, or a button and an item, of one toolbar share an id. |
 | `PLAY0808` | Warning | A toolbar item of a feature or module links a command that no slice of that feature or module declares. |
 
+## Application calendar and clock operands
+
+Decisions 0106 and 0107 add the application calendar and clock operands. Both compilers parse the forms; the binder refuses every one of them with `PLAY0268` ("not yet admitted, decision 0106/0107") until a later slice admits it, so no model that uses them reaches an executable semantic model yet.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0812` | Error | A `time zone "<id>"` or `time zone configurable default "<id>"` declaration is repeated, malformed or outside the application root. Declare it once at the application root. |
+| `PLAY0813` | Error | A command declares `calendar` more than once, or the line is neither `calendar "<id>"` nor `calendar from $context.<member>`. |
+| `PLAY0814` | Error | A specification declares `given time zone` more than once, or the line is not `given time zone "<id>"`. |
+
 ## Specification case tables
 
 | Code | Severity | Meaning |

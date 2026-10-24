@@ -8,6 +8,20 @@ import { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
 export type { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
 export type { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
 
+// 'today - 7 days', 'now + 2 hours' - a clock keyword with a signed offset (decisions 0106/0107). A bare 'today' or 'now' stays a path.
+export interface ClockOffsetExpressionSyntax extends SyntaxNode {
+    readonly kind: 'ClockOffsetExpressionSyntax';
+    readonly clock: string;
+    readonly amount: number;
+    readonly unit: string;
+}
+
+// 'date of <operand>' - the calendar date of an instant in the application time zone.
+export interface DateOfExpressionSyntax extends SyntaxNode {
+    readonly kind: 'DateOfExpressionSyntax';
+    readonly operand: ExpressionSyntax;
+}
+
 // Legacy literals retain Double interpretation; Exact values use explicit canonical-string slots.
 export interface LiteralExpressionSyntax extends SyntaxNode {
     readonly kind: 'LiteralExpressionSyntax';
@@ -105,6 +119,8 @@ export type ExpressionSyntax =
     | EventContextExpressionSyntax
     | CausedByExpressionSyntax
     | TemplateExpressionSyntax
+    | ClockOffsetExpressionSyntax
+    | DateOfExpressionSyntax
     | LiteralExpressionSyntax
     | PathExpressionSyntax
     | ContextExpressionSyntax

@@ -92,7 +92,7 @@ internal static partial class ScreenplaySyntaxText
     /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string Condition(ConditionSyntax condition) => condition switch
     {
-        ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {ExpressionCore(comparison.Right)}",
+        ComparisonConditionSyntax comparison => $"{(comparison.LeftExpression is null ? comparison.Left : ExpressionCore(comparison.LeftExpression))} {Comparison(comparison.Operator)} {ExpressionCore(comparison.Right)}",
         LogicalConditionSyntax logical => Combined(
             Condition(logical.Left),
             OperatorOf(logical.Left),
@@ -278,6 +278,8 @@ internal static partial class ScreenplaySyntaxText
         EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
         CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
         TemplateExpressionSyntax template => Template(template),
+        ClockOffsetExpressionSyntax clock => $"{clock.Clock} {(clock.Amount < 0 ? "-" : "+")} {Math.Abs((long)clock.Amount)} {clock.Unit}",
+        DateOfExpressionSyntax dateOf => $"date of {ExpressionCore(dateOf.Operand)}",
         RawExpressionSyntax raw => raw.Text,
         _ => throw Unsupported("expression", expression)
     };

@@ -39,6 +39,8 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
 }
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'Application calendar (decisions 0106/0107). Syntax-only; binding reports PLAY0268. Never falls back to the machine zone.' },
+    { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'Configurable application calendar default. Syntax-only; binding reports PLAY0268.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
     { label: 'reaction batches atomic', insertText: 'reaction batches atomic', documentation: 'Opts the composed application into atomic direct and refusal-branch reaction batches (ESM v22). Omit only to retain legacy per-fact behavior.' },
     { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
@@ -140,6 +142,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'Command calendar. Syntax-only (decisions 0106/0107); binding reports PLAY0268. The contextual calendar from $context.<member> form is also syntax-only.' },
     documentationItem,
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'An input of the command — a name and a type reference.' },
     { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -254,6 +257,7 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'given time zone', insertText: 'given time zone "${1:Europe/Oslo}"', documentation: 'Specification calendar. Syntax-only (decisions 0106/0107); binding reports PLAY0268.' },
     { label: 'parameter', insertText: 'parameter ${1:name} ${2:Type}', documentation: 'One typed value, supplied exactly once by every case.' },
     { label: 'case', insertText: 'case ${1:Name}\n    ${2:parameter} = ${3:value}', documentation: 'One named complete set of concrete parameter values.' },
     { label: 'given caller as', insertText: 'given caller as ${1:Persona}', documentation: 'An authenticated deterministic witness of a top-level persona; no body. Use explicit callers for negation, ownership claims and implementations.' },

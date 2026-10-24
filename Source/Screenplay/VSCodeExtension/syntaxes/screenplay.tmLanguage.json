@@ -10,6 +10,7 @@
         { "include": "#numeric-preamble" },
         { "include": "#reaction-batches-preamble" },
         { "include": "#command-reads-preamble" },
+        { "include": "#calendar-declarations" },
         { "include": "#fenced-csharp" },
         { "include": "#fenced-react" },
         { "include": "#fenced-typescript" },
@@ -38,6 +39,13 @@
         { "include": "#common" }
     ],
     "repository": {
+        "calendar-declarations": {
+            "patterns": [
+                { "match": "^(time)(\\s+)(zone)(\\s+)(configurable\\s+default\\s+)?(?=\")", "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } } },
+                { "match": "^(\\s*)(calendar)(\\s+)(?=\"|from\\s+\\$context\\.)", "captures": { "2": { "name": "keyword.other.screenplay" } } },
+                { "match": "^(\\s*)(given)(\\s+)(time)(\\s+)(zone)(?=\\s+\")", "captures": { "2": { "name": "keyword.control.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "6": { "name": "keyword.other.screenplay" } } }
+            ]
+        },
         "command-reads-preamble": {
             "match": "^(command)(\\s+)(reads)(\\s+)(protected)(?=\\s*(?://.*)?$)",
             "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } }

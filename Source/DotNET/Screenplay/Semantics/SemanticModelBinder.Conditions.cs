@@ -20,11 +20,8 @@ public sealed partial class SemanticModelBinder
                     left, logical.Operator == LogicalOperator.And ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, rightCondition);
             }
 
-            if (syntax is not ComparisonConditionSyntax comparison)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "This condition has no portable ESM v1 meaning.", syntax.Location);
-                return null;
-            }
+            var comparison = AdmitClockFreeComparison(syntax);
+            if (comparison is null) return null;
 
             if (comparison.Left.StartsWith('$'))
             {
