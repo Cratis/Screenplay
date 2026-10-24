@@ -41,7 +41,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => ReleaseStagePlan.PendingReason.ShouldNotBeNull();
     [Fact] void should_publish_the_shell_stage_plan() => _corpus.StagePlans.Select(plan => plan.Profile).ShouldEqual("Web", "Desktop");
     [Fact] void should_pin_the_shell_stage_plan_to_the_shell_source() => _corpus.StagePlans.Single(plan => plan.Profile == "Desktop").Assertions.Single(assertion => assertion.Path == "source.case").Value.ShouldEqual("screen-shell-navigation-positive");
-    [Fact] void should_not_claim_cli_or_studio_plan_parity_before_they_render_the_shell() => _corpus.StagePlans.Single(plan => plan.Profile == "Desktop").PendingReason!.ShouldContain("Cratis/cli#374");
+    [Fact] void should_not_claim_cli_or_studio_plan_parity_before_they_render_the_shell() => _corpus.StagePlans.Single(plan => plan.Profile == "Desktop").PendingReason.ShouldContain("Cratis/cli#374");
 
     [Fact]
     void should_fail_backend_esm_admission_with_the_expected_diagnostics()
@@ -197,7 +197,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     void should_record_the_released_vector_stage_pending_warnings_in_the_pending_reason()
     {
         var plan = ReleaseStagePlan;
-        plan.PendingReason!.ShouldContain("CLI 3.40.2");
+        plan.PendingReason.ShouldContain("CLI 3.40.2");
         plan.PendingReason.ShouldContain("Stage 4.49.2");
         plan.PendingReason.ShouldContain("authored Scene composition");
         plan.PendingReason.ShouldContain("STAGE-SCENE-ACTION-001");
