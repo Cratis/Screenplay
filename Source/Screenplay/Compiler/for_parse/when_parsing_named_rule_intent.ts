@@ -20,11 +20,14 @@ const rule = (source: string) => {
 const vectors: { name: string; authored: string; decoded: string; blank: boolean }[] = JSON.parse(readFileSync(new URL('../Conformance/handler-hint-whitespace.json', import.meta.url), 'utf8'));
 
 describe('when parsing command named-rule intent', () => {
-    it.each(['csharp', 'typescript', 'react', 'html', 'sql'])('should preserve every validation member and opaque %s code', language => {
+    it.each(['csharp', 'java', 'typescript', 'react', 'html', 'sql'])('should preserve every validation member and opaque %s code', language => {
         const body = `\`\`\`${language}\nreturn value => value != "hint";\n// command Fake\n\`\`\``;
-        const direct = rule(prefix + body.split('\n').map(line => '            ' + line).join('\n'));
+        const source = prefix + body.split('\n').map(line => '            ' + line).join('\n');
+        expect(parse(source).diagnostics).toEqual([]);
+        const direct = rule(source);
         const wrapped = rule(prefix + '            implementation\n              hint "Keep"\n' + body.split('\n').map(line => '              ' + line).join('\n'));
         expect(serializeRule({ ...wrapped, implementation: null })).toEqual(toSyntaxJson(direct));
+        expect(wrapped.code?.language).toBe(language);
         expect(wrapped.code?.code).toBe('return value => value != "hint";\n// command Fake');
         expect(wrapped.implementation?.hints.map(hint => hint.text)).toEqual(['Keep']);
         expect(Object.keys(toSyntaxJson(wrapped)!)).toEqual(['kind', 'code', 'file', 'implementation', 'message', 'property', 'rule', 'severity', 'value']);
