@@ -1,10 +1,11 @@
 ---
 id: 0114
 title: Let an events capture key by its event source (ESM v33)
-status: proposed
-stage: none
+status: accepted
+stage: implemented
 class: contract
-reversibility: cheap
+reversibility: reversible
+decided: 2026-10-24
 decider: Sindre Alstad Wilting
 amends: 0105
 applies-to:
@@ -12,6 +13,8 @@ applies-to:
   - Source/Screenplay/**
   - Documentation/screenplay/**
 ---
+
+> **2026-10-24 — acceptance.** Accepted by the repository coordinator under Sindre Alstad Wilting's delegated authority for additive repository decisions, not a new direct answer from Sindre. Acceptance covers only the bounded opt-in contract below; it does not certify implementation or consumer readiness.
 
 ## Context
 
@@ -33,6 +36,20 @@ inbox read to the key instead of scanning. The language cannot say so today. The
 - **`key orderId is event source`.** Chosen: it uses the documented term and adds one CDL word, `is`.
 - **A bare `source` marker.** Rejected: `source` is already a CDL directive.
 - **Infer it from the key's type.** Rejected: a typed key says nothing about the foreign source.
+
+## Default if unanswered
+
+Without acceptance, captures cannot declare this equality and hosts cannot safely narrow inbox reads by the capture key.
+
+## Timeline and scope
+
+This contract applies to ESM v33 marked source-events captures. ESM v32 and unmarked captures remain unchanged. Consumer admission is separate: unsupported consumers must reject v33 clearly until upgraded.
+
+## Verification
+
+**Done when:** marked captures preserve the key/source equality through parsing, serialization and reference execution, infer a missing fixture source, and reject a conflicting source without changing unmarked models.
+
+**Verify by:** the focused C# and TypeScript capture specifications, v33 round-trip and frozen earlier-version vectors, followed by the assembled Release gate and consumer admission checks. Final assembled verification is outstanding.
 
 ## Consequences
 
