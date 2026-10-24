@@ -25,6 +25,8 @@ on:
       - "*.slnx"
       - "global.json"
       - ".github/workflows/dotnet-build.yml"
+      - ".github/scripts/run-specifications*"
+      - ".github/scripts/verify-specifications-trx.cs"
 
 # One source of truth for both the coverage guard and the spec matrix. Most projects
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
@@ -37,7 +39,7 @@ env:
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
         "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
         "Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj",
-        "Source/DotNET/Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj",
+        "Source/DotNET/Screenplay.ContractCatalog.Specs/Screenplay.ContractCatalog.Specs.csproj",
         "Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj",
         "Source/DotNET/Tool/Tool.csproj",
         "Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj"
@@ -116,6 +118,9 @@ jobs:
       - name: Build event model board
         run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
+      - name: Verify native specification launcher
+        run: node --test .github/scripts/run-specifications.test.mjs
+
       - name: Build Debug
         run: dotnet build --configuration Debug
 
@@ -170,7 +175,7 @@ jobs:
           PROJECTS: ${{ toJSON(matrix.projects) }}
         run: |
           while IFS= read -r project; do
-            dotnet test "$project" --no-build --no-restore --configuration Debug
+            bash .github/scripts/run-specifications.sh "$project" Debug
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
   package-validation:
@@ -211,8 +216,8 @@ jobs:
       - name: Build Release
         run: dotnet build --configuration Release -p:Version=9999.0.0
 
-      - name: Run canonical vectors on all supported runtimes
-        run: dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj --configuration Release --no-build --no-restore
+      - name: Run canonical vector specifications on net10.0
+        run: bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
 
       # Package validation only runs on pack, so a binary break was invisible until the release failed on
       # main - which is how eight versions came to be tagged with no package on NuGet. Packing here puts the
