@@ -5,6 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection;
 
+[PerFactSpecificationLifecycle]
 public class when_reading_processing_records : given.a_connection
 {
     JsonElement _response;

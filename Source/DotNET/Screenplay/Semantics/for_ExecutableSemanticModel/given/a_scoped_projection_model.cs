@@ -37,9 +37,9 @@ public class a_scoped_projection_model : Specification
     protected SemanticId TypeProperty(string typeName, string name) =>
         _application.Types.Single(_ => _.Name == typeName).Properties.Single(_ => _.Name == name).Id;
 
-    protected Exception ValidateOrders(SemanticProjectionScope scope) => Validate(_orders with { Scope = scope });
+    protected Exception? ValidateOrders(SemanticProjectionScope scope) => Validate(_orders with { Scope = scope });
 
-    protected Exception Validate(SemanticProjection replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+    protected Exception? Validate(SemanticProjection replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
         LanguageVersion.V1,
         SemanticVersion.V1,
         Replace(replacement)));

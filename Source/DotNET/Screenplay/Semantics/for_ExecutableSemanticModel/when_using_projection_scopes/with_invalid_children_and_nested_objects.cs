@@ -8,10 +8,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // which the element type must then have. A nested object must be one composite property.
 public class with_invalid_children_and_nested_objects : given.a_scoped_projection_model
 {
-    Exception _missingChildren;
-    Exception _scalarChildren;
-    Exception _unsetIdentityWithoutKeyProperty;
-    Exception _collectionNested;
+    Exception? _missingChildren;
+    Exception? _scalarChildren;
+    Exception? _unsetIdentityWithoutKeyProperty;
+    Exception? _collectionNested;
 
     void Because()
     {

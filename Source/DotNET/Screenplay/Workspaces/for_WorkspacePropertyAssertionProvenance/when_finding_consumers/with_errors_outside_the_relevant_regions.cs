@@ -13,6 +13,6 @@ public class with_errors_outside_the_relevant_regions : given.a_partial_example_
 
     void Because() => Consumers = Provenance.Consumers(Occurrence);
 
-    [Fact] void should_report_known_empty_consumers() => Consumers!.ShouldBeEmpty();
+    [Fact] void should_report_known_empty_consumers() => Consumers.ShouldBeEmpty();
     [Fact] void should_not_report_unavailable_consumers() => Consumers.ShouldNotBeNull();
 }

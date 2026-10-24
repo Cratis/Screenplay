@@ -18,7 +18,7 @@ public class and_recovery_is_pending : given.a_persisted_model_root
 
     [Fact] void should_refuse() => _outcome.Success.ShouldBeFalse();
     [Fact] void should_name_the_pending_operation() => _outcome.FailureKind.ShouldEqual("PendingOperation");
-    [Fact] void should_explain_recovery() => _outcome.Reason!.ShouldContain("recover-workspace");
+    [Fact] void should_explain_recovery() => _outcome.Reason.ShouldContain("recover-workspace");
     [Fact] void should_not_return_a_workspace() => _outcome.Workspace.ShouldBeNull();
     [Fact] void should_write_nothing() => Snapshot().ShouldEqual(_before);
 }

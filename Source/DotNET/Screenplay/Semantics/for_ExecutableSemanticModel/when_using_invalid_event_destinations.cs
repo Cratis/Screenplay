@@ -7,9 +7,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_invalid_event_destinations : a_valid_semantic_model
 {
-    Exception _literalDestination;
-    Exception _nonIdentifierDestination;
-    Exception _optionalDestination;
+    Exception? _literalDestination;
+    Exception? _nonIdentifierDestination;
+    Exception? _optionalDestination;
 
     void Because()
     {
@@ -47,7 +47,7 @@ public class when_using_invalid_event_destinations : a_valid_semantic_model
             }]
         });
 
-        Exception Validate(SemanticCommand replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticCommand replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with { Commands = [replacement] })));

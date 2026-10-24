@@ -9,11 +9,11 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 public class when_reading_malformed_constraints : a_valid_semantic_model
 {
     string _json;
-    Exception _emptyArray;
-    Exception _unknownKind;
-    Exception _unknownScope;
-    Exception _missingMember;
-    Exception _unknownMember;
+    Exception? _emptyArray;
+    Exception? _unknownKind;
+    Exception? _unknownScope;
+    Exception? _missingMember;
+    Exception? _unknownMember;
 
     void Establish()
     {
@@ -39,11 +39,15 @@ public class when_reading_malformed_constraints : a_valid_semantic_model
         _unknownMember = Read(_json.Replace("\"ignoreCasing\":false", "\"ignoreCasing\":false,\"removedWith\":[]", StringComparison.Ordinal));
     }
 
-    [Fact] void should_reject_an_empty_constraints_array_as_noncanonical() => _emptyArray.Message.ShouldContain("not canonical");
+    [Fact] void should_reject_an_empty_constraints_array_as_noncanonical()
+    {
+        _emptyArray.ShouldNotBeNull();
+        _emptyArray.Message.ShouldContain("not canonical");
+    }
     [Fact] void should_reject_an_unknown_kind() => _unknownKind.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_unknown_scope() => _unknownScope.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_missing_member() => _missingMember.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_unknown_member() => _unknownMember.ShouldBeOfExactType<InvalidSemanticContract>();
 
-    static Exception Read(string json) => Catch.Exception(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(json)));
+    static Exception? Read(string json) => Catch.Exception(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(json)));
 }

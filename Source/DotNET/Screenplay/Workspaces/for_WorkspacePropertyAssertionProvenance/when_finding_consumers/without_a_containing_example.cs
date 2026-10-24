@@ -24,6 +24,6 @@ public class without_a_containing_example : for_WorkspaceRefactoring.given.a_pro
 
     void Because() => _consumers = _provenance.Consumers(_index.Entries.First(entry => entry.Node is PropertyMappingSyntax && WorkspacePropertyPlan.Parents(entry, _index).Any(parent => parent.Node is SpecificationEventSyntax)));
 
-    [Fact] void should_report_known_empty_consumers() => _consumers!.ShouldBeEmpty();
+    [Fact] void should_report_known_empty_consumers() => _consumers.ShouldBeEmpty();
     [Fact] void should_not_require_example_expansion() => _expansion.IsValueCreated.ShouldBeFalse();
 }

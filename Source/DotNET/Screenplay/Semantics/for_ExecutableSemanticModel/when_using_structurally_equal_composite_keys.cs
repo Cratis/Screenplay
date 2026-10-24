@@ -9,9 +9,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_structurally_equal_composite_keys : a_valid_semantic_model
 {
-    Exception _accepted;
-    Exception _duplicateGivenState;
-    Exception _duplicateQueryExpectation;
+    Exception? _accepted;
+    Exception? _duplicateGivenState;
+    Exception? _duplicateQueryExpectation;
 
     void Because()
     {
@@ -104,7 +104,7 @@ public class when_using_structurally_equal_composite_keys : a_valid_semantic_mod
             ThenQueries = [queryExpectation, queryExpectation with { Key = firstKey, Results = [] }]
         });
 
-        Exception Validate(SemanticSpecification specification)
+        Exception? Validate(SemanticSpecification specification)
         {
             var application = ReplaceSlices(
                 typedStateChange with { Specifications = [specification] },

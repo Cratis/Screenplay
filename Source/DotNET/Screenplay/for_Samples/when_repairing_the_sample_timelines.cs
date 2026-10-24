@@ -8,7 +8,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.for_Samples;
 
-public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputHelper output) : given.the_samples
+public class when_repairing_the_sample_timelines(Xunit.ITestOutputHelper output) : given.the_samples
 {
     [Theory]
     [InlineData("Library", 2, 2)]

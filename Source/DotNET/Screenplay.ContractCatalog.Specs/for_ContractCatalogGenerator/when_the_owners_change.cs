@@ -47,10 +47,10 @@ public class when_the_owners_change
     {
         var result = Generate(Catalog);
         Assert.Empty(result.Diagnostics);
-        Assert.Contains("\"newKeyword\"", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
-        Assert.Contains("\"empty\"", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
-        Assert.DoesNotContain("\"operand\"", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
-        Assert.Contains("\"Live\", \"A live diagnostic.\", new Cratis.Screenplay.Diagnostics.DiagnosticSeverity[] {(Cratis.Screenplay.Diagnostics.DiagnosticSeverity)1}", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"newKeyword\"", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"empty\"", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("\"operand\"", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"Live\", \"A live diagnostic.\", new Cratis.Screenplay.Diagnostics.DiagnosticSeverity[] {(Cratis.Screenplay.Diagnostics.DiagnosticSeverity)1}", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -67,10 +67,10 @@ public class when_the_owners_change
     [InlineData("Source\\obj\\Generated.cs")]
     public void should_exclude_specifications_and_build_outputs_on_every_platform(string path)
     {
-        var fixture = CSharpSyntaxTree.ParseText("class Fixture { void Test() => Cratis.Screenplay.Diagnostics.Diagnostic.Warning(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Reserved); }", path: path);
+        var fixture = CSharpSyntaxTree.ParseText("class Fixture { void Test() => Cratis.Screenplay.Diagnostics.Diagnostic.Warning(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Reserved); }", path: path, cancellationToken: TestContext.Current.CancellationToken);
         var result = Generate(Catalog, fixture);
         Assert.Empty(result.Diagnostics);
-        Assert.Equal(Generate(Catalog).GeneratedTrees.Single().GetText().ToString(), result.GeneratedTrees.Single().GetText().ToString());
+        Assert.Equal(Generate(Catalog).GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString());
     }
 
     static GeneratorDriverRunResult Generate(string source, SyntaxTree? fixture = null)

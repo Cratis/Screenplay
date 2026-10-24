@@ -9,21 +9,21 @@ public class when_using_invalid_constraint_contracts : a_valid_semantic_model
 {
     SemanticConstraint _uniqueValue;
     SemanticConstraint _uniqueEvent;
-    Exception _unresolvedEvent;
-    Exception _foreignProperty;
-    Exception _propertiesOnUniqueEvent;
-    Exception _noPropertiesOnUniqueValue;
-    Exception _noTargets;
-    Exception _defaultTargets;
-    Exception _repeatedTarget;
-    Exception _repeatedProperty;
+    Exception? _unresolvedEvent;
+    Exception? _foreignProperty;
+    Exception? _propertiesOnUniqueEvent;
+    Exception? _noPropertiesOnUniqueValue;
+    Exception? _noTargets;
+    Exception? _defaultTargets;
+    Exception? _repeatedTarget;
+    Exception? _repeatedProperty;
     Exception _duplicateNameAcrossSlices;
-    Exception _unknownKind;
-    Exception _unknownScope;
-    Exception _unresolvedRelease;
-    Exception _releasingATarget;
-    Exception _ignoringCasingOfAnEvent;
-    Exception _emptyMessage;
+    Exception? _unknownKind;
+    Exception? _unknownScope;
+    Exception? _unresolvedRelease;
+    Exception? _releasingATarget;
+    Exception? _ignoringCasingOfAnEvent;
+    Exception? _emptyMessage;
 
     void Establish()
     {
@@ -71,7 +71,7 @@ public class when_using_invalid_constraint_contracts : a_valid_semantic_model
     [Fact] void should_reject_ignoring_casing_of_an_event_occurrence() => _ignoringCasingOfAnEvent.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_empty_message() => _emptyMessage.ShouldBeOfExactType<InvalidSemanticContract>();
 
-    Exception Validate(SemanticConstraint constraint)
+    Exception? Validate(SemanticConstraint constraint)
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
         return Catch.Exception(() => ExecutableSemanticModel.Create(
