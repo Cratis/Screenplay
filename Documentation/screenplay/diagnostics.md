@@ -639,7 +639,7 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 
 ### Protected command reads
 
-`PLAY0781`–`PLAY0785` are binder refusals under `command reads protected`. `PLAY0786` is reported once per legacy model, at its first command read, only when every read is admissible. Protected reads bind and execute in the reference evaluator under ESM v25. Missing required state rejects with `Validation` before requirements/mappings; matching intervening facts yield `Conflict` / `DecisionStateChanged`. Target realization requires separate version admission.
+`PLAY0781`–`PLAY0785` are binder refusals under `command reads protected`. `PLAY0786` is reported once per legacy model, at its first command read, only when every read is admissible. Protected reads bind and execute in the reference evaluator under ESM v25. Missing required state rejects with `Validation` before requirements/mappings. A commit-time settlement rejection with category `Constraint` takes precedence over a protected-read conflict; for every other settlement outcome, matching intervening facts yield `Conflict` / `DecisionStateChanged`. A refused decision keeps its captured refusal, and an invalid prefix-extension rejects with `Contract` before settlement. Target realization requires separate version admission.
 
 | Code | Severity | Reported when |
 |---|---|---|

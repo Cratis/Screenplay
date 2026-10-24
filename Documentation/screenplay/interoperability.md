@@ -265,6 +265,12 @@ Race vector fixture version **1** proves the [protected command read](commands.m
 (which declares `command reads protected`), its identity catalog, canonical ESM bytes and semantic revision. The files live in
 `Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/races-v1/`. Verify the SHA-256 of the exact bytes; do not reserialize first.
 
+The original bytes, `Version` and `Sha256` remain frozen. The additive **V1R2** revision exposes `BytesV1R2`, `VersionV1R2`,
+`Sha256V1R2` and `ModelV1R2`. Its `races.v1r2.json` lives in the sibling `races-v1r2/` directory and keeps fixture contract version **1**,
+all sixteen V1 vectors unchanged and in order, and the same source, identity catalog, ESM v25 bytes and semantic revision.
+It adds `read-race-and-late-uniqueness-claim`: a later fact changes the protected state while another claims the value captured by the
+command's decision. Commit returns the `Constraint` rejection (`UniqueValue`), not a read conflict, and appends no command facts.
+
 Each vector gives `decided` facts, a `request`, the expected `dependencies`, and `commits`. A commit extends the decided world with `later`
 facts, or replaces it with a `history`, and states the `expect`ed outcome: `accepted` with the command's facts, `conflict` with its category, or
 `rejected` with category, code and message. Every outcome lists the event names of the world it settled against. A host runs one vector with
@@ -276,7 +282,9 @@ The conflict contract needs no C# type:
 - The boundary is the count of facts in the decided world.
 - A dependency is a key value plus a set of event contract ids: the reading view's `from` events and removals, merged per key.
 - A conflict is any fact after the boundary whose event contract is in the set and whose destination equals the key, compared ordinally.
-- The outcome is `Conflict` with category `DecisionStateChanged` and no facts. Otherwise the command settles against the later log.
+- A world that is not a prefix-extension is rejected with `Contract` before settlement; a decision refused at decide time keeps its captured refusal without conflict checking.
+- Otherwise, settle against the later log first. A `Constraint` rejection takes precedence over a protected-read conflict.
+- For every other settlement outcome, a matching dependency returns `Conflict` with category `DecisionStateChanged` and no facts. With no matching dependency, return the settlement outcome.
 
 The vectors cover handled, removed and unrelated events at the read key and at another key, a second view of the same key, merged keys,
 commands that produce no facts, absent and rejected decisions, a late uniqueness claim, a decision committed against its own world, three
@@ -284,10 +292,12 @@ repeated-commit cases (accepted then conflicting, accepted then constraint-rejec
 and a commit world that is shorter than or rewrites the decided history. Non-canonical UUID key casing is not a vector: the public path refuses it.
 The vectors do not cover the guarded write after settlement; that window is a [host obligation](reactions.md#append-a-settled-command-in-a-live-host).
 
-To regenerate the model files and the vectors from the reference evaluator, set `SCREENPLAY_REGENERATE_PROTECTED_READ_RACES=1` and run the
-`for_ProtectedCommandReadRaceVectors.when_loading_the_published_fixture` spec in `Screenplay.CanonicalVectors.Specs`. Each case states the
-outcome it is meant to show, so a regeneration that observes anything else fails. Regeneration intentionally fails at the end: review the diff,
-deliberately update the `Sha256` constant, rebuild and rerun without the variable.
+To regenerate V1R2 from the reference evaluator without writing any frozen V1 resources, set
+`SCREENPLAY_REGENERATE_PROTECTED_READ_RACES_V1R2=1` and run the
+`for_ProtectedCommandReadRaceVectors.when_loading_the_v1r2_fixture` spec in `Screenplay.CanonicalVectors.Specs`. Each case states the
+outcome it is meant to show, so a regeneration that observes anything else fails. The generator also checks that all sixteen V1 vectors
+remain unchanged. Regeneration intentionally fails at the end: review the additive fixture, deliberately pin `Sha256V1R2`, rebuild and
+rerun without the variable. Keep the original fixture and its hash unchanged.
 
 ### Canonical conformance corpus
 
