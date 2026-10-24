@@ -88,6 +88,12 @@ export interface SpecificationClockSyntax extends SyntaxNode {
     readonly instant: string;
 }
 
+// 'given time zone "<id>"' - the zone the scenario runs in.
+export interface SpecificationTimeZoneSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationTimeZoneSyntax';
+    readonly id: string;
+}
+
 // 'when trigger <Trigger>', with the values the occurrence carries.
 export interface SpecificationTriggerSyntax extends SyntaxNode {
     readonly kind: 'SpecificationTriggerSyntax';
@@ -174,6 +180,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenReadModels: readonly SpecificationReadModelSyntax[];
     readonly thenErrors: readonly SpecificationErrorSyntax[];
     readonly givenClock: SpecificationClockSyntax | null;
+    readonly givenTimeZone?: SpecificationTimeZoneSyntax | null;
     readonly givenCaptures: readonly SpecificationCaptureSyntax[];
     readonly givenGenerated?: readonly SpecificationGeneratedValueSyntax[];
     readonly whenClock: SpecificationClockSyntax | null;

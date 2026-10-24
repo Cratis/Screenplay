@@ -19,6 +19,7 @@ export const languageExtensionPoint: languages.ILanguageExtensionPoint = {
 // ScreenplayParser and SliceParser and fails when this list has drifted from it, so a construct
 // added to the compiler cannot silently lose its highlighting and completion.
 export const constructKeywords = [
+    'time',
     'domain',
     'import',
     'concept',

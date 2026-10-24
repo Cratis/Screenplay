@@ -45,4 +45,10 @@ public enum SemanticProjectionTargetKind
 /// Represents the source of events a capture reads, as opposed to the rows of an outside system.
 /// </summary>
 /// <param name="Events">The declared event contracts, with an origin, whose occurrences are the captured items, in source order.</param>
-public sealed record SemanticCaptureEventsSource(ImmutableArray<SemanticId> Events);
+public sealed record SemanticCaptureEventsSource(ImmutableArray<SemanticId> Events)
+{
+    /// <summary>
+    /// Gets whether every captured event is sourced by the capture's key (<c>key &lt;property&gt; is event source</c>).
+    /// </summary>
+    public bool KeyIsEventSource { get; init; }
+}

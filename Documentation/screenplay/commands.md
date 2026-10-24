@@ -7,6 +7,24 @@ description: "Declare a Screenplay command: its properties, authorization, valid
 
 Commands are input definitions — imperative intents. A command declares its properties, its authorization, its validation rules, and what events it produces.
 
+## Calendar and clock operands — syntax only
+
+Decisions 0106/0107 introduce application-root `time zone "Europe/Oslo"` (or
+`time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
+(or `calendar from $context.zone`), and specification `given time zone "Europe/Oslo"`.
+Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
+`now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
+Bare `today` and `now` remain ordinary paths, preserving properties with those names.
+
+These forms are **syntax-only**: both parsers preserve them, but executable binding
+reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM
+version or introduce runtime behavior. Zone ids are retained, not validated against the
+host's time-zone database. No machine-local calendar is inferred. The
+[clock preview fixture](fixtures/clock-preview.play)
+is the warning-free authoring example for #824; executable Invoicing intentionally does not use these forms.
+Authoring tools preserve these forms while model and affected-member readiness report syntax-only;
+unrelated members and properties named `today` or `now` remain unaffected.
+
 ## Syntax
 
 ````screenplay

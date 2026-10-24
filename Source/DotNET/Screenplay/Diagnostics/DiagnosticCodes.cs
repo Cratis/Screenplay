@@ -3457,6 +3457,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string FeatureToolbarCommandNotFound = "PLAY0808";
 
+    /// <summary>
+    /// A capture declares <c>is event source</c> on its key, but is not a <c>source events</c> capture with a single property key.
+    /// </summary>
+    public const string CaptureEventSourceKeyOutsideEvents = "PLAY0809";
+
     // sample data - design and preview time demo rows; the active pack is chosen once in the ui profile.
 
     /// <summary>
@@ -3613,4 +3618,19 @@ public static class DiagnosticCodes
     /// </summary>
     [DiagnosticArgumentDefinitions("query:text;The performer query that declares the argument.", "argument:text;The context-sourced argument that cannot be supplied to the performer.")]
     public const string ContextSourcedPerformedQueryArgument = "PLAY0810";
+
+    /// <summary>
+    /// A <c>time zone</c> declaration is repeated, malformed or outside the application root.
+    /// </summary>
+    public const string InvalidTimeZoneDeclaration = "PLAY0812";
+
+    /// <summary>
+    /// A command <c>calendar</c> declaration is repeated or malformed.
+    /// </summary>
+    public const string InvalidCommandCalendar = "PLAY0813";
+
+    /// <summary>
+    /// A specification <c>given time zone</c> declaration is repeated or malformed.
+    /// </summary>
+    public const string InvalidSpecificationTimeZone = "PLAY0814";
 }

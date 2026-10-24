@@ -74,6 +74,8 @@ public partial class ScreenplayPrinter
                 writer.Line($"given clock {StringLiteral.Quote(clock.Instant)}", clock);
             }
 
+            WriteGivenTimeZone(writer, specification.GivenTimeZone);
+
             foreach (var failure in specification.GivenOperationFailures) writer.Line($"given operation {failure.Operation} fails", failure);
 
             foreach (var given in specification.Given)

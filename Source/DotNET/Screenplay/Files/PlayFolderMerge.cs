@@ -72,6 +72,7 @@ internal static partial class PlayFolderMerge
             // in another - and the folder is one application.
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
             CommandReadMode = MergeCommandReadMode(applications, context),
+            TimeZone = MergeTimeZone(applications, context),
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
@@ -100,6 +101,17 @@ internal static partial class PlayFolderMerge
         }
 
         return declared.FirstOrDefault()?.CommandReadMode;
+    }
+
+    static TimeZoneSyntax? MergeTimeZone(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)
+    {
+        var declared = applications.Where(application => application.TimeZone is not null).ToArray();
+        foreach (var extra in declared.Skip(1))
+        {
+            context.Error(DiagnosticCodes.InvalidTimeZoneDeclaration, "Declare 'time zone' once at the application root.", extra.Location);
+        }
+
+        return declared.FirstOrDefault()?.TimeZone;
     }
 
     static ReactionProductionMode? MergeReactionProductionMode(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)

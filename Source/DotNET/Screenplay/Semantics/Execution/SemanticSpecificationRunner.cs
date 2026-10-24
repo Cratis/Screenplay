@@ -187,18 +187,37 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
 
+    static SemanticRejected? GivenFacts(SemanticExecutionPlan plan, SemanticSpecification specification, out ImmutableArray<SemanticFact> facts)
+    {
+        try
+        {
+            facts = [.. specification.GivenEvents
+                .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
+                {
+                    Context = value.EventSource is null ? null : new(value.EventSource),
+                    Route = plan.FormatFixtureRoute(value.Route)
+                })
+                .Select(fact => SemanticCaptureEvaluation.TakeEventSourceKey(plan, fact))];
+            return null;
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            facts = [];
+            return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
+    }
+
     static SemanticExecutionResult EstablishWorld(
         SemanticExecutionPlan plan,
         SemanticSpecification specification,
         out SemanticWorld world)
     {
-        var facts = specification.GivenEvents
-            .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
-            {
-                Context = value.EventSource is null ? null : new(value.EventSource),
-                Route = plan.FormatFixtureRoute(value.Route)
-            })
-            .ToImmutableArray();
+        if (GivenFacts(plan, specification, out var facts) is { } rejected)
+        {
+            world = SemanticWorld.Empty;
+            return rejected;
+        }
+
         var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
         if (establishment is not SemanticAccepted accepted)
         {

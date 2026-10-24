@@ -26,7 +26,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | StickyNoteDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
@@ -52,6 +52,10 @@ CommandReadsPreamble = "command", "reads", "protected", NL ;
    Imported commands inherit the mode; presence selects ESM v25.
    The two behavioral preambles may appear in either order. This is not a
    command declaration. Without it, legacy command reads remain refused. *)
+
+TimeZoneDecl = "time", "zone", [ "configurable", "default" ], StringLiteral, NL ;
+(* At most once across composed application-root documents. Syntax-only: PLAY0268,
+   decisions 0106/0107. Zone ids are retained verbatim; no machine-local time zone is inferred. *)
 
 NumericPreamble = "numbers", "exact", NL ;
 
@@ -840,11 +844,14 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 CommandDecl    = "command", Ident, NL,
                  INDENT,
                    { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AuthorizeDecl
-                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl },
+                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl | CommandCalendarDecl },
                  DEDENT ;
 
 (* A command cannot have both produces and handler. At most one concurrency
    block; repeated authorize lines combine with and in authored order. *)
+
+CommandCalendarDecl = "calendar", ( StringLiteral | "from", "$context.", QualifiedName ), NL ;
+(* At most once per command. Both forms are syntax-only, refused by PLAY0268. *)
 
 CommandStreamDecl = "stream", Ident, ".", Ident, NL,
                     [ INDENT, ( "streamId", "=", MappingSource, NL | CommandStreamIdParts ), DEDENT ] ;
@@ -1052,8 +1059,14 @@ Condition      = ConditionAnd, { "or", ConditionAnd } ;
 
 ConditionAnd   = ConditionOperand, { "and", ConditionOperand } ;
 
-ConditionOperand = Path, CompOp, Value
+ConditionOperand = ( Path | ClockOffset | DateOf ), CompOp, ( Value | ClockOffset | DateOf )
                | "(", Condition, ")" ;
+ClockOffset    = ( "today" | "now" ), ( "+" | "-" ), Integer, ClockUnit ;
+ClockUnit      = "day" | "days" | "hour" | "hours" | "minute" | "minutes" ;
+DateOf         = "date", "of", ( Path | ClockOffset ) ;
+(* Clock offsets and date-of are syntax-only (PLAY0268, decisions 0106/0107).
+   Integer is nonnegative and at most 2147483647. Bare today/now remain paths;
+   property names are not globally reserved by these contextual spellings. *)
 
 CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
                | "contains" | "starts", "with" ;
@@ -1242,6 +1255,7 @@ SpecificationGiven = OperationFailureFixture
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "given", "time", "zone", StringLiteral, NL
                | "given", "clock", StringLiteral, NL
                | "given", "capture", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]

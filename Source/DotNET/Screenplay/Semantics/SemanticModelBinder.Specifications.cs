@@ -44,7 +44,7 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
             }
 
-            if (!ValidateNoEventsExpectation(specification)) return null;
+            if (!ValidateClockSpecificationAdmission(specification)) return null;
 
             // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
             // same model - its bytes are those of the 'then query' spelling.

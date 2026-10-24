@@ -44,6 +44,8 @@ internal static partial class ScreenplayParser
         var sawReactionBatches = false;
         CommandReadMode? commandReadMode = null;
         var sawCommandReads = false;
+        TimeZoneSyntax? timeZone = null;
+        var sawTimeZone = false;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var types = new List<TypeSyntax>();
@@ -81,6 +83,17 @@ internal static partial class ScreenplayParser
                         commandReadMode = CommandReadMode.Protected;
                     }
                     sawCommandReads = true;
+                    break;
+                case "time" when TimeZoneParser.IsDeclaration(line.Content):
+                    if (sawTimeZone || !placement.IsDocument || TimeZoneParser.Parse(context, line) is not { } declared)
+                    {
+                        context.Error(DiagnosticCodes.InvalidTimeZoneDeclaration, "Declare 'time zone \"<id>\"' or 'time zone configurable default \"<id>\"' once at the application root.", line.Location);
+                    }
+                    else
+                    {
+                        timeZone = declared;
+                    }
+                    sawTimeZone = true;
                     break;
                 case "reaction":
                     if (sawReactionBatches || !placement.IsDocument || !ReactionBatchesParser.IsAtomic(line.Content))
@@ -245,6 +258,7 @@ internal static partial class ScreenplayParser
             Identity = identity,
             ReactionProductionMode = reactionProductionMode,
             CommandReadMode = commandReadMode,
+            TimeZone = timeZone,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             StickyNotes = stickyNotes,

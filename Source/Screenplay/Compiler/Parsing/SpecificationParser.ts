@@ -6,7 +6,7 @@ import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
     SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
@@ -44,6 +44,8 @@ const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const nativeMappingPattern = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
+const givenTimeZonePrefix = pattern('^given\\s+time\\s+zone\\b');
+const givenTimeZonePattern = pattern(`^given\\s+time\\s+zone\\s+"(${stringBodyPattern})"$`);
 const givenClockPrefix = pattern('^given\\s+clock\\b');
 const givenCapturePrefix = pattern('^given\\s+capture\\b');
 const givenGeneratedPrefix = pattern('^given\\s+generated\\b');
@@ -85,6 +87,7 @@ interface SpecificationBody {
     thenAbsentReadModels: SpecificationAbsentReadModelSyntax[];
     thenQueries: SpecificationQuerySyntax[];
     givenClock: SpecificationClockSyntax | null;
+    givenTimeZone: SpecificationTimeZoneSyntax | null;
     givenCaptures: SpecificationCaptureSyntax[];
     givenGenerated?: SpecificationGeneratedValueSyntax[];
     whenClock: SpecificationClockSyntax | null;
@@ -114,7 +117,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenNoEvents: false, thenReadModels: [], thenErrors: [],
-        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
+        givenClock: null, givenTimeZone: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -225,6 +228,14 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             skipBody(context, line.indent);
         } else {
             body.givenClock = parseClock(context, line, 'given');
+        }
+    } else if (givenTimeZonePrefix.test(line.content)) {
+        const match = givenTimeZonePattern.exec(line.content);
+        skipBody(context, line.indent);
+        if (body.givenTimeZone !== null || match === null) {
+            context.error(DiagnosticCodes.InvalidSpecificationTimeZone, "A specification states its time zone at most once, as 'given time zone \"<id>\"'.", locationOf(line));
+        } else {
+            body.givenTimeZone = { kind: 'SpecificationTimeZoneSyntax', id: unescapeString(match[1]), location: locationOf(line) };
         }
     } else if (givenGeneratedPrefix.test(line.content)) {
         const pinned = parseGivenGenerated(context, line);

@@ -169,6 +169,8 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'LiteralExpressionSyntax': return typeof expression.value === 'object' && expression.value !== null ? expression.value.value : JSON.stringify(expression.value);
         case 'ListExpressionSyntax': return `[${expression.items.map(expressionText).join(', ')}]`;
         case 'ObjectExpressionSyntax': return `{ ${expression.members.map(member => `${JSON.stringify(member.name)}: ${expressionText(member.value)}`).join(', ')} }`;
+        case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;
+        case 'DateOfExpressionSyntax': return `date of ${expressionText(expression.operand)}`;
         case 'RawExpressionSyntax': return expression.text;
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'PathExpressionSyntax': return expression.path;

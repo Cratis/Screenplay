@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { IdentitySyntax } from './IdentitySyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -27,7 +28,7 @@ import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -49,6 +50,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitApplication(syntax: ApplicationSyntax): void {
         this.visitNode(syntax);
         if (syntax.domain !== null) this.visitDomain(syntax.domain);
+        if (syntax.timeZone != null) this.visitTimeZone(syntax.timeZone);
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         syntax.systems?.forEach(node => this.visitSystem(node));
@@ -276,11 +278,18 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
 
+    visitTimeZone(syntax: TimeZoneSyntax): void { this.visitNode(syntax); }
+
+    visitCommandCalendar(syntax: CommandCalendarSyntax): void { this.visitNode(syntax); }
+
+    visitSpecificationTimeZone(syntax: SpecificationTimeZoneSyntax): void { this.visitNode(syntax); }
+
     visitCommand(syntax: CommandSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         if (syntax.stream != null) this.visitCommandStream(syntax.stream);
+        if (syntax.calendar != null) this.visitCommandCalendar(syntax.calendar);
         syntax.streamCandidates?.forEach(candidate => this.visitCommandStream(candidate));
         syntax.validations.forEach(node => this.visitValidate(node));
         syntax.produces.forEach(node => this.visitProduces(node));
@@ -503,7 +512,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitCondition(syntax: ConditionSyntax): void {
         this.visitNode(syntax);
-        if (syntax.kind === 'ComparisonConditionSyntax') this.visitExpression(syntax.right);
+        if (syntax.kind === 'ComparisonConditionSyntax') {
+            if (syntax.leftExpression != null) this.visitExpression(syntax.leftExpression);
+            this.visitExpression(syntax.right);
+        }
         else { this.visitCondition(syntax.left); this.visitCondition(syntax.right); }
     }
 
@@ -697,6 +709,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.parameters?.forEach(node => { this.visitNode(node); this.visitTypeRef(node.type); });
         syntax.cases?.forEach(node => { this.visitNode(node); node.values.forEach(value => this.visitPropertyMapping(value)); });
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
+        if (syntax.givenTimeZone != null) this.visitSpecificationTimeZone(syntax.givenTimeZone);
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
         syntax.thenOperations?.forEach(node => this.visitSpecificationOperation(node));
         syntax.thenCompensated?.forEach(node => this.visitSpecificationCompensated(node));
@@ -833,6 +846,8 @@ export abstract class ScreenplaySyntaxWalker {
             syntax.items.forEach(item => this.visitExpression(item));
         } else if (syntax.kind === 'ObjectExpressionSyntax') {
             syntax.members.forEach(member => this.visitObjectMember(member));
+        } else if (syntax.kind === 'DateOfExpressionSyntax') {
+            this.visitExpression(syntax.operand);
         } else if (syntax.kind === 'TemplateExpressionSyntax') {
             syntax.parts.forEach(part => { this.visitNode(part); if (part.kind === 'TemplateInterpolationSyntax') this.visitExpression(part.expression); });
         }

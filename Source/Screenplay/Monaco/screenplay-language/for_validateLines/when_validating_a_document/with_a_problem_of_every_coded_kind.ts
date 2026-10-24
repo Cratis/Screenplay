@@ -11,6 +11,8 @@ import { ValidationIssue, validateLines } from '../../validation';
 // One document holding every condition the editor and the compiler both check, so a condition added
 // later without a code fails here rather than reaching a user as a codeless squiggle.
 const document = [
+    'time zone "UTC"',
+    'time zone "Europe/Oslo"',
     'reaction batches atomic',
     'reaction batches atomic',
     'command reads protected',
@@ -22,7 +24,12 @@ const document = [
     '  feature F',
     '    slice StateChange S',
     '      command C',
+    '        calendar "UTC"',
+    '        calendar "Europe/Oslo"',
     '        reads View optional as existing',
+    '      specification Zoned',
+    '        given time zone "UTC"',
+    '        given time zone "Europe/Oslo"',
     'concept InvoiceId : Guid',
     'concept InvoiceId : String',
     'concept Amount : Wat',
@@ -167,6 +174,8 @@ describe('when validating a document with a problem of every coded kind', () => 
             issues.push(...validateLines(['module M'], { compilerDiagnostics: [{ code, severity: 'error', message: 'C# binding disposition', location: { line: 1, column: 1 } }] }));
         }
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
+        const eventSourceKeyOutsideEvents = ['module M', '  feature F', '    slice Translate Receive', '      capture Feed', '        source webhook', '          path /feed', '        key id is event source'];
+        issues.push(...validateLines(eventSourceKeyOutsideEvents, { compilerDiagnostics: parse(eventSourceKeyOutsideEvents.join('\n')).diagnostics }));
     });
 
     it('should give every issue it reports a code', () => {

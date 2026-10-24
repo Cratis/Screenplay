@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -68,7 +69,10 @@ internal static partial class ConditionParser
             return null;
         }
 
-        var left = tokens[position++];
+        var operands = new ClockOperandParser(context, tokens, location);
+        var leftExpression = operands.TryParse(ref position);
+        if (operands.Malformed) return null;
+        var left = leftExpression is null ? tokens[position++] : ScreenplaySyntaxText.Expression(leftExpression);
         if (position >= tokens.Count || ParseOperator(tokens, position, out var width) is not { } comparison)
         {
             context.Error(DiagnosticCodes.ExpectedComparisonOperator, $"Expected a comparison operator after '{left}'", location);
@@ -76,14 +80,9 @@ internal static partial class ConditionParser
         }
 
         position += width;
-        if (position >= tokens.Count)
-        {
-            context.Error(DiagnosticCodes.ExpectedComparisonValue, "Expected a value to compare against", location);
-            return null;
-        }
-
-        var right = ExpressionParser.ParseMappingSource(context, tokens[position++], location);
-        return new ComparisonConditionSyntax(left, comparison, right, location);
+        return operands.ParseRight(ref position) is { } right
+            ? new ComparisonConditionSyntax(left, comparison, right, location) { LeftExpression = leftExpression }
+            : null;
     }
 
     /// <summary>
@@ -129,6 +128,6 @@ internal static partial class ConditionParser
     [GeneratedRegex(@"\s", RegexOptions.NonBacktracking)]
     private static partial Regex WhitespaceRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|\\+|[\\w.$-]+", RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 }

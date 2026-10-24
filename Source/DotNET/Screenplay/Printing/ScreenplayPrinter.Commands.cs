@@ -43,6 +43,8 @@ public partial class ScreenplayPrinter
 
             if (command.Stream is not null) WriteCommandStream(writer, command.Stream);
 
+            WriteCalendar(writer, command.Calendar);
+
             foreach (var produces in command.Produces)
             {
                 WriteProduces(writer, produces);

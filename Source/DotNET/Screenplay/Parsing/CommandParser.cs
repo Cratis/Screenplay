@@ -45,6 +45,7 @@ internal static partial class CommandParser
         var handlers = new List<(HandlerSyntax? Handler, SourceLocation Location)>();
         ConcurrencySyntax? concurrency = null;
         CommandStreamSyntax? stream = null;
+        CommandCalendarSyntax? calendar = null;
         var streamCandidates = new List<CommandStreamSyntax>();
         string? description = null;
         string? documentation = null;
@@ -63,6 +64,18 @@ internal static partial class CommandParser
                 // is a property no matter which keyword it starts with - 'description String' declares a
                 // property called description. Only the directives that do take an identifier operand
                 // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
+                case "calendar" when CommandCalendarParser.IsDeclaration(line.Content):
+                    var parsedCalendar = CommandCalendarParser.Parse(line);
+                    if (calendar is not null || parsedCalendar is null)
+                    {
+                        context.Error(DiagnosticCodes.InvalidCommandCalendar, "A command declares at most one 'calendar \"<id>\"' or 'calendar from $context.<member>'.", line.Location);
+                    }
+                    else
+                    {
+                        calendar = parsedCalendar;
+                    }
+
+                    break;
                 case "description" or "documentation" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
                     AddProperty(context, properties, named, name.Groups[1].Value, line);
                     break;
@@ -229,6 +242,7 @@ internal static partial class CommandParser
             DirectiveLocations = directiveLocations,
             Response = response,
             Stream = stream,
+            Calendar = calendar,
             StreamCandidates = streamCandidates
         };
     }

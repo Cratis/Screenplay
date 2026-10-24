@@ -1,11 +1,12 @@
 ---
 id: 0111
 title: A reference input chooses from a declared query; defaults are declared once
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: L0 (delegated by woksin)
 class: contract
 reversibility: costly
-decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/**
@@ -76,7 +77,21 @@ record are to these revisions.
    A read model with no `display` property, and a field with no `show`, shows the key. The compiler reports information
    naming the read model.
 4. **A default choice, declared once.** A model may declare, for an identifier concept, the default choice query. A field
-   without `choose` then uses it, for every form and for generated forms. The compiler never selects a query by
+   without `choose` then uses it, for every form and for generated forms.
+   ```screenplay
+   choose OrganizationId from ActiveOrganizations show name
+   choose StageId from AllStages
+   ```
+   - `choose <Concept> from <Query> [value <key>] [show <path>]` is a document-level declaration, written beside
+     concepts in any document of the model. `from`, `value` and `show` mean what they mean on a field (item 1) and are
+     checked the same way.
+   - It applies to every command input, in any form or generated form, whose type is the concept, and to `Concept[]`
+     inputs as a multiple choice (item 5).
+   - The query must be invocable with no arguments, or with arguments that are all optional or have a default; a
+     default has no other field to bind `with` from. Otherwise the compiler reports an error.
+   - A field's own `choose from` overrides the default, and `choose none` opts the field out of it.
+
+   The compiler never selects a query by
    itself: not from the concept alone, not from a `*Id` name, not from a matching key. Two defaults for the same concept
    are a compiler error. Where no default and no `choose`
    exist, the field is a plain input and the compiler reports information naming the candidate queries, with a repair
@@ -90,9 +105,20 @@ record are to these revisions.
 7. **Stage** renders the declared choice onto `DropdownField` and `MultiSelectField`. Stage #744 is re-scoped to render
    what is declared, with no inference from concepts. Stage's session identity fallback
    (`StageCommandForm.tsx:258-303`) is implementation behaviour, not part of this contract.
-8. **No ESM change** for the choice itself, because form and screen syntax is authoring-only. The `display` marker sits
-   on a read model, which is in the executable model. It stays authoring-only and out of the ESM bytes; whether the ESM
-   writer already ignores such a member is open point 1.
+8. **No ESM change.** Form and screen syntax is authoring-only, so neither a field's `choose` nor the default
+   declaration enters the ESM. The `display` marker sits on a read model property, which is in the executable model. It
+   stays out of the ESM bytes by this rule: the binder does not carry `display` into the bound property or any other
+   semantic record.
+   - Today this holds by construction, not by the writer ignoring unknown members (references in this item are to
+     Screenplay `95522ad4`). The canonical writer serializes the
+     bound model, never syntax (`SemanticModelCanonicalJson.cs:393-400`), and writes a read-model property as identity,
+     name, type and `identifier` only (`:212-224`). The binder builds that property from the owner, name, type and
+     identifier (`SemanticModelBinder.Identity.cs:21-31`), and the revision is a hash of the canonical bytes
+     (`Identifiers.cs:283-284`). A marker the binder leaves out therefore changes neither bytes, version nor revision.
+   - The implementation pins the rule with a byte and revision comparison of the same model with and without
+     `display`.
+   - In syntax JSON, `PropertySyntax.IsDisplay` is omitted when false, so untouched documents keep their syntax JSON, as
+     for other additive init-only members (`ast-compatibility.md:34`).
 
 ## Options considered
 
@@ -120,9 +146,10 @@ record are to these revisions.
 
 ## Open points
 
-1. Whether the ESM writer ignores an unknown read-model syntax member such as `display`. This must be checked before the
-   marker is implemented; if it does not, the marker is carried outside the read-model JSON.
-2. The spelling of the default-choice declaration (an application-level line naming the concept and the query).
+1. Settled (item 8): the ESM writer never sees syntax members; `display` stays out of the bytes as long as the binder
+   does not carry it into the bound model.
+2. Settled (item 4): the default-choice declaration is spelled `choose <Concept> from <Query>`, with the field's
+   `value` and `show` clauses.
 3. Search within a choice list, and narrowing a list by anything other than arguments bound from other fields of the
    same form, are follow-ups.
 4. The keywords `choose from`, `value` and `show` are open to taste; the semantics are fixed.
