@@ -4,6 +4,8 @@
         <RootNamespace>Cratis.Screenplay.CanonicalVectors.Specs</RootNamespace>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
+        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks></TargetFrameworks>
         <EnablePackageValidation>false</EnablePackageValidation>
         <!-- PublishedCorpus is a standalone tool that consumes the published corpus package; it is not part of these specs. -->
         <DefaultItemExcludes>$(DefaultItemExcludes);BrowserHarness/PublishedCorpus/**</DefaultItemExcludes>
@@ -12,16 +14,6 @@
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Cratis.Specifications" PrivateAssets="all" />
-        <PackageReference Include="Cratis.Specifications.XUnit" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
-        <PackageReference Include="xunit" PrivateAssets="all" />
-        <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all">
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
