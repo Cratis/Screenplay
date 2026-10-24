@@ -4,15 +4,24 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { consumedEvents, isEventsSource } from '../Syntax/CaptureEventsSource';
+import { CaptureSyntax } from '../Syntax/Captures';
 import { EventSyntax } from '../Syntax/Declarations';
 import { EventVisibility } from '../Syntax/EventVisibility';
 import { SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 
 export function validateEventSourceKeys(slice: SliceSyntax, context: ParserContext): void {
-    for (const capture of slice.captures.filter(value => value.keyIsEventSource === true && !(value.source != null && isEventsSource(value.source) && isPropertyKey(value.key)))) {
+    for (const capture of slice.captures.filter(isMisplacedEventSourceKey)) {
         context.error(DiagnosticCodes.CaptureEventSourceKeyOutsideEvents, `Capture '${capture.name}' declares 'is event source' on its key; only a 'source events' capture with a single property key can.`, capture.location);
     }
+}
+
+function isMisplacedEventSourceKey(capture: CaptureSyntax): boolean {
+    return capture.keyIsEventSource === true && !isSingleKeyEventsCapture(capture);
+}
+
+function isSingleKeyEventsCapture(capture: CaptureSyntax): boolean {
+    return capture.source != null && isEventsSource(capture.source) && isPropertyKey(capture.key);
 }
 
 function isPropertyKey(key: string | null): boolean {
