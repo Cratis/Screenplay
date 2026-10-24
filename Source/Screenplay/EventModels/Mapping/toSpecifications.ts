@@ -164,8 +164,8 @@ function specificationTitle(name: string): string {
         .replace(/(\d)(\p{L})/gu, '$1 $2');
 }
 
-// Card names are plain text, not HTML. The header also carries these details because an owned
-// event's current name takes precedence over the step name on the board.
+// Card names are plain text, not HTML. The specification's route annotations also carry these details
+// because an owned event's current name takes precedence over the step name on the board.
 export const routeAvailability = 'Admitted by ESM v8; the board displays authored routing, not a specification execution result.';
 
 function factName(event: SpecificationEventSyntax): string {

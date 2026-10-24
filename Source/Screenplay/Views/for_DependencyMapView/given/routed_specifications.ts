@@ -40,7 +40,8 @@ function headerNamed(board: Element, title: string): Element {
     return header;
 }
 
-// What the real board shows for the sources above: routing only in the information badge of the routed specification.
+// What the real board shows for the sources above: routing only in the information badges of the routed specification
+// and of its slice, whose header summarizes every annotation in the slice.
 export function expectRoutesOnlyInTheBadge(board: Element): void {
     const routed = headerNamed(board, 'Routed');
     const plain = headerNamed(board, 'Reading The Quarterly');
@@ -56,4 +57,8 @@ export function expectRoutesOnlyInTheBadge(board: Element): void {
     expect(label).toContain('then 1: E — stream A.S; streamId period = "<2026 & 10>", projectId = "p"');
     expect(label).toContain('Admitted by ESM v8');
     expect(badge!.getAttribute('title')).toBe(label);
+    const slice = board.querySelector<HTMLElement>('.event-modeling-grid-slice-column-header .event-model-annotation-badge');
+    expect(slice).not.toBeNull();
+    expect(slice!.getAttribute('data-severity')).toBe('information');
+    expect(slice!.querySelector('[role="img"]')!.getAttribute('aria-label')).toContain('then 1: E — stream A.S');
 }
