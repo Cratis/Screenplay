@@ -104,26 +104,20 @@ function queryRejectionAction(specification: SpecificationSyntax): { name: strin
     return { name: `query ${query.query}`, values: valuesOf(query.arguments) };
 }
 
-// @cratis/event-models 0.118.2 reads and renders the specification name in its header. Linked
-// event cards can override step names, so carry every explicit route there as well, labeled by
-// role and occurrence. Keep links and payloads intact; this is display-only, not executable routing.
+// The board renders the specification name in its header. Everything the specification states that the cards
+// cannot say stays in the title - except its authored routing, which is a per-specification information
+// annotation (see specificationRouteAnnotations) so a route never lengthens the header.
 function specificationName(specification: SpecificationSyntax, onCards: readonly (SpecificationReadModelSyntax | undefined)[]): string {
     const origin = specificationCaseOrigins.get(specification);
     const title = origin === undefined ? specification.name : `${origin.table} — ${origin.case}`;
-    const routes = [
-        ...specification.given.map((event, index) => ({ event, role: `given ${index + 1}` })),
-        ...(specification.whenAppended ? [{ event: specification.whenAppended, role: 'when append' }] : []),
-        ...specification.thenEvents.map((event, index) => ({ event, role: `then ${index + 1}` })),
-    ].filter(({ event }) => event.stream || event.noStream);
-    const details = routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`);
-    if (routes.length > 0) details.push(routeAvailability);
+    const details: string[] = [];
     for (const model of specification.givenReadModels.filter(model => !onCards.includes(model))) {
         details.push(`given readmodel ${model.name} { ${mappingText(model.properties)} }`);
     }
     for (const model of specification.thenReadModels.filter(model => !onCards.includes(model))) {
         details.push(`then readmodel ${model.name}${model.exactly ? ' exactly' : ''} { ${mappingText(model.properties)} }`);
     }
-    if (specification.whenRedelivered != null) details.push(`when ${redeliveryText(specification.whenRedelivered)}`);
+    if (specification.whenRedelivered != null) details.push(`when ${redeliveryTitle(specification.whenRedelivered)}`);
     if (specification.thenNoEvents) details.push('then no events');
     if (specification.when?.generatedValues?.length) {
         details.push(`generated (not request inputs): ${mappingText(specification.when.generatedValues)}`);
@@ -147,11 +141,16 @@ function readModelOf(model: SpecificationReadModelSyntax, id: string, card: Pick
     return { id, readModelItemId: card.id, name: model.name, values: valuesOf(model.properties) };
 }
 
-function redeliveryText(action: SpecificationRedeliverySyntax): string {
+// The redelivery as the title states it: the event, the reaction and the occurrence selector, without its routing.
+function redeliveryTitle(action: SpecificationRedeliverySyntax): string {
+    return `redelivered ${action.eventType} to ${action.reaction}${action.for == null ? '' : ` for ${expressionText(action.for)}`}`;
+}
+
+export function redeliveryText(action: SpecificationRedeliverySyntax): string {
     return `redelivered ${action.eventType} to ${action.reaction}${action.stream || action.noStream ? ` — ${routeDetails(action)}` : action.for == null ? '' : ` for ${expressionText(action.for)}`}`;
 }
 
-function mappingText(values: readonly PropertyMappingSyntax[]): string {
+export function mappingText(values: readonly PropertyMappingSyntax[]): string {
     return values.map(value => `${value.property} = ${expressionText(value.source)}`).join(', ');
 }
 
@@ -167,14 +166,14 @@ function specificationTitle(name: string): string {
 
 // Card names are plain text, not HTML. The header also carries these details because an owned
 // event's current name takes precedence over the step name on the board.
-const routeAvailability = 'Admitted by ESM v8; the board displays authored routing, not a specification execution result.';
+export const routeAvailability = 'Admitted by ESM v8; the board displays authored routing, not a specification execution result.';
 
 function factName(event: SpecificationEventSyntax): string {
     if (!event.stream && !event.noStream) return event.eventType;
     return `${event.eventType} — ${routeDetails(event)}; ${routeAvailability}`;
 }
 
-function routeDetails(event: Pick<SpecificationEventSyntax, 'for' | 'stream' | 'noStream'>): string {
+export function routeDetails(event: Pick<SpecificationEventSyntax, 'for' | 'stream' | 'noStream'>): string {
     const route = event.stream;
     return [event.for ? `for ${expressionText(event.for)}` : '',
         route ? `stream ${route.eventSource}.${route.stream}` : 'no stream',

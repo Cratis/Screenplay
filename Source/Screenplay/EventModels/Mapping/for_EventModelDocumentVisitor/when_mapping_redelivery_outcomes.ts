@@ -85,6 +85,17 @@ describe('when mapping redelivery outcomes', () => {
         specifications[4].when!.name.should.equal('trigger Startup');
         (specifications[4].screenplay?.whenRedelivered === undefined).should.be.true;
     });
+    it('should keep an already spaced title as written when it carries details', () => {
+        const application = parse(source).value;
+        const spaced = toEventModelDocument({ ...application, modules: application.modules.map(module => ({
+            ...module, features: module.features.map(feature => ({
+                ...feature, slices: feature.slices.map(slice => ({
+                    ...slice, specifications: slice.specifications.map(specification => ({ ...specification, name: 'No new facts' })),
+                })),
+            })),
+        })) }, 'Billing');
+        spaced.collections[0].modules[0].features[0].slices[0].specifications[4].name.should.equal('No new facts — then no events');
+    });
     it('should preserve unhandled refusal messages and distinguish authorization denials', () => {
         specifications[1].thenErrors.map(error => ({ name: error.name, message: error.message })).should.deep.equal([
             { name: 'error', message: '<Claim & validation>' },
@@ -97,13 +108,17 @@ describe('when mapping redelivery outcomes', () => {
         specifications[3].thenEvents[0].values.should.deep.equal({ reason: 'constraint', constraint: 'UniqueClaim', message: 'Already claimed' });
         specifications[3].thenErrors.should.deep.equal([]);
     });
-    it('should retain routed and unrouted locator text on the action and header', () => {
+    it('should retain routed and unrouted locator text on the action and in the header annotations, not the title', () => {
         const routed = toEventModelDocument(parse(routeSource).value, 'Billing');
         const scenarios = routed.collections[0].modules[0].features[0].slices[0].specifications;
         scenarios[1].when!.name.should.contain('stream Invoice.Ledger; streamId = "september"');
-        headerOf(routed, 1).should.contain('stream Invoice.Ledger; streamId = &quot;september&quot;');
+        headerOf(routed, 1).should.not.contain('stream Invoice.Ledger');
+        headerOf(routed, 1).should.contain('when redelivered Approved to Claimer');
+        const messages = (id: string) => routed.collections[0].modules[0].features[0].slices[0].annotations!.filter(annotation => annotation.specificationId === id).map(annotation => annotation.message).join('\n');
+        messages(scenarios[1].id).should.contain('when redelivered Approved to Claimer — ').and.contain('stream Invoice.Ledger; streamId = "september"');
         scenarios[2].when!.name.should.contain('no stream');
-        headerOf(routed, 2).should.contain('no stream');
+        headerOf(routed, 2).should.not.contain('no stream');
+        messages(scenarios[2].id).should.contain('no stream');
     });
     it('should remain readable by the published board schema', () => {
         problems_the_board_finds_in(document).should.deep.equal([]);

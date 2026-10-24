@@ -106,7 +106,16 @@ export interface SliceDocument {
     actors: UserExperienceActorDocument[];
     automationTrigger?: AutomationTriggerDocument;
     specifications: SliceSpecificationDocument[];
+    annotations?: SliceAnnotationDocument[];
     commentCount: number;
+}
+
+// A finding the board draws beside what it names. Screenplay uses only whole-specification information, targeted by
+// the specification's id, to show a specification's authored routing without lengthening its title.
+export interface SliceAnnotationDocument {
+    severity: 'information' | 'warning' | 'error';
+    message: string;
+    specificationId: string;
 }
 
 // Something from outside the model a translation turns into events - for a capture, the system it reads.
