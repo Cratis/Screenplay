@@ -19,6 +19,7 @@ public class when_binding_named_rule_intent
     [InlineData("file", false)]
     [InlineData("file", true)]
     [InlineData("csharp", false)]
+    [InlineData("java", false)]
     [InlineData("typescript", false)]
     [InlineData("react", false)]
     [InlineData("html", false)]
@@ -45,6 +46,7 @@ public class when_binding_named_rule_intent
         after.Source.Span.StartLine.ShouldBeGreaterThan(before.Source.Span.StartLine);
         if (language != "file")
         {
+            after.Language.ShouldEqual(language);
             var rule = Rule(new ScreenplayCompiler().Parse(wrappedSource).Value!);
             rule.Code!.Code.ShouldEqual(Code);
             rule.Code.BodyStart!.Line.ShouldEqual(after.BodySpan!.Value.StartLine);

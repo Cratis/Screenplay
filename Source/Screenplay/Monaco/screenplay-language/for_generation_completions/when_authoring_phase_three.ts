@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { planCompletions } from '../completion-planner';
-import { conceptItems } from '../completion-items';
+import { conceptItems, implementationItems } from '../completion-items';
 import { hoverContent } from '../hover-content';
 import { diagnosticCodes } from '../diagnostic-codes';
 
@@ -19,6 +19,11 @@ describe('when authoring phase-three generation', () => {
         expect(item.documentation).not.toContain('not yet executable');
         const line = `  generate ${strategy} `;
         expect(hoverContent(['concept Code : String', line], 1, strategy, 12, 12 + strategy.length)).toContain('ESM v21');
+    });
+    it('should offer Java as an opaque implementation fence', () => {
+        const item = implementationItems.find(entry => entry.label === 'java')!;
+        expect(item.insertText).toContain('```java');
+        expect(item.documentation).toContain('unsupported');
     });
     it('should offer direct sources under a generation rule', () => {
         expect(labels(['concept Code : String', '  generate rule Make', '    '])).toEqual(['file', 'csharp']);

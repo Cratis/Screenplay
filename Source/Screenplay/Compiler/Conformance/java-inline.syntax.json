@@ -1,0 +1,166 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "JavaLabel",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "JavaAccess"
+                    }
+                  },
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "return new Done(value);",
+                      "language": "java"
+                    },
+                    "file": null,
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": [
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": "Implement for a Java-capable target."
+                        }
+                      ]
+                    }
+                  },
+                  "name": "C",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "value",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": {
+                            "kind": "CodeBlockSyntax",
+                            "code": "return true;",
+                            "language": "java"
+                          },
+                          "file": null,
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Keep the Java predicate opaque."
+                              }
+                            ]
+                          },
+                          "message": null,
+                          "property": "value",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "BeValid"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Done",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "value",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

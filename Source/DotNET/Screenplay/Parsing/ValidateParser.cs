@@ -32,9 +32,9 @@ internal static class ValidateParser
             if (context.TryPeekChild(line.Indent, out var fence) && fence.Content.StartsWith("```", StringComparison.Ordinal))
             {
                 context.Reader.TakeSignificant();
-                if (fence.Content != "```csharp")
+                if (fence.Content is not ("```csharp" or "```java"))
                 {
-                    context.Error(DiagnosticCodes.ExpectedCodeFence, "Expected '```csharp' after 'validate'", fence.Location);
+                    context.Error(DiagnosticCodes.ExpectedCodeFence, "Expected '```csharp' or '```java' after 'validate'", fence.Location);
                     return null;
                 }
 

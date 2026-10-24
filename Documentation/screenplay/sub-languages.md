@@ -11,13 +11,24 @@ Two of those sets are open, and they are open in different places. Read this sec
 
 ## What the compiler can be extended with
 
-**Inline languages are open.** The five an inline block ships with — `csharp`, `typescript`, `react`, `html`, `sql` — are what the surrounding tooling understands end to end: a Stage renders them, an editor highlights them. Hand the compiler a registry and it recognizes more:
+**Inline languages are open.** The six an inline block ships with — `csharp`, `java`, `typescript`, `react`, `html`, `sql` — are recognized by both compilers and the editors. Recognition preserves an opaque body; it does not promise execution or rendering. Hand the compiler a registry and it recognizes more:
 
 ```csharp
 var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(["python", "kotlin"]));
 ```
 
-A registered block parses, carries its language tag, and holds its text in the syntax tree. The compiler does not read it — whoever registered the language is what makes sense of it, and that boundary is exactly what lets the set be open. Nothing else changes: `new ScreenplayCompiler()` still recognizes the built-in five and nothing more.
+A registered block parses, carries its language tag, and holds its text in the syntax tree. The compiler does not read it — whoever registered the language is what makes sense of it, and that boundary is exactly what lets the set be open. Nothing else changes: `new ScreenplayCompiler()` still recognizes the built-in six and nothing more.
+
+Use a tagged fence for Java, just like the other built-in inline languages:
+
+````screenplay
+policy InvoiceAccess
+  ```java
+  return true;
+  ```
+````
+
+The printer preserves `java` and the body text. Semantic implementation requirements retain the language tag, but reference execution reports Unsupported when it needs that predicate. Java is accepted for targets that render Java, such as Axon; the Cratis target refuses Java bodies. Registering or recognizing Java does not make it executable C#.
 
 **Construct keywords are not open.** The words that introduce a construct inside a slice — `projection`, `capture`, `command`, and the rest — are fixed in the compiler. PDL and CDL are built in rather than registered, and a third construct keyword means changing the compiler. The editor is a different story, and the rest of this page is about that.
 

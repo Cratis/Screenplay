@@ -48,8 +48,9 @@ describe('when TextMate tokenizes command named-rule intent', () => {
         expect(tokens[6](8)).toContain('keyword.other.screenplay');
         for (const [line, column] of [[1, 2], [2, 2], [8, 6], [9, 8], [13, 6], [14, 8]]) expect(tokens[line](column)).not.toContain('keyword.other.screenplay');
     });
-    it('should keep code fences and dedented sibling commands isolated', () => {
-        const tokens = scopes(['command C', ...body, '        ```csharp', '        hint "code"', '        implementation', '        ```', '        hint "After"', 'command Next', '  implementation', '    hint "Other"']);
+    it.each(['csharp', 'java'])('should keep %s fences and dedented sibling commands isolated', language => {
+        const tokens = scopes(['command C', ...body, `        \`\`\`${language}`, '        hint "code"', '        implementation', '        ```', '        hint "After"', 'command Next', '  implementation', '    hint "Other"']);
+        expect(tokens[7](8)).toContain(`meta.embedded.block.${language}`);
         expect(tokens[7](8), 'hint inside fence').not.toContain('keyword.other.screenplay');
         expect(tokens[8](8), 'implementation inside fence').not.toContain('keyword.other.screenplay');
         expect(tokens[10](8)).toContain('keyword.other.screenplay');
