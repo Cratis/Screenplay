@@ -29,7 +29,8 @@ public class when_resolving_action_subjects : given.a_compiler
     [Fact]
     void should_keep_same_name_precedence_over_key_type_fallback()
     {
-        var effective = ScreenActionSubjects.Resolve(_compiler.Compile(Source).Value!).Value!;
+        var source = Source.Replace("itemId TenantId", "itemId ItemId", StringComparison.Ordinal);
+        var effective = ScreenActionSubjects.Resolve(_compiler.Compile(source).Value!).Value!;
         Action(effective).Inputs.Single().Binding.ShouldEqual("item.itemId");
     }
 
@@ -56,14 +57,14 @@ public class when_resolving_action_subjects : given.a_compiler
     void should_not_infer_item_from_ineligible_or_primitive_identifiers(string original, string replacement)
     {
         var raw = _compiler.Compile(Source.Replace(original, replacement, StringComparison.Ordinal)).Value!;
-        Action(ScreenActionSubjects.Resolve(raw).Value!).Subject.ShouldEqual(ScreenActionSubjectKind.Screen);
+        Action(ScreenActionSubjects.Resolve(raw).Value!).Subject.ShouldBeNull();
     }
 
     [Fact]
     void should_not_use_primitive_equality_as_nominal_proof()
     {
         var source = Source.Replace("rowId ItemId key", "rowId Uuid key", StringComparison.Ordinal).Replace("itemId ItemId identifier", "itemId Uuid identifier", StringComparison.Ordinal);
-        Action(ScreenActionSubjects.Resolve(_compiler.Compile(source).Value!).Value!).Subject.ShouldEqual(ScreenActionSubjectKind.Screen);
+        Action(ScreenActionSubjects.Resolve(_compiler.Compile(source).Value!).Value!).Subject.ShouldBeNull();
     }
 
     [Fact]

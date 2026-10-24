@@ -21,9 +21,9 @@ internal static class WorkspaceActionSubjectRepairs
         var resolver = new ActionSubjectResolver(PlayFolderMerge.Merge(roots).Value!);
         resolver.Resolve();
         if (!resolver.Repairs.TryGetValue(subject.Node, out var evidence)) return [];
-        var inferred = evidence.Effective is ScreenActionSyntax action ? action.Subject : ((ToolbarItemSyntax)evidence.Effective).Subject;
+        var inferred = (evidence.Effective is ScreenActionSyntax action ? action.Subject : ((ToolbarItemSyntax)evidence.Effective).Subject) ?? ScreenActionSubjectKind.Screen;
         (SyntaxNode Node, string Title)[] candidates = diagnostic.Code == DiagnosticCodes.InferredActionSubject
-            ? [(Explicit(subject.Node, inferred!.Value), $"Make inferred 'for {inferred.Value.ToString().ToLowerInvariant()}' explicit")]
+            ? [(Explicit(subject.Node, inferred), $"Make inferred 'for {inferred.ToString().ToLowerInvariant()}' explicit")]
             :
             [
                 (Explicit(subject.Node, ScreenActionSubjectKind.Item), "Use 'for item' (item-bound action)"),

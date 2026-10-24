@@ -82,11 +82,6 @@ internal static partial class GuardedActionValidator
         ParserContext context)
     {
         var properties = subjects.Count == 1 ? declarations.ViewProperties(subjects[0].Type.Name, scope) : null;
-        if (subjects.Count != 1)
-        {
-            context.Warning(DiagnosticCodes.UnresolvedActionSubject, "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved", action.Location);
-        }
-
         foreach (var alternative in action.Alternatives)
         {
             foreach (var comparison in Comparisons(alternative.Condition))
@@ -114,8 +109,10 @@ internal static partial class GuardedActionValidator
         ParserContext context)
     {
         var command = declarations.Resolve(commandName, scope, slice => slice.Commands, command => command.Name)?.Node;
+        var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var argument in arguments)
         {
+            if (!names.Add(argument.Name)) context.Error(DiagnosticCodes.InvalidInteractionArgument, $"Duplicate argument '{argument.Name}' - supply each input only once", argument.Location);
             var inputs = command?.Properties.Where(property => property.Name == argument.Name).ToArray();
             if (inputs is { Length: 0 })
             {

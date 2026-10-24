@@ -1,0 +1,2530 @@
+{
+  "source": "source.play",
+  "application": {
+    "kind": "ApplicationSyntax",
+    "authentication": null,
+    "behaviors": [],
+    "concepts": [
+      {
+        "kind": "ConceptSyntax",
+        "attributes": [],
+        "file": null,
+        "name": "ItemId",
+        "type": "Uuid",
+        "validations": [],
+        "values": []
+      },
+      {
+        "kind": "ConceptSyntax",
+        "attributes": [],
+        "file": null,
+        "name": "TenantId",
+        "type": "Uuid",
+        "validations": [],
+        "values": []
+      }
+    ],
+    "domain": null,
+    "eventSources": [],
+    "fileImports": [],
+    "imports": [],
+    "layouts": [],
+    "modules": [
+      {
+        "kind": "ModuleSyntax",
+        "authorize": null,
+        "behaviors": [],
+        "contributions": [],
+        "description": null,
+        "dialogTemplates": [],
+        "features": [
+          {
+            "kind": "FeatureSyntax",
+            "authorize": null,
+            "behaviors": [],
+            "contributions": [],
+            "description": null,
+            "features": [],
+            "fileImports": [],
+            "isPlacement": false,
+            "name": "Items",
+            "slices": [
+              {
+                "kind": "SliceSyntax",
+                "captures": [],
+                "commands": [
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Retry",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "name",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "String"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  },
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Foreign",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "tenantId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TenantId"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  },
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Optional",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": true,
+                          "name": "ItemId"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  },
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Generated",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": true,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  },
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Primitive",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Uuid"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  },
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "concurrency": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "TwoIdentifiers",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "tenantId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TenantId"
+                        }
+                      }
+                    ],
+                    "reads": [],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  }
+                ],
+                "constraints": [],
+                "description": null,
+                "events": [],
+                "file": null,
+                "name": "List",
+                "operations": [],
+                "projections": [],
+                "queries": [
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "Rows",
+                    "performer": null,
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "Row"
+                    },
+                    "scope": null
+                  },
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "NamedRows",
+                    "performer": null,
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "NamedRow"
+                    },
+                    "scope": null
+                  },
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "AmbiguousRows",
+                    "performer": null,
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "AmbiguousRow"
+                    },
+                    "scope": null
+                  },
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "One",
+                    "performer": null,
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "Row"
+                    },
+                    "scope": null
+                  }
+                ],
+                "reactions": [],
+                "readModels": [
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "file": null,
+                    "name": "Row",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "rowId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TenantId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "tenantId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "TenantId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "name",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "String"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "ready",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Bool"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "file": null,
+                    "name": "NamedRow",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "rowId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "name",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "String"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "file": null,
+                    "name": "AmbiguousRow",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "rowId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "otherId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "name",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "String"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "reducers": [],
+                "screens": [
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "InferredItem"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "inputs": [
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "item.tenantId",
+                            "name": "itemId"
+                          },
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "$context.name",
+                            "name": "name"
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "subject": "Item"
+                      }
+                    ],
+                    "file": null,
+                    "name": "ExplicitItem"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null,
+                        "subject": "Screen"
+                      }
+                    ],
+                    "file": null,
+                    "name": "ScreenScope"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "NamedRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "NamedRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "SameName"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Foreign",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "ForeignKey"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Optional",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "OptionalIdentifier"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Generated",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "GeneratedIdentifier"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Primitive",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "PrimitiveIdentifier"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "TwoIdentifiers",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "MultipleIdentifiers"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "AmbiguousRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "AmbiguousRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null,
+                        "subject": "Item"
+                      }
+                    ],
+                    "file": null,
+                    "name": "AmbiguousKeys"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenGuardedActionSyntax",
+                        "alternatives": [
+                          {
+                            "kind": "ScreenActionAlternativeSyntax",
+                            "arguments": [],
+                            "command": "Retry",
+                            "condition": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.ready",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": true
+                              }
+                            }
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "otherwise": {
+                          "kind": "ScreenActionOtherwiseSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "outcome": "Execute"
+                        },
+                        "subject": "Screen"
+                      }
+                    ],
+                    "file": null,
+                    "name": "GuardedCollection"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "One",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenGuardedActionSyntax",
+                        "alternatives": [
+                          {
+                            "kind": "ScreenActionAlternativeSyntax",
+                            "arguments": [],
+                            "command": "Retry",
+                            "condition": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.ready",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": true
+                              }
+                            }
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "otherwise": {
+                          "kind": "ScreenActionOtherwiseSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "outcome": "Execute"
+                        },
+                        "subject": "Screen"
+                      }
+                    ],
+                    "file": null,
+                    "name": "GuardedRecord"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "One",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenGuardedActionSyntax",
+                        "alternatives": [
+                          {
+                            "kind": "ScreenActionAlternativeSyntax",
+                            "arguments": [
+                              {
+                                "kind": "InteractionArgumentSyntax",
+                                "binding": "item.rowId",
+                                "name": "itemId"
+                              },
+                              {
+                                "kind": "InteractionArgumentSyntax",
+                                "binding": "item.name",
+                                "name": "name"
+                              }
+                            ],
+                            "command": "Retry",
+                            "condition": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.ready",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": true
+                              }
+                            }
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "otherwise": {
+                          "kind": "ScreenActionOtherwiseSyntax",
+                          "arguments": [],
+                          "command": null,
+                          "outcome": "Hidden"
+                        }
+                      }
+                    ],
+                    "file": null,
+                    "name": "LegacyGuarded"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenGuardedActionSyntax",
+                        "alternatives": [
+                          {
+                            "kind": "ScreenActionAlternativeSyntax",
+                            "arguments": [],
+                            "command": "Retry",
+                            "condition": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.ready",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": true
+                              }
+                            }
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "otherwise": null,
+                        "subject": "Item"
+                      }
+                    ],
+                    "file": null,
+                    "name": "MissingSubject"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "NamedRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "NamedRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenGuardedActionSyntax",
+                        "alternatives": [
+                          {
+                            "kind": "ScreenActionAlternativeSyntax",
+                            "arguments": [],
+                            "command": "Retry",
+                            "condition": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.ready",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": true
+                              }
+                            }
+                          }
+                        ],
+                        "label": "Retry",
+                        "navigate": null,
+                        "otherwise": null,
+                        "subject": "Item"
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "EquallyNear"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenSectionSyntax",
+                        "directives": [
+                          {
+                            "kind": "ScreenActionSyntax",
+                            "command": "Retry",
+                            "label": null,
+                            "navigate": null
+                          },
+                          {
+                            "kind": "ScreenDataSyntax",
+                            "by": null,
+                            "query": "NamedRows",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": true,
+                              "isOptional": false,
+                              "name": "NamedRow"
+                            }
+                          }
+                        ],
+                        "name": "\u0022Details\u0022"
+                      },
+                      {
+                        "kind": "ScreenToolbarSyntax",
+                        "items": [
+                          {
+                            "kind": "ToolbarItemSyntax",
+                            "icon": null,
+                            "label": null,
+                            "name": "retry",
+                            "parameters": [
+                              {
+                                "kind": "ScreenNavigationParameterSyntax",
+                                "binding": {
+                                  "kind": "UiBindingSyntax",
+                                  "bindingKind": "DataContext",
+                                  "componentId": null,
+                                  "componentPropertyPath": null,
+                                  "expectedValueType": null,
+                                  "literal": null,
+                                  "mode": null,
+                                  "nullBehavior": null,
+                                  "path": "$context.name",
+                                  "query": null,
+                                  "rawText": null
+                                },
+                                "name": "name"
+                              }
+                            ],
+                            "presentation": [],
+                            "subject": "Item",
+                            "syntaxKind": "Action",
+                            "target": "Retry"
+                          },
+                          {
+                            "kind": "ToolbarItemSyntax",
+                            "icon": null,
+                            "label": null,
+                            "name": "global",
+                            "parameters": [],
+                            "presentation": [],
+                            "subject": "Screen",
+                            "syntaxKind": "Action",
+                            "target": "Foreign"
+                          },
+                          {
+                            "kind": "ToolbarItemSyntax",
+                            "icon": null,
+                            "label": null,
+                            "name": "inferred",
+                            "parameters": [],
+                            "presentation": [],
+                            "syntaxKind": "Action",
+                            "target": "Retry"
+                          }
+                        ],
+                        "name": ""
+                      }
+                    ],
+                    "file": null,
+                    "name": "Nested"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "InvalidClause"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "file": null,
+                    "name": "DuplicateClause"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenToolbarSyntax",
+                        "items": [
+                          {
+                            "kind": "ToolbarItemSyntax",
+                            "icon": null,
+                            "label": null,
+                            "name": "go",
+                            "parameters": [],
+                            "presentation": [],
+                            "syntaxKind": "Navigate",
+                            "target": "InferredItem"
+                          }
+                        ],
+                        "name": ""
+                      }
+                    ],
+                    "file": null,
+                    "name": "InapplicableClause"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "inputs": [
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "item.name",
+                            "name": "name"
+                          },
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "$context.name",
+                            "name": "name"
+                          }
+                        ],
+                        "label": null,
+                        "navigate": null,
+                        "subject": "Item"
+                      }
+                    ],
+                    "file": null,
+                    "name": "InvalidInput"
+                  }
+                ],
+                "specifications": [],
+                "templates": [],
+                "type": "StateView"
+              }
+            ],
+            "templates": [],
+            "usedBehaviors": []
+          }
+        ],
+        "fileImports": [],
+        "forms": [],
+        "isPlacement": false,
+        "name": "Work",
+        "screenTemplates": [],
+        "templates": [],
+        "usedBehaviors": []
+      }
+    ],
+    "personas": [],
+    "policies": [],
+    "sampleDataPacks": [],
+    "seeds": [],
+    "systems": [],
+    "templates": [],
+    "themes": [],
+    "triggers": [],
+    "types": [],
+    "uiProfiles": []
+  },
+  "locations": [
+    {
+      "path": "$",
+      "kind": "ApplicationSyntax",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "path": "$.concepts[0]",
+      "kind": "ConceptSyntax",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "path": "$.concepts[1]",
+      "kind": "ConceptSyntax",
+      "location": {
+        "line": 2,
+        "column": 1
+      }
+    },
+    {
+      "path": "$.modules[0]",
+      "kind": "ModuleSyntax",
+      "location": {
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "path": "$.modules[0].features[0]",
+      "kind": "FeatureSyntax",
+      "location": {
+        "line": 4,
+        "column": 3
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0]",
+      "kind": "SliceSyntax",
+      "location": {
+        "line": 5,
+        "column": 5
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[0]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 20,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[0].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 21,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[0].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 21,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[0].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 22,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[0].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 22,
+        "column": 14
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[1]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 23,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[1].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 24,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[1].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 24,
+        "column": 18
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[2]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 25,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[2].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 26,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[2].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 26,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[3]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 27,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[3].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 28,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[3].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 28,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[4]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 29,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[4].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 30,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[4].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 30,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[5]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 31,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[5].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 32,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[5].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 32,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[5].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 33,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].commands[5].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 33,
+        "column": 18
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[0]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 34,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[0].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 34,
+        "column": 21
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[1]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 35,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[1].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 35,
+        "column": 26
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[2]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 36,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[2].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 36,
+        "column": 30
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[3]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 37,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[3].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 37,
+        "column": 20
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 6,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 7,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 7,
+        "column": 15
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 8,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 8,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[2]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 9,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[2].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 9,
+        "column": 18
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[3]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 10,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[3].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 10,
+        "column": 14
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[4]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 11,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[0].properties[4].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 11,
+        "column": 15
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 12,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 13,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 13,
+        "column": 15
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 14,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 14,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[2]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 15,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[1].properties[2].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 15,
+        "column": 14
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 16,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 17,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 17,
+        "column": 15
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 18,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 18,
+        "column": 17
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[2]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 19,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[2].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 19,
+        "column": 14
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[0]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 38,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[0].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 39,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[0].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 39,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[0].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 40,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 70,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 71,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 71,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 72,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 73,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 73,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 73,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
+      "location": {
+        "line": 74,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 75,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 76,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 76,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 77,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 78,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 78,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 78,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
+      "location": {
+        "line": 79,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 80,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 81,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 81,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 82,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 83,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].arguments[0]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 84,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].arguments[1]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 85,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 83,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 83,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
+      "location": {
+        "line": 86,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 87,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 88,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 89,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 89,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 89,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 90,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 91,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 91,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[1]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 92,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 92,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 93,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 94,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 94,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 94,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[3]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 95,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 96,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 97,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 97,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1]",
+      "kind": "ScreenSectionSyntax",
+      "location": {
+        "line": 98,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 99,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[1]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 100,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 100,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2]",
+      "kind": "ScreenToolbarSyntax",
+      "location": {
+        "line": 101,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 102,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0].parameters[0]",
+      "kind": "ScreenNavigationParameterSyntax",
+      "location": {
+        "line": 103,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0].parameters[0].binding",
+      "kind": "UiBindingSyntax",
+      "location": {
+        "line": 103,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[1]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 104,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[2]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 105,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 106,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 107,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 108,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 109,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 110,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[0]",
+      "kind": "ScreenToolbarSyntax",
+      "location": {
+        "line": 111,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[0].items[0]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 112,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 113,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 114,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0].inputs[0]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 116,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0].inputs[1]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 117,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 41,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 42,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 42,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 43,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[1].inputs[0]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 44,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[1].inputs[1]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 45,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[2]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 46,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[2].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 47,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[2].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 47,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[2].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 48,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[3]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 49,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[3].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 50,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[3].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 50,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[3].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 51,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[4]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 52,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[4].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 53,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[4].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 53,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[4].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 54,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[5]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 55,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[5].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 56,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[5].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 56,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[5].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 57,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[6]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 58,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[6].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 59,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[6].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 59,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[6].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 60,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[7]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 61,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[7].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 62,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[7].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 62,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[7].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 63,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[8]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 64,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[8].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 65,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[8].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 65,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[8].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 66,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[9]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 67,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[9].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 68,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[9].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 68,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[9].directives[1]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 69,
+        "column": 9
+      }
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { resolveActionSubjects } from '../ScreenActionSubjects';
 import { ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenTableSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
@@ -66,9 +65,6 @@ function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherit
 
 function validateAction(action: ScreenGuardedActionSyntax, subjects: readonly ScreenDataSyntax[], slice: SliceSyntax, declarations: RefusalDeclarations, context: ParserContext): void {
     const properties = subjects.length === 1 ? viewProperties(subjects[0].type.name, slice, declarations) : null;
-    if (subjects.length !== 1) {
-        context.warning(DiagnosticCodes.UnresolvedActionSubject, "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved", action.location);
-    }
     for (const alternative of action.alternatives) {
         for (const comparison of comparisons(alternative.condition)) validateItemPath(comparison.left, comparison.location, properties, slice, declarations, context);
         validateArguments(alternative.command, alternative.arguments, properties, slice, declarations, context);

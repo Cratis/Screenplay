@@ -61,8 +61,9 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
 
     ScreenActionSyntax PlainAction(ScreenActionSyntax action, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope)
     {
-        var subject = Subject(action.Subject, action.Command, subjects, scope, action.Location);
-        var inputs = subject == ScreenActionSubjectKind.Item ? Inputs(action.Command, action.Inputs, subjects, scope, action.Location) : action.Inputs;
+        var context = new ActionSubjectContext(subjects, scope, action.Location);
+        var subject = Subject(action.Subject, action.Command, action.Inputs.Select(input => input.Name), context);
+        var inputs = subject == ScreenActionSubjectKind.Item && HasSubject(subjects, action.Location, false) ? Inputs(action.Command, action.Inputs, context) : action.Inputs;
         var effective = action with { Subject = subject, Inputs = inputs };
         Remember(action, effective, subjects, scope);
         return effective;
@@ -71,24 +72,34 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
     ToolbarItemSyntax ToolbarItem(ToolbarItemSyntax item, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope)
     {
         if (item.Kind != ToolbarItemKind.Action) return item;
-        var subject = Subject(item.Subject, item.Target, subjects, scope, item.Location);
-        if (subject != ScreenActionSubjectKind.Item)
+        var context = new ActionSubjectContext(subjects, scope, item.Location);
+        var subject = Subject(item.Subject, item.Target, item.Parameters.Select(parameter => parameter.Name), context);
+        if (subject != ScreenActionSubjectKind.Item || !HasSubject(subjects, item.Location, false))
         {
             var effective = item with { Subject = subject };
             Remember(item, effective, subjects, scope);
             return effective;
         }
         var authored = item.Parameters.ToArray();
-        var inputs = Inputs(item.Target, authored.Select(parameter => new InteractionArgumentSyntax(parameter.Name, string.Empty, parameter.Location)), subjects, scope, item.Location);
+        var inputs = Inputs(item.Target, authored.Select(parameter => new InteractionArgumentSyntax(parameter.Name, string.Empty, parameter.Location)), context);
         var inferred = inputs.Skip(authored.Length).Select(input => new ScreenNavigationParameterSyntax(input.Name, new(UiBindingKind.DataContext, input.Binding, input.Location), input.Location));
         var resolved = item with { Subject = subject, Parameters = [.. authored.Concat(inferred)] };
         Remember(item, resolved, subjects, scope);
         return resolved;
     }
 
+    bool HasSubject(IReadOnlyList<ScreenDataSyntax> subjects, Cratis.Screenplay.Diagnostics.SourceLocation location, bool guarded)
+    {
+        if (subjects.Count == 1) return true;
+        var message = guarded ? "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved" : "Action 'for item' requires one resolvable data subject - no item binding is inferred";
+        _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnresolvedActionSubject, message, location));
+        return false;
+    }
+
     ScreenGuardedActionSyntax GuardedAction(ScreenGuardedActionSyntax action, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope)
     {
-        if (action.Subject == ScreenActionSubjectKind.Screen && subjects.Count == 1 && subjects[0].Type.IsCollection)
+        if (!HasSubject(subjects, action.Location, true)) return action;
+        if (action.Subject == ScreenActionSubjectKind.Screen && subjects[0].Type.IsCollection)
         {
             _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnsupportedActionSubjectContext, "A guarded action 'for screen' cannot use a collection as 'item' - use a single-record data context or 'for item'", action.Location));
             return action;
@@ -96,10 +107,10 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
 
         return action with
         {
-            Subject = action.Subject ?? ScreenActionSubjectKind.Item,
-            Alternatives = [.. action.Alternatives.Select(alternative => alternative with { Arguments = Inputs(alternative.Command, alternative.Arguments, subjects, scope, alternative.Location) })],
+            Subject = action.Subject,
+            Alternatives = [.. action.Alternatives.Select(alternative => alternative with { Arguments = Inputs(alternative.Command, alternative.Arguments, new(subjects, scope, alternative.Location)) })],
             Otherwise = action.Otherwise is { Command: { } command } otherwise
-                ? otherwise with { Arguments = Inputs(command, otherwise.Arguments, subjects, scope, otherwise.Location) }
+                ? otherwise with { Arguments = Inputs(command, otherwise.Arguments, new(subjects, scope, otherwise.Location)) }
                 : action.Otherwise
         };
     }

@@ -17,6 +17,7 @@ import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
 import { prepareTimelineQuickFixes } from './TimelineQuickFixes';
+import { prepareActionSubjectQuickFixes } from './ActionSubjectQuickFixes';
 
 export interface QuickFixEdit {
     /** Destination document for an application-snapshot repair; absent for a buffer-local edit. */
@@ -44,7 +45,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.EventFromLaterSlice || code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
+    return code === DiagnosticCodes.InferredActionSubject || code === DiagnosticCodes.ChangedActionSubject || code === DiagnosticCodes.EventFromLaterSlice || code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -63,12 +64,16 @@ export function findQuickFixes(source: string, options: QuickFixOptions = {}): Q
 export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement' | 'path' | 'documents'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
     const local = prepareLocalQuickFixes(source, options);
     let timeline: ReturnType<typeof prepareTimelineQuickFixes> | undefined;
+    let subjects: ReturnType<typeof prepareActionSubjectQuickFixes> | undefined;
+    const subjectFixes = (line?: number, code?: string) => (subjects ??= prepareActionSubjectQuickFixes(source, options))(line, code);
     return (line, diagnosticCode) => {
         const requests = typeof line === 'number' ? [{ line, diagnosticCode }] : line ?? [];
         const localFixes = local(line, diagnosticCode);
         const selected = requests.filter(request => request.diagnosticCode === DiagnosticCodes.EventFromLaterSlice || (request.diagnosticCode === undefined && localFixes.length === 0));
         const fixes = selected.length === 0 ? [] : [...new Set(selected.map(request => request.line))].flatMap(line => (timeline ??= prepareTimelineQuickFixes(source, options))(line));
-        return [...localFixes, ...fixes];
+        const subjectRequests = requests.filter(request => request.diagnosticCode === undefined || request.diagnosticCode === DiagnosticCodes.InferredActionSubject || request.diagnosticCode === DiagnosticCodes.ChangedActionSubject);
+        const actions = requests.length === 0 ? subjectFixes(undefined, diagnosticCode) : subjectRequests.flatMap(request => subjectFixes(request.line, request.diagnosticCode));
+        return [...localFixes, ...fixes, ...actions];
     };
 }
 

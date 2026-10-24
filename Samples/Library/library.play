@@ -174,8 +174,9 @@ module Lending
           column title     label "Title"
           column author    label "Author"
           column available label "On the shelf"
-        action AddBook
-        action BorrowBook
+        action AddBook for screen
+        action BorrowBook for item
+          with bookId from item.bookId
 
       specification BorrowingTakesABookOffTheShelf
         given caller

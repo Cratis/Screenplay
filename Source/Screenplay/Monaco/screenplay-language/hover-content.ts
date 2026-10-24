@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { actionSubjectHover } from './action-subject-authoring';
 import { continuationResponseHover } from './continuation-responses';
 import { reactionReferenceAt } from './reaction-authoring';
 import { refusalContext } from './refusal-context';
@@ -41,6 +42,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const actionSubject = actionSubjectHover(line, word, startColumn);
+    if (actionSubject) return actionSubject;
     const returned = continuationResponseHover(lines, lineIndex, word, startColumn, endColumn, application);
     if (returned) return returned;
     const reaction = reactionReferenceAt(lines, lineIndex, startColumn, endColumn, application);

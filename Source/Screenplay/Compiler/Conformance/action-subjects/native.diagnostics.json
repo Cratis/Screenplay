@@ -1,0 +1,245 @@
+[
+  {
+    "code": "PLAY0815",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one \u0027for item\u0027 or \u0027for screen\u0027 before the label on an action",
+    "location": {
+      "line": 107,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0815",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one \u0027for item\u0027 or \u0027for screen\u0027 before the label on an action",
+    "location": {
+      "line": 109,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0815",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one \u0027for item\u0027 or \u0027for screen\u0027 before the label on an action",
+    "location": {
+      "line": 112,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0319",
+    "severity": "error",
+    "message": "Invalid argument \u0027with itemId\u0027 - expected \u0027with \u003Cname\u003E from \u003Cbinding\u003E\u0027",
+    "location": {
+      "line": 115,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0346",
+    "severity": "warning",
+    "message": "A guarded action requires exactly one nearest \u0027data\u0027 subject; no data or equally near data bindings leave \u0027item\u0027 unresolved",
+    "location": {
+      "line": 88,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0346",
+    "severity": "warning",
+    "message": "A guarded action requires exactly one nearest \u0027data\u0027 subject; no data or equally near data bindings leave \u0027item\u0027 unresolved",
+    "location": {
+      "line": 93,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0319",
+    "severity": "error",
+    "message": "Duplicate argument \u0027name\u0027 - supply each input only once",
+    "location": {
+      "line": 117,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for item\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 40,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027Retry\u0027 now infers \u0027for item\u0027; legacy row-name matching would use itemId from item.itemId, name from item.name",
+    "location": {
+      "line": 40,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for item\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 51,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Foreign\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 54,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027Foreign\u0027 now infers \u0027for screen\u0027; legacy row-name matching would use tenantId from item.tenantId",
+    "location": {
+      "line": 54,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Optional\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 57,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027Optional\u0027 now infers \u0027for screen\u0027; legacy row-name matching would use itemId from item.itemId",
+    "location": {
+      "line": 57,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Generated\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 60,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Primitive\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 63,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027Primitive\u0027 now infers \u0027for screen\u0027; legacy row-name matching would use itemId from item.itemId",
+    "location": {
+      "line": 63,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027TwoIdentifiers\u0027 infers \u0027for item\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 66,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027TwoIdentifiers\u0027 now infers \u0027for item\u0027; legacy row-name matching would use itemId from item.itemId, tenantId from item.tenantId",
+    "location": {
+      "line": 66,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "warning",
+    "message": "Input \u0027itemId\u0027 of action \u0027Retry\u0027 matches several declared key fields - write an explicit binding",
+    "location": {
+      "line": 69,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "A guarded action \u0027for screen\u0027 cannot use a collection as \u0027item\u0027 - use a single-record data context or \u0027for item\u0027",
+    "location": {
+      "line": 72,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 95,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for item\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 99,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for item\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 105,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "warning",
+    "message": "Action \u0027Retry\u0027 now infers \u0027for item\u0027; legacy row-name matching would use itemId from item.itemId, name from item.name",
+    "location": {
+      "line": 105,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 107,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0816",
+    "severity": "information",
+    "message": "Action \u0027Retry\u0027 infers \u0027for screen\u0027 from its declared data and identifier types",
+    "location": {
+      "line": 109,
+      "column": 9
+    }
+  }
+]

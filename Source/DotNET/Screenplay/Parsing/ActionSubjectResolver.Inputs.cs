@@ -10,53 +10,65 @@ internal sealed partial class ActionSubjectResolver
 {
     static bool EligibleIdentifier(PropertySyntax input) => input.IsIdentifier && !input.IsGenerated && !input.Type.IsOptional && !input.Type.IsCollection;
 
-    ScreenActionSubjectKind Subject(ScreenActionSubjectKind? authored, string commandName, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope, SourceLocation location)
+    ScreenActionSubjectKind? Subject(ScreenActionSubjectKind? authored, string command, IEnumerable<string> bound, ActionSubjectContext context)
     {
-        if (authored is { } explicitSubject) return explicitSubject;
-        var inputs = CommandInputs(commandName, scope);
-        var properties = Properties(subjects, scope);
-        var keys = properties.Where(property => property.IsKey).ToArray();
-        var eligible = inputs.Where(input => EligibleIdentifier(input) && keys.Any(key => SameConcept(input, key))).ToArray();
-        var inferred = subjects.Count == 1 && subjects[0].Type.IsCollection && eligible.Length == 1 && keys.Count(key => SameConcept(eligible[0], key)) == 1
-            ? ScreenActionSubjectKind.Item
-            : ScreenActionSubjectKind.Screen;
-        _diagnostics.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.InferredActionSubject, $"Action '{commandName}' infers 'for {inferred.ToString().ToLowerInvariant()}' from its declared data and identifier types", location));
-        if (subjects.Count == 1 && subjects[0].Type.IsCollection)
-        {
-            var legacy = inputs.SelectMany(input => properties.Where(property => string.Equals(input.Name, property.Name, StringComparison.OrdinalIgnoreCase)).Select(property => (Input: input, Property: property))).ToArray();
-            if ((legacy.Length > 0) != (inferred == ScreenActionSubjectKind.Item))
-            {
-                var paths = string.Join(", ", legacy.Select(pair => $"{pair.Input.Name} from item.{pair.Property.Name}"));
-                _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.ChangedActionSubject, $"Action '{commandName}' now infers 'for {inferred.ToString().ToLowerInvariant()}'; legacy row-name matching would use {(paths.Length == 0 ? "no row property" : paths)}", location));
-            }
-        }
+        if (authored is not null) return authored;
+        var inputs = CommandInputs(command, context.Scope);
+        var properties = Properties(context.Data, context.Scope);
+        var identifiers = inputs.Where(EligibleIdentifier).ToArray();
+        var item = context.Data is [{ Type.IsCollection: true }] && identifiers is [var identifier] && Keys(identifier, properties).Length == 1;
+        var inferred = item ? ScreenActionSubjectKind.Item : ScreenActionSubjectKind.Screen;
+        _diagnostics.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.InferredActionSubject, $"Action '{command}' infers 'for {inferred.ToString().ToLowerInvariant()}' from its declared data and identifier types", context.Location));
+        ReportMigration(command, bound, context, item);
 
-        return inferred;
+        // Screen is the legacy omitted default; inference must not manufacture authored metadata.
+        return item ? ScreenActionSubjectKind.Item : null;
     }
 
-    InteractionArgumentSyntax[] Inputs(string commandName, IEnumerable<InteractionArgumentSyntax> authored, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope, SourceLocation location)
+    void ReportMigration(string command, IEnumerable<string> bound, ActionSubjectContext context, bool item)
+    {
+        if (context.Data is not [{ Type.IsCollection: true }]) return;
+        var properties = Properties(context.Data, context.Scope);
+        var inputs = CommandInputs(command, context.Scope).Where(input => !input.IsGenerated && !bound.Contains(input.Name)).ToArray();
+        var legacy = inputs.SelectMany(input => properties.Where(property => string.Equals(input.Name, property.Name, StringComparison.OrdinalIgnoreCase)).Select(property => $"{input.Name} from item.{property.Name}")).ToArray();
+        var current = item ? inputs.Select(input => (Input: input, Property: Binding(input, properties))).Where(pair => pair.Property is not null).Select(pair => $"{pair.Input.Name} from item.{pair.Property!.Name}").ToArray() : [];
+        if (!legacy.SequenceEqual(current))
+        {
+            _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.ChangedActionSubject, $"Action '{command}' now infers 'for {(item ? "item" : "screen")}'; legacy row-name matching would use {(legacy.Length == 0 ? "no row property" : string.Join(", ", legacy))}", context.Location));
+        }
+    }
+
+    InteractionArgumentSyntax[] Inputs(string command, IEnumerable<InteractionArgumentSyntax> authored, ActionSubjectContext context)
     {
         var result = authored.ToList();
-        if (subjects.Count != 1) return [.. result];
-        var properties = Properties(subjects, scope);
-        foreach (var input in CommandInputs(commandName, scope).Where(input => !input.IsGenerated))
+        if (context.Data.Count != 1) return [.. result];
+        var properties = Properties(context.Data, context.Scope);
+        foreach (var input in CommandInputs(command, context.Scope).Where(input => !input.IsGenerated))
         {
             if (result.Exists(argument => argument.Name == input.Name)) continue;
-            var sameName = properties.Where(property => property.Name == input.Name).ToArray();
-            if (sameName.Length == 1)
+            if (Binding(input, properties) is { } property)
             {
-                result.Add(new(input.Name, $"item.{sameName[0].Name}", location));
-                continue;
+                result.Add(new(input.Name, $"item.{property.Name}", context.Location));
             }
-
-            if (!EligibleIdentifier(input)) continue;
-            var keys = properties.Where(property => property.IsKey && SameConcept(input, property)).ToArray();
-            if (keys.Length == 1) result.Add(new(input.Name, $"item.{keys[0].Name}", location));
-            else if (keys.Length > 1) _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.AmbiguousActionInputBinding, $"Input '{input.Name}' of action '{commandName}' matches several declared key fields - write an explicit binding", location));
+            else if (Keys(input, properties).Length > 1)
+            {
+                _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.AmbiguousActionInputBinding, $"Input '{input.Name}' of action '{command}' matches several declared key fields - write an explicit binding", context.Location));
+            }
         }
 
         return [.. result];
     }
+
+    PropertySyntax? Binding(PropertySyntax input, PropertySyntax[] properties)
+    {
+        var named = properties.Where(property => property.Name == input.Name && _declarations.Compatible(property.Type, input.Type) == true).ToArray();
+        if (named is [var property]) return property;
+        return Keys(input, properties) is [var key] ? key : null;
+    }
+
+    PropertySyntax[] Keys(PropertySyntax input, PropertySyntax[] properties) => EligibleIdentifier(input)
+        ? [.. properties.Where(property => property.IsKey && SameConcept(input, property))]
+        : [];
 
     PropertySyntax[] Properties(IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope) => subjects.Count == 1
         ? _declarations.ViewProperties(subjects[0].Type.Name, scope)?.ToArray() ?? []

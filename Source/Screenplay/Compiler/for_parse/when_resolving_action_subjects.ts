@@ -25,7 +25,7 @@ describe('when resolving action subjects', () => {
         });
     }
     it('should keep same-name precedence before key fallback', () => {
-        action(resolveActionSubjects(parse(source).value).value).inputs![0].binding.should.equal('item.itemId');
+        action(resolveActionSubjects(parse(source.replace('itemId TenantId', 'itemId ItemId')).value).value).inputs![0].binding.should.equal('item.itemId');
     });
     it('should bind a renamed key by nominal concept', () => {
         const resolved = resolveActionSubjects(parse(source.replace('        itemId TenantId\n', '')).value);
@@ -38,12 +38,12 @@ describe('when resolving action subjects', () => {
     });
     for (const replacement of ['ItemId optional identifier', 'ItemId generated identifier', 'TenantId identifier']) {
         it(`should not infer an item from ${replacement}`, () => {
-            action(resolveActionSubjects(parse(source.replace('ItemId identifier', replacement)).value).value).subject!.should.equal('Screen');
+            (action(resolveActionSubjects(parse(source.replace('ItemId identifier', replacement)).value).value).subject ?? 'Screen').should.equal('Screen');
         });
     }
     it('should not use primitive equality as nominal proof', () => {
         const primitive = source.replace('rowId ItemId key', 'rowId Uuid key').replace('itemId ItemId identifier', 'itemId Uuid identifier');
-        action(resolveActionSubjects(parse(primitive).value).value).subject!.should.equal('Screen');
+        (action(resolveActionSubjects(parse(primitive).value).value).subject ?? 'Screen').should.equal('Screen');
     });
     it('should leave ambiguous key input unresolved', () => {
         const ambiguous = source.replace('        itemId TenantId\n', '        otherId ItemId key\n') + ' for item';

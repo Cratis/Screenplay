@@ -35,10 +35,27 @@
         { "include": "#specification-stream" },
         { "include": "#stream-id-parts" },
         { "include": "#declared-dependency" },
+        { "include": "#action-subjects" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
     "repository": {
+        "action-subjects": {
+            "patterns": [
+                {
+                    "match": "^(\\s*)(action)(\\s+)(\"(?:[^\"\\\\]|\\\\.)*\"|\\$strings\\.[\\w.]+)(\\s+)(for)(\\s+)(item|screen)\\b",
+                    "captures": { "2": { "name": "keyword.other.screenplay" }, "4": { "name": "string.quoted.double.screenplay" }, "6": { "name": "keyword.other.screenplay" }, "8": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^(\\s*)(action)(\\s+)([\\w.]+)(\\s+)(for)(\\s+)(item|screen)\\b",
+                    "captures": { "2": { "name": "keyword.other.screenplay" }, "4": { "name": "entity.name.type.screenplay" }, "6": { "name": "keyword.other.screenplay" }, "8": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^(\\s*)(item)(\\s+)(\\w+)(\\s+)(action)(\\s+)([\\w.]+)(\\s+)(for)(\\s+)(item|screen)\\b",
+                    "captures": { "2": { "name": "keyword.other.screenplay" }, "4": { "name": "variable.other.screenplay" }, "6": { "name": "keyword.other.screenplay" }, "8": { "name": "entity.name.type.screenplay" }, "10": { "name": "keyword.other.screenplay" }, "12": { "name": "keyword.other.screenplay" } }
+                }
+            ]
+        },
         "calendar-declarations": {
             "patterns": [
                 { "match": "^(time)(\\s+)(zone)(\\s+)(configurable\\s+default\\s+)?(?=\")", "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "5": { "name": "keyword.other.screenplay" } } },

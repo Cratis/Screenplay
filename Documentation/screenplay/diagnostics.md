@@ -9,6 +9,14 @@ Every problem the compiler finds is reported as a **diagnostic**: a severity, a 
 
 A message is written for a person and gets reworded whenever a clearer wording is found. A **code never changes**. So a code is what you match on, suppress on, and group by - anything reading the message text breaks the next time the message is improved.
 
+## Action subject diagnostics
+
+Decision 0110 reserves PLAY0815–PLAY0819: malformed/duplicate/misplaced clauses
+(Error), inference (Information), changed legacy row behavior (Warning), ambiguous
+input keys (Warning), and unsupported guarded screen/collection context (Warning),
+respectively. See [action subjects](action-subjects.md#diagnostics-and-migration)
+for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
+
 ## Reading a diagnostic
 
 The CLI prints a diagnostic in the format editors and build servers already parse - the file, the position, the severity, the code, and the message - followed by the offending line and a caret:
