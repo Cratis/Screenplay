@@ -19,8 +19,8 @@ public class when_assessing_a_fixed_utc_year : given.a_declaration
         _second = SemanticConceptCheck.Check(concept, 2025);
     }
 
-    [Fact] void should_use_the_first_year_in_genuine_witnesses() => _first.Proofs.Single().Witness!.ShouldContain("2024");
-    [Fact] void should_use_the_second_year_in_genuine_witnesses() => _second.Proofs.Single().Witness!.ShouldContain("2025");
+    [Fact] void should_use_the_first_year_in_genuine_witnesses() => _first.Proofs.Single().Witness.ShouldContain("2024");
+    [Fact] void should_use_the_second_year_in_genuine_witnesses() => _second.Proofs.Single().Witness.ShouldContain("2025");
     [Fact] void should_not_count_date_literals_as_entropy() => _first.Support!.Count.ShouldEqual(new BigInteger(2));
     [Fact] void should_not_mutate_the_declaration_between_assessments() => _second.Support!.Count.ShouldEqual(_first.Support!.Count);
 }

@@ -27,7 +27,7 @@ public class when_protecting_legacy_command_reads : Specification
     [Fact] void should_insert_the_preamble() => _result.Workspace!.Documents.Single().Text.ShouldContain("command reads protected");
     [Fact] void should_keep_the_read_subject() => WorkspaceSyntaxIndex.Create(_workspace).Find(_repair.Subject)!.Node.ShouldBeOfExactType<ReadsSyntax>();
     [Fact] void should_require_individual_review() => _repair.CanFixAll.ShouldBeFalse();
-    [Fact] void should_disclose_the_behavior_change() => _repair.Title!.ShouldContain("absence and conflict");
+    [Fact] void should_disclose_the_behavior_change() => _repair.Title.ShouldContain("absence and conflict");
     [Fact] void should_remove_the_legacy_diagnostic() => _result.Workspace!.Compilation.Diagnostics.ShouldNotContain(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyCommandReadsRepairAvailable);
 
     [Fact]

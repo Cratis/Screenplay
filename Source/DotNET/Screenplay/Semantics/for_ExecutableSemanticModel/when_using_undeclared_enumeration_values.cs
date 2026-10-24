@@ -8,12 +8,12 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_undeclared_enumeration_values : a_valid_semantic_model
 {
-    Exception _collectionSpecificationValue;
+    Exception? _collectionSpecificationValue;
     Exception _invalidRepresentation;
-    Exception _literalMapping;
-    Exception _nestedSpecificationValue;
-    Exception _specificationValue;
-    Exception _validationOperand;
+    Exception? _literalMapping;
+    Exception? _nestedSpecificationValue;
+    Exception? _specificationValue;
+    Exception? _validationOperand;
 
     void Because()
     {
@@ -81,7 +81,7 @@ public class when_using_undeclared_enumeration_values : a_valid_semantic_model
                 Concepts = [.. _application.Concepts.Select(_ => _.Id == projectId.Id ? projectId : _)]
             }));
 
-        Exception Validate(SemanticConcept concept, SemanticSlice slice)
+        Exception? Validate(SemanticConcept concept, SemanticSlice slice)
         {
             var application = ReplaceSlice(slice);
             application = application with
@@ -91,7 +91,7 @@ public class when_using_undeclared_enumeration_values : a_valid_semantic_model
             return Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, application));
         }
 
-        Exception ValidateSpecificationValue(
+        Exception? ValidateSpecificationValue(
             SemanticConcept concept,
             SemanticTypeReference type,
             SemanticValue value,

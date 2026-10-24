@@ -20,9 +20,9 @@ public class when_reporting_compliance_with_duplicate_declarations : Specificati
         Assert.Contains(snapshot.Compilation.Diagnostics, diagnostic => diagnostic.Code == DiagnosticCodes.DuplicateDeclaration);
         var index = snapshot.Index;
         index.Readiness.ModelSyntaxOnly.ShouldBeTrue();
-        index.Readiness.ModelExecutionReadiness!.ShouldContain("concept compliance");
+        index.Readiness.ModelExecutionReadiness.ShouldContain("concept compliance");
         var declaration = index.Declarations.Single(declaration => declaration.Kind == "Event" && declaration.Name == "Changed");
         index.Readiness.SyntaxOnly(declaration.Syntax).ShouldBeTrue();
-        index.Readiness.ExecutionReadiness(declaration.Syntax)!.ShouldContain("PLAY0268");
+        index.Readiness.ExecutionReadiness(declaration.Syntax).ShouldContain("PLAY0268");
     }
 }

@@ -7,10 +7,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_validating_a_match_rule : a_valid_semantic_model
 {
-    Exception _valid;
-    Exception _invalidPattern;
-    Exception _nonTextOperand;
-    Exception _nonTextTarget;
+    Exception? _valid;
+    Exception? _invalidPattern;
+    Exception? _nonTextOperand;
+    Exception? _nonTextTarget;
 
     void Because()
     {
@@ -20,7 +20,7 @@ public class when_validating_a_match_rule : a_valid_semantic_model
         _nonTextTarget = Check(_commandProjectIdPropertyId, SemanticValue.Text(".*"));
     }
 
-    Exception Check(SemanticId property, SemanticValue operand)
+    Exception? Check(SemanticId property, SemanticValue operand)
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
         var command = slice.Commands.Single() with { Validations = [new(property, SemanticValidationRuleKind.Matches, operand, null)] };

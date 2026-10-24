@@ -18,7 +18,7 @@ public class without_persisted_identities : given.a_persisted_model_root
 
     [Fact] void should_refuse() => _outcome.Success.ShouldBeFalse();
     [Fact] void should_require_persisted_identities() => _outcome.FailureKind.ShouldEqual("PersistedIdentitiesRequired");
-    [Fact] void should_name_the_identity_file() => _outcome.Reason!.ShouldContain(".screenplay/identities.json");
+    [Fact] void should_name_the_identity_file() => _outcome.Reason.ShouldContain(".screenplay/identities.json");
     [Fact] void should_not_return_a_workspace() => _outcome.Workspace.ShouldBeNull();
     [Fact] void should_write_nothing() => Snapshot().ShouldEqual(_before);
 }

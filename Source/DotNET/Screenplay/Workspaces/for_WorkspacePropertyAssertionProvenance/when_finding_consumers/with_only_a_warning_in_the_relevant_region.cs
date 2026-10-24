@@ -11,6 +11,6 @@ public class with_only_a_warning_in_the_relevant_region : given.a_partial_exampl
 
     void Because() => Consumers = Provenance.Consumers(Occurrence);
 
-    [Fact] void should_report_known_empty_consumers() => Consumers!.ShouldBeEmpty();
+    [Fact] void should_report_known_empty_consumers() => Consumers.ShouldBeEmpty();
     [Fact] void should_not_report_unavailable_consumers() => Consumers.ShouldNotBeNull();
 }

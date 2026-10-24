@@ -8,14 +8,14 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_col
 
 public class with_default_null_or_mismatched_collection_values : given.a_value_algebra_model
 {
-    Exception _arrayForScalar;
-    Exception _defaultArray;
-    Exception _defaultObject;
-    Exception _nestedArray;
-    Exception _nullElement;
-    Exception _nullObjectProperty;
-    Exception _nullReferenceElement;
-    Exception _scalarForArray;
+    Exception? _arrayForScalar;
+    Exception? _defaultArray;
+    Exception? _defaultObject;
+    Exception? _nestedArray;
+    Exception? _nullElement;
+    Exception? _nullObjectProperty;
+    Exception? _nullReferenceElement;
+    Exception? _scalarForArray;
 
     void Because()
     {
@@ -43,7 +43,7 @@ public class with_default_null_or_mismatched_collection_values : given.a_value_a
     [Fact] void should_reject_an_array_for_a_scalar_target() => _arrayForScalar.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_nested_array_for_a_single_collection_cardinality() => _nestedArray.ShouldBeOfExactType<InvalidSemanticContract>();
 
-    Exception ValidateBackups(SemanticValue backups) => Catch.Exception(() => CreateModel(_validPayload, backups));
-    Exception ValidatePayload(SemanticValue payload) => Catch.Exception(() => CreateModel(payload, _validBackups));
+    Exception? ValidateBackups(SemanticValue backups) => Catch.Exception(() => CreateModel(_validPayload, backups));
+    Exception? ValidatePayload(SemanticValue payload) => Catch.Exception(() => CreateModel(payload, _validBackups));
 }
 #endif

@@ -9,9 +9,9 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 
 public class when_reading_malformed_value_variants : Specification
 {
-    Exception[] _shapeErrors;
-    Exception _nestedNonCanonicalDecimal;
-    Exception _nestedNonNfcText;
+    Exception?[] _shapeErrors;
+    Exception? _nestedNonCanonicalDecimal;
+    Exception? _nestedNonNfcText;
 
     void Because()
     {
@@ -49,7 +49,7 @@ public class when_reading_malformed_value_variants : Specification
     [Fact] void should_reject_a_noncanonical_nested_decimal() => _nestedNonCanonicalDecimal.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_non_nfc_nested_text() => _nestedNonNfcText.ShouldBeOfExactType<InvalidSemanticContract>();
 
-    static Exception ReadValue(string json) => Catch.Exception(() =>
+    static Exception? ReadValue(string json) => Catch.Exception(() =>
     {
         var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json), CanonicalJson.ReaderOptions);
         SemanticModelRead.RequiredToken(ref reader, JsonTokenType.StartObject, "value");

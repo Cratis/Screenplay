@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // The mirror positive case for every rejection in this folder: the golden #211 slice uses every scoped shape and validates.
 public class with_every_scoped_shape : given.a_scoped_projection_model
 {
-    Exception _exception;
+    Exception? _exception;
 
     void Because() => _exception = Validate(_orders);
 

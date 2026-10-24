@@ -5,10 +5,14 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class an_events_capture_without_events : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because() => _error = Rebuild(InboundModel, "TrackShipments", slice => slice with { Captures = [.. slice.Captures.Select(capture => capture with { EventsSource = new SemanticCaptureEventsSource([]) })] });
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_why() => _error.Message.ShouldContain("one or more distinct events");
+    [Fact] void should_say_why()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("one or more distinct events");
+    }
 }
