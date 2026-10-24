@@ -1,8 +1,9 @@
 ---
 id: 0112
 title: A top-level `title` is the screen title, and names fall back through one shared rule
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
 class: contract
 reversibility: cheap
 decider: Sindre Alstad Wilting

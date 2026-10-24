@@ -1,8 +1,10 @@
 ---
 id: 0097
 title: A performer query is an opaque read, not a refusal of the application
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-23
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: cheap
 applies-to:
