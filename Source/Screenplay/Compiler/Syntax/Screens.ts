@@ -45,8 +45,12 @@ export interface ScreenDataSyntax extends SyntaxNode {
 }
 
 // 'action <Command>' with an optional 'label "..."' and 'navigate to ...'.
+export type ScreenActionSubjectKind = 'Item' | 'Screen';
+
 export interface ScreenActionSyntax extends SyntaxNode {
     readonly kind: 'ScreenActionSyntax';
+    readonly subject?: ScreenActionSubjectKind | null;
+    readonly inputs?: readonly InteractionArgumentSyntax[];
     readonly command: string;
     readonly label: string | null;
     readonly navigate: ScreenNavigateSyntax | null;
@@ -55,6 +59,7 @@ export interface ScreenActionSyntax extends SyntaxNode {
 // One labeled action with ordered command alternatives.
 export interface ScreenGuardedActionSyntax extends SyntaxNode {
     readonly kind: 'ScreenGuardedActionSyntax';
+    readonly subject?: ScreenActionSubjectKind | null;
     readonly label: string;
     readonly alternatives: readonly ScreenActionAlternativeSyntax[];
     readonly otherwise: ScreenActionOtherwiseSyntax | null;
@@ -201,6 +206,7 @@ export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';
 
 export interface ToolbarItemSyntax extends SyntaxNode {
     readonly kind: 'ToolbarItemSyntax';
+    readonly subject?: ScreenActionSubjectKind | null;
     readonly name: string;
     readonly syntaxKind: ToolbarItemKind;
     readonly target: string;

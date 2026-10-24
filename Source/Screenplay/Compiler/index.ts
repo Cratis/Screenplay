@@ -7,6 +7,7 @@ export * from './Diagnostics';
 export * from './Dependencies';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
+export { resolveActionSubjects } from './ScreenActionSubjects';
 export { checkPortableMatchPattern } from './Parsing/checkPortableMatchPattern';
 export { PortableMatchStatus } from './Parsing/PortableMatchStatus';
 export type { PortableMatchCheck } from './Parsing/PortableMatchCheck';

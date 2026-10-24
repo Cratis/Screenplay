@@ -42,6 +42,9 @@ internal static partial class GuardedActionValidator
                 case ScreenGuardedActionSyntax action:
                     ValidateAction(action, subjects, scope, declarations, context);
                     break;
+                case ScreenActionSyntax action:
+                    ValidateArguments(action.Command, action.Inputs, subjects.Count == 1 ? declarations.ViewProperties(subjects[0].Type.Name, scope) : null, scope, declarations, context);
+                    break;
                 case ScreenBehaviorSyntax attached:
                     ValidateInteraction(attached.Behavior, subjects, scope, declarations, context);
                     break;

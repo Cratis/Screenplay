@@ -158,6 +158,11 @@ internal static partial class ScreenParser
 
     static ScreenDirectiveSyntax? ParseDirective(ParserContext context, SourceLine line)
     {
+        if (LineText.FirstWord(line.Content) != "action")
+        {
+            ParseSubjectClause(context, line, false, out _, out _);
+        }
+
         switch (LineText.FirstWord(line.Content))
         {
             case "data":
@@ -216,13 +221,14 @@ internal static partial class ScreenParser
 
     static ScreenDirectiveSyntax? ParseAction(ParserContext context, SourceLine line)
     {
-        var guarded = GuardedActionRegex().Match(line.Content);
+        var subject = ParseSubjectClause(context, line, true, out var header, out var inlineLabel);
+        var guarded = GuardedActionRegex().Match(header);
         if (guarded.Success)
         {
-            return ParseGuardedAction(context, line, OperandText(guarded, 1));
+            return ParseGuardedAction(context, line, OperandText(guarded, 1)) with { Subject = subject };
         }
 
-        var match = ActionRegex().Match(line.Content);
+        var match = ActionRegex().Match(header);
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidActionDirective, $"Invalid action directive '{line.Content}' - expected 'action <Command>'", line.Location);
@@ -230,9 +236,10 @@ internal static partial class ScreenParser
             return null;
         }
 
-        string? label = null;
-        SourceLocation? labelLocation = null;
+        var label = inlineLabel;
+        SourceLocation? labelLocation = inlineLabel is null ? null : line.Location;
         ScreenNavigateSyntax? navigate = null;
+        var inputs = new List<InteractionArgumentSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -247,6 +254,10 @@ internal static partial class ScreenParser
             {
                 navigate = ParseNavigate(context, child.Content, child);
             }
+            else if (LineText.FirstWord(child.Content) == "with")
+            {
+                if (ParsePlainActionInput(context, child) is { } input) inputs.Add(input);
+            }
             else
             {
                 context.Error(DiagnosticCodes.UnknownActionDirective, $"Unexpected '{child.Content}' in action - expected 'label \"...\"' or 'navigate to ...'", child.Location);
@@ -255,6 +266,8 @@ internal static partial class ScreenParser
 
         return new ScreenActionSyntax(match.Groups[1].Value, label, navigate, line.Location)
         {
+            Subject = subject,
+            Inputs = inputs,
             DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
         };
     }
@@ -530,7 +543,9 @@ internal static partial class ScreenParser
 
     static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
     {
-        var match = ToolbarItemRegex().Match(line.Content);
+        var isAction = HeaderWordRegex().Matches(line.Content).Cast<Match>().Any(word => word.Value == "action");
+        var subject = ParseSubjectClause(context, line, isAction, out var header, out var inlineLabel);
+        var match = ToolbarItemRegex().Match(header);
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid toolbar item '{line.Content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>', 'item <name> dialog <DialogTemplate>' or 'button <id> title \"<text>\" slice <Slice>'", line.Location);
@@ -544,8 +559,8 @@ internal static partial class ScreenParser
             "navigate" => ToolbarItemKind.Navigate,
             _ => ToolbarItemKind.Dialog
         };
-        var item = new ToolbarItemSyntax(match.Groups[1].Value, kind, match.Groups[3].Value, line.Location);
-        string? label = null;
+        var item = new ToolbarItemSyntax(match.Groups[1].Value, kind, match.Groups[3].Value, line.Location) { Subject = subject };
+        var label = inlineLabel;
         string? icon = null;
         string? confirm = null;
         var parameters = new List<ScreenNavigationParameterSyntax>();

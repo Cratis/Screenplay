@@ -156,8 +156,8 @@ public partial class ScreenplayPrinter
     void WriteScreenAction(ScreenplayWriter writer, ScreenActionSyntax action)
     {
         using var anchor = writer.Anchor(action);
-        writer.Line($"action {action.Command}");
-        if (action.Label is null && action.Navigate is null)
+        writer.Line($"action {action.Command}{WriteActionSubject(action.Subject)}");
+        if (action.Label is null && action.Navigate is null && !action.Inputs.Any())
         {
             return;
         }
@@ -168,6 +168,8 @@ public partial class ScreenplayPrinter
             {
                 writer.DirectiveLine($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}", action, "label");
             }
+
+            foreach (var input in action.Inputs) writer.Line($"with {input.Name} from {input.Binding}", input);
 
             if (action.Navigate is not null)
             {
@@ -371,7 +373,7 @@ public partial class ScreenplayPrinter
             ToolbarItemKind.Dialog => $"item {item.Name} dialog {item.Target}",
             _ => $"item {item.Name} action {item.Target}"
         };
-        writer.Line(head);
+        writer.Line(head + WriteActionSubject(item.Subject));
         using (writer.Indent())
         {
             if (item.Label is not null)

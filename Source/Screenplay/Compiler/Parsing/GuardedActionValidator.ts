@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { resolveActionSubjects } from '../ScreenActionSubjects';
 import { ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenTableSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { comparisons, validateArguments, validateItemPath, viewProperties } from './GuardedActionInputs';
@@ -12,6 +13,7 @@ import { RefusalDeclarations } from './RefusalDeclarations';
 
 // Resolves known subject and input shapes without guessing imported or ambiguous declarations.
 export function validateGuardedActions(application: ApplicationSyntax, context: ParserContext): void {
+    for (const diagnostic of resolveActionSubjects(application).diagnostics) context[diagnostic.severity](diagnostic.code, diagnostic.message, diagnostic.location, diagnostic.arguments);
     const declarations = new RefusalDeclarations(application);
     const interactions = new GuardedInteractions(declarations, context);
     interactions.structural(application);
@@ -35,6 +37,9 @@ function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherit
         switch (directive.kind) {
             case 'ScreenGuardedActionSyntax':
                 validateAction(directive, subjects, slice, declarations, context);
+                break;
+            case 'ScreenActionSyntax':
+                validateArguments(directive.command, directive.inputs ?? [], subjects.length === 1 ? viewProperties(subjects[0].type.name, slice, declarations) : null, slice, declarations, context);
                 break;
             case 'ScreenBehaviorSyntax':
                 interactions.at(directive.location, subjects, slice);

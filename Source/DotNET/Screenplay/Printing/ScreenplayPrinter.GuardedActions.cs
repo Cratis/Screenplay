@@ -10,9 +10,11 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static string WriteActionSubject(ScreenActionSubjectKind? subject) => subject is null ? string.Empty : $" for {subject.Value.ToString().ToLowerInvariant()}";
+
     void WriteScreenGuardedAction(ScreenplayWriter writer, ScreenGuardedActionSyntax action)
     {
-        writer.Line($"action {ScreenplaySyntaxText.LocalizableString(action.Label)}");
+        writer.Line($"action {ScreenplaySyntaxText.LocalizableString(action.Label)}{WriteActionSubject(action.Subject)}");
         using (writer.Indent())
         {
             foreach (var alternative in action.Alternatives)

@@ -117,6 +117,9 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     UniquePropertyConstraintSyntax: ['description'],
     ProjectionSyntax: ['description'],
     ScreenSyntax: ['description'],
+    ScreenActionSyntax: ['subject'],
+    ScreenGuardedActionSyntax: ['subject'],
+    ToolbarItemSyntax: ['subject'],
     FormSyntax: ['description'],
     SpecificationSyntax: ['description', 'whenRedelivered', 'givenTimeZone'],
     SpecificationErrorSyntax: ['caseValue'],
@@ -126,6 +129,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
 
 // Members omitted from the wire form when empty arrays, by node kind.
 const omittedWhenEmpty: Record<string, readonly string[]> = {
+    ScreenActionSyntax: ['inputs'],
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
     SpecificationSyntax: ['parameters', 'cases'],

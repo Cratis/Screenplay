@@ -116,6 +116,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenAction(ScreenActionSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var input in syntax.Inputs) VisitInteractionArgument(input);
 
         if (syntax.Navigate is not null)
         {
