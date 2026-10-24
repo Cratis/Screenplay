@@ -21,6 +21,7 @@ public sealed partial class SemanticModelBinder
             var parameters = keys.Concat(query.Filters).Where(parameter => parameter.Source is ContextExpressionSyntax).ToArray();
             foreach (var parameter in parameters)
             {
+                _opaqueQueries.Add(query);
                 var arguments = new DiagnosticArguments.Builder()
                     .Add("query", DiagnosticArgument.Text(query.Name))
                     .Add("argument", DiagnosticArgument.Text(parameter.Name)).Build();

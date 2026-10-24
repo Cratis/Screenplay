@@ -3612,5 +3612,5 @@ public static class DiagnosticCodes
     /// A performer query argument is sourced from context, which is not supported.
     /// </summary>
     [DiagnosticArgumentDefinitions("query:text;The performer query that declares the argument.", "argument:text;The context-sourced argument that cannot be supplied to the performer.")]
-    public const string ContextSourcedPerformedQueryArgument = "PLAY0809";
+    public const string ContextSourcedPerformedQueryArgument = "PLAY0810";
 }
