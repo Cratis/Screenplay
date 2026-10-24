@@ -11,6 +11,66 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
 public class when_freezing_legacy_source_syntax_bytes
 {
+    static readonly HashSet<string> _featureVectors =
+    [
+        "command-reads",
+        "reaction-batches",
+        "identity",
+        "reaction-identity",
+        "reaction-event-source",
+        "declaration-descriptions",
+        "purposes",
+        "event-subject",
+        "authoring-metadata",
+        "compliance",
+        "duplicate-compliance",
+        "named-rule-intent",
+        "java-inline",
+        "described-handler",
+        "specification-examples",
+        "persona-callers",
+        "personas-canvas",
+        "specification-tables",
+        "guarded-actions",
+        "guarded-interactions",
+        "no-events",
+        "declared-dependencies",
+        "reaction-refusals-redelivery",
+        "specification-streams",
+        "public-events",
+        "public-events-admission",
+        "event-translations",
+        "read-model-keys",
+        "removal-key-parts",
+        "enum-member-numbers",
+        "generation",
+        "generation-rule-bodies",
+        "query-validation",
+        "template-references",
+        "toolbar-buttons",
+        "domain-canvases",
+        "feature-toolbars",
+        "acme-admissions",
+        "acme-second-admissions",
+        "typed-capture-keys",
+        "anonymous-policies",
+        "crm-sample",
+        "ticketing-sample",
+        "inventory-sample",
+        "hr-sample",
+        "projects-sample",
+        "administration-sample",
+        "approvals-sample",
+        "orders-sample",
+        "catalog-sample",
+        "vendors-sample",
+        "invoicing-blueprint-sample",
+        "customer-portal-sample",
+        "contracts-sample",
+        "work-orders-sample",
+        "bookings-sample",
+    ];
+
     [Fact]
     void should_preserve_the_complete_legacy_native_bytes_without_normalizing_values()
     {
@@ -27,7 +87,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (name == "command-reads" || name == "reaction-batches" || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "reaction-event-source" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "java-inline" || name == "described-handler" || name == "specification-examples" || name == "persona-callers" || name == "personas-canvas" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys" || name == "removal-key-parts" || name == "enum-member-numbers" || name == "generation" || name == "generation-rule-bodies" || name == "query-validation" || name == "template-references" || name == "toolbar-buttons" || name == "domain-canvases" || name == "feature-toolbars" || name == "acme-admissions" || name == "acme-second-admissions" || name == "typed-capture-keys" || name == "anonymous-policies" || name == "crm-sample" || name == "ticketing-sample" || name == "inventory-sample" || name == "hr-sample" || name == "projects-sample" || name == "administration-sample" || name == "approvals-sample" || name == "orders-sample" || name == "catalog-sample" || name == "vendors-sample" || name == "invoicing-blueprint-sample" || name == "customer-portal-sample" || name == "contracts-sample" || name == "work-orders-sample" || name == "bookings-sample") continue;
+            if (_featureVectors.Contains(name) || parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal)) continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
