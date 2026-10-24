@@ -32,6 +32,7 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         if (syntax.Stream is not null) VisitCommandStream(syntax.Stream);
+        if (syntax.Calendar is not null) VisitCommandCalendar(syntax.Calendar);
         foreach (var candidate in syntax.StreamCandidates) VisitCommandStream(candidate);
 
         if (syntax.Concurrency is not null)
@@ -352,12 +353,19 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
+    /// Visits a <see cref="CommandCalendarSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="CommandCalendarSyntax"/> to visit.</param>
+    public virtual void VisitCommandCalendar(CommandCalendarSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="ComparisonConditionSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="ComparisonConditionSyntax"/> to visit.</param>
     public virtual void VisitComparisonCondition(ComparisonConditionSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.LeftExpression is not null) VisitExpression(syntax.LeftExpression);
         VisitExpression(syntax.Right);
     }
 

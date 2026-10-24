@@ -195,6 +195,9 @@ public record CommandSyntax(
     /// <summary>Gets the syntax-only authored stream route; it does not supply a destination.</summary>
     public CommandStreamSyntax? Stream { get; init; }
 
+    /// <summary>Gets the syntax-only <c>calendar</c> declaration naming the time zone of the command&apos;s clock operands (decisions 0106/0107).</summary>
+    public CommandCalendarSyntax? Calendar { get; init; }
+
     /// <summary>
     /// Gets every ambiguous or duplicate stream header in authored order. These candidates never
     /// select a route; their property interpretations are owned here, not in Properties.
@@ -458,7 +461,13 @@ public record ComparisonConditionSyntax(
     string Left,
     ComparisonOperator Operator,
     ExpressionSyntax Right,
-    SourceLocation Location) : ConditionSyntax(Location);
+    SourceLocation Location) : ConditionSyntax(Location)
+{
+    /// <summary>
+    /// Gets the left operand when it is a clock or <c>date of</c> expression instead of a bare name; <see cref="Left"/> then holds its text.
+    /// </summary>
+    public ExpressionSyntax? LeftExpression { get; init; }
+}
 
 /// <summary>
 /// Represents two conditions combined with <c>and</c> or <c>or</c>.

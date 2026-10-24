@@ -67,13 +67,13 @@ internal static class SemanticScenario
                 case { WhenAppended: { } appended }:
                     actionFacts = 1;
                     failure = loop.Append(
-                        new SemanticFact(appended.EventContract, appended.EventSource?.Value ?? SemanticValue.Null, appended.Values)
+                        SemanticCaptureEvaluation.TakeEventSourceKey(plan, new SemanticFact(appended.EventContract, appended.EventSource?.Value ?? SemanticValue.Null, appended.Values)
                         {
                             Context = appended.EventSource is null ? null : new(appended.EventSource),
                             Tags = plan.Events[appended.EventContract].Tags,
                             Occurred = clock,
                             Route = plan.FormatFixtureRoute(appended.Route)
-                        },
+                        }),
                         clock);
                     break;
                 default:

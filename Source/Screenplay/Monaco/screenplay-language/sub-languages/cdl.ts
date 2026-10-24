@@ -10,7 +10,7 @@ import { SubLanguageDefinition } from '../sub-language-registry';
 export const cdl: SubLanguageDefinition = {
     tokens: [
         [
-            /\b(?:source|api|route|poll|path|topic|key|map|translate|split|append|tag|when|children|nested|identified|by|from|to|and|or|added|removed)\b/,
+            /\b(?:source|api|route|poll|path|topic|key|map|translate|split|append|tag|when|children|nested|identified|by|from|to|and|or|added|removed|is|event)\b/,
             'keyword',
         ],
     ],
@@ -63,7 +63,8 @@ export const cdl: SubLanguageDefinition = {
         poll: 'CDL — the polling interval for an API source, e.g. 5m.',
         path: 'CDL — the inbound path a webhook source listens on.',
         topic: 'CDL — the topic a message source subscribes to.',
-        key: 'CDL — declares which source property identifies an instance.',
+        key: 'CDL — declares which source property identifies an instance. On a `source events` capture, `key <property> is event source` promises each captured event is sourced by that key.',
+        is: 'CDL — in `key <property> is event source`, marks the key as the event source of every captured event.',
         map: 'CDL — maps and translates source values before events are appended.',
         translate: 'CDL — translates source values into Screenplay values.',
         append: 'CDL — appends an event when the source data changes.',

@@ -53,6 +53,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const readModes = applications.filter(application => application.commandReadMode != null);
     for (const extra of readModes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidCommandReadsDeclaration,
         "Declare 'command reads protected' once at the application root.", extra.location));
+    const zones = applications.filter(application => application.timeZone != null);
+    for (const extra of zones.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidTimeZoneDeclaration,
+        "Declare 'time zone' once at the application root.", extra.location));
     const modes = applications.filter(application => application.reactionProductionMode != null);
     for (const extra of modes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidReactionBatchesDeclaration,
         "Declare 'reaction batches atomic' once at the application root.", extra.location));
@@ -73,6 +76,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         sourceOptions,
         ...(modes.length === 0 ? {} : { reactionProductionMode: modes[0].reactionProductionMode }),
         ...(readModes.length === 0 ? {} : { commandReadMode: readModes[0].commandReadMode }),
+        ...(zones.length === 0 ? {} : { timeZone: zones[0].timeZone }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),

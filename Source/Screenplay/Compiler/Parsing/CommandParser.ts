@@ -9,6 +9,7 @@ import { parseCondition } from './ConditionParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
+import { CommandCalendarSyntax } from '../Syntax/Calendar';
 import { CommandStreamSyntax } from '../Syntax/EventSources';
 import { parseCommandStream } from './EventSourceParser';
 import { ExpressionSyntax } from '../Syntax/Expressions';
@@ -38,6 +39,8 @@ import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
 const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
+const calendarPrefix = pattern('^calendar\\s+(?:"|from\\s+\\$context\\.)');
+const calendarPattern = pattern(`^calendar\\s+(?:"(${stringBodyPattern})"|from\\s+\\$context\\.([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*))$`);
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
@@ -106,11 +109,19 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     const handlers: { handler: HandlerSyntax | null; location: SourceLocation }[] = [];
     let stream: CommandStreamSyntax | null = null;
     const streamCandidates: CommandStreamSyntax[] = [];
+    let calendar: CommandCalendarSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
         const asProperty = tryParseProperty(child);
-        if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
+        if (keyword === 'calendar' && calendarPrefix.test(child.content)) {
+            const match = calendarPattern.exec(child.content);
+            if (calendar !== null || match === null) {
+                context.error(DiagnosticCodes.InvalidCommandCalendar, 'A command declares at most one \'calendar "<id>"\' or \'calendar from $context.<member>\'.', locationOf(child));
+            } else {
+                calendar = { kind: 'CommandCalendarSyntax', id: match[1] === undefined ? null : unescapeString(match[1]), contextMember: match[2] ?? null, location: locationOf(child) };
+            }
+        } else if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
             identifier = addProperty(context, properties, asProperty, name, child, identifier);
         } else if (keyword === 'returns') {
             const scalar = scalarResponsePattern.exec(child.content);
@@ -198,7 +209,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     if (handler !== null && !isPendingHandler(handler) && produces.length > 0) {
         context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
     }
-    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     dependencySources.set(syntax, { reads: referenceReads, concurrency });
     return syntax;

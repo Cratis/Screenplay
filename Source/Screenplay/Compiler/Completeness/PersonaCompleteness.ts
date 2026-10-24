@@ -70,6 +70,8 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'RefusalExpressionSyntax': return `$refusal.${expression.member}`;
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'RawExpressionSyntax': return expression.text;
+        case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;
+        case 'DateOfExpressionSyntax': return `date of ${expressionText(expression.operand)}`;
         case 'TemplateExpressionSyntax': return '`' + expression.parts.map(part => part.kind === 'TemplateTextSyntax' ? part.text : '${' + expressionText(part.expression) + '}').join('') + '`';
         case 'ListExpressionSyntax': return `[${expression.items.map(structuredText).join(',')}]`;
         case 'ObjectExpressionSyntax': return `{${expression.members.map(member => `${JSON.stringify(member.name)}:${structuredText(member.value)}`).join(',')}}`;

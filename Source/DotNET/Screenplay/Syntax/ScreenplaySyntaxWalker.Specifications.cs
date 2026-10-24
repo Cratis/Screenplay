@@ -33,6 +33,7 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.GivenCallerPersona is not null) VisitSpecificationCallerPersona(syntax.GivenCallerPersona);
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
         if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
+        if (syntax.GivenTimeZone is not null) VisitSpecificationTimeZone(syntax.GivenTimeZone);
 
         foreach (var failure in syntax.GivenOperationFailures) VisitSpecificationOperationFailure(failure);
         foreach (var operation in syntax.ThenOperations) VisitSpecificationOperation(operation);
@@ -320,6 +321,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="SpecificationClockSyntax"/> to visit.</param>
     public virtual void VisitSpecificationClock(SpecificationClockSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationTimeZoneSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationTimeZoneSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationTimeZone(SpecificationTimeZoneSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SpecificationTriggerSyntax"/> node.

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
 import { ReactionProductionMode } from './ReactionProductionMode';
 import type { IdentitySyntax } from './IdentitySyntax';
@@ -104,6 +105,7 @@ export interface ModuleSyntax extends SyntaxNode {
 export interface ApplicationSyntax extends SyntaxNode {
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
+    readonly timeZone?: TimeZoneSyntax | null;
     readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';

@@ -54,7 +54,7 @@ SourceBlock     = "source", Ident, NL,
 
 SourceSetting   = Ident, LineValue, NL ;
 
-KeyDirective    = "key", LineValue, NL ;
+KeyDirective    = "key", LineValue, [ "is", "event", "source" ], NL ;
 
 MapBlock        = "map", NL,
                   INDENT,
@@ -214,7 +214,7 @@ EventsSource = "source", "events", NL,
                DEDENT ;
 ```
 
-The parser reports `PLAY0620` for an empty block, any other setting, an invalid name or a repeated event. The assembled model additionally requires an explicitly inbound Translate slice (`PLAY0619`) whose consumed events are foreign public events (`PLAY0610`, `PLAY0616`) and whose `append` events are private local events (`PLAY0612`); all consumed events must come from one origin (`PLAY0687`). The form is admitted by ESM v9. Its key must be a required property of every locally declared `from` event (`PLAY0700`); context keys are not admitted. Specifications present typed events through `given <Event>` and `when append <Event>`, not capture records (`PLAY0701`). The reference folds incoming properties into per-key state, then evaluates root appends; `children` and `nested` over events remain Unsupported. Only `$context.occurred`, supplied by `given clock`, is executable context. See [capturing from public events](../captures.md#capturing-from-public-events) for change detection and runtime limits.
+The parser reports `PLAY0620` for an empty block, any other setting, an invalid name or a repeated event. The assembled model additionally requires an explicitly inbound Translate slice (`PLAY0619`) whose consumed events are foreign public events (`PLAY0610`, `PLAY0616`) and whose `append` events are private local events (`PLAY0612`); all consumed events must come from one origin (`PLAY0687`). The form is admitted by ESM v9. Its key must be a required property of every locally declared `from` event (`PLAY0700`); context keys are not admitted. `key <property> is event source` is valid only here and on a single property key (`PLAY0809`); it selects ESM v33. Specifications present typed events through `given <Event>` and `when append <Event>`, not capture records (`PLAY0701`). The reference folds incoming properties into per-key state, then evaluates root appends; `children` and `nested` over events remain Unsupported. Only `$context.occurred`, supplied by `given clock`, is executable context. See [capturing from public events](../captures.md#capturing-from-public-events) for change detection and runtime limits.
 
 ### Key Directive
 

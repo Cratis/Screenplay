@@ -91,6 +91,13 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
 
     static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
 
+    static bool ClockRefused(SyntaxNode node)
+    {
+        var walker = new ClockReadinessWalker();
+        walker.Visit(node);
+        return walker.Unadmitted;
+    }
+
     string[] UnadmittedFeatures(SyntaxNode node)
     {
         const string streams = "property-path stream id mappings (#407)";
@@ -134,7 +141,8 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
+        return [.. LocalFeatures().Concat(Feature(ClockRefused(node), "calendar and clock operands (#824)"))
+            .Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
@@ -238,6 +246,36 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         _identityReads[node] = walker.Unadmitted;
 
         return walker.Unadmitted;
+    }
+
+    sealed class ClockReadinessWalker : ScreenplaySyntaxWalker
+    {
+        static readonly Dictionary<Type, Action<ClockReadinessWalker, SyntaxNode>> _visits = new()
+        {
+            [typeof(ApplicationSyntax)] = (walker, node) => walker.VisitApplication((ApplicationSyntax)node),
+            [typeof(ModuleSyntax)] = (walker, node) => walker.VisitModule((ModuleSyntax)node),
+            [typeof(FeatureSyntax)] = (walker, node) => walker.VisitFeature((FeatureSyntax)node),
+            [typeof(SliceSyntax)] = (walker, node) => walker.VisitSlice((SliceSyntax)node),
+            [typeof(CommandSyntax)] = (walker, node) => walker.VisitCommand((CommandSyntax)node),
+            [typeof(SpecificationSyntax)] = (walker, node) => walker.VisitSpecification((SpecificationSyntax)node),
+            [typeof(ReactionSyntax)] = (walker, node) => walker.VisitReaction((ReactionSyntax)node),
+            [typeof(ScreenSyntax)] = (walker, node) => walker.VisitScreen((ScreenSyntax)node),
+            [typeof(ScreenGuardedActionSyntax)] = (walker, node) => walker.VisitScreenGuardedAction((ScreenGuardedActionSyntax)node),
+            [typeof(ScreenActionAlternativeSyntax)] = (walker, node) => walker.VisitScreenActionAlternative((ScreenActionAlternativeSyntax)node)
+        };
+
+        public bool Unadmitted { get; private set; }
+
+        public void Visit(SyntaxNode node)
+        {
+            if (_visits.TryGetValue(node.GetType(), out var visit)) visit(this, node);
+            else if (node is ConditionSyntax condition) VisitCondition(condition);
+            else if (node is ExpressionSyntax expression) VisitExpression(expression);
+            else VisitNode(node);
+        }
+
+        public override void VisitNode(SyntaxNode node) => Unadmitted |= node is
+            TimeZoneSyntax or CommandCalendarSyntax or SpecificationTimeZoneSyntax or ClockOffsetExpressionSyntax or DateOfExpressionSyntax;
     }
 
     sealed class ComplianceReadinessWalker(ImmutableArray<Diagnostic> refusals) : ScreenplaySyntaxWalker

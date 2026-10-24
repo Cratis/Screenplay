@@ -16,6 +16,7 @@ import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacemen
 import { PersonaSyntax, StickyNoteSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
+import { TimeZoneSyntax } from '../Syntax/Calendar';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
@@ -52,6 +53,7 @@ import { parseUiProfile } from './UiProfileLegacyLayout';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
+const timeZonePattern = pattern(`^time\\s+zone\\s+(configurable\\s+default\\s+)?"(${stringBodyPattern})"$`);
 const importPattern = pattern(`^import\\s+([\\w.]+)(?:\\s+from\\s+"(?<origin>${stringBodyPattern})")?$`);
 const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@?\\w+)*)$');
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
@@ -82,6 +84,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     let reactionProductionMode: ReactionProductionMode | null = null;
     let sawReactionBatches = false;
     let commandReadMode: CommandReadMode | null = null;
+    let timeZone: TimeZoneSyntax | null = null;
+    let sawTimeZone = false;
     let sawCommandReads = false;
     let domain: DomainSyntax | null = null;
     const imports: ImportSyntax[] = [];
@@ -111,6 +115,17 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
                 commandReadMode = CommandReadMode.Protected;
             }
             sawCommandReads = true;
+            continue;
+        }
+        if (keyword === 'time' && /^time\s+zone(?:\s|$)/.test(line.content)) {
+            const match = timeZonePattern.exec(line.content);
+            context.skipBlock(line.indent);
+            if (sawTimeZone || !isDocumentPlacement(placement) || match === null) {
+                context.error(DiagnosticCodes.InvalidTimeZoneDeclaration, "Declare 'time zone \"<id>\"' or 'time zone configurable default \"<id>\"' once at the application root.", locationOf(line));
+            } else {
+                timeZone = { kind: 'TimeZoneSyntax', id: unescapeString(match[2]), configurable: match[1] !== undefined, location: locationOf(line) };
+            }
+            sawTimeZone = true;
             continue;
         }
         if (keyword === 'reaction') {
@@ -209,7 +224,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

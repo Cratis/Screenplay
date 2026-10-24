@@ -88,6 +88,7 @@ export interface CaptureSyntax extends SyntaxNode {
     readonly map?: readonly CaptureMapOperationSyntax[];
     readonly source: CaptureSourceSyntax | null;
     readonly key: string | null;
+    readonly keyIsEventSource?: boolean;
     readonly appends: readonly CaptureAppendSyntax[];
     readonly children: readonly CaptureChildrenSyntax[];
     readonly nested: readonly CaptureNestedSyntax[];
