@@ -30,25 +30,35 @@ internal static partial class SemanticCaptureEvaluation
     {
         if (fact.Route is not null) return fact;
         var contract = plan.Events[fact.EventContract];
-        foreach (var capture in plan.Captures.Values.Where(capture => capture.EventsSource is { KeyIsEventSource: true } source && source.Events.Contains(fact.EventContract)).OrderBy(capture => capture.Id.ToString(), StringComparer.Ordinal))
+        var marked = plan.Captures.Values
+            .Where(capture => capture.EventsSource is { KeyIsEventSource: true } source && source.Events.Contains(fact.EventContract))
+            .OrderBy(capture => capture.Id.ToString(), StringComparer.Ordinal);
+        foreach (var capture in marked)
         {
-            var record = EventRecord(plan, contract, fact);
-            var key = record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value;
-            if (key is not (SemanticTextValue or SemanticNumberValue) || (key is SemanticTextValue text && string.IsNullOrWhiteSpace(text.Value))) continue;
+            if (UsableKey(capture, EventRecord(plan, contract, fact)) is not { } key) continue;
             if (KeyDisagreesWithSource(fact, key) is { } disagreement)
             {
                 throw new InvalidSemanticContract($"Capture '{capture.Name}' keys by event source, but event '{contract.Name}' from source '{disagreement}' carries key '{KeyText(key)}'.");
             }
 
-            if (fact.Destination is not SemanticNullValue) return fact;
-            var type = contract.Origin is not null
-                ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
-                : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, plan.Projections.Values, fact.EventContract);
-            return fact with { Destination = key, Context = new(new(type, key)) };
+            return fact.Destination is SemanticNullValue ? fact with { Destination = key, Context = new(new(FixtureSourceType(plan, contract), key)) } : fact;
         }
 
         return fact;
     }
+
+    static SemanticValue? UsableKey(SemanticCapture capture, SemanticCaptureRecord record) =>
+        record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value switch
+        {
+            SemanticTextValue { Value: var text } when string.IsNullOrWhiteSpace(text) => null,
+            SemanticTextValue or SemanticNumberValue => record.Fields.Single(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal)).Value,
+            _ => null
+        };
+
+    static SemanticTypeReference FixtureSourceType(SemanticExecutionPlan plan, SemanticEventContract contract) =>
+        contract.Origin is not null
+            ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
+            : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, plan.Projections.Values, contract.Id);
 
     // A marked capture promises that the key is the event source. A fixture with no source takes the key; only a
     // source that differs from the key is a contract failure. Returns the differing source, or null.

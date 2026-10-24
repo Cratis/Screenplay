@@ -187,12 +187,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
 
-    static SemanticExecutionResult EstablishWorld(
-        SemanticExecutionPlan plan,
-        SemanticSpecification specification,
-        out SemanticWorld world)
+    static SemanticRejected? GivenFacts(SemanticExecutionPlan plan, SemanticSpecification specification, out ImmutableArray<SemanticFact> facts)
     {
-        ImmutableArray<SemanticFact> facts;
         try
         {
             facts = [.. specification.GivenEvents
@@ -202,11 +198,24 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                     Route = plan.FormatFixtureRoute(value.Route)
                 })
                 .Select(fact => SemanticCaptureEvaluation.TakeEventSourceKey(plan, fact))];
+            return null;
         }
         catch (InvalidSemanticContract exception)
         {
+            facts = [];
+            return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
+    }
+
+    static SemanticExecutionResult EstablishWorld(
+        SemanticExecutionPlan plan,
+        SemanticSpecification specification,
+        out SemanticWorld world)
+    {
+        if (GivenFacts(plan, specification, out var facts) is { } rejected)
+        {
             world = SemanticWorld.Empty;
-            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+            return rejected;
         }
 
         var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
