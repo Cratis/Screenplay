@@ -23,17 +23,14 @@ public class when_holding_invoicing_to_the_language : Specification
 
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
+        ("`time zone`, `calendar`, `given time zone`, clock offsets and `date of`", 824,
+            [("Documentation/screenplay/fixtures/clock-preview.play", [typeof(TimeZoneSyntax), typeof(CommandCalendarSyntax), typeof(SpecificationTimeZoneSyntax), typeof(ClockOffsetExpressionSyntax), typeof(DateOfExpressionSyntax)])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
-        (typeof(ClockOffsetExpressionSyntax), "Source/Screenplay/Compiler/Conformance/clock-operands.play", "Decisions 0106/0107 are syntax-only and explicitly refused by the binder with PLAY0268; executable Invoicing cannot use them."),
-        (typeof(DateOfExpressionSyntax), "Source/Screenplay/Compiler/Conformance/clock-operands.play", "Decisions 0106/0107 are syntax-only and explicitly refused by the binder with PLAY0268; executable Invoicing cannot use them."),
-        (typeof(TimeZoneSyntax), "Source/Screenplay/Compiler/Conformance/clock-operands.play", "Decisions 0106/0107 are syntax-only and explicitly refused by the binder with PLAY0268; executable Invoicing cannot use them."),
-        (typeof(CommandCalendarSyntax), "Source/Screenplay/Compiler/Conformance/clock-operands.play", "Decisions 0106/0107 are syntax-only and explicitly refused by the binder with PLAY0268; executable Invoicing cannot use them."),
-        (typeof(SpecificationTimeZoneSyntax), "Source/Screenplay/Compiler/Conformance/clock-operands.play", "Decisions 0106/0107 are syntax-only and explicitly refused by the binder with PLAY0268; executable Invoicing cannot use them."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
