@@ -207,7 +207,7 @@ public sealed partial class SemanticModelBinder
             if (expanded.Case is { } row) arguments = arguments.With("case", DiagnosticArgument.Text(row.Name));
             foreach (var property in missing)
             {
-                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{origin.Role}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location, arguments.With("property", DiagnosticArgument.Text(property.Name)));
+                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{authored.Name}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location, arguments.With("property", DiagnosticArgument.Text(property.Name)));
             }
         }
 
