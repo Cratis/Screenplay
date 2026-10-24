@@ -1665,14 +1665,16 @@ InlineBlock    = "```", LanguageTag, NL, { AnyLine }, "```", NL ;
    earlier forms - "validate csharp" on the keyword line, and a language tag on
    its own line above a bare fence - still parse, with a deprecation warning
    (PLAY0397), and print back in the form above.                            *)
-LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
+LanguageTag    = "csharp" | "java" | "typescript" | "react" | "html" | "sql"
                | (* any language registered with the compiler *) ;
 
-(* The five above are what the language ships with, and what the surrounding
-   tooling understands end to end - a Stage renders them, an editor highlights
-   them. A consumer adds to the set by handing the compiler a language
-   registry; the compiler then carries a registered block as text without
-   claiming to read it. See sub-languages.md.                                *)
+(* The six above are what the language ships with: both compilers recognize
+   them and the editors highlight them. Recognition preserves an opaque body;
+   it does not promise execution or rendering - the Cratis target refuses Java
+   bodies, which are for targets that render Java. A consumer adds to the
+   set by handing the compiler a language registry; the compiler then
+   carries a registered block as text without claiming to read it. See
+   sub-languages.md.                                                        *)
 
 StringLiteral  = '"', { StringChar }, '"' ;
 StringChar     = ? any char except '"', '\' and newline ? | Escape ;

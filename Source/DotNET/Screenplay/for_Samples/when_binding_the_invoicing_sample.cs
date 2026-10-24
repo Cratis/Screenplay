@@ -46,6 +46,16 @@ public class when_binding_the_invoicing_sample : Specification
         diagnostic.Message.Contains("ApplyLateFee", StringComparison.Ordinal)).ShouldBeTrue();
 
     [Fact]
+    void should_pin_the_context_sourced_performer_filter_refusal() => _diagnostics.Count(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.ContextSourcedPerformedQueryArgument && diagnostic.Severity == DiagnosticSeverity.Error &&
+        diagnostic.Message.Contains("Query 'ListLineItems' argument 'tenantId'", StringComparison.Ordinal)).ShouldEqual(1);
+
+    [Fact]
+    void should_pin_the_context_sourced_performer_key_refusal() => _diagnostics.Count(diagnostic =>
+        diagnostic.Code == DiagnosticCodes.ContextSourcedPerformedQueryArgument && diagnostic.Severity == DiagnosticSeverity.Error &&
+        diagnostic.Message.Contains("Query 'GetMyCreditStatus' argument 'customerId'", StringComparison.Ordinal)).ShouldEqual(1);
+
+    [Fact]
     void should_admit_the_composite_key_shape()
     {
         var readModel = SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Single(model => model.Name == "InvoicePaymentMethodTotals");
