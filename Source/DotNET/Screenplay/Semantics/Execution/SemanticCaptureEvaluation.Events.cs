@@ -41,24 +41,11 @@ internal static partial class SemanticCaptureEvaluation
                 throw new InvalidSemanticContract($"Capture '{capture.Name}' keys by event source, but event '{contract.Name}' from source '{disagreement}' carries key '{KeyText(key)}'.");
             }
 
-            return fact.Destination is SemanticNullValue ? fact with { Destination = key, Context = new(new(FixtureSourceType(plan, contract), key)) } : fact;
+            fact = fact.Destination is SemanticNullValue ? fact with { Destination = key, Context = new(new(FixtureSourceType(plan, contract), key)) } : fact;
         }
 
         return fact;
     }
-
-    static SemanticValue? UsableKey(SemanticCapture capture, SemanticCaptureRecord record) =>
-        record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value switch
-        {
-            SemanticTextValue { Value: var text } when string.IsNullOrWhiteSpace(text) => null,
-            SemanticTextValue or SemanticNumberValue => record.Fields.Single(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal)).Value,
-            _ => null
-        };
-
-    static SemanticTypeReference FixtureSourceType(SemanticExecutionPlan plan, SemanticEventContract contract) =>
-        contract.Origin is not null
-            ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
-            : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, plan.Projections.Values, contract.Id);
 
     // A marked capture promises that the key is the event source. A fixture with no source takes the key; only a
     // source that differs from the key is a contract failure. Returns the differing source, or null.
@@ -102,6 +89,19 @@ internal static partial class SemanticCaptureEvaluation
         ValidatePreconditions(context, capture, previous, current);
         return EvaluateScopes(context, capture, previous, current);
     }
+
+    static SemanticValue? UsableKey(SemanticCapture capture, SemanticCaptureRecord record) =>
+        record.Fields.SingleOrDefault(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal))?.Value switch
+        {
+            SemanticTextValue { Value: var text } when string.IsNullOrWhiteSpace(text) => null,
+            SemanticTextValue or SemanticNumberValue => record.Fields.Single(field => string.Equals(field.Name, capture.Key, StringComparison.Ordinal)).Value,
+            _ => null
+        };
+
+    static SemanticTypeReference FixtureSourceType(SemanticExecutionPlan plan, SemanticEventContract contract) =>
+        contract.Origin is not null
+            ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
+            : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, plan.Projections.Values, contract.Id);
 
     static bool SameEventState(SemanticExecutionPlan plan, SemanticCaptureRecord previous, SemanticCaptureRecord current)
     {
