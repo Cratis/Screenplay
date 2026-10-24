@@ -22,7 +22,7 @@ public sealed class ScreenplayLanguageRegistry(
     /// between a language the compiler ships with and one it merely carries.
     /// </remarks>
     public static readonly IReadOnlySet<string> BuiltInInlineLanguages =
-        new HashSet<string>(StringComparer.Ordinal) { "csharp", "typescript", "react", "html", "sql" };
+        new HashSet<string>(StringComparer.Ordinal) { "csharp", "java", "typescript", "react", "html", "sql" };
 
     /// <summary>
     /// The triggers a reaction may respond to without anything being registered, beyond the events and the

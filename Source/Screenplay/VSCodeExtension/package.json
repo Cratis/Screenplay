@@ -87,6 +87,7 @@
                 "path": "./syntaxes/screenplay.tmLanguage.json",
                 "embeddedLanguages": {
                     "meta.embedded.block.csharp": "csharp",
+                    "meta.embedded.block.java": "java",
                     "meta.embedded.block.typescript": "typescript",
                     "meta.embedded.block.typescriptreact": "typescriptreact",
                     "meta.embedded.block.html": "html",

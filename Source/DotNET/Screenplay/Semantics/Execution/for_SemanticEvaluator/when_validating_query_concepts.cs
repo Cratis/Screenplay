@@ -63,10 +63,12 @@ public class when_validating_query_concepts : Specification
         rejected.Details.ShouldEqual("$strings.validation.searchText.short");
     }
 
-    [Fact]
-    void should_refuse_opaque_argument_rules_with_the_query_capability()
+    [Theory]
+    [InlineData("csharp")]
+    [InlineData("java")]
+    void should_refuse_opaque_argument_rules_with_the_query_capability(string language)
     {
-        var source = Source.Replace("min 2 message \"Search text is too short\"", "rule BeSearchable\n      ```csharp\n      return true;\n      ```", StringComparison.Ordinal);
+        var source = Source.Replace("min 2 message \"Search text is too short\"", $"rule BeSearchable\n      ```{language}\n      return true;\n      ```", StringComparison.Ordinal);
         var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
         ((SemanticUnsupported)Execute(plan, "Lookup", "a")).Capability.ShouldEqual(SemanticExecutionCapability.Query);
     }

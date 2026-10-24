@@ -3614,6 +3614,12 @@ public static class DiagnosticCodes
     public const string ReservedStoredName = "PLAY0802";
 
     /// <summary>
+    /// A performer query argument is sourced from context, which is not supported.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("query:text;The performer query that declares the argument.", "argument:text;The context-sourced argument that cannot be supplied to the performer.")]
+    public const string ContextSourcedPerformedQueryArgument = "PLAY0810";
+
+    /// <summary>
     /// A <c>time zone</c> declaration is repeated, malformed or outside the application root.
     /// </summary>
     public const string InvalidTimeZoneDeclaration = "PLAY0812";

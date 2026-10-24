@@ -43,7 +43,7 @@ export class ParserContext {
         return context;
     }
 
-    constructor(readonly reader: LineReader, readonly path?: string, languages: ReadonlySet<string> = new Set(['csharp', 'typescript', 'react', 'html', 'sql'])) {
+    constructor(readonly reader: LineReader, readonly path?: string, languages: ReadonlySet<string> = new Set(['csharp', 'java', 'typescript', 'react', 'html', 'sql'])) {
         this.languages = languages;
     }
 

@@ -79,6 +79,6 @@ Line comments start with `//` and run to the end of the line.
 
 ## Tooling
 
-The [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-language) NPM package provides a Monaco language service for `.play` files — syntax highlighting (including embedded C#/TypeScript/React/HTML blocks and the PDL/CDL sub-languages), IntelliSense completions, hover documentation, and diagnostics. The [`screenplay-editor`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-editor) app hosts the editor standalone.
+The [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-language) NPM package provides a Monaco language service for `.play` files — syntax highlighting (including embedded C#/Java/TypeScript/React/HTML/SQL blocks and the PDL/CDL sub-languages), IntelliSense completions, hover documentation, and diagnostics. The [`screenplay-editor`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-editor) app hosts the editor standalone.
 
 The [Screenplay VS Code extension](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/VSCodeExtension) brings the same language support to VS Code — a TextMate grammar with embedded-language and PDL/CDL highlighting, plus IntelliSense, hover, and diagnostics driven by the same shared language logic. `.play` files carry the Cratis icon.
