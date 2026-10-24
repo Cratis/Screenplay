@@ -3607,4 +3607,10 @@ public static class DiagnosticCodes
     /// An event source has the reserved stored name Default, or an event stream has the reserved stored name All, including through an id pin.
     /// </summary>
     public const string ReservedStoredName = "PLAY0802";
+
+    /// <summary>
+    /// A performer query argument is sourced from context, which is not supported.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("query:text;The performer query that declares the argument.", "argument:text;The context-sourced argument that cannot be supplied to the performer.")]
+    public const string ContextSourcedPerformedQueryArgument = "PLAY0809";
 }

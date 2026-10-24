@@ -43327,6 +43327,31 @@
       "title": "A toolbar item of a feature or module links a command that no slice of that feature or module declares.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0809",
+      "name": "ContextSourcedPerformedQueryArgument",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A performer query argument is sourced from context, which is not supported.",
+      "reserved": false,
+      "retired": false,
+      "arguments": [
+        {
+          "name": "query",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The performer query that declares the argument."
+        },
+        {
+          "name": "argument",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The context-sourced argument that cannot be supplied to the performer."
+        }
+      ]
     }
   ],
   "mcpTools": [

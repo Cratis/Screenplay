@@ -21,6 +21,7 @@ export const diagnosticCodes = {
     duplicateEventInProjectionScope: 'PLAY0801',
     reservedStoredName: 'PLAY0802',
     ambiguousMatchPattern: 'PLAY0803',
+    contextSourcedPerformedQueryArgument: 'PLAY0809', // C# only
     describedCommandNotImplemented: 'PLAY0695', // C# only
     describedCommandWithoutProductions: 'PLAY0696', // C# only
     describedCommandCardinalityNotAdmitted: 'PLAY0697', // C# only

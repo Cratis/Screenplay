@@ -9,6 +9,7 @@ export const DiagnosticCodes = {
     InvalidMatchPattern: 'PLAY0367',
     PatternOutsidePortableMatchDialect: 'PLAY0699',
     AmbiguousMatchPattern: 'PLAY0803',
+    ContextSourcedPerformedQueryArgument: 'PLAY0809', // C# only
     DeprecatedStudioTextRulePattern: 'PLAY0787',
     InvalidIdentityDeclaration: 'PLAY0633',
     DuplicateIdentity: 'PLAY0634',

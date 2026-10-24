@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -11,6 +12,22 @@ public sealed partial class SemanticModelBinder
     private sealed partial class BindingContext
     {
         readonly Dictionary<QuerySyntax, int> _performedQueryRequirements = new(ReferenceEqualityComparer.Instance);
+
+        bool CanBindPerformedQueryArguments(QuerySyntax query)
+        {
+            if (query.Performer is null) return true;
+
+            var keys = query.By is null ? query.ByParts : [query.By, .. query.ByParts];
+            var parameters = keys.Concat(query.Filters).Where(parameter => parameter.Source is ContextExpressionSyntax).ToArray();
+            foreach (var parameter in parameters)
+            {
+                var arguments = new DiagnosticArguments.Builder()
+                    .Add("query", DiagnosticArgument.Text(query.Name))
+                    .Add("argument", DiagnosticArgument.Text(parameter.Name)).Build();
+                Error(DiagnosticCodes.ContextSourcedPerformedQueryArgument, $"Query '{query.Name}' argument '{parameter.Name}' is sourced from context, which is not supported for performer queries; use a caller-supplied argument instead.", parameter.Location, arguments);
+            }
+            return parameters.Length == 0;
+        }
 
         void RequirePerformedQuery(SemanticAddress slice, QuerySyntax query)
         {
