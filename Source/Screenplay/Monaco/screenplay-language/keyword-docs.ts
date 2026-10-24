@@ -181,6 +181,7 @@ export const keywordDocs: Record<string, string> = {
     and: 'Both conditions must hold.',
     or: 'Either condition may hold.',
     csharp: 'An inline C# block whose opening fence is ```csharp.',
+    java: 'An opaque inline Java block whose opening fence is ```java. For Java-capable targets such as Axon; the Cratis target refuses Java bodies.',
     sql: 'An inline SQL block between triple backticks — a query performer written against a relational store.',
     typescript: 'An inline TypeScript block between triple backticks.',
     react: 'An inline React/TSX block; receives the surrounding data contract as `Props`.',

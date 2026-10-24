@@ -1,0 +1,35 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+policy JavaAccess
+  ```java
+  return true;
+  ```
+
+concept JavaLabel : String
+  validate
+    ```java
+    return true;
+    ```
+
+module M
+  feature F
+    slice StateChange S
+      command C
+        value String
+        authorize JavaAccess
+        validate
+          value rule BeValid
+            implementation
+              hint "Keep the Java predicate opaque."
+              ```java
+              return true;
+              ```
+        handler
+          implementation
+            hint "Implement for a Java-capable target."
+            ```java
+            return new Done(value);
+            ```
+      event Done
+        value String

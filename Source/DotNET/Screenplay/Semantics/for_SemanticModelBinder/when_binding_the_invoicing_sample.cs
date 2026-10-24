@@ -54,6 +54,7 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
 
         // Context-sourced filters, and explicit scopes remain outside the admitted query shapes.
         (Unsupported, "Query 'ListInvoices' filter 'tenantId' uses 'from'"),
+        (DiagnosticCodes.ContextSourcedPerformedQueryArgument, "Query 'ListLineItems' argument 'tenantId'"),
         (Unsupported, "Query 'GetSystemActivity' must"),
         (Unsupported, "Read model 'InvoiceListReadModel' must have one unambiguous keyed query"),
         (Unsupported, "Read model 'InvoiceLineReportReadModel' must have one unambiguous keyed query"),
