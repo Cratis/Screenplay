@@ -26,7 +26,7 @@ inbox read to the key instead of scanning. The language cannot say so today. The
    from the key's value; a fixture without `for` takes the key. An unmarked capture is unchanged.
 3. **Admission.** Only a `source events` capture with a single property key may declare it (`PLAY0809`, an error, no
    repair). Dotted paths and `$` keys stay with `PLAY0700`.
-4. **Version.** A marked capture selects ESM v33 and serializes `keyIsEventSource` on its `sourceEvents`; v32 is frozen.
+4. **Version.** A marked capture selects ESM v33 and serializes `keyIsEventSource` beside its `sourceEvents`; v32 is frozen.
 
 ## Options considered
 

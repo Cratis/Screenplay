@@ -122,7 +122,7 @@ slice Translate ReceiveDispatches
       orderId = $.orderId
 ```
 
-When a fixture states a `for`, the reference compares it with the key: a `for` that differs from the key's value fails the run with a contract rejection naming the capture, the event and both values. A fixture without `for` takes the key as its source. A marked capture selects ESM v33 and serializes `keyIsEventSource` on the capture's `sourceEvents`; a capture without the marker serializes exactly as before. Stage admits v33 before rendering, and may narrow the inbox read by the key.
+When a fixture states a `for`, the reference compares it with the key: a `for` that differs from the key's value fails the run with a contract rejection naming the capture, the event and both values. A fixture without `for` takes the key as its source before projections and reactions see it, so `$eventSourceId` is the key. The check runs when the world is established, with or without an action. A marked capture selects ESM v33 and serializes `keyIsEventSource` beside the capture's `sourceEvents`; a capture without the marker serializes exactly as before. Stage admits v33 before rendering, and may narrow the inbox read by the key.
 
 ### Lists and objects in public events
 

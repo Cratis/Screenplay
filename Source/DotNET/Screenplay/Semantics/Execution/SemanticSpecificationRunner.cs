@@ -192,13 +192,23 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         SemanticSpecification specification,
         out SemanticWorld world)
     {
-        var facts = specification.GivenEvents
-            .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
-            {
-                Context = value.EventSource is null ? null : new(value.EventSource),
-                Route = plan.FormatFixtureRoute(value.Route)
-            })
-            .ToImmutableArray();
+        ImmutableArray<SemanticFact> facts;
+        try
+        {
+            facts = [.. specification.GivenEvents
+                .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
+                {
+                    Context = value.EventSource is null ? null : new(value.EventSource),
+                    Route = plan.FormatFixtureRoute(value.Route)
+                })
+                .Select(fact => SemanticCaptureEvaluation.TakeEventSourceKey(plan, fact))];
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            world = SemanticWorld.Empty;
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
+
         var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
         if (establishment is not SemanticAccepted accepted)
         {
