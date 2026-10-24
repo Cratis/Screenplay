@@ -174,6 +174,8 @@ describe('when validating a document with a problem of every coded kind', () => 
             issues.push(...validateLines(['module M'], { compilerDiagnostics: [{ code, severity: 'error', message: 'C# binding disposition', location: { line: 1, column: 1 } }] }));
         }
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
+        const eventSourceKeyOutsideEvents = ['module M', '  feature F', '    slice Translate Receive', '      capture Feed', '        source webhook', '          path /feed', '        key id is event source'];
+        issues.push(...validateLines(eventSourceKeyOutsideEvents, { compilerDiagnostics: parse(eventSourceKeyOutsideEvents.join('\n')).diagnostics }));
     });
 
     it('should give every issue it reports a code', () => {
