@@ -201,6 +201,14 @@ export interface SpecificationCallerDocument {
     claims: Record<string, string>;
 }
 
+// Every read model a specification states (with exactly), the redelivery action and the explicit no-events expectation.
+export interface SpecificationScreenplayMetadata {
+    givenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
+    thenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
+    whenRedelivered?: { eventType: string; reaction: string; values: Record<string, unknown>; for?: unknown };
+    thenNoEvents?: boolean;
+}
+
 export interface SliceSpecificationDocument {
     id: string;
     name: string;
@@ -212,11 +220,8 @@ export interface SliceSpecificationDocument {
     thenEvents: SpecificationStepDocument[];
     thenReadModel?: SpecificationReadModelDocument;
     thenErrors: { id: string; name: string; message?: string }[];
-    // The board reader ignores these additions: every read model a specification states, with 'exactly'.
-    givenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
-    thenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
-    whenRedelivered?: { eventType: string; reaction: string; values: Record<string, unknown>; for?: unknown };
-    thenNoEvents?: boolean;
+    // Screenplay-only metadata, kept beneath one name so it never collides with fields the board reader recognizes.
+    screenplay?: SpecificationScreenplayMetadata;
     thenReturns?: { value: unknown } | { fields: Record<string, unknown> };
     thenAbsentReadModels?: { name: string; key: unknown }[];
     collapsed: boolean;

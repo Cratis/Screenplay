@@ -54,10 +54,10 @@ describe('when mapping typed examples', () => {
         (slice.specifications[1].when === undefined).should.be.true;
     });
     it('should carry effective read model fixtures and preserve exactly matching', () => {
-        slice.specifications[0].givenReadModels!.should.deep.equal([
+        slice.specifications[0].screenplay!.givenReadModels!.should.deep.equal([
             { name: 'Invoices.Registration.RegisterInvoice.InvoiceBalance', values: { total: 3000 }, exactly: false },
         ]);
-        slice.specifications[0].thenReadModels!.should.deep.equal([
+        slice.specifications[0].screenplay!.thenReadModels!.should.deep.equal([
             { name: 'Invoices.Registration.RegisterInvoice.InvoiceBalance', values: { total: 5000 }, exactly: true },
         ]);
     });
@@ -105,6 +105,11 @@ module Sales
         slices[1].specifications[0].given[0].eventId.should.equal(slices[1].events[0].id);
         slices[1].specifications[0].given[0].eventId.should.not.equal(slices[0].events[0].id);
         slices[1].specifications[0].given[0].values.should.deep.equal({ total: 10 });
+    });
+    it('should not let the board reader mistake the read model fixtures for its own', () => {
+        const specification = readEventModelDocument(document).collections[0].modules[0].features[0].slices[0].specifications[0];
+        (specification.givenReadModel === undefined).should.be.true;
+        (specification.thenReadModel === undefined).should.be.true;
     });
     it('should remain readable by the published board schema', () => {
         problems_the_board_finds_in(document).should.deep.equal([]);

@@ -3,7 +3,7 @@
 
 import { specificationCaseOrigins, ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
-import { ReadModelItemDocument, SliceSpecificationDocument, SpecificationCallerDocument, SpecificationReadModelDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
+import { ReadModelItemDocument, SliceSpecificationDocument, SpecificationCallerDocument, SpecificationReadModelDocument, SpecificationScreenplayMetadata, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
 import { EventOwners } from './EventOwners';
 import { SliceScope } from './SliceScope';
@@ -42,13 +42,14 @@ export function toSpecifications(
             ],
             collapsed: false,
         };
+        const metadata: SpecificationScreenplayMetadata = {};
         if (specification.givenCaller != null) document.caller = callerOf(specification.givenCaller);
         if (specification.givenReadModels.length) {
-            document.givenReadModels = specification.givenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+            metadata.givenReadModels = specification.givenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
         }
         if (givenOnCard !== undefined) document.givenReadModel = readModelOf(givenOnCard, at('given readmodel', 0), readModel!);
         if (specification.thenReadModels.length) {
-            document.thenReadModels = specification.thenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+            metadata.thenReadModels = specification.thenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
         }
         if (thenOnCard !== undefined) document.thenReadModel = readModelOf(thenOnCard, at('then readmodel', 0), readModel!);
         if (specification.whenAppended !== null) {
@@ -58,10 +59,11 @@ export function toSpecifications(
         }
         if (specification.whenRedelivered != null) {
             const action = specification.whenRedelivered;
-            document.whenRedelivered = { eventType: action.eventType, reaction: action.reaction, values: valuesOf(action.values) };
-            if (action.for != null) document.whenRedelivered.for = valueOf(action.for);
+            metadata.whenRedelivered = { eventType: action.eventType, reaction: action.reaction, values: valuesOf(action.values) };
+            if (action.for != null) metadata.whenRedelivered.for = valueOf(action.for);
         }
-        if (specification.thenNoEvents) document.thenNoEvents = true;
+        if (specification.thenNoEvents) metadata.thenNoEvents = true;
+        if (Object.keys(metadata).length > 0) document.screenplay = metadata;
         if (specification.thenReturns != null) {
             document.thenReturns = specification.thenReturns.kind === 'ScalarSpecificationReturnSyntax'
                 ? { value: valueOf(specification.thenReturns.value) }

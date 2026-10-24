@@ -59,7 +59,7 @@ describe('when mapping redelivery outcomes', () => {
         specifications[0].when!.name.should.equal('redelivered Approved to Claimer for "invoice-1"');
         specifications[0].when!.values.should.deep.equal({ invoice: 'invoice-1' });
         (specifications[0].when!.commandId === undefined).should.be.true;
-        specifications[0].whenRedelivered!.should.deep.equal({
+        specifications[0].screenplay!.whenRedelivered!.should.deep.equal({
             eventType: 'Approved', reaction: 'Claimer', for: 'invoice-1', values: { invoice: 'invoice-1' },
         });
     });
@@ -69,9 +69,9 @@ describe('when mapping redelivery outcomes', () => {
         specifications[0].thenErrors.should.deep.equal([]);
     });
     it('should distinguish explicit no-event expectations from an empty list of expected events', () => {
-        specifications[0].thenNoEvents!.should.be.true;
-        specifications[4].thenNoEvents!.should.be.true;
-        (specifications[1].thenNoEvents === undefined).should.be.true;
+        specifications[0].screenplay!.thenNoEvents!.should.be.true;
+        specifications[4].screenplay!.thenNoEvents!.should.be.true;
+        (specifications[1].screenplay?.thenNoEvents === undefined).should.be.true;
     });
     it('should render redelivery and no-event expectations as assertions', () => {
         const markup = headerOf(document, 0);
@@ -83,14 +83,14 @@ describe('when mapping redelivery outcomes', () => {
     it('should render no-event expectations for other actions too', () => {
         headerOf(document, 4).should.contain('then no events');
         specifications[4].when!.name.should.equal('trigger Startup');
-        (specifications[4].whenRedelivered === undefined).should.be.true;
+        (specifications[4].screenplay?.whenRedelivered === undefined).should.be.true;
     });
     it('should preserve unhandled refusal messages and distinguish authorization denials', () => {
         specifications[1].thenErrors.map(error => ({ name: error.name, message: error.message })).should.deep.equal([
             { name: 'error', message: '<Claim & validation>' },
         ]);
         specifications[2].thenErrors.map(error => error.name).should.deep.equal(['denied']);
-        (specifications[2].whenRedelivered!.for === undefined).should.be.true;
+        (specifications[2].screenplay!.whenRedelivered!.for === undefined).should.be.true;
         specifications[2].when!.values.should.deep.equal({});
     });
     it('should retain the expected refusal event payload instead of treating it as a rejection', () => {
