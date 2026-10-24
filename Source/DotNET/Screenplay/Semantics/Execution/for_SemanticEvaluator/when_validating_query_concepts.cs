@@ -41,24 +41,24 @@ public class when_validating_query_concepts : Specification
     void should_validate_keys_in_v1_without_promoting_the_model()
     {
         var source = Source.Replace("      query Filtered => Item[]\n        filter status SearchText optional", string.Empty, StringComparison.Ordinal);
-        _plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
-        _plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
-        ((SemanticRejected)Execute("Lookup", "a")).Category.ShouldEqual(SemanticRejectionCategory.Validation);
+        var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
+        plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
+        ((SemanticRejected)Execute(plan, "Lookup", "a")).Category.ShouldEqual(SemanticRejectionCategory.Validation);
     }
 
     [Fact]
     void should_authorize_before_validating_arguments()
     {
         var source = "policy Member\n  require authenticated\n" + Source.Replace("by itemId SearchText", "by itemId SearchText\n        authorize Member", StringComparison.Ordinal);
-        _plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
-        ((SemanticRejected)Execute("Lookup", "a")).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
+        var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
+        ((SemanticRejected)Execute(plan, "Lookup", "a")).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
     }
 
     [Fact]
     void should_preserve_a_string_key_message()
     {
-        _plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(Source.Replace("\"Search text is too short\"", "$strings.validation.searchText.short", StringComparison.Ordinal)).Model).Plan!;
-        var rejected = (SemanticRejected)Execute("Lookup", "a");
+        var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(Source.Replace("\"Search text is too short\"", "$strings.validation.searchText.short", StringComparison.Ordinal)).Model).Plan!;
+        var rejected = (SemanticRejected)Execute(plan, "Lookup", "a");
         rejected.MessageIsStringKey.ShouldBeTrue();
         rejected.Details.ShouldEqual("$strings.validation.searchText.short");
     }
@@ -67,26 +67,28 @@ public class when_validating_query_concepts : Specification
     void should_refuse_opaque_argument_rules_with_the_query_capability()
     {
         var source = Source.Replace("min 2 message \"Search text is too short\"", "rule BeSearchable\n      ```csharp\n      return true;\n      ```", StringComparison.Ordinal);
-        _plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
-        ((SemanticUnsupported)Execute("Lookup", "a")).Capability.ShouldEqual(SemanticExecutionCapability.Query);
+        var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
+        ((SemanticUnsupported)Execute(plan, "Lookup", "a")).Capability.ShouldEqual(SemanticExecutionCapability.Query);
     }
 
     [Fact]
     void should_not_refuse_an_omitted_filter_with_an_opaque_rule()
     {
         var source = Source.Replace("min 2 message \"Search text is too short\"", "rule BeSearchable\n      ```csharp\n      return true;\n      ```", StringComparison.Ordinal);
-        _plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
-        Execute("Filtered", null).Kind.ShouldEqual(SemanticExecutionOutcomeKind.Accepted);
+        var plan = SemanticExecutionPlan.Compile(query_filter_source.Compile(source).Model).Plan!;
+        Execute(plan, "Filtered", null).Kind.ShouldEqual(SemanticExecutionOutcomeKind.Accepted);
     }
 
-    SemanticExecutionResult Execute(string name, string? key, string? filter = null)
+    SemanticExecutionResult Execute(string name, string? key, string? filter = null) => Execute(_plan, name, key, filter);
+
+    static SemanticExecutionResult Execute(SemanticExecutionPlan plan, string name, string? key, string? filter = null)
     {
-        var query = _plan.Queries.Values.Single(query => query.Name == name);
+        var query = plan.Queries.Values.Single(query => query.Name == name);
         var request = new SemanticQueryRequest(query.Id, key is null ? SemanticValue.Null : SemanticValue.Text(key))
         {
             Filters = filter is null ? [] : [new(query.Filters.Single().Id, SemanticValue.Text(filter))]
         };
-        return new SemanticEvaluator().Execute(_plan, SemanticWorld.Empty,
+        return new SemanticEvaluator().Execute(plan, SemanticWorld.Empty,
             new SemanticExecutionRequest(default, [], [request], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
     }
 }

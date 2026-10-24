@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_adding_a_property;
 
 public class with_RegisterProject_release_baseline : given.a_RegisterProject_property_workspace
@@ -24,9 +26,24 @@ public class with_RegisterProject_release_baseline : given.a_RegisterProject_pro
     [Fact]
     void should_refuse_in_place_edits_after_generation_two_is_admitted()
     {
-        Workspace = Result.Workspace!;
-        var admitted = ReleaseBaseline.Admit(Workspace, _baseline, "v2", DateTimeOffset.UtcNow).Document!;
-        var refused = Workspace.ProposeProperty(AddRequest("ProjectRegistered", 2) with { Name = "another", ReleaseBaseline = Read(admitted) });
+        var workspace = Result.Workspace!;
+        var admitted = ReleaseBaseline.Admit(workspace, _baseline, "v2", DateTimeOffset.UtcNow).Document!;
+        var owner = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry =>
+            (entry.Node is CommandSyntax or EventSyntax or ReadModelSyntax) &&
+            WorkspaceReferenceBindings.Name(entry.Node) == "ProjectRegistered" &&
+            entry.Node is EventSyntax @event && @event.Generation == 2);
+        var refused = workspace.ProposeProperty(new WorkspacePropertyRequest
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Action = "add",
+            Owner = owner.Handle,
+            ExpectedOwnerName = "ProjectRegistered",
+            Name = "another",
+            Type = "String",
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            ReleaseBaseline = ReleaseBaselineStore.ReadBytes(ReleaseBaselineStore.Serialize(admitted), workspace.IdentityCatalog.Application)
+        });
         refused.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.BaselinedRevisionImmutable);
         refused.Workspace.ShouldBeNull();
     }
