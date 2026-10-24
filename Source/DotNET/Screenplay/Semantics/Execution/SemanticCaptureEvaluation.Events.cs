@@ -41,7 +41,7 @@ internal static partial class SemanticCaptureEvaluation
                 throw new InvalidSemanticContract($"Capture '{capture.Name}' keys by event source, but event '{contract.Name}' from source '{disagreement}' carries key '{KeyText(key)}'.");
             }
 
-            fact = fact.Destination is SemanticNullValue ? fact with { Destination = key, Context = new(new(FixtureSourceType(plan, contract), key)) } : fact;
+            fact = fact.Destination is SemanticNullValue ? WithInferredSource(plan, fact, key) : fact;
         }
 
         return fact;
@@ -59,7 +59,7 @@ internal static partial class SemanticCaptureEvaluation
     internal static string KeyText(SemanticValue value) => value switch
     {
         SemanticTextValue text => text.Value,
-        SemanticNumberValue number => number.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        SemanticNumberValue number => SemanticValueRules.CaptureText(number),
         _ => value.ToString() ?? string.Empty
     };
 
@@ -88,6 +88,18 @@ internal static partial class SemanticCaptureEvaluation
         var context = new Context(plan, capture, key, occurrence, accept, eventsSource: true);
         ValidatePreconditions(context, capture, previous, current);
         return EvaluateScopes(context, capture, previous, current);
+    }
+
+    static SemanticFact WithInferredSource(SemanticExecutionPlan plan, SemanticFact fact, SemanticValue key)
+    {
+        var type = FixtureSourceType(plan, plan.Events[fact.EventContract]);
+        var primitive = type.Kind == SemanticTypeReferenceKind.Concept
+            ? plan.Model.Application.Concepts.Single(concept => concept.Id == type.Target).Primitive
+            : type.Primitive;
+        var source = primitive == SemanticPrimitiveType.Text && key is SemanticNumberValue
+            ? new SemanticTextValue(KeyText(key))
+            : key;
+        return fact with { Destination = source, Context = new(new(type, source)) };
     }
 
     static SemanticValue? UsableKey(SemanticCapture capture, SemanticCaptureRecord record) =>
