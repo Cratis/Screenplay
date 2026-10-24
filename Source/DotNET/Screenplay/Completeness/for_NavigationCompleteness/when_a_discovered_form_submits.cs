@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Completeness.for_NavigationCompleteness;
 
 public class when_a_discovered_form_submits : given.screens
 {
-    void Establish() => Compile("command Go\nscreen Home\n  action Go\nscreen Detail", "on load\n  navigate to Home\nform Input for Go\n  on submit navigate to Detail");
+    void Establish() => Compile("command Go\nscreen Home\n  action Go for screen\nscreen Detail", "on load\n  navigate to Home\nform Input for Go\n  on submit navigate to Detail");
     void Because() => Findings = ModelCompleteness.Check(Compilation, new([CompletenessCheck.Navigation]));
 
     [Fact] void should_follow_the_discovered_forms_submit_edge() => Findings.ShouldBeEmpty();

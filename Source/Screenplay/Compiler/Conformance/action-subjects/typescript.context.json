@@ -292,6 +292,38 @@
                       "name": "Row"
                     },
                     "scope": null
+                  },
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "CasedRows",
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "CasedRow"
+                    },
+                    "scope": null
+                  },
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "NoKeyRows",
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "NoKeyRow"
+                    },
+                    "scope": null
                   }
                 ],
                 "reactions": [],
@@ -404,6 +436,57 @@
                           "isCollection": false,
                           "isOptional": false,
                           "name": "String"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "name": "CasedRow",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "rowId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      },
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "itemID",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "name": "NoKeyRow",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
                         }
                       }
                     ]
@@ -674,7 +757,7 @@
                         "navigate": null
                       }
                     ],
-                    "name": "MultipleIdentifiers"
+                    "name": "RecoveredSecondIdentifier"
                   },
                   {
                     "kind": "ScreenSyntax",
@@ -699,6 +782,209 @@
                       }
                     ],
                     "name": "AmbiguousKeys"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "AmbiguousRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "AmbiguousRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "name": "AmbiguousInferred"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "CasedRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "CasedRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "name": "CaseMismatch"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "NoKeyRows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "NoKeyRow"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "name": "MissingKey"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Imported.Inventory.Views.Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Imported.Inventory.Views.Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Imported.Inventory.Commands.Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "name": "QualifiedDeclarations"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenActionSyntax",
+                        "command": "Missing.Commands.Retry",
+                        "label": null,
+                        "navigate": null
+                      }
+                    ],
+                    "name": "UnresolvedDeclaration"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenTemplateReferenceSyntax",
+                        "name": "Detail",
+                        "slots": [
+                          {
+                            "kind": "ScreenSlotSyntax",
+                            "directives": [
+                              {
+                                "kind": "ScreenActionSyntax",
+                                "command": "Retry",
+                                "label": null,
+                                "navigate": null
+                              }
+                            ],
+                            "name": "actions"
+                          }
+                        ]
+                      }
+                    ],
+                    "name": "SlotScope"
+                  },
+                  {
+                    "kind": "ScreenSyntax",
+                    "directives": [
+                      {
+                        "kind": "ScreenDataSyntax",
+                        "by": null,
+                        "query": "Rows",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": true,
+                          "isOptional": false,
+                          "name": "Row"
+                        }
+                      },
+                      {
+                        "kind": "ScreenComponentSyntax",
+                        "component": "scene.web.Panel",
+                        "context": null,
+                        "exposes": [],
+                        "icon": null,
+                        "name": "panel",
+                        "outlets": [
+                          {
+                            "kind": "ComponentOutletSyntax",
+                            "directives": [
+                              {
+                                "kind": "ScreenActionSyntax",
+                                "command": "Retry",
+                                "label": null,
+                                "navigate": null
+                              },
+                              {
+                                "kind": "ScreenDataSyntax",
+                                "by": null,
+                                "query": "NamedRows",
+                                "type": {
+                                  "kind": "TypeRefSyntax",
+                                  "isCollection": true,
+                                  "isOptional": false,
+                                  "name": "NamedRow"
+                                }
+                              }
+                            ],
+                            "name": "detail"
+                          }
+                        ],
+                        "presentation": [],
+                        "properties": [],
+                        "stableId": null
+                      }
+                    ],
+                    "name": "OutletScope"
                   },
                   {
                     "kind": "ScreenSyntax",
@@ -1108,12 +1394,374 @@
         "fileImports": [],
         "isPlacement": false,
         "name": "Work"
+      },
+      {
+        "kind": "ModuleSyntax",
+        "authorize": null,
+        "description": null,
+        "features": [
+          {
+            "kind": "FeatureSyntax",
+            "authorize": null,
+            "description": null,
+            "features": [],
+            "fileImports": [],
+            "isPlacement": false,
+            "name": "Inventory",
+            "slices": [
+              {
+                "kind": "SliceSyntax",
+                "captures": [],
+                "commands": [
+                  {
+                    "kind": "CommandSyntax",
+                    "authorize": null,
+                    "description": null,
+                    "handler": null,
+                    "name": "Retry",
+                    "produces": [],
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": true,
+                        "name": "itemId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      }
+                    ],
+                    "response": null,
+                    "stream": null,
+                    "streamCandidates": [],
+                    "validations": []
+                  }
+                ],
+                "constraints": [],
+                "description": null,
+                "events": [],
+                "name": "Commands",
+                "operations": [],
+                "projections": [],
+                "queries": [],
+                "reactions": [],
+                "readModels": [],
+                "screens": [],
+                "specifications": [],
+                "type": "StateChange"
+              },
+              {
+                "kind": "SliceSyntax",
+                "captures": [],
+                "commands": [],
+                "constraints": [],
+                "description": null,
+                "events": [],
+                "name": "Views",
+                "operations": [],
+                "projections": [],
+                "queries": [
+                  {
+                    "kind": "QuerySyntax",
+                    "authorize": null,
+                    "by": null,
+                    "description": null,
+                    "filters": [],
+                    "isObservable": false,
+                    "name": "Rows",
+                    "returnType": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": true,
+                      "isOptional": false,
+                      "name": "Row"
+                    },
+                    "scope": null
+                  }
+                ],
+                "reactions": [],
+                "readModels": [
+                  {
+                    "kind": "ReadModelSyntax",
+                    "description": null,
+                    "name": "Row",
+                    "properties": [
+                      {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "isKey": true,
+                        "name": "rowId",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "ItemId"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "screens": [],
+                "specifications": [],
+                "type": "StateView"
+              }
+            ]
+          }
+        ],
+        "fileImports": [],
+        "isPlacement": false,
+        "name": "Imported"
       }
     ],
     "personas": [],
     "systems": [],
     "types": []
   },
+  "subjects": [
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[0].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[0]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[0].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[1].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[1]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[1].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[2].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[2]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[2].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[3].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[3]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[3].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[4].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[4]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[4].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[5].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[5]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[5].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[6].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[6]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[6].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[7].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[7]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[7].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[8].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[8]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[8].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[9].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[9]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[9].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[10]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[10].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[11]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[11].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[12]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[12].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[13]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[13].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[14].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[14]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[14].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].slots[0].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[15]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[15].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[16]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[17]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[17].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[18]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[18].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[19]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[19].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[20]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": []
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[2]",
+      "screen": "$.modules[0].features[0].slices[0].screens[21]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[21].directives[0]",
+        "$.modules[0].features[0].slices[0].screens[21].directives[1]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[3]",
+      "screen": "$.modules[0].features[0].slices[0].screens[21]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[21].directives[0]",
+        "$.modules[0].features[0].slices[0].screens[21].directives[1]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[1].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[22]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[22].directives[1].directives[1]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[22]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[22].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[1]",
+      "screen": "$.modules[0].features[0].slices[0].screens[22]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[22].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[2]",
+      "screen": "$.modules[0].features[0].slices[0].screens[22]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": [
+        "$.modules[0].features[0].slices[0].screens[22].directives[0]"
+      ]
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[23].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[23]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": []
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[24].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[24]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": []
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[25].directives[0].items[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[25]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": []
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[26].directives[0]",
+      "screen": "$.modules[0].features[0].slices[0].screens[26]",
+      "slice": "$.modules[0].features[0].slices[0]",
+      "data": []
+    }
+  ],
   "locations": [
     {
       "path": "$",
@@ -1151,7 +1799,7 @@
       "path": "$.modules[0].features[0]",
       "kind": "FeatureSyntax",
       "location": {
-        "line": 4,
+        "line": 6,
         "column": 3
       }
     },
@@ -1159,7 +1807,7 @@
       "path": "$.modules[0].features[0].slices[0]",
       "kind": "SliceSyntax",
       "location": {
-        "line": 5,
+        "line": 7,
         "column": 5
       }
     },
@@ -1167,7 +1815,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[0]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 20,
+        "line": 27,
         "column": 7
       }
     },
@@ -1175,7 +1823,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[0].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 21,
+        "line": 28,
         "column": 9
       }
     },
@@ -1183,7 +1831,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[0].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 21,
+        "line": 28,
         "column": 16
       }
     },
@@ -1191,7 +1839,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[0].properties[1]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 22,
+        "line": 29,
         "column": 9
       }
     },
@@ -1199,7 +1847,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[0].properties[1].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 22,
+        "line": 29,
         "column": 14
       }
     },
@@ -1207,7 +1855,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[1]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 23,
+        "line": 30,
         "column": 7
       }
     },
@@ -1215,7 +1863,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[1].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 24,
+        "line": 31,
         "column": 9
       }
     },
@@ -1223,7 +1871,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[1].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 24,
+        "line": 31,
         "column": 18
       }
     },
@@ -1231,7 +1879,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[2]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 25,
+        "line": 32,
         "column": 7
       }
     },
@@ -1239,7 +1887,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[2].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 26,
+        "line": 33,
         "column": 9
       }
     },
@@ -1247,7 +1895,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[2].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 26,
+        "line": 33,
         "column": 16
       }
     },
@@ -1255,7 +1903,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[3]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 27,
+        "line": 34,
         "column": 7
       }
     },
@@ -1263,7 +1911,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[3].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 28,
+        "line": 35,
         "column": 9
       }
     },
@@ -1271,7 +1919,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[3].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 28,
+        "line": 35,
         "column": 16
       }
     },
@@ -1279,7 +1927,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[4]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 29,
+        "line": 36,
         "column": 7
       }
     },
@@ -1287,7 +1935,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[4].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 30,
+        "line": 37,
         "column": 9
       }
     },
@@ -1295,7 +1943,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[4].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 30,
+        "line": 37,
         "column": 16
       }
     },
@@ -1303,7 +1951,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[5]",
       "kind": "CommandSyntax",
       "location": {
-        "line": 31,
+        "line": 38,
         "column": 7
       }
     },
@@ -1311,7 +1959,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[5].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 32,
+        "line": 39,
         "column": 9
       }
     },
@@ -1319,7 +1967,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[5].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 32,
+        "line": 39,
         "column": 16
       }
     },
@@ -1327,7 +1975,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[5].properties[1]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 33,
+        "line": 40,
         "column": 9
       }
     },
@@ -1335,7 +1983,7 @@
       "path": "$.modules[0].features[0].slices[0].commands[5].properties[1].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 33,
+        "line": 40,
         "column": 18
       }
     },
@@ -1343,7 +1991,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[0]",
       "kind": "QuerySyntax",
       "location": {
-        "line": 34,
+        "line": 41,
         "column": 7
       }
     },
@@ -1351,7 +1999,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[0].returnType",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 34,
+        "line": 41,
         "column": 21
       }
     },
@@ -1359,7 +2007,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[1]",
       "kind": "QuerySyntax",
       "location": {
-        "line": 35,
+        "line": 42,
         "column": 7
       }
     },
@@ -1367,7 +2015,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[1].returnType",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 35,
+        "line": 42,
         "column": 26
       }
     },
@@ -1375,7 +2023,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[2]",
       "kind": "QuerySyntax",
       "location": {
-        "line": 36,
+        "line": 43,
         "column": 7
       }
     },
@@ -1383,7 +2031,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[2].returnType",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 36,
+        "line": 43,
         "column": 30
       }
     },
@@ -1391,7 +2039,7 @@
       "path": "$.modules[0].features[0].slices[0].queries[3]",
       "kind": "QuerySyntax",
       "location": {
-        "line": 37,
+        "line": 44,
         "column": 7
       }
     },
@@ -1399,15 +2047,47 @@
       "path": "$.modules[0].features[0].slices[0].queries[3].returnType",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 37,
+        "line": 44,
         "column": 20
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[4]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 45,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[4].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 45,
+        "column": 26
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[5]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 46,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].queries[5].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 46,
+        "column": 26
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].readModels[0]",
       "kind": "ReadModelSyntax",
       "location": {
-        "line": 6,
+        "line": 8,
         "column": 7
       }
     },
@@ -1415,7 +2095,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 7,
+        "line": 9,
         "column": 9
       }
     },
@@ -1423,7 +2103,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 7,
+        "line": 9,
         "column": 15
       }
     },
@@ -1431,7 +2111,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[1]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 8,
+        "line": 10,
         "column": 9
       }
     },
@@ -1439,7 +2119,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[1].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 8,
+        "line": 10,
         "column": 16
       }
     },
@@ -1447,7 +2127,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[2]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 9,
+        "line": 11,
         "column": 9
       }
     },
@@ -1455,7 +2135,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[2].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 9,
+        "line": 11,
         "column": 18
       }
     },
@@ -1463,7 +2143,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[3]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 10,
+        "line": 12,
         "column": 9
       }
     },
@@ -1471,7 +2151,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[3].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 10,
+        "line": 12,
         "column": 14
       }
     },
@@ -1479,7 +2159,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[4]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 11,
+        "line": 13,
         "column": 9
       }
     },
@@ -1487,7 +2167,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[0].properties[4].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 11,
+        "line": 13,
         "column": 15
       }
     },
@@ -1495,7 +2175,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1]",
       "kind": "ReadModelSyntax",
       "location": {
-        "line": 12,
+        "line": 14,
         "column": 7
       }
     },
@@ -1503,7 +2183,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 13,
+        "line": 15,
         "column": 9
       }
     },
@@ -1511,7 +2191,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 13,
+        "line": 15,
         "column": 15
       }
     },
@@ -1519,7 +2199,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[1]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 14,
+        "line": 16,
         "column": 9
       }
     },
@@ -1527,7 +2207,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[1].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 14,
+        "line": 16,
         "column": 16
       }
     },
@@ -1535,7 +2215,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[2]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 15,
+        "line": 17,
         "column": 9
       }
     },
@@ -1543,7 +2223,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[1].properties[2].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 15,
+        "line": 17,
         "column": 14
       }
     },
@@ -1551,7 +2231,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[2]",
       "kind": "ReadModelSyntax",
       "location": {
-        "line": 16,
+        "line": 18,
         "column": 7
       }
     },
@@ -1559,7 +2239,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[2].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 17,
+        "line": 19,
         "column": 9
       }
     },
@@ -1567,7 +2247,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[2].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 17,
+        "line": 19,
         "column": 15
       }
     },
@@ -1575,7 +2255,7 @@
       "path": "$.modules[0].features[0].slices[0].readModels[2].properties[1]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 18,
+        "line": 20,
         "column": 9
       }
     },
@@ -1583,23 +2263,87 @@
       "path": "$.modules[0].features[0].slices[0].readModels[2].properties[1].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 18,
-        "column": 17
+        "line": 20,
+        "column": 16
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[2]",
+      "path": "$.modules[0].features[0].slices[0].readModels[3]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 21,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[3].properties[0]",
       "kind": "PropertySyntax",
       "location": {
-        "line": 19,
+        "line": 22,
         "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].readModels[2].properties[2].type",
+      "path": "$.modules[0].features[0].slices[0].readModels[3].properties[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 19,
+        "line": 22,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 23,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 24,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 24,
+        "column": 15
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[1]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 25,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 25,
+        "column": 17
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[2]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 26,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].readModels[4].properties[2].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 26,
         "column": 14
       }
     },
@@ -1607,7 +2351,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[0]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 38,
+        "line": 47,
         "column": 7
       }
     },
@@ -1615,7 +2359,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[0].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 39,
+        "line": 48,
         "column": 9
       }
     },
@@ -1623,7 +2367,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[0].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 39,
+        "line": 48,
         "column": 9
       }
     },
@@ -1631,7 +2375,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[0].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 40,
+        "line": 49,
         "column": 9
       }
     },
@@ -1639,7 +2383,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[10]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 70,
+        "line": 79,
         "column": 7
       }
     },
@@ -1647,7 +2391,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[10].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 71,
+        "line": 80,
         "column": 9
       }
     },
@@ -1655,55 +2399,23 @@
       "path": "$.modules[0].features[0].slices[0].screens[10].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 71,
+        "line": 80,
         "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[10].directives[1]",
-      "kind": "ScreenGuardedActionSyntax",
+      "kind": "ScreenActionSyntax",
       "location": {
-        "line": 72,
+        "line": 81,
         "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0]",
-      "kind": "ScreenActionAlternativeSyntax",
-      "location": {
-        "line": 73,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0].condition",
-      "kind": "ComparisonConditionSyntax",
-      "location": {
-        "line": 73,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].alternatives[0].condition.right",
-      "kind": "LiteralExpressionSyntax",
-      "location": {
-        "line": 73,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[10].directives[1].otherwise",
-      "kind": "ScreenActionOtherwiseSyntax",
-      "location": {
-        "line": 74,
-        "column": 11
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[11]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 75,
+        "line": 82,
         "column": 7
       }
     },
@@ -1711,7 +2423,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[11].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 76,
+        "line": 83,
         "column": 9
       }
     },
@@ -1719,55 +2431,23 @@
       "path": "$.modules[0].features[0].slices[0].screens[11].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 76,
+        "line": 83,
         "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[11].directives[1]",
-      "kind": "ScreenGuardedActionSyntax",
+      "kind": "ScreenActionSyntax",
       "location": {
-        "line": 77,
+        "line": 84,
         "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0]",
-      "kind": "ScreenActionAlternativeSyntax",
-      "location": {
-        "line": 78,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0].condition",
-      "kind": "ComparisonConditionSyntax",
-      "location": {
-        "line": 78,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].alternatives[0].condition.right",
-      "kind": "LiteralExpressionSyntax",
-      "location": {
-        "line": 78,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[11].directives[1].otherwise",
-      "kind": "ScreenActionOtherwiseSyntax",
-      "location": {
-        "line": 79,
-        "column": 11
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[12]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 80,
+        "line": 85,
         "column": 7
       }
     },
@@ -1775,7 +2455,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[12].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 81,
+        "line": 86,
         "column": 9
       }
     },
@@ -1783,111 +2463,55 @@
       "path": "$.modules[0].features[0].slices[0].screens[12].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 81,
+        "line": 86,
         "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[12].directives[1]",
-      "kind": "ScreenGuardedActionSyntax",
+      "kind": "ScreenActionSyntax",
       "location": {
-        "line": 82,
+        "line": 87,
         "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0]",
-      "kind": "ScreenActionAlternativeSyntax",
-      "location": {
-        "line": 83,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].arguments[0]",
-      "kind": "InteractionArgumentSyntax",
-      "location": {
-        "line": 84,
-        "column": 13
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].arguments[1]",
-      "kind": "InteractionArgumentSyntax",
-      "location": {
-        "line": 85,
-        "column": 13
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].condition",
-      "kind": "ComparisonConditionSyntax",
-      "location": {
-        "line": 83,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].alternatives[0].condition.right",
-      "kind": "LiteralExpressionSyntax",
-      "location": {
-        "line": 83,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[12].directives[1].otherwise",
-      "kind": "ScreenActionOtherwiseSyntax",
-      "location": {
-        "line": 86,
-        "column": 11
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[13]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 87,
+        "line": 88,
         "column": 7
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[13].directives[0]",
-      "kind": "ScreenGuardedActionSyntax",
+      "kind": "ScreenDataSyntax",
       "location": {
-        "line": 88,
+        "line": 89,
         "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0]",
-      "kind": "ScreenActionAlternativeSyntax",
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].type",
+      "kind": "TypeRefSyntax",
       "location": {
         "line": 89,
-        "column": 11
+        "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0].condition",
-      "kind": "ComparisonConditionSyntax",
+      "path": "$.modules[0].features[0].slices[0].screens[13].directives[1]",
+      "kind": "ScreenActionSyntax",
       "location": {
-        "line": 89,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[13].directives[0].alternatives[0].condition.right",
-      "kind": "LiteralExpressionSyntax",
-      "location": {
-        "line": 89,
-        "column": 11
+        "line": 90,
+        "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[14]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 90,
+        "line": 91,
         "column": 7
       }
     },
@@ -1895,7 +2519,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[14].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 91,
+        "line": 92,
         "column": 9
       }
     },
@@ -1903,63 +2527,15 @@
       "path": "$.modules[0].features[0].slices[0].screens[14].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 91,
+        "line": 92,
         "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[14].directives[1]",
-      "kind": "ScreenDataSyntax",
-      "location": {
-        "line": 92,
-        "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[1].type",
-      "kind": "TypeRefSyntax",
-      "location": {
-        "line": 92,
-        "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2]",
-      "kind": "ScreenGuardedActionSyntax",
-      "location": {
-        "line": 93,
-        "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0]",
-      "kind": "ScreenActionAlternativeSyntax",
-      "location": {
-        "line": 94,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0].condition",
-      "kind": "ComparisonConditionSyntax",
-      "location": {
-        "line": 94,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[2].alternatives[0].condition.right",
-      "kind": "LiteralExpressionSyntax",
-      "location": {
-        "line": 94,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[14].directives[3]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 95,
+        "line": 93,
         "column": 9
       }
     },
@@ -1967,7 +2543,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[15]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 96,
+        "line": 94,
         "column": 7
       }
     },
@@ -1975,7 +2551,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[15].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 97,
+        "line": 95,
         "column": 9
       }
     },
@@ -1983,120 +2559,160 @@
       "path": "$.modules[0].features[0].slices[0].screens[15].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 97,
+        "line": 95,
         "column": 9
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[15].directives[1]",
-      "kind": "ScreenSectionSyntax",
+      "kind": "ScreenTemplateReferenceSyntax",
       "location": {
-        "line": 98,
+        "line": 96,
         "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[0]",
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].slots[0]",
+      "kind": "ScreenSlotSyntax",
+      "location": {
+        "line": 97,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].slots[0].directives[0]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 99,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[1]",
-      "kind": "ScreenDataSyntax",
-      "location": {
-        "line": 100,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[1].directives[1].type",
-      "kind": "TypeRefSyntax",
-      "location": {
-        "line": 100,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2]",
-      "kind": "ScreenToolbarSyntax",
-      "location": {
-        "line": 101,
-        "column": 9
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0]",
-      "kind": "ToolbarItemSyntax",
-      "location": {
-        "line": 102,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0].parameters[0]",
-      "kind": "ScreenNavigationParameterSyntax",
-      "location": {
-        "line": 103,
+        "line": 98,
         "column": 13
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[0].parameters[0].binding",
-      "kind": "UiBindingSyntax",
-      "location": {
-        "line": 103,
-        "column": 13
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[1]",
-      "kind": "ToolbarItemSyntax",
-      "location": {
-        "line": 104,
-        "column": 11
-      }
-    },
-    {
-      "path": "$.modules[0].features[0].slices[0].screens[15].directives[2].items[2]",
-      "kind": "ToolbarItemSyntax",
-      "location": {
-        "line": 105,
-        "column": 11
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[16]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 106,
+        "line": 99,
         "column": 7
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[16].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 100,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 100,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1]",
+      "kind": "ScreenComponentSyntax",
+      "location": {
+        "line": 101,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0]",
+      "kind": "ComponentOutletSyntax",
+      "location": {
+        "line": 102,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[0]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 107,
-        "column": 9
+        "line": 103,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 104,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 104,
+        "column": 13
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[17]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 108,
+        "line": 105,
         "column": 7
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[17].directives[0]",
-      "kind": "ScreenActionSyntax",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 106,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 106,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 107,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 108,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 108,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 108,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[17].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
       "location": {
         "line": 109,
-        "column": 9
+        "column": 11
       }
     },
     {
@@ -2109,17 +2725,57 @@
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[18].directives[0]",
-      "kind": "ScreenToolbarSyntax",
+      "kind": "ScreenDataSyntax",
       "location": {
         "line": 111,
         "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[18].directives[0].items[0]",
-      "kind": "ToolbarItemSyntax",
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 111,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
       "location": {
         "line": 112,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 113,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 113,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 113,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[18].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
+      "location": {
+        "line": 114,
         "column": 11
       }
     },
@@ -2127,31 +2783,79 @@
       "path": "$.modules[0].features[0].slices[0].screens[19]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 113,
+        "line": 115,
         "column": 7
       }
     },
     {
       "path": "$.modules[0].features[0].slices[0].screens[19].directives[0]",
-      "kind": "ScreenActionSyntax",
+      "kind": "ScreenDataSyntax",
       "location": {
-        "line": 114,
+        "line": 116,
         "column": 9
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0].inputs[0]",
-      "kind": "InteractionArgumentSyntax",
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0].type",
+      "kind": "TypeRefSyntax",
       "location": {
         "line": 116,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 117,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 118,
         "column": 11
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[19].directives[0].inputs[1]",
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].alternatives[0].arguments[0]",
       "kind": "InteractionArgumentSyntax",
       "location": {
-        "line": 117,
+        "line": 119,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].alternatives[0].arguments[1]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 120,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 118,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 118,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[19].directives[1].otherwise",
+      "kind": "ScreenActionOtherwiseSyntax",
+      "location": {
+        "line": 121,
         "column": 11
       }
     },
@@ -2159,7 +2863,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[1]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 41,
+        "line": 50,
         "column": 7
       }
     },
@@ -2167,7 +2871,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[1].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 42,
+        "line": 51,
         "column": 9
       }
     },
@@ -2175,7 +2879,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[1].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 42,
+        "line": 51,
         "column": 9
       }
     },
@@ -2183,7 +2887,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[1].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 43,
+        "line": 52,
         "column": 9
       }
     },
@@ -2191,7 +2895,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[1].directives[1].inputs[0]",
       "kind": "InteractionArgumentSyntax",
       "location": {
-        "line": 44,
+        "line": 53,
         "column": 11
       }
     },
@@ -2199,7 +2903,319 @@
       "path": "$.modules[0].features[0].slices[0].screens[1].directives[1].inputs[1]",
       "kind": "InteractionArgumentSyntax",
       "location": {
-        "line": 45,
+        "line": 54,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 122,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20].directives[0]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 123,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20].directives[0].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 124,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20].directives[0].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 124,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[20].directives[0].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 124,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 125,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 126,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 126,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[1]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 127,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 127,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[2]",
+      "kind": "ScreenGuardedActionSyntax",
+      "location": {
+        "line": 128,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[2].alternatives[0]",
+      "kind": "ScreenActionAlternativeSyntax",
+      "location": {
+        "line": 129,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[2].alternatives[0].condition",
+      "kind": "ComparisonConditionSyntax",
+      "location": {
+        "line": 129,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[2].alternatives[0].condition.right",
+      "kind": "LiteralExpressionSyntax",
+      "location": {
+        "line": 129,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[21].directives[3]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 130,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 131,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[0]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 132,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 132,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[1]",
+      "kind": "ScreenSectionSyntax",
+      "location": {
+        "line": 133,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[1].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 134,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[1].directives[1]",
+      "kind": "ScreenDataSyntax",
+      "location": {
+        "line": 135,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[1].directives[1].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 135,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2]",
+      "kind": "ScreenToolbarSyntax",
+      "location": {
+        "line": 136,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[0]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 137,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[0].parameters[0]",
+      "kind": "ScreenNavigationParameterSyntax",
+      "location": {
+        "line": 138,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[0].parameters[0].binding",
+      "kind": "UiBindingSyntax",
+      "location": {
+        "line": 138,
+        "column": 13
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[1]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 139,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[22].directives[2].items[2]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 140,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[23]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 141,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[23].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 142,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[24]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 143,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[24].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 144,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[25]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 145,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[25].directives[0]",
+      "kind": "ScreenToolbarSyntax",
+      "location": {
+        "line": 146,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[25].directives[0].items[0]",
+      "kind": "ToolbarItemSyntax",
+      "location": {
+        "line": 147,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[26]",
+      "kind": "ScreenSyntax",
+      "location": {
+        "line": 148,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[26].directives[0]",
+      "kind": "ScreenActionSyntax",
+      "location": {
+        "line": 149,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[26].directives[0].inputs[0]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 151,
+        "column": 11
+      }
+    },
+    {
+      "path": "$.modules[0].features[0].slices[0].screens[26].directives[0].inputs[1]",
+      "kind": "InteractionArgumentSyntax",
+      "location": {
+        "line": 152,
         "column": 11
       }
     },
@@ -2207,7 +3223,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[2]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 46,
+        "line": 55,
         "column": 7
       }
     },
@@ -2215,7 +3231,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[2].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 47,
+        "line": 56,
         "column": 9
       }
     },
@@ -2223,7 +3239,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[2].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 47,
+        "line": 56,
         "column": 9
       }
     },
@@ -2231,7 +3247,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[2].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 48,
+        "line": 57,
         "column": 9
       }
     },
@@ -2239,7 +3255,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[3]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 49,
+        "line": 58,
         "column": 7
       }
     },
@@ -2247,7 +3263,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[3].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 50,
+        "line": 59,
         "column": 9
       }
     },
@@ -2255,7 +3271,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[3].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 50,
+        "line": 59,
         "column": 9
       }
     },
@@ -2263,7 +3279,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[3].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 51,
+        "line": 60,
         "column": 9
       }
     },
@@ -2271,7 +3287,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[4]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 52,
+        "line": 61,
         "column": 7
       }
     },
@@ -2279,7 +3295,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[4].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 53,
+        "line": 62,
         "column": 9
       }
     },
@@ -2287,7 +3303,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[4].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 53,
+        "line": 62,
         "column": 9
       }
     },
@@ -2295,7 +3311,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[4].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 54,
+        "line": 63,
         "column": 9
       }
     },
@@ -2303,7 +3319,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[5]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 55,
+        "line": 64,
         "column": 7
       }
     },
@@ -2311,7 +3327,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[5].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 56,
+        "line": 65,
         "column": 9
       }
     },
@@ -2319,7 +3335,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[5].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 56,
+        "line": 65,
         "column": 9
       }
     },
@@ -2327,7 +3343,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[5].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 57,
+        "line": 66,
         "column": 9
       }
     },
@@ -2335,7 +3351,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[6]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 58,
+        "line": 67,
         "column": 7
       }
     },
@@ -2343,7 +3359,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[6].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 59,
+        "line": 68,
         "column": 9
       }
     },
@@ -2351,7 +3367,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[6].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 59,
+        "line": 68,
         "column": 9
       }
     },
@@ -2359,7 +3375,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[6].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 60,
+        "line": 69,
         "column": 9
       }
     },
@@ -2367,7 +3383,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[7]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 61,
+        "line": 70,
         "column": 7
       }
     },
@@ -2375,7 +3391,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[7].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 62,
+        "line": 71,
         "column": 9
       }
     },
@@ -2383,7 +3399,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[7].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 62,
+        "line": 71,
         "column": 9
       }
     },
@@ -2391,7 +3407,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[7].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 63,
+        "line": 72,
         "column": 9
       }
     },
@@ -2399,7 +3415,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[8]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 64,
+        "line": 73,
         "column": 7
       }
     },
@@ -2407,7 +3423,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[8].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 65,
+        "line": 74,
         "column": 9
       }
     },
@@ -2415,7 +3431,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[8].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 65,
+        "line": 74,
         "column": 9
       }
     },
@@ -2423,7 +3439,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[8].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 66,
+        "line": 75,
         "column": 9
       }
     },
@@ -2431,7 +3447,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[9]",
       "kind": "ScreenSyntax",
       "location": {
-        "line": 67,
+        "line": 76,
         "column": 7
       }
     },
@@ -2439,7 +3455,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[9].directives[0]",
       "kind": "ScreenDataSyntax",
       "location": {
-        "line": 68,
+        "line": 77,
         "column": 9
       }
     },
@@ -2447,7 +3463,7 @@
       "path": "$.modules[0].features[0].slices[0].screens[9].directives[0].type",
       "kind": "TypeRefSyntax",
       "location": {
-        "line": 68,
+        "line": 77,
         "column": 9
       }
     },
@@ -2455,8 +3471,104 @@
       "path": "$.modules[0].features[0].slices[0].screens[9].directives[1]",
       "kind": "ScreenActionSyntax",
       "location": {
-        "line": 69,
+        "line": 78,
         "column": 9
+      }
+    },
+    {
+      "path": "$.modules[1]",
+      "kind": "ModuleSyntax",
+      "location": {
+        "line": 153,
+        "column": 1
+      }
+    },
+    {
+      "path": "$.modules[1].features[0]",
+      "kind": "FeatureSyntax",
+      "location": {
+        "line": 154,
+        "column": 3
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[0]",
+      "kind": "SliceSyntax",
+      "location": {
+        "line": 155,
+        "column": 5
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[0].commands[0]",
+      "kind": "CommandSyntax",
+      "location": {
+        "line": 156,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[0].commands[0].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 157,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[0].commands[0].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 157,
+        "column": 16
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1]",
+      "kind": "SliceSyntax",
+      "location": {
+        "line": 158,
+        "column": 5
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1].queries[0]",
+      "kind": "QuerySyntax",
+      "location": {
+        "line": 161,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1].queries[0].returnType",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 161,
+        "column": 21
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1].readModels[0]",
+      "kind": "ReadModelSyntax",
+      "location": {
+        "line": 159,
+        "column": 7
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1].readModels[0].properties[0]",
+      "kind": "PropertySyntax",
+      "location": {
+        "line": 160,
+        "column": 9
+      }
+    },
+    {
+      "path": "$.modules[1].features[0].slices[1].readModels[0].properties[0].type",
+      "kind": "TypeRefSyntax",
+      "location": {
+        "line": 160,
+        "column": 15
       }
     }
   ]

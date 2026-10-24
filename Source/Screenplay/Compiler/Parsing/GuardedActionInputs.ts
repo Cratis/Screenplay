@@ -18,10 +18,7 @@ export function viewProperties(name: string, slice: SliceSyntax | undefined, dec
 
 export function validateArguments(commandName: string, arguments_: readonly InteractionArgumentSyntax[], properties: readonly PropertySyntax[] | null, slice: SliceSyntax | undefined, declarations: RefusalDeclarations, context: ParserContext): void {
     const command = declarations.resolve(commandName, slice, candidate => candidate.commands)?.node;
-    const names = new Set<string>();
     for (const argument of arguments_) {
-        if (names.has(argument.name)) context.error(DiagnosticCodes.InvalidInteractionArgument, `Duplicate argument '${argument.name}' - supply each input only once`, argument.location);
-        names.add(argument.name);
         const inputs = command?.properties.filter(property => property.name === argument.name);
         if (inputs?.length === 0) context.warning(DiagnosticCodes.UnknownActionArgumentProperty, `Command '${commandName}' has no argument property '${argument.name}'`, argument.location);
         const subjectProperty = validateItemPath(argument.binding, argument.location, properties, slice, declarations, context, true);

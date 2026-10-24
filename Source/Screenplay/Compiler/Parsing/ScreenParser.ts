@@ -12,7 +12,7 @@ import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
-import { parseSubjectClause } from './ActionSubjectClause';
+import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
 import { InteractionArgumentSyntax } from '../Syntax/Screens';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
@@ -184,9 +184,8 @@ function parseAction(context: ParserContext, line: SourceLine): ScreenActionSynt
         } else if (firstWord(child.content) === 'navigate') {
             target = parseNavigate(context, child.content, child) ?? null;
         } else if (firstWord(child.content) === 'with') {
-            const input = pattern('^with\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$').exec(child.content);
-            if (input !== null) inputs.push({ kind: 'InteractionArgumentSyntax', name: input[1], binding: input[2].trim(), location: locationOf(child) });
-            else context.error(DiagnosticCodes.InvalidInteractionArgument, `Invalid argument '${child.content}' - expected 'with <name> from <binding>'`, locationOf(child));
+            const input = parsePlainActionInput(context, child, inputs);
+            if (input !== undefined) inputs.push(input);
         } else {
             context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));
         }

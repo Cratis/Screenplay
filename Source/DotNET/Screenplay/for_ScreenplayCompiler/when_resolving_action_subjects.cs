@@ -88,5 +88,19 @@ public class when_resolving_action_subjects : given.a_compiler
     }
 
     static ScreenSyntax Screen(ApplicationSyntax application) => application.Modules.Single().Features.Single().Slices.Single().Screens.Single();
+    [Fact]
+    void should_not_infer_a_row_from_two_identifier_inputs_in_an_assembled_snapshot()
+    {
+        var raw = _compiler.Compile(Source).Value!;
+        var module = raw.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single();
+        var command = slice.Commands.Single();
+        var ambiguous = command with { Properties = [.. command.Properties, command.Properties.First() with { Name = "otherId" }] };
+        var snapshot = raw with { Modules = [module with { Features = [feature with { Slices = [slice with { Commands = [ambiguous] }] }] }] };
+        Action(ScreenActionSubjects.Resolve(snapshot).Value!).Subject.ShouldBeNull();
+        Action(raw).Subject.ShouldBeNull();
+    }
+
     static ScreenActionSyntax Action(ApplicationSyntax application) => Screen(application).Directives.OfType<ScreenActionSyntax>().Single();
 }

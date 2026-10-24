@@ -229,7 +229,7 @@ module Stock
               property title = "Shipments"
               property subtitle = "Every parcel with its carrier and tracking number"
           toolbar
-            action DispatchShipment
+            action DispatchShipment for item
               label "Dispatch"
             // The stage of the selected parcel decides what can be done to it; the Picking board only shows the stages.
             data ShipmentRow[] via query AllShipments

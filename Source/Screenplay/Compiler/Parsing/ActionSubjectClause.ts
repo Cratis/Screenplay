@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { ScreenActionSubjectKind } from '../Syntax/Screens';
+import { InteractionArgumentSyntax, ScreenActionSubjectKind } from '../Syntax/Screens';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
@@ -11,6 +11,16 @@ import { locationOf, SourceLine } from './SourceLine';
 const word = new RegExp(pattern(`"${stringBodyPattern}"|\\S+`).source, 'gu');
 const label = pattern(`^label\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*))$`);
 const clause = pattern('^for\\s+(item|screen)$');
+
+export function parsePlainActionInput(context: ParserContext, line: SourceLine, inputs: readonly InteractionArgumentSyntax[]): InteractionArgumentSyntax | undefined {
+    const input = pattern('^with\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$').exec(line.content);
+    if (input === null) {
+        context.error(DiagnosticCodes.InvalidInteractionArgument, `Invalid argument '${line.content}' - expected 'with <name> from <binding>'`, locationOf(line));
+        return undefined;
+    }
+    if (inputs.some(argument => argument.name === input[1])) context.error(DiagnosticCodes.InvalidInteractionArgument, `Duplicate argument '${input[1]}' - supply each input only once`, locationOf(line));
+    return { kind: 'InteractionArgumentSyntax', name: input[1], binding: input[2].trim(), location: locationOf(line) };
+}
 
 export function parseSubjectClause(context: ParserContext, line: SourceLine, action: boolean): { header: string; subject?: ScreenActionSubjectKind; label?: string } {
     const words = [...line.content.matchAll(word)];

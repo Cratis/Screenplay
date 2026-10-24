@@ -319,6 +319,40 @@
                     "name": "Row"
                   },
                   "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "CasedRows",
+                  "performer": null,
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "CasedRow"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "NoKeyRows",
+                  "performer": null,
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "NoKeyRow"
+                  },
+                  "scope": null
                 }
               ],
               "reactions": [],
@@ -433,6 +467,59 @@
                         "isCollection": false,
                         "isOptional": false,
                         "name": "String"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "file": null,
+                  "name": "CasedRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemID",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "file": null,
+                  "name": "NoKeyRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
                       }
                     }
                   ]
@@ -753,7 +840,7 @@
                     }
                   ],
                   "file": null,
-                  "name": "MultipleIdentifiers"
+                  "name": "RecoveredSecondIdentifier"
                 },
                 {
                   "kind": "ScreenSyntax",
@@ -786,6 +873,260 @@
                   ],
                   "file": null,
                   "name": "AmbiguousKeys"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "AmbiguousRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "AmbiguousRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "file": null,
+                  "name": "AmbiguousInferred"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "CasedRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "CasedRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "file": null,
+                  "name": "CaseMismatch"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "NoKeyRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "NoKeyRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "file": null,
+                  "name": "MissingKey"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Imported.Inventory.Views.Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Imported.Inventory.Views.Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Imported.Inventory.Commands.Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "file": null,
+                  "name": "QualifiedDeclarations"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Missing.Commands.Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "file": null,
+                  "name": "UnresolvedDeclaration"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Detail",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "Retry",
+                              "inputs": [
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.rowId",
+                                  "name": "itemId"
+                                },
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.name",
+                                  "name": "name"
+                                }
+                              ],
+                              "label": null,
+                              "navigate": null,
+                              "subject": "Item"
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "file": null,
+                  "name": "SlotScope"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenComponentSyntax",
+                      "behaviors": [],
+                      "component": "scene.web.Panel",
+                      "context": null,
+                      "exposes": [],
+                      "icon": null,
+                      "name": "panel",
+                      "outlets": [
+                        {
+                          "kind": "ComponentOutletSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "Retry",
+                              "inputs": [
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.itemId",
+                                  "name": "itemId"
+                                },
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.name",
+                                  "name": "name"
+                                }
+                              ],
+                              "label": null,
+                              "navigate": null,
+                              "subject": "Item"
+                            },
+                            {
+                              "kind": "ScreenDataSyntax",
+                              "by": null,
+                              "query": "NamedRows",
+                              "type": {
+                                "kind": "TypeRefSyntax",
+                                "isCollection": true,
+                                "isOptional": false,
+                                "name": "NamedRow"
+                              }
+                            }
+                          ],
+                          "name": "detail"
+                        }
+                      ],
+                      "presentation": [],
+                      "properties": [],
+                      "stableId": null,
+                      "usedBehaviors": []
+                    }
+                  ],
+                  "file": null,
+                  "name": "OutletScope"
                 },
                 {
                   "kind": "ScreenSyntax",
@@ -1294,9 +1635,173 @@
         }
       ],
       "fileImports": [],
-      "forms": [],
+      "forms": [
+        {
+          "kind": "FormSyntax",
+          "behaviors": [],
+          "columnMode": "Unspecified",
+          "columns": [],
+          "fields": [
+            {
+              "kind": "FormFieldSyntax",
+              "composeUsing": null,
+              "from": null,
+              "label": null,
+              "property": "name"
+            }
+          ],
+          "for": "Work.Items.List.Retry",
+          "generationMode": "Unspecified",
+          "layout": null,
+          "name": "RetryForm",
+          "onSubmit": null,
+          "populate": null,
+          "usedBehaviors": []
+        }
+      ],
       "isPlacement": false,
       "name": "Work",
+      "screenTemplates": [],
+      "templates": [],
+      "usedBehaviors": []
+    },
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "behaviors": [],
+      "contributions": [],
+      "description": null,
+      "dialogTemplates": [],
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "behaviors": [],
+          "contributions": [],
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Inventory",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "concurrency": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Retry",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "reads": [],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "file": null,
+              "name": "Commands",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "reducers": [],
+              "screens": [],
+              "specifications": [],
+              "templates": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "file": null,
+              "name": "Views",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Rows",
+                  "performer": null,
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Row"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "file": null,
+                  "name": "Row",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "reducers": [],
+              "screens": [],
+              "specifications": [],
+              "templates": [],
+              "type": "StateView"
+            }
+          ],
+          "templates": [],
+          "usedBehaviors": []
+        }
+      ],
+      "fileImports": [],
+      "forms": [],
+      "isPlacement": false,
+      "name": "Imported",
       "screenTemplates": [],
       "templates": [],
       "usedBehaviors": []

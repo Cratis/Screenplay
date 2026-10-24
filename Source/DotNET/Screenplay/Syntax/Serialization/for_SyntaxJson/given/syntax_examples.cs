@@ -32,6 +32,7 @@ internal static class syntax_examples
 
         // Implementation intent adds a single authoritative payload invariant; keep this example valid
         // while still independently populating every other structural member.
+        node = WithActionSubjectContract(node);
         return node switch
         {
             ConceptSyntax concept => concept with { Type = "Enum" },
@@ -62,6 +63,8 @@ internal static class syntax_examples
             _ => node
         };
     }
+
+    static SyntaxNode WithActionSubjectContract(SyntaxNode node) => node is ToolbarItemSyntax item ? item with { Kind = ToolbarItemKind.Action } : node;
 
     internal static bool SameValues(object? left, object? right)
     {

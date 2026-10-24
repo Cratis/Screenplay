@@ -67,7 +67,7 @@ public class when_printing_screen_release_ui_contract : given.a_printer
               screen BrowseInvoices
                 data InvoiceList via query AllInvoices
                 toolbar main
-                  item edit action EditInvoice
+                  item edit action EditInvoice for screen
                     label "Edit"
                     icon edit
                     presentation placement "primary"

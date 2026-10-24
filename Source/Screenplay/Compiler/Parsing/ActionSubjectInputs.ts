@@ -74,10 +74,15 @@ export class ActionSubjectInputs {
         for (const input of this.command(command, context).filter(input => !input.isGenerated)) {
             if (result.some(argument => argument.name === input.name)) continue;
             const matches = properties.filter(property => property.name.toLowerCase() === input.name.toLowerCase());
-            if (matches.length > 1 || (matches.length === 0 && this.keys(input, properties).length > 0)) return null;
+            if (!this.legacyMatchIsSafe(input, properties, matches.length)) return null;
             if (matches.length === 1) result.push({ kind: 'InteractionArgumentSyntax', name: input.name, binding: `item.${matches[0].name}`, location: context.location });
         }
         return result;
+    }
+
+    private legacyMatchIsSafe(input: PropertySyntax, properties: readonly PropertySyntax[], matches: number): boolean {
+        if (matches > 1) return false;
+        return matches > 0 || this.keys(input, properties).length === 0;
     }
 
     inputs(command: string, authored: readonly InteractionArgumentSyntax[], context: ActionSubjectContext): readonly InteractionArgumentSyntax[] {

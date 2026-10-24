@@ -55,3 +55,9 @@ Native `ScreenActionSubjects.Resolve(application)` and TypeScript `resolveAction
 The paired native/TypeScript fixture packs are under `Source/Screenplay/Compiler/Conformance/action-subjects`: authored source, raw syntax, effective syntax, diagnostics, and context/location sidecars. Each context includes the complete authored declaration tree and canonical-path source locations, so consumers can verify nominal identity without inventing it. Native/TS packs preserve their existing modeled syntax surfaces and assert common-member parity separately.
 
 Runtime execution and rendering proof are Scene-owned. Compiler fixtures and editor assistance do not claim renderer support or change the executable semantic model.
+
+## Corpus migration gate
+
+Before making inference part of a Scene release, compile each real application workspace with its imports and collect PLAY0816 and PLAY0817 by source path, line and command. Treat an unresolvable declaration as insufficient evidence, not a successful migration. For every PLAY0817, review the previous row-name bindings alongside the proposed effective inputs; either state `for screen`, state `for item` with the intended explicit inputs, or retain the previous bindings explicitly. Apply a proposed repair transactionally and compile the complete workspace again. Do not bulk-accept a binding based only on its spelling.
+
+Track that real-corpus scan and disposition review as a follow-up to Screenplay#1052, before the consuming Scene release. The repository samples and paired fixture packs are the compiler regression gate, not evidence that an external corpus has been migrated. Scene must separately verify selection, form/renderer inputs and guarded single-record behavior against the effective pack; it must not reinterpret the raw authored pack as resolved execution metadata.

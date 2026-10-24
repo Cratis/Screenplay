@@ -225,10 +225,15 @@ internal static partial class ScreenParser
         var guarded = GuardedActionRegex().Match(header);
         if (guarded.Success)
         {
-            return ParseGuardedAction(context, line, OperandText(guarded, 1)) with { Subject = subject };
+            return ParseGuardedAction(context, line, OperandText(guarded, 1), subject);
         }
 
-        var match = ActionRegex().Match(header);
+        return ParsePlainAction(context, line, (header, inlineLabel, subject));
+    }
+
+    static ScreenActionSyntax? ParsePlainAction(ParserContext context, SourceLine line, (string Header, string? Label, ScreenActionSubjectKind? Subject) header)
+    {
+        var match = ActionRegex().Match(header.Header);
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidActionDirective, $"Invalid action directive '{line.Content}' - expected 'action <Command>'", line.Location);
@@ -236,8 +241,8 @@ internal static partial class ScreenParser
             return null;
         }
 
-        var label = inlineLabel;
-        SourceLocation? labelLocation = inlineLabel is null ? null : line.Location;
+        var label = header.Label;
+        var labelLocation = label is null ? null : line.Location;
         ScreenNavigateSyntax? navigate = null;
         var inputs = new List<InteractionArgumentSyntax>();
 
@@ -256,7 +261,7 @@ internal static partial class ScreenParser
             }
             else if (LineText.FirstWord(child.Content) == "with")
             {
-                if (ParsePlainActionInput(context, child) is { } input) inputs.Add(input);
+                AddPlainActionInput(context, child, inputs);
             }
             else
             {
@@ -266,10 +271,15 @@ internal static partial class ScreenParser
 
         return new ScreenActionSyntax(match.Groups[1].Value, label, navigate, line.Location)
         {
-            Subject = subject,
+            Subject = header.Subject,
             Inputs = inputs,
             DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
         };
+    }
+
+    static void AddPlainActionInput(ParserContext context, SourceLine child, List<InteractionArgumentSyntax> inputs)
+    {
+        if (ParsePlainActionInput(context, child, inputs) is { } input) inputs.Add(input);
     }
 
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)

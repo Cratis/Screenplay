@@ -36,7 +36,7 @@ public class when_freezing_legacy_source_syntax_bytes
             var legacy = name switch
             {
                 "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))))),
-                "library-sample" => WithoutLibraryForms(parsed),
+                "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
 

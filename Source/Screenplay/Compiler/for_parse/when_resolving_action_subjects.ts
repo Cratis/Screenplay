@@ -41,6 +41,16 @@ describe('when resolving action subjects', () => {
             (action(resolveActionSubjects(parse(source.replace('ItemId identifier', replacement)).value).value).subject ?? 'Screen').should.equal('Screen');
         });
     }
+    it('should not infer a row from two identifier inputs in an assembled snapshot', () => {
+        const raw = parse(source).value;
+        const module = raw.modules[0];
+        const feature = module.features[0];
+        const slice = feature.slices[0];
+        const command = slice.commands[0];
+        const ambiguous = { ...command, properties: [...command.properties, { ...command.properties[0], name: 'otherId' }] };
+        const snapshot = { ...raw, modules: [{ ...module, features: [{ ...feature, slices: [{ ...slice, commands: [ambiguous] }] }] }] };
+        (action(resolveActionSubjects(snapshot).value).subject ?? 'Screen').should.equal('Screen');
+    });
     it('should not use primitive equality as nominal proof', () => {
         const primitive = source.replace('rowId ItemId key', 'rowId Uuid key').replace('itemId ItemId identifier', 'itemId Uuid identifier');
         (action(resolveActionSubjects(parse(primitive).value).value).subject ?? 'Screen').should.equal('Screen');

@@ -55,7 +55,7 @@ module Buying
           list
             toolbar actions
               button register title "Register supplier" slice Buying.Suppliers.RegisterSupplier emphasis primary icon plus
-            action OfferSupplierProduct
+            action OfferSupplierProduct for item
               label "Offer product"
             data SupplierRow[] via query AllSuppliers
             table SupplierRow

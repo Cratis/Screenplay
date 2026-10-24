@@ -41,10 +41,15 @@ internal static partial class ScreenParser
         return suffix.Groups[1].Value == "item" ? ScreenActionSubjectKind.Item : ScreenActionSubjectKind.Screen;
     }
 
-    static InteractionArgumentSyntax? ParsePlainActionInput(ParserContext context, SourceLine line)
+    static InteractionArgumentSyntax? ParsePlainActionInput(ParserContext context, SourceLine line, IReadOnlyList<InteractionArgumentSyntax> inputs)
     {
         var match = InteractionParser.WithRegex().Match(line.Content);
-        if (match.Success) return new(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
+        if (match.Success)
+        {
+            var name = match.Groups[1].Value;
+            if (inputs.Any(input => input.Name == name)) context.Error(DiagnosticCodes.InvalidInteractionArgument, $"Duplicate argument '{name}' - supply each input only once", line.Location);
+            return new(name, match.Groups[2].Value.Trim(), line.Location);
+        }
         context.Error(DiagnosticCodes.InvalidInteractionArgument, $"Invalid argument '{line.Content}' - expected 'with <name> from <binding>'", line.Location);
         context.SkipBlock(line.Indent);
         return null;

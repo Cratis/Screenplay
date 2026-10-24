@@ -1,6 +1,8 @@
 concept ItemId : Uuid
 concept TenantId : Uuid
 module Work
+  form RetryForm for Work.Items.List.Retry
+    field name
   feature Items
     slice StateView List
       readmodel Row
@@ -13,6 +15,11 @@ module Work
         rowId ItemId key
         itemId ItemId
         name String
+      readmodel CasedRow
+        rowId ItemId key
+        itemID ItemId
+      readmodel NoKeyRow
+        itemId ItemId
       readmodel AmbiguousRow
         rowId ItemId key
         otherId ItemId key
@@ -35,6 +42,8 @@ module Work
       query NamedRows => NamedRow[]
       query AmbiguousRows => AmbiguousRow[]
       query One => Row
+      query CasedRows => CasedRow[]
+      query NoKeyRows => NoKeyRow[]
       screen InferredItem
         data Row[] via query Rows
         action Retry
@@ -61,12 +70,38 @@ module Work
       screen PrimitiveIdentifier
         data Row[] via query Rows
         action Primitive
-      screen MultipleIdentifiers
+      screen RecoveredSecondIdentifier
         data Row[] via query Rows
         action TwoIdentifiers
       screen AmbiguousKeys
         data AmbiguousRow[] via query AmbiguousRows
         action Retry for item
+      screen AmbiguousInferred
+        data AmbiguousRow[] via query AmbiguousRows
+        action Retry
+      screen CaseMismatch
+        data CasedRow[] via query CasedRows
+        action Retry
+      screen MissingKey
+        data NoKeyRow[] via query NoKeyRows
+        action Retry
+      screen QualifiedDeclarations
+        data Imported.Inventory.Views.Row[] via query Imported.Inventory.Views.Rows
+        action Imported.Inventory.Commands.Retry
+      screen UnresolvedDeclaration
+        data Row[] via query Rows
+        action Missing.Commands.Retry
+      screen SlotScope
+        data Row[] via query Rows
+        template Detail
+          actions
+            action Retry
+      screen OutletScope
+        data Row[] via query Rows
+        component scene.web.Panel panel
+          outlet detail
+            action Retry
+            data NamedRow[] via query NamedRows
       screen GuardedCollection
         data Row[] via query Rows
         action "Retry" for screen
@@ -115,3 +150,12 @@ module Work
           with itemId
           with name from item.name
           with name from $context.name
+module Imported
+  feature Inventory
+    slice StateChange Commands
+      command Retry
+        itemId ItemId identifier
+    slice StateView Views
+      readmodel Row
+        rowId ItemId key
+      query Rows => Row[]

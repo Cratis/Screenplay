@@ -36,10 +36,21 @@ public class when_exporting_action_subject_fixture_packs : Specification
         _effective = ScreenActionSubjects.Resolve(_raw).Value!;
         _exports["raw.syntax"] = SyntaxJson.Serialize(_raw);
         _exports["effective.syntax"] = SyntaxJson.Serialize(_effective);
+        _exports["manifest"] = JsonSerializer.SerializeToElement(new
+        {
+            protocol = "Cratis.ActionSubjects/1",
+            authored = "source.play",
+            rawSyntaxJson = "native.raw.syntax.json",
+            effectiveSyntaxJson = "native.effective.syntax.json",
+            diagnostics = "native.diagnostics.json",
+            context = "native.context.json",
+            cases = _raw.Modules.First().Features.First().Slices.First().Screens.Select((screen, index) => new { name = screen.Name, focusPath = $"$.modules[0].features[0].slices[0].screens[{index}]" })
+        });
         _exports["context"] = JsonSerializer.SerializeToElement(new
         {
             source = "source.play",
             application = _before,
+            subjects = Subjects(_before, "$", new(null, null, [])).ToArray(),
             locations = Locations(_raw, "$").OrderBy(entry => entry.Path, StringComparer.Ordinal).Select(entry => new
             {
                 path = entry.Path,
@@ -49,8 +60,51 @@ public class when_exporting_action_subject_fixture_packs : Specification
         });
     }
 
+    [Theory]
+    [InlineData("InferredItem", "item.rowId")]
+    [InlineData("SameName", "item.itemId")]
+    [InlineData("CaseMismatch", "item.rowId")]
+    [InlineData("QualifiedDeclarations", "item.rowId")]
+    [InlineData("SlotScope", "item.rowId")]
+    [InlineData("OutletScope", "item.itemId")]
+    void should_resolve_declared_identity_in_each_scope(string screen, string binding)
+    {
+        var action = Actions(screen).Single();
+        action.Subject.ShouldEqual(ScreenActionSubjectKind.Item);
+        action.Inputs.Single(input => input.Name == "itemId").Binding.ShouldEqual(binding);
+    }
+
+    [Theory]
+    [InlineData("ForeignKey")]
+    [InlineData("OptionalIdentifier")]
+    [InlineData("GeneratedIdentifier")]
+    [InlineData("PrimitiveIdentifier")]
+    [InlineData("AmbiguousInferred")]
+    [InlineData("MissingKey")]
+    [InlineData("UnresolvedDeclaration")]
+    void should_not_invent_identity(string screen)
+    {
+        var action = Actions(screen).Single();
+        action.Subject.ShouldBeNull();
+        action.Inputs.ShouldBeEmpty();
+    }
+
+    IEnumerable<ScreenActionSyntax> Actions(string name)
+    {
+        var walker = new Cratis.Screenplay.Syntax.for_ScreenplaySyntaxWalker.given.a_counting_walker();
+        walker.VisitScreen(_effective.Modules.First().Features.First().Slices.First().Screens.Single(screen => screen.Name == name));
+        return walker.Nodes.OfType<ScreenActionSyntax>();
+    }
+
     [Fact] void should_leave_authored_syntax_unchanged() => SyntaxJson.StructurallyEqual(_raw, SyntaxJson.Deserialize(_before)).ShouldBeTrue();
     [Fact] void should_be_idempotent() => SyntaxJson.StructurallyEqual(_effective, ScreenActionSubjects.Resolve(_effective).Value!).ShouldBeTrue();
+
+    [Fact]
+    void should_retain_locations_of_every_authored_node()
+    {
+        var effective = Locations(_effective, "$").ToDictionary(entry => entry.Path, entry => entry.Node.Location);
+        foreach (var (path, node) in Locations(_raw, "$")) effective[path].ShouldEqual(node.Location);
+    }
 
     [Fact]
     void should_match_the_native_fixture_pack()
@@ -68,11 +122,41 @@ public class when_exporting_action_subject_fixture_packs : Specification
     [Fact]
     void should_agree_with_typescript_on_authored_and_effective_members()
     {
+        var context = JsonDocument.Parse(File.ReadAllText(Path.Combine(_directory, "typescript.context.json"))).RootElement;
+        Assert.True(JsonElement.DeepEquals(context.GetProperty("subjects"), _exports["context"].GetProperty("subjects")));
         foreach (var name in new[] { "raw.syntax", "effective.syntax" })
         {
             var expected = JsonDocument.Parse(File.ReadAllText(Path.Combine(_directory, $"typescript.{name}.json"))).RootElement;
             Compare(expected, _exports[name], "$");
         }
+    }
+
+    sealed record SubjectScope(string? Screen, string? Slice, string[] Data);
+
+    static IEnumerable<object> Subjects(JsonElement value, string path, SubjectScope inherited)
+    {
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            return value.EnumerateArray().SelectMany((child, index) => Subjects(child, $"{path}[{index}]", inherited));
+        }
+        if (value.ValueKind != JsonValueKind.Object) return [];
+        var kind = value.TryGetProperty("kind", out var tag) ? tag.GetString() : null;
+        var scope = kind switch
+        {
+            "SliceSyntax" => inherited with { Slice = path },
+            "ScreenSyntax" => inherited with { Screen = path, Data = [] },
+            "ScreenContributionSyntax" => inherited with { Data = [] },
+            _ => inherited
+        };
+        if (value.TryGetProperty("directives", out var directives))
+        {
+            var local = directives.EnumerateArray().Select((node, index) => (node, index)).Where(entry => entry.node.GetProperty("kind").GetString() == "ScreenDataSyntax").Select(entry => $"{path}.directives[{entry.index}]").ToArray();
+            if (local.Length > 0) scope = scope with { Data = local };
+        }
+        var children = value.EnumerateObject().SelectMany(property => Subjects(property.Value, $"{path}.{property.Name}", scope));
+        return kind is "ScreenActionSyntax" or "ScreenGuardedActionSyntax" or "ToolbarItemSyntax"
+            ? new object[] { new { path, screen = scope.Screen, slice = scope.Slice, data = scope.Data } }.Concat(children)
+            : children;
     }
 
     static bool Relevant(Diagnostic diagnostic) => diagnostic.Code is DiagnosticCodes.InvalidInteractionArgument or DiagnosticCodes.UnknownActionSubjectField or DiagnosticCodes.UnresolvedActionSubject or DiagnosticCodes.InvalidActionSubjectClause or DiagnosticCodes.InferredActionSubject or DiagnosticCodes.ChangedActionSubject or DiagnosticCodes.AmbiguousActionInputBinding or DiagnosticCodes.UnsupportedActionSubjectContext;

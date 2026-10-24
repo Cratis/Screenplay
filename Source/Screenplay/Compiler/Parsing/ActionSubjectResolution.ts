@@ -47,19 +47,20 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
             otherwise: fallback !== null && fallback.command !== null ? { ...fallback, arguments: resolver.inputs(fallback.command, fallback.arguments, { ...context, location: fallback.location }) } : fallback,
         };
     };
+    const plain = (node: ScreenActionSyntax, context: ActionSubjectContext): ScreenActionSyntax => {
+        const subject = resolver.subject(node.subject, node.command, (node.inputs ?? []).map(input => input.name), context);
+        const inputs = subject === 'Item' && hasSubject(context, false) ? resolver.inputs(node.command, node.inputs ?? [], context) : node.inputs;
+        const effective = subject == null && inputs === node.inputs ? node : { ...node, subject, ...(inputs === undefined ? {} : { inputs }) };
+        observe?.({ authored: node, effective, command: node.command, context });
+        return effective;
+    };
     const body = (directives: readonly ScreenDirectiveSyntax[], inherited: ActionSubjectContext): readonly ScreenDirectiveSyntax[] => {
         const local = directives.filter((node): node is Extract<ScreenDirectiveSyntax, { kind: 'ScreenDataSyntax' }> => node.kind === 'ScreenDataSyntax');
         const scope = { ...inherited, data: local.length > 0 ? local : inherited.data };
         return directives.map(node => {
             const context = { ...scope, location: node.location };
             switch (node.kind) {
-                case 'ScreenActionSyntax': {
-                    const subject = resolver.subject(node.subject, node.command, (node.inputs ?? []).map(input => input.name), context);
-                    const inputs = subject === 'Item' && hasSubject(context, false) ? resolver.inputs(node.command, node.inputs ?? [], context) : node.inputs;
-                    const effective = subject == null && inputs === node.inputs ? node : { ...node, subject, inputs };
-                    observe?.({ authored: node, effective, command: node.command, context });
-                    return effective;
-                }
+                case 'ScreenActionSyntax': return plain(node, context);
                 case 'ScreenGuardedActionSyntax': return guarded(node, context);
                 case 'ScreenToolbarSyntax': return { ...node, items: node.items.map(item => toolbar(item, { ...context, location: item.location })) };
                 case 'ScreenSectionSyntax': return { ...node, directives: body(node.directives, scope) };
@@ -71,7 +72,7 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
     };
     const screen = (node: ScreenSyntax, slice: SliceSyntax): ScreenSyntax => {
         const context = { data: [], slice, location: node.location };
-        return { ...node, directives: body(node.directives, context), contributions: node.contributions?.map(contribution => ({ ...contribution, directives: body(contribution.directives, context) })) };
+        return { ...node, directives: body(node.directives, context), ...(node.contributions === undefined ? {} : { contributions: node.contributions.map(contribution => ({ ...contribution, directives: body(contribution.directives, context) })) }) };
     };
     const feature = (node: FeatureSyntax): FeatureSyntax => ({ ...node, features: node.features.map(feature), slices: node.slices.map(slice => ({ ...slice, screens: slice.screens.map(node => screen(node, slice)) })) });
     const value = { ...application, modules: application.modules.map(module => ({ ...module, features: module.features.map(feature) })) };

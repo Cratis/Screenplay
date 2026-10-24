@@ -195,7 +195,7 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
-        if (diagnostic.Code is DiagnosticCodes.InferredActionSubject or DiagnosticCodes.ChangedActionSubject)
+        if (WorkspaceActionSubjectRepairs.Supports(diagnostic.Code))
         {
             return WorkspaceActionSubjectRepairs.Find(index, revision, diagnostic, verifyRepair);
         }

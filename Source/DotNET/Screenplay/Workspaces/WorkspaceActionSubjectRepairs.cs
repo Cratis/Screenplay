@@ -12,6 +12,8 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static class WorkspaceActionSubjectRepairs
 {
+    internal static bool Supports(string code) => code == DiagnosticCodes.InferredActionSubject || code == DiagnosticCodes.ChangedActionSubject;
+
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
     {
         var matches = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Location == diagnostic.Location &&
@@ -38,7 +40,9 @@ internal static class WorkspaceActionSubjectRepairs
         var result = ImmutableArray.CreateBuilder<WorkspaceDiagnosticRepair>();
         foreach (var (node, title) in candidates)
         {
-            var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, subject.Handle,
+            var repair = new WorkspaceDiagnosticRepair(
+                diagnostic.Code,
+                subject.Handle,
                 [new ReplaceWorkspaceNode(subject.Handle, subject.Node, node)])
             {
                 Title = title,

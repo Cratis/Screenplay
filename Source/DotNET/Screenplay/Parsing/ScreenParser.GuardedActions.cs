@@ -12,7 +12,7 @@ internal static partial class ScreenParser
 {
     internal static void ValidateGuardedCondition(ParserContext context, ConditionSyntax condition) => ValidateActionCondition(context, condition);
 
-    static ScreenGuardedActionSyntax ParseGuardedAction(ParserContext context, SourceLine line, string label)
+    static ScreenGuardedActionSyntax ParseGuardedAction(ParserContext context, SourceLine line, string label, ScreenActionSubjectKind? subject)
     {
         var alternatives = new List<ScreenActionAlternativeSyntax>();
         ScreenActionOtherwiseSyntax? otherwise = null;
@@ -82,7 +82,7 @@ internal static partial class ScreenParser
             context.Error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded action must declare at least one 'when' alternative", line.Location);
         }
 
-        return new(label, alternatives, line.Location) { Otherwise = otherwise, Navigate = navigate };
+        return new(label, alternatives, line.Location) { Otherwise = otherwise, Navigate = navigate, Subject = subject };
     }
 
     static List<InteractionArgumentSyntax> ParseActionArguments(ParserContext context, SourceLine line)

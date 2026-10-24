@@ -109,10 +109,8 @@ internal static partial class GuardedActionValidator
         ParserContext context)
     {
         var command = declarations.Resolve(commandName, scope, slice => slice.Commands, command => command.Name)?.Node;
-        var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var argument in arguments)
         {
-            if (!names.Add(argument.Name)) context.Error(DiagnosticCodes.InvalidInteractionArgument, $"Duplicate argument '{argument.Name}' - supply each input only once", argument.Location);
             var inputs = command?.Properties.Where(property => property.Name == argument.Name).ToArray();
             if (inputs is { Length: 0 })
             {

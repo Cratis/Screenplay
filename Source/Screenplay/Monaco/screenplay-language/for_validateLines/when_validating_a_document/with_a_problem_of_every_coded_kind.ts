@@ -176,6 +176,10 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
     });
 
+    beforeEach(() => {
+        issues.push(...validateLines(readFileSync(new URL('../../../../Compiler/Conformance/action-subjects/source.play', import.meta.url), 'utf8').split('\n')));
+    });
+
     it('should give every issue it reports a code', () => {
         issues.filter((issue) => !issue.code).should.be.empty;
     });
