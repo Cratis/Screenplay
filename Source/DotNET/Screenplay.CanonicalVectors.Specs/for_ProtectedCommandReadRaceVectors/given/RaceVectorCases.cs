@@ -120,6 +120,17 @@ internal static class RaceVectorCases
             [History(Contract), History(Contract, Fact("Recorded", "read", "rewritten")), History(Accepted, Fact("Recorded", "read", "original"))])
     ];
 
+    internal static readonly RaceCase[] AllV1R2 =
+    [
+        .. All,
+        new(
+            "read-race-and-late-uniqueness-claim",
+            "A constraint refusal takes precedence over a protected-read conflict against the same later world.",
+            [Fact("Recorded", "read", "original")],
+            Update(),
+            [Later(Constraint, Fact("Recorded", "read", "changed"), Fact("Saved", "competitor", "original"))])
+    ];
+
     static RaceFact Fact(string @event, string source, string? value = null, string? sourceType = null) => new(@event, source, value, sourceType);
 
     static RaceRequest Update() => new("Update", [("id", "write"), ("lookup", "read")]);
