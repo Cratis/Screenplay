@@ -26,20 +26,20 @@ public sealed partial class SemanticModelBinder
         void RefuseApplicationTimeZone()
         {
             if (syntax.TimeZone is null) return;
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, "The application time zone is not yet admitted (decision 0106/0107).", syntax.TimeZone.Location);
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, "The application time zone is not yet admitted (decision 0106/0107) (#824).", syntax.TimeZone.Location);
         }
 
         void RefuseCommandCalendar(CommandSyntax command)
         {
             if (command.Calendar is null) return;
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' declares a calendar, which is not yet admitted (decision 0106/0107).", command.Calendar.Location);
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' declares a calendar, which is not yet admitted (decision 0106/0107) (#824).", command.Calendar.Location);
         }
 
         bool ValidateClockSpecificationAdmission(SpecificationSyntax specification)
         {
             if (specification.GivenTimeZone is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' states 'given time zone', which is not yet admitted (decision 0106/0107).", specification.GivenTimeZone.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' states 'given time zone', which is not yet admitted (decision 0106/0107) (#824).", specification.GivenTimeZone.Location);
                 return false;
             }
 
@@ -52,7 +52,7 @@ public sealed partial class SemanticModelBinder
             operands.VisitApplication(syntax);
             foreach (var operand in operands.Nodes)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Clock operands (today, now and date of) are not yet admitted (decision 0106/0107).", operand.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Clock operands (today, now and date of) are not yet admitted (decision 0106/0107) (#824).", operand.Location);
             }
         }
     }

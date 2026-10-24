@@ -57,6 +57,7 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | Construct | Issue | Fixture |
 | --- | --- | --- |
 | `numbers exact` | #285 | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
+| `time zone`, `calendar`, `given time zone`, clock offsets and `date of` | #824 | `Documentation/screenplay/fixtures/clock-preview.play` |
 | `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
 
 `for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every

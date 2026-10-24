@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
@@ -11,6 +12,21 @@ const prefix = 'module M\n  feature F\n    slice StateChange S\n      command Su
 const source = 'time zone configurable default "Europe/Oslo"\n' + prefix + '        calendar from $context.zone\n        produces when date of occurred >= date of now - 7 days\n          Recorded\n      specification Case\n        given time zone "Europe/Oslo"\n';
 
 describe('when parsing clock operands', () => {
+    it('should preserve every clock preview kind without authoring diagnostics', () => {
+        const preview = readFileSync(new URL('../../../../Documentation/screenplay/fixtures/clock-preview.play', import.meta.url), 'utf8');
+        const result = parse(preview);
+        expect(result.diagnostics).toEqual([]);
+        class Walker extends ScreenplaySyntaxWalker {
+            kinds = new Set<string>();
+            override visitNode(node: SyntaxNode): void { this.kinds.add(node.kind); }
+        }
+        const walker = new Walker();
+        walker.visitApplication(result.value);
+        for (const kind of ['TimeZoneSyntax', 'CommandCalendarSyntax', 'SpecificationTimeZoneSyntax', 'ClockOffsetExpressionSyntax', 'DateOfExpressionSyntax']) {
+            expect(walker.kinds.has(kind)).toBe(true);
+        }
+    });
+
     it('should parse and walk every syntax-only node', () => {
         const result = parse(source);
         expect(result.diagnostics).toEqual([]);
