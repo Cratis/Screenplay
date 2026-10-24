@@ -13,7 +13,7 @@ A Screenplay is a script for a production, so its file is a `.play`. The name is
 
 ## Do I still write C#, TypeScript, or React?
 
-Only at the implementation points that admit code. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference where the declarative language cannot state the realization. Concepts, commands, events, queries, and specifications still carry the business meaning; code is an attachment rather than a second application model.
+Only at the implementation points that admit code. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference where the declarative language cannot state the realization. Concepts, commands, events, queries, and specifications still carry the business meaning; code is an attachment rather than a second application model. Built-in inline tags are `csharp`, `java`, `typescript`, `react`, `html`, and `sql`. Java is for targets that render Java, such as Axon; the Cratis target refuses Java bodies.
 
 ## What are Stage and Studio?
 

@@ -189,6 +189,8 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0799` | `template` | text | no | The template that cannot start a screen in a feature. | — |
 | `PLAY0799` | `blueprint` | text | yes | The blueprint the template comes from. | — |
 | `PLAY0800` | `subject` | declaration | no | The command whose handler requires a constrained implementation attachment. | — |
+| `PLAY0810` | `query` | text | no | The performer query that declares the argument. | — |
+| `PLAY0810` | `argument` | text | no | The context-sourced argument that cannot be supplied to the performer. | — |
 
 ## The catalogue
 
@@ -364,6 +366,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0051` | Error | A query declares more than one performer, and a query has at most one. |
 | `PLAY0052` | Error | A performer names neither a `file` nor an inline code block. |
 | `PLAY0053` | Error | A line in a performer body opens with a word a performer declares nothing by. |
+| `PLAY0810` | Error | A performer query declares a `by` or `filter` argument sourced from `$context`. The message and arguments name the query and argument. Context-sourced performer arguments are not supported; use a caller-supplied argument instead. C# binding only. |
 
 ### Projections
 
@@ -1134,7 +1137,7 @@ These checks do not execute handlers, custom predicates or opaque expressions. A
 
 Concept compliance markers, qualifiers and secret scopes are admitted by ESM v13. `PLAY0268` refuses compliance on enum or event-source/stream identity concepts and refuses an event containing personal or explicitly subject-scoped secret values together with an explicit `subject` mark until lineage is admitted. The latter check is source/binder-only: subject marks have no ESM bytes. `PLAY0515` still rejects protected identities during source validation. The strict reader and programmatic validator refuse compliance below v13, unknown special categories or scopes, secret scope next to personal, and compliance on enum or identity concepts. Reasons remain report-only (`PLAY0270`).
 
-Caller-supplied equality filters on collection queries are admitted by ESM v14. `PLAY0268` names the query, filter and reason for a refused filter: it has a `from` source, returns a single result, lacks a same-named scalar primitive/concept/enum property, differs in nominal type (ignoring optionality), repeats a name or duplicates `by`. Explicit scope, performer and context-sourced `by` each have their own refusal. The strict reader and evaluator reject unknown/repeated filter values, missing required filters, null and type mismatches. `PLAY0468` applies to unknown/repeated/missing required specification arguments in both query spellings. See [Queries](queries.md).
+Caller-supplied equality filters on collection queries are admitted by ESM v14. `PLAY0268` names the query, filter and reason for a refused filter: it has a `from` source, returns a single result, lacks a same-named scalar primitive/concept/enum property, differs in nominal type (ignoring optionality), repeats a name or duplicates `by`. Explicit scope and context-sourced `by` each have their own refusal. Performer queries are opaque reads, but a context-sourced `by` or `filter` argument on one reports `PLAY0810` instead of being omitted from its shape. The strict reader and evaluator reject unknown/repeated filter values, missing required filters, null and type mismatches. `PLAY0468` applies to unknown/repeated/missing required specification arguments in both query spellings. See [Queries](queries.md).
 
 ESM v26 admits chronological Date/DateTime comparisons only in command `require`, `produces when` and command/property validation rules. `PLAY0268` refuses mixed primitives, optional condition operands, concept rules, reaction `where`, protected read paths, `$context` and `today`; a refused whole comparison reports only this code, without checking literals. In an admitted position, an invalid date literal or a DateTime literal without an explicit offset or Z reports `PLAY0273`. Runtime offset-less DateTime inputs on participating properties reject with Validation before rules, even for skipped comparisons. See [command date comparisons](commands.md#chronological-command-date-comparisons).
 
