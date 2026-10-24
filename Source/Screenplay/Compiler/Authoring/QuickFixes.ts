@@ -44,8 +44,21 @@ export interface QuickFixOptions {
     readonly diagnosticCode?: string;
 }
 
+const quickFixDiagnosticCodes: ReadonlySet<unknown> = new Set([
+    DiagnosticCodes.InferredActionSubject,
+    DiagnosticCodes.ChangedActionSubject,
+    DiagnosticCodes.EventFromLaterSlice,
+    DiagnosticCodes.DeprecatedStudioTextRulePattern,
+    DiagnosticCodes.DuplicateComplianceMarker,
+    DiagnosticCodes.LegacyOptionalSuffix,
+    DiagnosticCodes.LegacyComplianceMarker,
+    DiagnosticCodes.RedundantEventId,
+    DiagnosticCodes.PublicTranslationRequiresDirection,
+    DiagnosticCodes.LegacyProfileLayout,
+]);
+
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.InferredActionSubject || code === DiagnosticCodes.ChangedActionSubject || code === DiagnosticCodes.EventFromLaterSlice || code === DiagnosticCodes.DeprecatedStudioTextRulePattern || code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection || code === DiagnosticCodes.LegacyProfileLayout;
+    return quickFixDiagnosticCodes.has(code);
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.

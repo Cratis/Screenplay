@@ -13,7 +13,7 @@ import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
-import { ScreenActionSyntax, ScreenGuardedActionSyntax, ToolbarItemSyntax } from './Screens';
+import { validateActionSubject } from './ActionSubjectInvariants';
 import { SpecificationEventSyntax, SpecificationStreamSyntax } from './Specifications';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '../Text/SourceStreamNames';
@@ -32,12 +32,7 @@ const collection = (value: unknown, kind: string, message: string): void => {
 // The native ImplementationInvariants / OperationInvariants / EventSourceInvariants contracts.
 // Shared by the isolated strict reader and the writer, without pulling the transport schema into Monaco.
 export function validateSyntaxInvariants(node: SyntaxNode): void {
-    if (['ScreenActionSyntax', 'ScreenGuardedActionSyntax', 'ToolbarItemSyntax'].includes(node.kind)) {
-        const action = node as ScreenActionSyntax | ScreenGuardedActionSyntax | ToolbarItemSyntax;
-        if (action.subject != null && action.subject !== 'Item' && action.subject !== 'Screen') refuse('An action subject must be Item or Screen.');
-        if (action.kind === 'ToolbarItemSyntax' && action.subject != null && action.syntaxKind !== 'Action') refuse('Only an action toolbar item can have a subject.');
-        if (action.kind === 'ScreenActionSyntax' && action.inputs !== undefined) collection(action.inputs, 'InteractionArgumentSyntax', 'Action inputs must be a collection of arguments.');
-    }
+    validateActionSubject(node, collection);
     const metadataError = publicEventMetadataError(node);
     if (metadataError !== undefined) refuse(metadataError);
     if (node.kind === 'ConceptSyntax') {

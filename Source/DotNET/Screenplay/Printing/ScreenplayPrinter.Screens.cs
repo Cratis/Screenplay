@@ -10,6 +10,8 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static bool HasScreenActionBody(ScreenActionSyntax action) => action.Label is not null || action.Navigate is not null || action.Inputs.Any();
+
     void WriteScreen(ScreenplayWriter writer, ScreenSyntax screen)
     {
         using var anchor = writer.Anchor(screen);
@@ -157,7 +159,7 @@ public partial class ScreenplayPrinter
     {
         using var anchor = writer.Anchor(action);
         writer.Line($"action {action.Command}{WriteActionSubject(action.Subject)}");
-        if (action.Label is null && action.Navigate is null && !action.Inputs.Any())
+        if (!HasScreenActionBody(action))
         {
             return;
         }

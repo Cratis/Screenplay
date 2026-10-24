@@ -170,14 +170,16 @@ internal static class WorkspaceRepairVerification
 
     static WorkspaceAuthoringResult VerifyActionSubjectRepair(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringResult result)
     {
-        if (result.Accepted && WorkspaceActionSubjectRepairs.Supports(repair.DiagnosticCode) &&
-            !WorkspaceActionSubjectRepairs.Preserves(index, repair, result))
+        if (RequiresActionSubjectVerification(repair, result) && !WorkspaceActionSubjectRepairs.Preserves(index, repair, result))
         {
             return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Cannot prove that the action subject repair preserves the model, catalog, comments and other diagnostics.");
         }
 
         return result;
     }
+
+    static bool RequiresActionSubjectVerification(WorkspaceDiagnosticRepair repair, WorkspaceAuthoringResult result) =>
+        result.Accepted && WorkspaceActionSubjectRepairs.Supports(repair.DiagnosticCode);
 
     sealed record Verdict(bool Accepted, ImmutableArray<WorkspaceConflict> Conflicts)
     {

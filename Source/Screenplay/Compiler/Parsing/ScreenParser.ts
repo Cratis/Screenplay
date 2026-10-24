@@ -165,8 +165,14 @@ function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax |
 
 function parseAction(context: ParserContext, line: SourceLine): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
     const parsed = parseSubjectClause(context, line, true);
+    const result = parseActionHeader(context, line, parsed);
+    if (result === undefined || parsed.subject === undefined) return result;
+    return { ...result, subject: parsed.subject };
+}
+
+function parseActionHeader(context: ParserContext, line: SourceLine, parsed: ReturnType<typeof parseSubjectClause>): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
     const guarded = guardedAction.exec(parsed.header);
-    if (guarded !== null) return { ...parseGuardedAction(context, line, operandText(guarded, 1), parseNavigate), ...(parsed.subject === undefined ? {} : { subject: parsed.subject }) };
+    if (guarded !== null) return parseGuardedAction(context, line, operandText(guarded, 1), parseNavigate);
     const match = action.exec(parsed.header);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidActionDirective, `Invalid action directive '${line.content}' - expected 'action <Command>'`, locationOf(line));
@@ -184,13 +190,17 @@ function parseAction(context: ParserContext, line: SourceLine): ScreenActionSynt
         } else if (firstWord(child.content) === 'navigate') {
             target = parseNavigate(context, child.content, child) ?? null;
         } else if (firstWord(child.content) === 'with') {
-            const input = parsePlainActionInput(context, child, inputs);
-            if (input !== undefined) inputs.push(input);
+            addPlainActionInput(context, child, inputs);
         } else {
             context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));
         }
     }
-    return { kind: 'ScreenActionSyntax', command: match[1], label: text, navigate: target, ...(parsed.subject === undefined ? {} : { subject: parsed.subject }), ...(inputs.length === 0 ? {} : { inputs }), location: locationOf(line) };
+    return { kind: 'ScreenActionSyntax', command: match[1], label: text, navigate: target, ...(inputs.length === 0 ? {} : { inputs }), location: locationOf(line) };
+}
+
+function addPlainActionInput(context: ParserContext, line: SourceLine, inputs: InteractionArgumentSyntax[]): void {
+    const input = parsePlainActionInput(context, line, inputs);
+    if (input !== undefined) inputs.push(input);
 }
 
 function parseNavigate(context: ParserContext, text: string, line: SourceLine): ScreenNavigateSyntax | undefined {

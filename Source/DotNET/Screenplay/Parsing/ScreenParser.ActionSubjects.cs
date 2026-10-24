@@ -10,35 +10,43 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class ScreenParser
 {
-    static ScreenActionSubjectKind? ParseSubjectClause(ParserContext context, SourceLine line, bool action, out string header, out string? label)
+    static ScreenActionSubjectKind? ParseSubjectClause(SubjectClauseRequest request, out string header, out string? label)
     {
-        header = line.Content;
-        label = null;
+        header = request.Line.Content;
         var words = HeaderWordRegex().Matches(header).Cast<Match>().ToArray();
         var clauses = words.Where(word => word.Value == "for").ToArray();
         var labelWord = words.FirstOrDefault(word => word.Value == "label");
-        if (labelWord is not null)
-        {
-            var match = LabelRegex().Match(header[labelWord.Index..]);
-            if (match.Success)
-            {
-                label = OperandText(match, 1);
-                header = header[..labelWord.Index].TrimEnd();
-            }
-        }
+        label = ParseSubjectLabel(ref header, labelWord);
 
         if (clauses.Length == 0) return null;
         var clause = clauses[0];
         var suffix = SubjectClauseRegex().Match(header[clause.Index..]);
-        if (!action || clauses.Length != 1 || !suffix.Success || (labelWord is not null && labelWord.Index < clause.Index))
+        if (IsInvalidSubjectClause(request, clauses, suffix, labelWord))
         {
-            context.Error(DiagnosticCodes.InvalidActionSubjectClause, "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action", line.Location);
+            request.Context.Error(DiagnosticCodes.InvalidActionSubjectClause, "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action", request.Line.Location);
             header = header[..Math.Min(clause.Index, header.Length)].TrimEnd();
             return null;
         }
 
         header = header[..clause.Index].TrimEnd();
         return suffix.Groups[1].Value == "item" ? ScreenActionSubjectKind.Item : ScreenActionSubjectKind.Screen;
+    }
+
+    static string? ParseSubjectLabel(ref string header, Match? labelWord)
+    {
+        if (labelWord is null) return null;
+        var match = LabelRegex().Match(header[labelWord.Index..]);
+        if (!match.Success) return null;
+        var label = OperandText(match, 1);
+        header = header[..labelWord.Index].TrimEnd();
+        return label;
+    }
+
+    static bool IsInvalidSubjectClause(SubjectClauseRequest request, Match[] clauses, Match suffix, Match? labelWord)
+    {
+        if (!request.Action) return true;
+        if (clauses.Length != 1) return true;
+        return !suffix.Success || (labelWord is not null && labelWord.Index < clauses[0].Index);
     }
 
     static InteractionArgumentSyntax? ParsePlainActionInput(ParserContext context, SourceLine line, IReadOnlyList<InteractionArgumentSyntax> inputs)
@@ -58,6 +66,11 @@ internal static partial class ScreenParser
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\S+", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderWordRegex();
 
+    [GeneratedRegex(@"^item\s+\S+\s+action\s", RegexOptions.NonBacktracking)]
+    private static partial Regex ToolbarActionHeaderRegex();
+
     [GeneratedRegex(@"^for\s+(item|screen)$", RegexOptions.NonBacktracking)]
     private static partial Regex SubjectClauseRegex();
+
+    sealed record SubjectClauseRequest(ParserContext Context, SourceLine Line, bool Action);
 }
