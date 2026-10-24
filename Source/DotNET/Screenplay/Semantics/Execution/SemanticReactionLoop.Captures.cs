@@ -24,6 +24,10 @@ internal sealed partial class SemanticReactionLoop
             var contract = plan.Events[fact.EventContract];
             var record = SemanticCaptureEvaluation.EventRecord(plan, contract, fact);
             var key = SemanticCaptureEvaluation.EventKey(capture, contract, record);
+            if (capture.EventsSource is { KeyIsEventSource: true } && SemanticCaptureEvaluation.KeyDisagreesWithSource(fact, key) is { } disagreement)
+            {
+                throw new InvalidSemanticContract($"Capture '{capture.Name}' keys by event source, but event '{contract.Name}' from source '{disagreement}' carries key '{SemanticCaptureEvaluation.KeyText(key)}'.");
+            }
             if (key is not (SemanticTextValue or SemanticNumberValue))
             {
                 return new SemanticUnsupported(World, SemanticExecutionCapability.Specification, $"Capture '{capture.Name}' requires a text or numeric event key '{capture.Key}'.");

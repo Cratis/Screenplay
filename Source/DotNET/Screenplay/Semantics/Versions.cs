@@ -168,6 +168,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V32 = new(32, 0);
 
     /// <summary>
+    /// Gets the language version admitting an events capture that keys by its event source.
+    /// </summary>
+    public static readonly LanguageVersion V33 = new(33, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -356,6 +361,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting typed event capture keys.
     /// </summary>
     public static readonly SemanticVersion V32 = new(32, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting an events capture that keys by its event source.
+    /// </summary>
+    public static readonly SemanticVersion V33 = new(33, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1176,7 +1186,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV32Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV33Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1189,7 +1199,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV32Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV33Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

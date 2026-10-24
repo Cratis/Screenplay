@@ -84,6 +84,7 @@ export const diagnosticCodes = {
     invalidCaptureEventsSource: 'PLAY0620',
     captureEventsFromSeveralOrigins: 'PLAY0687',
     captureEventsKeyNotRequired: 'PLAY0700',
+    captureEventSourceKeyOutsideEvents: 'PLAY0809',
     captureEventsRecordFixture: 'PLAY0701',
     refutedGeneratedConceptRule: 'PLAY0688',
     unprovenGeneratedConceptRule: 'PLAY0689',

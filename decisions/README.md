@@ -108,3 +108,4 @@
 | [0111](0111-explicit-reference-choice-for-identifier-inputs.md) | A reference input chooses from a declared query; defaults are declared once | accepted | none | 2026-10-23 | L0 (delegated by woksin) |
 | [0112](0112-screen-title-and-shared-fallback-naming-rule.md) | A top-level `title` is the screen title, and names fall back through one shared rule | proposed | none | — | — |
 | [0113](0113-performer-bodies-are-rendered.md) | Performer bodies are rendered, with a documented typed context | proposed | none | — | — |
+| [0114](0114-events-capture-keys-by-event-source.md) | Let an events capture key by its event source (ESM v33) | accepted | implemented | 2026-10-24 | Sindre Alstad Wilting (delegated repository acceptance) |

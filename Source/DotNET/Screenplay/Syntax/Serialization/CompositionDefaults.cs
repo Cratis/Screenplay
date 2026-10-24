@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// </summary>
 static class CompositionDefaults
 {
-    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes) };
+    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes), nameof(Captures.CaptureSyntax.KeyIsEventSource) };
 
     static readonly Dictionary<string, Default> _templateMembers = new(StringComparer.Ordinal)
     {
@@ -44,6 +44,7 @@ static class CompositionDefaults
         [typeof(ToolbarButtonSyntax)] = new(StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null, ["authorize"] = Default.Null, ["confirm"] = Default.Null },
         [typeof(NavigationRegionSyntax)] = new(StringComparer.Ordinal) { ["logo"] = Default.Null, ["buttons"] = Default.Empty },
         [typeof(Specifications.SpecificationSyntax)] = new(StringComparer.Ordinal) { ["givenGenerated"] = Default.Empty },
+        [typeof(Captures.CaptureSyntax)] = new(StringComparer.Ordinal) { ["keyIsEventSource"] = Default.False },
         [typeof(AddMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },
         [typeof(SubtractMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },
         [typeof(NavigationItemSyntax)] = new(StringComparer.Ordinal) { ["icon"] = Default.Null, ["target"] = Default.Null, ["slot"] = Default.Null, ["children"] = Default.Empty },
@@ -89,7 +90,7 @@ static class CompositionDefaults
     /// <returns><see langword="true"/> when an absent member reads as its default.</returns>
     internal static bool IsOptional(PropertyInfo property) =>
         _optionalBooleans.Contains(property.Name) &&
-        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax));
+        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax) || property.DeclaringType == typeof(Captures.CaptureSyntax));
 
     static bool IsEmpty(object? value) => value is null || (value is IEnumerable items && !items.Cast<object>().Any());
 }
