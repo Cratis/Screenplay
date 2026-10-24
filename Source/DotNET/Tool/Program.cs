@@ -3,4 +3,11 @@
 
 using Cratis.Screenplay.Tool;
 
+#if DEBUG
+if (args.Length > 0 && args[0] == "--specifications")
+{
+    return await Xunit.Runner.InProc.SystemConsole.ConsoleRunner.Run(args[1..]);
+}
+#endif
+
 return ToolCommands.Run(args, Console.Out, Console.Error);
