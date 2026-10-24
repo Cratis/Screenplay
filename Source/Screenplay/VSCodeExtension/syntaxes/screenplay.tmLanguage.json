@@ -11,6 +11,7 @@
         { "include": "#reaction-batches-preamble" },
         { "include": "#command-reads-preamble" },
         { "include": "#fenced-csharp" },
+        { "include": "#fenced-java" },
         { "include": "#fenced-react" },
         { "include": "#fenced-typescript" },
         { "include": "#fenced-html" },
@@ -54,6 +55,7 @@
                 { "include": "#description-block" },
                 { "include": "#comment" },
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 { "include": "#fenced-typescript" },
                 { "include": "#fenced-sql" },
                 { "include": "#code-block-csharp" },
@@ -94,6 +96,7 @@
                 },
                 { "include": "#comment" },
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 {
                     "match": "^\\s*(?:(validate)\\s+)?(checksum)\\s+(luhn|mod11|mod97)\\b",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
@@ -132,6 +135,7 @@
                 { "include": "#event-block" },
                 { "include": "#description-block" },
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 { "include": "#stream-id-parts" },
                 { "include": "#keyword-input" },
                 { "include": "#keywords" },
@@ -142,13 +146,13 @@
             "begin": "^([ ]*)(validate)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
-            "patterns": [{ "include": "#command-named-rule" }, { "include": "#fenced-csharp" }, { "include": "#keywords" }, { "include": "#common" }]
+            "patterns": [{ "include": "#command-named-rule" }, { "include": "#fenced-csharp" }, { "include": "#fenced-java" }, { "include": "#keywords" }, { "include": "#common" }]
         },
         "command-named-rule": {
             "begin": "^([ ]*)((?:[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]|[.])+)\\s+(rule)\\s+([A-Za-z_][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*)(?=\\s*(?:severity\\s+\\w+|message\\s+.*|//.*|$))",
             "beginCaptures": { "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
-            "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
+            "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-java" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
         },
         "stream-id-parts": {
             "begin": "^([ \\t]*)(streamId)(?=\\s*(?://.*)?$)",
@@ -211,6 +215,7 @@
                 { "include": "#handler-implementation" },
                 { "include": "#description-block" },
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 { "include": "#fenced-react" },
                 { "include": "#fenced-typescript" },
                 { "include": "#fenced-html" },
@@ -556,6 +561,14 @@
             "contentName": "meta.embedded.block.csharp",
             "patterns": [{ "include": "source.cs" }]
         },
+        "fenced-java": {
+            "begin": "^[ ]*(```)(java)[ ]*$",
+            "beginCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" }, "2": { "name": "entity.name.tag.code-language.screenplay" } },
+            "end": "^[ ]*(```)[ ]*$",
+            "endCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" } },
+            "contentName": "meta.embedded.block.java",
+            "patterns": [{ "include": "source.java" }]
+        },
         "fenced-react": {
             "begin": "^[ ]*(```)(react)[ ]*$",
             "end": "^[ ]*(```)[ ]*$",
@@ -703,6 +716,7 @@
             "patterns": [
                 { "include": "#handler-implementation" },
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 { "include": "#fenced-react" },
                 { "include": "#fenced-typescript" },
                 { "include": "#fenced-html" },
@@ -717,6 +731,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 { "include": "#fenced-csharp" },
+                { "include": "#fenced-java" },
                 { "include": "#fenced-react" },
                 { "include": "#fenced-typescript" },
                 { "include": "#fenced-html" },

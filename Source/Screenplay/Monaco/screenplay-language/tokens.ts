@@ -19,6 +19,7 @@ const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'pur
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
+    java: 'java',
     typescript: 'typescript',
     react: 'typescript',
     html: 'html',

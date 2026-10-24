@@ -238,7 +238,7 @@ export const clauseKeywords = [
     'warning',
 ];
 
-export const codeBlockTags = ['csharp', 'typescript', 'react', 'html', 'sql'];
+export const codeBlockTags = ['csharp', 'java', 'typescript', 'react', 'html', 'sql'];
 
 // The roots a `$context.` path can start with — the members of CommandContext and QueryContext.
 export const contextRoots = [
