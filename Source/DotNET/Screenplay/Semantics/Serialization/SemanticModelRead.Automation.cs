@@ -183,14 +183,13 @@ internal static partial class SemanticModelRead
                 case "sourceEvents" when schemaVersion >= LanguageVersion.V9.Major:
                     eventsSource = new([.. StringArray(ref reader, property).Select(SemanticId.Parse)]);
                     break;
-                case "keyIsEventSource" when schemaVersion >= LanguageVersion.V33.Major:
-                    keyIsEventSource = Boolean(ref reader, property);
+                default:
+                    keyIsEventSource = CaptureEventSourceKey(ref reader, property, schemaVersion);
                     break;
-                default: throw Unknown(property, "capture");
             }
         }
 
-        if (keyIsEventSource) eventsSource = (eventsSource ?? throw new InvalidSemanticContract("A capture declares 'keyIsEventSource' without 'sourceEvents'.")) with { KeyIsEventSource = true };
+        eventsSource = ApplyCaptureEventSourceKey(eventsSource, keyIsEventSource);
 
         Required(id.IsSet && name is not null && key is not null && !map.IsDefault && !appends.IsDefault && !children.IsDefault && !nested.IsDefault, "capture");
         return new(id, name!, key!, map, appends) { Children = children, Nested = nested, EventsSource = eventsSource };
@@ -563,6 +562,17 @@ internal static partial class SemanticModelRead
         "records" => SemanticCaptureFieldKind.Records,
         _ => throw DiscriminatorError(value, "capture record field kind")
     };
+
+    static bool CaptureEventSourceKey(ref Utf8JsonReader reader, string property, uint schemaVersion)
+    {
+        if (property != "keyIsEventSource" || schemaVersion < LanguageVersion.V33.Major) throw Unknown(property, "capture");
+        return Boolean(ref reader, property);
+    }
+
+    static SemanticCaptureEventsSource? ApplyCaptureEventSourceKey(SemanticCaptureEventsSource? eventsSource, bool keyIsEventSource)
+        => keyIsEventSource
+            ? (eventsSource ?? throw new InvalidSemanticContract("A capture declares 'keyIsEventSource' without 'sourceEvents'.")) with { KeyIsEventSource = true }
+            : eventsSource;
 
     sealed class AutomationSpecification
     {

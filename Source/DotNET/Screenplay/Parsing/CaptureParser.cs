@@ -78,13 +78,7 @@ internal static partial class CaptureParser
                     source = ParseSource(context, line);
                     break;
                 case "key":
-                    key = line.Content["key".Length..].Trim();
-                    if (EventSourceKeyRegex().Match(key) is { Success: true } marker)
-                    {
-                        key = key[..marker.Index];
-                        keyIsEventSource = true;
-                    }
-
+                    key = ParseKey(line.Content["key".Length..].Trim(), ref keyIsEventSource);
                     keyLocation = line.Location;
                     break;
                 case "map":
@@ -513,6 +507,17 @@ internal static partial class CaptureParser
         }
 
         return (map, appends, mapLocation);
+    }
+
+    static string ParseKey(string key, ref bool keyIsEventSource)
+    {
+        if (EventSourceKeyRegex().Match(key) is { Success: true } marker)
+        {
+            keyIsEventSource = true;
+            return key[..marker.Index];
+        }
+
+        return key;
     }
 
     [GeneratedRegex(@"\s+is\s+event\s+source$", RegexOptions.NonBacktracking)]

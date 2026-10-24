@@ -44,8 +44,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
+        => SemanticModelValidator.UsesEventSourceCaptureKeys(application)
+            ? (LanguageVersion.V33, SemanticVersion.V33)
+            : SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectVersionsBeforeEventSourceCaptureKeys(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
-        if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
         if (SemanticModelValidator.UsesTypedCaptureKeys(application)) return (LanguageVersion.V32, SemanticVersion.V32);
         if (SemanticModelValidator.UsesAnonymousPolicies(application)) return (LanguageVersion.V31, SemanticVersion.V31);
         if (SemanticModelValidator.UsesAcmeSecondAdmissions(application)) return (LanguageVersion.V30, SemanticVersion.V30);

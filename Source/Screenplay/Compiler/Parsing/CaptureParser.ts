@@ -51,12 +51,7 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
             case 'source': source = parseSource(context, child, owner); break;
-            case 'key': {
-                key = child.content.substring('key'.length).trim();
-                const marker = eventSourceKeyRules.exec(key);
-                if (marker !== null) { key = key.substring(0, marker.index); keyIsEventSource = true; }
-                break;
-            }
+            case 'key': [key, keyIsEventSource] = parseKey(child.content.substring('key'.length).trim(), keyIsEventSource); break;
             case 'map': map.push(...parseMap(context, child)); break;
             case 'append': pushAppend(context, child, appends); break;
             case 'children': {
@@ -78,7 +73,16 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
                 context.skipOpaqueBlock(child.indent);
         }
     }
-    return { kind: 'CaptureSyntax', sourceOptions: context.sourceOptions, name, source, key, ...(keyIsEventSource ? { keyIsEventSource } : {}), map, appends, children, nested, location: locationOf(line) };
+    return { kind: 'CaptureSyntax', sourceOptions: context.sourceOptions, name, source, key, ...eventSourceKeyMarker(keyIsEventSource), map, appends, children, nested, location: locationOf(line) };
+}
+
+function parseKey(key: string, keyIsEventSource: boolean): [string, boolean] {
+    const marker = eventSourceKeyRules.exec(key);
+    return marker !== null ? [key.substring(0, marker.index), true] : [key, keyIsEventSource];
+}
+
+function eventSourceKeyMarker(keyIsEventSource: boolean): { keyIsEventSource?: boolean } {
+    return keyIsEventSource ? { keyIsEventSource } : {};
 }
 
 function parseSource(context: ParserContext, line: SourceLine, owner: ParserContext): CaptureSourceSyntax {
