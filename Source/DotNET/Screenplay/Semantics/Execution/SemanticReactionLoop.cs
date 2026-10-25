@@ -29,6 +29,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     readonly Queue<(SemanticFact Fact, DateTimeOffset? Occurred)> _pending = new();
     readonly Dictionary<(SemanticId Command, SemanticId Property), Queue<SemanticValue>> _pinned = [];
     readonly List<SemanticFact> _facts = [];
+    readonly List<SemanticRecordedInvocation> _invocations = [];
     readonly SemanticValueValidator _validator = new(
         plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
         plan.Model.Application.Types.ToDictionary(type => type.Id));
@@ -42,6 +43,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Gets every fact appended through the loop, in order.
     /// </summary>
     public ImmutableArray<SemanticFact> Facts => [.. _facts];
+
+    /// <summary>
+    /// Gets every invocation a reaction made through the loop, in invocation order.
+    /// </summary>
+    public ImmutableArray<SemanticRecordedInvocation> Invocations => [.. _invocations];
 
     /// <summary>
     /// Pins the values the commands that reactions invoke receive for their generated properties, each invocation taking the
@@ -325,6 +331,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         };
 
         var result = evaluator.Execute(plan, World, request);
+        _invocations.Add(new(command.Id, commandValues, result is SemanticAccepted));
         if (result is not SemanticAccepted accepted)
         {
             if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&

@@ -655,6 +655,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then error "<message>"` | A rejection, for the named reason. |
 | `then error` | A validation or constraint rejection without a named reason. |
 | `then denied` | A typed authorization denial (`Unauthorized`). |
+| `then invokes <CommandType>` | An invocation the slice's own reactions make, with the stated values; when any is stated, every invocation must match (ESM v34). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
 ## Pinning generated values for a reaction-invoked command
@@ -673,6 +674,23 @@ specification ConfirmingAnOrderCreatesAShipment
 ```
 
 Each invocation of the command by a reaction takes the next value pinned for that command and property, in authored order; two invocations need two lines. The command and property must name a `generated` property, and the value is a concrete literal of its type. An invocation with nothing pinned stays unsupported (`IdentityAllocation`) rather than inventing a value, so a specification never passes by accident. The pinned values select language/semantic `30.0`; commands that a specification invokes directly keep `generated <property> = <value>` inside the `when` block.
+
+## Invocation expectations
+
+A specification runs its own slice only ([decision 0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md)). When its reaction invokes a command another slice owns, the command is decided for its outcome but its events are not part of this slice's facts. State the invocation itself with `then invokes <Command>`, with the values it is expected to pass indented beneath it, like the values of a `then <Event>`:
+
+```screenplay
+specification ClosingAPaidInvoice
+  when append InvoicePaid
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+  then invokes CloseInvoice
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    reason = "paid"
+```
+
+The run records every invocation the slice's reactions make, in order, whether the command accepted or refused it and whether or not the slice owns the command. Once a specification states one `then invokes`, the recorded invocations must match the stated ones exactly in count and order; with `then events in any order` they match in any order. Only the stated values are compared, so a property left out is not checked. A specification that states no `then invokes` does not compare invocations. A stated invocation is a success outcome.
+
+The command must exist, every value must name one of its non-generated properties with a literal of that property's type, and a reaction declared in the specification's own slice must invoke the command; otherwise the compiler reports `PLAY0816`. The statement selects language/semantic `34.0`.
 
 ## Generated fixtures and return expectations
 
