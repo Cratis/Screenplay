@@ -98,6 +98,7 @@ static class McpDeclarationDetails
                     givenOperationFailures = specification.GivenOperationFailures,
                     thenOperations = specification.ThenOperations,
                     thenCompensated = specification.ThenCompensated,
+                    thenInvocations = specification.ThenInvocations,
                     syntaxOnly = readiness.SyntaxOnly(specification),
                     executionReadiness = readiness.ExecutionReadiness(specification),
                     givenEvents = specification.Given.Count(),

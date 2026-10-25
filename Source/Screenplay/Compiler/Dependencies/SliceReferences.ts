@@ -10,7 +10,7 @@ import { EventSpecSyntax, JoinEventSyntax, ProjectionSyntax, ProjectionBlockSynt
 import { InvokesSyntax, NamedTriggerSourceSyntax, ReactionTriggerSyntax } from '../Syntax/Reactions';
 import { ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenActionSyntax, ScreenDataSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
-import { SpecificationSyntax, SpecificationEventSyntax, SpecificationCommandSyntax, SpecificationRedeliverySyntax } from '../Syntax/Specifications';
+import { SpecificationSyntax, SpecificationEventSyntax, SpecificationCommandSyntax, SpecificationInvocationSyntax, SpecificationRedeliverySyntax } from '../Syntax/Specifications';
 import { SliceSyntax } from '../Syntax/Structure';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
 import type { DependencyKind, SliceReference, SharedReference, CollectedSliceReferences } from './index';
@@ -21,7 +21,7 @@ export const referenceClassifications: Readonly<Record<string, DependencyKind | 
     uniqueProperty: 'usesFactsFrom', concurrency: 'usesFactsFrom', trigger: 'reactsTo', reads: 'decidesFrom',
     invokes: 'asks', action: 'asks', actionAlternative: 'asks', actionOtherwise: 'asks', formCommand: 'asks', dataQuery: 'shows', populate: 'shows', navigate: 'shows',
     whenRedeliveredEvent: 'verifiedWith', redeliveryReaction: 'verifiedWith', refusalConstraint: null, refusalProduces: null,
-    specificationEvent: 'verifiedWith', givenEvent: 'verifiedWith', whenAppendedEvent: 'verifiedWith', thenEvent: 'verifiedWith', whenCommand: 'verifiedWith',
+    specificationEvent: 'verifiedWith', givenEvent: 'verifiedWith', whenAppendedEvent: 'verifiedWith', thenEvent: 'verifiedWith', whenCommand: 'verifiedWith', thenInvokes: 'verifiedWith',
     declares: null, uses: null, commandEventSource: null, commandStream: null, specificationEventSource: null, specificationStream: null, thenOperation: null,
     givenOperationFailure: null, thenCompensated: null, produces: null, authorizes: null, queryResult: null,
     dataReadModel: null, type: null, exampleType: null, contributes: null, template: null, specificationReadModel: null,
@@ -123,6 +123,7 @@ export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
             case 'ScreenNavigateSyntax': add((node as ScreenNavigateSyntax).screen, 'Screen', 'navigate'); break;
             case 'SpecificationEventSyntax': add((node as SpecificationEventSyntax).eventType, 'Event', this.specification?.given.includes(node as SpecificationEventSyntax) === true ? 'givenEvent' : this.specification?.whenAppended === node ? 'whenAppendedEvent' : 'thenEvent'); break;
             case 'SpecificationCommandSyntax': add((node as SpecificationCommandSyntax).commandType, 'Command', 'whenCommand'); break;
+            case 'SpecificationInvocationSyntax': add((node as SpecificationInvocationSyntax).command, 'Command', 'thenInvokes'); break;
             case 'SpecificationRedeliverySyntax': {
                 const redelivery = node as SpecificationRedeliverySyntax;
                 add(redelivery.eventType, 'Event', 'whenRedeliveredEvent');

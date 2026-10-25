@@ -166,7 +166,7 @@ sealed class WorkspaceReferenceBindings
     {
         WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Event or WorkspaceReferenceDomain.View or WorkspaceReferenceDomain.Fixture or WorkspaceReferenceDomain.Reaction or WorkspaceReferenceDomain.Constraint => true,
         WorkspaceReferenceDomain.Trigger => reference.Entry.Node is NamedTriggerSourceSyntax,
-        WorkspaceReferenceDomain.Command => reference.Entry.Node is InvokesSyntax,
+        WorkspaceReferenceDomain.Command => reference.Entry.Node is InvokesSyntax or SpecificationInvocationSyntax,
         _ => false
     };
 

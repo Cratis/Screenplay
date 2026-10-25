@@ -99,6 +99,7 @@ public static partial class SpecificationExamples
             SpecificationErrorSyntax { CaseValue: { } reference } item => item with { Name = (Value(reference) as LiteralExpressionSyntax)?.Value as string, CaseValue = null },
             SpecificationStreamSyntax item => item with { StreamId = item.StreamId is null ? null : item.StreamId with { Source = Value(item.StreamId.Source) }, StreamIdParts = Values(item.StreamIdParts) },
             SpecificationOperationSyntax item => item with { Values = Values(item.Values) },
+            SpecificationInvocationSyntax item => item with { Values = Values(item.Values) },
             ScalarSpecificationReturnSyntax item => item with { Value = Value(item.Value) },
             RecordSpecificationReturnSyntax item => item with { Fields = Values(item.Fields) },
             _ => step
@@ -121,6 +122,7 @@ public static partial class SpecificationExamples
             ThenResults = [.. specification.ThenResults.Select(step => (SpecificationQueryResultSyntax)Step(step))],
             ThenErrors = [.. specification.ThenErrors.Select(step => (SpecificationErrorSyntax)Step(step))],
             ThenOperations = [.. specification.ThenOperations.Select(step => (SpecificationOperationSyntax)Step(step))],
+            ThenInvocations = [.. specification.ThenInvocations.Select(step => (SpecificationInvocationSyntax)Step(step))],
             ThenReturns = specification.ThenReturns is null ? null : (SpecificationReturnSyntax)Step(specification.ThenReturns)
         };
     }

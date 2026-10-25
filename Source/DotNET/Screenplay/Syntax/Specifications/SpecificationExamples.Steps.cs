@@ -26,6 +26,7 @@ public static partial class SpecificationExamples
         foreach (var step in specification.ThenResults) yield return ("then result", step, step.Properties);
         foreach (var step in specification.ThenErrors.Where(step => step.CaseValue is not null)) yield return ("then error", step, [new("message", step.CaseValue!, step.Location)]);
         foreach (var step in specification.ThenOperations) yield return ("then operation", step, step.Values);
+        foreach (var step in specification.ThenInvocations) yield return ("then invokes", step, step.Values);
         if (specification.ThenReturns is ScalarSpecificationReturnSyntax scalar) yield return ("then returns", scalar, [new("value", scalar.Value, scalar.Location)]);
         if (specification.ThenReturns is RecordSpecificationReturnSyntax record) yield return ("then returns", record, record.Fields);
     }

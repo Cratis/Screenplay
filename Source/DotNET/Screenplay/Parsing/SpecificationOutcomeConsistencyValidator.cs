@@ -22,6 +22,11 @@ internal static class SpecificationOutcomeConsistencyValidator
     {
         foreach (var (slice, scope) in declarations.Slices)
         {
+            foreach (var specification in slice.Specifications)
+            {
+                ValidateInvocations(specification, slice, scope, declarations, context);
+            }
+
             foreach (var specification in slice.Specifications.Where(specification => specification.When is not null))
             {
                 var command = declarations.Resolve(specification.When!.CommandType, scope, item => item.Commands, node => node.Name);
@@ -35,6 +40,26 @@ internal static class SpecificationOutcomeConsistencyValidator
                     var commandSlice = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, resolved.Scope)).Slice;
                     ValidateEvent(specification.When!, expected, scope, resolved.Node, commandSlice, resolved.Scope, declarations, context);
                 }
+            }
+        }
+    }
+
+    // A specification runs its own slice only, so only a reaction that slice declares can make the stated invocation.
+    static void ValidateInvocations(SpecificationSyntax specification, SliceSyntax slice, DeclarationScope scope, ConsistencyDeclarations declarations, ParserContext context)
+    {
+        foreach (var expected in specification.ThenInvocations)
+        {
+            if (declarations.Resolve(expected.Command, scope, entry => entry.Commands, node => node.Name) is not { } command) continue;
+            var triggers = slice.Reactions.SelectMany(reaction => reaction.Triggers).ToArray();
+            if (triggers.Any(trigger => trigger.File is not null || trigger.Code is not null)) continue;
+            var invoked = triggers.SelectMany(trigger => trigger.Invokes ?? [])
+                .Any(invocation => declarations.Resolve(invocation.Command, scope, entry => entry.Commands, node => node.Name) is { } target && ReferenceEquals(target.Node, command.Node));
+            if (!invoked)
+            {
+                context.Error(
+                    DiagnosticCodes.UnreachableSpecificationInvocation,
+                    $"Specification '{specification.Name}' states 'then invokes {expected.Command}', but no reaction of its slice '{slice.Name}' invokes '{command.Node.Name}'",
+                    expected.Location);
             }
         }
     }

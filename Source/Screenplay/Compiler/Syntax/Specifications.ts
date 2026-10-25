@@ -82,6 +82,13 @@ export interface SpecificationGeneratedValueSyntax extends SyntaxNode {
     readonly source: ExpressionSyntax;
 }
 
+// 'then invokes <Command>' - an invocation the specification's own slice's reactions are expected to make, with the values it passes.
+export interface SpecificationInvocationSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationInvocationSyntax';
+    readonly command: string;
+    readonly values: readonly PropertyMappingSyntax[];
+}
+
 // 'given clock "<instant>"' or 'when clock "<instant>"' - an ISO 8601 instant as written.
 export interface SpecificationClockSyntax extends SyntaxNode {
     readonly kind: 'SpecificationClockSyntax';
@@ -194,4 +201,5 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly givenOperationFailures?: readonly SpecificationOperationFailureSyntax[];
     readonly thenOperations?: readonly SpecificationOperationSyntax[];
     readonly thenCompensated?: readonly SpecificationCompensatedSyntax[];
+    readonly thenInvocations?: readonly SpecificationInvocationSyntax[];
 }
