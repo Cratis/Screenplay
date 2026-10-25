@@ -19,7 +19,7 @@ internal sealed partial class SemanticReactionLoop
 
     SemanticExecutionResult? DeliverCaptures(SemanticFact fact, DateTimeOffset? occurred, bool history)
     {
-        foreach (var capture in plan.Captures.Values.Where(capture => capture.EventsSource?.Events.Contains(fact.EventContract) == true).OrderBy(capture => capture.Id.ToString(), StringComparer.Ordinal))
+        foreach (var capture in plan.RunningCaptures.Where(capture => capture.EventsSource?.Events.Contains(fact.EventContract) == true).OrderBy(capture => capture.Id.ToString(), StringComparer.Ordinal))
         {
             var contract = plan.Events[fact.EventContract];
             var record = SemanticCaptureEvaluation.EventRecord(plan, contract, fact);

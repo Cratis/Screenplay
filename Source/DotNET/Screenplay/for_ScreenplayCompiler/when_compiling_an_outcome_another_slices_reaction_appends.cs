@@ -6,7 +6,8 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
-public class when_compiling_an_outcome_a_reaction_appends : given.a_compiler
+// A specification runs only its own slice, so what another slice's reaction appends can never follow its command.
+public class when_compiling_an_outcome_another_slices_reaction_appends : given.a_compiler
 {
     const string Source =
         """
@@ -46,6 +47,6 @@ public class when_compiling_an_outcome_a_reaction_appends : given.a_compiler
         _withoutReaction = _compiler.Compile(Source[..Source.IndexOf("      reaction Welcomer", StringComparison.Ordinal)] + "      event InvoiceWelcomed\n        invoiceId Uuid\n");
     }
 
-    [Fact] void should_leave_an_event_a_reaction_may_append_to_execution() => _withReaction.Diagnostics.Where(diagnostic => diagnostic.Severity != DiagnosticSeverity.Information).ShouldBeEmpty();
+    [Fact] void should_report_it_although_another_slice_reacts() => _withReaction.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldEqual(1);
     [Fact] void should_still_report_it_when_nothing_reacts() => _withoutReaction.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldEqual(1);
 }

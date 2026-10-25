@@ -36,7 +36,7 @@ public class when_running_query_rejections : Specification
     void should_not_pass_another_rejection_category(SemanticRejectionCategory category)
     {
         var evaluator = Substitute.For<ISemanticEvaluator>();
-        evaluator.Execute(_plan, Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticRejected(SemanticWorld.Empty, category, null, "Invoice number is too short"));
+        evaluator.Execute(Arg.Any<SemanticExecutionPlan>(), Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticRejected(SemanticWorld.Empty, category, null, "Invoice number is too short"));
         new SemanticSpecificationRunner(evaluator).Run(_plan, _specification).Passed.ShouldBeFalse();
     }
 
@@ -44,7 +44,7 @@ public class when_running_query_rejections : Specification
     void should_not_pass_an_unsupported_query()
     {
         var evaluator = Substitute.For<ISemanticEvaluator>();
-        evaluator.Execute(_plan, Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Query, "opaque"));
+        evaluator.Execute(Arg.Any<SemanticExecutionPlan>(), Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Query, "opaque"));
         new SemanticSpecificationRunner(evaluator).Run(_plan, _specification).Passed.ShouldBeFalse();
     }
 
@@ -72,7 +72,7 @@ public class when_running_query_rejections : Specification
         var specification = plan.Specifications.Values.Single().Id;
         new SemanticSpecificationRunner().Run(plan, specification).Passed.ShouldBeTrue();
         var evaluator = Substitute.For<ISemanticEvaluator>();
-        evaluator.Execute(plan, Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, "Invoice number is too short"));
+        evaluator.Execute(Arg.Any<SemanticExecutionPlan>(), Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>()).Returns(new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, "Invoice number is too short"));
         new SemanticSpecificationRunner(evaluator).Run(plan, specification).Passed.ShouldBeTrue();
     }
 

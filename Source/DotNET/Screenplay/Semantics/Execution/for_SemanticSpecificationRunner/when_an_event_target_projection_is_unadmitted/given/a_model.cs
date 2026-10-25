@@ -20,7 +20,7 @@ public class a_model : Specification
                 when Quiet
                   id = "one"
                 then no events
-              specification Observed
+              specification Recording
                 when Record
                   id = "one"
                 then Recorded
@@ -31,6 +31,10 @@ public class a_model : Specification
               projection Publisher => Published
                 from Recorded
                   at = $eventContext.occurred
+              specification Observed
+                when append Recorded
+                  for "one"
+                then no events
         """;
 
     protected SemanticCompilation _compilation;

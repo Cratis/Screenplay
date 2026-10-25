@@ -83,6 +83,12 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
+        // A specification is about the slice it belongs to and nothing else: other slices' reactions, captures and publications do not run.
+        if (plan.IsolatedSlice is null && plan.SliceOf(specification) is { } slice)
+        {
+            plan = plan.IsolatedTo(slice);
+        }
+
         var reducer = plan.Model.Application.Modules.SelectMany(module => AllSlices(module.Features))
             .SelectMany(slice => slice.Reducers)
             .FirstOrDefault(candidate => (candidate.From is null && (

@@ -96,10 +96,11 @@ internal static class SpecificationOutcomeConsistencyValidator
         while (pending.TryDequeue(out var occurrence))
         {
             if (!seen.Add(occurrence)) continue;
-            foreach (var (slice, scope) in declarations.Slices)
+
+            // A specification runs its own slice in isolation: only what that slice declares can follow the command.
+            foreach (var (slice, scope) in declarations.Slices.Where(entry => ReferenceEquals(entry.Slice, commandSlice)))
             {
-                // An outbound Translate slice publishes the event its projection folds (decision 0098): the public event follows the
-                // private one, so a command specification may state it.
+                // An outbound Translate slice publishes the event its projection folds (decision 0098); within the slice it follows the command.
                 foreach (var projection in slice.Projections.Where(projection => projection.ReadModel is not null))
                 {
                     if (!projection.Blocks.OfType<FromSyntax>().Any(from => from.Events.Any(spec => declarations.Event(spec.Event, scope) == occurrence)))
@@ -130,6 +131,9 @@ internal static class SpecificationOutcomeConsistencyValidator
                             if (resolved is not { } target || target.Node.Handler is not null) return true;
                             if (!invoked.Add(target.Node)) continue;
                             var owner = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, target.Scope)).Slice;
+
+                            // A command another slice owns is that slice's behavior; its facts do not follow in this slice's specification.
+                            if (!ReferenceEquals(owner, commandSlice)) continue;
                             foreach (var producer in target.Node.Produces)
                             {
                                 var kind = declarations.Productions.Resolve(producer.Event, owner).Kind;

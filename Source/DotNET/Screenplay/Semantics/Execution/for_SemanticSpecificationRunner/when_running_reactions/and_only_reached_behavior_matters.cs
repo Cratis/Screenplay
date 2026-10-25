@@ -3,6 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.when_running_reactions;
 
+// The commands the reactions invoke are the automation's own, so a specification of it runs them in full.
 public class and_only_reached_behavior_matters : given.a_v6_scenario
 {
     const string Source =
@@ -11,7 +12,17 @@ public class and_only_reached_behavior_matters : given.a_v6_scenario
           require authenticated
         module Billing
           feature Flow
-            slice StateChange Finish
+            slice StateView OpaqueView
+              readmodel Details
+                id String
+              query DetailsById => Details optional
+                by id String
+              reducer Derived => Details
+                on Reduced
+                  ```csharp
+                    return current;
+                    ```
+            slice Automation Flow
               command Finish
                 id String identifier
                 produces Finished
@@ -29,17 +40,6 @@ public class and_only_reached_behavior_matters : given.a_v6_scenario
                 at DateTime
               event Allocated
               event ProtectedFact
-            slice StateView OpaqueView
-              readmodel Details
-                id String
-              query DetailsById => Details optional
-                by id String
-              reducer Derived => Details
-                on Reduced
-                  ```csharp
-                    return current;
-                    ```
-            slice Automation Flow
               readmodel Marker
                 id String
               query MarkerById => Marker optional

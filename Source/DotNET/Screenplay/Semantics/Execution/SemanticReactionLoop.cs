@@ -131,7 +131,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         while (_pending.TryDequeue(out var item))
         {
             var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
-            foreach (var reaction in plan.Reactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
+            foreach (var reaction in plan.RunningReactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
             {
                 foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == item.Fact.EventContract))
                 {
@@ -340,7 +340,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
 
         // An invoked response is computed by the evaluator, but is not the initiating command's response.
         // A value the specification pinned with 'given generated' reaches generation; an unpinned one reports IdentityAllocation.
-        return AcceptCommand(accepted, occurrence?.Occurred);
+        // A command another slice owns is that slice's behavior: in an isolated run its outcome decides the reaction, its facts are not adopted.
+        return plan.Runs(command.Id) ? AcceptCommand(accepted, occurrence?.Occurred) : null;
     }
 
     SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>
