@@ -12,7 +12,11 @@ static class LogicalReadModels
     {
         var declared = declarations.ToArray();
         var explicitAddresses = declared.Where(declaration => declaration.Kind == "ReadModel").Select(declaration => declaration.Address).ToHashSet(StringComparer.Ordinal);
+        var events = declared.Where(declaration => declaration.Kind == "Event").Select(declaration => declaration.Address).ToHashSet(StringComparer.Ordinal);
+
+        // An outbound translation's projection targets an event, which is no read model: naming one would invent a view that is not authored.
         var outputs = declared.SelectMany(declaration => Outputs(declaration.Syntax)
+            .Where(output => !(output.Syntax is ProjectionSyntax && events.Contains(string.Join('.', declaration.Scope.Append(output.Name)))))
             .Select(output => new AuthoredDeclaration("ReadModel", output.Name, declaration.Scope, output.Syntax.Location, null, null, output.Syntax) { IsImplicit = true, Hierarchy = declaration.Hierarchy }));
 
         // A shape and its builder name one view, not competing declarations. Keep the builder
