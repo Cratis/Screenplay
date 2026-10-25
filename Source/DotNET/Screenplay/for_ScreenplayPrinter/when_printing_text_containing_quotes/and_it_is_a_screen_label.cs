@@ -16,7 +16,7 @@ public class and_it_is_a_screen_label : given.a_printer
                 invoiceId Uuid
 
               screen InvoiceDashboard
-                action RegisterInvoice
+                action RegisterInvoice for screen
                   label "Register a \"draft\" invoice"
         """;
 

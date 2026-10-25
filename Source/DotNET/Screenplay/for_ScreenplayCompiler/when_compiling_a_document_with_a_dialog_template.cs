@@ -25,7 +25,7 @@ public class when_compiling_a_document_with_a_dialog_template : given.a_compiler
                   body
                     title "Register invoice"
                   actions
-                    action RegisterInvoice
+                    action RegisterInvoice for screen
         """;
 
     CompilationResult<ApplicationSyntax> _result;

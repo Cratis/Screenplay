@@ -1,0 +1,161 @@
+concept ItemId : Uuid
+concept TenantId : Uuid
+module Work
+  form RetryForm for Work.Items.List.Retry
+    field name
+  feature Items
+    slice StateView List
+      readmodel Row
+        rowId ItemId key
+        itemId TenantId
+        tenantId TenantId
+        name String
+        ready Bool
+      readmodel NamedRow
+        rowId ItemId key
+        itemId ItemId
+        name String
+      readmodel CasedRow
+        rowId ItemId key
+        itemID ItemId
+      readmodel NoKeyRow
+        itemId ItemId
+      readmodel AmbiguousRow
+        rowId ItemId key
+        otherId ItemId key
+        name String
+      command Retry
+        itemId ItemId identifier
+        name String
+      command Foreign
+        tenantId TenantId
+      command Optional
+        itemId ItemId optional identifier
+      command Generated
+        itemId ItemId generated identifier
+      command Primitive
+        itemId Uuid identifier
+      command TwoIdentifiers
+        itemId ItemId identifier
+        tenantId TenantId identifier
+      query Rows => Row[]
+      query NamedRows => NamedRow[]
+      query AmbiguousRows => AmbiguousRow[]
+      query One => Row
+      query CasedRows => CasedRow[]
+      query NoKeyRows => NoKeyRow[]
+      screen InferredItem
+        data Row[] via query Rows
+        action Retry
+      screen ExplicitItem
+        data Row[] via query Rows
+        action Retry for item label "Retry"
+          with itemId from item.tenantId
+          with name from $context.name
+      screen ScreenScope
+        data Row[] via query Rows
+        action Retry for screen
+      screen SameName
+        data NamedRow[] via query NamedRows
+        action Retry
+      screen ForeignKey
+        data Row[] via query Rows
+        action Foreign
+      screen OptionalIdentifier
+        data Row[] via query Rows
+        action Optional
+      screen GeneratedIdentifier
+        data Row[] via query Rows
+        action Generated
+      screen PrimitiveIdentifier
+        data Row[] via query Rows
+        action Primitive
+      screen RecoveredSecondIdentifier
+        data Row[] via query Rows
+        action TwoIdentifiers
+      screen AmbiguousKeys
+        data AmbiguousRow[] via query AmbiguousRows
+        action Retry for item
+      screen AmbiguousInferred
+        data AmbiguousRow[] via query AmbiguousRows
+        action Retry
+      screen CaseMismatch
+        data CasedRow[] via query CasedRows
+        action Retry
+      screen MissingKey
+        data NoKeyRow[] via query NoKeyRows
+        action Retry
+      screen QualifiedDeclarations
+        data Imported.Inventory.Views.Row[] via query Imported.Inventory.Views.Rows
+        action Imported.Inventory.Commands.Retry
+      screen UnresolvedDeclaration
+        data Row[] via query Rows
+        action Missing.Commands.Retry
+      screen SlotScope
+        data Row[] via query Rows
+        template Detail
+          actions
+            action Retry
+      screen OutletScope
+        data Row[] via query Rows
+        component scene.web.Panel panel
+          outlet detail
+            action Retry
+            data NamedRow[] via query NamedRows
+      screen GuardedCollection
+        data Row[] via query Rows
+        action "Retry" for screen
+          when item.ready == true execute Retry
+          otherwise execute Retry
+      screen GuardedRecord
+        data Row via query One
+        action "Retry" for screen
+          when item.ready == true execute Retry
+          otherwise execute Retry
+      screen LegacyGuarded
+        data Row via query One
+        action "Retry"
+          when item.ready == true execute Retry
+            with itemId from item.rowId
+            with name from item.name
+          otherwise hidden
+      screen MissingSubject
+        action "Retry" for item
+          when item.ready == true execute Retry
+      screen EquallyNear
+        data Row[] via query Rows
+        data NamedRow[] via query NamedRows
+        action "Retry" for item
+          when item.ready == true execute Retry
+        action Retry
+      screen Nested
+        data Row[] via query Rows
+        section "Details"
+          action Retry
+          data NamedRow[] via query NamedRows
+        toolbar
+          item retry action Retry for item
+            parameter name from $context.name
+          item global action Foreign for screen
+          item inferred action Retry
+      screen InvalidClause
+        action Retry for planet
+      screen DuplicateClause
+        action Retry for item for screen
+      screen InapplicableClause
+        toolbar
+          item go navigate to InferredItem for item
+      screen InvalidInput
+        action Retry for item
+          with itemId
+          with name from item.name
+          with name from $context.name
+module Imported
+  feature Inventory
+    slice StateChange Commands
+      command Retry
+        itemId ItemId identifier
+    slice StateView Views
+      readmodel Row
+        rowId ItemId key
+      query Rows => Row[]

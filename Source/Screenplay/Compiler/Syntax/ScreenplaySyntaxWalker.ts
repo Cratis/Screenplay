@@ -625,6 +625,7 @@ export abstract class ScreenplaySyntaxWalker {
                 this.visitTypeRef(syntax.type);
                 break;
             case 'ScreenActionSyntax':
+                syntax.inputs?.forEach(input => this.visitInteractionArgument(input));
                 if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
                 break;
             case 'ScreenNavigateSyntax':

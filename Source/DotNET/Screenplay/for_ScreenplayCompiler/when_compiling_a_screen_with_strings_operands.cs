@@ -17,7 +17,7 @@ public class when_compiling_a_screen_with_strings_operands : given.a_compiler
 
               screen InvoiceList
                 title $strings.invoices.title
-                action RegisterInvoice
+                action RegisterInvoice for screen
                   label $strings.invoices.actions.newInvoice
                 table InvoiceListReadModel
                   column invoiceNumber label $strings.invoices.columns.number

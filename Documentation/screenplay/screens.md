@@ -56,6 +56,10 @@ issues the command and discovers its command-bound form. An action's `navigate t
 
 Screen `data ... via query ... by value` and `navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key to a single-instance query. The compiler reports `PLAY0661`; no automatic screen repair is offered. Collection queries may filter by a subset. See [Read-model keys](readmodels.md#keys).
 
+## Action subjects
+
+Plain actions, guarded actions and action toolbar items accept `for item` or `for screen` after the command or label, before an inline `label`. Plain actions also accept ordered `with <input> from <binding>` children. Prefer explicit scope in new documents. See [action subjects](action-subjects.md) for inference, nominal identifier/key binding, migration diagnostics and the separate authored/effective compiler boundary.
+
 ## One action, several commands
 
 Use a label-headed **guarded action** when one user decision can run different commands as the displayed item's state changes. The label is a quoted string or a `$strings.<key>` reference; it replaces the plain action's `label` child.
@@ -77,7 +81,7 @@ screen PlanDetails
 
 ### Subject and conditions
 
-`item` is the nearest container's `data` item, or the selected element when that data is a collection. Sibling data in the action's section, filled slot or screen body takes precedence over outer data, regardless of source order. Without an item (loading or no selection), the action is always hidden, even with an execute fallback. Missing or equally near data declarations produce a warning rather than guessing a subject.
+For a guarded action (omitted subject or `for item`), `item` is the nearest container's `data` item, or the selected element when that data is a collection. Sibling data in the action's section, filled slot or screen body takes precedence over outer data, regardless of source order. Without an item (loading or no selection), the action is always hidden, even with an execute fallback. Missing or equally near data declarations produce a warning rather than guessing a subject.
 
 Conditions compare `item.<field>[.<field>…]` with a literal: a string, number, Boolean or `null`. They do not read route parameters, screen state, `$context` or `$env`, and cannot compare two item paths. Use `==`, `!=`, numeric `>`, `>=`, `<`, `<=`, or string `contains` and `starts with`. Combine comparisons with `and`, `or` and parentheses; `and` binds more tightly. Collection-valued fields are not supported in conditions. Unsupported punctuation, such as brackets around a literal, is rejected with `PLAY0344` rather than discarded.
 
@@ -92,9 +96,10 @@ Alternatives are checked in authored order whenever query data changes. The firs
 Each alternative and execute fallback may bind inputs with `with <property> from <binding>`. A binding may pass a terminal collection field, such as `with ids from item.ids`, to a matching collection input; it cannot traverse through a collection. Inputs resolve in this order:
 
 1. Explicit `with` bindings.
-2. Subject fields with the same name as the command input.
-3. The command's declared [form](forms.md).
-4. Renderer input.
+2. Compatible subject fields with the same case-sensitive name as the command input.
+3. A unique declared nominal identifier/key match for required, non-generated identifier inputs.
+4. The command's declared [form](forms.md).
+5. Renderer input.
 
 The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. If the selected command is unavailable to the caller, present the action as unavailable, as [#335](https://github.com/Cratis/Screenplay/issues/335) defines once admitted. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds, never to open that command's own input screen. If input needs a separate screen or dialog, open it first with a click or row-click carrying the item's identity; place the guarded action on that input screen.
 

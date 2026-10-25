@@ -19,6 +19,11 @@ public record ScreenGuardedActionSyntax(string Label, IEnumerable<ScreenActionAl
     public ScreenActionOtherwiseSyntax? Otherwise { get; init; }
 
     /// <summary>
+    /// Gets the explicitly authored subject, or null for the contextual default.
+    /// </summary>
+    public ScreenActionSubjectKind? Subject { get; init; }
+
+    /// <summary>
     /// Gets the navigation performed after successful execution of the selected command.
     /// </summary>
     public ScreenNavigateSyntax? Navigate { get; init; }

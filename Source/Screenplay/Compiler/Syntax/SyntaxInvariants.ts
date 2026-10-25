@@ -13,6 +13,7 @@ import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
+import { validateActionSubject } from './ActionSubjectInvariants';
 import { SpecificationEventSyntax, SpecificationStreamSyntax } from './Specifications';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '../Text/SourceStreamNames';
@@ -31,6 +32,7 @@ const collection = (value: unknown, kind: string, message: string): void => {
 // The native ImplementationInvariants / OperationInvariants / EventSourceInvariants contracts.
 // Shared by the isolated strict reader and the writer, without pulling the transport schema into Monaco.
 export function validateSyntaxInvariants(node: SyntaxNode): void {
+    validateActionSubject(node, collection);
     const metadataError = publicEventMetadataError(node);
     if (metadataError !== undefined) refuse(metadataError);
     if (node.kind === 'ConceptSyntax') {

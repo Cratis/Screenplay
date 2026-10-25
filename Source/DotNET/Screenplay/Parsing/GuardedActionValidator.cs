@@ -42,6 +42,9 @@ internal static partial class GuardedActionValidator
                 case ScreenGuardedActionSyntax action:
                     ValidateAction(action, subjects, scope, declarations, context);
                     break;
+                case ScreenActionSyntax action:
+                    ValidateArguments(action.Command, action.Inputs, subjects.Count == 1 ? declarations.ViewProperties(subjects[0].Type.Name, scope) : null, scope, declarations, context);
+                    break;
                 case ScreenBehaviorSyntax attached:
                     ValidateInteraction(attached.Behavior, subjects, scope, declarations, context);
                     break;
@@ -79,11 +82,6 @@ internal static partial class GuardedActionValidator
         ParserContext context)
     {
         var properties = subjects.Count == 1 ? declarations.ViewProperties(subjects[0].Type.Name, scope) : null;
-        if (subjects.Count != 1)
-        {
-            context.Warning(DiagnosticCodes.UnresolvedActionSubject, "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved", action.Location);
-        }
-
         foreach (var alternative in action.Alternatives)
         {
             foreach (var comparison in Comparisons(alternative.Condition))

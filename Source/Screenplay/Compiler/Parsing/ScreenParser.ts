@@ -12,6 +12,8 @@ import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
+import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
+import { InteractionArgumentSyntax } from '../Syntax/Screens';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
 import { parseDescription } from './DescriptionParser';
@@ -114,6 +116,7 @@ function parseDirectives(context: ParserContext, parent: SourceLine): ScreenDire
 }
 
 function parseDirective(context: ParserContext, line: SourceLine): ScreenDirectiveSyntax | undefined {
+    if (firstWord(line.content) !== 'action') parseSubjectClause(context, line, false);
     switch (firstWord(line.content)) {
         case 'data':
             return parseData(context, line);
@@ -161,16 +164,24 @@ function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax |
 }
 
 function parseAction(context: ParserContext, line: SourceLine): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
-    const guarded = guardedAction.exec(line.content);
+    const parsed = parseSubjectClause(context, line, true);
+    const result = parseActionHeader(context, line, parsed);
+    if (result === undefined || parsed.subject === undefined) return result;
+    return { ...result, subject: parsed.subject };
+}
+
+function parseActionHeader(context: ParserContext, line: SourceLine, parsed: ReturnType<typeof parseSubjectClause>): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
+    const guarded = guardedAction.exec(parsed.header);
     if (guarded !== null) return parseGuardedAction(context, line, operandText(guarded, 1), parseNavigate);
-    const match = action.exec(line.content);
+    const match = action.exec(parsed.header);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidActionDirective, `Invalid action directive '${line.content}' - expected 'action <Command>'`, locationOf(line));
         context.skipBlock(line.indent);
         return undefined;
     }
-    let text: string | null = null;
+    let text: string | null = parsed.label ?? null;
     let target: ScreenNavigateSyntax | null = null;
+    const inputs: InteractionArgumentSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const labelMatch = label.exec(child.content);
@@ -178,11 +189,18 @@ function parseAction(context: ParserContext, line: SourceLine): ScreenActionSynt
             text = operandText(labelMatch, 1);
         } else if (firstWord(child.content) === 'navigate') {
             target = parseNavigate(context, child.content, child) ?? null;
+        } else if (firstWord(child.content) === 'with') {
+            addPlainActionInput(context, child, inputs);
         } else {
             context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));
         }
     }
-    return { kind: 'ScreenActionSyntax', command: match[1], label: text, navigate: target, location: locationOf(line) };
+    return { kind: 'ScreenActionSyntax', command: match[1], label: text, navigate: target, ...(inputs.length === 0 ? {} : { inputs }), location: locationOf(line) };
+}
+
+function addPlainActionInput(context: ParserContext, line: SourceLine, inputs: InteractionArgumentSyntax[]): void {
+    const input = parsePlainActionInput(context, line, inputs);
+    if (input !== undefined) inputs.push(input);
 }
 
 function parseNavigate(context: ParserContext, text: string, line: SourceLine): ScreenNavigateSyntax | undefined {
@@ -500,13 +518,14 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
 }
 
 function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItemSyntax | undefined {
-    const match = toolbarItem.exec(line.content);
+    const parsed = parseSubjectClause(context, line, /^item\s+\S+\s+action\s/u.test(line.content));
+    const match = toolbarItem.exec(parsed.header);
     if (match === null) {
         context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid toolbar item '${line.content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>', 'item <name> dialog <DialogTemplate>' or 'button <id> title "<text>" slice <Slice>'`, locationOf(line));
         context.skipBlock(line.indent);
         return undefined;
     }
-    let itemLabel = null;
+    let itemLabel: string | null = parsed.label ?? null;
     let icon = null;
     let itemConfirm: string | undefined;
     const parameters: ScreenNavigationParameterSyntax[] = [];
@@ -535,7 +554,7 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
         parsePresentationValue(context, child, presentationValues);
     }
     const syntaxKind: ToolbarItemKind = match[2] === 'navigate' ? 'Navigate' : match[2] === 'dialog' ? 'Dialog' : 'Action';
-    return { kind: 'ToolbarItemSyntax', name: match[1], syntaxKind, target: match[3], label: itemLabel, icon, ...(itemConfirm !== undefined ? { confirm: itemConfirm } : {}), parameters, presentation: presentationValues, location: locationOf(line) };
+    return { kind: 'ToolbarItemSyntax', name: match[1], syntaxKind, target: match[3], label: itemLabel, icon, ...(parsed.subject === undefined ? {} : { subject: parsed.subject }), ...(itemConfirm !== undefined ? { confirm: itemConfirm } : {}), parameters, presentation: presentationValues, location: locationOf(line) };
 }
 
 function parseUiBindingValue(context: ParserContext, text: string, line: SourceLine) {

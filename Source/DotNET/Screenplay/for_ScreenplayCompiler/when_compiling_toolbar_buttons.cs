@@ -13,7 +13,7 @@ public class when_compiling_toolbar_buttons : given.a_toolbar_document
     ToolbarButtonSyntax Button(string id) => Toolbar.Buttons.Single(button => button.Id == id);
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_report_only_the_missing_slice_warning() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).Where(code => string.CompareOrdinal(code, "PLAY0760") >= 0).ShouldContainOnly(DiagnosticCodes.ToolbarButtonWithoutSlice);
+    [Fact] void should_report_only_the_missing_slice_warning() => _result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning).Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.ToolbarButtonWithoutSlice);
     [Fact] void should_read_every_button() => Toolbar.Buttons.Select(button => button.Id).ShouldContainOnly("place", "invoice", "later");
     [Fact] void should_read_the_title_slice_emphasis_and_icon() => (Button("place").Title, Button("place").Slice, Button("place").Emphasis, Button("place").Icon).ShouldEqual(("Place order", "Shop.Orders.PlaceOrder", ToolbarEmphasis.Primary, "plus"));
     [Fact] void should_read_a_localized_title_as_written() => Button("invoice").Title.ShouldEqual("$strings.orders.invoice");

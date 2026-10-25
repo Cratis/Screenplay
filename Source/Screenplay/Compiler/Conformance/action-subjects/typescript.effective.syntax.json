@@ -1,0 +1,1696 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "TenantId",
+      "type": "Uuid",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Items",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Retry",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Foreign",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "tenantId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TenantId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Optional",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Generated",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Primitive",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "TwoIdentifiers",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "tenantId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TenantId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "List",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Rows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Row"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "NamedRows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "NamedRow"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "AmbiguousRows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "AmbiguousRow"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "One",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "Row"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "CasedRows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "CasedRow"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "NoKeyRows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "NoKeyRow"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Row",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TenantId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "tenantId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TenantId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "ready",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "NamedRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "CasedRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemID",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "NoKeyRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "AmbiguousRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "otherId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        },
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.name",
+                          "name": "name"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "InferredItem"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.tenantId",
+                          "name": "itemId"
+                        },
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "$context.name",
+                          "name": "name"
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "ExplicitItem"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Screen"
+                    }
+                  ],
+                  "name": "ScreenScope"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "NamedRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "NamedRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.itemId",
+                          "name": "itemId"
+                        },
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.name",
+                          "name": "name"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "SameName"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Foreign",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "ForeignKey"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Optional",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "OptionalIdentifier"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Generated",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "GeneratedIdentifier"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Primitive",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "PrimitiveIdentifier"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "TwoIdentifiers",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        },
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.tenantId",
+                          "name": "tenantId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "RecoveredSecondIdentifier"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "AmbiguousRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "AmbiguousRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.name",
+                          "name": "name"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "AmbiguousKeys"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "AmbiguousRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "AmbiguousRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "AmbiguousInferred"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "CasedRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "CasedRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "CaseMismatch"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "NoKeyRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "NoKeyRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "MissingKey"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Imported.Inventory.Views.Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Imported.Inventory.Views.Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Imported.Inventory.Commands.Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.rowId",
+                          "name": "itemId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "QualifiedDeclarations"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Missing.Commands.Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "UnresolvedDeclaration"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Detail",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "Retry",
+                              "inputs": [
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.rowId",
+                                  "name": "itemId"
+                                },
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.name",
+                                  "name": "name"
+                                }
+                              ],
+                              "label": null,
+                              "navigate": null,
+                              "subject": "Item"
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "SlotScope"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenComponentSyntax",
+                      "component": "scene.web.Panel",
+                      "context": null,
+                      "exposes": [],
+                      "icon": null,
+                      "name": "panel",
+                      "outlets": [
+                        {
+                          "kind": "ComponentOutletSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "Retry",
+                              "inputs": [
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.itemId",
+                                  "name": "itemId"
+                                },
+                                {
+                                  "kind": "InteractionArgumentSyntax",
+                                  "binding": "item.name",
+                                  "name": "name"
+                                }
+                              ],
+                              "label": null,
+                              "navigate": null,
+                              "subject": "Item"
+                            },
+                            {
+                              "kind": "ScreenDataSyntax",
+                              "by": null,
+                              "query": "NamedRows",
+                              "type": {
+                                "kind": "TypeRefSyntax",
+                                "isCollection": true,
+                                "isOptional": false,
+                                "name": "NamedRow"
+                              }
+                            }
+                          ],
+                          "name": "detail"
+                        }
+                      ],
+                      "presentation": [],
+                      "properties": [],
+                      "stableId": null
+                    }
+                  ],
+                  "name": "OutletScope"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [],
+                        "command": "Retry",
+                        "outcome": "Execute"
+                      },
+                      "subject": "Screen"
+                    }
+                  ],
+                  "name": "GuardedCollection"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "One",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.rowId",
+                              "name": "itemId"
+                            },
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.name",
+                              "name": "name"
+                            }
+                          ],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "item.rowId",
+                            "name": "itemId"
+                          },
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "item.name",
+                            "name": "name"
+                          }
+                        ],
+                        "command": "Retry",
+                        "outcome": "Execute"
+                      },
+                      "subject": "Screen"
+                    }
+                  ],
+                  "name": "GuardedRecord"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "One",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.rowId",
+                              "name": "itemId"
+                            },
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.name",
+                              "name": "name"
+                            }
+                          ],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [],
+                        "command": null,
+                        "outcome": "Hidden"
+                      }
+                    }
+                  ],
+                  "name": "LegacyGuarded"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "otherwise": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "MissingSubject"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "NamedRows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "NamedRow"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Retry",
+                      "navigate": null,
+                      "otherwise": null,
+                      "subject": "Item"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "EquallyNear"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Row"
+                      }
+                    },
+                    {
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenActionSyntax",
+                          "command": "Retry",
+                          "inputs": [
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.itemId",
+                              "name": "itemId"
+                            },
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.name",
+                              "name": "name"
+                            }
+                          ],
+                          "label": null,
+                          "navigate": null,
+                          "subject": "Item"
+                        },
+                        {
+                          "kind": "ScreenDataSyntax",
+                          "by": null,
+                          "query": "NamedRows",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": true,
+                            "isOptional": false,
+                            "name": "NamedRow"
+                          }
+                        }
+                      ],
+                      "name": "\"Details\""
+                    },
+                    {
+                      "kind": "ScreenToolbarSyntax",
+                      "items": [
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": null,
+                          "label": null,
+                          "name": "retry",
+                          "parameters": [
+                            {
+                              "kind": "ScreenNavigationParameterSyntax",
+                              "binding": {
+                                "kind": "UiBindingSyntax",
+                                "bindingKind": "DataContext",
+                                "componentId": null,
+                                "componentPropertyPath": null,
+                                "expectedValueType": null,
+                                "literal": null,
+                                "mode": null,
+                                "nullBehavior": null,
+                                "path": "$context.name",
+                                "query": null,
+                                "rawText": null
+                              },
+                              "name": "name"
+                            },
+                            {
+                              "kind": "ScreenNavigationParameterSyntax",
+                              "binding": {
+                                "kind": "UiBindingSyntax",
+                                "bindingKind": "DataContext",
+                                "componentId": null,
+                                "componentPropertyPath": null,
+                                "expectedValueType": null,
+                                "literal": null,
+                                "mode": null,
+                                "nullBehavior": null,
+                                "path": "item.rowId",
+                                "query": null,
+                                "rawText": null
+                              },
+                              "name": "itemId"
+                            }
+                          ],
+                          "presentation": [],
+                          "subject": "Item",
+                          "syntaxKind": "Action",
+                          "target": "Retry"
+                        },
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": null,
+                          "label": null,
+                          "name": "global",
+                          "parameters": [],
+                          "presentation": [],
+                          "subject": "Screen",
+                          "syntaxKind": "Action",
+                          "target": "Foreign"
+                        },
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": null,
+                          "label": null,
+                          "name": "inferred",
+                          "parameters": [
+                            {
+                              "kind": "ScreenNavigationParameterSyntax",
+                              "binding": {
+                                "kind": "UiBindingSyntax",
+                                "bindingKind": "DataContext",
+                                "componentId": null,
+                                "componentPropertyPath": null,
+                                "expectedValueType": null,
+                                "literal": null,
+                                "mode": null,
+                                "nullBehavior": null,
+                                "path": "item.rowId",
+                                "query": null,
+                                "rawText": null
+                              },
+                              "name": "itemId"
+                            },
+                            {
+                              "kind": "ScreenNavigationParameterSyntax",
+                              "binding": {
+                                "kind": "UiBindingSyntax",
+                                "bindingKind": "DataContext",
+                                "componentId": null,
+                                "componentPropertyPath": null,
+                                "expectedValueType": null,
+                                "literal": null,
+                                "mode": null,
+                                "nullBehavior": null,
+                                "path": "item.name",
+                                "query": null,
+                                "rawText": null
+                              },
+                              "name": "name"
+                            }
+                          ],
+                          "presentation": [],
+                          "subject": "Item",
+                          "syntaxKind": "Action",
+                          "target": "Retry"
+                        }
+                      ],
+                      "name": ""
+                    }
+                  ],
+                  "name": "Nested"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "InvalidClause"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "DuplicateClause"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenToolbarSyntax",
+                      "items": [
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": null,
+                          "label": null,
+                          "name": "go",
+                          "parameters": [],
+                          "presentation": [],
+                          "syntaxKind": "Navigate",
+                          "target": "InferredItem"
+                        }
+                      ],
+                      "name": ""
+                    }
+                  ],
+                  "name": "InapplicableClause"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.name",
+                          "name": "name"
+                        },
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "$context.name",
+                          "name": "name"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Item"
+                    }
+                  ],
+                  "name": "InvalidInput"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Work"
+    },
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Inventory",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Retry",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Commands",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Views",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Rows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Row"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Row",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "rowId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Imported"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

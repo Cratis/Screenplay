@@ -1,0 +1,118 @@
+{
+  "protocol": "Cratis.ActionSubjects/1",
+  "authored": "source.play",
+  "rawSyntaxJson": "typescript.raw.syntax.json",
+  "effectiveSyntaxJson": "typescript.effective.syntax.json",
+  "diagnostics": "typescript.diagnostics.json",
+  "context": "typescript.context.json",
+  "cases": [
+    {
+      "name": "InferredItem",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[0]"
+    },
+    {
+      "name": "ExplicitItem",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[1]"
+    },
+    {
+      "name": "ScreenScope",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[2]"
+    },
+    {
+      "name": "SameName",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[3]"
+    },
+    {
+      "name": "ForeignKey",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[4]"
+    },
+    {
+      "name": "OptionalIdentifier",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[5]"
+    },
+    {
+      "name": "GeneratedIdentifier",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[6]"
+    },
+    {
+      "name": "PrimitiveIdentifier",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[7]"
+    },
+    {
+      "name": "RecoveredSecondIdentifier",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[8]"
+    },
+    {
+      "name": "AmbiguousKeys",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[9]"
+    },
+    {
+      "name": "AmbiguousInferred",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[10]"
+    },
+    {
+      "name": "CaseMismatch",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[11]"
+    },
+    {
+      "name": "MissingKey",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[12]"
+    },
+    {
+      "name": "QualifiedDeclarations",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[13]"
+    },
+    {
+      "name": "UnresolvedDeclaration",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[14]"
+    },
+    {
+      "name": "SlotScope",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[15]"
+    },
+    {
+      "name": "OutletScope",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[16]"
+    },
+    {
+      "name": "GuardedCollection",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[17]"
+    },
+    {
+      "name": "GuardedRecord",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[18]"
+    },
+    {
+      "name": "LegacyGuarded",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[19]"
+    },
+    {
+      "name": "MissingSubject",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[20]"
+    },
+    {
+      "name": "EquallyNear",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[21]"
+    },
+    {
+      "name": "Nested",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[22]"
+    },
+    {
+      "name": "InvalidClause",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[23]"
+    },
+    {
+      "name": "DuplicateClause",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[24]"
+    },
+    {
+      "name": "InapplicableClause",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[25]"
+    },
+    {
+      "name": "InvalidInput",
+      "focusPath": "$.modules[0].features[0].slices[0].screens[26]"
+    }
+  ]
+}

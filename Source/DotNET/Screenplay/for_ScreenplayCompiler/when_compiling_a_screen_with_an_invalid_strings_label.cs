@@ -17,7 +17,7 @@ public class when_compiling_a_screen_with_an_invalid_strings_label : given.a_com
                 invoiceId Uuid
 
               screen InvoiceList
-                action RegisterInvoice
+                action RegisterInvoice for screen
                   label $strings.
         """;
 

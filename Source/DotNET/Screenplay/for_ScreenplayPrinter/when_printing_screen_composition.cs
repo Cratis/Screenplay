@@ -63,7 +63,7 @@ public class when_printing_screen_composition : given.a_printer
                 navigate to Browse
                   outlet detail
                 contribute to Actions order 10
-                  action Register
+                  action Register for screen
                 contribute to Navigation
                   section filters
                     title "Filters"
