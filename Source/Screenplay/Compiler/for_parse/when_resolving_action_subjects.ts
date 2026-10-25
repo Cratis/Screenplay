@@ -30,7 +30,7 @@ describe('when resolving action subjects', () => {
     it('should bind a renamed key by nominal concept', () => {
         const resolved = resolveActionSubjects(parse(source.replace('        itemId TenantId\n', '')).value);
         action(resolved.value).inputs![0].binding.should.equal('item.rowId');
-        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0817').should.equal(true);
+        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0819').should.equal(true);
     });
     it('should retain an explicit mapping', () => {
         const effective = resolveActionSubjects(parse(source + ' for item\n          with itemId from $context.currentItem').value).value;
@@ -59,12 +59,12 @@ describe('when resolving action subjects', () => {
         const ambiguous = source.replace('        itemId TenantId\n', '        otherId ItemId key\n') + ' for item';
         const resolved = resolveActionSubjects(parse(ambiguous).value);
         action(resolved.value).inputs!.should.deep.equal([]);
-        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0818' && diagnostic.severity === 'warning').should.equal(true);
+        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0820' && diagnostic.severity === 'warning').should.equal(true);
     });
     it('should retain a guarded screen collection without selecting an item', () => {
         const guarded = source.replace('        action Retry', '        action "Retry" for screen\n          when item.ready == true execute Retry');
         const resolved = resolveActionSubjects(parse(guarded).value);
         (screen(resolved.value).directives[1] as ScreenGuardedActionSyntax).alternatives[0].arguments.should.deep.equal([]);
-        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0819' && diagnostic.severity === 'warning').should.equal(true);
+        resolved.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0821' && diagnostic.severity === 'warning').should.equal(true);
     });
 });

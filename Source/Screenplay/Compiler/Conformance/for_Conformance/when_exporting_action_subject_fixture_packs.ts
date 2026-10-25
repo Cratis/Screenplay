@@ -15,7 +15,7 @@ const directory = fileURLToPath(new URL('../action-subjects/', import.meta.url))
 const compiled = parse(readFileSync(`${directory}source.play`, 'utf8'));
 const raw = toSyntaxJson(compiled.value);
 const effective = resolveActionSubjects(compiled.value).value;
-const relevant = new Set(['PLAY0319', 'PLAY0345', 'PLAY0346', 'PLAY0815', 'PLAY0816', 'PLAY0817', 'PLAY0818', 'PLAY0819']);
+const relevant = new Set(['PLAY0319', 'PLAY0345', 'PLAY0346', 'PLAY0817', 'PLAY0818', 'PLAY0819', 'PLAY0820', 'PLAY0821']);
 
 interface LocatedNode {
     path: string;

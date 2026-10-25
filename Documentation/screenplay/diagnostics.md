@@ -15,11 +15,11 @@ Decision 0110 adds the following catalog entries:
 
 | Code | Severity | Meaning |
 |---|---|---|
-| `PLAY0815` | Error | An action subject clause is malformed, duplicated, or attached to a non-action toolbar item. Use one `for item` or `for screen` before the inline label. |
-| `PLAY0816` | Information | An omitted plain/toolbar action subject is inferred from its declared data and identifier types. |
-| `PLAY0817` | Warning | Effective row binding differs from legacy case-insensitive name matching. Make intent explicit; a safe repair may retain legacy mappings. |
-| `PLAY0818` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
-| `PLAY0819` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
+| `PLAY0817` | Error | An action subject clause is malformed, duplicated, or attached to a non-action toolbar item. Use one `for item` or `for screen` before the inline label. |
+| `PLAY0818` | Information | An omitted plain/toolbar action subject is inferred from its declared data and identifier types. |
+| `PLAY0819` | Warning | Effective row binding differs from legacy case-insensitive name matching. Make intent explicit; a safe repair may retain legacy mappings. |
+| `PLAY0820` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
+| `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

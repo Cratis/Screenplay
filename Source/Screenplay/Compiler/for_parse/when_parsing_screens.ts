@@ -51,7 +51,7 @@ describe('when parsing screens', () => {
         screens = result.value.modules[0].features[0].slices[0].screens;
     });
 
-    it('should explain the omitted action subject', () => result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity]).should.deep.equal([['PLAY0816', 'information']]));
+    it('should explain the omitted action subject', () => result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity]).should.deep.equal([['PLAY0818', 'information']]));
     it('should read both screens', () => screens.map(screen => screen.name).should.deep.equal(['Invoices', 'Details']));
     it('should read the directives in order', () =>
         screens[0].directives.map(directive => directive.kind).should.deep.equal([
@@ -123,7 +123,7 @@ describe('when parsing screen release UI bindings', () => {
         component = result.value.modules[0].features[0].slices[0].screens[0].directives[1] as import('../Syntax/Screens').ScreenComponentSyntax;
     });
 
-    it('should explain the omitted toolbar action subject', () => result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity]).should.deep.equal([['PLAY0816', 'information']]));
+    it('should explain the omitted toolbar action subject', () => result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity]).should.deep.equal([['PLAY0818', 'information']]));
     it('should read toolbar parameters as component bindings', () => toolbar.items[0].parameters[0].binding.should.deep.include({ bindingKind: 'ComponentProperty', componentId: 'invoices', path: 'selectedItem.id' }));
     it('should read toolbar presentation', () => toolbar.items[1].presentation[0].value!.should.equal('primary'));
     it('should read component query context', () => component.context!.should.deep.include({ bindingKind: 'QueryResult', query: 'AllInvoices', path: 'items' }));

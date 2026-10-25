@@ -70,7 +70,7 @@ describe('when parsing the repository samples', () => {
             `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`,
             // Action-subject packs include deliberate parser recovery and malformed clause/input cases.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:40 PLAY0036 Command 'TwoIdentifiers' already marks 'itemId' as identifier - only one property can be the identifier`,
-            ...[142, 144, 147].map(line => `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:${line} PLAY0815 Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action`),
+            ...[142, 144, 147].map(line => `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:${line} PLAY0817 Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action`),
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:150 PLAY0319 Invalid argument 'with itemId' - expected 'with <name> from <binding>'`,
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:152 PLAY0319 Duplicate argument 'name' - supply each input only once`,
             // The metadata-only fixture deliberately declares no operational public output.

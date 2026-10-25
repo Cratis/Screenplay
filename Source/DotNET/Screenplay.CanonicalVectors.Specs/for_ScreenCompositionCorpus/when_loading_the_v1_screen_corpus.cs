@@ -67,10 +67,10 @@ public class when_loading_the_v1_screen_corpus : Specification
     {
         string[] expected =
         [
-            "PLAY0816: Action 'AddComment' infers 'for screen' from its declared data and identifier types",
-            "PLAY0816: Action 'CreateWorkItem' infers 'for screen' from its declared data and identifier types",
-            "PLAY0816: Action 'RenameWorkItem' infers 'for screen' from its declared data and identifier types",
-            "PLAY0817: Action 'AddComment' now infers 'for screen'; legacy row-name matching would use commentId from item.commentId, workItemId from item.workItemId, text from item.text"
+            "PLAY0818: Action 'AddComment' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'CreateWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'RenameWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0819: Action 'AddComment' now infers 'for screen'; legacy row-name matching would use commentId from item.commentId, workItemId from item.workItemId, text from item.text"
         ];
         ActionSubjectAdvisories.Describe(_diagnostics).ShouldEqual(expected);
     }
@@ -88,10 +88,10 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_locate_the_action_subject_advisories_for_the_screen_actions() =>
         ActionSubjectAdvisories.DescribeLocations(_diagnostics).ShouldEqual(
-            "PLAY0816@229 CreateWorkItem",
-            "PLAY0816@276 RenameWorkItem",
-            "PLAY0816@290 AddComment",
-            "PLAY0817@290 AddComment");
+            "PLAY0818@229 CreateWorkItem",
+            "PLAY0818@276 RenameWorkItem",
+            "PLAY0818@290 AddComment",
+            "PLAY0819@290 AddComment");
 
     [Fact]
     void should_point_every_action_subject_advisory_at_its_action_in_every_source_form()

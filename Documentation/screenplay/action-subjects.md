@@ -40,11 +40,11 @@ Without a clause, a plain or toolbar action infers Item only for exactly one col
 
 | Code | Severity | Meaning |
 |---|---|---|
-| PLAY0815 | Error | Malformed, duplicate or misplaced subject clause. |
-| PLAY0816 | Information | Explains an omitted plain/toolbar subject's inference. |
-| PLAY0817 | Warning | Effective row binding differs from legacy case-insensitive name matching. |
-| PLAY0818 | Warning | Multiple nominal keys could bind an input; write an explicit binding. |
-| PLAY0819 | Warning | Guarded `for screen` has collection-valued data and cannot choose one item. |
+| PLAY0817 | Error | Malformed, duplicate or misplaced subject clause. |
+| PLAY0818 | Information | Explains an omitted plain/toolbar subject's inference. |
+| PLAY0819 | Warning | Effective row binding differs from legacy case-insensitive name matching. |
+| PLAY0820 | Warning | Multiple nominal keys could bind an input; write an explicit binding. |
+| PLAY0821 | Warning | Guarded `for screen` has collection-valued data and cannot choose one item. |
 
 PLAY0319 still covers malformed/duplicate input syntax, PLAY0345 still covers unknown subject fields, and PLAY0346 still covers a missing or ambiguous guarded subject. Fixes can make inference explicit or retain legacy row behavior using explicit bindings when declaration proof is unambiguous. No fix silently rewrites source or guesses an imported declaration.
 
@@ -58,6 +58,6 @@ Runtime execution and rendering proof are Scene-owned. Compiler fixtures and edi
 
 ## Corpus migration gate
 
-Before making inference part of a Scene release, compile each real application workspace with its imports and collect PLAY0816 and PLAY0817 by source path, line and command. Treat an unresolvable declaration as insufficient evidence, not a successful migration. For every PLAY0817, review the previous row-name bindings alongside the proposed effective inputs; either state `for screen`, state `for item` with the intended explicit inputs, or retain the previous bindings explicitly. Apply a proposed repair transactionally and compile the complete workspace again. Do not bulk-accept a binding based only on its spelling.
+Before making inference part of a Scene release, compile each real application workspace with its imports and collect PLAY0818 and PLAY0819 by source path, line and command. Treat an unresolvable declaration as insufficient evidence, not a successful migration. For every PLAY0819, review the previous row-name bindings alongside the proposed effective inputs; either state `for screen`, state `for item` with the intended explicit inputs, or retain the previous bindings explicitly. Apply a proposed repair transactionally and compile the complete workspace again. Do not bulk-accept a binding based only on its spelling.
 
 Track that real-corpus scan and disposition review as a follow-up to Screenplay#1052, before the consuming Scene release. The repository samples and paired fixture packs are the compiler regression gate, not evidence that an external corpus has been migrated. Scene must separately verify selection, form/renderer inputs and guarded single-record behavior against the effective pack; it must not reinterpret the raw authored pack as resolved execution metadata.

@@ -58,7 +58,7 @@ describe('when preserving action subject contracts', () => {
     });
     for (const header of ['action Retry for', 'action Retry for planet', 'action Retry for item for screen', 'toolbar\n          item go navigate to Details for item']) {
         it(`should reject malformed or inapplicable scope: ${header}`, () => {
-            expect(parse(source.replace('action Retry for item label "Retry for screen"', header)).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0815')).toBe(true);
+            expect(parse(source.replace('action Retry for item label "Retry for screen"', header)).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0817')).toBe(true);
         });
     }
 });

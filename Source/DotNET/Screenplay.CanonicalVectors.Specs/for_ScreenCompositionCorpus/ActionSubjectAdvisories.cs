@@ -6,7 +6,7 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ScreenCompositionCorpus;
 
 /// <summary>
-/// Separates the 0110 action subject advisories (PLAY0816/PLAY0817) from the frozen published corpus diagnostics.
+/// Separates the 0110 action subject advisories (PLAY0818/PLAY0819) from the frozen published corpus diagnostics.
 /// </summary>
 static class ActionSubjectAdvisories
 {

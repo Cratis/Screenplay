@@ -45038,7 +45038,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0815",
+      "code": "PLAY0817",
       "name": "InvalidActionSubjectClause",
       "severity": "error",
       "severities": [
@@ -45049,7 +45049,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0816",
+      "code": "PLAY0818",
       "name": "InferredActionSubject",
       "severity": "information",
       "severities": [
@@ -45060,7 +45060,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0817",
+      "code": "PLAY0819",
       "name": "ChangedActionSubject",
       "severity": "warning",
       "severities": [
@@ -45071,7 +45071,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0818",
+      "code": "PLAY0820",
       "name": "AmbiguousActionInputBinding",
       "severity": "warning",
       "severities": [
@@ -45082,7 +45082,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0819",
+      "code": "PLAY0821",
       "name": "UnsupportedActionSubjectContext",
       "severity": "warning",
       "severities": [

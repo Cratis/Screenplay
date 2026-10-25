@@ -24,7 +24,7 @@ module Work
         action Retry
 `;
 const range = { startLineNumber: 12, startColumn: 9, endLineNumber: 12, endColumn: 21 } as Range;
-const context = { only: 'quickfix', markers: [{ ...range, code: 'PLAY0816', message: 'Infer subject', severity: 1 }], trigger: 1 } as languages.CodeActionContext;
+const context = { only: 'quickfix', markers: [{ ...range, code: 'PLAY0818', message: 'Infer subject', severity: 1 }], trigger: 1 } as languages.CodeActionContext;
 const token = { isCancellationRequested: false } as CancellationToken;
 
 function model(): editor.ITextModel {
@@ -48,7 +48,7 @@ describe('when editing action subjects', () => {
     it('should surface every action-subject diagnostic from the shared compiler fixture', () => {
         const fixture = readFileSync(new URL('../../../Compiler/Conformance/action-subjects/source.play', import.meta.url), 'utf8');
         const codes = validateLines(fixture.split('\n')).map(issue => issue.code);
-        for (const code of ['PLAY0815', 'PLAY0816', 'PLAY0817', 'PLAY0818', 'PLAY0819']) expect(codes).toContain(code);
+        for (const code of ['PLAY0817', 'PLAY0818', 'PLAY0819', 'PLAY0820', 'PLAY0821']) expect(codes).toContain(code);
     });
     for (const header of ['action Retry ', 'action "Choose" ', 'item retry action Retry ']) {
         it(`should offer explicit scope on ${header}`, () => expect(labels(header)).toEqual(['for item', 'for screen']));
@@ -59,10 +59,10 @@ describe('when editing action subjects', () => {
         expect(hoverContent(['screen S', '  action "for item"'], 1, 'item', 15, 19)).toBeNull();
     });
     it('should forward inference code severity message and source location', () => {
-        const diagnostics = parse(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0816');
+        const diagnostics = parse(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0818');
         const expected = diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity, diagnostic.message, diagnostic.location.line - 1, diagnostic.location.column]);
         for (const context of [undefined, { compilerDiagnostics: diagnostics }]) {
-            expect(validateLines(source.split('\n'), context).filter(marker => marker.code === 'PLAY0816').map(marker => [marker.code, marker.severity, marker.message, marker.line, marker.startColumn])).toEqual(expected);
+            expect(validateLines(source.split('\n'), context).filter(marker => marker.code === 'PLAY0818').map(marker => [marker.code, marker.severity, marker.message, marker.line, marker.startColumn])).toEqual(expected);
         }
     });
     it('should offer a version-bound compiler repair', async () => {

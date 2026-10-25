@@ -27,19 +27,19 @@ namespace Cratis.Screenplay.Diagnostics;
 public static class DiagnosticCodes
 {
     /// <summary>Malformed, duplicate or inapplicable action subject clause.</summary>
-    public const string InvalidActionSubjectClause = "PLAY0815";
+    public const string InvalidActionSubjectClause = "PLAY0817";
 
     /// <summary>The inferred subject of an action without an authored clause.</summary>
-    public const string InferredActionSubject = "PLAY0816";
+    public const string InferredActionSubject = "PLAY0818";
 
     /// <summary>An inferred action subject differs from legacy row-name matching.</summary>
-    public const string ChangedActionSubject = "PLAY0817";
+    public const string ChangedActionSubject = "PLAY0819";
 
     /// <summary>Several declared keys are eligible for an action input.</summary>
-    public const string AmbiguousActionInputBinding = "PLAY0818";
+    public const string AmbiguousActionInputBinding = "PLAY0820";
 
     /// <summary>A guarded screen action cannot obtain an item from a collection.</summary>
-    public const string UnsupportedActionSubjectContext = "PLAY0819";
+    public const string UnsupportedActionSubjectContext = "PLAY0821";
 
     // The document and its top level.
 

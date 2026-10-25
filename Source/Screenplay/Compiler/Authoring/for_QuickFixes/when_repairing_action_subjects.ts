@@ -21,20 +21,20 @@ module Work
         action Retry // preserve this comment
 `;
 
-const fixes = (text: string, code = 'PLAY0817') => findQuickFixes(text, { diagnosticCode: code });
+const fixes = (text: string, code = 'PLAY0819') => findQuickFixes(text, { diagnosticCode: code });
 
 describe('when repairing action subjects', () => {
     it('should advertise both inference diagnostics', () => {
-        expect(isQuickFixDiagnostic('PLAY0816')).toBe(true);
-        expect(isQuickFixDiagnostic('PLAY0817')).toBe(true);
+        expect(isQuickFixDiagnostic('PLAY0818')).toBe(true);
+        expect(isQuickFixDiagnostic('PLAY0819')).toBe(true);
     });
     it('should make the inferred item subject explicit without rewriting comments', () => {
-        const fix = fixes(source, 'PLAY0816');
+        const fix = fixes(source, 'PLAY0818');
         expect(fix).toHaveLength(1);
         const edited = applyQuickFixEdits(source, fix[0].edits)!;
         expect(edited).toContain('action Retry for item // preserve this comment');
-        expect(parse(edited).diagnostics.some(diagnostic => ['PLAY0816', 'PLAY0817'].includes(diagnostic.code))).toBe(false);
-        expect(fixes(edited, 'PLAY0816')).toEqual([]);
+        expect(parse(edited).diagnostics.some(diagnostic => ['PLAY0818', 'PLAY0819'].includes(diagnostic.code))).toBe(false);
+        expect(fixes(edited, 'PLAY0818')).toEqual([]);
     });
     it('should suppress legacy intent that the effective key fallback cannot represent', () => {
         expect(fixes(source).map(fix => fix.title)).toEqual(["Use 'for item' (item-bound action)", "Use 'for screen' (no selection binding)"]);
@@ -67,6 +67,6 @@ describe('when repairing action subjects', () => {
         expect(prepareActionSubjectQuickFixes(invalid, {})()).toEqual([]);
     });
     it('should not guess declarations in imported buffer snapshots', () => {
-        expect(findQuickFixes(source, { documents: new Map([['a.play', source], ['b.play', '']]), path: 'a.play', diagnosticCode: 'PLAY0816' })).toEqual([]);
+        expect(findQuickFixes(source, { documents: new Map([['a.play', source], ['b.play', '']]), path: 'a.play', diagnosticCode: 'PLAY0818' })).toEqual([]);
     });
 });

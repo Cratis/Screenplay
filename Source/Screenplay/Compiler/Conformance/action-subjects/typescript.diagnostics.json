@@ -1,6 +1,6 @@
 [
   {
-    "code": "PLAY0815",
+    "code": "PLAY0817",
     "severity": "error",
     "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
     "location": {
@@ -9,7 +9,7 @@
     }
   },
   {
-    "code": "PLAY0815",
+    "code": "PLAY0817",
     "severity": "error",
     "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
     "location": {
@@ -18,7 +18,7 @@
     }
   },
   {
-    "code": "PLAY0815",
+    "code": "PLAY0817",
     "severity": "error",
     "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
     "location": {
@@ -45,7 +45,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -54,7 +54,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
     "location": {
@@ -63,7 +63,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -72,7 +72,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Foreign' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -81,7 +81,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Foreign' now infers 'for screen'; legacy row-name matching would use tenantId from item.tenantId",
     "location": {
@@ -90,7 +90,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Optional' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -99,7 +99,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Optional' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
     "location": {
@@ -108,7 +108,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Generated' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -117,7 +117,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Primitive' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -126,7 +126,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Primitive' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
     "location": {
@@ -135,7 +135,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'TwoIdentifiers' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -144,7 +144,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'TwoIdentifiers' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, tenantId from item.tenantId",
     "location": {
@@ -153,7 +153,7 @@
     }
   },
   {
-    "code": "PLAY0818",
+    "code": "PLAY0820",
     "severity": "warning",
     "message": "Input 'itemId' of action 'Retry' matches several declared key fields - write an explicit binding",
     "location": {
@@ -162,7 +162,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -171,7 +171,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for screen'; legacy row-name matching would use name from item.name",
     "location": {
@@ -180,7 +180,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -189,7 +189,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemID",
     "location": {
@@ -198,7 +198,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -207,7 +207,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
     "location": {
@@ -216,7 +216,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Imported.Inventory.Commands.Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -225,7 +225,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Imported.Inventory.Commands.Retry' now infers 'for item'; legacy row-name matching would use no row property",
     "location": {
@@ -234,7 +234,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Missing.Commands.Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -243,7 +243,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -252,7 +252,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
     "location": {
@@ -261,7 +261,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -270,7 +270,7 @@
     }
   },
   {
-    "code": "PLAY0819",
+    "code": "PLAY0821",
     "severity": "warning",
     "message": "A guarded action 'for screen' cannot use a collection as 'item' - use a single-record data context or 'for item'",
     "location": {
@@ -297,7 +297,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -306,7 +306,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -315,7 +315,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
     "location": {
@@ -324,7 +324,7 @@
     }
   },
   {
-    "code": "PLAY0817",
+    "code": "PLAY0819",
     "severity": "warning",
     "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
     "location": {
@@ -333,7 +333,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
@@ -342,7 +342,7 @@
     }
   },
   {
-    "code": "PLAY0816",
+    "code": "PLAY0818",
     "severity": "information",
     "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
     "location": {
