@@ -29,20 +29,30 @@ The equivalence rules are:
 
 - N1: only canonical executable semantic model JSON is compared. Source spans,
   documents, display paths, the catalog and source map are outside that model.
-  No generated backend source is normalized or compared.
-- N2: drop the top-level `revision` and catalog-revision (`catrev1:`) values.
-  Keep schema and language/semantic versions, contract revisions, predecessors,
-  prior revisions and event `origin`. The latter is the foreign store name of a
-  public event, not identity-assignment provenance.
+  No generated backend source is normalized or compared. Fields are classified by
+  their canonical schema role, not by identity-looking string contents.
+- N2: drop only the top-level model `revision`. The current canonical executable
+  model has no catalog-revision metadata field. Keep schema and language/semantic
+  versions, contract revisions, predecessors, prior revisions and event `origin`.
+  The latter is the foreign store name of a public event, not identity-assignment
+  provenance. Ordinary literal text, patterns, labels, names and messages remain
+  significant even when they look like `catrev1:`, `rev1:` or other identities.
 - N3: use two passes. First map application/semantic `id` definitions to structural
   keys (`/application`, then parent, collection and name); map `contractId` to
   `ownerKey#contract`. Then replace identity references with `@key` and requirement
   identities (`requirementId` and `requirement`) with `ownerKey#requirement`.
-  An unmapped identity fails with its JSON path.
+  Only schema-designated identity/reference fields receive this treatment; an
+  unmapped reference in one of those fields fails with its JSON path. Overloaded
+  names such as `source`, `path` and `identifiedBy` are classified by their owner
+  and discriminated variant, so capture field names and literal paths stay text.
 - N4: re-sort set collections by structural key after replacing identities;
   preserve the order of ordered collections.
 - N5: compare every other scalar exactly, including case, code, number format
   and whitespace inside strings. There is no fuzzy matching.
+
+The schema-designated string roles are listed in
+[SemanticStringClassification](https://github.com/Cratis/Screenplay/blob/main/Source/DotNET/Screenplay.Conformance/SemanticStringClassification.cs).
+The same classification is used when ranking fallback keys.
 
 Declaration collections are sets, sorted by stable structural keys. Ordered
 collections, including command `produces`, projection transitions and
@@ -90,8 +100,12 @@ Each loss has a `fixture`, `change` (`missing`, `unexpected`, `changed`,
 `uncompilable` or `diagnostic`), exact `path`, `direction` (`render` or `adapter`),
 and `diagnostics` array. It must carry exactly one of `issue` (an `owner/repo#123`
 reference) or a nonempty `byDesign` reason. Wildcard paths, unknown members,
-duplicate entries and malformed issue references are rejected. Silent losses
-must carry an issue, never `byDesign`.
+duplicate JSON members at any object level, duplicate entries and malformed issue
+references are rejected. When present, `diagnostics` must be an array containing
+only strings; optional `path`, `issue` and `byDesign` fields must be strings, not
+null or another JSON type. Invalid present fields produce malformed findings and
+can never yield a clean verdict. Silent losses must carry an issue, never
+`byDesign`.
 
 ```csharp
 using var stream = File.OpenRead("semantic-loss-ledger.json");

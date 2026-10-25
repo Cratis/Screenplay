@@ -5,4 +5,7 @@
 
 namespace Cratis.Screenplay.Conformance;
 
-internal sealed record SemanticNodeLocation(string Path, string Owner, string Property, string OwnerKey);
+internal sealed record SemanticNodeLocation(string Path, string Owner, string Property, string OwnerKey)
+{
+    public SemanticStringKind StringKind { get; init; }
+}

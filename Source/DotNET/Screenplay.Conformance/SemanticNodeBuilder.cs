@@ -49,7 +49,7 @@ internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
                 continue;
             }
 
-            if (Value(member.Value, new($"{path}/{member.Name}", owner, member.Name, ownerKey)) is { } node)
+            if (Value(member.Value, new($"{path}/{member.Name}", owner, member.Name, ownerKey) { StringKind = SemanticStringClassification.Classify(element, owner, member.Name) }) is { } node)
             {
                 members.Add(new(member.Name, node));
             }
@@ -68,18 +68,14 @@ internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
 
     NormalizedSemanticNode? String(string value, JsonElement element, SemanticNodeLocation location)
     {
-        var (path, _, property, ownerKey) = location;
-        if (SemanticIdentityText.IsRequirement(property))
+        var path = location.Path;
+        var property = location.Property;
+        if (location.StringKind == SemanticStringKind.Requirement)
         {
-            return Encoded($"{ownerKey}#requirement");
+            return Encoded($"{location.OwnerKey}#requirement");
         }
 
-        if (SemanticIdentityText.IsProvenance(value))
-        {
-            return null;
-        }
-
-        if (!SemanticIdentityText.IsIdentity(value))
+        if (location.StringKind == SemanticStringKind.Literal)
         {
             return NormalizedSemanticNode.Leaf(element.GetRawText());
         }
@@ -95,17 +91,19 @@ internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
 
     NormalizedSemanticNode Array(JsonElement array, SemanticNodeLocation location)
     {
-        var (path, owner, property, ownerKey) = location;
+        var path = location.Path;
+        var owner = location.Owner;
+        var property = location.Property;
         var rule = SemanticArrayClassification.Require(owner, property, path);
         var elements = array.EnumerateArray().ToArray();
         if (rule.Kind == SemanticArrayKind.Ordered)
         {
             return NormalizedSemanticNode.List(elements.Select((element, index) =>
-                Element(element, $"{path}[{index.ToString(CultureInfo.InvariantCulture)}]", property, ownerKey)));
+                Element(element, location with { Path = $"{path}[{index.ToString(CultureInfo.InvariantCulture)}]" })));
         }
 
         var segments = rule.Kind == SemanticArrayKind.ReferenceSet
-            ? SemanticSiblingSegments.Assign(elements, element => Reference(element, rule.KeyProperty!))
+            ? SemanticSiblingSegments.Assign(elements, element => Reference(element, rule.KeyProperty!), property)
             : SemanticStructuralKeys.Named(elements, rule.KeyProperty ?? "name");
 
         var members = new List<KeyValuePair<string, NormalizedSemanticNode>>();
@@ -117,14 +115,14 @@ internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
                 _fallbackKeys.Add(elementPath);
             }
 
-            members.Add(new(segments[index].Value, Element(elements[index], elementPath, property, ownerKey)));
+            members.Add(new(segments[index].Value, Element(elements[index], location with { Path = elementPath })));
         }
 
         return NormalizedSemanticNode.Set(members);
     }
 
-    NormalizedSemanticNode Element(JsonElement element, string path, string property, string ownerKey) =>
-        Value(element, new(path, property, property, ownerKey)) ?? NormalizedSemanticNode.Leaf("null");
+    NormalizedSemanticNode Element(JsonElement element, SemanticNodeLocation location) =>
+        Value(element, location with { Owner = location.Property }) ?? NormalizedSemanticNode.Leaf("null");
 
     string? Reference(JsonElement element, string keyProperty) =>
         SemanticSiblingSegments.StringProperty(element, keyProperty) is { } reference && keys.TryResolve(reference, out var key) ? $"@{key}" : null;

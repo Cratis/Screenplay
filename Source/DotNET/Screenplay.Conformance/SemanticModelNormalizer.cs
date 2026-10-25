@@ -15,9 +15,9 @@ namespace Cratis.Screenplay.Conformance;
 /// Normalises a canonical semantic model so two models can be compared independently of how their identities were assigned.
 /// </summary>
 /// <remarks>
-/// <para>N1: only the canonical JSON is read; source spans, documents, the identity catalog and the source map are not in it.</para>
-/// <para>N2: the top-level <c language="text">revision</c> and any catalog revision are dropped; everything else is kept.</para>
-/// <para>N3: identities become structural keys (see <see cref="SemanticStructuralKeys"/>); an identity with no definition fails.</para>
+/// <para>N1: only canonical JSON is read; source spans, documents, the identity catalog and the source map are not in it. String roles come from schema fields.</para>
+/// <para>N2: only the top-level <c language="text">revision</c> is dropped. No catalog revision metadata is emitted; identity-looking domain text is retained.</para>
+/// <para>N3: schema-designated identities become structural keys (see <see cref="SemanticStructuralKeys"/>); an unmapped reference in such a field fails.</para>
 /// <para>N4: arrays the writer sorts are compared as sets; every other array keeps its order (see <see cref="SemanticArrayClassification"/>).</para>
 /// <para>N5: strings and numbers keep their exact canonical text.</para>
 /// </remarks>

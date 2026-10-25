@@ -27,8 +27,9 @@ internal static class SemanticSiblingSegments
     /// </summary>
     /// <param name="elements">The elements, in writer order.</param>
     /// <param name="keyOf">Gets the key of an element, or <see langword="null"/> when it has none.</param>
+    /// <param name="owner">The schema property containing these elements.</param>
     /// <returns>The segment of every element, in the same order, and whether it needed the fallback.</returns>
-    public static SemanticSegment[] Assign(IReadOnlyList<JsonElement> elements, Func<JsonElement, string?> keyOf)
+    public static SemanticSegment[] Assign(IReadOnlyList<JsonElement> elements, Func<JsonElement, string?> keyOf, string owner = "")
     {
         var keys = elements.Select(keyOf).ToArray();
         var segments = new SemanticSegment[elements.Count];
@@ -41,7 +42,7 @@ internal static class SemanticSiblingSegments
                 continue;
             }
 
-            var ordered = members.OrderBy(index => StrippedText(elements[index]), StringComparer.Ordinal).ThenBy(index => index).ToArray();
+            var ordered = members.OrderBy(index => StrippedText(elements[index], owner), StringComparer.Ordinal).ThenBy(index => index).ToArray();
             for (var ordinal = 0; ordinal < ordered.Length; ordinal++)
             {
                 segments[ordered[ordinal]] = new($"{group.Key}~{ordinal + 1}", true);
@@ -66,19 +67,20 @@ internal static class SemanticSiblingSegments
     /// Gets the canonical text of an element with every identity-typed string and requirement hash emptied.
     /// </summary>
     /// <param name="element">The element.</param>
+    /// <param name="owner">The schema property containing the element.</param>
     /// <returns>The stripped text.</returns>
-    public static string StrippedText(JsonElement element)
+    public static string StrippedText(JsonElement element, string owner = "")
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
-            WriteStripped(writer, element, null);
+            WriteStripped(writer, element, owner, SemanticStringKind.Literal);
         }
 
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 
-    static void WriteStripped(Utf8JsonWriter writer, JsonElement element, string? property)
+    static void WriteStripped(Utf8JsonWriter writer, JsonElement element, string owner, SemanticStringKind kind)
     {
         switch (element.ValueKind)
         {
@@ -87,7 +89,7 @@ internal static class SemanticSiblingSegments
                 foreach (var member in element.EnumerateObject())
                 {
                     writer.WritePropertyName(member.Name);
-                    WriteStripped(writer, member.Value, member.Name);
+                    WriteStripped(writer, member.Value, member.Name, SemanticStringClassification.Classify(element, owner, member.Name));
                 }
 
                 writer.WriteEndObject();
@@ -96,12 +98,12 @@ internal static class SemanticSiblingSegments
                 writer.WriteStartArray();
                 foreach (var item in element.EnumerateArray())
                 {
-                    WriteStripped(writer, item, property);
+                    WriteStripped(writer, item, owner, kind);
                 }
 
                 writer.WriteEndArray();
                 break;
-            case JsonValueKind.String when SemanticIdentityText.IsIdentity(element.GetString()) || SemanticIdentityText.IsRequirement(property):
+            case JsonValueKind.String when kind != SemanticStringKind.Literal:
                 writer.WriteStringValue(string.Empty);
                 break;
             default:

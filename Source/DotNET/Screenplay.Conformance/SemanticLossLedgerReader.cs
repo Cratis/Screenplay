@@ -38,6 +38,7 @@ internal sealed class SemanticLossLedgerReader
         try
         {
             using var document = JsonDocument.Parse(stream);
+            reader._problems.AddRange(SemanticLossJsonMembers.Problems(document.RootElement, "the ledger"));
             return reader.Ledger(document.RootElement);
         }
         catch (JsonException exception)
@@ -154,11 +155,14 @@ internal sealed class SemanticLossLedgerReader
             _problems.Add($"The {where} has an unknown 'direction'.");
         }
 
-        var diagnostics = entry.TryGetProperty("diagnostics", out var codes) && codes.ValueKind == JsonValueKind.Array
-            ? codes.EnumerateArray().Where(_ => _.ValueKind == JsonValueKind.String).Select(_ => _.GetString()!).ToImmutableArray()
-            : [];
-
-        return new(Required(entry, "fixture", $"the {where}"), change, String(entry, "path"), direction, diagnostics, String(entry, "issue"), String(entry, "byDesign"));
+        return new(
+            Required(entry, "fixture", $"the {where}"),
+            change,
+            SemanticLossJsonFields.Optional(entry, "path", where, _problems),
+            direction,
+            SemanticLossJsonFields.Diagnostics(entry, where, _problems),
+            SemanticLossJsonFields.Optional(entry, "issue", where, _problems),
+            SemanticLossJsonFields.Optional(entry, "byDesign", where, _problems));
     }
 
     void Known(JsonElement element, string[] known, string where)
