@@ -10,9 +10,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_ordering_validation_by_property_type : a_valid_semantic_model
 {
-    Exception _onNumber;
-    Exception _onText;
-    Exception _withTextOperand;
+    Exception? _onNumber;
+    Exception? _onText;
+    Exception? _withTextOperand;
 
     void Because()
     {
@@ -21,7 +21,7 @@ public class when_ordering_validation_by_property_type : a_valid_semantic_model
         _withTextOperand = Validate(SemanticPrimitiveType.DecimalNumber, SemanticValidationRuleKind.GreaterThanOrEqual, SemanticValue.Text("0"));
     }
 
-    Exception Validate(SemanticPrimitiveType primitive, SemanticValidationRuleKind kind, SemanticValue operand)
+    Exception? Validate(SemanticPrimitiveType primitive, SemanticValidationRuleKind kind, SemanticValue operand)
     {
         var concept = new SemanticConcept(Id(SemanticKind.Concept, "Ordered"), "Ordered", primitive, [], [new(default, kind, operand, null)]);
         return Catch.Exception(() => ExecutableSemanticModel.Create(

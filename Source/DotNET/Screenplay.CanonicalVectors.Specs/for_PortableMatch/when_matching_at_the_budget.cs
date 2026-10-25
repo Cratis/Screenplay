@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 using Cratis.Screenplay.Semantics;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_PortableMatch;
 

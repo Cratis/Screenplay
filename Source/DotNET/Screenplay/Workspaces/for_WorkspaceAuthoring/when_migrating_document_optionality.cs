@@ -9,6 +9,7 @@ using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring;
 
+[PerFactSpecificationLifecycle]
 public class when_migrating_document_optionality : Specification
 {
     const string Source = "// café?\r\ntype Details\r\n  note      String? // keep?\r\n  lines     String[]?";

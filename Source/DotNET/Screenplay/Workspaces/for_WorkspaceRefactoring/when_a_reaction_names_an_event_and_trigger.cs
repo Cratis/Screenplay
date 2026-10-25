@@ -26,15 +26,15 @@ public class when_a_reaction_names_an_event_and_trigger : given.a_refactoring_wo
     [Fact]
     void should_preserve_the_event_reference_when_renaming_the_trigger_with_a_typed_edit()
     {
-        Workspace = ScreenplayWorkspace.Create("App", [Document("model", "model.play", "trigger Created\nmodule App\n  feature F\n    slice Automation S\n      event Created\n      reaction React\n        when Created")], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("App")));
-        var entry = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is TriggerSyntax);
+        var workspace = ScreenplayWorkspace.Create("App", [Document("model", "model.play", "trigger Created\nmodule App\n  feature F\n    slice Automation S\n      event Created\n      reaction React\n        when Created")], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("App")));
+        var entry = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Node is TriggerSyntax);
         var trigger = (TriggerSyntax)entry.Node;
-        var result = Workspace.ProposeAuthoring(new WorkspaceAuthoringRequest
+        var result = workspace.ProposeAuthoring(new WorkspaceAuthoringRequest
         {
-            ExpectedRevision = Workspace.Revision,
-            ExpectedCatalogRevision = Workspace.IdentityCatalog.Revision,
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
             Validation = WorkspaceAuthoringValidation.Executable,
-            SemanticRenames = [new(SemanticAddress.ForTrigger(Workspace.IdentityCatalog.Application, "Created"), SemanticAddress.ForTrigger(Workspace.IdentityCatalog.Application, "Signaled"))],
+            SemanticRenames = [new(SemanticAddress.ForTrigger(workspace.IdentityCatalog.Application, "Created"), SemanticAddress.ForTrigger(workspace.IdentityCatalog.Application, "Signaled"))],
             Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
             Operations = [new ReplaceWorkspaceNode(entry.Handle, trigger, trigger with { Name = "Signaled" })]
         });

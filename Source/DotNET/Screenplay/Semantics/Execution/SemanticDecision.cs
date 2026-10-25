@@ -44,6 +44,9 @@ public sealed class SemanticDecision
     /// <remarks>
     /// Only a fact after the <see cref="Boundary"/> that matches <see cref="Dependencies"/> conflicts; every other later
     /// fact is settled against, as constraints, projections and publications see the commit-time world.
+    /// A constraint rejection from settlement takes precedence over a protected-read conflict; every other settlement
+    /// outcome yields to the conflict. A refused decision keeps its refusal without conflict checking, and an invalid
+    /// prefix-extension is rejected before settlement.
     /// </remarks>
     /// <param name="world">The commit-time world; it must hold the decided facts as its prefix.</param>
     /// <returns>The accepted, rejected or conflicting result; a conflict carries no facts.</returns>
@@ -55,13 +58,16 @@ public sealed class SemanticDecision
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "The commit world is not a prefix-extension of the decide world.");
         }
 
-        // A refused decision performs no settlement or conflict checking.
+        var result = _settle(world);
+        if (result is SemanticRejected { Category: SemanticRejectionCategory.Constraint }) return result;
+
+        // A refused decision keeps its refusal without conflict checking.
         if (!_refused && world.Facts.Skip(Boundary).Any(Dependencies.Matches))
         {
             return new SemanticConflict(world, SemanticConflictCategory.DecisionStateChanged, "Protected decision state changed after it was read.");
         }
 
-        return _settle(world);
+        return result;
     }
 
     internal static SemanticDecision Refused(SemanticExecutionResult result) =>

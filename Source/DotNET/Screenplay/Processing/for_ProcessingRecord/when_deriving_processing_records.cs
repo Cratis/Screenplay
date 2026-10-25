@@ -48,7 +48,7 @@ public class when_deriving_processing_records : Specification
     [Fact] void should_derive_personal_categories_not_operational_secrets() => _ledger.Categories.ShouldContainOnly("Note");
     [Fact] void should_derive_special_categories() => _ledger.SpecialCategories.ShouldContainOnly("health");
     [Fact] void should_identify_criminal_data() => _ledger.CriminalData.ShouldBeTrue();
-    [Fact] void should_prompt_for_assessment_without_asserting_scale() => _ledger.DpiaPrompt!.ShouldContain("Processing scale is not declared");
+    [Fact] void should_prompt_for_assessment_without_asserting_scale() => _ledger.DpiaPrompt.ShouldContain("Processing scale is not declared");
     [Fact] void should_keep_the_pii_only_mapping_for_combined_markers() => _ledger.SecurityMeasures.ShouldContainOnly("Declared [PII]: per-subject encryption and crypto-shredding", "Declared [Encrypted] scope global and [NotAudited]");
     [Fact] void should_find_the_erasure_conflict() => _ledger.Findings.Single().ShouldContain("deleting the subject key");
     [Fact] void should_not_find_an_erasure_conflict_without_an_exception() => _report.Rows.Single(row => row.Purpose == "Billing").Findings.ShouldBeEmpty();

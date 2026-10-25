@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -61,22 +63,22 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [Fact]
     void should_reject_a_tampered_addition()
     {
-        Repair = Find(DiagnosticCodes.UnknownEvent);
-        var add = (AddWorkspaceNode)Repair.Operations.Single();
-        Repair = Repair with { Operations = [add with { Node = ((EventSyntax)add.Node) with { Name = "Tampered" } }] };
-        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
-        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
+        var repair = Find(DiagnosticCodes.UnknownEvent);
+        var add = (AddWorkspaceNode)repair.Operations.Single();
+        repair = repair with { Operations = [add with { Node = ((EventSyntax)add.Node) with { Name = "Tampered" } }] };
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, repair, Request());
+        result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
     }
 
     [Fact]
     void should_reject_a_tampered_destination()
     {
-        Prepare(DiagnosticCodes.OmittedProductionDestination);
-        Repair = Find(DiagnosticCodes.OmittedProductionDestination);
-        var replace = (ReplaceWorkspaceNode)Repair.Operations.Single();
-        Repair = Repair with { Operations = [replace with { Node = ((ProducesSyntax)replace.Node) with { For = new LiteralExpressionSyntax("tampered", replace.Node.Location) } }] };
-        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
-        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
+        var workspace = CreateWorkspace(DestinationSource);
+        var repair = Find(workspace, DiagnosticCodes.OmittedProductionDestination);
+        var replace = (ReplaceWorkspaceNode)repair.Operations.Single();
+        repair = repair with { Operations = [replace with { Node = ((ProducesSyntax)replace.Node) with { For = new LiteralExpressionSyntax("tampered", replace.Node.Location) } }] };
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
+        result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
     }
 
     [Theory]
@@ -96,4 +98,21 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
         string.Join('\n', Result.Conflicts.Select(conflict => $"{conflict.Kind}: {conflict.Message}")).ShouldEqual(string.Empty);
         Result.Accepted.ShouldBeTrue();
     }
+
+    static ScreenplayWorkspace CreateWorkspace(string source) => ScreenplayWorkspace.Create(
+        "Projects",
+        [WorkspaceDocument.Create("document-0", PortablePlayPath.Parse("document-0.play"), Encoding.UTF8.GetBytes(source))],
+        SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
+
+    static WorkspaceAuthoringRequest Request(ScreenplayWorkspace workspace) => new()
+    {
+        ExpectedRevision = workspace.Revision,
+        ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+        Validation = WorkspaceAuthoringValidation.Authoring,
+        Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments
+    };
+
+    static WorkspaceDiagnosticRepair Find(ScreenplayWorkspace workspace, string code) => WorkspaceSyntaxIndex.Create(workspace).RepairableDiagnostics
+        .Where(diagnostic => diagnostic.Code == code)
+        .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(workspace, workspace.Revision, diagnostic)).First();
 }

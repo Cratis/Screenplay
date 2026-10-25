@@ -11,10 +11,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 // Maximum and minimum follow the property's type: on text they bound its length with a whole number.
 public class when_bounding_validation_by_property_type : a_valid_semantic_model
 {
-    Exception _textLength;
-    Exception _negativeLength;
-    Exception _fractionalLength;
-    Exception _equalityOnIdentifier;
+    Exception? _textLength;
+    Exception? _negativeLength;
+    Exception? _fractionalLength;
+    Exception? _equalityOnIdentifier;
 
     void Because()
     {
@@ -24,7 +24,7 @@ public class when_bounding_validation_by_property_type : a_valid_semantic_model
         _equalityOnIdentifier = Validate(new(_commandProjectIdPropertyId, SemanticValidationRuleKind.Equal, SemanticValue.Text("00000000-0000-0000-0000-000000000001"), null));
     }
 
-    Exception Validate(SemanticValidationRule validation)
+    Exception? Validate(SemanticValidationRule validation)
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
         var command = slice.Commands.Single() with { Validations = [validation] };

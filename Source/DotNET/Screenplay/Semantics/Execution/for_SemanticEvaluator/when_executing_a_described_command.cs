@@ -5,6 +5,7 @@ using Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.give
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator;
 
+[PerFactSpecificationLifecycle]
 public class when_executing_a_described_command : a_v6_scenario
 {
     const string Source = "policy Member\n  require authenticated\nmodule M\n  feature F\n    slice StateChange S\n      event Chosen\n        value String\n        at DateTime\n      command Choose\n        value String\n        authorize Member\n        validate\n          value not empty\n        handler\n          implementation\n            hint \"Choose payload values\"\n        produces Chosen\n          at = $context.occurred\n      specification Denied\n        given caller\n          role \"Guest\"\n        when Choose\n          value = \"valid\"\n        then denied\n      specification Invalid\n        given caller\n          authenticated\n        when Choose\n          value = \"\"\n        then error\n      specification Reached\n        given caller\n          authenticated\n        when Choose\n          value = \"valid\"\n        then Chosen\n          value = \"chosen\"\n          at = \"2026-01-01T00:00:00Z\"\n";

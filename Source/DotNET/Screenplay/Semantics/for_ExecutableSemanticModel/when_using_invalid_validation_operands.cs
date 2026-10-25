@@ -10,9 +10,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_invalid_validation_operands : a_valid_semantic_model
 {
-    Exception _forbidden;
-    Exception _missing;
-    Exception _wrongType;
+    Exception? _forbidden;
+    Exception? _missing;
+    Exception? _wrongType;
 
     void Because()
     {
@@ -21,7 +21,7 @@ public class when_using_invalid_validation_operands : a_valid_semantic_model
         _wrongType = Validate(new(_commandNamePropertyId, SemanticValidationRuleKind.Maximum, SemanticValue.Text("1"), null));
     }
 
-    Exception Validate(SemanticValidationRule validation)
+    Exception? Validate(SemanticValidationRule validation)
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
         var command = slice.Commands.Single() with { Validations = [validation] };

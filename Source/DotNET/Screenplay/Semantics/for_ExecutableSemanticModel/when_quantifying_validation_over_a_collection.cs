@@ -11,10 +11,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 // A quantified rule sits on a collection, and its operand is typed by the element type.
 public class when_quantifying_validation_over_a_collection : a_valid_semantic_model
 {
-    Exception _onNumbers;
-    Exception _onScalar;
-    Exception _onText;
-    Exception _withCollectionOperand;
+    Exception? _onNumbers;
+    Exception? _onScalar;
+    Exception? _onText;
+    Exception? _withCollectionOperand;
 
     void Because()
     {
@@ -24,7 +24,7 @@ public class when_quantifying_validation_over_a_collection : a_valid_semantic_mo
         _withCollectionOperand = Validate(SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber, isCollection: true), SemanticValue.Array([SemanticValue.Number(0)]));
     }
 
-    Exception Validate(SemanticTypeReference type, SemanticValue operand)
+    Exception? Validate(SemanticTypeReference type, SemanticValue operand)
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
         var weights = new SemanticProperty(Id(SemanticKind.Property, "RegisterProject.Weights"), "Weights", type, false);

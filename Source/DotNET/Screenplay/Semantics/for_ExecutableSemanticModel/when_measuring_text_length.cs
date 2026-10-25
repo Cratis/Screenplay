@@ -11,11 +11,11 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 // A length operand is a whole number on a text property, so operand typing follows the rule kind.
 public class when_measuring_text_length : a_valid_semantic_model
 {
-    Exception _onText;
-    Exception _onNumber;
-    Exception _onEnumeration;
-    Exception _withTextOperand;
-    Exception _withNegativeOperand;
+    Exception? _onText;
+    Exception? _onNumber;
+    Exception? _onEnumeration;
+    Exception? _withTextOperand;
+    Exception? _withNegativeOperand;
 
     void Because()
     {
@@ -26,7 +26,7 @@ public class when_measuring_text_length : a_valid_semantic_model
         _withNegativeOperand = Validate(SemanticPrimitiveType.Text, [], SemanticValue.Number(-1));
     }
 
-    Exception Validate(SemanticPrimitiveType primitive, string[] values, SemanticValue operand)
+    Exception? Validate(SemanticPrimitiveType primitive, string[] values, SemanticValue operand)
     {
         var concept = new SemanticConcept(
             Id(SemanticKind.Concept, "Measured"),

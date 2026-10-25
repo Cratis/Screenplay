@@ -1,0 +1,1060 @@
+{
+  "version": 1,
+  "model": {
+    "application": "ProtectedCommandReadRaces",
+    "esm": 25,
+    "source": "races.play"
+  },
+  "vectors": [
+    {
+      "name": "present-state-race-recorded",
+      "description": "A later change to the read key by an event the view handles conflicts.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "Recorded"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "present-state-race-removal",
+      "description": "A later removal of the read key by an event the view removes with conflicts.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Removed",
+              "source": "read"
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "Removed"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "same-event-other-key",
+      "description": "The same handled event at another key does not conflict; the command settles with its decided value.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "write",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "other-view-same-key",
+      "description": "An event another view handles at the read key does not conflict.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "OtherRecorded",
+              "source": "read",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "OtherRecorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "merged-keys",
+      "description": "Reads of one key by two views merge into one dependency whose event set covers both views.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        },
+        {
+          "event": "OtherRecorded",
+          "source": "read",
+          "values": {
+            "value": "second"
+          }
+        }
+      ],
+      "request": {
+        "command": "Merge",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "OtherRecorded",
+            "OtherRemoved",
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "OtherRecorded",
+              "Recorded"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "OtherRecorded",
+              "source": "read",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "OtherRecorded",
+              "OtherRecorded"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "OtherRemoved",
+              "source": "read"
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "OtherRecorded",
+              "OtherRemoved"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "write",
+              "values": {
+                "value": "changed"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [],
+            "world": [
+              "Recorded",
+              "OtherRecorded",
+              "Recorded"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-fact-command-conflict",
+      "description": "A command that produces no facts still conflicts on a matching later fact.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "NoFacts",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Removed",
+              "source": "read"
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "Removed"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-fact-command-accept",
+      "description": "A command that produces no facts is accepted without appending when no dependency changed.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "NoFacts",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "OtherRecorded",
+              "source": "read",
+              "values": {
+                "value": "other"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [],
+            "world": [
+              "Recorded",
+              "OtherRecorded"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "irrelevant-fact-preserved",
+      "description": "A later fact outside the dependency set stays in the world the command settles against.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Saved",
+              "source": "other",
+              "values": {
+                "value": "elsewhere"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "absent-then-created",
+      "description": "A read of absent state is refused at decision time and stays refused after the state is created.",
+      "decided": [],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "now present"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Validation",
+            "message": "View 'read' does not exist.",
+            "world": [
+              "Recorded"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "rejected-decision",
+      "description": "A decision rejected by its own requirement keeps that rejection instead of conflicting.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": ""
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "now valid"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Validation",
+            "message": "Value is empty.",
+            "world": [
+              "Recorded",
+              "Recorded"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "late-uniqueness-claim",
+      "description": "A uniqueness claim that lands after the decision is enforced against the later world.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Saved",
+              "source": "competitor",
+              "values": {
+                "value": "original"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Constraint",
+            "code": "UniqueValue",
+            "message": "Constraint 'UniqueValue' is violated: another event source already holds the constrained value.",
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-later-facts",
+      "description": "A commit against the decided world itself settles the decision.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "repeat-commit-accept-then-conflict",
+      "description": "One decision is accepted against one world, conflicts against a longer one, and is accepted against the first again.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "Removed",
+              "source": "read"
+            }
+          ],
+          "expect": {
+            "outcome": "conflict",
+            "category": "DecisionStateChanged",
+            "world": [
+              "Recorded",
+              "Removed"
+            ]
+          }
+        },
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "repeat-commit-late-constraint",
+      "description": "One decision is accepted against one world, rejected by a constraint against a longer one, and accepted against the first again.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "Saved",
+              "source": "competitor",
+              "values": {
+                "value": "original"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Constraint",
+            "code": "UniqueValue",
+            "message": "Constraint 'UniqueValue' is violated: another event source already holds the constrained value.",
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        },
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "repeat-commit-stale-generated-source",
+      "description": "A generated event source taken by another writer after the decision is refused as stale; the same decision settles against a world without it.",
+      "decided": [],
+      "request": {
+        "command": "Create",
+        "values": {},
+        "generated": {
+          "id": "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
+        }
+      },
+      "dependencies": [],
+      "commits": [
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Created",
+                "source": "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
+              }
+            ],
+            "world": [
+              "Created"
+            ]
+          }
+        },
+        {
+          "later": [
+            {
+              "event": "Created",
+              "source": "0192f3a4-5b6c-7d8e-9f01-23456789abcd",
+              "sourceType": "GeneratedId"
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Concurrency",
+            "message": "A generated event source already has facts; retry the command with a fresh generated value.",
+            "world": [
+              "Created"
+            ]
+          }
+        },
+        {
+          "later": [],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Created",
+                "source": "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
+              }
+            ],
+            "world": [
+              "Created"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "reconstructed-nonprefix-history",
+      "description": "A commit world that is shorter than, or rewrites, the decided history is refused; an equal history rebuilt from the log is accepted.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "history": [],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Contract",
+            "message": "The commit world is not a prefix-extension of the decide world.",
+            "world": []
+          }
+        },
+        {
+          "history": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "rewritten"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Contract",
+            "message": "The commit world is not a prefix-extension of the decide world.",
+            "world": [
+              "Recorded"
+            ]
+          }
+        },
+        {
+          "history": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "original"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "accepted",
+            "facts": [
+              {
+                "event": "Saved",
+                "source": "write",
+                "values": {
+                  "value": "original"
+                }
+              }
+            ],
+            "world": [
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "read-race-and-late-uniqueness-claim",
+      "description": "A constraint refusal takes precedence over a protected-read conflict against the same later world.",
+      "decided": [
+        {
+          "event": "Recorded",
+          "source": "read",
+          "values": {
+            "value": "original"
+          }
+        }
+      ],
+      "request": {
+        "command": "Update",
+        "values": {
+          "id": "write",
+          "lookup": "read"
+        }
+      },
+      "dependencies": [
+        {
+          "key": "read",
+          "eventContracts": [
+            "Recorded",
+            "Removed"
+          ]
+        }
+      ],
+      "commits": [
+        {
+          "later": [
+            {
+              "event": "Recorded",
+              "source": "read",
+              "values": {
+                "value": "changed"
+              }
+            },
+            {
+              "event": "Saved",
+              "source": "competitor",
+              "values": {
+                "value": "original"
+              }
+            }
+          ],
+          "expect": {
+            "outcome": "rejected",
+            "category": "Constraint",
+            "code": "UniqueValue",
+            "message": "Constraint 'UniqueValue' is violated: another event source already holds the constrained value.",
+            "world": [
+              "Recorded",
+              "Recorded",
+              "Saved"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
