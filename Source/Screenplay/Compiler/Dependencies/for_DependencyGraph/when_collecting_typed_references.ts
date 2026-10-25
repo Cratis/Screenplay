@@ -29,6 +29,7 @@ const cases = [
     ['specification T\n        when append E', 'verifiedWith', 'whenAppendedEvent'],
     ['specification T\n        then E', 'verifiedWith', 'thenEvent'],
     ['specification T\n        when C', 'verifiedWith', 'whenCommand'],
+    ['specification T\n        then invokes C', 'verifiedWith', 'thenInvokes'],
 ];
 for (const [body, kind, role] of cases) {
     describe(`when collecting ${role} from ${body.split('\n')[0]}`, () => {

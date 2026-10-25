@@ -21,7 +21,7 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["uniqueProperty"] = "usesFactsFrom", ["concurrency"] = "usesFactsFrom", ["trigger"] = "reactsTo", ["reads"] = "decidesFrom",
         ["invokes"] = "asks", ["action"] = "asks", ["actionAlternative"] = "asks", ["actionOtherwise"] = "asks", ["formCommand"] = "asks", ["dataQuery"] = "shows", ["populate"] = "shows", ["navigate"] = "shows",
         ["whenRedeliveredEvent"] = "verifiedWith", ["redeliveryReaction"] = "verifiedWith", ["refusalConstraint"] = null, ["refusalProduces"] = null,
-        ["specificationEvent"] = "verifiedWith", ["givenEvent"] = "verifiedWith", ["whenAppendedEvent"] = "verifiedWith", ["thenEvent"] = "verifiedWith", ["whenCommand"] = "verifiedWith",
+        ["specificationEvent"] = "verifiedWith", ["givenEvent"] = "verifiedWith", ["whenAppendedEvent"] = "verifiedWith", ["thenEvent"] = "verifiedWith", ["whenCommand"] = "verifiedWith", ["thenInvokes"] = "verifiedWith",
         ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["specificationEventSource"] = null, ["specificationStream"] = null, ["thenOperation"] = null,
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["givenCallerPersona"] = null, ["purpose"] = null, ["queryResult"] = null,
         ["identitySource"] = null, ["identityDetailType"] = null,
@@ -98,6 +98,7 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
             ScreenNavigateSyntax value => Reference(value.Screen, "Screen", "navigate", node),
             SpecificationEventSyntax value => Reference(value.EventType, "Event", EventRole(node), node),
             SpecificationCommandSyntax value => Reference(value.CommandType, "Command", "whenCommand", node),
+            SpecificationInvocationSyntax value => Reference(value.Command, "Command", "thenInvokes", node),
             _ => null
         };
         if (reference is not null) _references.Add(reference);

@@ -48,7 +48,7 @@ static class SemanticEventPublication
         var results = ImmutableArray.CreateBuilder<SemanticFact>();
         failure = null;
         published = [];
-        var projections = plan.Projections.Values.Where(projection => projection.Target == SemanticProjectionTargetKind.Event)
+        var projections = plan.Projections.Values.Where(projection => projection.Target == SemanticProjectionTargetKind.Event && plan.Runs(projection.Id))
             .OrderBy(projection => projection.Id.ToString(), StringComparer.Ordinal).ToArray();
         if (projections.Length == 0)
         {

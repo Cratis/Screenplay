@@ -89,8 +89,8 @@ module Merchandising
             action SetProductPrice
               navigate to PricingBoard
 
-      // The accepted path states the public event the price change is published as (PublishPriceChange translates it).
-      specification SettingAPriceIsPublished
+      // The public event the price change is published as belongs to PublishPriceChange, and is specified there.
+      specification SettingAPrice
         given caller
           authenticated
           role "Merchandiser"
@@ -107,12 +107,6 @@ module Merchandising
         then ProductPriceSet
           price    = 59
           currency = "NOK"
-          effectiveFrom = "2026-03-01"
-        then ProductPriceChanged
-          productId     = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku           = "ACM-1000"
-          newPrice      = 59
-          currency      = "NOK"
           effectiveFrom = "2026-03-01"
 
       specification APriceBelowZeroIsRejected

@@ -22,6 +22,11 @@ internal static class SpecificationOutcomeConsistencyValidator
     {
         foreach (var (slice, scope) in declarations.Slices)
         {
+            foreach (var specification in slice.Specifications)
+            {
+                ValidateInvocations(specification, slice, scope, declarations, context);
+            }
+
             foreach (var specification in slice.Specifications.Where(specification => specification.When is not null))
             {
                 var command = declarations.Resolve(specification.When!.CommandType, scope, item => item.Commands, node => node.Name);
@@ -35,6 +40,26 @@ internal static class SpecificationOutcomeConsistencyValidator
                     var commandSlice = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, resolved.Scope)).Slice;
                     ValidateEvent(specification.When!, expected, scope, resolved.Node, commandSlice, resolved.Scope, declarations, context);
                 }
+            }
+        }
+    }
+
+    // A specification runs its own slice only, so only a reaction that slice declares can make the stated invocation.
+    static void ValidateInvocations(SpecificationSyntax specification, SliceSyntax slice, DeclarationScope scope, ConsistencyDeclarations declarations, ParserContext context)
+    {
+        foreach (var expected in specification.ThenInvocations)
+        {
+            if (declarations.Resolve(expected.Command, scope, entry => entry.Commands, node => node.Name) is not { } command) continue;
+            var triggers = slice.Reactions.SelectMany(reaction => reaction.Triggers).ToArray();
+            if (triggers.Any(trigger => trigger.File is not null || trigger.Code is not null)) continue;
+            var invoked = triggers.SelectMany(trigger => trigger.Invokes ?? [])
+                .Any(invocation => declarations.Resolve(invocation.Command, scope, entry => entry.Commands, node => node.Name) is { } target && ReferenceEquals(target.Node, command.Node));
+            if (!invoked)
+            {
+                context.Error(
+                    DiagnosticCodes.UnreachableSpecificationInvocation,
+                    $"Specification '{specification.Name}' states 'then invokes {expected.Command}', but no reaction of its slice '{slice.Name}' invokes '{command.Node.Name}'",
+                    expected.Location);
             }
         }
     }
@@ -96,10 +121,11 @@ internal static class SpecificationOutcomeConsistencyValidator
         while (pending.TryDequeue(out var occurrence))
         {
             if (!seen.Add(occurrence)) continue;
-            foreach (var (slice, scope) in declarations.Slices)
+
+            // A specification runs its own slice in isolation: only what that slice declares can follow the command.
+            foreach (var (slice, scope) in declarations.Slices.Where(entry => ReferenceEquals(entry.Slice, commandSlice)))
             {
-                // An outbound Translate slice publishes the event its projection folds (decision 0098): the public event follows the
-                // private one, so a command specification may state it.
+                // An outbound Translate slice publishes the event its projection folds (decision 0098); within the slice it follows the command.
                 foreach (var projection in slice.Projections.Where(projection => projection.ReadModel is not null))
                 {
                     if (!projection.Blocks.OfType<FromSyntax>().Any(from => from.Events.Any(spec => declarations.Event(spec.Event, scope) == occurrence)))
@@ -130,6 +156,9 @@ internal static class SpecificationOutcomeConsistencyValidator
                             if (resolved is not { } target || target.Node.Handler is not null) return true;
                             if (!invoked.Add(target.Node)) continue;
                             var owner = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, target.Scope)).Slice;
+
+                            // A command another slice owns is that slice's behavior; its facts do not follow in this slice's specification.
+                            if (!ReferenceEquals(owner, commandSlice)) continue;
                             foreach (var producer in target.Node.Produces)
                             {
                                 var kind = declarations.Productions.Resolve(producer.Event, owner).Kind;

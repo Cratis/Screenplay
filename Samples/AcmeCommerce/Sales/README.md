@@ -25,5 +25,4 @@ was cancelled or rejected and why. Order lines and the delivery address are comp
 delivery city and postal code the read model copies out of the address. The Orders/Approvals *domain* blueprints are not used: they need their own approved package sets to render.
 
 Language notes: the private event for P5 is `OrderConfirmationIssued` (one application cannot hold two events named `OrderConfirmed`); P6 carries no
-`customerId`/`at` (inbound-origin status events have no customer; `$eventContext.*` makes every specification of the application unsupported); the
-reference evaluator cannot copy the composite `lines`/`shipTo` in the `ReceiveOrder` capture, so that one specification is reported `unsupported`.
+`customerId`/`at` (inbound-origin status events have no customer; `$eventContext.*` makes every specification of the application unsupported).

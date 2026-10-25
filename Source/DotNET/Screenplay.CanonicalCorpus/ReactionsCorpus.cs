@@ -62,7 +62,10 @@ public static class ReactionsCorpus
             SpecificationExpectations =
             [
                 Expectation("sem1:3a829ffd770e18dc85cc1ecca5c121cf437ad54d97113a1edc6983dccc6903a9", "SendingAnInvoice"),
-                Expectation("sem1:182fc65c0262f892fb967a11f1f8b98bafacdafe7d37b47d761db5393a3f54cb", "ClosingAPaidInvoice"),
+
+                // The payment closes the invoice through CloseInvoice, another slice's command: a specification runs only its
+                // own slice, so the invocation is decided but its fact is CloseInvoice's; only the payment the reaction records follows.
+                Expectation("sem1:182fc65c0262f892fb967a11f1f8b98bafacdafe7d37b47d761db5393a3f54cb", "ClosingAPaidInvoice") with { WorldFactCount = 1 },
                 Expectation("sem1:95eed25fd308f7b074895d55f3169ce68266e2bc022f18c7365b9bb0c52ae2c0", "IssuingTheWeeklyDigest"),
                 Expectation("sem1:ef2515ee64c918e848e50ec9c9720351c8f1fdae1dc99d887392fda543a2aa24", "SeeingALegacyPayment"),
                 Expectation("sem1:16a07b5b5d7fda3deff9fc4f544219b7c60b3fe19f951d79220ea40227a55f1e", "RejectingAnEmptyReason") with
@@ -77,7 +80,9 @@ public static class ReactionsCorpus
                     Outcome = SemanticExecutionOutcomeKind.Rejected,
                     RejectionCategory = SemanticRejectionCategory.Constraint,
                     RejectionMessage = "Constraint 'OnlyClosedOnce' is violated: the event source already has the constrained event.",
-                    WorldFactCount = 1
+
+                    // The given close and the payment the reaction recorded before the refused invocation.
+                    WorldFactCount = 2
                 },
                 Expectation("sem1:31e9ac46cb4c89e2befb8c65f331e9815cfee7afba14a1c68ed71f03f2154559", "UnsupportedStartup") with
                 {
@@ -88,7 +93,7 @@ public static class ReactionsCorpus
                 }
             ],
             EsmBytes = Resource("expected.esm-v6.json"),
-            SemanticRevision = SemanticRevision.Parse("rev1:1be294990a5cf564bba0cbc9aae5a1db1d2e0b27387e2a164de2149e8a4f0700")
+            SemanticRevision = SemanticRevision.Parse("rev1:4a69f9707b76866818667595d066d8aea4e121749e1472b62268c2cbaab071fb")
         };
     }
 

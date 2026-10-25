@@ -222,6 +222,11 @@ public partial class ScreenplayPrinter
                     WriteSpecificationError(writer, error);
                 }
             }
+
+            foreach (var invocation in specification.ThenInvocations)
+            {
+                WriteSpecificationBlock(writer, $"then invokes {invocation.Command}", invocation, invocation.Values);
+            }
         }
     }
 

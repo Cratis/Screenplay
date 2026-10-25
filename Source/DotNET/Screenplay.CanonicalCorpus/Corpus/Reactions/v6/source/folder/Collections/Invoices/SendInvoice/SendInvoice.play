@@ -18,6 +18,3 @@ module Collections
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           sentAt = "2026-10-02T09:00:00Z"
-        then ReminderScheduled
-          for "9c858901-8a57-4791-81fe-4c455b099bc9"
-          scheduledAt = "2026-10-02T09:00:00Z"

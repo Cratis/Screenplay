@@ -324,23 +324,31 @@ To assert a localized rule's rejection, quote the key in the specification: `the
 
 Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Choose either the bare or the quoted form for a specification: the executable model accepts exactly one rejection and no success outcomes. Both forms round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
 
-## Stating the public event a command publishes
+## A specification states its own slice only
 
-When a command's private event is published by an outbound `Translate` slice, a specification of the command may state the public event after the private one. The accepted path is then proved where the command is, with both facts, rather than in a separate `when append` specification on the translation slice:
+A specification runs only the slice that declares it. That slice's reactions, captures and outbound publications run; other slices' never do, so their facts cannot appear in `then`, read-model or query assertions, and `PLAY0285` refuses another slice's event as unreachable. A command's specification states the command's own events; the public event an outbound `Translate` slice publishes from them is stated in that slice's own `when append` specification:
 
 ```screenplay
-specification SettingAPriceIsPublished
+specification SettingAPrice
   when SetProductPrice
     productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
     price = 59
   then ProductPriceSet
     price = 59
-  then ProductPriceChanged
-    productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-    newPrice = 59
 ```
 
-The expected facts are the command's own events and the public events its outbound projection derives from them, in the order they were appended. Without the public event the exact fact count would fail; with it stated, a published event whose values differ fails the specification. `PLAY0285` no longer calls a public event unreachable when an outbound projection publishes it from an event the command produces. The statement of the public event takes no `for`, because its destination is derived from the private event. This needs no new language version.
+When the slice's reaction invokes a command another slice owns, that command is decided - its refusals reach the reaction's `on refused` branches - but its facts are that slice's and are not kept. The automation states the hand-over with `then invokes`, the command and the values it passes:
+
+```screenplay
+specification ClosingAPaidInvoice
+  when append InvoicePaid
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+  then invokes CloseInvoice
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    reason = "paid"
+```
+
+When a specification states at least one `then invokes`, the invocations the slice's reactions made must match them exactly in count and order (any order under `then events in any order`), comparing only the stated values. A refused invocation counts too. A specification that states none does not compare invocations. `then invokes` selects ESM v34. See decision 0115.
 
 ## Query results
 
@@ -535,7 +543,7 @@ An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00
 
 These forms, and the automation and translate slices whose reactions and captures they drive, bind to ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)), and the reference runner executes them:
 
-- **Every action sets reactions off.** After a command, an append, a clock tick, a trigger or a capture record, each new fact runs the reactions to its event, and what those append or the commands they invoke run more, until nothing is left to react to. `then` events compare every new fact, the action's and the reactions'.
+- **A specification runs its own slice only.** After a command, an append, a clock tick, a trigger or a capture record, each new fact runs the reactions, captures and outbound publications that the specification's own slice declares, and what those append runs them again, until nothing is left to react to. Other slices' reactions, captures and publications do not run. A command another slice owns is decided when this slice's reaction invokes it, so refusals and `on refused` branches behave as declared, but its events are that slice's and are not kept; state the hand-over with [`then invokes`](#invocation-expectations). `then` events compare every new fact of the slice, the action's and its reactions' ([decision 0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md)).
 - **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions and captures appended - the way a command's `then` events are what it produced.
 - **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
 - **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
@@ -563,7 +571,7 @@ A first event is `added` only; field and transition guards require a modificatio
 
 Reached reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. Unrelated reactions and bodies excluded by `where` do not run. A later reaction failure retains earlier accepted facts; each invoked command remains atomic. The reference permits at most 1,000 new facts per scenario and 10,000 due occurrences per clock advance, failing closed at either limit. Clock occurrences are not fake input events, and capture sources are never contacted. A command a reaction invokes runs through its full pipeline with the reaction's declared system identity, or no caller when none is declared. Without an identity a gated command rejects, ending the scenario. This matches an unmarked Arc reactor: Arc supplies a system principal only to returned commands of a reactor carrying `[ExecuteCommandsAsSystem]`. Declare that path with [`runs as system role`](reactions.md#returned-command-identity), which selects released ESM v10. Its authentication and exact roles can satisfy a gate; claim conditions are unknown, including under `not`, and a final unknown denies. Authorization identity does not supply `$context.causedBy`, which remains unsupported in invocations. `given caller` still supplies no actor to reaction invocations. Without `runs as` or another later construct, these automation forms select language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
 
-The compiler's command-outcome check follows declared event reactions and invoked commands. It defers an event's values to execution when that reachable chain may produce the event, including another occurrence of a type the initiating command produces. Unreachable reactions do not suppress a provable contradiction. This check does not prove reaction guards or termination; reached opaque effects also defer proof to execution.
+The compiler's command-outcome check follows the event reactions, invoked commands and outbound publications declared in the specification's own slice; an event only another slice produces is unreachable (`PLAY0285`). It defers an event's values to execution when that reachable chain may produce the event, including another occurrence of a type the initiating command produces. Unreachable reactions do not suppress a provable contradiction. This check does not prove reaction guards or termination; reached opaque effects also defer proof to execution.
 
 In v6, projection arithmetic outside the reference numeric range returns `SemanticUnsupported`, not a contract rejection. The overflowing append contributes no fact or partial projection state, earlier accepted facts remain, and an overflowing command contributes none of its transaction. An unsupported result never satisfies `then error`.
 
@@ -655,11 +663,12 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then error "<message>"` | A rejection, for the named reason. |
 | `then error` | A validation or constraint rejection without a named reason. |
 | `then denied` | A typed authorization denial (`Unauthorized`). |
+| `then invokes <CommandType>` | An invocation the slice's own reactions make, with the stated values; when any is stated, every invocation must match (ESM v34). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
 ## Pinning generated values for a reaction-invoked command
 
-A reaction can invoke a command that generates a value, such as `shipmentId ShipmentId generated identifier`. The specification pins the value the invocation takes with `given generated <Command>.<property> = <value>`:
+A reaction can invoke a command that generates a value, such as `shipmentId ShipmentId generated identifier`. The specification pins the value the invocation takes with `given generated <Command>.<property> = <value>`. The example's command is declared in the automation's own slice, so its event is one of the slice's facts:
 
 ```screenplay
 specification ConfirmingAnOrderCreatesAShipment
@@ -673,6 +682,23 @@ specification ConfirmingAnOrderCreatesAShipment
 ```
 
 Each invocation of the command by a reaction takes the next value pinned for that command and property, in authored order; two invocations need two lines. The command and property must name a `generated` property, and the value is a concrete literal of its type. An invocation with nothing pinned stays unsupported (`IdentityAllocation`) rather than inventing a value, so a specification never passes by accident. The pinned values select language/semantic `30.0`; commands that a specification invokes directly keep `generated <property> = <value>` inside the `when` block.
+
+## Invocation expectations
+
+A specification runs its own slice only ([decision 0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md)). When its reaction invokes a command another slice owns, the command is decided for its outcome but its events are not part of this slice's facts. State the invocation itself with `then invokes <Command>`, with the values it is expected to pass indented beneath it, like the values of a `then <Event>`:
+
+```screenplay
+specification ClosingAPaidInvoice
+  when append InvoicePaid
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+  then invokes CloseInvoice
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    reason = "paid"
+```
+
+The run records every invocation the slice's reactions make, in order, whether the command accepted or refused it and whether or not the slice owns the command. Once a specification states one `then invokes`, the recorded invocations must match the stated ones exactly in count and order; with `then events in any order` they match in any order. Only the stated values are compared, so a property left out is not checked. A specification that states no `then invokes` does not compare invocations. A stated invocation is a success outcome.
+
+The command must exist, every value must name one of its non-generated properties with a literal of that property's type, and a reaction declared in the specification's own slice must invoke the command; otherwise the compiler reports `PLAY0816`. The statement selects language/semantic `34.0`.
 
 ## Generated fixtures and return expectations
 

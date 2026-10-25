@@ -29,6 +29,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     readonly Queue<(SemanticFact Fact, DateTimeOffset? Occurred)> _pending = new();
     readonly Dictionary<(SemanticId Command, SemanticId Property), Queue<SemanticValue>> _pinned = [];
     readonly List<SemanticFact> _facts = [];
+    readonly List<SemanticRecordedInvocation> _invocations = [];
     readonly SemanticValueValidator _validator = new(
         plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
         plan.Model.Application.Types.ToDictionary(type => type.Id));
@@ -42,6 +43,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Gets every fact appended through the loop, in order.
     /// </summary>
     public ImmutableArray<SemanticFact> Facts => [.. _facts];
+
+    /// <summary>
+    /// Gets every invocation a reaction made through the loop, in invocation order.
+    /// </summary>
+    public ImmutableArray<SemanticRecordedInvocation> Invocations => [.. _invocations];
 
     /// <summary>
     /// Pins the values the commands that reactions invoke receive for their generated properties, each invocation taking the
@@ -131,7 +137,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         while (_pending.TryDequeue(out var item))
         {
             var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
-            foreach (var reaction in plan.Reactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
+            foreach (var reaction in plan.RunningReactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
             {
                 foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == item.Fact.EventContract))
                 {
@@ -325,6 +331,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         };
 
         var result = evaluator.Execute(plan, World, request);
+        _invocations.Add(new(command.Id, commandValues, result is SemanticAccepted));
         if (result is not SemanticAccepted accepted)
         {
             if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&
@@ -340,7 +347,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
 
         // An invoked response is computed by the evaluator, but is not the initiating command's response.
         // A value the specification pinned with 'given generated' reaches generation; an unpinned one reports IdentityAllocation.
-        return AcceptCommand(accepted, occurrence?.Occurred);
+        // A command another slice owns is that slice's behavior: in an isolated run its outcome decides the reaction, its facts are not adopted.
+        return plan.Runs(command.Id) ? AcceptCommand(accepted, occurrence?.Occurred) : null;
     }
 
     SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>

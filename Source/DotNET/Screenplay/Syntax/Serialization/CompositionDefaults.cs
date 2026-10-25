@@ -43,7 +43,7 @@ static class CompositionDefaults
         [typeof(ScreenToolbarSyntax)] = new(StringComparer.Ordinal) { ["buttons"] = Default.Empty },
         [typeof(ToolbarButtonSyntax)] = new(StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null, ["authorize"] = Default.Null, ["confirm"] = Default.Null },
         [typeof(NavigationRegionSyntax)] = new(StringComparer.Ordinal) { ["logo"] = Default.Null, ["buttons"] = Default.Empty },
-        [typeof(Specifications.SpecificationSyntax)] = new(StringComparer.Ordinal) { ["givenGenerated"] = Default.Empty },
+        [typeof(Specifications.SpecificationSyntax)] = new(StringComparer.Ordinal) { ["givenGenerated"] = Default.Empty, ["thenInvocations"] = Default.Empty },
         [typeof(Captures.CaptureSyntax)] = new(StringComparer.Ordinal) { ["keyIsEventSource"] = Default.False },
         [typeof(AddMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },
         [typeof(SubtractMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },

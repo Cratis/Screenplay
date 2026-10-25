@@ -321,9 +321,25 @@ again.
 
 Every behaviour above has a [specification](specifications.md): a command is given a caller (`authenticated`, `role "..."`) and
 prior events and then either produces events or is refused with a message; a view is given events and then shows a read model.
-The accepted path of a command whose slice publishes a public event states that public event after the private ones (`then
-ProductPriceChanged` after `then ProductPriceSet`), so the publication is proved where the command is; the translate slice keeps
-its own specification for the event-driven path.
+A specification runs only the slice that declares it (Screenplay decision 0115), so it states only what that slice does: a
+command's specification states its own events, and the public event is stated in the outbound translate slice that publishes it
+(`SettingAPrice` states `ProductPriceSet`; `PublishPriceChange` states `ProductPriceChanged`). An automation states the hand-over
+to the command it invokes with `then invokes`, and that command's own slice proves what it appends:
+
+```screenplay
+specification ASmallOrderApprovesItself
+  when append OrderReceived
+    for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+    email       = "ada@example.com"
+    market      = "NO"
+    quotedTotal = 98
+  then invokes ApproveOrder
+    orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+```
+
+A chain across slices - an order received, approved, confirmed and published - is therefore proved link by link.
 
 ## The shell
 
@@ -569,9 +585,9 @@ screenplay test Samples/AcmeCommerce
 
 `--warnaserror` turns warnings into failures; the sample is held at zero. The compiler reports 19 informational
 diagnostics (`PLAY0469`: an event copies a command identifier into its payload although that identifier already identifies the
-event source), which are not warnings. `screenplay test` ran 169 specifications: 168 pass and 1 is reported *unsupported* -
-`ReceivingAnOrderFromTheStorefront` in Sales, because the reference evaluator cannot use the composite capture field `lines` as a
-scalar. The exit code of `test` is therefore 3, not 0. `cratis screenplay validate Samples/AcmeCommerce` reports the model valid as well.
+event source), which are not warnings. `screenplay test` ran 188 specifications: 186 pass and 2 are reported *unsupported* -
+`OfferingAProduct` in Purchasing, because its command needs a deterministic generated `offerId`, and `PuttingStockAway` in
+Warehouse, because the reference evaluator cannot complete a `locations` child. The exit code of `test` is therefore 3, not 0. `cratis screenplay validate Samples/AcmeCommerce` reports the model valid as well.
 
 ### Packaging a domain for Studio
 

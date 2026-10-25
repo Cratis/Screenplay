@@ -69,9 +69,7 @@ module Billing
       specification InvokedBody
         when append FeeRequested
           days = 3
-        then LateFeeApplied
-          for "invoice-1"
-          amount = 30
+        then no events
       specification InvokedInvalid
         when append FeeRequested
           days = 0

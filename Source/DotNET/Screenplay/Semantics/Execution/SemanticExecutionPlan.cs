@@ -170,7 +170,24 @@ public sealed class SemanticExecutionPlan
     /// </summary>
     public ImmutableDictionary<SemanticId, SemanticCapture> Captures { get; }
 
+    /// <summary>
+    /// Gets the slice the plan is isolated to, or <see langword="null"/> when every slice's behavior runs.
+    /// </summary>
+    public SemanticId? IsolatedSlice { get; private init; }
+
     internal ImmutableHashSet<SemanticId> UnadmittedArtifacts { get; }
+
+    /// <summary>
+    /// Gets the reactions that run: every reaction, or only the isolated slice's own.
+    /// </summary>
+    internal IEnumerable<SemanticReaction> RunningReactions => Reactions.Where(reaction => Runs(reaction.Id));
+
+    /// <summary>
+    /// Gets the captures that run: every capture, or only the isolated slice's own.
+    /// </summary>
+    internal IEnumerable<SemanticCapture> RunningCaptures => Captures.Values.Where(capture => Runs(capture.Id));
+
+    ImmutableHashSet<SemanticId> OwnedBehavior { get; init; } = [];
 
     /// <summary>
     /// Compiles ESM into a plan only when every reachable capability is admitted.
@@ -198,6 +215,33 @@ public sealed class SemanticExecutionPlan
     /// <returns>The plan compilation, blocking issues, and deferred slice-owned issues.</returns>
     public static SemanticExecutionPlanCompilation CompileForSpecifications(ExecutableSemanticModel model) =>
         CompileCore(model, []);
+
+    /// <summary>
+    /// Narrows the plan to the behavior one slice owns, the way a specification of that slice runs: only its own reactions,
+    /// captures and publications run, and a command from another slice is evaluated for its outcome without adopting its facts.
+    /// Every declaration, read-model projection, query and constraint stays, since they describe state and contracts, not behavior.
+    /// </summary>
+    /// <param name="slice">The semantic identity of the slice.</param>
+    /// <returns>The isolated plan.</returns>
+    public SemanticExecutionPlan IsolatedTo(SemanticId slice)
+    {
+        var owner = AllSlices(Model.Application).SingleOrDefault(candidate => candidate.Id == slice)
+            ?? throw new InvalidSemanticContract($"Slice '{slice}' is not in the model.");
+        return new(Model, Commands, Events, Projections, ReadModels, Queries, Specifications, Constraints, Reactions, Captures, UnadmittedArtifacts)
+        {
+            IsolatedSlice = slice,
+            OwnedBehavior = [.. owner.Commands.Select(command => command.Id), .. owner.Reactions.Select(reaction => reaction.Id),
+                .. owner.Captures.Select(capture => capture.Id), .. owner.Projections.Select(projection => projection.Id)]
+        };
+    }
+
+    /// <summary>
+    /// Finds the slice that declares a specification.
+    /// </summary>
+    /// <param name="specification">The semantic identity of the specification.</param>
+    /// <returns>The slice identity, or <see langword="null"/> when no slice declares it.</returns>
+    public SemanticId? SliceOf(SemanticId specification) =>
+        AllSlices(Model.Application).FirstOrDefault(slice => slice.Specifications.Any(candidate => candidate.Id == specification))?.Id;
 
     internal static bool IsBlockingIssue(
         SemanticPlanIssue issue,
@@ -278,6 +322,10 @@ public sealed class SemanticExecutionPlan
             [])
         { UnselectedIssues = unselected };
     }
+
+    // Whether a command, reaction, capture or projection is behavior the run performs and adopts: everything when the plan is not
+    // isolated, otherwise only what the isolated slice declares.
+    internal bool Runs(SemanticId behavior) => IsolatedSlice is null || OwnedBehavior.Contains(behavior);
 
     internal bool IsUnadmittedReadModel(SemanticId readModel) =>
         UnadmittedArtifacts.Contains(readModel) || Projections.Values.Any(projection =>

@@ -257,7 +257,7 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? AccessMembers(SyntaxNode node) => node switch
     {
-        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax or ExecuteCommandActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        InvokesSyntax or SpecificationInvocationSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax or ExecuteCommandActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         _ => AuthorizationMembers(node)
     };

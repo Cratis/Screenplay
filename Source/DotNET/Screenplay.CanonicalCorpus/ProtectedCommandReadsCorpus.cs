@@ -99,7 +99,8 @@ public static class ProtectedCommandReadsCorpus
     {
         var application = ApplicationIdentity.Create(ApplicationName);
         var catalog = SemanticIdentityCatalog.Empty(application);
-        var slice = SemanticAddress.ForSlice(application, "Storage", "Decisions", "Use");
+        var use = SemanticAddress.ForSlice(application, "Storage", "Decisions", "Use");
+        var workflow = SemanticAddress.ForSlice(application, "Storage", "Decisions", "Workflow");
         (string Name, string? Error, int Count)[] cases =
         [
             ("MissingFromEmpty", "Current 'missing' does not exist.", 0),
@@ -113,18 +114,18 @@ public static class ProtectedCommandReadsCorpus
             ("GenerationAfterPresence", null, 1),
             ("ReadPathRequirementRejectsEmpty", "The stored value must not be empty.", 1),
             ("ReadPathMappingAcrossSources", null, 2),
-            ("ReactionInvokesProtectedRead", null, 3),
-            ("ReactionInvokesProtectedReadOfMissing", "Current 'missing' does not exist.", 1),
             ("RefusedEmptyKey", "Current '' does not exist.", 0),
             ("RefusedWhitespaceKey", "Current '   ' does not exist.", 0),
             ("RefusedStarKey", "Current '*' does not exist.", 0),
             ("RefusedHashKey", "Current 'a#b' does not exist.", 0),
             ("RefusedPaddedKey", "Current ' padded ' does not exist.", 0),
-            ("RefusedStarKeyWithStoredInstance", "Current '*' does not exist.", 1)
+            ("RefusedStarKeyWithStoredInstance", "Current '*' does not exist.", 1),
+            ("ReactionInvokesProtectedRead", null, 2),
+            ("ReactionInvokesProtectedReadOfMissing", "Current 'missing' does not exist.", 1)
         ];
         return [.. cases.Select(value => new CanonicalCorpusSpecificationExpectation
         {
-            Specification = catalog.ResolveSemantic(SemanticAddress.ForSpecification(slice, value.Name)),
+            Specification = catalog.ResolveSemantic(SemanticAddress.ForSpecification(value.Name.StartsWith("ReactionInvokes", StringComparison.Ordinal) ? workflow : use, value.Name)),
             Name = value.Name,
             Outcome = value.Error is null ? SemanticExecutionOutcomeKind.Accepted : SemanticExecutionOutcomeKind.Rejected,
             RejectionMessage = value.Error,

@@ -3,7 +3,9 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.when_running_reactions;
 
-public class and_a_command_sets_off_a_cascade : given.a_v6_scenario
+// A specification runs only its own slice: the command's specification sees none of the reactions, and the automation's
+// sees its own reactions' facts but not those of the command another slice owns.
+public class and_other_slices_react_to_the_command : given.a_v6_scenario
 {
     const string Source =
         """
@@ -24,23 +26,6 @@ public class and_a_command_sets_off_a_cascade : given.a_v6_scenario
                 number String
                 registeredAt DateTime
               specification RegisteringAnInvoice
-                given clock "2026-10-02T09:00:00Z"
-                when RegisterInvoice
-                  invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  number = "INV-1"
-                then InvoiceRegistered
-                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  number = "INV-1"
-                  registeredAt = "2026-10-02T09:00:00Z"
-                then InvoiceWelcomed
-                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  welcomedAt = "2026-10-02T09:00:00Z"
-                then InvoiceClosed
-                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
-                  reason = "welcomed"
-              specification ForgettingTheReactions
                 given clock "2026-10-02T09:00:00Z"
                 when RegisterInvoice
                   invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
@@ -75,21 +60,33 @@ public class and_a_command_sets_off_a_cascade : given.a_v6_scenario
               event InvoiceWelcomed
                 invoiceId InvoiceId
                 welcomedAt DateTime
+              specification WelcomingAnInvoice
+                given clock "2026-10-02T09:00:00Z"
+                when append InvoiceRegistered
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  number = "INV-1"
+                  registeredAt = "2026-10-02T09:00:00Z"
+                then InvoiceWelcomed
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  welcomedAt = "2026-10-02T09:00:00Z"
         """;
 
-    SemanticSpecificationRun _cascade;
-    SemanticSpecificationRun _forgotten;
+    SemanticSpecificationRun _command;
+    SemanticSpecificationRun _automation;
 
     void Establish() => Compile(Source);
 
     void Because()
     {
-        _cascade = Run("RegisteringAnInvoice");
-        _forgotten = Run("ForgettingTheReactions");
+        _command = Run("RegisteringAnInvoice");
+        _automation = Run("WelcomingAnInvoice");
     }
 
     [Fact] void should_select_esm_v6() => _plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V6);
-    [Fact] void should_pass_with_what_the_reactions_appended() => _cascade.Passed.ShouldBeTrue();
-    [Fact] void should_append_the_command_the_reaction_and_the_invoked_command_facts() => ((SemanticAccepted)_cascade.Execution).Facts.Length.ShouldEqual(3);
-    [Fact] void should_fail_a_specification_that_leaves_the_reactions_out() => _forgotten.Failures.ShouldContain("Expected 1 fact(s), got 3.");
+    [Fact] void should_pass_the_command_with_its_own_fact() => Assert.True(_command.Passed, string.Join('\n', _command.Failures));
+    [Fact] void should_not_run_other_slices_reactions_for_the_command() => ((SemanticAccepted)_command.Execution).Facts.Length.ShouldEqual(1);
+    [Fact] void should_pass_the_automation_with_its_own_reactions_facts() => Assert.True(_automation.Passed, string.Join('\n', _automation.Failures));
+    [Fact] void should_not_adopt_the_facts_of_the_command_another_slice_owns() => ((SemanticAccepted)_automation.Execution).Facts.Select(_ => _plan.Events[_.EventContract].Name).ShouldEqual(["InvoiceRegistered", "InvoiceWelcomed"]);
 }

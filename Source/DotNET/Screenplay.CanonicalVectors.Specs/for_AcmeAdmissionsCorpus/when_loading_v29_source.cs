@@ -19,7 +19,7 @@ public class when_loading_v29_source : Specification
         foreach (var model in _models)
         {
             var plan = SemanticExecutionPlan.Compile(model).Plan!;
-            plan.Specifications.Count.ShouldEqual(4);
+            plan.Specifications.Count.ShouldEqual(5);
             foreach (var specification in plan.Specifications.Values)
             {
                 var run = new SemanticSpecificationRunner().Run(plan, specification.Id);
@@ -56,7 +56,7 @@ public class when_loading_v29_source : Specification
     void should_pin_normalized_outcomes_and_worlds()
     {
         var vector = AcmeAdmissionsCorpus.V29;
-        vector.SpecificationExpectations.Length.ShouldEqual(4);
+        vector.SpecificationExpectations.Length.ShouldEqual(5);
         foreach (var model in _models)
         {
             var plan = SemanticExecutionPlan.Compile(model).Plan!;

@@ -248,21 +248,10 @@ module Buying
           quantity     = 40
           onHand       = 4
           reorderPoint = 10
-        then PurchaseOrderCreated
-          for "c0ffee00-0000-4000-8000-000000000001"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
-          supplierId      = "5a0b7c1e-2d4f-4a6b-8c9d-0e1f2a3b4c01"
-        then PurchaseOrderLineAdded
-          for "c0ffee00-0000-4000-8000-000000000001"
-          sku       = "ACM-1000"
-          quantity  = 40
-          unitPrice = 62
-        then ReplenishmentOrderPlaced
-          for "c0ffee00-0000-4000-8000-000000000001"
-          sku = "ACM-1000"
-        then SkuReplenishmentStarted
-          for "ACM-1000"
-          purchaseOrderId = "c0ffee00-0000-4000-8000-000000000001"
+        // the order itself is CreateReplenishmentPurchaseOrder's, and is specified there: this slice hands the request over
+        then invokes CreateReplenishmentPurchaseOrder
+          sku      = "ACM-1000"
+          quantity = 40
 
       specification AutoReplenishSkipsWhenAnOpenOrderCoversTheSku
         given generated CreateReplenishmentPurchaseOrder.purchaseOrderId = "c0ffee00-0000-4000-8000-000000000003"

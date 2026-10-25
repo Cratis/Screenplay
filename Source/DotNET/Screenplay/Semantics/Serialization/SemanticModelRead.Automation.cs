@@ -383,6 +383,26 @@ internal static partial class SemanticModelRead
         return new(target) { Field = field, Value = value };
     }
 
+    internal static SemanticSpecificationInvocation SpecificationInvocation(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "specification invocation");
+        var seen = NewSeen();
+        SemanticId command = default;
+        ImmutableArray<SemanticPropertyValue> values = default;
+        while (NextProperty(ref reader, seen, "specification invocation") is { } property)
+        {
+            switch (property)
+            {
+                case "command": command = SemanticId.Parse(String(ref reader, property)); break;
+                case "values": values = Array(ref reader, PropertyValue, property); break;
+                default: throw Unknown(property, "specification invocation");
+            }
+        }
+
+        Required(command.IsSet && !values.IsDefault, "specification invocation");
+        return new(command, values);
+    }
+
     internal static SemanticSpecificationGeneratedValue SpecificationGeneratedValue(ref Utf8JsonReader reader)
     {
         Object(ref reader, "pinned generated value");

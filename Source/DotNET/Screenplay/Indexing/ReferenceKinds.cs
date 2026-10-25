@@ -50,6 +50,7 @@ static class ReferenceKinds
         SpecificationCallerPersonaSyntax value => [(value.Name, ["Persona"], "givenCallerPersona")],
         SpecificationEventSyntax value => [(value.EventType, ["Event", "Example"], "specificationEvent")],
         SpecificationCommandSyntax value => [(value.CommandType, ["Command", "Example"], "whenCommand")],
+        SpecificationInvocationSyntax value => [(value.Command, ["Command"], "thenInvokes")],
         SpecificationReadModelSyntax value => [(value.Name, ["ReadModel", "Example"], "specificationReadModel")],
         SpecificationAbsentReadModelSyntax value => [(value.Name, ["ReadModel"], "thenAbsentReadModel")],
         SpecificationQuerySyntax value => [(value.Query, ["Query"], "thenQuery")],

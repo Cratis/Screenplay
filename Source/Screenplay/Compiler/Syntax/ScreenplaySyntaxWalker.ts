@@ -29,7 +29,7 @@ import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, T
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
     SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
-    SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
+    SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationInvocationSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
@@ -742,6 +742,12 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
         if (syntax.thenReturns != null) this.visitSpecificationReturn(syntax.thenReturns);
         syntax.thenErrors.forEach(node => { this.visitNode(node); if (node.caseValue != null) this.visitExpression(node.caseValue); });
+        syntax.thenInvocations?.forEach(node => this.visitSpecificationInvocation(node));
+    }
+
+    visitSpecificationInvocation(syntax: SpecificationInvocationSyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
     }
 
     visitSpecificationRedelivery(syntax: SpecificationRedeliverySyntax): void {

@@ -44,9 +44,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-        => SemanticModelValidator.UsesEventSourceCaptureKeys(application)
-            ? (LanguageVersion.V33, SemanticVersion.V33)
-            : SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
+    {
+        if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
+        if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
+        return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
+    }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectVersionsBeforeEventSourceCaptureKeys(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
@@ -245,7 +247,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV33Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV34Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)

@@ -28,24 +28,16 @@ module Stock
             sku  = $.sku
             name = $.name
 
+      // The snapshot of the new SKU and the public stock level are the other slices', and are specified there
       specification RegisteringAPublishedProduct
         when append ProductPublishedAtWarehouse
           productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
           sku       = "ACM-1000"
           name      = "Acme mug"
-        then events in any order
         then SkuRegistered
           for "ACM-1000"
           sku = "ACM-1000"
           name = "Acme mug"
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 0
-          available = 0
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 0
-          available = 0
 
     // P3 ProductRetired (Catalog): no more goods are received for a SKU the shop no longer sells
     slice Translate BlockSkuFromCatalog
@@ -100,7 +92,7 @@ module Stock
               quantity   = $.quantity
               movementId = $.orderId
 
-      // The confirmation travels all the way: reserve, plan the parcel, snapshot and publish
+      // The confirmation becomes a reservation request; reserving, planning the parcel and publishing are the other slices'
       specification ReservingAConfirmedOrderLine
         given SkuRegistered
           for "ACM-1000"
@@ -115,35 +107,12 @@ module Stock
         when append OrderConfirmedAtWarehouse
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           lines   = [{"sku":"ACM-1000","quantity":3}]
-        then events in any order
         then ReservationRequested
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku        = "ACM-1000"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then ReservationMade
-          for "ACM-1000"
-          sku = "ACM-1000"
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          quantity   = 3
-          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then StockReserved
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then ShipmentPlanned
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 40
-          available = 37
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 40
-          available = 37
 
       // A second order for the same SKU is told apart by its order
       specification ReservingASecondOrderForTheSameSku
@@ -163,35 +132,12 @@ module Stock
         when append OrderConfirmedAtWarehouse
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           lines   = [{"sku":"ACM-1000","quantity":5}]
-        then events in any order
         then ReservationRequested
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           sku        = "ACM-1000"
           quantity   = 5
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-        then ReservationMade
-          for "ACM-1000"
-          sku        = "ACM-1000"
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          quantity   = 5
-          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-        then StockReserved
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          sku      = "ACM-1000"
-          quantity = 5
-        then ShipmentPlanned
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          sku      = "ACM-1000"
-          quantity = 5
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 40
-          available = 35
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 40
-          available = 35
 
   feature Receiving
 
@@ -226,6 +172,7 @@ module Stock
             quantity        = $.quantity
             receivedAt      = $.receivedAt
 
+      // The snapshot that follows a delivery is SnapshotStockOnMovement's, and is specified there
       specification BookingTheFirstDelivery
         given SkuRegistered
           for "ACM-1000"
@@ -238,21 +185,12 @@ module Stock
           sku             = "ACM-1000"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
-        then events in any order
         then StockReceived
           for "ACM-1000"
           sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 40
           receivedAt      = "2026-10-02T09:00:00Z"
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 40
-          available = 40
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 40
-          available = 40
 
       // A second delivery of the same SKU is told apart by its receipt
       specification BookingARepeatDelivery
@@ -274,18 +212,9 @@ module Stock
           sku             = "ACM-1000"
           quantity        = 20
           receivedAt      = "2026-10-05T09:00:00Z"
-        then events in any order
         then StockReceived
           for "ACM-1000"
           sku = "ACM-1000"
           purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
           quantity        = 20
           receivedAt      = "2026-10-05T09:00:00Z"
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 20
-          available = 20
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 20
-          available = 20
