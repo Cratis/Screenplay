@@ -7,9 +7,12 @@ internal sealed partial class SemanticReactionLoop
 {
     readonly Dictionary<SemanticId, Dictionary<SemanticValue, SemanticCaptureRecord>> _captureStates = [];
 
-    internal SemanticExecutionResult? FoldCaptures()
+    internal SemanticExecutionResult? FoldCaptures() => FoldCaptures(World.Facts.Length);
+
+    // Folds only the facts before the first one a live host just appended: what a capture has already seen, never what it is about to react to.
+    internal SemanticExecutionResult? FoldCaptures(int count)
     {
-        foreach (var fact in World.Facts)
+        foreach (var fact in World.Facts.Take(count))
         {
             if (DeliverCaptures(fact, fact.Occurred, history: true) is { } failure) return failure;
         }
