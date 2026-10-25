@@ -24,7 +24,7 @@ module Stock
           sku      = $eventSourceId
           quantity = quantity
 
-      // The reservation also plans the shipment, snapshots and watches the stock: all cascaded facts are listed
+      // What else a reservation sets going (the shipment, the snapshot) belongs to other slices, and is specified there
       specification PublishingAReservation
         given SkuRegistered
           for "ACM-1000"
@@ -42,23 +42,10 @@ module Stock
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then events in any order
         then StockReserved
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku      = "ACM-1000"
           quantity = 3
-        then ShipmentPlanned
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 40
-          available = 37
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 40
-          available = 37
 
     // P8 StockReservationFailed
     slice Translate PublishReservationFailure
@@ -219,23 +206,10 @@ module Stock
           sku            = "ACM-1000"
           quantity       = 3
           dispatchedAt   = "2026-10-02T14:00:00Z"
-        then events in any order
+        // taking the units off the shelf is TakeStockWhenDispatched's, and is specified there
         then ShipmentDispatched
           orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           shipmentId     = "5e5e5e5e-0c0d-4c6a-9a41-3b6a1a0e6001"
           carrier        = posten
           trackingNumber = "RR123456789NO"
           dispatchedAt   = "2026-10-02T14:00:00Z"
-        then StockDispatched
-          for "ACM-1000"
-          sku = "ACM-1000"
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          quantity = 3
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 37
-          available = 37
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 37
-          available = 37

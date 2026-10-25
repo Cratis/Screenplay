@@ -63,5 +63,5 @@ buyer already works in.
 - A purchase order is numbered at submission (`PO-...`), not at creation: a reaction-created draft cannot generate a number.
 - The dashboard figures are one projected row (a literal key), like the warehouse's, so the dashboard plays and previews: a read composed by a query `performer` is opaque, and Studio's Play leaves it out with the screens that show it.
 - An id that travels keeps its own concept on each side: `crossingId` arrives as Purchasing's own `CrossingId` (Warehouse's `MovementId`, the same Uuid), so the Purchasing package also compiles on its own, and nothing in Purchasing needs it as a `PurchaseOrderId` any more.
-- The accepted path of `ReceivePurchaseOrderGoods` is a command specification that states the public event `PurchaseOrderReceived` it publishes (`GoodsAgainstASubmittedOrderArePublished`).
+- The accepted path of `ReceivePurchaseOrderGoods` states its own event (`GoodsAgainstASubmittedOrderAreReceived`); the public `PurchaseOrderReceived` is stated by the outbound translation that publishes it.
 - Domain blueprints (`Cratis.Blueprint.Orders/Inventory/Approvals`) are not used here: Purchasing has no blueprint of its own, the foundation templates are referenced.

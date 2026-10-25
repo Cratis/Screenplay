@@ -24,7 +24,8 @@ public class when_binding_acme_typed_capture_keys : Specification
         _model = result.Value!.Model;
     }
 
-    [Fact] void should_select_v32() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V32);
+    // The automation specifications state what they invoke with `then invokes`, which selects v34
+    [Fact] void should_select_v34() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V34);
 
     [Theory]
     [InlineData("OrderReceived")]

@@ -324,23 +324,31 @@ To assert a localized rule's rejection, quote the key in the specification: `the
 
 Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Choose either the bare or the quoted form for a specification: the executable model accepts exactly one rejection and no success outcomes. Both forms round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
 
-## Stating the public event a command publishes
+## A specification states its own slice only
 
-When a command's private event is published by an outbound `Translate` slice, a specification of the command may state the public event after the private one. The accepted path is then proved where the command is, with both facts, rather than in a separate `when append` specification on the translation slice:
+A specification runs only the slice that declares it. That slice's reactions, captures and outbound publications run; other slices' never do, so their facts cannot appear in `then`, read-model or query assertions, and `PLAY0285` refuses another slice's event as unreachable. A command's specification states the command's own events; the public event an outbound `Translate` slice publishes from them is stated in that slice's own `when append` specification:
 
 ```screenplay
-specification SettingAPriceIsPublished
+specification SettingAPrice
   when SetProductPrice
     productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
     price = 59
   then ProductPriceSet
     price = 59
-  then ProductPriceChanged
-    productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-    newPrice = 59
 ```
 
-The expected facts are the command's own events and the public events its outbound projection derives from them, in the order they were appended. Without the public event the exact fact count would fail; with it stated, a published event whose values differ fails the specification. `PLAY0285` no longer calls a public event unreachable when an outbound projection publishes it from an event the command produces. The statement of the public event takes no `for`, because its destination is derived from the private event. This needs no new language version.
+When the slice's reaction invokes a command another slice owns, that command is decided - its refusals reach the reaction's `on refused` branches - but its facts are that slice's and are not kept. The automation states the hand-over with `then invokes`, the command and the values it passes:
+
+```screenplay
+specification ClosingAPaidInvoice
+  when append InvoicePaid
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+  then invokes CloseInvoice
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    reason = "paid"
+```
+
+When a specification states at least one `then invokes`, the invocations the slice's reactions made must match them exactly in count and order (any order under `then events in any order`), comparing only the stated values. A refused invocation counts too. A specification that states none does not compare invocations. `then invokes` selects ESM v34. See decision 0115.
 
 ## Query results
 

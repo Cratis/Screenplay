@@ -104,14 +104,11 @@ module Orders
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku     = "ACM-1000"
           shortBy = 1
-        then events in any order
+        // the status the shopper hears is PublishOrderStatus's, and is specified there
         then OrderPutOnHold
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           sku     = "ACM-1000"
           shortBy = 1
-        then OrderStatusChanged
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          status  = "onHold"
 
     // P12 ShipmentDispatched (Warehouse) -> OrderShipmentRecorded (the order becomes Shipped)
     slice Translate RecordShipment
@@ -151,13 +148,10 @@ module Orders
           carrier        = "posten"
           trackingNumber = "TRK-100200"
           dispatchedAt   = "2026-10-20T08:00:00Z"
-        then events in any order
+        // the status the shopper hears is PublishOrderStatus's, and is specified there
         then OrderShipmentRecorded
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           shipmentId     = "5a1c6e1e-0d4b-4b6e-9d63-0f4a9b6d7e01"
           carrier        = "posten"
           trackingNumber = "TRK-100200"
           dispatchedAt   = "2026-10-20T08:00:00Z"
-        then OrderStatusChanged
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          status  = "shipped"

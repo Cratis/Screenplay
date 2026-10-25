@@ -26,8 +26,8 @@ module Orders
         unique event OrderReceived
         message "An order is received once"
 
-      // 98 < 500: the policy-driven automation approves it; the confirm automation, the status translation and the confirmation
-      // translation follow, all from one received order.
+      // 98 < 500: the policy-driven automation hands the order to ApproveOrder. The approval itself, the confirmation that follows it
+      // and the public events are the other slices', and each is specified there.
       specification ASmallOrderApprovesItself
         when append OrderReceived
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -38,22 +38,8 @@ module Orders
           shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           market      = "NO"
           quotedTotal = 98
-        then events in any order
-        then OrderApproved
+        then invokes ApproveOrder
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then OrderConfirmationIssued
-          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-          market      = "NO"
-          quotedTotal = 98
-        then OrderConfirmed
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo  = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-        then OrderStatusChanged
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          status  = "approved"
 
     slice StateChange RejectOrder
       description "A sales manager turns an order down, with a reason the shopper sees"
@@ -214,21 +200,9 @@ module Orders
         when append OrderApproved
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-        // the outcome of the reaction (the fact it reacts to is excluded); the public events follow from it (translation/publish.play)
-        then events in any order
-        then OrderConfirmationIssued
-          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
-          market      = "NO"
-          quotedTotal = 1798
-        then OrderConfirmed
+        // the confirmation itself is ConfirmOrder's, and the public events are the outbound translations' (translation/publish.play)
+        then invokes ConfirmOrder
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          lines   = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo  = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
-        then OrderStatusChanged
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          status  = "approved"
 
     slice StateChange ConfirmOrder
       description "Confirms an approved order: the shop's promise becomes the warehouse's work"
@@ -278,6 +252,32 @@ module Orders
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
         then error "Only an approved order can be confirmed"
 
+      specification ConfirmingAnApprovedOrder
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          email       = "grace@example.com"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+        given OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+        when ConfirmOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+        then OrderConfirmationIssued
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
+          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          market      = "NO"
+          quotedTotal = 1798
+
   // The decision lives in its own feature on purpose: the menu item "Approval inbox" targets the feature Orders.Approval, and a feature opens on one of its screens.
   // Decision is reached from the inbox (double click an order), never from the menu, so it must not be a screen of the feature the menu opens.
   feature Decision
@@ -300,7 +300,25 @@ module Orders
       event OrderApproved
         orderId OrderId
 
-      // The accepting scenario is ASmallOrderApprovesItself / PublishOrderStatus; this is the denied path.
+      specification ApprovingAReceivedOrder
+        given caller
+          authenticated
+          role "SalesManager"
+        given OrderReceived
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email       = "ada@example.com"
+          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          market      = "NO"
+          quotedTotal = 98
+        when ApproveOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderApproved
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
       specification ARepCannotApprove
         given caller
           authenticated

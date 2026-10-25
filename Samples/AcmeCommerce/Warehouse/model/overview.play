@@ -25,6 +25,26 @@ module Stock
       example Publish : RecordStockLevel
         sku = "ACM-1000"
 
+      specification SnapshottingAStockLevel
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when Publish
+        then StockLevelSnapshotTaken
+          for "ACM-1000"
+          onHand    = 40
+          available = 40
+
       specification ASalesRepCannotSnapshotAStockLevel
         given caller
           authenticated
@@ -72,15 +92,9 @@ module Stock
           movementId   = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
           quantity     = 5
           reason       = found
-        then events in any order
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 5
-          available = 5
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 5
-          available = 5
+        // the snapshot is RecordStockLevel's, and the public stock level PublishStockLevel's
+        then invokes RecordStockLevel
+          sku = "ACM-1000"
 
     slice StateChange RaiseReorderAlarm
       description "Raises the reorder alarm when the SKU is below its reorder point and no alarm is open for it"
@@ -109,7 +123,35 @@ module Stock
         sku        = "ACM-1000"
         crossingId = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
 
-      // The accepted path and what it publishes: see WatchReorderPoint and PublishLowStock
+      specification RaisingTheAlarmBelowTheReorderPoint
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 12
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when Alarm
+        then ReorderPointCrossed
+          for "ACM-1000"
+          crossingId        = "c1c1c1c1-0c0d-4c6a-9a41-3b6a1a0e5001"
+          onHand            = 12
+          reorderPoint      = 10
+          suggestedQuantity = 50
+
+      // What the alarm publishes: see PublishLowStock
       specification AnOpenAlarmIsNotRaisedTwice
         given caller
           authenticated
@@ -155,7 +197,8 @@ module Stock
             on refused by validation
               acknowledge
 
-      // Once per crossing: the first drop below the reorder point raises the alarm, the next drop while it is open stays silent
+      // Once per crossing: every drop asks RaiseReorderAlarm, which raises the alarm on the first crossing and refuses while it is
+      // open; the reaction acknowledges the refusal, so nothing is reported. The alarm itself is RaiseReorderAlarm's.
       specification RaisingTheAlarmOnTheFirstCrossing
         given SkuRegistered
           for "ACM-1000"
@@ -173,35 +216,9 @@ module Stock
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then events in any order
-        then ReorderPointCrossed
-          for "ACM-1000"
-          crossingId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          onHand            = 12
-          reorderPoint      = 10
-          suggestedQuantity = 50
-        then StockBelowReorderPoint
-          crossingId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku               = "ACM-1000"
-          onHand            = 12
-          reorderPoint      = 10
-          suggestedQuantity = 50
-        then ShipmentPlanned
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockReserved
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 12
-          available = 9
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 12
-          available = 9
+        then invokes RaiseReorderAlarm
+          sku        = "ACM-1000"
+          crossingId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
 
       specification StayingSilentWhileTheAlarmIsOpen
         given SkuRegistered
@@ -226,23 +243,11 @@ module Stock
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           quantity   = 3
           movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then events in any order
-        then ShipmentPlanned
-          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockReserved
-          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          sku      = "ACM-1000"
-          quantity = 3
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 12
-          available = 9
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 12
-          available = 9
+        // RaiseReorderAlarm refuses while the alarm is open, and the reaction acknowledges it: nothing is reported
+        then no events
+        then invokes RaiseReorderAlarm
+          sku        = "ACM-1000"
+          crossingId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
 
     slice StateView WarehouseDashboard
       description "What needs attention: how much is on the shelves, what is promised, which SKUs run out and where the parcels are"

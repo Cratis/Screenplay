@@ -29,7 +29,7 @@ module Orders
             quotedTotal = $.total
 
       // The quoted total is what the shopper saw: Sales keeps it, whatever the price list says later (flow F-D). The order's lines and
-      // address cross the boundary whole, and a total below 500 sets the whole approval chain going (SmallOrderAutoApproval).
+      // address cross the boundary whole. What a received order sets going (SmallOrderAutoApproval) is specified in its own slice.
       specification ReceivingAnOrderFromTheStorefront
         when append OrderPlacedAtSales
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -38,7 +38,6 @@ module Orders
           lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
           shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           total      = 98
-        then events in any order
         then OrderReceived
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -48,18 +47,3 @@ module Orders
           shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           market      = "NO"
           quotedTotal = 98
-        then OrderApproved
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-        then OrderConfirmationIssued
-          orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-          market      = "NO"
-          quotedTotal = 98
-        then OrderConfirmed
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo  = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-        then OrderStatusChanged
-          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          status  = "approved"
