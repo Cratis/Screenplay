@@ -62,6 +62,7 @@ public static class ReactionsCorpus
             SpecificationExpectations =
             [
                 Expectation("sem1:3a829ffd770e18dc85cc1ecca5c121cf437ad54d97113a1edc6983dccc6903a9", "SendingAnInvoice"),
+
                 // The payment closes the invoice through CloseInvoice, another slice's command: a specification runs only its
                 // own slice, so the invocation is decided but its fact is CloseInvoice's; only the payment the reaction records follows.
                 Expectation("sem1:182fc65c0262f892fb967a11f1f8b98bafacdafe7d37b47d761db5393a3f54cb", "ClosingAPaidInvoice") with { WorldFactCount = 1 },
@@ -79,6 +80,7 @@ public static class ReactionsCorpus
                     Outcome = SemanticExecutionOutcomeKind.Rejected,
                     RejectionCategory = SemanticRejectionCategory.Constraint,
                     RejectionMessage = "Constraint 'OnlyClosedOnce' is violated: the event source already has the constrained event.",
+
                     // The given close and the payment the reaction recorded before the refused invocation.
                     WorldFactCount = 2
                 },
