@@ -104,6 +104,7 @@ export const diagnosticCodes = {
     invalidTimeZoneDeclaration: 'PLAY0812',
     invalidCommandCalendar: 'PLAY0813',
     invalidSpecificationTimeZone: 'PLAY0814',
+    invalidSpecificationInvocation: 'PLAY0815',
     invalidDescription: 'PLAY0145',
     emptyDescription: 'PLAY0146',
     duplicateDescription: 'PLAY0147',
