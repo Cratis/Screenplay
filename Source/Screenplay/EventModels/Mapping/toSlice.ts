@@ -15,6 +15,7 @@ import { SliceScope } from './SliceScope';
 import { toAutomationTrigger } from './toAutomationTrigger';
 import { toCaptureSource, toCaptureTrigger } from './toCaptureSource';
 import { toCommand } from './toCommand';
+import { specificationRouteAnnotations } from './specificationRouteAnnotations';
 import { toSpecifications } from './toSpecifications';
 
 const sliceTypes: Record<SliceSyntax['type'], number> = {
@@ -53,6 +54,8 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         commentCount: 0,
     };
     if (slice.direction != null) document.direction = slice.direction;
+    const annotations = specificationRouteAnnotations(slice.specifications, document.specifications);
+    if (annotations.length > 0) document.annotations = annotations;
     if (command !== undefined) {
         document.command = command;
     }

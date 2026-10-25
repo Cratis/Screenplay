@@ -35,7 +35,7 @@ function hiddenFixtures(specification: SliceSpecificationDocument): string[] {
         Object.entries((fixtures ?? []).reduce<Record<string, number>>((counts, fixture) => ({ ...counts, [fixture.name]: (counts[fixture.name] ?? 0) + 1 }), {}))
             .filter(([name, count]) => count > specification.name.split(`${side} readmodel ${name} `).length - 1 + (onCard?.name === name ? 1 : 0))
             .map(([name]) => `${specification.name}: ${side} readmodel ${name}`);
-    return [...hidden('given', specification.givenReadModels, specification.givenReadModel), ...hidden('then', specification.thenReadModels, specification.thenReadModel)];
+    return [...hidden('given', specification.screenplay?.givenReadModels, specification.givenReadModel), ...hidden('then', specification.screenplay?.thenReadModels, specification.thenReadModel)];
 }
 
 describe('when mapping the read model fixtures of the samples', () => {
