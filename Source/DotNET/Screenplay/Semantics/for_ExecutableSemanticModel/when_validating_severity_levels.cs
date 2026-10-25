@@ -10,9 +10,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_validating_severity_levels : a_valid_semantic_model
 {
-    Exception _invalidRule;
-    Exception _invalidRequirement;
-    Exception _validWarning;
+    Exception? _invalidRule;
+    Exception? _invalidRequirement;
+    Exception? _validWarning;
 
     void Because()
     {
@@ -34,7 +34,7 @@ public class when_validating_severity_levels : a_valid_semantic_model
         });
     }
 
-    Exception Validate(SemanticSlice slice, SemanticCommand command) => Catch.Exception(() => ExecutableSemanticModel.Create(
+    Exception? Validate(SemanticSlice slice, SemanticCommand command) => Catch.Exception(() => ExecutableSemanticModel.Create(
         LanguageVersion.V1, SemanticVersion.V1, ReplaceSlice(slice with { Commands = [command], Specifications = [] })));
 
     [Fact] void should_reject_an_unknown_rule_level() => _invalidRule.ShouldBeOfExactType<InvalidSemanticContract>();

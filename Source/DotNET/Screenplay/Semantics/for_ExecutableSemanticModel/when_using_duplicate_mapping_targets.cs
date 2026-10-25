@@ -10,8 +10,8 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_duplicate_mapping_targets : a_valid_semantic_model
 {
-    Exception _duplicate;
-    Exception _missingRequired;
+    Exception? _duplicate;
+    Exception? _missingRequired;
 
     void Because()
     {
@@ -22,7 +22,7 @@ public class when_using_duplicate_mapping_targets : a_valid_semantic_model
         _duplicate = Validate(duplicate);
         _missingRequired = Validate(produced with { Mappings = [produced.Mappings[0]] });
 
-        Exception Validate(SemanticProducedEvent replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticProducedEvent replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with { Commands = [command with { Produces = [replacement] }] })));

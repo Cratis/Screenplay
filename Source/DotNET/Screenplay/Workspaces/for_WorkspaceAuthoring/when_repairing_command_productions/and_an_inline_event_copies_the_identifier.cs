@@ -19,7 +19,7 @@ public class and_an_inline_event_copies_the_identifier : given.a_command_product
     void Because() => Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
 
     [Fact] void should_accept_the_explicit_contract_change() => Result.Accepted.ShouldBeTrue();
-    [Fact] void should_label_the_consequence() => Repair.Title!.ShouldContain("changes the event contract");
+    [Fact] void should_label_the_consequence() => Repair.Title.ShouldContain("changes the event contract");
     [Fact] void should_exclude_it_from_fix_all() => Repair.CanFixAll.ShouldBeFalse();
     [Fact] void should_retire_the_payload_property() => Repair.RetiredSemanticAddresses.Length.ShouldEqual(1);
     [Fact] void should_remove_the_diagnostic() => Result.Workspace!.Compilation.Diagnostics.Any(value => value.Code == DiagnosticCodes.EventSourceIdInPayload).ShouldBeFalse();

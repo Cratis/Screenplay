@@ -17,7 +17,8 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// vector with <c>EstablishWorld</c>, <c>Decide</c>, <c>ExtendWorld</c> and <c>Commit</c> only, committing the same decision once
 /// per commit entry. The conflict contract is target neutral: the boundary is the count of facts in the decided world, a dependency
 /// is a key value plus a set of event contracts, and a conflict is a fact after the boundary whose event contract is in the set and
-/// whose destination equals the key, compared ordinally. The window between settlement and the guarded write is a host obligation
+/// whose destination equals the key, compared ordinally. A constraint rejection from settlement takes precedence over a conflict.
+/// The additive V1R2 fixture pins that precedence while preserving the original fixture. The window between settlement and the guarded write is a host obligation
 /// and is not covered by these vectors.
 /// </remarks>
 public static class ProtectedCommandReadRaceVectors
@@ -31,6 +32,16 @@ public static class ProtectedCommandReadRaceVectors
     /// The lowercase SHA-256 of the exact UTF-8 fixture bytes, including the trailing newline.
     /// </summary>
     public const string Sha256 = "c964b1529ea7fb11659926aea3acbdb055d969aa5737d4c7c07fb93d193c59f7";
+
+    /// <summary>
+    /// The fixture contract version used by the additive V1R2 revision; its shape is unchanged from V1.
+    /// </summary>
+    public const int VersionV1R2 = 1;
+
+    /// <summary>
+    /// The lowercase SHA-256 of the exact UTF-8 V1R2 fixture bytes, including the trailing newline.
+    /// </summary>
+    public const string Sha256V1R2 = "8912d53a4772c39b1396ba3407e242c4c14e692f24cfa02e0de463565d774728";
 
     const string ApplicationName = "ProtectedCommandReadRaces";
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ProtectedCommandReads.races_v1";
@@ -62,9 +73,19 @@ public static class ProtectedCommandReadRaceVectors
         SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource("semantic-revision.txt").AsSpan()).Trim())
     };
 
-    static ImmutableArray<byte> Resource(string name)
+    /// <summary>
+    /// Gets the additive fixture revision with every original vector and the coinciding protected-read race and constraint refusal.
+    /// </summary>
+    public static ImmutableArray<byte> BytesV1R2 => Resource("races.v1r2.json", "Cratis.Screenplay.CanonicalCorpus.Corpus.ProtectedCommandReads.races_v1r2");
+
+    /// <summary>
+    /// Gets the unchanged source-backed ESM v25 model under the additive fixture revision's name.
+    /// </summary>
+    public static CanonicalCorpusVector ModelV1R2 => Model with { Name = "protected-command-reads/races-v1r2" };
+
+    static ImmutableArray<byte> Resource(string name, string prefix = Prefix)
     {
-        using var stream = typeof(ProtectedCommandReadRaceVectors).Assembly.GetManifestResourceStream($"{Prefix}.{name}") ??
+        using var stream = typeof(ProtectedCommandReadRaceVectors).Assembly.GetManifestResourceStream($"{prefix}.{name}") ??
             throw new InvalidSemanticContract($"Protected command read race resource '{name}' is missing.");
         using var bytes = new MemoryStream();
         stream.CopyTo(bytes);

@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class a_command_producing_a_public_event : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because()
     {
@@ -18,5 +18,9 @@ public class a_command_producing_a_public_event : given.a_model_to_corrupt
     }
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_an_outbound_translation_publishes_it() => _error.Message.ShouldContain("an outbound translation publishes it");
+    [Fact] void should_say_an_outbound_translation_publishes_it()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("an outbound translation publishes it");
+    }
 }

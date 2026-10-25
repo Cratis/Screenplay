@@ -10,8 +10,8 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_invalid_query_contracts : a_valid_semantic_model
 {
-    Exception _cardinality;
-    Exception _type;
+    Exception? _cardinality;
+    Exception? _type;
 
     void Because()
     {
@@ -23,7 +23,7 @@ public class when_using_invalid_query_contracts : a_valid_semantic_model
             Argument = query.Argument with { Type = SemanticTypeReference.ForConcept(_projectNameConceptId) }
         });
 
-        Exception Validate(SemanticKeyedQuery replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticKeyedQuery replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with { Queries = [replacement] })));

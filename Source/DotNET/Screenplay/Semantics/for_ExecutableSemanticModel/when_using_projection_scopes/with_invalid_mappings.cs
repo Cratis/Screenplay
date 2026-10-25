@@ -8,14 +8,14 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // (Chronicle/Source/Kernel/Concepts/Events/EventContext.cs:28-44), so an unknown path can only be caught here.
 public class with_invalid_mappings : given.a_scoped_projection_model
 {
-    Exception _nullSet;
-    Exception _unknownContextPath;
-    Exception _nonCanonicalContextPath;
-    Exception _collectionContextPath;
-    Exception _arithmeticOnText;
-    Exception _clearOfARequiredTarget;
-    Exception _everyReadingAnEventProperty;
-    Exception _duplicateTarget;
+    Exception? _nullSet;
+    Exception? _unknownContextPath;
+    Exception? _nonCanonicalContextPath;
+    Exception? _collectionContextPath;
+    Exception? _arithmeticOnText;
+    Exception? _clearOfARequiredTarget;
+    Exception? _everyReadingAnEventProperty;
+    Exception? _duplicateTarget;
 
     void Because()
     {

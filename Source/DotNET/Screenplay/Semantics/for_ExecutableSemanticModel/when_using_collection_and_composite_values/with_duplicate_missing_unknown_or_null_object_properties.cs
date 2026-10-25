@@ -6,10 +6,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_col
 
 public class with_duplicate_missing_unknown_or_null_object_properties : given.a_value_algebra_model
 {
-    Exception _duplicate;
-    Exception _missing;
-    Exception _requiredNull;
-    Exception _unknown;
+    Exception? _duplicate;
+    Exception? _missing;
+    Exception? _requiredNull;
+    Exception? _unknown;
 
     void Because()
     {
@@ -41,6 +41,6 @@ public class with_duplicate_missing_unknown_or_null_object_properties : given.a_
     [Fact] void should_reject_unknown_object_properties() => _unknown.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_null_for_a_required_object_property() => _requiredNull.ShouldBeOfExactType<InvalidSemanticContract>();
 
-    Exception Validate(SemanticValue payload) => Catch.Exception(() => CreateModel(payload, _validBackups));
+    Exception? Validate(SemanticValue payload) => Catch.Exception(() => CreateModel(payload, _validBackups));
 }
 #endif
