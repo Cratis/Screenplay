@@ -207,6 +207,15 @@ public sealed record SemanticSpecification(
     /// Gets the record the specification presents to a capture.
     /// </summary>
     public SemanticSpecificationCapture? WhenCapture { get; init; }
+
+    /// <summary>
+    /// Gets the invocations the specification's slice's reactions are expected to make, in invocation order (ESM v34).
+    /// </summary>
+    /// <remarks>
+    /// When empty, invocations are not compared. When not empty, the recorded invocations must match in count and order -
+    /// as a multiset under <see cref="ThenEventsInAnyOrder"/> - comparing only the stated values.
+    /// </remarks>
+    public ImmutableArray<SemanticSpecificationInvocation> ThenInvocations { get; init; } = [];
 }
 
 /// <summary>
@@ -236,3 +245,10 @@ public sealed record SemanticSpecificationCapture(SemanticId Capture, SemanticCa
 /// <param name="Property">The generated command property.</param>
 /// <param name="Value">The pinned value; each invocation takes the next one pinned for its command and property.</param>
 public sealed record SemanticSpecificationGeneratedValue(SemanticId Command, SemanticId Property, SemanticValue Value);
+
+/// <summary>
+/// Represents an invocation a specification expects its slice's reactions to make.
+/// </summary>
+/// <param name="Command">The invoked command.</param>
+/// <param name="Values">The stated non-generated command property values, canonically ordered by target identity; unstated properties are not compared.</param>
+public sealed record SemanticSpecificationInvocation(SemanticId Command, ImmutableArray<SemanticPropertyValue> Values);

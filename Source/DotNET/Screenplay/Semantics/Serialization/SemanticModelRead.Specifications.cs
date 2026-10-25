@@ -117,7 +117,8 @@ internal static partial class SemanticModelRead
             .Add("thenDenied", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenDenied = OnlyTrue(ref reader, property, "specification"))
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
             .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
-            .Add("givenGenerated", 30, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property));
+            .Add("givenGenerated", 30, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
+            .Add("thenInvocations", 34, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenInvocations = Array(ref reader, SpecificationInvocation, property));
 
         public ImmutableArray<SemanticSpecificationEvent> GivenEvents { get; set; }
 
@@ -151,6 +152,8 @@ internal static partial class SemanticModelRead
 
         public AutomationSpecification Automation { get; } = new();
 
+        public ImmutableArray<SemanticSpecificationInvocation> ThenInvocations { get; set; } = [];
+
         bool HasGiven => !GivenEvents.IsDefault && !GivenReadModels.IsDefault;
 
         bool HasThen => !ThenEvents.IsDefault && !ThenReadModels.IsDefault && !ThenQueries.IsDefault && !ThenErrors.IsDefault;
@@ -175,7 +178,8 @@ internal static partial class SemanticModelRead
                 GivenGenerated = Automation.GivenGenerated,
                 WhenClock = Automation.WhenClock,
                 WhenTrigger = Automation.WhenTrigger,
-                WhenCapture = Automation.WhenCapture
+                WhenCapture = Automation.WhenCapture,
+                ThenInvocations = ThenInvocations
             };
         }
     }

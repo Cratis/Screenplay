@@ -161,7 +161,8 @@ public sealed partial class SemanticModelBinder
                 GivenGenerated = [.. specification.GivenGenerated.Select(BindSpecificationGenerated).OfType<SemanticSpecificationGeneratedValue>()],
                 WhenClock = specification.WhenClock is null ? null : BindClock(specification.WhenClock),
                 WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),
-                WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture)
+                WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture),
+                ThenInvocations = [.. specification.ThenInvocations.Select(expected => BindSpecificationInvocation(specification, expected)).OfType<SemanticSpecificationInvocation>()]
             };
         }
 
