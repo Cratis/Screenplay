@@ -35,7 +35,7 @@ public class when_validating_recovery_specifications : Specification
 
     void Reject(SemanticSpecification specification) => Validate(_slice with { Specifications = [specification] }).ShouldBeOfExactType<InvalidSemanticContract>();
 
-    Exception Validate(SemanticSlice slice, SemanticVersion? version = null)
+    Exception? Validate(SemanticSlice slice, SemanticVersion? version = null)
     {
         var module = _application.Modules[0];
         var feature = module.Features.Single(feature => feature.Name == "RecoverySpecifications");

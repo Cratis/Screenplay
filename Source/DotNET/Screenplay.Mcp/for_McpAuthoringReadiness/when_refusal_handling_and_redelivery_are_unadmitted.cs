@@ -18,7 +18,7 @@ public class when_refusal_handling_and_redelivery_are_unadmitted : Specification
     }
 
     [Fact] void should_leave_the_model_admitted() => _readiness.ModelSyntaxOnly.ShouldBeFalse();
-    [Fact] void should_not_report_an_unadmitted_feature() => _readiness.ModelExecutionReadiness.ShouldNotContain("#433");
+    [Fact] void should_not_report_an_unadmitted_feature() => (_readiness.ModelExecutionReadiness ?? string.Empty).ShouldNotContain("#433");
     [Fact] void should_leave_the_reaction_admitted() => _readiness.SyntaxOnly(_slice.Reactions.Single()).ShouldBeFalse();
     [Fact] void should_leave_the_redelivery_specification_admitted() => _readiness.SyntaxOnly(_slice.Specifications.Single()).ShouldBeFalse();
     [Fact] void should_leave_the_unaffected_command_executable() => _readiness.SyntaxOnly(_slice.Commands.Single()).ShouldBeFalse();

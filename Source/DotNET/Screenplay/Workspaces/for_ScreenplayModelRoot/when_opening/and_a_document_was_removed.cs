@@ -13,6 +13,6 @@ public class and_a_document_was_removed : given.a_persisted_model_root
 
     [Fact] void should_refuse() => _outcome.Success.ShouldBeFalse();
     [Fact] void should_report_a_mapping_conflict() => _outcome.FailureKind.ShouldEqual("IdentityMappingConflict");
-    [Fact] void should_name_the_mapping_conflict() => _outcome.Reason!.ShouldContain("IdentityMappingConflict:");
+    [Fact] void should_name_the_mapping_conflict() => _outcome.Reason.ShouldContain("IdentityMappingConflict:");
     [Fact] void should_preserve_identities() => File.ReadAllBytes(IdentitiesPath).ShouldEqual(OriginalState);
 }

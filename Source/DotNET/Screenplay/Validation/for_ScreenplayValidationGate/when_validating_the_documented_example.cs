@@ -39,7 +39,7 @@ public class when_validating_the_documented_example : given.a_gate_file
     [Fact] void should_validate_the_example_against_every_schema_constraint() => _valid.ShouldBeTrue();
     [Fact] void should_read_the_example_without_refusal() => _read.Failure.ShouldBeNull();
     [Fact] void should_read_the_documented_checks() => _read.Declaration.Checks.Value.ToArray().ShouldEqual(new[] { "field-origins", "query-keys", "navigation" });
-    [Fact] void should_keep_the_schema_enum_equal_to_the_parser_set() => _schema.RootElement.GetProperty("properties").GetProperty("validation").GetProperty("properties").GetProperty("checks").GetProperty("items").GetProperty("enum").EnumerateArray().Select(item => item.GetString()).ShouldEqual(CompletenessChecks.AcceptedNames);
+    [Fact] void should_keep_the_schema_enum_equal_to_the_parser_set() => _schema.RootElement.GetProperty("properties").GetProperty("validation").GetProperty("properties").GetProperty("checks").GetProperty("items").GetProperty("enum").EnumerateArray().Select(item => item.GetString()).ToArray().ShouldEqual(CompletenessChecks.AcceptedNames.ToArray());
     [Fact] void should_forbid_unknown_top_level_members() => _schema.RootElement.GetProperty("additionalProperties").GetBoolean().ShouldBeFalse();
     [Fact] void should_forbid_unknown_validation_members() => _schema.RootElement.GetProperty("properties").GetProperty("validation").GetProperty("additionalProperties").GetBoolean().ShouldBeFalse();
 

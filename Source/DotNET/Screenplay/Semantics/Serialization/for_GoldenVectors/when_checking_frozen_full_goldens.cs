@@ -4,7 +4,7 @@
 #if DEBUG
 using System.Security.Cryptography;
 using Cratis.Screenplay.Semantics.Serialization.given;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_GoldenVectors;
 

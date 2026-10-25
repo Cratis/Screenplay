@@ -10,8 +10,8 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_validating_query_result_cardinality : a_valid_semantic_model
 {
-    Exception _missingRequiredResult;
-    Exception _manyResults;
+    Exception? _missingRequiredResult;
+    Exception? _manyResults;
 
     void Because()
     {
@@ -29,7 +29,7 @@ public class when_validating_query_result_cardinality : a_valid_semantic_model
             query,
             success with { ThenQueries = [result with { Results = [result.Results[0], result.Results[0]] }] });
 
-        Exception Validate(SemanticKeyedQuery replacementQuery, SemanticSpecification replacementSpecification) =>
+        Exception? Validate(SemanticKeyedQuery replacementQuery, SemanticSpecification replacementSpecification) =>
             Catch.Exception(() => ExecutableSemanticModel.Create(
                 LanguageVersion.V1,
                 SemanticVersion.V1,

@@ -5,6 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
+[PerFactSpecificationLifecycle]
 public class when_proposing_whole_source : given.an_authoring_connection
 {
     const string Streams = "concept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n";

@@ -6,6 +6,7 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_repairing_command_productions;
 
+[PerFactSpecificationLifecycle]
 public class and_the_event_is_undeclared : given.a_command_production
 {
     string _original;

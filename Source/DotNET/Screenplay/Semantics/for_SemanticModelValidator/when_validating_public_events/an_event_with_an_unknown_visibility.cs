@@ -5,10 +5,14 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class an_event_with_an_unknown_visibility : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because() => _error = Rebuild(OutboundModel, "PublishOrderShipped", slice => slice with { Events = [.. slice.Events.Select(@event => @event with { Visibility = (SemanticEventVisibility)99 })] });
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_why() => _error.Message.ShouldContain("unknown visibility");
+    [Fact] void should_say_why()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("unknown visibility");
+    }
 }

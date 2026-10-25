@@ -137,7 +137,7 @@ public class when_protecting_phase_a_boundaries
     {
         using var nullable = JsonDocument.Parse("{\"kind\":\"ApplicationSyntax\",\"sourceOptions\":{\"numericMode\":\"exact\"},\"types\":null,\"personas\":null,\"seeds\":null}");
         var result = (ApplicationSyntax)SyntaxJson.Deserialize(nullable.RootElement);
-        result.Types!.ShouldBeEmpty();
+        result.Types.ShouldBeEmpty();
         result.Modules.ShouldBeEmpty();
         foreach (var member in new[] { "\"eventSources\":null", "\"eventSources\":[{\"kind\":\"EventSourceSyntax\",\"name\":\"Orders\",\"streams\":null}]" })
         {

@@ -16,6 +16,6 @@ public class when_a_deferred_projection_observes_an_unrelated_event : a_scoped_p
     void Because() => _published = SemanticEventPublication.TryPublish(_plan, [], [_fact], out _publications, out _failure);
 
     [Fact] void should_refuse_publication() => _published.ShouldBeFalse();
-    [Fact] void should_identify_the_deferred_publisher() => _failure!.ShouldContain("Publisher");
+    [Fact] void should_identify_the_deferred_publisher() => _failure.ShouldContain("Publisher");
     [Fact] void should_publish_nothing() => _publications.ShouldBeEmpty();
 }

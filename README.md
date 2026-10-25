@@ -216,8 +216,20 @@ yarn lint      # zero lint errors
 yarn compile   # zero TypeScript errors
 
 dotnet build Screenplay.slnx --configuration Release   # zero errors, zero warnings
-dotnet test Screenplay.slnx                            # all specs pass
+dotnet build --configuration Debug                    # build executable specifications
+bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay/Screenplay.csproj Debug
+bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
 ```
+
+Specifications run on .NET 10 through the xUnit v3 native executable. Run the launcher for every project in
+`SPEC_SHARDS` in `.github/workflows/dotnet-build.yml`; the example above selects the compiler. The launcher
+requires a successful native exit and a fresh, nonempty passing TRX; a zero-test run fails. Native options
+such as `-filterVSTest 'FullyQualifiedName~YourNamespace'` are forwarded unchanged. Release libraries retain
+their existing target frameworks; only specification execution is .NET 10-only.
+
+Contract catalog specifications run in `Cratis.Screenplay.ContractCatalog.Specs.dll` instead of
+`Screenplay.ContractCatalog.dll`; their namespaces, methods and theory cases are unchanged. The generator
+remains a library in Debug and Release, with no specification runner dependencies.
 
 ## The Cratis ecosystem
 

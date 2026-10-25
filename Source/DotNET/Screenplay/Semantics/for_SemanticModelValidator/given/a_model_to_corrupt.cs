@@ -9,7 +9,7 @@ public class a_model_to_corrupt : for_SemanticModelBinder.given.a_public_events_
 
     protected ExecutableSemanticModel InboundModel => Bind(Inbound).Value!.Model;
 
-    protected static Exception Rebuild(ExecutableSemanticModel model, string slice, Func<SemanticSlice, SemanticSlice> change) =>
+    protected static Exception? Rebuild(ExecutableSemanticModel model, string slice, Func<SemanticSlice, SemanticSlice> change) =>
         Catch.Exception(() => ExecutableSemanticModel.Create(model.LanguageVersion, model.SemanticVersion, WithSlice(model.Application, slice, change)));
 
     protected static SemanticEventContract Public(ExecutableSemanticModel model, string slice) =>

@@ -3,6 +3,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <IsPackable>false</IsPackable>
+        <IsTestProject>false</IsTestProject>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Microsoft.CodeAnalysis" HintPath="$(MSBuildToolsPath)/Roslyn/bincore/Microsoft.CodeAnalysis.dll" />

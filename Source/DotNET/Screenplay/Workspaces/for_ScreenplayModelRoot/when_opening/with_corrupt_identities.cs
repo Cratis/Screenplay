@@ -18,7 +18,7 @@ public class with_corrupt_identities : given.a_persisted_model_root
 
     [Fact] void should_refuse() => _outcome.Success.ShouldBeFalse();
     [Fact] void should_report_an_identity_state_conflict() => _outcome.FailureKind.ShouldEqual("IdentityStateConflict");
-    [Fact] void should_name_the_identity_state_conflict() => _outcome.Reason!.ShouldContain("IdentityStateConflict:");
+    [Fact] void should_name_the_identity_state_conflict() => _outcome.Reason.ShouldContain("IdentityStateConflict:");
     [Fact] void should_not_return_a_workspace() => _outcome.Workspace.ShouldBeNull();
     [Fact] void should_not_repair_the_identities() => File.ReadAllText(IdentitiesPath).ShouldEqual("<<<<<<< main");
     [Fact] void should_write_nothing() => Snapshot().ShouldEqual(_before);

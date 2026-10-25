@@ -5,10 +5,14 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class an_inbound_slice_flipped_to_outbound_without_a_local_public_event : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because() => _error = Rebuild(InboundModel, "TrackShipments", slice => slice with { Direction = SemanticTranslationDirection.Outbound });
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_why() => _error.Message.ShouldContain("exactly one local public event");
+    [Fact] void should_say_why()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("exactly one local public event");
+    }
 }
