@@ -7,10 +7,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // so only a projection's own level can subscribe to all events, and 'all' always includes children.
 public class with_invalid_shapes : given.a_scoped_projection_model
 {
-    Exception _bothShapes;
-    Exception _allBelowTheProjectionLevel;
-    Exception _allExcludingChildren;
-    Exception _joinOnAnUnknownProperty;
+    Exception? _bothShapes;
+    Exception? _allBelowTheProjectionLevel;
+    Exception? _allExcludingChildren;
+    Exception? _joinOnAnUnknownProperty;
 
     void Because()
     {

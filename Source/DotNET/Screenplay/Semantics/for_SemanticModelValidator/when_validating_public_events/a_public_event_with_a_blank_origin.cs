@@ -5,10 +5,14 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class a_public_event_with_a_blank_origin : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because() => _error = Rebuild(InboundModel, "TrackShipments", slice => slice with { Events = [.. slice.Events.Select(@event => @event.Origin is null ? @event : @event with { Origin = " " })] });
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_why() => _error.Message.ShouldContain("origin must be a nonblank store name");
+    [Fact] void should_say_why()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("origin must be a nonblank store name");
+    }
 }

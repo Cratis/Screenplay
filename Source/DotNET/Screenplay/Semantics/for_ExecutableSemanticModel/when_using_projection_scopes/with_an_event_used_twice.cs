@@ -7,9 +7,9 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // across from, remove with and remove via join; another level - a child collection or a nested object - starts its own set.
 public class with_an_event_used_twice : given.a_scoped_projection_model
 {
-    Exception _fromAndRemoval;
-    Exception _twoJoins;
-    Exception _sameEventOnAnotherLevel;
+    Exception? _fromAndRemoval;
+    Exception? _twoJoins;
+    Exception? _sameEventOnAnotherLevel;
 
     void Because()
     {

@@ -8,12 +8,12 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_using_pro
 // A parent key only routes inside a child collection (ProjectionFactory.cs:975-1007).
 public class with_invalid_keys : given.a_scoped_projection_model
 {
-    Exception _unknownCompositeType;
-    Exception _unknownCompositePart;
-    Exception _numericLiteralKey;
-    Exception _parentKeyOutsideChildren;
-    Exception _missingParentKeyInsideChildren;
-    Exception _incompatibleKeyType;
+    Exception? _unknownCompositeType;
+    Exception? _unknownCompositePart;
+    Exception? _numericLiteralKey;
+    Exception? _parentKeyOutsideChildren;
+    Exception? _missingParentKeyInsideChildren;
+    Exception? _incompatibleKeyType;
 
     void Because()
     {

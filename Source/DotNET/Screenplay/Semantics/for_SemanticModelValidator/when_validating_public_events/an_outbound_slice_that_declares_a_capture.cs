@@ -5,10 +5,14 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating
 
 public class an_outbound_slice_that_declares_a_capture : given.a_model_to_corrupt
 {
-    Exception _error;
+    Exception? _error;
 
     void Because() => _error = Rebuild(OutboundModel, "PublishOrderShipped", slice => slice with { Captures = [new SemanticCapture(SemanticId.Create(SemanticKind.Capture, "stray"), "Stray", "key", [], [])] });
 
     [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_say_why() => _error.Message.ShouldContain("cannot declare a capture");
+    [Fact] void should_say_why()
+    {
+        _error.ShouldNotBeNull();
+        _error.Message.ShouldContain("cannot declare a capture");
+    }
 }

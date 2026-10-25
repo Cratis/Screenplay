@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticDateComparisons;
 
 public class when_comparing_invalid_date_values : Specification
 {
-    Exception[] _errors;
+    Exception?[] _errors;
 
     void Because() => _errors = new (SemanticValue Left, SemanticValue Right, SemanticPrimitiveType Primitive)[]
     {
@@ -19,6 +19,16 @@ public class when_comparing_invalid_date_values : Specification
     }.Select(example => Catch.Exception(() => SemanticDateComparisons.Compare(example.Left, example.Right, example.Primitive))).ToArray();
 
     [Fact] void should_refuse_every_invalid_pair() => _errors.ShouldEachConformTo(error => error is InvalidSemanticContract);
-    [Fact] void should_preserve_the_non_text_refusal() => _errors[0].Message.ShouldEqual("A date comparison requires text values of its declared date primitive.");
-    [Fact] void should_preserve_the_unparseable_refusal() => _errors[2].Message.ShouldEqual("A date comparison requires valid dates or explicitly offset instants.");
+    [Fact] void should_preserve_the_non_text_refusal()
+    {
+        var error = _errors[0];
+        error.ShouldNotBeNull();
+        error.Message.ShouldEqual("A date comparison requires text values of its declared date primitive.");
+    }
+    [Fact] void should_preserve_the_unparseable_refusal()
+    {
+        var error = _errors[2];
+        error.ShouldNotBeNull();
+        error.Message.ShouldEqual("A date comparison requires valid dates or explicitly offset instants.");
+    }
 }

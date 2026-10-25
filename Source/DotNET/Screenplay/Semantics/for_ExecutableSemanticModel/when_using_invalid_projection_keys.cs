@@ -10,8 +10,8 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_invalid_projection_keys : a_valid_semantic_model
 {
-    Exception _wrongCardinality;
-    Exception _wrongType;
+    Exception? _wrongCardinality;
+    Exception? _wrongType;
 
     void Because()
     {
@@ -30,7 +30,7 @@ public class when_using_invalid_projection_keys : a_valid_semantic_model
             }
         });
 
-        Exception Validate(SemanticProjectionTransition replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticProjectionTransition replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with { Projections = [projection with { Transitions = [replacement] }] })));

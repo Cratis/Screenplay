@@ -111,7 +111,7 @@ public class when_loading_implementation_files : Specification
         var created = mkfifo(Path.Combine(_root, "pipe.cs"), 0x180);
         Assert.True(created == 0, $"mkfifo failed with errno {Marshal.GetLastPInvokeError()}.");
 
-        var result = await Task.Run(() => Bind("pipe.cs")).WaitAsync(TimeSpan.FromSeconds(30));
+        var result = await Task.Run(() => Bind("pipe.cs"), TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
         result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.AttachmentUnreadable).Severity.ShouldEqual(DiagnosticSeverity.Warning);
     }
 

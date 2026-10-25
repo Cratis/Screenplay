@@ -8,14 +8,14 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_incoherent_specifications : a_valid_semantic_model
 {
-    Exception _conflictingGivenReadModel;
-    Exception _conflictingThenReadModel;
-    Exception _duplicateCommandTarget;
-    Exception _duplicateQueryExpectation;
-    Exception _duplicateQueryResultState;
-    Exception _inconsistentStateKey;
-    Exception _mixedOutcome;
-    Exception _inexactCommand;
+    Exception? _conflictingGivenReadModel;
+    Exception? _conflictingThenReadModel;
+    Exception? _duplicateCommandTarget;
+    Exception? _duplicateQueryExpectation;
+    Exception? _duplicateQueryResultState;
+    Exception? _inconsistentStateKey;
+    Exception? _mixedOutcome;
+    Exception? _inexactCommand;
     Exception _unproducedEvent;
 
     void Because()
@@ -75,7 +75,7 @@ public class when_using_incoherent_specifications : a_valid_semantic_model
                 Specifications = [.. slice.Specifications.Select(_ => _.Id == success.Id ? unexpectedSpecification : _)]
             })));
 
-        Exception Validate(SemanticSpecification replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticSpecification replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with

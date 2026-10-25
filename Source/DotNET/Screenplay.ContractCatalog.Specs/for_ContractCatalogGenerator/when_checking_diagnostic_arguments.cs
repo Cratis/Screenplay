@@ -63,7 +63,7 @@ public class when_checking_diagnostic_arguments
         Assert.Equal("SPCON003", diagnostic.Id);
         Assert.Equal(DiagnosticSeverity.Error, diagnostic.Severity);
         Assert.Contains("Structured", diagnostic.GetMessage(), StringComparison.Ordinal);
-        Assert.Equal(emission, diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan));
+        Assert.Equal(emission, diagnostic.Location.SourceTree!.GetText(TestContext.Current.CancellationToken).ToString(diagnostic.Location.SourceSpan));
     }
 
     [Theory]
@@ -81,7 +81,7 @@ public class when_checking_diagnostic_arguments
     public void should_publish_the_declared_meaning_optionality_and_keyword_set()
     {
         var result = Generate("Cratis.Screenplay.Diagnostics.Diagnostic.Error(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Structured, \"message\", null, new object())");
-        var generated = result.GeneratedTrees.Single().GetText().ToString();
+        var generated = result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString();
         Assert.Contains("new(\"subject\",\"text\",false,\"The authored subject.\", new string[] {})", generated, StringComparison.Ordinal);
         Assert.Contains("new(\"role\",\"keyword\",true,\"The step role.\", new string[] {\"given\",\"when\"})", generated, StringComparison.Ordinal);
     }
@@ -94,7 +94,7 @@ public class when_checking_diagnostic_arguments
     public void should_not_require_subjects_in_specifications_or_build_outputs(string path)
     {
         const string emission = "Cratis.Screenplay.Diagnostics.Diagnostic.Error(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Structured, \"message\", null, new object())";
-        var fixture = CSharpSyntaxTree.ParseText("class Fixture { void Report() => Cratis.Screenplay.Diagnostics.Diagnostic.Error(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Structured, \"message\", null); }", path: path);
+        var fixture = CSharpSyntaxTree.ParseText("class Fixture { void Report() => Cratis.Screenplay.Diagnostics.Diagnostic.Error(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Structured, \"message\", null); }", path: path, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(Generate(emission, fixture).Diagnostics);
     }
 
@@ -118,7 +118,7 @@ public class when_checking_diagnostic_arguments
         Assert.Contains("Structured", diagnostic.GetMessage(), StringComparison.Ordinal);
         Assert.Contains(declaration, diagnostic.GetMessage(), StringComparison.Ordinal);
         Assert.Contains(reason, diagnostic.GetMessage(), StringComparison.Ordinal);
-        Assert.Contains("Structured", diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan), StringComparison.Ordinal);
+        Assert.Contains("Structured", diagnostic.Location.SourceTree!.GetText(TestContext.Current.CancellationToken).ToString(diagnostic.Location.SourceSpan), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class when_checking_diagnostic_arguments
     {
         var result = GenerateWithDefinitions($"subject:text;{meaning}");
         Assert.Empty(result.Diagnostics);
-        Assert.Contains($"new(\"subject\",\"text\",false,{SymbolDisplay.FormatLiteral(meaning, true)}, new string[] {{}})", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
+        Assert.Contains($"new(\"subject\",\"text\",false,{SymbolDisplay.FormatLiteral(meaning, true)}, new string[] {{}})", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class when_checking_diagnostic_arguments
     {
         var result = GenerateWithDefinitions("case:keyword?=given readmodel|when append;The step.");
         Assert.Empty(result.Diagnostics);
-        Assert.Contains("new(\"case\",\"keyword\",true,\"The step.\", new string[] {\"given readmodel\",\"when append\"})", result.GeneratedTrees.Single().GetText().ToString(), StringComparison.Ordinal);
+        Assert.Contains("new(\"case\",\"keyword\",true,\"The step.\", new string[] {\"given readmodel\",\"when append\"})", result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), StringComparison.Ordinal);
     }
 
     static GeneratorDriverRunResult GenerateWithDefinitions(params string[] definitions) => Generate(

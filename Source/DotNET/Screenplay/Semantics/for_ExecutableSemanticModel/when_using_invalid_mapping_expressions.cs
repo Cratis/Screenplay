@@ -10,10 +10,10 @@ namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_invalid_mapping_expressions : a_valid_semantic_model
 {
-    Exception _wrongRoot;
-    Exception _wrongSource;
-    Exception _wrongType;
-    Exception _unresolvedTarget;
+    Exception? _wrongRoot;
+    Exception? _wrongSource;
+    Exception? _wrongType;
+    Exception? _unresolvedTarget;
 
     void Because()
     {
@@ -52,7 +52,7 @@ public class when_using_invalid_mapping_expressions : a_valid_semantic_model
             })
         });
 
-        Exception Validate(SemanticProducedEvent replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
+        Exception? Validate(SemanticProducedEvent replacement) => Catch.Exception(() => ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
             ReplaceSlice(slice with { Commands = [command with { Produces = [replacement] }] })));

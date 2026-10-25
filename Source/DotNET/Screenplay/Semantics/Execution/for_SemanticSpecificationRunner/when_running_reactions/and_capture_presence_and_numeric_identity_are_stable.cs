@@ -28,14 +28,15 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
     {
         foreach (var (previous, current) in new[] { ("1", "1.0"), ("1.00", "1.000"), ("0", "-0.0"), ("-2.0", "-2.00") })
         {
-            var run = Present("", $"[{{\"id\":{current}}}]", $"[{{\"id\":{previous}}}]");
+            var plan = PresentPlan("", $"[{{\"id\":{current}}}]", $"[{{\"id\":{previous}}}]");
+            var run = Run(plan, "PresentRecord");
             run.Passed.ShouldBeTrue();
             ((SemanticAccepted)run.Execution).Facts.Length.ShouldEqual(1);
-            var bytes = SemanticModelSerializer.Serialize(_plan.Model);
+            var bytes = SemanticModelSerializer.Serialize(plan.Model);
             var roundTrip = SemanticModelSerializer.Deserialize(bytes);
-            roundTrip.Revision.ShouldEqual(_plan.Model.Revision);
-            _plan = SemanticExecutionPlan.Compile(roundTrip).Plan!;
-            var restored = Run("PresentRecord");
+            roundTrip.Revision.ShouldEqual(plan.Model.Revision);
+            var restoredPlan = SemanticExecutionPlan.Compile(roundTrip).Plan!;
+            var restored = Run(restoredPlan, "PresentRecord");
             restored.Passed.ShouldBeTrue();
             restored.Execution.World.Facts.Select(fact => fact.EventContract).ShouldEqual(run.Execution.World.Facts.Select(fact => fact.EventContract));
         }
@@ -46,11 +47,12 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
     {
         foreach (var (current, previous) in new[] { ("[{\"id\":1},{\"id\":1.0}]", "[]"), ("[]", "[{\"id\":0},{\"id\":-0.0}]") })
         {
-            var run = Present("", current, previous);
+            var plan = PresentPlan("", current, previous);
+            var run = Run(plan, "PresentRecord");
             run.Execution.ShouldBeOfExactType<SemanticRejected>();
             run.Execution.World.Facts.Length.ShouldEqual(0);
-            _plan = SemanticExecutionPlan.Compile(SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(_plan.Model))).Plan!;
-            Run("PresentRecord").Execution.ShouldBeOfExactType<SemanticRejected>();
+            var restoredPlan = SemanticExecutionPlan.Compile(SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(plan.Model))).Plan!;
+            Run(restoredPlan, "PresentRecord").Execution.ShouldBeOfExactType<SemanticRejected>();
         }
     }
 
@@ -62,9 +64,28 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
         ((SemanticAccepted)run.Execution).Facts.Length.ShouldEqual(1);
     }
 
-    SemanticSpecificationRun Present(string contact, string current, string previous)
+    SemanticSpecificationRun Present(string contact, string current, string previous) => Run(PresentPlan(contact, current, previous), "PresentRecord");
+
+    static SemanticExecutionPlan CompilePlan(string source)
     {
-        Compile($$"""
+        const string StableKey = "v6-scenario";
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Billing"));
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(StableKey), StableKey, "Billing.play", source);
+        var compilation = new SemanticModelCompiler().Compile("Billing", SemanticDocumentSet.Create([document], catalog));
+        if (!compilation.Success)
+        {
+            throw new InvalidOperationException(string.Join(Environment.NewLine, compilation.Diagnostics.Where(_ => _.Severity == Diagnostics.DiagnosticSeverity.Error).Select(_ => _.Message)));
+        }
+
+        return SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
+    }
+
+    static SemanticSpecificationRun Run(SemanticExecutionPlan plan, string specification) =>
+        new SemanticSpecificationRunner().Run(plan, plan.Specifications.Values.Single(value => value.Name == specification).Id);
+
+    static SemanticExecutionPlan PresentPlan(string contact, string current, string previous)
+    {
+        var plan = CompilePlan($$"""
             module Billing
               feature Import
                 slice Translate Records
@@ -94,11 +115,11 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
             """);
 
         // Preserve the caller's decimal scale in the programmatic graph; DSL numeric parsing may normalize it.
-        var module = _plan.Model.Application.Modules.Single();
+        var module = plan.Model.Application.Modules.Single();
         var feature = module.Features.Single();
         var slice = feature.Slices.Single();
         var specification = slice.Specifications.Single();
-        var application = _plan.Model.Application with
+        var application = plan.Model.Application with
         {
             Modules = [module with { Features = [feature with { Slices = [slice with { Specifications = [specification with
             {
@@ -106,8 +127,7 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
                 WhenCapture = specification.WhenCapture! with { Record = Scaled(specification.WhenCapture.Record, current) }
             }] }] }] }]
         };
-        _plan = SemanticExecutionPlan.Compile(ExecutableSemanticModel.Create(LanguageVersion.V6, SemanticVersion.V6, application)).Plan!;
-        return Run("PresentRecord");
+        return SemanticExecutionPlan.Compile(ExecutableSemanticModel.Create(LanguageVersion.V6, SemanticVersion.V6, application)).Plan!;
     }
 
     static SemanticCaptureRecord Scaled(SemanticCaptureRecord record, string children)
