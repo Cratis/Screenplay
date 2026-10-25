@@ -116,7 +116,7 @@ function parseDirectives(context: ParserContext, parent: SourceLine): ScreenDire
 }
 
 function parseDirective(context: ParserContext, line: SourceLine): ScreenDirectiveSyntax | undefined {
-    if (firstWord(line.content) !== 'action') parseSubjectClause(context, line, false);
+    validateNonActionSubjectClause(context, line);
     switch (firstWord(line.content)) {
         case 'data':
             return parseData(context, line);
@@ -163,8 +163,14 @@ function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax |
     return { kind: 'ScreenDataSyntax', type: parseTypeRef(match[1], locationOf(line)), query: match[2], by: match[3] ?? null, location: locationOf(line) };
 }
 
+function validateNonActionSubjectClause(context: ParserContext, line: SourceLine): void {
+    const grammar = new Map([['data', data], ['navigate', navigate], ['component', component], ['title', title]]).get(firstWord(line.content));
+    // Expressions, code and open-ended template references belong to their own parsers.
+    if (grammar !== undefined) parseSubjectClause(context, line, false, content => grammar.test(content));
+}
+
 function parseAction(context: ParserContext, line: SourceLine): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
-    const parsed = parseSubjectClause(context, line, true);
+    const parsed = parseSubjectClause(context, line, true, content => action.test(content) || guardedAction.test(content));
     const result = parseActionHeader(context, line, parsed);
     if (result === undefined || parsed.subject === undefined) return result;
     return { ...result, subject: parsed.subject };
@@ -518,7 +524,7 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
 }
 
 function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItemSyntax | undefined {
-    const parsed = parseSubjectClause(context, line, /^item\s+\S+\s+action\s/u.test(line.content));
+    const parsed = parseSubjectClause(context, line, /^item\s+\S+\s+action\s/u.test(line.content), content => toolbarItem.test(content));
     const match = toolbarItem.exec(parsed.header);
     if (match === null) {
         context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid toolbar item '${line.content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>', 'item <name> dialog <DialogTemplate>' or 'button <id> title "<text>" slice <Slice>'`, locationOf(line));
