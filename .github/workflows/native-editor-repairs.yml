@@ -30,9 +30,13 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
+      actions: read
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
+      skip: ${{ steps.gate.outputs.skip }}
     steps:
+      - id: gate
+        uses: Cratis/Workflows/.github/actions/skip-if-already-ran@main
       - uses: actions/checkout@v4
         if: github.event_name == 'pull_request'
         with:
@@ -63,6 +67,7 @@ jobs:
   repair:
     name: Installed VSIX / ${{ matrix.rid }}
     needs: changes
+    if: needs.changes.outputs.skip != 'true'
     strategy:
       fail-fast: false
       matrix:
