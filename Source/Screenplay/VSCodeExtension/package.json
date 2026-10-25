@@ -276,10 +276,10 @@
     "devDependencies": {
         "@cratis/arc": "22.50.1",
         "@cratis/arc.react": "22.50.1",
-        "@cratis/components": "4.26.4",
-        "@cratis/event-models": "0.172.0",
+        "@cratis/components": "4.35.0",
+        "@cratis/event-models": "0.296.2",
         "@cratis/fundamentals": "7.24.1",
-        "@cratis/scene": "0.172.0",
+        "@cratis/scene": "0.296.2",
         "@types/chai": "^5.2.3",
         "@types/node": "26.6.4",
         "@types/react": "19.3.0",
