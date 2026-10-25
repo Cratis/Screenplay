@@ -175,17 +175,17 @@ public sealed class SemanticExecutionPlan
     /// </summary>
     public SemanticId? IsolatedSlice { get; private init; }
 
-    internal ImmutableHashSet<SemanticId> UnadmittedArtifacts { get; }
-
     /// <summary>
     /// Gets the reactions that run: every reaction, or only the isolated slice's own.
     /// </summary>
-    internal IEnumerable<SemanticReaction> RunningReactions => Reactions.Where(reaction => Runs(reaction.Id));
+    public IEnumerable<SemanticReaction> RunningReactions => Reactions.Where(reaction => Runs(reaction.Id));
 
     /// <summary>
     /// Gets the captures that run: every capture, or only the isolated slice's own.
     /// </summary>
-    internal IEnumerable<SemanticCapture> RunningCaptures => Captures.Values.Where(capture => Runs(capture.Id));
+    public IEnumerable<SemanticCapture> RunningCaptures => Captures.Values.Where(capture => Runs(capture.Id));
+
+    internal ImmutableHashSet<SemanticId> UnadmittedArtifacts { get; }
 
     ImmutableHashSet<SemanticId> OwnedBehavior { get; init; } = [];
 
@@ -242,6 +242,14 @@ public sealed class SemanticExecutionPlan
     /// <returns>The slice identity, or <see langword="null"/> when no slice declares it.</returns>
     public SemanticId? SliceOf(SemanticId specification) =>
         AllSlices(Model.Application).FirstOrDefault(slice => slice.Specifications.Any(candidate => candidate.Id == specification))?.Id;
+
+    /// <summary>
+    /// Tells whether a command, reaction, capture or projection is behavior the run performs and adopts: everything when the
+    /// plan is not isolated, otherwise only what the isolated slice declares.
+    /// </summary>
+    /// <param name="behavior">The semantic identity of the command, reaction, capture or projection.</param>
+    /// <returns><see langword="true"/> when the behavior runs.</returns>
+    public bool Runs(SemanticId behavior) => IsolatedSlice is null || OwnedBehavior.Contains(behavior);
 
     internal static bool IsBlockingIssue(
         SemanticPlanIssue issue,
@@ -322,10 +330,6 @@ public sealed class SemanticExecutionPlan
             [])
         { UnselectedIssues = unselected };
     }
-
-    // Whether a command, reaction, capture or projection is behavior the run performs and adopts: everything when the plan is not
-    // isolated, otherwise only what the isolated slice declares.
-    internal bool Runs(SemanticId behavior) => IsolatedSlice is null || OwnedBehavior.Contains(behavior);
 
     internal bool IsUnadmittedReadModel(SemanticId readModel) =>
         UnadmittedArtifacts.Contains(readModel) || Projections.Values.Any(projection =>
