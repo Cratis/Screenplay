@@ -22,8 +22,9 @@ export function parsePlainActionInput(context: ParserContext, line: SourceLine, 
     return { kind: 'InteractionArgumentSyntax', name: input[1], binding: input[2].trim(), location: locationOf(line) };
 }
 
-export function parseSubjectClause(context: ParserContext, line: SourceLine, action: boolean): { header: string; subject?: ScreenActionSubjectKind; label?: string } {
-    const words = [...line.content.matchAll(word)];
+export function parseSubjectClause(context: ParserContext, line: SourceLine, action: boolean, isHeader: (content: string) => boolean): { header: string; subject?: ScreenActionSubjectKind; label?: string } {
+    const boundary = subjectHeaderBoundary(line.content, isHeader);
+    const words = [...line.content.matchAll(word)].filter(part => part.index! >= boundary);
     const clauses = words.filter(part => part[0] === 'for');
     const labelWord = words.find(part => part[0] === 'label');
     let header = line.content;
@@ -41,7 +42,13 @@ export function parseSubjectClause(context: ParserContext, line: SourceLine, act
     header = header.substring(0, start).trimEnd();
     if (!action || clauses.length !== 1 || match === null || labelWord !== undefined && labelWord.index! < start) {
         context.error(DiagnosticCodes.InvalidActionSubjectClause, "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action", locationOf(line));
-        return { header, label: text };
+        return { header: line.content.substring(0, boundary).trimEnd(), label: text };
     }
     return { header, subject: match[1] === 'item' ? 'Item' : 'Screen', label: text };
+}
+
+function subjectHeaderBoundary(content: string, isHeader: (header: string) => boolean): number {
+    // A complete existing header wins, including keyword-looking required operands.
+    if (isHeader(content)) return content.length;
+    return [...content.matchAll(word)].reverse().find(part => isHeader(content.substring(0, part.index).trimEnd()))?.index ?? content.length;
 }

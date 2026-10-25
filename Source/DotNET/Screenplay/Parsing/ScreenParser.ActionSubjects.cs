@@ -13,7 +13,8 @@ internal static partial class ScreenParser
     static ScreenActionSubjectKind? ParseSubjectClause(SubjectClauseRequest request, out string header, out string? label)
     {
         header = request.Line.Content;
-        var words = HeaderWordRegex().Matches(header).Cast<Match>().ToArray();
+        var boundary = SubjectHeaderBoundary(header, request.IsHeader);
+        var words = HeaderWordRegex().Matches(header).Cast<Match>().Where(word => word.Index >= boundary).ToArray();
         var clauses = words.Where(word => word.Value == "for").ToArray();
         var labelWord = words.FirstOrDefault(word => word.Value == "label");
         label = ParseSubjectLabel(ref header, labelWord);
@@ -24,12 +25,37 @@ internal static partial class ScreenParser
         if (IsInvalidSubjectClause(request, clauses, suffix, labelWord))
         {
             request.Context.Error(DiagnosticCodes.InvalidActionSubjectClause, "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action", request.Line.Location);
-            header = header[..Math.Min(clause.Index, header.Length)].TrimEnd();
+            header = header[..boundary].TrimEnd();
             return null;
         }
 
         header = header[..clause.Index].TrimEnd();
         return suffix.Groups[1].Value == "item" ? ScreenActionSubjectKind.Item : ScreenActionSubjectKind.Screen;
+    }
+
+    static int SubjectHeaderBoundary(string content, Func<string, bool> isHeader)
+    {
+        // A complete existing header wins, including keyword-looking required operands.
+        if (isHeader(content)) return content.Length;
+        return HeaderWordRegex().Matches(content).Cast<Match>().Reverse()
+            .FirstOrDefault(word => isHeader(content[..word.Index].TrimEnd()))?.Index ?? content.Length;
+    }
+
+    static bool IsActionHeader(string content) => ActionRegex().IsMatch(content) || GuardedActionRegex().IsMatch(content);
+
+    static void ValidateNonActionSubjectClause(ParserContext context, SourceLine line)
+    {
+        var grammar = LineText.FirstWord(line.Content) switch
+        {
+            "data" => DataRegex(),
+            "navigate" => NavigateRegex(),
+            "component" => ComponentRegex(),
+            "title" => TitleRegex(),
+            _ => null
+        };
+
+        // Expressions, code and open-ended template references belong to their own parsers.
+        if (grammar is not null) ParseSubjectClause(new(context, line, false, grammar.IsMatch), out _, out _);
     }
 
     static string? ParseSubjectLabel(ref string header, Match? labelWord)
@@ -72,5 +98,5 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^for\s+(item|screen)$", RegexOptions.NonBacktracking)]
     private static partial Regex SubjectClauseRegex();
 
-    sealed record SubjectClauseRequest(ParserContext Context, SourceLine Line, bool Action);
+    sealed record SubjectClauseRequest(ParserContext Context, SourceLine Line, bool Action, Func<string, bool> IsHeader);
 }

@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, expect, it } from 'vitest';
-import { parse } from '../../ScreenplayCompiler';
+import { parse, parseForAuthoring } from '../../ScreenplayCompiler';
+import { ScreenActionSyntax } from '../../Syntax/Screens';
+import { toSyntaxJson } from '../../Syntax/SyntaxJson';
 import { applyQuickFixEdits, findQuickFixes, isQuickFixDiagnostic } from '../QuickFixes';
 import { prepareActionSubjectQuickFixes } from '../ActionSubjectQuickFixes';
 
@@ -61,6 +63,47 @@ describe('when repairing action subjects', () => {
         expect(edited).toContain('item retry action Retry for item // preserve this comment');
         expect(edited).toContain('parameter name from data item.name\r\n            parameter itemId from data item.itemId\r\n');
         expect(fixes(edited)).toEqual([]);
+    });
+    it.each([0, 1])('should repair only occurrence %s of two identical subject advisories', selectedIndex => {
+        const text = source.replace('rowId ItemId key', 'itemId ItemId key')
+            .replace('itemId ItemId identifier', 'itemId ItemId')
+            .replace('screen List', 'screen First')
+            + '      screen Second\n        data Row[] via query Rows\n        action Retry // preserve this comment\n';
+        const original = parseForAuthoring(text);
+        expect(original.success).toBe(true);
+        const actions = (document: ReturnType<typeof parseForAuthoring>) => document.value.modules[0].features[0].slices[0].screens
+            .map(screen => screen.directives.find(directive => directive.kind === 'ScreenActionSyntax') as ScreenActionSyntax);
+        const before = actions(original);
+        const selected = before[selectedIndex];
+        const untouchedIndex = 1 - selectedIndex;
+        const advisories = original.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0818');
+        expect(advisories).toHaveLength(2);
+        expect(advisories[0].message).toBe(advisories[1].message);
+        expect(advisories[0].location.line).not.toBe(advisories[1].location.line);
+        const proposals = findQuickFixes(text, { diagnosticCode: 'PLAY0818', line: selected.location.line });
+        expect(proposals).toHaveLength(1);
+        expect(proposals[0].scope).toBe('occurrence');
+        const edited = applyQuickFixEdits(text, proposals[0].edits)!;
+        const candidate = parseForAuthoring(edited);
+        expect(candidate.success).toBe(true);
+        const after = actions(candidate);
+        expect(after[selectedIndex].subject).toBe('Screen');
+        expect(after[untouchedIndex].subject).toBeUndefined();
+        expect(after.filter(action => action.subject != null)).toHaveLength(1);
+        const repaired: ScreenActionSyntax = { ...selected, subject: 'Screen' };
+        expect(toSyntaxJson(after[selectedIndex])).toEqual(toSyntaxJson(repaired));
+        expect(toSyntaxJson(after[untouchedIndex])).toEqual(toSyntaxJson(before[untouchedIndex]));
+        const remaining = candidate.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0818');
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].message).toBe(advisories[0].message);
+        expect(remaining[0].location.line).toBe(after[untouchedIndex].location.line);
+        const expected = original.diagnostics.filter(diagnostic => diagnostic.location.line !== selected.location.line || !['PLAY0818', 'PLAY0819'].includes(diagnostic.code))
+            .map(diagnostic => JSON.stringify([diagnostic.code, diagnostic.message])).sort();
+        expect(candidate.diagnostics.map(diagnostic => JSON.stringify([diagnostic.code, diagnostic.message])).sort()).toEqual(expected);
+        expect(findQuickFixes(edited, { diagnosticCode: 'PLAY0818', line: after[untouchedIndex].location.line })).toHaveLength(1);
+        expect(before.every(action => action.subject == null)).toBe(true);
+        expect(text.split('action Retry // preserve this comment')).toHaveLength(3);
+        expect(edited.split('// preserve this comment')).toHaveLength(3);
     });
     it('should not propose subject repairs when the authored clause is invalid', () => {
         const invalid = source.replace('action Retry //', 'action Retry for unknown //');

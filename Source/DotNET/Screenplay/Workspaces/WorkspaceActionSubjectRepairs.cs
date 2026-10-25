@@ -70,7 +70,6 @@ internal static class WorkspaceActionSubjectRepairs
         var subject = index.Find(repair.Subject)!;
         var before = index.Workspace.Compilation.Diagnostics;
         var after = result.Workspace!.Compilation.Diagnostics;
-        if (after.Any(diagnostic => diagnostic.Code == repair.DiagnosticCode && diagnostic.Message == before.First(original => original.Code == repair.DiagnosticCode && original.Location == subject.Location).Message)) return false;
         static bool IsSubjectDiagnostic(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.InferredActionSubject || diagnostic.Code == DiagnosticCodes.ChangedActionSubject;
         var expected = before.Where(diagnostic => diagnostic.Location != subject.Location || !IsSubjectDiagnostic(diagnostic)).Select(diagnostic => (diagnostic.Code, diagnostic.Message)).Order().ToArray();
         var actual = after.Select(diagnostic => (diagnostic.Code, diagnostic.Message)).Order().ToArray();

@@ -158,10 +158,7 @@ internal static partial class ScreenParser
 
     static ScreenDirectiveSyntax? ParseDirective(ParserContext context, SourceLine line)
     {
-        if (LineText.FirstWord(line.Content) != "action")
-        {
-            ParseSubjectClause(new(context, line, false), out _, out _);
-        }
+        ValidateNonActionSubjectClause(context, line);
 
         switch (LineText.FirstWord(line.Content))
         {
@@ -221,7 +218,7 @@ internal static partial class ScreenParser
 
     static ScreenDirectiveSyntax? ParseAction(ParserContext context, SourceLine line)
     {
-        var subject = ParseSubjectClause(new(context, line, true), out var header, out var inlineLabel);
+        var subject = ParseSubjectClause(new(context, line, true, IsActionHeader), out var header, out var inlineLabel);
         var guarded = GuardedActionRegex().Match(header);
         if (guarded.Success)
         {
@@ -554,7 +551,7 @@ internal static partial class ScreenParser
     static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
     {
         var isAction = ToolbarActionHeaderRegex().IsMatch(line.Content);
-        var subject = ParseSubjectClause(new(context, line, isAction), out var header, out var inlineLabel);
+        var subject = ParseSubjectClause(new(context, line, isAction, ToolbarItemRegex().IsMatch), out var header, out var inlineLabel);
         var match = ToolbarItemRegex().Match(header);
         if (!match.Success)
         {
