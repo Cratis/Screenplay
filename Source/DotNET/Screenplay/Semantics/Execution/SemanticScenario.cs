@@ -26,10 +26,27 @@ internal static class SemanticScenario
     /// <param name="expected">The specification.</param>
     /// <param name="queries">The queries to answer once the reactions settle.</param>
     /// <param name="actionFacts">How many of the resulting facts the action itself appended, ahead of those reactions appended.</param>
+    /// <param name="invocations">Every invocation the reactions made, in invocation order.</param>
     /// <returns>The accepted scenario with every new fact, or what rejected it or is unsupported.</returns>
     public static SemanticExecutionResult Perform(
         ISemanticEvaluator evaluator,
         SemanticExecutionPlan plan,
+        SemanticWorld world,
+        SemanticSpecification expected,
+        ImmutableArray<SemanticQueryRequest> queries,
+        out int actionFacts,
+        out ImmutableArray<SemanticRecordedInvocation> invocations)
+    {
+        var loop = new SemanticReactionLoop(evaluator, plan, world);
+        var result = Perform(plan, evaluator, loop, world, expected, queries, out actionFacts);
+        invocations = loop.Invocations;
+        return result;
+    }
+
+    static SemanticExecutionResult Perform(
+        SemanticExecutionPlan plan,
+        ISemanticEvaluator evaluator,
+        SemanticReactionLoop loop,
         SemanticWorld world,
         SemanticSpecification expected,
         ImmutableArray<SemanticQueryRequest> queries,
@@ -39,7 +56,6 @@ internal static class SemanticScenario
         DateTimeOffset? clock = expected.GivenClock is { } given ? Instant(given) : null;
         var occurrence = clock is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
 
-        var loop = new SemanticReactionLoop(evaluator, plan, world);
         loop.Pin(expected.GivenGenerated);
         SemanticExecutionResult? failure;
         SemanticExecutionResponse? response = null;
@@ -132,7 +148,7 @@ internal static class SemanticScenario
 
     static SemanticExecutionResult? Advance(SemanticExecutionPlan plan, SemanticReactionLoop loop, DateTimeOffset from, DateTimeOffset to)
     {
-        if (!SemanticClock.TryFindDue(plan.Reactions, from, to, out var due))
+        if (!SemanticClock.TryFindDue([.. plan.RunningReactions], from, to, out var due))
         {
             return new SemanticUnsupported(loop.World, SemanticExecutionCapability.Reaction, $"Advancing the clock makes more than {SemanticClock.MaximumOccurrences} occurrences due.");
         }
@@ -151,7 +167,7 @@ internal static class SemanticScenario
     static SemanticExecutionResult? Fire(SemanticExecutionPlan plan, SemanticReactionLoop loop, SemanticSpecificationTrigger fired, DateTimeOffset? clock)
     {
         var values = fired.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
-        foreach (var reaction in plan.Reactions)
+        foreach (var reaction in plan.RunningReactions)
         {
             foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == fired.Kind && trigger.Source == fired.Trigger))
             {

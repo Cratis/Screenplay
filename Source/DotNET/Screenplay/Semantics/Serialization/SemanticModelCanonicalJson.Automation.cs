@@ -210,6 +210,18 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("whenCapture");
             WriteSpecificationCapture(writer, specification.WhenCapture);
         }
+
+        // Written only when stated, so every model without 'then invokes' keeps its canonical bytes (ESM v34).
+        if (!specification.ThenInvocations.IsDefaultOrEmpty)
+        {
+            WriteArray(writer, "thenInvocations", specification.ThenInvocations, (output, invocation) =>
+            {
+                output.WriteStartObject();
+                output.WriteString("command", invocation.Command.ToString());
+                WriteArray(output, "values", invocation.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+                output.WriteEndObject();
+            });
+        }
     }
 
     static void WriteSpecificationCapture(Utf8JsonWriter writer, SemanticSpecificationCapture capture)

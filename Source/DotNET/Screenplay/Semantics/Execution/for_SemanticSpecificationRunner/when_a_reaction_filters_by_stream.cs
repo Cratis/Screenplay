@@ -27,7 +27,7 @@ public class when_a_reaction_filters_by_stream : event_route_models
         var application = Plan(reactions: [reaction]).Model.Application;
         var module = application.Modules[0];
         var feature = module.Features[0];
-        application = application with { Modules = [module with { Features = [feature with { Slices = [feature.Slices[0] with { ReadModels = [readModel], Specifications = [specification] }, feature.Slices[1] with { Reactions = [reaction with { From = new(Source.Id, Stream.Id) }] }] }] }] };
+        application = application with { Modules = [module with { Features = [feature with { Slices = [feature.Slices[0] with { ReadModels = [readModel] }, feature.Slices[1] with { Specifications = [specification], Reactions = [reaction with { From = new(Source.Id, Stream.Id) }] }] }] }] };
         var model = ExecutableSemanticModel.Create(LanguageVersion.V10, SemanticVersion.V10, application);
         var result = new SemanticSpecificationRunner().Run(SemanticExecutionPlan.Compile(model).Plan!, specification.Id);
         result.Passed.ShouldBeTrue();

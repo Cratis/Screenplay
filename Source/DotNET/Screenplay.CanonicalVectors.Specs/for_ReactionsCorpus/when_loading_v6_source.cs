@@ -14,7 +14,7 @@ public class when_loading_v6_source : Specification
 {
     readonly CanonicalCorpusVector _vector = ReactionsCorpus.V6;
 
-    [Fact] void should_pin_the_source_backed_revision() => _vector.SemanticRevision.ToString().ShouldEqual("rev1:1be294990a5cf564bba0cbc9aae5a1db1d2e0b27387e2a164de2149e8a4f0700");
+    [Fact] void should_pin_the_source_backed_revision() => _vector.SemanticRevision.ToString().ShouldEqual("rev1:4a69f9707b76866818667595d066d8aea4e121749e1472b62268c2cbaab071fb");
     [Fact] void should_expect_every_specification() => _vector.SpecificationExpectations.Select(expectation => expectation.Name).ShouldEqual("SendingAnInvoice", "ClosingAPaidInvoice", "IssuingTheWeeklyDigest", "SeeingALegacyPayment", "RejectingAnEmptyReason", "RejectingASecondClose", "UnsupportedStartup");
     [Fact] void should_admit_the_version_and_run_every_specification_in_every_source_form()
     {

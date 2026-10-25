@@ -17,6 +17,9 @@ internal static partial class SemanticModelValidator
             .Any(append => !produced.Contains(append.EventContract) && append.EventSourceType != text);
     }
 
+    internal static bool UsesThenInvocations(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Specifications).Any(specification => !specification.ThenInvocations.IsDefaultOrEmpty);
+
     internal static bool UsesEventSourceCaptureKeys(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Captures).Any(capture => capture.EventsSource is { KeyIsEventSource: true });
 
@@ -102,6 +105,14 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V32,
             "An ESM v32 model must declare a typed event capture key.",
             "Typed event capture keys require ESM schema v32.");
+
+    static void ValidateThenInvocationVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesThenInvocations(application),
+            version,
+            SemanticVersion.V34,
+            "An ESM v34 model must contain a specification that states 'then invokes'.",
+            "A specification that states 'then invokes' requires ESM schema v34.");
 
     static void ValidateEventSourceCaptureKeyVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

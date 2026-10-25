@@ -119,6 +119,9 @@ function specificationName(specification: SpecificationSyntax, onCards: readonly
     }
     if (specification.whenRedelivered != null) details.push(`when ${redeliveryTitle(specification.whenRedelivered)}`);
     if (specification.thenNoEvents) details.push('then no events');
+    for (const invocation of specification.thenInvocations ?? []) {
+        details.push(`then invokes ${invocation.command}${invocation.values.length === 0 ? '' : ` { ${mappingText(invocation.values)} }`}`);
+    }
     if (specification.when?.generatedValues?.length) {
         details.push(`generated (not request inputs): ${mappingText(specification.when.generatedValues)}`);
     }

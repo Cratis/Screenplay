@@ -429,6 +429,22 @@ internal static partial class SemanticModelValidator
                 ValidateValue(pinned.Value, generated.Type, "pinned generated value");
             }
 
+            RequireObjects(specification.ThenInvocations, nameof(specification.ThenInvocations), "specification invocation");
+            if (!specification.ThenInvocations.IsDefaultOrEmpty && !_semanticVersion.IsAtLeast(SemanticVersion.V34))
+            {
+                throw new InvalidSemanticContract($"Specification '{specification.Name}' states invocations, which requires ESM v34.");
+            }
+
+            foreach (var invocation in specification.ThenInvocations)
+            {
+                if (!_commands.TryGetValue(invocation.Command, out var invoked))
+                {
+                    throw new InvalidSemanticContract($"Specification '{specification.Name}' states an invocation of an unresolved command.");
+                }
+
+                ValidatePropertyValues(invocation.Values, [.. invoked.Properties.Where(property => !property.IsGenerated)], false);
+            }
+
             RequireObjects(specification.GivenCaptures, nameof(specification.GivenCaptures), "given capture record");
             var seen = new HashSet<(SemanticId, SemanticValue)>();
             foreach (var record in specification.GivenCaptures)

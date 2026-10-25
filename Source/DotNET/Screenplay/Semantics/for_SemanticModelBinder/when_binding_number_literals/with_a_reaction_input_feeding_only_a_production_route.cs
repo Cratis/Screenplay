@@ -6,11 +6,12 @@ using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_number_literals;
 
+// The invoked command is the automation's own, so its specification runs it in full.
 public class with_a_reaction_input_feeding_only_a_production_route : given.a_semantic_binder
 {
     CompilationResult<SemanticCompilation> _result;
 
-    SemanticCommand Command => Slices.Single(slice => slice.Name == "S").Commands.Single();
+    SemanticCommand Command => Automation.Commands.Single();
     SemanticSlice Automation => Slices.Single(slice => slice.Name == "A");
     SemanticSlice[] Slices => [.. _result.Value!.Model.Application.Modules.Single().Features.Single().Slices];
 
@@ -23,7 +24,7 @@ public class with_a_reaction_input_feeding_only_a_production_route : given.a_sem
             streamId LedgerKey
         module M
           feature F
-            slice StateChange S
+            slice Automation A
               command C
                 id String identifier
                 key LedgerKey
@@ -31,7 +32,6 @@ public class with_a_reaction_input_feeding_only_a_production_route : given.a_sem
                   stream Account.Ledger
                     streamId = key
                   count Int = 42
-            slice Automation A
               reaction R
                 when Startup
                   invokes C

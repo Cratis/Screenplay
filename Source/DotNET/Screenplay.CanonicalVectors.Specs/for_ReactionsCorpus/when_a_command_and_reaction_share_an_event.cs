@@ -5,12 +5,13 @@ using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ReactionsCorpus;
 
+// The reaction is the command's own slice's: a specification only ever sees what its slice does.
 public class when_a_command_and_reaction_share_an_event : Specification
 {
     const string Source = """
         module Billing
           feature Steps
-            slice StateChange Start
+            slice Automation Start
               command Start
                 id String identifier
                 produces Changed
@@ -27,7 +28,6 @@ public class when_a_command_and_reaction_share_an_event : Specification
                 then Changed
                   for "root"
                   step = 1
-            slice Automation Next
               reaction Next
                 where step == 0
                 when Changed

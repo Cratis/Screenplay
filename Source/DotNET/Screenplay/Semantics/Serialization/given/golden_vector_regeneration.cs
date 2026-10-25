@@ -63,7 +63,7 @@ public static class golden_vector_regeneration
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV33();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV34();
         if (model.SemanticVersion.Major != current)
         {
             throw new GoldenVectorsRegenerated($"The current golden builder must select ESM v{current}; nothing was regenerated.");

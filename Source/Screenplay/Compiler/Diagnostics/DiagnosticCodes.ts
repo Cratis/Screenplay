@@ -444,6 +444,8 @@ export const DiagnosticCodes = {
     InvalidTimeZoneDeclaration: 'PLAY0812',
     InvalidCommandCalendar: 'PLAY0813',
     InvalidSpecificationTimeZone: 'PLAY0814',
+    InvalidSpecificationInvocation: 'PLAY0815',
+    UnreachableSpecificationInvocation: 'PLAY0816', // C# only: the outcome consistency check is native.
     GenerationSupportBudgetExceeded: 'PLAY0691',
     EmptyGenerationSupport: 'PLAY0692', // C# only: conservative nominal producer identity comparison.
     MixedEnumerationNumbering: 'PLAY0667',

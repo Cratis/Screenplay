@@ -52,10 +52,7 @@ module Buying
           quantity     = 40
           onHand       = 4
           reorderPoint = 10
-        // no preferred supplier is chosen in this scenario: AutoReplenish reports the block (the full chain is specified in DraftReplenishmentOrder)
-        then ReplenishmentBlocked
-          for "ACM-1000"
-          reason = "SkuSourcing 'ACM-1000' does not exist."
+        // what the request sets going is DraftReplenishmentOrder's, and is specified there
 
   feature Demand
     slice Translate RecordDemand

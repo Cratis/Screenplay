@@ -61,4 +61,4 @@ on the screen the clerk already works in.
 - No read model is composed by a performer: `ItemPage` is composed from nine events plus a join, which keeps it executable.
 - The Inventory domain blueprints bind to blueprint-shaped read models (`Items`, `InventoryFigures`) and need `Cratis.Blueprint.Inventory` in the profile
   packages, which `cratis render` cannot resolve (`CLI-RENDER-007`); the foundation templates are used.
-- A command specification states the public event its slice publishes (`RegisteringASkuByHand`); the translation slices keep their own specifications for the event-driven path.
+- Each specification states only its own slice: `RegisteringASkuByHand` states `SkuRegistered`, the snapshot is `SnapshotStockOnMovement`'s (`then invokes RecordStockLevel`) and the public `StockLevelChanged` is `PublishStockLevel`'s.

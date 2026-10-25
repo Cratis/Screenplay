@@ -18,6 +18,8 @@ applies-to:
   - Documentation/screenplay/captures.md
 ---
 
+> **2026-10-25 — amended by [0115](0115-a-specification-runs-its-own-slice-only.md).** A specification now runs only its own slice. `then` compares the facts of the specification's own slice, not every reaction's; other slices' reactions do not run. The original decision text is preserved.
+
 > **2026-10-15 - clarification.** Accepted [decision 0080](0080-treat-the-first-record-of-a-key-in-a-record-capture-as-added-only.md) supersedes this record's first-record field-change rule: a record with no previous state is added only at root, child and nested level, as Chronicle does. Field-change guards and their `and`/`or` combinations require previous state; transitions, maps, expression guards and unguarded appends keep their meaning. Canonical bytes and ESM versions are unchanged.
 
 ## Context

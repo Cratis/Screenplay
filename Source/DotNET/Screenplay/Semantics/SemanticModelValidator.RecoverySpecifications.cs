@@ -23,11 +23,11 @@ internal static partial class SemanticModelValidator
         {
             if (specification.ThenNoEvents) return true;
 
-            return specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || HasReadModelOutcome(specification);
+            return specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || !specification.ThenInvocations.IsDefaultOrEmpty || HasReadModelOutcome(specification);
         }
 
         static bool AssertsActionOutcome(SemanticSpecification specification) =>
-            specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0;
+            specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 || !specification.ThenInvocations.IsDefaultOrEmpty;
 
         static bool AssertsMoreThanReadState(SemanticSpecification specification, bool deniedQuery)
         {

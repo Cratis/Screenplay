@@ -19,7 +19,7 @@ public class when_preserving_pre_v7_corpora : Specification
             (RegisterProjectCorpus.LegacyV1, "050b69657cacb080e30aeb74b7f398034a898ecce0a5aae38cdcb231394ce387"),
             (RegisterProjectCorpus.V2, "33d559853c1ac64a741c3eec2bc6b01ca33fb3fcb5e78e0a62937c8182a4e8c2"),
             (ReadModelAbsenceCorpus.V5, "b4eb78f60c75ef5562c8e79a42ff15b35fae0cdc5cf8a2b9b2c9221f818b3eee"),
-            (ReactionsCorpus.V6, "6207b5a1d4d915a3548123d4df9380104d25194a93640d8ba5d0474f2fdf1155")
+            (ReactionsCorpus.V6, "a5cb3f10195624287ceca88bedfee83a6301a92c59a3de2d9a6fc604f811aa00")
         ];
         foreach (var (corpus, hash) in vectors)
         {

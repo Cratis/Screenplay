@@ -79,6 +79,36 @@ public sealed partial class SemanticModelBinder
             return BindGeneratedValue(pinned.Source, property) is { } value ? new(commandId, propertyId, value) : null;
         }
 
+        SemanticSpecificationInvocation? BindSpecificationInvocation(SpecificationSyntax specification, SpecificationInvocationSyntax expected)
+        {
+            var commands = AllSlices()
+                .SelectMany(entry => entry.Slice.Commands.Where(command => command.Name == ShortName(expected.Command)).Select(command => (entry, command)))
+                .Where(candidate => CommandBelongsToSlice(expected.Command, SemanticAddress.ForSlice(_applicationIdentity, candidate.entry.Module, candidate.entry.FeaturePath, candidate.entry.Slice.Name)))
+                .ToArray();
+            if (commands.Length != 1)
+            {
+                var reason = commands.Length == 0 ? "is unresolved" : "is ambiguous; qualify it";
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification '{specification.Name}' invoked command '{expected.Command}' {reason}.", expected.Location);
+                return null;
+            }
+
+            var (entry, command) = commands[0];
+            var slice = SemanticAddress.ForSlice(_applicationIdentity, entry.Module, entry.FeaturePath, entry.Slice.Name);
+            var commandAddress = SemanticAddress.ForCommand(slice, command.Name);
+
+            // The command and its properties were resolved where they are declared; resolving them again would register a second source span.
+            var commandId = documents.IdentityCatalog.ResolveSemanticAssignment(commandAddress).Id;
+            var properties = command.Properties.Where(property => !property.IsGenerated).ToDictionary(
+                property => property.Name,
+                property => new SemanticProperty(
+                    documents.IdentityCatalog.ResolveSemanticAssignment(SemanticAddress.ForProperty(commandAddress, property.Name)).Id,
+                    property.Name,
+                    BindTypeReference(property.Type),
+                    property.IsIdentifier),
+                StringComparer.Ordinal);
+            return new(commandId, BindPropertyValues(expected.Values, properties, "specification invocation"));
+        }
+
         SemanticSpecificationCapture? BindSpecificationCapture(SpecificationCaptureSyntax presented)
         {
             UsesV6 = true;

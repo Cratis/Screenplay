@@ -286,6 +286,7 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
     { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
     { label: 'then no events', insertText: 'then no events', documentation: 'Asserts the action appended no events, including after when append, where no reaction appended anything. Executable from ESM v17; cannot accompany event, error or denial expectations.' },
+    { label: 'then invokes', insertText: 'then invokes ${1:Command}\n    ${2:property} = ${3:value}', documentation: 'An invocation the slice\'s own reactions make, with the values it passes; unstated values are not compared. Once stated, every invocation must match in count and order. Executable from ESM v34.' },
 ];
 
 // What follows a 'given', 'when' or 'then' already typed in a specification.
@@ -317,6 +318,7 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected afterwards.' },
         { label: 'error', insertText: 'error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
         { label: 'denied', insertText: 'denied', documentation: 'The action is denied to the caller.' },
+        { label: 'invokes', insertText: 'invokes ${1:Command}\n    ${2:property} = ${3:value}', documentation: 'An invocation the slice\'s own reactions make, with the values it passes. Executable from ESM v34.' },
     ],
 };
 

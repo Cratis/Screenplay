@@ -30,6 +30,7 @@ const document = [
     '      specification Zoned',
     '        given time zone "UTC"',
     '        given time zone "Europe/Oslo"',
+    '        then invokes',
     'concept InvoiceId : Guid',
     'concept InvoiceId : String',
     'concept Amount : Wat',
