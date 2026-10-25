@@ -54,8 +54,8 @@ describe('when Monarch compiles named-rule states', () => {
             expect(typeAt(lines[line], column)).toBe('identifier.play');
         }
     });
-    it('should preserve legacy delimiters, operators, metadata, strings, comments and embedded fences', () => {
-        const lines = tokenize(['event Done', '  id "old" // pin', '  tags String[] = ["x", "y"]', 'command C', ...body.slice(0, 5), '        ```csharp', '        implementation', '        hint "code"', '        ```', '        hint "After"']);
+    it.each(['csharp', 'java'])('should preserve delimiters, metadata and embedded %s fences', language => {
+        const lines = tokenize(['event Done', '  id "old" // pin', '  tags String[] = ["x", "y"]', 'command C', ...body.slice(0, 5), `        \`\`\`${language}`, '        implementation', '        hint "code"', '        ```', '        hint "After"']);
         expect(typeAt(lines[1], 2)).toBe('keyword.play');
         expect(typeAt(lines[1], 5)).toBe('string.play');
         expect(typeAt(lines[1], 11)).toBe('comment.play');

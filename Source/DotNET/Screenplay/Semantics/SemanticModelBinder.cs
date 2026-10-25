@@ -592,7 +592,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             foreach (var (module, featurePath, slice) in AllSlices())
             {
                 var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
-                foreach (var query in slice.Queries)
+                foreach (var query in slice.Queries.Where(CanBindPerformedQueryArguments))
                 {
                     var bound = BindQuery(sliceAddress, query);
                     if (bound is null)

@@ -81,7 +81,7 @@ export const operationItems: CompletionEntry[] = [
 export const operationImplementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
-    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
+    ...['csharp', 'java', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
 ];
 
 export const operationPhaseItems: CompletionEntry[] = [
@@ -183,7 +183,7 @@ export const producesItems: CompletionEntry[] = [
 export const implementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered nonblank guidance for a handler implementation. Not an execution guarantee.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects one existing model-relative attachment.' },
-    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects one inline payload. Handler execution remains unsupported.' })),
+    ...['csharp', 'java', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects one inline payload. Handler execution remains unsupported.' })),
 ];
 
 export const handlerItems: CompletionEntry[] = [

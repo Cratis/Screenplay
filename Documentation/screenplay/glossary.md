@@ -69,7 +69,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Sub-language** — a named grammar embedded inside a construct's body, parsed by a registered sub-parser. PDL and CDL are the built-ins; more can be registered.
 - **PDL (Projection Declaration Language)** — the embedded sub-language for `projection` bodies.
 - **CDL (Change Data Capture Language)** — the embedded sub-language for `capture` bodies.
-- **Embedded code block** — an inline `csharp`, `typescript`, `react`, `html`, or `sql` block (between triple backticks) or a `file` reference — the escape hatch any construct can drop into.
+- **Embedded code block** — an inline `csharp`, `java`, `typescript`, `react`, `html`, or `sql` block (between triple backticks) or a `file` reference — the escape hatch any construct can drop into.
 - **Realization metadata** — a `file` reference or inline code block attached to a construct once it is implemented. Always optional: a document must be meaningful with none of it.
 - **Context variables** — values the runtime supplies inside expressions: `$context` (the command or query context), `$env` (environment), `$eventContext`, and `$.` (the current capture item).
 - **Context** — what a block of inline or file-referenced code is given, in scope as `context`. There is one per job: a **command context** and a **query context** (the command or arguments, the tenant, the caller, the causation, and when it was received — reachable declaratively through `$context.`), a **rule context** (what is under validation and who is calling), and a **policy context** (the caller and what the decision is about).
