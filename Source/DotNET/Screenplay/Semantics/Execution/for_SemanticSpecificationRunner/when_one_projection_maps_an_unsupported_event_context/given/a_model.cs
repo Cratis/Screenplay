@@ -66,10 +66,6 @@ public class a_model : Specification
                 when Quiet
                   id = "one"
                 then no events
-              specification Cascade
-                when Start
-                  id = "one"
-                then Started
             slice StateView History
               readmodel Timeline
                 id String key
@@ -86,6 +82,10 @@ public class a_model : Specification
                 when Started
                   invokes Record
                     id = $eventSourceId
+              specification Cascade
+                when append Started
+                  for "one"
+                then no events
         """;
 
     protected SemanticCompilation _compilation;

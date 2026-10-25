@@ -14,6 +14,8 @@ applies-to:
   - Samples/AcmeCommerce/**
 ---
 
+> **2026-10-25 — amended by [0115](0115-a-specification-runs-its-own-slice-only.md).** A command's specification no longer states the public event an outbound `Translate` slice publishes; that slice's own specification states it. The original decision text is preserved.
+
 ## Context
 
 Decision 0092 freezes the language at ESM v28. Item 4 allows a construct only when a real model is blocked and no

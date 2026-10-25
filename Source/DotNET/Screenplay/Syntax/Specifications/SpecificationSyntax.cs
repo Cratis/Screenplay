@@ -176,6 +176,11 @@ public record SpecificationSyntax(
     /// Gets the compensation assertions.
     /// </summary>
     public IEnumerable<SpecificationCompensatedSyntax> ThenCompensated { get; init; } = [];
+
+    /// <summary>
+    /// Gets the commands the slice's reactions are expected to invoke, stated with <c>then invokes &lt;Command&gt;</c>, in authored order (ESM v34).
+    /// </summary>
+    public IEnumerable<SpecificationInvocationSyntax> ThenInvocations { get; init; } = [];
 }
 
 /// <summary>

@@ -60,7 +60,8 @@ public static class AcmeAdmissionsCorpus
         var catalog = SemanticIdentityCatalog.Empty(application);
         (string Feature, string Slice, string Name, string? Error, int Count)[] cases =
         [
-            ("Pricing", "SetPrice", "SettingAPricePublishesIt", null, 2),
+            ("Pricing", "SetPrice", "SettingAPrice", null, 1),
+            ("Pricing", "PublishPrice", "PublishingAPrice", null, 2),
             ("Pricing", "SetPrice", "RejectingAThirdDecimal", "Money has at most two decimals.", 0),
             ("Basket", "PutInBasket", "AddingALine", null, 1),
             ("Stock", "MoveStock", "MovingStockForAnOrder", null, 1)

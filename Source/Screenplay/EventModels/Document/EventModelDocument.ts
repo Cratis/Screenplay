@@ -106,7 +106,16 @@ export interface SliceDocument {
     actors: UserExperienceActorDocument[];
     automationTrigger?: AutomationTriggerDocument;
     specifications: SliceSpecificationDocument[];
+    annotations?: SliceAnnotationDocument[];
     commentCount: number;
+}
+
+// A finding the board draws beside what it names. Screenplay uses only whole-specification information, targeted by
+// the specification's id, to show a specification's authored routing without lengthening its title.
+export interface SliceAnnotationDocument {
+    severity: 'information' | 'warning' | 'error';
+    message: string;
+    specificationId: string;
 }
 
 // Something from outside the model a translation turns into events - for a capture, the system it reads.
@@ -201,6 +210,14 @@ export interface SpecificationCallerDocument {
     claims: Record<string, string>;
 }
 
+// Every read model a specification states (with exactly), the redelivery action and the explicit no-events expectation.
+export interface SpecificationScreenplayMetadata {
+    givenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
+    thenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
+    whenRedelivered?: { eventType: string; reaction: string; values: Record<string, unknown>; for?: unknown };
+    thenNoEvents?: boolean;
+}
+
 export interface SliceSpecificationDocument {
     id: string;
     name: string;
@@ -212,11 +229,8 @@ export interface SliceSpecificationDocument {
     thenEvents: SpecificationStepDocument[];
     thenReadModel?: SpecificationReadModelDocument;
     thenErrors: { id: string; name: string; message?: string }[];
-    // The board reader ignores these additions: every read model a specification states, with 'exactly'.
-    givenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
-    thenReadModels?: { name: string; values: Record<string, unknown>; exactly: boolean }[];
-    whenRedelivered?: { eventType: string; reaction: string; values: Record<string, unknown>; for?: unknown };
-    thenNoEvents?: boolean;
+    // Screenplay-only metadata, kept beneath one name so it never collides with fields the board reader recognizes.
+    screenplay?: SpecificationScreenplayMetadata;
     thenReturns?: { value: unknown } | { fields: Record<string, unknown> };
     thenAbsentReadModels?: { name: string; key: unknown }[];
     collapsed: boolean;

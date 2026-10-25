@@ -108,6 +108,21 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitSpecificationError(error);
         }
+
+        foreach (var invocation in syntax.ThenInvocations)
+        {
+            VisitSpecificationInvocation(invocation);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationInvocationSyntax"/> node and the values it expects.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationInvocationSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationInvocation(SpecificationInvocationSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
 
     /// <summary>

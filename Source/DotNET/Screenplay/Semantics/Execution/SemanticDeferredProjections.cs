@@ -8,7 +8,8 @@ namespace Cratis.Screenplay.Semantics.Execution;
 static class SemanticDeferredProjections
 {
     internal static string? FindFailure(SemanticExecutionPlan plan, IEnumerable<SemanticFact> facts) =>
-        plan.Projections.Values.Where(projection => plan.UnadmittedArtifacts.Contains(projection.Id))
+        plan.Projections.Values.Where(projection => plan.UnadmittedArtifacts.Contains(projection.Id) &&
+                (projection.Target != SemanticProjectionTargetKind.Event || plan.Runs(projection.Id)))
             .Select(projection => FailureFor(projection, facts)).FirstOrDefault(failure => failure is not null);
 
     internal static string? FailureFor(SemanticProjection projection, IEnumerable<SemanticFact> facts) =>

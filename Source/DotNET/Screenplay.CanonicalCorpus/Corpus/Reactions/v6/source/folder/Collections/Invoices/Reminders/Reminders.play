@@ -10,6 +10,9 @@ module Collections
         when PaymentFileArrived
           invoiceId
           amount
+          produces PaymentReceived
+            for invoiceId
+            amount = amount
           invokes CloseInvoice
             invoiceId = invoiceId
             reason = "paid"
@@ -28,13 +31,15 @@ module Collections
         scheduledAt DateTime
       event DigestIssued
         issuedAt DateTime
+      event PaymentReceived
+        amount Decimal
       specification ClosingAPaidInvoice
         when trigger PaymentFileArrived
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           amount = 120
-        then InvoiceClosed
+        then PaymentReceived
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
-          reason = "paid"
+          amount = 120
       specification IssuingTheWeeklyDigest
         given clock "2026-10-05T07:00:00Z"
         when clock "2026-10-05T07:30:00Z"

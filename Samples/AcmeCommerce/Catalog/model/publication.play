@@ -151,8 +151,8 @@ module Merchandising
       example ApproveMug : ApproveProductForSale
         productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
 
-      // The accepted path states the public event the approval is published as (PublishProduct translates it).
-      specification ApprovingAReadyProductPublishesIt
+      // The public event the approval is published as belongs to PublishProduct, and is specified there.
+      specification ApprovingAReadyProduct
         given caller
           authenticated
           role "Merchandiser"
@@ -179,15 +179,6 @@ module Merchandising
           imageUrl = "/images/acm-1000.png"
           price    = 49
           currency = "NOK"
-        then ProductPublished
-          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
-          sku       = "ACM-1000"
-          name      = "Acme mug"
-          details   = "A sturdy mug for everyday use"
-          category  = "Kitchen"
-          price     = 49
-          currency  = "NOK"
-          imageUrl  = "/images/acm-1000.png"
 
       specification ApprovingAnUnpricedProductIsRejected
         given caller

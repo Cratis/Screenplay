@@ -23,7 +23,7 @@ import { addFixtureValue, addInlineValue } from './SpecificationExampleParser';
 import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcrete, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
-import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
+import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationInvocationSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
@@ -48,6 +48,8 @@ const givenTimeZonePrefix = pattern('^given\\s+time\\s+zone\\b');
 const givenTimeZonePattern = pattern(`^given\\s+time\\s+zone\\s+"(${stringBodyPattern})"$`);
 const givenClockPrefix = pattern('^given\\s+clock\\b');
 const givenCapturePrefix = pattern('^given\\s+capture\\b');
+const thenInvokesPrefix = pattern('^then\\s+invokes\\b');
+const thenInvokesPattern = pattern('^then\\s+invokes\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
 const givenGeneratedPrefix = pattern('^given\\s+generated\\b');
 const givenGeneratedPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
@@ -103,6 +105,7 @@ interface SpecificationBody {
     givenOperationFailures: SpecificationOperationFailureSyntax[];
     thenOperations: SpecificationOperationSyntax[];
     thenCompensated: SpecificationCompensatedSyntax[];
+    thenInvocations?: SpecificationInvocationSyntax[];
 }
 
 export function parseSpecification(context: ParserContext, line: SourceLine): SpecificationSyntax {
@@ -398,6 +401,12 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
             body.thenNoResult = { kind: 'SpecificationNoResultSyntax', location: locationOf(line) };
         }
         skipBody(context, line.indent);
+        return;
+    }
+    if (thenInvokesPrefix.test(line.content)) {
+        const invocation = parseNamedStep(context, line, thenInvokesPattern, DiagnosticCodes.InvalidSpecificationInvocation, 'then invokes', 'then invokes <Command>',
+            (command, values): SpecificationInvocationSyntax => ({ kind: 'SpecificationInvocationSyntax', command, values, location: locationOf(line) }));
+        if (invocation !== null) (body.thenInvocations ??= []).push(invocation);
         return;
     }
     if (line.content.startsWith('then denied')) {

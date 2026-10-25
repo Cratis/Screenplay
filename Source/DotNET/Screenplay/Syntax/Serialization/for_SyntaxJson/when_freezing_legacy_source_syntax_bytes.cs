@@ -71,6 +71,7 @@ public class when_freezing_legacy_source_syntax_bytes
         "bookings-sample",
         "clock-operands",
         "event-source-capture-keys",
+        "then-invokes",
     ];
 
     [Fact]

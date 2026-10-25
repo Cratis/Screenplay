@@ -152,25 +152,16 @@ module Stock
         sku  = "ACM-1000"
         name = "Acme mug"
 
-      // The accepted path states everything the registration sets going, down to the public event Storefront listens to.
+      // What the registration sets going (the snapshot and the public event) belongs to other slices, and is specified there.
       specification RegisteringASkuByHand
         given caller
           authenticated
           role "WarehouseClerk"
         when Mug
-        then events in any order
         then SkuRegistered
           for "ACM-1000"
           sku  = "ACM-1000"
           name = "Acme mug"
-        then StockLevelSnapshotTaken
-          for "ACM-1000"
-          onHand    = 0
-          available = 0
-        then StockLevelChanged
-          sku       = "ACM-1000"
-          onHand    = 0
-          available = 0
 
       specification ASkuNeedsThePrefix
         given caller

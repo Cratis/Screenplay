@@ -77,7 +77,7 @@ public static class DescribedCommandHandlersCorpus
             ("ApplyLateFee", "Invalid", SemanticExecutionOutcomeKind.Rejected, 0),
             ("ApplyLateFee", "Body", described ? SemanticExecutionOutcomeKind.Unsupported : SemanticExecutionOutcomeKind.Accepted, described ? 0 : 1),
             ("ApplyLateFee", "History", SemanticExecutionOutcomeKind.Accepted, 1),
-            ("RequestedFees", "InvokedBody", described ? SemanticExecutionOutcomeKind.Unsupported : SemanticExecutionOutcomeKind.Accepted, described ? 1 : 2),
+            ("RequestedFees", "InvokedBody", described ? SemanticExecutionOutcomeKind.Unsupported : SemanticExecutionOutcomeKind.Accepted, 1),
             ("RequestedFees", "InvokedInvalid", SemanticExecutionOutcomeKind.Accepted, 2),
             ("RequestedFees", "InvokedDenied", SemanticExecutionOutcomeKind.Rejected, 1)
         ];

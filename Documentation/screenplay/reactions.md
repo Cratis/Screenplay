@@ -360,6 +360,8 @@ Durable collection fan-out, acknowledgement and delivery guarantees remain outsi
 Use `SemanticReactionSettlement` after `SemanticEvaluator.Execute` accepts a command, before persisting its
 facts, to run event-triggered reactions and their cascades through invoked commands. It shares the
 specification runner's reaction semantics, including `from`, `where`, append order and the 1,000-fact limit.
+Unlike a specification run, which runs only its own slice ([decision 0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md)),
+settlement runs every slice's reactions over the plan you pass, as the live system does.
 The limit counts the observed input facts as well as reaction effects, not established history.
 
 Pass the accepted command result's `World` and `Facts`. That world already contains the command's facts and

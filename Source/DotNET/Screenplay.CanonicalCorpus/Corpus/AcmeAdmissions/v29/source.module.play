@@ -9,16 +9,13 @@ module Shop
           price = price
       event PriceSet
         price Money
-      specification SettingAPricePublishesIt
+      specification SettingAPrice
         when SetPrice
           productId = "mug"
           price = 19.99
         then PriceSet
           for "mug"
           price = 19.99
-        then PriceChanged
-          productId = "mug"
-          newPrice = 19.99
       specification RejectingAThirdDecimal
         when SetPrice
           productId = "mug"
@@ -33,6 +30,13 @@ module Shop
         from PriceSet
           productId = $eventSourceId
           newPrice = price
+      specification PublishingAPrice
+        when append PriceSet
+          for "mug"
+          price = 19.99
+        then PriceChanged
+          productId = "mug"
+          newPrice = 19.99
   feature Basket
     slice StateChange PutInBasket
       command PutInBasket

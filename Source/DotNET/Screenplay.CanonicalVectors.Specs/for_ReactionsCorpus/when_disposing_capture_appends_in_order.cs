@@ -6,6 +6,7 @@ using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ReactionsCorpus;
 
+// The reactions that follow the capture are declared in the capture's own slice: a specification runs nothing another slice declares.
 public class when_disposing_capture_appends_in_order : Specification
 {
     const string Source = """
@@ -185,7 +186,6 @@ public class when_disposing_capture_appends_in_order : Specification
     void should_settle_an_earlier_append_reaction_before_evaluating_a_later_unsupported_mapping()
     {
         var source = Text("payload = {\"value\":1}") + "\n" + """
-            slice Automation Derived
               reaction Follow
                 when First
                   produces Followed
@@ -203,7 +203,6 @@ public class when_disposing_capture_appends_in_order : Specification
     void should_report_an_earlier_reaction_constraint_rejection_before_a_later_capture_mapping()
     {
         var source = Text("payload = {\"value\":1}", "given Followed\n          for \"root\"") + "\n" + """
-            slice Automation Derived
               reaction Follow
                 when First
                   produces Followed
@@ -242,7 +241,6 @@ public class when_disposing_capture_appends_in_order : Specification
     void should_stop_at_the_shared_reaction_fact_limit_before_reaching_a_later_capture_mapping()
     {
         var source = Text("payload = {\"value\":1}") + "\n" + """
-            slice Automation Cycle
               reaction Follow
                 when First
                   produces Looped

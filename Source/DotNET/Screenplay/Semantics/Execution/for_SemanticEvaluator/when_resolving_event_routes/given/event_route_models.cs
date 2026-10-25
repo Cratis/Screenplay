@@ -48,9 +48,12 @@ public class event_route_models : Specification
         bool noCommands = false,
         bool legacy = false)
     {
+        // A specification runs only its own slice, so with reactions it belongs to the automation that declares them.
+        var automated = !reactions.IsDefaultOrEmpty;
+        ImmutableArray<SemanticSpecification> declared = specifications.IsDefault ? [] : specifications;
         var slice = new SemanticSlice(SemanticId.Create(SliceAddress), "Slice", SemanticSliceKind.StateChange,
-            [Event, Before], noCommands ? [] : [command ?? Command], [], [], [], specifications.IsDefault ? [] : specifications);
-        var automation = new SemanticSlice(SemanticId.Create(AutomationAddress), "Automation", SemanticSliceKind.Automation, [], [], [], [], [], [])
+            [Event, Before], noCommands ? [] : [command ?? Command], [], [], [], automated ? [] : declared);
+        var automation = new SemanticSlice(SemanticId.Create(AutomationAddress), "Automation", SemanticSliceKind.Automation, [], [], [], [], [], automated ? declared : [])
         {
             Reactions = reactions.IsDefault ? [] : reactions
         };

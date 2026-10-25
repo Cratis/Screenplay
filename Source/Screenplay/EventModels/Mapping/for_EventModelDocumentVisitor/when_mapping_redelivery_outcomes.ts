@@ -59,7 +59,7 @@ describe('when mapping redelivery outcomes', () => {
         specifications[0].when!.name.should.equal('redelivered Approved to Claimer for "invoice-1"');
         specifications[0].when!.values.should.deep.equal({ invoice: 'invoice-1' });
         (specifications[0].when!.commandId === undefined).should.be.true;
-        specifications[0].whenRedelivered!.should.deep.equal({
+        specifications[0].screenplay!.whenRedelivered!.should.deep.equal({
             eventType: 'Approved', reaction: 'Claimer', for: 'invoice-1', values: { invoice: 'invoice-1' },
         });
     });
@@ -69,9 +69,9 @@ describe('when mapping redelivery outcomes', () => {
         specifications[0].thenErrors.should.deep.equal([]);
     });
     it('should distinguish explicit no-event expectations from an empty list of expected events', () => {
-        specifications[0].thenNoEvents!.should.be.true;
-        specifications[4].thenNoEvents!.should.be.true;
-        (specifications[1].thenNoEvents === undefined).should.be.true;
+        specifications[0].screenplay!.thenNoEvents!.should.be.true;
+        specifications[4].screenplay!.thenNoEvents!.should.be.true;
+        (specifications[1].screenplay?.thenNoEvents === undefined).should.be.true;
     });
     it('should render redelivery and no-event expectations as assertions', () => {
         const markup = headerOf(document, 0);
@@ -83,27 +83,42 @@ describe('when mapping redelivery outcomes', () => {
     it('should render no-event expectations for other actions too', () => {
         headerOf(document, 4).should.contain('then no events');
         specifications[4].when!.name.should.equal('trigger Startup');
-        (specifications[4].whenRedelivered === undefined).should.be.true;
+        (specifications[4].screenplay?.whenRedelivered === undefined).should.be.true;
+    });
+    it('should keep an already spaced title as written when it carries details', () => {
+        const application = parse(source).value;
+        const spaced = toEventModelDocument({ ...application, modules: application.modules.map(module => ({
+            ...module, features: module.features.map(feature => ({
+                ...feature, slices: feature.slices.map(slice => ({
+                    ...slice, specifications: slice.specifications.map(specification => ({ ...specification, name: 'No new facts' })),
+                })),
+            })),
+        })) }, 'Billing');
+        spaced.collections[0].modules[0].features[0].slices[0].specifications[4].name.should.equal('No new facts — then no events');
     });
     it('should preserve unhandled refusal messages and distinguish authorization denials', () => {
         specifications[1].thenErrors.map(error => ({ name: error.name, message: error.message })).should.deep.equal([
             { name: 'error', message: '<Claim & validation>' },
         ]);
         specifications[2].thenErrors.map(error => error.name).should.deep.equal(['denied']);
-        (specifications[2].whenRedelivered!.for === undefined).should.be.true;
+        (specifications[2].screenplay!.whenRedelivered!.for === undefined).should.be.true;
         specifications[2].when!.values.should.deep.equal({});
     });
     it('should retain the expected refusal event payload instead of treating it as a rejection', () => {
         specifications[3].thenEvents[0].values.should.deep.equal({ reason: 'constraint', constraint: 'UniqueClaim', message: 'Already claimed' });
         specifications[3].thenErrors.should.deep.equal([]);
     });
-    it('should retain routed and unrouted locator text on the action and header', () => {
+    it('should retain routed and unrouted locator text on the action and in the header annotations, not the title', () => {
         const routed = toEventModelDocument(parse(routeSource).value, 'Billing');
         const scenarios = routed.collections[0].modules[0].features[0].slices[0].specifications;
         scenarios[1].when!.name.should.contain('stream Invoice.Ledger; streamId = "september"');
-        headerOf(routed, 1).should.contain('stream Invoice.Ledger; streamId = &quot;september&quot;');
+        headerOf(routed, 1).should.not.contain('stream Invoice.Ledger');
+        headerOf(routed, 1).should.contain('when redelivered Approved to Claimer');
+        const messages = (id: string) => routed.collections[0].modules[0].features[0].slices[0].annotations!.filter(annotation => annotation.specificationId === id).map(annotation => annotation.message).join('\n');
+        messages(scenarios[1].id).should.contain('when redelivered Approved to Claimer — ').and.contain('stream Invoice.Ledger; streamId = "september"');
         scenarios[2].when!.name.should.contain('no stream');
-        headerOf(routed, 2).should.contain('no stream');
+        headerOf(routed, 2).should.not.contain('no stream');
+        messages(scenarios[2].id).should.contain('no stream');
     });
     it('should remain readable by the published board schema', () => {
         problems_the_board_finds_in(document).should.deep.equal([]);

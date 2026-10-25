@@ -30,7 +30,7 @@ public class reaction_integer_bounds : given.a_semantic_binder
             {{shape}}
             module M
               feature F
-                slice StateChange S
+                slice Automation A
                   command C
                     id String identifier
                     key Key
@@ -39,7 +39,6 @@ public class reaction_integer_bounds : given.a_semantic_binder
             {{route}}
                     produces event E
                       value Decimal = payload
-                slice Automation A
                   reaction R
                     when Startup
                       invokes C
@@ -56,7 +55,7 @@ public class reaction_integer_bounds : given.a_semantic_binder
         compilation.Model.LanguageVersion.ShouldEqual(LanguageVersion.V11);
         compilation.Model.SemanticVersion.ShouldEqual(SemanticVersion.V11);
         var slices = compilation.Model.Application.Modules.Single().Features.Single().Slices;
-        var command = slices.Single(slice => slice.Name == "S").Commands.Single();
+        var command = slices.Single(slice => slice.Name == "A").Commands.Single();
         var automation = slices.Single(slice => slice.Name == "A");
         var mappings = automation.Reactions.Single().Triggers.Single().Invokes.Single().Mappings;
         var key = command.Properties.Single(property => property.Name == "key");

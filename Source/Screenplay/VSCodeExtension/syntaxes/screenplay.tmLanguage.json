@@ -300,7 +300,7 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" }, "4": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(then)\\s+(operation|compensated)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
+                    "match": "^\\s*(then)\\s+(operation|compensated|invokes)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
                 },
                 {

@@ -20,8 +20,10 @@ describe('when mapping composite stream routes', () => {
     it('should display each literal specification part in authored order', () => {
         const slice = toEventModelDocument(parse(source).value, 'Test').collections[0].modules[0].features[0].slices[0];
         expect(slice.specifications[0].thenEvents[0].name).toContain('streamId period = "2026-10", projectId = "p"');
-        expect(slice.specifications[0].name).toContain('streamId period = "2026-10", projectId = "p"');
-        expect(slice.specifications[0].name).toContain('Admitted by ESM v8');
-        expect(slice.specifications[0].name).not.toContain('PLAY0268');
+        expect(slice.specifications[0].name).toBe('Routed');
+        const messages = slice.annotations!.map(annotation => annotation.message);
+        expect(messages[0]).toContain('streamId period = "2026-10", projectId = "p"');
+        expect(messages.join('\n')).toContain('Admitted by ESM v8');
+        expect(messages.join('\n')).not.toContain('PLAY0268');
     });
 });

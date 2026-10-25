@@ -120,7 +120,7 @@ Nothing in the first list remains: the language admitted each (Screenplay decisi
 - `Money` carries `decimals <= 2` ([#867](https://github.com/Cratis/Screenplay/issues/867)), and the basket's `addedValue` is `add addedValue by unitPrice * quantity` ([#864](https://github.com/Cratis/Screenplay/issues/864)).
 - The shell has application-level toolbar buttons in `navigation topbar` (`<Domain>/shell/navigation.play`, [#868](https://github.com/Cratis/Screenplay/issues/868)).
 - A feature adds buttons to the toolbar of its screens, each linked to one of its commands, with a confirmation where it matters (`Catalog/model/publication.play`: Approve and Withdraw, [#1012](https://github.com/Cratis/Screenplay/issues/1012)).
-- Command specifications state the public event their slice publishes ([#866](https://github.com/Cratis/Screenplay/issues/866)).
+- Every specification states only what its own slice does (Screenplay decision 0115): a public event is stated in the outbound translation that publishes it, and an automation states the command it invokes with `then invokes`; this replaces command specifications that stated the public event their slice publishes ([#866](https://github.com/Cratis/Screenplay/issues/866)).
 - Orders cross the boundary whole and fan out per line ([#857](https://github.com/Cratis/Screenplay/issues/857)); a replenishment order's id is generated and pinned in its specifications ([#858](https://github.com/Cratis/Screenplay/issues/858)); that command appends to two event sources ([#859](https://github.com/Cratis/Screenplay/issues/859)); an id keeps its own concept on each side of a boundary ([#861](https://github.com/Cratis/Screenplay/issues/861)).
 
 Still open:

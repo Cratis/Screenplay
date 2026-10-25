@@ -240,6 +240,7 @@ internal static class SyntaxKinds
         typeof(SpecificationCaptureSyntax),
         typeof(SpecificationClockSyntax),
         typeof(SpecificationGeneratedValueSyntax),
+        typeof(SpecificationInvocationSyntax),
         typeof(SpecificationCommandSyntax),
         typeof(SpecificationDeniedSyntax),
         typeof(SpecificationErrorSyntax),

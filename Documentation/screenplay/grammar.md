@@ -1322,8 +1322,17 @@ SpecificationThen = ReturnExpectation
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
+               | InvocationExpectation
                | "then", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping }, DEDENT ] ;
+
+InvocationExpectation = "then", "invokes", QualifiedName, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+(* An invocation the specification's own slice's reactions are expected to make,
+   with the values it passes; unstated properties are not compared. Once one is
+   stated, every invocation must match in count and order (any order under
+   "then events in any order"). A reaction of the specification's own slice must
+   invoke the command (PLAY0816). Executable from ESM v34. *)
 
 SpecificationEventSource = "for", Expression, NL ;
 SpecificationStream = "stream", Ident, ".", Ident, NL,

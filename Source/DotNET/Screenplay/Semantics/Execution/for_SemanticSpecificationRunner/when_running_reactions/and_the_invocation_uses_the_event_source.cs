@@ -3,6 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner.when_running_reactions;
 
+// The invoked command is the automation's own, so its specification runs it in full.
 public class and_the_invocation_uses_the_event_source : given.a_v6_scenario
 {
     [Theory]
@@ -21,13 +22,12 @@ public class and_the_invocation_uses_the_event_source : given.a_v6_scenario
                     produces OrderPlaced
                       for orderId
                   event OrderPlaced
-                slice StateChange StartPicking
+                slice Automation Picking
                   command StartPicking
                     orderId OrderId identifier
                     produces PickingStarted
                       for orderId
                   event PickingStarted
-                slice Automation Picking
                   reaction PickOnPlacement
                     when OrderPlaced
                       invokes StartPicking

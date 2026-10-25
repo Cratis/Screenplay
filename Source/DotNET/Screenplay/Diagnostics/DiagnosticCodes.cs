@@ -3648,4 +3648,14 @@ public static class DiagnosticCodes
     /// A specification <c>given time zone</c> declaration is repeated or malformed.
     /// </summary>
     public const string InvalidSpecificationTimeZone = "PLAY0814";
+
+    /// <summary>
+    /// A specification <c>then invokes</c> declaration is malformed.
+    /// </summary>
+    public const string InvalidSpecificationInvocation = "PLAY0815";
+
+    /// <summary>
+    /// A specification states <c>then invokes</c> a command no reaction of its own slice invokes.
+    /// </summary>
+    public const string UnreachableSpecificationInvocation = "PLAY0816";
 }

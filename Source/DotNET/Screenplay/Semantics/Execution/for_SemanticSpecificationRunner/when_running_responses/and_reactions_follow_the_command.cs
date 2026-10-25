@@ -7,8 +7,15 @@ public class and_reactions_follow_the_command : given.a_v6_scenario
 {
     const string Prefix = "concept Id : Uuid\nmodule Billing\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        produces event Started\n          id String = id\n        returns id\n";
 
+    // A specification runs only its own slice, so a reaction that follows the command is declared in the command's own slice.
     void CompileScenario(string source)
     {
+        if (source.Contains("    slice Automation Follow\n", StringComparison.Ordinal))
+        {
+            Compile(source.Replace("    slice StateChange S\n", "    slice Automation S\n", StringComparison.Ordinal).Replace("    slice Automation Follow\n", string.Empty, StringComparison.Ordinal));
+            return;
+        }
+
         var nextSlice = source.IndexOf("\n    slice ", source.IndexOf("\n    slice ", StringComparison.Ordinal) + 1, StringComparison.Ordinal);
         var specification = source.IndexOf("\n      specification ", StringComparison.Ordinal);
         Compile(source[..nextSlice] + source[specification..] + source[nextSlice..specification]);

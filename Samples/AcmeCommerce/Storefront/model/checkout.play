@@ -221,8 +221,7 @@ module Shop
           shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           method     = "standard"
           total      = 98
-        // the order, and what it sets going: the basket is emptied and the public event tells Sales
-        then events in any order
+        // emptying the basket and telling Sales are the automation's and the translation's, and are specified there
         then CheckoutCompleted
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -233,15 +232,6 @@ module Shop
           shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           deliveryMethod = "standard"
           total          = 98
-        then BasketCleared
-          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-        then OrderPlaced
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-          email      = "ada@example.com"
-          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-          total      = 98
 
       specification RejectingAnEmptyBasket
         given caller
@@ -333,16 +323,9 @@ module Shop
           shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
           deliveryMethod = "standard"
           total          = 98
-        // the public event is the other consequence of the same checkout (translation/publish.play)
-        then events in any order
-        then BasketCleared
-        then OrderPlaced
-          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-          email      = "ada@example.com"
-          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
-          total      = 98
+        // emptying the basket is ClearBasketContents', and is specified there: this slice hands the basket over
+        then invokes ClearBasketContents
+          basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
 
     slice StateChange ClearBasketContents
       description "Empties a basket (invoked by the automation, not by the shopper)"

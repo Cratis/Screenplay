@@ -89,6 +89,7 @@ internal static partial class SpecificationParser
         var givenOperationFailures = new List<SpecificationOperationFailureSyntax>();
         var thenOperations = new List<SpecificationOperationSyntax>();
         var thenCompensated = new List<SpecificationCompensatedSyntax>();
+        var thenInvocations = new List<SpecificationInvocationSyntax>();
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
@@ -323,6 +324,13 @@ internal static partial class SpecificationParser
 
                         SkipBody(context, line.Indent);
                     }
+                    else if (ThenInvokesPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (ParseThenInvokes(context, line) is { } invocation)
+                        {
+                            thenInvocations.Add(invocation);
+                        }
+                    }
                     else if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
                     {
                         if (line.Content != "then denied")
@@ -375,6 +383,7 @@ internal static partial class SpecificationParser
             GivenOperationFailures = givenOperationFailures,
             ThenOperations = thenOperations,
             ThenCompensated = thenCompensated,
+            ThenInvocations = thenInvocations,
             WhenAppended = whenAppended,
             WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,

@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal sealed partial class WorkspacePropertyLinks
 {
-    static readonly string[] _assertionMembers = ["thenEvents", "thenReadModels", "thenQueries", "thenResults", "results"];
+    static readonly string[] _assertionMembers = ["thenEvents", "thenReadModels", "thenQueries", "thenResults", "results", "thenInvocations"];
 
     static (string Name, string[] Kinds) FixtureReference(SyntaxNode node) => node switch
     {
@@ -19,6 +19,7 @@ internal sealed partial class WorkspacePropertyLinks
         InvokesSyntax value => (value.Command, ["Command"]),
         SpecificationExampleSyntax value => (value.Type, ["Command", "Event", "ReadModel"]),
         SpecificationCommandSyntax value => (value.CommandType, ["Command", "Example"]),
+        SpecificationInvocationSyntax value => (value.Command, ["Command"]),
         SpecificationEventSyntax value => (value.EventType, ["Event", "Example"]),
         SpecificationReadModelSyntax value => (value.Name, ["ReadModel", "Example"]),
         _ => (string.Empty, [])

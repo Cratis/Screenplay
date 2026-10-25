@@ -65,6 +65,7 @@ internal static partial class WorkspaceIdentifierSpans
             (SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationQuerySyntax, "query") => keyword == "then" || keyword == "and",
             (InvokesSyntax, "command") => keyword == "invokes",
+            (SpecificationInvocationSyntax, "command") => keyword == "invokes",
             (ExecuteCommandActionSyntax, "command") => keyword == "execute",
             (NavigateActionSyntax, "screen") => keyword == "navigate",
             (OpenDialogActionSyntax, "dialogTemplate") => keyword == "open",

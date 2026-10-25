@@ -31,7 +31,14 @@ public sealed record SemanticSpecificationRun(
     SemanticId Specification,
     bool Passed,
     SemanticExecutionResult Execution,
-    ImmutableArray<string> Failures);
+    ImmutableArray<string> Failures)
+{
+    /// <summary>
+    /// Gets every invocation the specification's slice's reactions made, in invocation order, whether or not the command
+    /// accepted it and whether or not the slice owns the command.
+    /// </summary>
+    public ImmutableArray<SemanticRecordedInvocation> Invocations { get; init; } = [];
+}
 
 /// <summary>
 /// Executes semantic specifications against immutable in-memory world state.
@@ -83,6 +90,12 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
+        // A specification is about the slice it belongs to and nothing else: other slices' reactions, captures and publications do not run.
+        if (plan.IsolatedSlice is null && plan.SliceOf(specification) is { } slice)
+        {
+            plan = plan.IsolatedTo(slice);
+        }
+
         var reducer = plan.Model.Application.Modules.SelectMany(module => AllSlices(module.Features))
             .SelectMany(slice => slice.Reducers)
             .FirstOrDefault(candidate => (candidate.From is null && (
@@ -132,9 +145,9 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var acts = HasAction(expected);
         if (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) && acts)
         {
-            var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts);
-            var compared = Compare(plan, expected, performed, actionFacts);
-            return new(specification, compared.IsEmpty, performed, compared);
+            var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts, out var invocations);
+            var compared = Compare(plan, expected, performed, actionFacts, invocations);
+            return new(specification, compared.IsEmpty, performed, compared) { Invocations = invocations };
         }
 
         var request = expected.When is null
@@ -255,7 +268,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         SemanticExecutionPlan plan,
         SemanticSpecification expected,
         SemanticExecutionResult execution,
-        int actionFacts = -1)
+        int actionFacts = -1,
+        ImmutableArray<SemanticRecordedInvocation> invocations = default)
     {
         var failures = ImmutableArray.CreateBuilder<string>();
         if (expected.ThenDenied)
@@ -281,6 +295,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
 
         CompareFollowingFacts(plan, expected, accepted.Facts, actionFacts, failures);
+        if (!expected.ThenInvocations.IsDefaultOrEmpty)
+        {
+            SemanticInvocationComparison.Compare(plan, expected.ThenInvocations, invocations.IsDefault ? [] : invocations, expected.ThenEventsInAnyOrder, failures);
+        }
 
         var commandFacts = actionFacts >= 0 ? accepted.Facts[..actionFacts] : accepted.Facts;
         var generatedIdentifier = expected.When is { } when && plan.Commands[when.Command].Properties.Any(property => property.IsIdentifier && property.IsGenerated);
