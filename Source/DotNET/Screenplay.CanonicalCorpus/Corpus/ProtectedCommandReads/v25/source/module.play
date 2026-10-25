@@ -155,27 +155,6 @@ module Storage
         then readmodel Current
           id = "reference"
           value = "original"
-      specification ReactionInvokesProtectedRead
-        given Stored
-          for "reference"
-          value = "original"
-        when RequestWork
-          id = "request"
-          targetId = "target"
-          sourceId = "reference"
-        then Requested
-          for "request"
-          destination = "target"
-          sourceId = "reference"
-        then Taken
-          for "target"
-          value = "original"
-      specification ReactionInvokesProtectedReadOfMissing
-        when RequestWork
-          id = "request"
-          targetId = "target"
-          sourceId = "missing"
-        then error "Current 'missing' does not exist."
       specification RefusedEmptyKey
         when Consume
           id = "target"
@@ -228,3 +207,18 @@ module Storage
           invokes Consume
             id = destination
             sourceId = sourceId
+      specification ReactionInvokesProtectedRead
+        given Stored
+          for "reference"
+          value = "original"
+        when append Requested
+          for "request"
+          destination = "target"
+          sourceId = "reference"
+        then no events
+      specification ReactionInvokesProtectedReadOfMissing
+        when append Requested
+          for "request"
+          destination = "target"
+          sourceId = "missing"
+        then error "Current 'missing' does not exist."

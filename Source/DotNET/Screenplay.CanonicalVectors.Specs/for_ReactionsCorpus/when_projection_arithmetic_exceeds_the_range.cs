@@ -6,13 +6,14 @@ using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ReactionsCorpus;
 
+// The cascading reaction is the specification's own slice's: a specification runs nothing another slice declares.
 public class when_projection_arithmetic_exceeds_the_range : Specification
 {
     const decimal Amount = 70000000000000000000000000000m;
     const string Source = """
         module Billing
           feature Totals
-            slice StateView Total
+            slice Automation Total
               readmodel Total
                 id String
                 total Decimal
@@ -45,7 +46,6 @@ public class when_projection_arithmetic_exceeds_the_range : Specification
                   amount = 70000000000000000000000000000
                 ACTION
                 then error
-            slice Automation Cascade
               reaction Cascade
                 when Started
                   produces Marker
