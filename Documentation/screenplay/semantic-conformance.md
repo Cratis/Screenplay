@@ -45,6 +45,9 @@ The equivalence rules are:
   unmapped reference in one of those fields fails with its JSON path. Overloaded
   names such as `source`, `path` and `identifiedBy` are classified by their owner
   and discriminated variant, so capture field names and literal paths stay text.
+  A composite key's `type` is an identity in every placement, including child
+  transition and removal `parentKey` values. Unknown string fields or unknown
+  overloaded contexts fail rather than silently being classified as literal.
 - N4: re-sort set collections by structural key after replacing identities;
   preserve the order of ordered collections.
 - N5: compare every other scalar exactly, including case, code, number format
@@ -52,7 +55,11 @@ The equivalence rules are:
 
 The schema-designated string roles are listed in
 [SemanticStringClassification](https://github.com/Cratis/Screenplay/blob/main/Source/DotNET/Screenplay.Conformance/SemanticStringClassification.cs).
-The same classification is used when ranking fallback keys.
+The same classification is used when ranking fallback keys. The focused specs
+cover writer reference contexts, overloaded literal variants and unknown-field
+refusal. The corpus guard also reverses identity assignments independently of
+this classifier and requires the normalized meaning to remain unchanged. Update
+the classification and context specs together whenever writer fields change.
 
 Declaration collections are sets, sorted by stable structural keys. Ordered
 collections, including command `produces`, projection transitions and

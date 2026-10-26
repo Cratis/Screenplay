@@ -15,7 +15,7 @@ namespace Cratis.Screenplay.Conformance;
 /// Normalises a canonical semantic model so two models can be compared independently of how their identities were assigned.
 /// </summary>
 /// <remarks>
-/// <para>N1: only canonical JSON is read; source spans, documents, the identity catalog and the source map are not in it. String roles come from schema fields.</para>
+/// <para>N1: only canonical JSON is read; source spans, documents, the identity catalog and the source map are not in it. String roles come from schema fields; unknown string fields fail.</para>
 /// <para>N2: only the top-level <c language="text">revision</c> is dropped. No catalog revision metadata is emitted; identity-looking domain text is retained.</para>
 /// <para>N3: schema-designated identities become structural keys (see <see cref="SemanticStructuralKeys"/>); an unmapped reference in such a field fails.</para>
 /// <para>N4: arrays the writer sorts are compared as sets; every other array keeps its order (see <see cref="SemanticArrayClassification"/>).</para>
@@ -28,7 +28,7 @@ internal static class SemanticModelNormalizer
     /// </summary>
     /// <param name="model">The model.</param>
     /// <returns>The normalised model.</returns>
-    /// <exception cref="SemanticNormalizationFailed">The model holds an identity with no definition, or an array that is not classified.</exception>
+    /// <exception cref="SemanticNormalizationFailed">The model holds an identity with no definition, or an array or string field that is not classified.</exception>
     public static NormalizedSemanticModel Normalize(ExecutableSemanticModel model) =>
         NormalizeCanonicalJson(SemanticModelSerializer.Serialize(model));
 
