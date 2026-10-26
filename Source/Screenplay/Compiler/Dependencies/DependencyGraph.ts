@@ -5,7 +5,7 @@ import { authoredOrderKey, authoredOrderOf } from '../Files/AuthoredOrder';
 import { expandSpecificationExamples } from '../Parsing/SpecificationCommandExamples';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
-import { ProjectionBlockSyntax, ProjectionVariantSyntax } from '../Syntax/Projections';
+import { ProjectionBlockSyntax, ProjectionSyntax, ProjectionVariantSyntax } from '../Syntax/Projections';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import type { DependencyKind, DependencyNode, DependencyLevel, DependencyEvidence, DependencyEdge, UnresolvedDependency, ImpliedDependency, DependencyGroup, DependencyOrder, DependencyContainerOrder } from './index';
 import { dependencyKinds } from './DependencyKind';
@@ -62,6 +62,7 @@ export class DependencyGraph {
             const node = this.add('module', module.name, this.root);
             for (const child of ordered(module.features, node)) feature(child, node);
         }
+        const eventTargets = this.projectionEventTargets();
         const declarations = new Map<string, DependencyNode[]>();
         const builders = new Map<string, DependencyNode[]>();
         const declare = (inventory: Map<string, DependencyNode[]>, kind: string, name: string, node: DependencyNode) => {
@@ -81,11 +82,7 @@ export class DependencyGraph {
             for (const query of syntax.queries) declare(declarations, 'Query', query.name, node);
             for (const screen of syntax.screens) declare(declarations, 'Screen', screen.name, node);
             for (const readModel of syntax.readModels) declare(declarations, 'ReadModel', readModel.name, node);
-            for (const projection of syntax.projections) {
-                const found = variants(projection.blocks);
-                if (found.length === 0) declare(builders, 'ReadModel', projection.readModel ?? projection.name, node);
-                for (const variant of found) declare(builders, 'ReadModel', variant.name, node);
-            }
+            for (const name of this.projectionReadModels(syntax, node, eventTargets)) declare(builders, 'ReadModel', name, node);
             for (const reducer of dependencySourcesOf(syntax).reducers ?? []) declare(builders, 'ReadModel', reducer.readModel, node);
         }
         const foundations = new Set((application.declaredTriggers ?? []).map(trigger => trigger.name.toLowerCase()));
@@ -239,6 +236,40 @@ export class DependencyGraph {
         return distinctNodes(nodes);
     }
 
+    private isBareProjectionTarget(name: string): boolean {
+        if (name.length === 0) return false;
+        return !name.includes('.');
+    }
+    private *projectionReadModels(syntax: SliceSyntax, node: DependencyNode, eventTargets: ReadonlyMap<string, DependencyNode>): Iterable<string> {
+        for (const projection of syntax.projections) {
+            const found = variants(projection.blocks);
+            if (found.length > 0) {
+                yield* found.map(variant => variant.name);
+                continue;
+            }
+            yield* this.projectionReadModel(projection, node, eventTargets);
+        }
+    }
+    private projectionReadModel(projection: ProjectionSyntax, node: DependencyNode, eventTargets: ReadonlyMap<string, DependencyNode>): string[] {
+        if (eventTargets.get(projection.readModel ?? '') === node) return [];
+        return [projection.readModel ?? projection.name];
+    }
+    private projectionEventTargets(): Map<string, DependencyNode> {
+        // Count physical declarations before registering builders, including case-only and generation collisions.
+        const events = new Map<string, { node: DependencyNode; name: string }[]>();
+        const readModels = new Set(this.slices.flatMap(({ syntax }) => syntax.readModels.map(value => value.name.toLowerCase())));
+        for (const { node, syntax } of this.slices) {
+            for (const event of eventDeclarations(syntax)) {
+                const key = event.name.toLowerCase();
+                if (!events.has(key)) events.set(key, []);
+                events.get(key)!.push({ node, name: event.name });
+            }
+        }
+        const targets = [...events.values()].filter(group => group.length === 1).map(([target]) => target)
+            .filter(target => this.isBareProjectionTarget(target.name))
+            .filter(target => !readModels.has(target.name.toLowerCase()));
+        return new Map(targets.map(target => [target.name, target.node]));
+    }
     private add(kind: DependencyLevel, name: string, parent: DependencyNode): DependencyNode {
         const scope = [...parent.scope, name];
         const address = scope.join('.');

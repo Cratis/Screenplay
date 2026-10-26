@@ -14,6 +14,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
 {
     readonly List<AuthoredDeclaration> _declarations = [];
     readonly List<AuthoredReference> _references = [];
+    readonly HashSet<int> _projectionTargets = [];
     readonly List<ApplicationSyntax> _applications = [];
     readonly List<string> _scope = [];
     readonly List<ReadOwner> _hierarchy = [];
@@ -173,23 +174,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
                 break;
         }
 
-        var owningSyntax = _ownership.For(node);
-        var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
-        foreach (var reference in ReferenceKinds.For(node, owningSyntax))
-        {
-            var refusalProduction = _inRefusal && node is ProducesSyntax;
-            var role = (refusalProduction, owner?.Syntax) switch
-            {
-                (true, _) => "refusalProduces",
-                (_, SpecificationSyntax specification) => SpecificationReferenceRoles.For(specification, node, reference.Role),
-                _ => reference.Role
-            };
-            _references.Add(new(reference.Name, reference.Kinds, owningSyntax is IdentityDetailSyntax ? [] : [.. _scope], ReferenceLocation(node), role, owner?.Owner)
-            {
-                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
-                AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
-            });
-        }
+        RegisterReferences(node);
     }
 
     /// <inheritdoc/>
@@ -237,6 +222,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             LogicalDeclarations.Complete(_declarations, application);
         }
 
+        SpecializeProjectionTargets();
         _declarations.AddRange([.. LogicalReadModels.From(_declarations)]);
         var productions = new ProductionInventory([.. _declarations]);
         var sources = _declarations.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0)
@@ -303,6 +289,87 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
         SpecificationStreamSyntax route => route.ReferenceLocation,
         _ => node.Location
     };
+
+    static bool HasVariants(IEnumerable<ProjectionBlockSyntax> blocks) => blocks.Any(block => block switch
+    {
+        ProjectionVariantSyntax => true,
+        ChildrenSyntax children => HasVariants(children.Blocks),
+        NestedSyntax nested => HasVariants(nested.Blocks),
+        _ => false
+    });
+
+    static bool IsBareProjectionTarget(string name)
+    {
+        if (name.Length == 0) return false;
+
+        return !name.Contains('.', StringComparison.Ordinal);
+    }
+
+    static bool IsLocalEventTarget(AuthoredReference reference, Dictionary<string, string[]> targets)
+    {
+        if (!targets.TryGetValue(reference.Name, out var scope)) return false;
+
+        return scope.SequenceEqual(reference.Scope, StringComparer.Ordinal);
+    }
+
+    void RegisterReferences(SyntaxNode node)
+    {
+        var owningSyntax = _ownership.For(node);
+        var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
+        foreach (var reference in ReferenceKinds.For(node, owningSyntax))
+        {
+            var role = ReferenceRole(node, reference.Role, owningSyntax);
+            TrackProjectionTarget(node, role);
+            _references.Add(new(reference.Name, reference.Kinds, owningSyntax is IdentityDetailSyntax ? [] : [.. _scope], ReferenceLocation(node), role, owner?.Owner)
+            {
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
+                AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
+            });
+        }
+    }
+
+    string ReferenceRole(SyntaxNode node, string role, SyntaxNode? owningSyntax)
+    {
+        var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
+        var refusalProduction = _inRefusal && node is ProducesSyntax;
+
+        return (refusalProduction, owner?.Syntax) switch
+        {
+            (true, _) => "refusalProduces",
+            (_, SpecificationSyntax specification) => SpecificationReferenceRoles.For(specification, node, role),
+            _ => role
+        };
+    }
+
+    void TrackProjectionTarget(SyntaxNode node, string role)
+    {
+        if (role != "builds") return;
+        if (node is not ProjectionSyntax { ReadModel: not null } projection) return;
+        if (HasVariants(projection.Blocks)) return;
+        _projectionTargets.Add(_references.Count);
+    }
+
+    Dictionary<string, string[]> ProjectionEventTargets()
+    {
+        // Only declared names participate: inferred views must not change this eligibility boundary.
+        var readModels = _declarations.Where(declaration => declaration.Kind == "ReadModel")
+            .Select(declaration => declaration.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return _declarations.Where(declaration => declaration.Kind == "Event")
+            .GroupBy(declaration => declaration.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() == 1).Select(group => group.Single())
+            .Where(declaration => IsBareProjectionTarget(declaration.Name) && !readModels.Contains(declaration.Name))
+            .ToDictionary(declaration => declaration.Name, declaration => declaration.Scope, StringComparer.Ordinal);
+    }
+
+    void SpecializeProjectionTargets()
+    {
+        var targets = ProjectionEventTargets();
+        foreach (var index in _projectionTargets.Where(index => IsLocalEventTarget(_references[index], targets)))
+        {
+            _references[index] = _references[index] with { Kinds = ["Event"] };
+        }
+    }
 
     AuthoredDeclaration Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
     {
