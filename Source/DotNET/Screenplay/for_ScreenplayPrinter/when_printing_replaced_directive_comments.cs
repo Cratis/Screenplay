@@ -37,7 +37,8 @@ public class when_printing_replaced_directive_comments : given.a_printer
 
         // Duplicate keys are diagnosed, but printing the recovery tree must still preserve their comments.
         roundtrip.Original!.Success.ShouldBeFalse();
-        roundtrip.Original.Diagnostics.Single(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Code.ShouldEqual(DiagnosticCodes.InvalidQueryParameter);
+        roundtrip.Original.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Code)
+            .ShouldEqual([DiagnosticCodes.DuplicateDeclaration, DiagnosticCodes.InvalidQueryParameter]);
         roundtrip.Reparsed.Success.ShouldBeTrue();
         var lines = roundtrip.Printed.Split('\n');
         lines.Count(line => line.Trim() == $"{header} // {headerComment}").ShouldEqual(1);

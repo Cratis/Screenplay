@@ -52,10 +52,10 @@ describe('when parsing handler intent', () => {
         expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(blank ? ['PLAY0493'] : []);
         if (!blank) expect(result.value.modules[0].features[0].slices[0].commands[0].handler?.implementation?.hints[0].text).toBe(decoded);
     });
-    it('should retain last-handler legacy behavior and admit produces', () => {
+    it('should diagnose duplicate attached handlers beside produces while retaining a recovery tree', () => {
         const result = parse(prefix + '          file Old.cs\n        handler\n          file New.cs\n        produces Registered\n      event Registered');
         expect(result.value.modules[0].features[0].slices[0].commands[0].handler?.file?.path).toBe('New.cs');
-        expect(result.diagnostics).toEqual([]);
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0168']);
     });
     it('should keep decoded escapes and hint order without trimming', () => {
         const result = parse(prefix + '          implementation\n            hint " first "\n            hint "Keep \\"quotes\\" and // text"');

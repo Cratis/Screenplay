@@ -165,9 +165,9 @@ internal static partial class CommandParser
                     handlers.Add((parsedHandler, line.Location));
                     if (parsedHandler is not null && handler is not null)
                     {
-                        // The last handler wins. Keep where the replaced one and its file were written,
-                        // so their comments print beside the retained handler instead of merging into
-                        // the command header.
+                        // Duplicate handlers are diagnosed below. Keep the replaced source locations
+                        // for recovery printing, so their comments stay beside the retained handler
+                        // instead of merging into the command header.
                         directiveLocations[$"omitted:handler:{handler.Location.Line}"] = handler.Location;
                         if (handler.File is { } replacedFile)
                         {

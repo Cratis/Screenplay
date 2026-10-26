@@ -858,7 +858,7 @@ handler
 
 This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
 
-A pending handler (an `implementation` wrapper with no `file` or code, with optional ordered hints) may coexist with `produces`. It cannot coexist with another `handler` occurrence, even another pending intent (`PLAY0698`), in either order.
+A command declares at most one `handler`, including across composed command fragments. Multiple attached handlers are duplicate declarations (`PLAY0168`), in either order; neither body silently replaces the other. A pending handler (an `implementation` wrapper with no `file` or code, with optional ordered hints) may coexist with `produces`. It cannot coexist with another `handler` occurrence, even another pending intent (`PLAY0698`), in either order.
 
 A pending command handler with unconditional `produces` is a **described command**, admitted by ESM **v23**. Under a pending intent, `produces` doubles as **result contract version 1**:
 
