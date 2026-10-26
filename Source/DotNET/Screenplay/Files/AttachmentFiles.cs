@@ -33,32 +33,34 @@ public static partial class AttachmentFiles
     /// <returns>The same reference manifest used by the attachment loader, before filesystem inspection.</returns>
     public static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents)
     {
+        // Each document that is a whole document on its own contributes its references, as always.
         var references = new ImplementationReferences();
-
-        // A document an import places in a module or feature is not a whole document on its own, so the
-        // set is assembled the way a folder is: imports resolved, placed files parsed where they belong.
         var texts = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var document in documents)
         {
             texts[document.DisplayPath] = document.Text;
-        }
-
-        var (_, assembled) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts));
-        if (assembled.Value is not null)
-        {
-            references.VisitApplication(assembled.Value);
-            return [.. references.Files];
-        }
-
-        // The set does not assemble: keep what each document that parses by itself still references.
-        foreach (var document in documents)
-        {
             var parsed = new ScreenplayCompiler().Parse(document.Text, document.DisplayPath);
             if (parsed.Value is not null) references.VisitApplication(parsed.Value);
         }
 
+        // A document an import places in a module or feature is not a whole document on its own, so the
+        // set is also assembled the way a folder is: imports resolved, placed files parsed where they belong.
+        var (_, assembled) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts));
+        if (assembled.Value is not null)
+        {
+            var placed = new ImplementationReferences();
+            placed.VisitApplication(assembled.Value);
+            var known = references.Files.Select(Identify).ToHashSet(StringComparer.Ordinal);
+            foreach (var file in placed.Files.Where(file => !known.Contains(Identify(file))))
+            {
+                references.Files.Add(file);
+            }
+        }
+
         return [.. references.Files];
     }
+
+    static string Identify(FileReferenceSyntax file) => $"{file.Location.Path}({file.Location.Line},{file.Location.Column}):{file.Path}";
 
     /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
     /// <param name="path">The authored file path.</param>
