@@ -43,7 +43,7 @@ internal static class SemanticLossReconciliation
             Unexplained = [.. fixtures.SelectMany(_ => _.Unexplained), .. Silent(ledger)],
             Uncited = [.. fixtures.SelectMany(_ => _.Uncited)],
             OverBudget = [.. SemanticLossRunRules.OverBudget(ledger)],
-            Vacuous = [.. SemanticLossRunRules.Vacuous(ledger, byFixture.Count, compared, requireCompleteRun, eligible)],
+            Vacuous = [.. SemanticLossRunRules.EmptyRun(byFixture.Count), .. requireCompleteRun ? SemanticLossRunRules.IncompleteRun(ledger, byFixture.Count, compared, eligible) : []],
             Orphans = requireCompleteRun ? [.. SemanticLossRunRules.Orphans(ledger, observed)] : [],
             IneligibleExclusions = requireCompleteRun && eligible is not null ? [.. SemanticLossRunRules.IneligibleExclusions(ledger, eligible)] : [],
             ObsoleteExclusions = [.. SemanticLossRunRules.ObsoleteExclusions(ledger, observed)],

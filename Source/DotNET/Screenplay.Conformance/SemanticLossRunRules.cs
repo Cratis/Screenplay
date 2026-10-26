@@ -40,26 +40,28 @@ internal static class SemanticLossRunRules
     }
 
     /// <summary>
-    /// Finds every reason the run proves nothing.
+    /// Finds the reason a run that observed no fixture proves nothing; it applies to every run.
     /// </summary>
-    /// <param name="ledger">The ledger.</param>
     /// <param name="executed">The number of fixtures observed.</param>
-    /// <param name="compared">The number of observations that were compared.</param>
-    /// <param name="requireCompleteRun">Whether the run claims to be complete.</param>
-    /// <param name="eligible">The eligible fixtures, when given.</param>
     /// <returns>The findings.</returns>
-    public static IEnumerable<SemanticLossFinding> Vacuous(SemanticLossLedger ledger, int executed, int compared, bool requireCompleteRun, IReadOnlySet<string>? eligible)
+    public static IEnumerable<SemanticLossFinding> EmptyRun(int executed)
     {
         if (executed == 0)
         {
             yield return Run("No fixture was observed.");
         }
+    }
 
-        if (!requireCompleteRun)
-        {
-            yield break;
-        }
-
+    /// <summary>
+    /// Finds every reason a run that claims to be complete proves nothing.
+    /// </summary>
+    /// <param name="ledger">The ledger.</param>
+    /// <param name="executed">The number of fixtures observed.</param>
+    /// <param name="compared">The number of observations that were compared.</param>
+    /// <param name="eligible">The eligible fixtures, when given.</param>
+    /// <returns>The findings.</returns>
+    public static IEnumerable<SemanticLossFinding> IncompleteRun(SemanticLossLedger ledger, int executed, int compared, IReadOnlySet<string>? eligible)
+    {
         if (eligible is null)
         {
             yield return Run("A complete run must name its eligible fixtures.");
