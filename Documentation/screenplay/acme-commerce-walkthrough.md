@@ -259,7 +259,7 @@ The Shopper browses, fills a basket and checks out. Features: Browse, Basket, Ch
 - **Rules.** `AddToBasket` reads the listing and refuses a sold-out product; `UniqueCustomerEmail`; `EmailAddress` must
   contain `@`.
 - **A multi-step flow.** Checkout is a wizard whose three steps (`EnterShippingAddress`, `ChooseDeliveryMethod`, `CheckOut`) are
-  command [forms](forms.md); `CheckOut` reads the basket size and the customer account and is refused for an empty basket.
+  command [forms](forms.md); `CheckOut` reads the basket's line count from a small view keyed `id` (Chronicle's decision reads need that key name) and is refused for an empty basket.
 - **Its own page shapes.** `ProductGrid` and `SideSummary` are screen templates the module declares itself (see below).
 - **Navigation.** The module *overrides* the application's topbar with its own: Browse, Basket, My orders.
 
