@@ -433,7 +433,7 @@ export const DiagnosticCodes = {
     PiiNotSupportedOnIdentifier: 'PLAY0515',
     HandlerWithoutImplementation: 'PLAY0045',
     UnknownHandlerDirective: 'PLAY0046',
-    CommandWithProducesAndHandler: 'PLAY0035',
+    CommandWithProducesAndHandler: 'PLAY0035', // Retired: handlers may declare produces as their result contract. Reserved forever.
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
     InvalidReadModelKey: 'PLAY0660',

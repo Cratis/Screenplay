@@ -25,7 +25,7 @@ static class McpModelQueries
                 commandReadMode = snapshot.Compilation.Value?.CommandReadMode?.ToString(),
                 commandReadReadiness = "Explicit Protected mode admits eligible command reads and read paths in require and produces mappings (ESM v25). Missing required read-model state rejects with Validation; matching intervening facts return Conflict/DecisionStateChanged. Without the preamble legacy refusals remain. Target realization requires separate version admission.",
                 describedCommandCount = declarations.Count(declaration => declaration.Syntax is Syntax.CommandSyntax { Handler: { Implementation: not null, File: null, Code: null } }),
-                describedCommandReadiness = "Pending command handlers with unconditional produces are admitted by ESM v23 (PLAY0695); body-reaching reference execution is Unsupported (ImplementationBody). Target realization requires separate v23 admission.",
+                describedCommandReadiness = "Pending command handlers (PLAY0695) and resolved, language-tagged file/inline handlers with unconditional produces are admitted by ESM v23. Body-reaching reference execution is Unsupported (ImplementationBody), including attached bodies. Target realization requires separate v23 admission.",
                 syntaxOnly = snapshot.Index.Readiness.ModelSyntaxOnly,
                 executionReadiness = snapshot.Index.Readiness.ModelExecutionReadiness,
                 declarationCount = declarations.Length,

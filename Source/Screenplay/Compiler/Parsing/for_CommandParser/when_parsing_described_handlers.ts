@@ -28,7 +28,7 @@ for (const body of ['file C.cs', 'implementation\n            file C.cs', '```cs
     describe(`when parsing an attached handler with productions ${body}`, () => {
         let result: ReturnType<typeof parse>;
         beforeEach(() => { result = parse(prefix + `        produces E\n        handler\n          ${body}`); });
-        it('should keep reporting PLAY0035', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([DiagnosticCodes.CommandWithProducesAndHandler]));
+        it('should admit the result contract', () => result.diagnostics.should.be.empty);
     });
 }
 

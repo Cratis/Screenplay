@@ -231,10 +231,6 @@ internal static partial class CommandParser
 
         properties = [.. properties.Where(property => !removed.Contains(property))];
         CommandHandlerValidator.Validate(handlers, context);
-        if (handler is not null && !CommandHandlerValidator.IsPending(handler) && produces.Count > 0)
-        {
-            context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
-        }
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {

@@ -25,6 +25,6 @@ public class when_parsing_legacy_handler_forms : given.a_compiler
     [InlineData("implementation\n            file C.cs")]
     [InlineData("```csharp\n          return null;\n          ```")]
     [InlineData("implementation\n            ```csharp\n            return null;\n            ```")]
-    void should_keep_refusing_attached_handlers_beside_productions(string body) =>
-        _compiler.Parse(Prefix + "        produces E\n        handler\n          " + body).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.CommandWithProducesAndHandler);
+    void should_admit_attached_handlers_beside_productions(string body) =>
+        _compiler.Parse(Prefix + "        produces E\n        handler\n          " + body).Success.ShouldBeTrue();
 }

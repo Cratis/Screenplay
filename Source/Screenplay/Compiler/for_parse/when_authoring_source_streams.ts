@@ -71,9 +71,9 @@ describe('when authoring source-owned streams', () => {
         expect(parsed.success).toBe(false);
         expect(parsed.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0504' && diagnostic.severity === 'error')).toBe(true);
     });
-    it('should allow handler authoring without statically produced events and keep the old handler ban', () => {
+    it('should allow handler authoring with or without a result contract', () => {
         expect(parse(prefix + route + '        handler\n          file C.cs').success).toBe(true);
-        expect(parse(prefix + route + '        handler\n          file C.cs\n        produces event Recorded').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0035');
+        expect(parse(prefix + route + '        handler\n          file C.cs\n        produces event Recorded').success).toBe(true);
     });
     it('should not capture production payload keywords', () => {
         const node = command(prefix + '        produces event Recorded\n          stream String = month\n          streamId String = month\n          eventsource String = month\n          identifier String = month\n          from String = month');

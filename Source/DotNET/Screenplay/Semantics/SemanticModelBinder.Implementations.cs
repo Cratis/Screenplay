@@ -115,7 +115,7 @@ public sealed partial class SemanticModelBinder
             var source = new SemanticSourceMapEntry(assignment.Id, span, assignment.Origin);
             var key = file is not null && AttachmentFiles.TryNormalize(file.Path, out var normalized, out _) ? normalized : null;
             var content = code?.Code ?? (key is not null && documents.AttachmentContents.TryGetValue(key, out var supplied) ? supplied : null);
-            var resolved = content is not null;
+            var resolved = DescribedCommandAdmission.HasImplementationContent(role, content);
             var hash = resolved ? Hash(content!) : string.Empty;
             SemanticImplementationBodySpan? bodySpan = null;
             if (code?.BodyStart is { } bodyStart && code.BodyEnd is { } bodyEnd)
@@ -133,7 +133,8 @@ public sealed partial class SemanticModelBinder
                 (value.Member == member || value.Member?.StartsWith($"{member}#", StringComparison.Ordinal) == true));
             var distinctMember = repeated == 0 ? member : $"{member}#{repeated}";
             var identity = ImplementationRequirementIdentity.Create(assignment.Id, role, distinctMember);
-            var requirement = new SemanticImplementationRequirement(role, owner, distinctMember, code?.Language, file?.Path, hash, source)
+            var language = DescribedCommandAdmission.ImplementationLanguage(role, file, code);
+            var requirement = new SemanticImplementationRequirement(role, owner, distinctMember, language, file?.Path, hash, source)
             {
                 RequirementId = identity,
                 ContextVersion = 1,

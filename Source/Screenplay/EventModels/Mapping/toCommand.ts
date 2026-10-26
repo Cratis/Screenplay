@@ -28,13 +28,15 @@ const ruleTypes: Partial<Record<ValidationRuleSyntax['rule'], string>> = {
     EndsWith: 'EndsWith',
 };
 
+const commandHandlerDetails = 'Command handler: ESM v23 requires unconditional produces. Pending intent reports PLAY0695; a resolved nonempty, language-tagged attached body does not. Result contract v1; reference execution is Unsupported (ImplementationBody), not body execution. Target admission is separate. Unconstrained or unresolved attachments remain unadmitted.';
+
 export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: SchemaSynthesizer, owners?: EventOwners): CommandItemDocument {
     return {
         id: scope.idOf('command', command.name),
         name: command.name,
         schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
-        logicDescription: [detailsOf(command), readsDetails(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
+        logicDescription: [detailsOf(command), command.handler && !command.stream ? commandHandlerDetails : '', readsDetails(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
         rules: rulesOf(command),
     };
 }
@@ -79,7 +81,7 @@ function routeDetails(command: CommandSyntax): string {
     if (!route) return escape(overrides.join('\n'));
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
         route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : route.streamIdParts.length > 0 ? `Stream id: ${route.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : '',
-        command.handler ? 'Command handlers require a constrained implementation attachment (PLAY0800).' :
+        command.handler ? commandHandlerDetails :
             [route.streamId?.source, ...route.streamIdParts.map(part => part.source)].some(source => source?.kind === 'PathExpressionSyntax' && source.path.includes('.')) ?
                 'Property paths remain unadmitted (PLAY0268).' :
                 'Admitted by ESM v8: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',

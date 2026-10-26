@@ -13,7 +13,7 @@ internal static class SemanticHandlerLinkage
         foreach (var command in commands)
         {
             var matches = requirements.Where(requirement => requirement.RequirementId == command.Handler!.RequirementId).ToArray();
-            if (matches.Length != 1) throw new InvalidSemanticContract("A described command requires exactly one matching pending CommandHandler requirement.");
+            if (matches.Length != 1) throw new InvalidSemanticContract("A described command requires exactly one matching CommandHandler requirement.");
             ValidateRequirement(command, matches[0]);
             var index = SemanticCompilationIndex.Create(application, matches[0].Owner.Application);
             if (!index.Declarations.TryGetValue(matches[0].Owner, out var owner) || owner != command.Id)
@@ -22,10 +22,10 @@ internal static class SemanticHandlerLinkage
             }
         }
 
-        if (requirements.Any(requirement => requirement.Role == SemanticImplementationRole.CommandHandler && requirement.AttachmentResolution == SemanticAttachmentResolution.Pending &&
+        if (requirements.Any(requirement => requirement.Role == SemanticImplementationRole.CommandHandler &&
             !commands.Any(command => command.Handler!.RequirementId == requirement.RequirementId)))
         {
-            throw new InvalidSemanticContract("A pending CommandHandler requirement has no matching described command.");
+            throw new InvalidSemanticContract("A CommandHandler requirement has no matching command.");
         }
     }
 
@@ -39,10 +39,11 @@ internal static class SemanticHandlerLinkage
             throw new InvalidSemanticContract("CommandHandler role, owner, identity, capability or context/result version does not match the described command.");
         }
 
-        if (requirement.AttachmentResolution != SemanticAttachmentResolution.Pending || requirement.File is not null || requirement.Language is not null ||
-            requirement.ContentHash.Length != 0 || requirement.BodySpan is not null || !requirement.BodyLines.IsEmpty || requirement.Hints.IsDefault)
+        var pending = requirement.AttachmentResolution == SemanticAttachmentResolution.Pending && requirement.File is null && requirement.Language is null &&
+            requirement.ContentHash.Length == 0 && requirement.BodySpan is null && requirement.BodyLines.IsEmpty;
+        if ((!pending && !DescribedCommandAdmission.IsResolvedBody(requirement)) || requirement.Hints.IsDefault || requirement.IsAmbiguous)
         {
-            throw new InvalidSemanticContract("A described CommandHandler requirement must be pending without an attached body.");
+            throw new InvalidSemanticContract("A CommandHandler requirement must be pending without a body or have a resolved, language-tagged and hashed body.");
         }
     }
 

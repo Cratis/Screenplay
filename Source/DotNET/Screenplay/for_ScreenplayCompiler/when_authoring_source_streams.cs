@@ -73,7 +73,7 @@ public class when_authoring_source_streams : given.a_compiler
     void should_allow_handler_routes_without_produced_events()
     {
         _compiler.Compile(Prefix + Route + "        handler\n          file C.cs").Success.ShouldBeTrue();
-        _compiler.Compile(Prefix + Route + "        handler\n          file C.cs\n        produces event Recorded").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.CommandWithProducesAndHandler).ShouldBeTrue();
+        _compiler.Compile(Prefix + Route + "        handler\n          file C.cs\n        produces event Recorded").Success.ShouldBeTrue();
     }
 
     [Fact]
