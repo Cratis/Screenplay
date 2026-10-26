@@ -17,12 +17,12 @@ namespace Cratis.Screenplay.Conformance;
 /// <param name="keys">The structural keys of the model.</param>
 internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
 {
-    readonly List<string> _fallbackKeys = [];
+    readonly SemanticSetNodeBuilder _sets = new(keys);
 
     /// <summary>
     /// Gets the paths of set elements that needed the <c language="text">~n</c> fallback.
     /// </summary>
-    public IReadOnlyList<string> FallbackKeys => _fallbackKeys;
+    public IReadOnlyList<string> FallbackKeys => _sets.FallbackKeys;
 
     /// <summary>
     /// Builds the node of the root object.
@@ -102,28 +102,9 @@ internal sealed class SemanticNodeBuilder(SemanticStructuralKeys keys)
                 Element(element, location with { Path = $"{path}[{index.ToString(CultureInfo.InvariantCulture)}]" })));
         }
 
-        var segments = rule.Kind == SemanticArrayKind.ReferenceSet
-            ? SemanticSiblingSegments.Assign(elements, element => Reference(element, rule.KeyProperty!), property)
-            : SemanticStructuralKeys.Named(elements, rule.KeyProperty ?? "name");
-
-        var members = new List<KeyValuePair<string, NormalizedSemanticNode>>();
-        for (var index = 0; index < elements.Length; index++)
-        {
-            var elementPath = $"{path}[{segments[index].Value}]";
-            if (segments[index].IsFallback)
-            {
-                _fallbackKeys.Add(elementPath);
-            }
-
-            members.Add(new(segments[index].Value, Element(elements[index], location with { Path = elementPath })));
-        }
-
-        return NormalizedSemanticNode.Set(members);
+        return _sets.Build(elements, rule, location, Element);
     }
 
     NormalizedSemanticNode Element(JsonElement element, SemanticNodeLocation location) =>
         Value(element, location with { Owner = location.Property }) ?? NormalizedSemanticNode.Leaf("null");
-
-    string? Reference(JsonElement element, string keyProperty) =>
-        SemanticSiblingSegments.StringProperty(element, keyProperty) is { } reference && keys.TryResolve(reference, out var key) ? $"@{key}" : null;
 }

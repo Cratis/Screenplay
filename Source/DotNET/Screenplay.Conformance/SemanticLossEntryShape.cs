@@ -49,6 +49,19 @@ internal static partial class SemanticLossEntryShape
 
     static IEnumerable<string> Problems(SemanticLossEntry entry)
     {
+        foreach (var problem in DirectionAndPathProblems(entry))
+        {
+            yield return problem;
+        }
+
+        foreach (var problem in JustificationProblems(entry))
+        {
+            yield return problem;
+        }
+    }
+
+    static IEnumerable<string> DirectionAndPathProblems(SemanticLossEntry entry)
+    {
         if (entry.Direction is null)
         {
             yield return "the entry must name a direction, 'render' or 'adapter'.";
@@ -63,7 +76,10 @@ internal static partial class SemanticLossEntryShape
         {
             yield return "the path must not contain a wildcard.";
         }
+    }
 
+    static IEnumerable<string> JustificationProblems(SemanticLossEntry entry)
+    {
         if ((entry.Issue is null) == (entry.ByDesign is null))
         {
             yield return "the entry must carry exactly one of 'issue' and 'byDesign'.";

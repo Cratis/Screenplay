@@ -45,7 +45,7 @@ internal static class SemanticModelEquivalence
 
     static void Compare(NormalizedSemanticNode expected, NormalizedSemanticNode actual, string path, List<SemanticDifference> differences)
     {
-        if (expected.Kind != actual.Kind || (expected.Kind == NormalizedSemanticNodeKind.Leaf && !string.Equals(expected.Value, actual.Value, StringComparison.Ordinal)))
+        if (expected.Kind != actual.Kind)
         {
             differences.Add(new(PathOrRoot(path), SemanticDifferenceKind.Changed, expected.Text, actual.Text));
             return;
@@ -53,6 +53,9 @@ internal static class SemanticModelEquivalence
 
         switch (expected.Kind)
         {
+            case NormalizedSemanticNodeKind.Leaf:
+                CompareLeaves(expected, actual, path, differences);
+                break;
             case NormalizedSemanticNodeKind.Object:
                 CompareMembers(expected, actual, name => $"{path}/{name}", differences);
                 break;
@@ -62,6 +65,14 @@ internal static class SemanticModelEquivalence
             case NormalizedSemanticNodeKind.List:
                 CompareItems(expected, actual, path, differences);
                 break;
+        }
+    }
+
+    static void CompareLeaves(NormalizedSemanticNode expected, NormalizedSemanticNode actual, string path, List<SemanticDifference> differences)
+    {
+        if (!string.Equals(expected.Value, actual.Value, StringComparison.Ordinal))
+        {
+            differences.Add(new(PathOrRoot(path), SemanticDifferenceKind.Changed, expected.Text, actual.Text));
         }
     }
 

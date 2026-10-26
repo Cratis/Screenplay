@@ -55,7 +55,14 @@ internal sealed class SemanticStructuralKeys
     /// <returns><see langword="true"/> when the identity is defined; otherwise, <see langword="false"/>.</returns>
     public bool TryResolve(string identity, out string key) => _keys.TryGetValue(identity, out key!);
 
-    void VisitObject(JsonElement element, string path, string owner)
+    static SemanticSegment[] ArraySegments(JsonElement[] elements, SemanticArrayRule rule) => rule.Kind switch
+    {
+        SemanticArrayKind.Ordered => [.. elements.Select((_, index) => new SemanticSegment(index.ToString(System.Globalization.CultureInfo.InvariantCulture), false))],
+        SemanticArrayKind.ReferenceSet => SemanticSiblingSegments.Assign(elements, _ => null),
+        _ => Named(elements, rule.KeyProperty ?? "name"),
+    };
+
+    void RegisterDefinitions(JsonElement element, string path)
     {
         var id = SemanticSiblingSegments.StringProperty(element, "id");
         if (SemanticIdentityText.IsDefinition(id))
@@ -66,38 +73,41 @@ internal sealed class SemanticStructuralKeys
                 Define(contractId, $"{path}#contract");
             }
         }
+    }
 
+    void VisitObject(JsonElement element, string path, string owner)
+    {
+        RegisterDefinitions(element, path);
         foreach (var member in element.EnumerateObject())
         {
-            var childPath = $"{path}/{member.Name}";
-            if (member.Value.ValueKind == JsonValueKind.Object)
-            {
-                VisitObject(member.Value, childPath, member.Name);
-            }
-            else if (member.Value.ValueKind == JsonValueKind.Array)
-            {
-                VisitArray(member.Value, childPath, owner, member.Name);
-            }
+            VisitMember(member, $"{path}/{member.Name}", owner);
         }
     }
 
-    void VisitArray(JsonElement array, string path, string owner, string property)
+    void VisitMember(JsonProperty member, string path, string owner)
     {
-        var rule = SemanticArrayClassification.Require(owner, property, path);
-        var elements = array.EnumerateArray().ToArray();
-        var segments = rule.Kind switch
+        switch (member.Value.ValueKind)
         {
-            SemanticArrayKind.Ordered => [.. elements.Select((_, index) => new SemanticSegment(index.ToString(System.Globalization.CultureInfo.InvariantCulture), false))],
-            SemanticArrayKind.ReferenceSet => SemanticSiblingSegments.Assign(elements, _ => null),
-            _ => Named(elements, rule.KeyProperty ?? "name"),
-        };
+            case JsonValueKind.Object:
+                VisitObject(member.Value, path, member.Name);
+                break;
+            case JsonValueKind.Array:
+                VisitArray(member, path, SemanticArrayClassification.Require(owner, member.Name, path));
+                break;
+        }
+    }
+
+    void VisitArray(JsonProperty member, string path, SemanticArrayRule rule)
+    {
+        var elements = member.Value.EnumerateArray().ToArray();
+        var segments = ArraySegments(elements, rule);
 
         for (var index = 0; index < elements.Length; index++)
         {
             var elementPath = $"{path}[{segments[index].Value}]";
             if (elements[index].ValueKind == JsonValueKind.Object)
             {
-                VisitObject(elements[index], elementPath, property);
+                VisitObject(elements[index], elementPath, member.Name);
             }
         }
     }

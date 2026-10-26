@@ -28,6 +28,11 @@ internal static class SemanticStringClassification
         "targets/properties", "mappings/target",
     };
 
+    static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
+    {
+        "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+    };
+
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
     // overloaded names are deliberately absent and resolved by schema context below.
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
@@ -50,39 +55,42 @@ internal static class SemanticStringClassification
     /// <exception cref="SemanticNormalizationFailed">A string field has no schema classification.</exception>
     public static SemanticStringKind Classify(JsonElement container, string owner, string property)
     {
-        if (property == "requirementId")
-        {
-            return SemanticStringKind.Requirement;
-        }
-
         var scoped = $"{owner}/{property}";
-        if (scoped == "generation/requirement")
+        if (property == "requirementId" || scoped == "generation/requirement")
         {
             return SemanticStringKind.Requirement;
         }
 
-        if (_identities.Contains(property))
+        if (IsIdentity(container, owner, property))
         {
             return SemanticStringKind.Identity;
         }
 
-        if (_scopedIdentities.Contains(scoped))
+        if (_literals.Contains(property))
         {
-            return SemanticStringKind.Identity;
+            return SemanticStringKind.Literal;
         }
 
-        if (VariantIdentity(container, owner, property))
+        if (_scopedLiterals.Contains(scoped))
         {
-            return SemanticStringKind.Identity;
+            return SemanticStringKind.Literal;
         }
 
-        if (_literals.Contains(property) || LiteralVariant(container, owner, property) || !HasStrings(container, property))
+        if (ShapeDiscriminatedLiteral(container, owner, property))
+        {
+            return SemanticStringKind.Literal;
+        }
+
+        if (!HasStrings(container, property))
         {
             return SemanticStringKind.Literal;
         }
 
         throw new SemanticNormalizationFailed($"{owner}/{property}", "the canonical string field has no schema classification");
     }
+
+    static bool IsIdentity(JsonElement container, string owner, string property) =>
+        _identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property);
 
     static bool VariantIdentity(JsonElement container, string owner, string property) => property switch
     {
@@ -94,14 +102,11 @@ internal static class SemanticStringClassification
         _ => false,
     };
 
-    static bool LiteralVariant(JsonElement container, string owner, string property) => property switch
+    static bool ShapeDiscriminatedLiteral(JsonElement container, string owner, string property) => property switch
     {
-        "key" => owner == "captures" || owner == "reducers",
-        "type" => owner == "claims",
-        "source" => owner == "map" || SemanticSiblingSegments.StringProperty(container, "kind") == "resolved",
+        "source" => SemanticSiblingSegments.StringProperty(container, "kind") == "resolved",
         "path" => SemanticSiblingSegments.StringProperty(container, "kind") == "eventContext",
         "identifiedBy" => owner == "children" && container.TryGetProperty("field", out _),
-        "targets" => owner == "map",
         _ => false,
     };
 
