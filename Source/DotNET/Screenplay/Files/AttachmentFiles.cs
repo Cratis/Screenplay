@@ -51,16 +51,11 @@ public static partial class AttachmentFiles
             var placed = new ImplementationReferences();
             placed.VisitApplication(assembled.Value);
             var known = references.Files.Select(Identify).ToHashSet(StringComparer.Ordinal);
-            foreach (var file in placed.Files.Where(file => !known.Contains(Identify(file))))
-            {
-                references.Files.Add(file);
-            }
+            references.Files.AddRange(placed.Files.Where(file => !known.Contains(Identify(file))));
         }
 
         return [.. references.Files];
     }
-
-    static string Identify(FileReferenceSyntax file) => $"{file.Location.Path}({file.Location.Line},{file.Location.Column}):{file.Path}";
 
     /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
     /// <param name="path">The authored file path.</param>
@@ -266,6 +261,8 @@ public static partial class AttachmentFiles
 
         return new() { Contents = contents.ToImmutable(), Diagnostics = diagnostics.ToImmutable() };
     }
+
+    static string Identify(FileReferenceSyntax file) => $"{file.Location.Path}({file.Location.Line},{file.Location.Column}):{file.Path}";
 
     static bool IsReservedDeviceName(string segment)
     {
