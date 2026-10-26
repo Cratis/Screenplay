@@ -39,6 +39,7 @@ env:
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
         "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
         "Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj",
+        "Source/DotNET/Screenplay.Conformance/Screenplay.Conformance.csproj",
         "Source/DotNET/Screenplay.ContractCatalog.Specs/Screenplay.ContractCatalog.Specs.csproj",
         "Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj",
         "Source/DotNET/Tool/Tool.csproj",
