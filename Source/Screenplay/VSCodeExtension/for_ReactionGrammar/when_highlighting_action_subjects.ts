@@ -9,7 +9,7 @@ import { WorkspaceApplication } from '../WorkspaceApplication';
 const grammar = JSON.parse(readFileSync(new URL('../syntaxes/screenplay.tmLanguage.json', import.meta.url), 'utf8'));
 const clauses = (grammar.repository['action-subjects'].patterns as { match: string }[]).map(rule => new RegExp(rule.match));
 const source = readFileSync(new URL('../../Compiler/Conformance/action-subjects/source.play', import.meta.url), 'utf8');
-const relevant = (code: string) => /^PLAY081[5-9]$/.test(code);
+const relevant = (code: string) => /^PLAY08(?:1[7-9]|2[01])$/.test(code);
 
 describe('when highlighting action subjects', () => {
     for (const line of ['action Retry for item', 'action "Choose" for screen', 'action $strings.choose for item', 'item retry action Work.Items.Retry for screen']) {
