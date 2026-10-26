@@ -1,0 +1,362 @@
+[
+  {
+    "code": "PLAY0817",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
+    "location": {
+      "line": 142,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
+    "location": {
+      "line": 144,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0817",
+    "severity": "error",
+    "message": "Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action",
+    "location": {
+      "line": 147,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0319",
+    "severity": "error",
+    "message": "Invalid argument 'with itemId' - expected 'with <name> from <binding>'",
+    "location": {
+      "line": 150,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0319",
+    "severity": "error",
+    "message": "Duplicate argument 'name' - supply each input only once",
+    "location": {
+      "line": 152,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 49,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
+    "location": {
+      "line": 49,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 60,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Foreign' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 63,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Foreign' now infers 'for screen'; legacy row-name matching would use tenantId from item.tenantId",
+    "location": {
+      "line": 63,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Optional' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 66,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Optional' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
+    "location": {
+      "line": 66,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Generated' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 69,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Primitive' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 72,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Primitive' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
+    "location": {
+      "line": 72,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'TwoIdentifiers' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 75,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'TwoIdentifiers' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, tenantId from item.tenantId",
+    "location": {
+      "line": 75,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0820",
+    "severity": "warning",
+    "message": "Input 'itemId' of action 'Retry' matches several declared key fields - write an explicit binding",
+    "location": {
+      "line": 78,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 81,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for screen'; legacy row-name matching would use name from item.name",
+    "location": {
+      "line": 81,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 84,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemID",
+    "location": {
+      "line": 84,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 87,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for screen'; legacy row-name matching would use itemId from item.itemId",
+    "location": {
+      "line": 87,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Imported.Inventory.Commands.Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 90,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Imported.Inventory.Commands.Retry' now infers 'for item'; legacy row-name matching would use no row property",
+    "location": {
+      "line": 90,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Missing.Commands.Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 93,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 98,
+      "column": 13
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
+    "location": {
+      "line": 98,
+      "column": 13
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 103,
+      "column": 13
+    }
+  },
+  {
+    "code": "PLAY0821",
+    "severity": "warning",
+    "message": "A guarded action 'for screen' cannot use a collection as 'item' - use a single-record data context or 'for item'",
+    "location": {
+      "line": 107,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0346",
+    "severity": "warning",
+    "message": "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved",
+    "location": {
+      "line": 123,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0346",
+    "severity": "warning",
+    "message": "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved",
+    "location": {
+      "line": 128,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 130,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 134,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for item' from its declared data and identifier types",
+    "location": {
+      "line": 140,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0819",
+    "severity": "warning",
+    "message": "Action 'Retry' now infers 'for item'; legacy row-name matching would use itemId from item.itemId, name from item.name",
+    "location": {
+      "line": 140,
+      "column": 11
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 142,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0818",
+    "severity": "information",
+    "message": "Action 'Retry' infers 'for screen' from its declared data and identifier types",
+    "location": {
+      "line": 144,
+      "column": 9
+    }
+  },
+  {
+    "code": "PLAY0346",
+    "severity": "warning",
+    "message": "Action 'for item' requires one resolvable data subject - no item binding is inferred",
+    "location": {
+      "line": 149,
+      "column": 9
+    }
+  }
+]

@@ -46,6 +46,7 @@ internal static partial class ScreenplayValidator
         ValidateSlices(application, slices, names, context);
         ValidateScopedReferences(application, expansion, names, context);
         ValidatePresentation(application, context);
+        foreach (var diagnostic in ScreenActionSubjects.Resolve(application).Diagnostics) context.Add(diagnostic);
         SampleDataValidator.Validate(application, slices, context);
         foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.UnsynthesizablePersonaCaller && !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
 

@@ -13,7 +13,7 @@ public sealed class SemanticReactionSettlement(ISemanticEvaluator evaluator)
     /// Runs reactions to appended facts and their cascading effects as one all-or-nothing evaluation.
     /// </summary>
     /// <param name="plan">The capability-admitted execution plan.</param>
-    /// <param name="world">The immutable input world, which must already contain <paramref name="appended"/>.</param>
+    /// <param name="world">The immutable input world, which must already contain <paramref name="appended"/> as its last facts.</param>
     /// <param name="appended">The newly appended facts to observe, in append order.</param>
     /// <param name="occurred">When the facts occurred, or <c>null</c> when no occurrence time is supplied.</param>
     /// <returns>
@@ -26,8 +26,11 @@ public sealed class SemanticReactionSettlement(ISemanticEvaluator evaluator)
         IEnumerable<SemanticFact> appended,
         DateTimeOffset? occurred)
     {
+        var observed = appended.ToArray();
         var loop = new SemanticReactionLoop(evaluator, plan, world);
-        var failure = loop.Observe(appended, occurred);
+
+        // A capture reacts to what changed since it last saw the key, so the facts already in the world are what it has seen.
+        var failure = loop.FoldCaptures(Math.Max(0, world.Facts.Length - observed.Length)) ?? loop.Observe(observed, occurred);
         var observedCount = loop.Facts.Length;
         failure ??= loop.Settle();
         if (failure is not null)

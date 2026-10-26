@@ -77,7 +77,18 @@ public record ScreenDataSyntax(TypeRefSyntax Type, string Query, string? By, Sou
 /// <param name="Label">The optional display label.</param>
 /// <param name="Navigate">The optional <see cref="ScreenNavigateSyntax"/> performed after the action.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ScreenActionSyntax(string Command, string? Label, ScreenNavigateSyntax? Navigate, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+public record ScreenActionSyntax(string Command, string? Label, ScreenNavigateSyntax? Navigate, SourceLocation Location) : ScreenDirectiveSyntax(Location)
+{
+    /// <summary>
+    /// Gets the explicitly authored subject, or null for the contextual default.
+    /// </summary>
+    public ScreenActionSubjectKind? Subject { get; init; }
+
+    /// <summary>
+    /// Gets the explicitly authored command input bindings.
+    /// </summary>
+    public IEnumerable<InteractionArgumentSyntax> Inputs { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>navigate to</c> directive.
@@ -370,6 +381,11 @@ public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Locati
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record ToolbarItemSyntax(string Name, ToolbarItemKind Kind, string Target, SourceLocation Location) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the explicitly authored command subject.
+    /// </summary>
+    public ScreenActionSubjectKind? Subject { get; init; }
+
     /// <summary>
     /// Gets the item label.
     /// </summary>

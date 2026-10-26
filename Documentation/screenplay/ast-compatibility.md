@@ -9,6 +9,18 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Action subject additions
+
+Decision 0110 adds nullable init-only `Subject` properties to `ScreenActionSyntax`,
+`ScreenGuardedActionSyntax` and `ToolbarItemSyntax`, plus ordered init-only `Inputs`
+on plain actions. Positional constructors and deconstruction arities are unchanged.
+TypeScript adds optional equivalents. JSON omits absent subjects and empty inputs;
+unknown subject enum values and subjects on non-action toolbar items are rejected.
+Raw compile/parse and printing preserve authored syntax. Effective semantics require
+native `ScreenActionSubjects.Resolve(application)` or TypeScript
+`resolveActionSubjects(application)`; neither mutates its input. See
+[action subjects](action-subjects.md) for the paired fixture/context boundary.
+
 ## Clock operand authoring additions
 
 Decisions 0106/0107 add optional `ApplicationSyntax.TimeZone`, `CommandSyntax.Calendar`,

@@ -11,6 +11,7 @@ internal static class SyntaxJsonWriter
     {
         SyntaxJson.CheckDepth(depth, path);
         ImplementationInvariants.Validate(node);
+        ActionSubjectInvariants.Validate(node);
         var descriptor = SyntaxKinds.For(node.GetType());
         var result = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = descriptor.Type.Name };
         foreach (var member in descriptor.Members)
@@ -53,7 +54,9 @@ internal static class SyntaxJsonWriter
     }
 
     static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
-        ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value);
+        ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
+        (node is ScreenActionSyntax or ScreenGuardedActionSyntax or ToolbarItemSyntax && member == "subject" && value is null) ||
+        (node is ScreenActionSyntax && member == "inputs" && value is IEnumerable<InteractionArgumentSyntax> inputs && !inputs.Any());
 
     static object? WriteMember(SyntaxMember member, object? value, string path, int depth)
     {

@@ -46079,6 +46079,61 @@
       "title": "A specification states then invokes a command no reaction of its own slice invokes.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0817",
+      "name": "InvalidActionSubjectClause",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Malformed, duplicate or inapplicable action subject clause.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0818",
+      "name": "InferredActionSubject",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "The inferred subject of an action without an authored clause.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0819",
+      "name": "ChangedActionSubject",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An inferred action subject differs from legacy row-name matching.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0820",
+      "name": "AmbiguousActionInputBinding",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "Several declared keys are eligible for an action input.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0821",
+      "name": "UnsupportedActionSubjectContext",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A guarded screen action cannot obtain an item from a collection.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
