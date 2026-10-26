@@ -33,11 +33,25 @@ public static partial class AttachmentFiles
     /// <returns>The same reference manifest used by the attachment loader, before filesystem inspection.</returns>
     public static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents)
     {
+        // Each document that is a whole document on its own contributes its references, as always.
         var references = new ImplementationReferences();
+        var texts = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var document in documents)
         {
+            texts[document.DisplayPath] = document.Text;
             var parsed = new ScreenplayCompiler().Parse(document.Text, document.DisplayPath);
             if (parsed.Value is not null) references.VisitApplication(parsed.Value);
+        }
+
+        // A document an import places in a module or feature is not a whole document on its own, so the
+        // set is also assembled the way a folder is: imports resolved, placed files parsed where they belong.
+        var (_, assembled) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts));
+        if (assembled.Value is not null)
+        {
+            var placed = new ImplementationReferences();
+            placed.VisitApplication(assembled.Value);
+            var known = references.Files.Select(Identify).ToHashSet(StringComparer.Ordinal);
+            references.Files.AddRange(placed.Files.Where(file => !known.Contains(Identify(file))));
         }
 
         return [.. references.Files];
@@ -106,150 +120,149 @@ public static partial class AttachmentFiles
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var fullRoot = Path.GetFullPath(root);
         var total = 0L;
-        foreach (var document in documents)
+        foreach (var reference in References(documents))
         {
-            foreach (var reference in References([document]))
+            if (!TryNormalize(reference.Path, out var key, out var reason))
             {
-                if (!TryNormalize(reference.Path, out var key, out var reason))
+                diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentPathRefused, $"File attachment '{reference.Path}' is {reason}.", reference.Location));
+                continue;
+            }
+
+            if (contents.ContainsKey(key))
+            {
+                continue;
+            }
+
+            try
+            {
+                if (File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
                 {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentPathRefused, $"File attachment '{reference.Path}' is {reason}.", reference.Location));
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' has a symbolic-link or reparse-point model root.", reference.Location));
                     continue;
                 }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
+                continue;
+            }
 
-                if (contents.ContainsKey(key))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    if (File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' has a symbolic-link or reparse-point model root.", reference.Location));
-                        continue;
-                    }
-                }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
-                    continue;
-                }
-
-                var path = fullRoot;
-                var refused = false;
-                foreach (var segment in key.Split('/'))
-                {
-                    path = Path.Combine(path, segment);
-                    try
-                    {
-                        var attributes = File.GetAttributes(path);
-                        if (attributes.HasFlag(FileAttributes.ReparsePoint))
-                        {
-                            diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' crosses a symbolic link or reparse point.", reference.Location));
-                            refused = true;
-                            break;
-                        }
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentMissing, $"File attachment '{reference.Path}' is missing.", reference.Location));
-                        refused = true;
-                        break;
-                    }
-                    catch (DirectoryNotFoundException)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentMissing, $"File attachment '{reference.Path}' is missing.", reference.Location));
-                        refused = true;
-                        break;
-                    }
-                    catch (IOException)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
-                        refused = true;
-                        break;
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
-                        refused = true;
-                        break;
-                    }
-                }
-
-                if (refused)
-                {
-                    continue;
-                }
-
-                path = Path.GetFullPath(path);
-                if (!path.StartsWith(fullRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-                {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentPathRefused, $"File attachment '{reference.Path}' is outside the model root.", reference.Location));
-                    continue;
-                }
-
+            var path = fullRoot;
+            var refused = false;
+            foreach (var segment in key.Split('/'))
+            {
+                path = Path.Combine(path, segment);
                 try
                 {
                     var attributes = File.GetAttributes(path);
-                    if (attributes.HasFlag(FileAttributes.Directory))
+                    if (attributes.HasFlag(FileAttributes.ReparsePoint))
                     {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is a directory.", reference.Location));
-                        continue;
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' crosses a symbolic link or reparse point.", reference.Location));
+                        refused = true;
+                        break;
                     }
-
-                    if (attributes.HasFlag(FileAttributes.Device) || attributes.HasFlag(FileAttributes.ReparsePoint))
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
-                        continue;
-                    }
-
-                    var isRegular = verifyRegularFile(path);
-                    if (isRegular is null)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot verify the file type on this platform.", reference.Location));
-                        continue;
-                    }
-
-                    if (!isRegular.Value)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
-                        continue;
-                    }
-
-                    using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    if (!stream.CanSeek)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not seekable.", reference.Location));
-                        continue;
-                    }
-
-                    if (stream.Length > MaximumFileBytes || stream.Length > MaximumBytes - total)
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentTooLarge, $"File attachment '{reference.Path}' exceeds the per-file or total byte limit.", reference.Location));
-                        continue;
-                    }
-
-                    var bytes = new byte[checked((int)stream.Length)];
-                    stream.ReadExactly(bytes);
-                    if (stream.ReadByte() != -1 || HasLink(fullRoot, key))
-                    {
-                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' changed while being read.", reference.Location));
-                        continue;
-                    }
-
-                    var text = new UTF8Encoding(false, true).GetString(bytes);
-                    contents.Add(key, text);
-                    total += bytes.Length;
                 }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or DecoderFallbackException or NotSupportedException)
+                catch (FileNotFoundException)
                 {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be read as UTF-8 text.", reference.Location));
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentMissing, $"File attachment '{reference.Path}' is missing.", reference.Location));
+                    refused = true;
+                    break;
                 }
+                catch (DirectoryNotFoundException)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentMissing, $"File attachment '{reference.Path}' is missing.", reference.Location));
+                    refused = true;
+                    break;
+                }
+                catch (IOException)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
+                    refused = true;
+                    break;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
+                    refused = true;
+                    break;
+                }
+            }
+
+            if (refused)
+            {
+                continue;
+            }
+
+            path = Path.GetFullPath(path);
+            if (!path.StartsWith(fullRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+            {
+                diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentPathRefused, $"File attachment '{reference.Path}' is outside the model root.", reference.Location));
+                continue;
+            }
+
+            try
+            {
+                var attributes = File.GetAttributes(path);
+                if (attributes.HasFlag(FileAttributes.Directory))
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is a directory.", reference.Location));
+                    continue;
+                }
+
+                if (attributes.HasFlag(FileAttributes.Device) || attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
+                    continue;
+                }
+
+                var isRegular = verifyRegularFile(path);
+                if (isRegular is null)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot verify the file type on this platform.", reference.Location));
+                    continue;
+                }
+
+                if (!isRegular.Value)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
+                    continue;
+                }
+
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (!stream.CanSeek)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not seekable.", reference.Location));
+                    continue;
+                }
+
+                if (stream.Length > MaximumFileBytes || stream.Length > MaximumBytes - total)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentTooLarge, $"File attachment '{reference.Path}' exceeds the per-file or total byte limit.", reference.Location));
+                    continue;
+                }
+
+                var bytes = new byte[checked((int)stream.Length)];
+                stream.ReadExactly(bytes);
+                if (stream.ReadByte() != -1 || HasLink(fullRoot, key))
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' changed while being read.", reference.Location));
+                    continue;
+                }
+
+                var text = new UTF8Encoding(false, true).GetString(bytes);
+                contents.Add(key, text);
+                total += bytes.Length;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or DecoderFallbackException or NotSupportedException)
+            {
+                diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be read as UTF-8 text.", reference.Location));
             }
         }
 
         return new() { Contents = contents.ToImmutable(), Diagnostics = diagnostics.ToImmutable() };
     }
+
+    static string Identify(FileReferenceSyntax file) => $"{file.Location.Path}({file.Location.Line},{file.Location.Column}):{file.Path}";
 
     static bool IsReservedDeviceName(string segment)
     {
