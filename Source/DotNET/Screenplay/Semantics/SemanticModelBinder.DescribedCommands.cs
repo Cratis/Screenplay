@@ -11,16 +11,13 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static bool IsConstrainedBody(CommandSyntax command, SemanticImplementationRequirement? requirement) =>
+            DescribedCommandAdmission.HasResultContract(command) && requirement is not null && DescribedCommandAdmission.IsResolvedBody(requirement);
+
         SemanticCommandHandler? BindCommandHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope)
         {
             if (command.Handler is not { } handler) return null;
-            if (!DescribedCommandAdmission.IsDescribed(command))
-            {
-                RequireImplementation(SemanticImplementationRole.CommandHandler, address, handler.File, handler.Code);
-                var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
-                Error(DiagnosticCodes.CommandHandlerRequiresAttachment, $"Command '{command.Name}' handler requires a constrained implementation attachment.", handler.Location, DiagnosticArguments.Empty.With("subject", subject));
-                return null;
-            }
+            if (!DescribedCommandAdmission.IsDescribed(command)) return BindAttachedCommandHandler(address, command, scope, handler);
 
             if (DescribedCommandAdmission.Refusal(command) is { } refusal)
             {
@@ -41,6 +38,16 @@ public sealed partial class SemanticModelBinder
             Information(DiagnosticCodes.DescribedCommandNotImplemented, $"Command '{command.Name}' is described but not implemented (requirement {pending.RequirementId}).", handler.Location);
 
             return new(pending.RequirementId, 1);
+        }
+
+        SemanticCommandHandler? BindAttachedCommandHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope, HandlerSyntax handler)
+        {
+            var attached = RequireImplementation(SemanticImplementationRole.CommandHandler, address, handler.File, handler.Code);
+            if (IsConstrainedBody(command, attached)) return new(attached!.RequirementId, 1);
+
+            var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
+            Error(DiagnosticCodes.CommandHandlerRequiresAttachment, $"Command '{command.Name}' handler requires a constrained implementation attachment.", handler.Location, DiagnosticArguments.Empty.With("subject", subject));
+            return null;
         }
     }
 }

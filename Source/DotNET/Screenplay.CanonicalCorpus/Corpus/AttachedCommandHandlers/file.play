@@ -1,0 +1,10 @@
+module Orders
+  feature Placing
+    slice StateChange Place
+      event Placed
+        reference String
+      command Place
+        reference String
+        produces Placed
+        handler
+          file Place.ts

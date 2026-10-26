@@ -13,9 +13,13 @@ export function isPendingHandler(handler: HandlerSyntax): boolean {
 }
 
 export function validateHandlerOccurrences(occurrences: readonly { handler: HandlerSyntax | null; location: SourceLocation }[], context: ParserContext): void {
-    if (!occurrences.some(entry => entry.handler !== null && isPendingHandler(entry.handler))) return;
+    const hasPending = occurrences.some(entry => entry.handler !== null && isPendingHandler(entry.handler));
+    const code = hasPending ? DiagnosticCodes.PendingIntentWithOtherHandler : DiagnosticCodes.DuplicateDeclaration;
+    const message = hasPending
+        ? 'A pending handler intent cannot coexist with another handler on the same command.'
+        : 'A command cannot declare more than one handler.';
     for (const entry of occurrences.slice(1)) {
-        context.error(DiagnosticCodes.PendingIntentWithOtherHandler, 'A pending handler intent cannot coexist with another handler on the same command.', entry.location);
+        context.error(code, message, entry.location);
     }
 }
 

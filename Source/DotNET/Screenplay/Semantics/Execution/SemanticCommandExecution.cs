@@ -47,7 +47,7 @@ internal sealed partial class SemanticCommandExecution(
 
         if (command.Handler is { } handler)
         {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, $"Command '{command.Name}' is described but not implemented (requirement {handler.RequirementId}); its handler body requires a target."));
+            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, $"Command '{command.Name}' handler body requires a target (requirement {handler.RequirementId}); the reference executor does not run implementation bodies."));
         }
 
         foreach (var produced in command.Produces)

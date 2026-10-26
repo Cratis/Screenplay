@@ -9,6 +9,16 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Attached command handler admission
+
+No AST shape changes. Direct and wrapped file/tagged-fence handler forms now accept
+`produces`; `PLAY0035` is retired and permanently reserved. The binder admits only
+resolved nonempty bodies with unconditional productions, using the existing ESM v23
+handler reference and context/result v1. Pending hints, legacy bodyless models and
+canonical model bytes are unchanged. Resolution, language, body location and hash
+remain sidecar metadata; reference execution still reports `ImplementationBody`.
+See [commands](commands.md#implementation-intent-handlers-only).
+
 ## Action subject additions
 
 Decision 0110 adds nullable init-only `Subject` properties to `ScreenActionSyntax`,

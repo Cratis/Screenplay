@@ -76,7 +76,7 @@ public readonly record struct SemanticImplementationBodySpan(int Start, int End,
 /// <param name="Role">The attachment's role.</param>
 /// <param name="Owner">The address of its owning declaration, or the nearest addressable parent.</param>
 /// <param name="Member">A stable discriminator for the nested rule or trigger, if any. Code validations use their ordinal among code validations of the owner; reordering those blocks changes their ids. Repeated identical members use an occurrence suffix.</param>
-/// <param name="Language">The inline language, or null for a file attachment.</param>
+/// <param name="Language">The inline language, inferred command-handler file language, or null when unknown.</param>
 /// <param name="File">The authored file path, or null for inline code.</param>
 /// <param name="ContentHash">SHA-256 of inline or host-supplied file content, or empty when unresolved.</param>
 /// <param name="Source">The attachment location mapped to the owner's semantic identity.</param>

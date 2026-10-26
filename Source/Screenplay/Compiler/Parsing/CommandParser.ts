@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { isPendingHandler, validateHandlerOccurrences } from './CommandHandlerValidator';
+import { validateHandlerOccurrences } from './CommandHandlerValidator';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { RequirementSyntax } from '../Syntax/Conditions';
 import { parseCondition } from './ConditionParser';
@@ -206,9 +206,6 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         }
     }
     validateHandlerOccurrences(handlers, context);
-    if (handler !== null && !isPendingHandler(handler) && produces.length > 0) {
-        context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
-    }
     const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     dependencySources.set(syntax, { reads: referenceReads, concurrency });

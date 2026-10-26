@@ -9,7 +9,33 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static class DescribedCommandAdmission
 {
+    static readonly IReadOnlyDictionary<string, string> _handlerLanguages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        [".cs"] = "csharp",
+        [".ts"] = "typescript",
+        [".js"] = "javascript",
+        [".java"] = "java",
+        [".kt"] = "kotlin",
+        [".ex"] = "elixir",
+        [".go"] = "go"
+    };
+
+    internal static bool HasImplementationContent(SemanticImplementationRole role, string? content) =>
+        content is not null && (role != SemanticImplementationRole.CommandHandler || !string.IsNullOrWhiteSpace(content));
+
+    internal static string? ImplementationLanguage(SemanticImplementationRole role, FileReferenceSyntax? file, CodeBlockSyntax? code) =>
+        code?.Language ?? (role == SemanticImplementationRole.CommandHandler ? HandlerLanguage(file?.Path) : null);
+
     internal static bool IsDescribed(CommandSyntax command) => command.Handler is { } handler && CommandHandlerValidator.IsPending(handler);
+
+    internal static bool HasResultContract(CommandSyntax command) =>
+        command.Handler is not null && command.Produces.Any() && command.Produces.All(production => production.When is null);
+
+    internal static bool IsResolvedBody(SemanticImplementationRequirement requirement) =>
+        requirement.AttachmentResolution == SemanticAttachmentResolution.Resolved &&
+        !string.IsNullOrWhiteSpace(requirement.Language) &&
+        IsLowercaseHash(requirement.ContentHash) && HasBodyReference(requirement) &&
+        requirement.Hints.IsEmpty && !requirement.IsAmbiguous;
 
     internal static Diagnostic? Refusal(CommandSyntax command)
     {
@@ -22,4 +48,11 @@ internal static class DescribedCommandAdmission
             ? Diagnostic.Error(DiagnosticCodes.DescribedCommandCardinalityNotAdmitted, $"Described command '{command.Name}' requires unconditional productions in result version 1.", conditional.Location)
             : null;
     }
+
+    static string? HandlerLanguage(string? path) => _handlerLanguages.GetValueOrDefault(Path.GetExtension(path) ?? string.Empty);
+
+    static bool IsLowercaseHash(string hash) => hash.Length == 64 && hash.All(char.IsAsciiHexDigitLower);
+
+    static bool HasBodyReference(SemanticImplementationRequirement requirement) =>
+        (requirement.BodySpan is { } span && span.End > span.Start) || !string.IsNullOrWhiteSpace(requirement.File);
 }

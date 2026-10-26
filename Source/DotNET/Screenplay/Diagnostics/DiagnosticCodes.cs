@@ -226,8 +226,9 @@ public static class DiagnosticCodes
     public const string UnknownCommandDirective = "PLAY0034";
 
     /// <summary>
-    /// A command declares both <c>produces</c> and <c>handler</c>, which say the same thing two ways.
+    /// No longer reported. A handler may declare unconditional <c>produces</c> as its result contract. Retained for compatibility.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string CommandWithProducesAndHandler = "PLAY0035";
 
     /// <summary>

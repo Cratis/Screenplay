@@ -7,7 +7,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Prevents a pending command handler intent from being replaced by another handler.
+/// Prevents a command handler from being silently replaced by another handler.
 /// </summary>
 internal static class CommandHandlerValidator
 {
@@ -16,10 +16,14 @@ internal static class CommandHandlerValidator
     internal static void Validate(IEnumerable<(HandlerSyntax? Handler, SourceLocation Location)> occurrences, ParserContext context)
     {
         var handlers = occurrences.ToList();
-        if (!handlers.Exists(entry => entry.Handler is { } handler && IsPending(handler))) return;
+        var hasPending = handlers.Exists(entry => entry.Handler is { } handler && IsPending(handler));
+        var code = hasPending ? DiagnosticCodes.PendingIntentWithOtherHandler : DiagnosticCodes.DuplicateDeclaration;
+        var message = hasPending
+            ? "A pending handler intent cannot coexist with another handler on the same command."
+            : "A command cannot declare more than one handler.";
         foreach (var entry in handlers.Skip(1))
         {
-            context.Error(DiagnosticCodes.PendingIntentWithOtherHandler, "A pending handler intent cannot coexist with another handler on the same command.", entry.Location);
+            context.Error(code, message, entry.Location);
         }
     }
 

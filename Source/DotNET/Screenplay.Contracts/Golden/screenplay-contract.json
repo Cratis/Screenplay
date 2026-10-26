@@ -37917,9 +37917,9 @@
       "severities": [
         "error"
       ],
-      "title": "A command declares both produces and handler, which say the same thing two ways.",
-      "reserved": false,
-      "retired": false
+      "title": "No longer reported. A handler may declare unconditional produces as its result contract. Retained for compatibility.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0036",

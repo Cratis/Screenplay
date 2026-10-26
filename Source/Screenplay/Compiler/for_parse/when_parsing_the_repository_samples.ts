@@ -73,6 +73,8 @@ describe('when parsing the repository samples', () => {
             ...[142, 144, 147].map(line => `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:${line} PLAY0817 Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action`),
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:150 PLAY0319 Invalid argument 'with itemId' - expected 'with <name> from <binding>'`,
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:152 PLAY0319 Duplicate argument 'name' - supply each input only once`,
+            // This frozen authoring fixture preserves the legacy duplicate for recovery-tree coverage.
+            `${join(repository, 'Source/Screenplay/Compiler/Conformance/described-handler.play')}:36 PLAY0168 A command cannot declare more than one handler.`,
             // The metadata-only fixture deliberately declares no operational public output.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0609 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`
         ]);

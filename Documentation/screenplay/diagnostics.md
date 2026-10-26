@@ -222,7 +222,7 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 ### Event sources and command streams
 
 Event-source declarations and command stream routes are admitted by ESM v8.
-Property-path mappings remain refused with `PLAY0268`; file/inline handler commands require a constrained implementation attachment (`PLAY0800`). Binding reports `PLAY0273`
+Property-path mappings remain refused with `PLAY0268`; unconstrained or unresolved file/inline handler commands retain `PLAY0800`. Binding reports `PLAY0273`
 for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
 `Default`, the reserved stored stream name `All` (including `id "All"`), or a routed fixture whose source identifier type cannot be resolved. Reserved-name checks are binding-only; authoring validation still accepts the declarations. For `All`, [rename the stream without retaining that stored-name pin](event-sources.md#rename-a-source-or-stream).
 A stream reference selects a classification, never the identity destination supplied by `for`.
@@ -351,8 +351,8 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 |---|---|---|
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
-| `PLAY0035` | Error | A command declares both `produces` and a file or code `handler`. A pending implementation intent may coexist with `produces`. |
-| `PLAY0800` | Error | A file/inline command handler requires a constrained implementation attachment. The `subject` argument identifies the command. This is a permanent limitation, not a construct awaiting ESM admission; hosts switch on this code rather than matching message text. |
+| `PLAY0035` | Retired | No longer reported. Pending and attached command handlers may declare unconditional `produces` as result contract v1. This code remains reserved forever. |
+| `PLAY0800` | Error | A file/inline command handler lacks a constrained result contract or resolved nonempty language-tagged body. Unconditional `produces` plus a resolved attachment binds in ESM v23 without this diagnostic. The `subject` argument identifies the command; hosts switch on this code rather than matching message text. |
 | `PLAY0695` | Information | A described command is admitted in ESM v23 but its pending payload implementation needs a target. The message names the command and RequirementId. |
 | `PLAY0696` | Error | A pending command handler has no productions, including response-only commands. Source remains valid; executable binding requires at least one production. |
 | `PLAY0697` | Error | A pending command handler has conditional productions (`produces when`). Result contract v1 requires unconditional productions. |
@@ -1548,7 +1548,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` reports that exact numeric mode is not admitted by any supported executable model (ESM) version yet, and unmarked documents keep their existing numeric behavior.
 
-These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. Attached file/inline handlers independently require a constrained implementation attachment (`PLAY0800`). Pending command handlers with unconditional productions bind in ESM v23 with `PLAY0695`; production-less and conditional forms report `PLAY0696` and `PLAY0697`. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. Attached file/inline handlers require unconditional `produces` and a resolved nonempty language-tagged body; otherwise `PLAY0800` remains. Pending command handlers with unconditional productions bind in ESM v23 with `PLAY0695`; production-less and conditional forms report `PLAY0696` and `PLAY0697`. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
 ### Timeline order
 
@@ -1586,7 +1586,7 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
-Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths still fail with `PLAY0268`, and attached file/inline handler commands require a constrained implementation attachment (`PLAY0800`). Pending command handlers with unconditional productions select ESM v23 (`PLAY0695`); no productions and conditional productions are binding errors `PLAY0696` and `PLAY0697`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths still fail with `PLAY0268`. Attached file/inline handlers with unconditional productions and resolved nonempty language-tagged bodies select ESM v23 without `PLAY0695`; other attached forms retain `PLAY0800`. Pending command handlers with unconditional productions select ESM v23 (`PLAY0695`); no productions and conditional productions are binding errors `PLAY0696` and `PLAY0697`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ### Negated claim targets
 
@@ -1679,5 +1679,6 @@ A retired code stays out of use forever.
 
 | Code | Retired in | Replacement |
 |---|---|---|
+| `PLAY0035` | Attached-handler admission (decision 0117) | Unconditional `produces` declares result contract v1 beside an attached or pending handler; unconstrained or unresolved attachments retain `PLAY0800`. |
 | `PLAY0176` | v4.25.0 | Repeated reads without aliases are reported as `PLAY0410`. |
 | `PLAY0686` | v4.152.0 | Event rename pins that differ from the name are carried as `storedName` in ESM v16 (decision 0075); no warning is needed. |
