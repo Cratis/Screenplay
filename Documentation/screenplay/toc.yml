@@ -139,6 +139,8 @@
   href: concept-checks.md
 - name: Visitors and traversal
   href: visitors.md
+- name: Semantic conformance test support
+  href: semantic-conformance.md
 - name: Syntax tree compatibility
   href: ast-compatibility.md
 - name: Folders
