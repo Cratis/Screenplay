@@ -9,6 +9,20 @@ Every problem the compiler finds is reported as a **diagnostic**: a severity, a 
 
 A message is written for a person and gets reworded whenever a clearer wording is found. A **code never changes**. So a code is what you match on, suppress on, and group by - anything reading the message text breaks the next time the message is improved.
 
+## Action subject diagnostics
+
+Decision 0110 adds the following catalog entries:
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `PLAY0817` | Error | An action subject clause is malformed, duplicated, or attached to a non-action toolbar item. Use one `for item` or `for screen` before the inline label. |
+| `PLAY0818` | Information | An omitted plain/toolbar action subject is inferred from its declared data and identifier types. |
+| `PLAY0819` | Warning | Effective row binding differs from legacy case-insensitive name matching. Make intent explicit; a safe repair may retain legacy mappings. |
+| `PLAY0820` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
+| `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
+ See [action subjects](action-subjects.md#diagnostics-and-migration)
+for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
+
 ## Reading a diagnostic
 
 The CLI prints a diagnostic in the format editors and build servers already parse - the file, the position, the severity, the code, and the message - followed by the offending line and a caret:

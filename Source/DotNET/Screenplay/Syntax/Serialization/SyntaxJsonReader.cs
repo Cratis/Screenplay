@@ -40,6 +40,7 @@ internal static class SyntaxJsonReader
 
         var node = descriptor.Create(values);
         ImplementationInvariants.Validate(node);
+        ActionSubjectInvariants.Validate(node);
         return node;
     }
 

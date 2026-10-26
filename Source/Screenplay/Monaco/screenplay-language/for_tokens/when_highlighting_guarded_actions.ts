@@ -27,6 +27,9 @@ describe('when highlighting guarded actions', () => {
                 ['  otherwise execute Choose', 'otherwise', 'keyword.play'],
                 ['  otherwise execute Choose', 'execute', 'keyword.play'],
                 ['  otherwise hidden', 'hidden', 'keyword.play'],
+                ['  action Retry for item', 'for', 'keyword.play'],
+                ['  action "Choose" for screen', 'screen', 'keyword.play'],
+                ['  item retry action Retry for item', 'for', 'keyword.play'],
                 ...contextualWords.flatMap(word => [
                     [`${word} String`, word, 'identifier.play'],
                     [`${word} = "value"`, word, 'identifier.play'],

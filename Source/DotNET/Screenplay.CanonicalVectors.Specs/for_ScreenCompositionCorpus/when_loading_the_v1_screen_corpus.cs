@@ -46,8 +46,9 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_fail_backend_esm_admission_with_the_expected_diagnostics()
     {
-        ((string[])[.. _diagnostics.Select(diagnostic => diagnostic.Code)]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Code)]);
-        ((string[])[.. _diagnostics.Select(diagnostic => diagnostic.Message)]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Message)]);
+        var boundary = ActionSubjectAdvisories.WithoutAdvisories(_diagnostics);
+        ((string[])[.. boundary.Select(diagnostic => diagnostic.Code)]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Code)]);
+        ((string[])[.. boundary.Select(diagnostic => diagnostic.Message)]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Message)]);
     }
 
     [Fact]
@@ -55,9 +56,55 @@ public class when_loading_the_v1_screen_corpus : Specification
     {
         foreach (var form in _corpus.SourceForms)
         {
-            var diagnostics = CompileForExecutableModel(form).ToArray();
+            var diagnostics = ActionSubjectAdvisories.WithoutAdvisories(CompileForExecutableModel(form));
             ((string[])[.. diagnostics.Select(diagnostic => diagnostic.Code).Order()]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Code).Order()]);
             ((string[])[.. diagnostics.Select(diagnostic => diagnostic.Message).Order()]).ShouldEqual([.. _corpus.EsmDiagnostics.Select(diagnostic => diagnostic.Message).Order()]);
+        }
+    }
+
+    [Fact]
+    void should_report_the_action_subject_advisories_for_the_screen_actions()
+    {
+        string[] expected =
+        [
+            "PLAY0818: Action 'AddComment' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'CreateWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'RenameWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0819: Action 'AddComment' now infers 'for screen'; legacy row-name matching would use commentId from item.commentId, workItemId from item.workItemId, text from item.text"
+        ];
+        ActionSubjectAdvisories.Describe(_diagnostics).ShouldEqual(expected);
+    }
+
+    [Fact]
+    void should_report_the_same_action_subject_advisories_for_every_source_form()
+    {
+        var expected = ActionSubjectAdvisories.Describe(_diagnostics);
+        foreach (var form in _corpus.SourceForms)
+        {
+            ActionSubjectAdvisories.Describe(CompileForExecutableModel(form)).ShouldEqual(expected);
+        }
+    }
+
+    [Fact]
+    void should_locate_the_action_subject_advisories_for_the_screen_actions() =>
+        ActionSubjectAdvisories.DescribeLocations(_diagnostics).ShouldEqual(
+            "PLAY0818@229 CreateWorkItem",
+            "PLAY0818@276 RenameWorkItem",
+            "PLAY0818@290 AddComment",
+            "PLAY0819@290 AddComment");
+
+    [Fact]
+    void should_point_every_action_subject_advisory_at_its_action_in_every_source_form()
+    {
+        foreach (var form in _corpus.SourceForms)
+        {
+            var documents = form.Documents.Select(document => (document.DisplayPath, document.StableKey, document.Text)).ToArray();
+            var advisories = CompileForExecutableModel(form).Where(ActionSubjectAdvisories.IsAdvisory).ToArray();
+            advisories.Length.ShouldEqual(4);
+            foreach (var advisory in advisories)
+            {
+                (ActionSubjectAdvisories.SourceLineOf(advisory, documents) ?? string.Empty).ShouldContain($"action {ActionSubjectAdvisories.ActionName(advisory)}");
+            }
         }
     }
 

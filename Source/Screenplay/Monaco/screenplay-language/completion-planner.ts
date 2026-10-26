@@ -251,6 +251,12 @@ export function planCompletions(
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
     if (chain.includes('screen')) {
+        const subjectHeader = /^\s*(?:action\s+(?:"(?:[^"\\]|\\.)*"|\$strings\.[\w.]+|[\w.]+)|item\s+\w+\s+action\s+[\w.]+)\s+/;
+        if (subjectHeader.test(textBefore)) {
+            const suffix = textBefore.replace(subjectHeader, '');
+            if (/^for\s+\w*$/.test(suffix)) return { kind: 'entries', entries: items.actionSubjectValueItems };
+            if (/^(?:f|fo|for)?$/.test(suffix)) return { kind: 'entries', entries: items.actionSubjectItems };
+        }
         let parentIndent = effectiveIndent;
         let guarded = false;
         for (let index = lineIndex - 1; index >= 0; index--) {

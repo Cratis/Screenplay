@@ -109,6 +109,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(then)(\s+)(events)(\s+)(in any order)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(when)(\s+)(redelivered)(\s+)([\w.]+)(\s+)(to)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', 'type.identifier']],
+            // Action subjects are header clauses, not new reserved property names.
+            [/^(\s*)(action)(\s+)("(?:[^"\\]|\\.)*"|\$strings\.[\w.]+)(\s+)(for)(\s+)(item|screen)\b/,
+                ['white', 'keyword', 'white', 'string', 'white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(action)(\s+)([\w.]+)(\s+)(for)(\s+)(item|screen)\b/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(item)(\s+)(\w+)(\s+)(action)(\s+)([\w.]+)(\s+)(for)(\s+)(item|screen)\b/,
+                ['white', 'keyword', 'white', 'identifier', 'white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', 'keyword']],
             // Guarded-action words are contextual; property names keep their ordinary meaning.
             [/^(\s*)(otherwise)(\s+)(hidden)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(otherwise)(\s+)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,

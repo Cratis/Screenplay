@@ -1557,7 +1557,12 @@ ScreenDirective = DataDecl
 ToolbarDecl    = "toolbar", Ident, NL,
                  [ INDENT, { ToolbarItem | ToolbarButton }, DEDENT ] ;
 
-ToolbarItem    = "item", Ident, ( "action" | "dialog" ), QualifiedName, NL,
+ToolbarItem    = "item", Ident, "action", QualifiedName, [ ActionSubject ], [ "label", LocalizableString ], NL,
+                 [ INDENT, { "parameter", Ident, "from", (* UI binding *) NL
+                           | "label", LocalizableString, NL
+                           | "icon", ( Ident | String ), NL
+                           | ToolbarConfirm }, DEDENT ]
+               | "item", Ident, "dialog", QualifiedName, NL,
                  [ INDENT, { "label", LocalizableString, NL
                            | "icon", ( Ident | String ), NL
                            | ToolbarConfirm }, DEDENT ]
@@ -1574,9 +1579,11 @@ ToolbarConfirm = "confirm", LocalizableString, NL ;   (* asked before the comman
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
-ActionDecl     = "action", QualifiedName, NL,
+ActionSubject  = "for", ( "item" | "screen" ) ;
+
+ActionDecl     = "action", QualifiedName, [ ActionSubject ], [ "label", LocalizableString ], NL,
                  [ INDENT, { ActionOption }, DEDENT ]
-               | "action", LocalizableString, NL,
+               | "action", LocalizableString, [ ActionSubject ], NL,
                  INDENT, { ActionAlternative | ActionOtherwise | NavigateDecl }, DEDENT ;
 
 ActionAlternative = "when", Condition, "execute", QualifiedName, NL,
@@ -1590,6 +1597,7 @@ ActionOtherwise   = "otherwise", "hidden", NL
    ordering requires numbers, contains / starts with require strings. *)
 
 ActionOption   = NavigateDecl
+               | InteractionArgument
                | "label", LocalizableString, NL ;
 
 NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,

@@ -25,7 +25,33 @@ public class when_compiling_the_v1_screen_composition_vectors : Specification
                 .ToArray());
     }
 
-    [Fact] void should_compile_the_positive_composition_without_diagnostics() => _positive.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_compile_the_positive_composition_without_diagnostics_beyond_the_action_subject_advisories() => ActionSubjectAdvisories.WithoutAdvisories(_positive.Diagnostics).ShouldBeEmpty();
+
+    [Fact]
+    void should_report_the_action_subject_advisories_for_the_positive_composition()
+    {
+        string[] expected =
+        [
+            "PLAY0818: Action 'CloseWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'CreateWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'CreateWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'RenameWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0818: Action 'RenameWorkItem' infers 'for screen' from its declared data and identifier types",
+            "PLAY0819: Action 'CreateWorkItem' now infers 'for screen'; legacy row-name matching would use workItemId from item.workItemId, title from item.title, priority from item.priority"
+        ];
+        ActionSubjectAdvisories.Describe(_positive.Diagnostics).ShouldEqual(expected);
+    }
+
+    [Fact]
+    void should_locate_the_action_subject_advisories_for_the_positive_composition() =>
+        ActionSubjectAdvisories.DescribeLocations(_positive.Diagnostics).ShouldEqual(
+            "PLAY0818@210 CreateWorkItem",
+            "PLAY0818@236 CreateWorkItem",
+            "PLAY0818@259 RenameWorkItem",
+            "PLAY0818@263 CloseWorkItem",
+            "PLAY0818@293 RenameWorkItem",
+            "PLAY0819@210 CreateWorkItem");
+
     [Fact] void should_carry_screen_contributions() => Screens(_positive.Value!).SelectMany(screen => screen.Contributions).Count().ShouldEqual(2);
     [Fact] void should_carry_document_level_exposures() => _positive.Value!.Exposures.Select(exposure => exposure.Owner).ShouldEqual(["WorkspaceFeatureShell", "EditWorkItemDialog"]);
     [Fact] void should_carry_instance_contributions() => _positive.Value!.InstanceContributions.Single().Contributions.Last().Items.Select(item => item.Id).ShouldEqual(["export:csv", "archive"]);

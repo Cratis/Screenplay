@@ -165,8 +165,21 @@ internal static class WorkspaceRepairVerification
             return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Cannot prove that the timeline repair preserves the model, catalog, readiness, placements and simulated ranks without introducing findings or problems.");
         }
 
+        return VerifyActionSubjectRepair(index, repair, result);
+    }
+
+    static WorkspaceAuthoringResult VerifyActionSubjectRepair(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringResult result)
+    {
+        if (RequiresActionSubjectVerification(repair, result) && !WorkspaceActionSubjectRepairs.Preserves(index, repair, result))
+        {
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Cannot prove that the action subject repair preserves the model, catalog, comments and other diagnostics.");
+        }
+
         return result;
     }
+
+    static bool RequiresActionSubjectVerification(WorkspaceDiagnosticRepair repair, WorkspaceAuthoringResult result) =>
+        result.Accepted && WorkspaceActionSubjectRepairs.Supports(repair.DiagnosticCode);
 
     sealed record Verdict(bool Accepted, ImmutableArray<WorkspaceConflict> Conflicts)
     {

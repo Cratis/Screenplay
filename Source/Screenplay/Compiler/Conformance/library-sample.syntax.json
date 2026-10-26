@@ -838,13 +838,22 @@
                       "kind": "ScreenActionSyntax",
                       "command": "AddBook",
                       "label": null,
-                      "navigate": null
+                      "navigate": null,
+                      "subject": "Screen"
                     },
                     {
                       "kind": "ScreenActionSyntax",
                       "command": "BorrowBook",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.bookId",
+                          "name": "bookId"
+                        }
+                      ],
                       "label": null,
-                      "navigate": null
+                      "navigate": null,
+                      "subject": "Item"
                     }
                   ],
                   "name": "BookCatalog"
@@ -2674,8 +2683,16 @@
                     {
                       "kind": "ScreenActionSyntax",
                       "command": "ReturnBook",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.bookId",
+                          "name": "bookId"
+                        }
+                      ],
                       "label": null,
-                      "navigate": null
+                      "navigate": null,
+                      "subject": "Item"
                     }
                   ],
                   "name": "MyLoans"

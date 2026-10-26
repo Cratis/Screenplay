@@ -369,8 +369,8 @@ export const validateItems: CompletionEntry[] = [
 export const screenItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:screen intent}"', documentation: 'Report-only description, not a localizable screen title.' },
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
-    { label: 'action', insertText: 'action ${1:CommandName}', documentation: 'Makes a command available as an action on the screen.' },
-    { label: 'action "…"', insertText: 'action "${1:Label}"\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },
+    { label: 'action', insertText: 'action ${1:CommandName} for ${2|item,screen|}', documentation: 'Makes a command available for the selected item or for the screen as a whole.' },
+    { label: 'action "…"', insertText: 'action "${1:Label}" for item\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },
     { label: 'layout', insertText: 'layout ${1:LayoutName}', documentation: 'Uses a layout template and fills its slots.' },
     { label: 'section', insertText: 'section ${1:name}', documentation: 'A named structural section of the screen.' },
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
@@ -382,7 +382,15 @@ export const screenItems: CompletionEntry[] = [
     { label: 'html', insertText: fenced('html'), documentation: 'Inline static HTML.' },
 ];
 
+export const actionSubjectItems: CompletionEntry[] = [
+    { label: 'for item', insertText: 'for item', documentation: 'Requires one nearest data subject (a record or selected collection item). Binds compatible same-name inputs, then a unique nominal identifier/key match.' },
+    { label: 'for screen', insertText: 'for screen', documentation: 'The action is screen-scoped; plain and toolbar actions do not fill inputs from selected rows.' },
+];
+
+export const actionSubjectValueItems: CompletionEntry[] = actionSubjectItems.map(item => ({ ...item, label: item.label.slice(4), insertText: item.insertText.slice(4) }));
+
 export const actionItems: CompletionEntry[] = [
+    { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding, before compatible same-name and declared identifier/key bindings.' },
     { label: 'navigate to', insertText: 'navigate to ${1:ScreenName}', documentation: 'Navigates to a screen after the action completes.' },
     { label: 'label', insertText: 'label "${1:text}"', documentation: 'The display label of the action.' },
 ];
@@ -391,7 +399,7 @@ export const guardedActionItems: CompletionEntry[] = [
     { label: 'when … execute', insertText: 'when item.${1:status} == "${2:open}" execute ${3:CommandName}', documentation: 'First matching alternative selects the command; authorization never falls through.' },
     { label: 'otherwise hidden', insertText: 'otherwise hidden', documentation: 'Hides the action when no alternative matches; also the default.' },
     { label: 'otherwise execute', insertText: 'otherwise execute ${1:CommandName}', documentation: 'Selects a fallback command when no alternative matches and a subject exists.' },
-    ...actionItems.filter(item => item.label !== 'label'),
+    ...actionItems.filter(item => item.label !== 'label' && item.label !== 'with … from'),
 ];
 
 export const interactionActionItems: CompletionEntry[] = [
@@ -410,7 +418,7 @@ export const interactionChoiceItems: CompletionEntry[] = [
 ];
 
 export const actionArgumentItems: CompletionEntry[] = [
-    { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding for this command alternative, before same-name item fields or its form.' },
+    { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding for this command alternative, before compatible same-name fields, a unique nominal identifier/key match, or its form.' },
 ];
 
 export const tableItems: CompletionEntry[] = [
