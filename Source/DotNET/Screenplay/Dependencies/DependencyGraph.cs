@@ -45,6 +45,8 @@ internal sealed partial class DependencyGraph
             foreach (var feature in Ordered(module.Features, node, feature => feature.Name, ranks)) Feature(feature, node);
         }
 
+        var eventTargets = ProjectionEventTargets();
+
         var declarations = new Dictionary<(string Kind, string Name), List<DependencyNode>>(new DeclarationNames());
         var builders = new Dictionary<(string Kind, string Name), List<DependencyNode>>(new DeclarationNames());
         void Declare(Dictionary<(string Kind, string Name), List<DependencyNode>> inventory, string kind, string name, DependencyNode node)
@@ -63,12 +65,7 @@ internal sealed partial class DependencyGraph
             foreach (var value in slice.Queries) Declare(declarations, "Query", value.Name, node);
             foreach (var value in slice.Screens) Declare(declarations, "Screen", value.Name, node);
             foreach (var value in slice.ReadModels ?? []) Declare(declarations, "ReadModel", value.Name, node);
-            foreach (var projection in slice.Projections)
-            {
-                var variants = Variants(projection.Blocks).ToArray();
-                if (variants.Length == 0) Declare(builders, "ReadModel", projection.ReadModel ?? projection.Name, node);
-                foreach (var variant in variants) Declare(builders, "ReadModel", variant.Name, node);
-            }
+            foreach (var name in ProjectionReadModels(slice, node, eventTargets)) Declare(builders, "ReadModel", name, node);
             foreach (var reducer in slice.Reducers ?? []) Declare(builders, "ReadModel", reducer.ReadModel, node);
         }
 
@@ -174,6 +171,29 @@ internal sealed partial class DependencyGraph
         values.Select((value, index) => (Value: value, Index: index, Rank: ranks.GetValueOrDefault(AuthoredOrder.Key(parent.Scope.Append(name(value))), int.MaxValue)))
             .OrderBy(item => item.Rank).ThenBy(item => item.Index).Select(item => item.Value);
 
+    static bool IsBareProjectionTarget(string name)
+    {
+        if (name.Length == 0) return false;
+
+        return !name.Contains('.', StringComparison.Ordinal);
+    }
+
+    static IEnumerable<string> ProjectionReadModels(SliceSyntax slice, DependencyNode node, IReadOnlyDictionary<string, DependencyNode> eventTargets) =>
+        slice.Projections.SelectMany(projection =>
+        {
+            var variants = Variants(projection.Blocks).ToArray();
+            if (variants.Length > 0) return variants.Select(variant => variant.Name);
+
+            return ProjectionReadModel(projection, node, eventTargets);
+        });
+
+    static IEnumerable<string> ProjectionReadModel(ProjectionSyntax projection, DependencyNode node, IReadOnlyDictionary<string, DependencyNode> eventTargets)
+    {
+        if (eventTargets.GetValueOrDefault(projection.ReadModel ?? string.Empty) == node) return [];
+
+        return [projection.ReadModel ?? projection.Name];
+    }
+
     static IEnumerable<ProjectionVariantSyntax> Variants(IEnumerable<ProjectionBlockSyntax> blocks) => blocks.SelectMany(block => block switch
     {
         ProjectionVariantSyntax variant => new[] { variant }.Concat(Variants(variant.Blocks)),
@@ -185,6 +205,18 @@ internal sealed partial class DependencyGraph
     static IOrderedEnumerable<DependencyEvidence> OrderedEvidence(IEnumerable<DependencyEvidence> evidence) => evidence.OrderBy(item => item.Consumer.Rank)
         .ThenBy(item => item.Location.Line).ThenBy(item => item.Location.Column).ThenBy(item => Array.IndexOf(Kinds, item.Kind))
         .ThenBy(item => item.Producer.Rank).ThenBy(item => item.Location.Path, StringComparer.Ordinal).ThenBy(item => item.Role, StringComparer.Ordinal).ThenBy(item => item.Name, StringComparer.Ordinal);
+
+    Dictionary<string, DependencyNode> ProjectionEventTargets()
+    {
+        // Count physical declarations before registering builders, including case-only and generation collisions.
+        var readModels = _slices.SelectMany(item => item.Syntax.ReadModels ?? []).Select(value => value.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return _slices.SelectMany(item => EventDeclarations.In(item.Syntax).Select(value => (item.Node, value.Name)))
+            .GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() == 1).Select(group => group.Single())
+            .Where(item => IsBareProjectionTarget(item.Name) && !readModels.Contains(item.Name))
+            .ToDictionary(item => item.Name, item => item.Node, StringComparer.Ordinal);
+    }
 
     DependencyNode Add(string kind, string name, DependencyNode parent)
     {

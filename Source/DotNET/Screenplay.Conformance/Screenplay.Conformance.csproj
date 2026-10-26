@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PackageVersion">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Conformance</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Conformance</RootNamespace>
+        <Description>Source-only test support that compares canonical Screenplay semantic models and reconciles round-trip losses against a reviewed ledger</Description>
+        <PackageTags>cratis;screenplay;conformance;round-trip;testing</PackageTags>
+        <IsPackable>true</IsPackable>
+
+        <!--
+            A source-only package: every type is internal, and the sources compile into the consuming spec project.
+            There is no assembly in the package, so there is nothing for package validation or an API baseline to compare.
+        -->
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <IncludeSymbols>false</IncludeSymbols>
+        <IncludeSource>false</IncludeSource>
+        <DevelopmentDependency>true</DevelopmentDependency>
+        <EnablePackageValidation>false</EnablePackageValidation>
+        <!--
+            NU5128: there is deliberately no lib folder. IDE0240: every file says #nullable enable for consumers that do not.
+            MA0182: the types are used by the consumer the sources compile into, not by this assembly.
+        -->
+        <NoWarn>$(NoWarn);NU5128;IDE0240;MA0182</NoWarn>
+
+        <!-- The sources must compile in a consumer that has no implicit usings and C# 12. -->
+        <LangVersion>12.0</LangVersion>
+        <ImplicitUsings>disable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!--
+        Prerelease until a second consumer (Cratis/Screenplay.Generation#83) uses it. The publish workflows pass one
+        lockstep version (-p:PackageVersion or -p:Version); TreatAsLocalProperty lets this project append -preview to it.
+    -->
+    <PropertyGroup>
+        <PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
+        <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0</PackageVersion>
+        <PackageVersion Condition="!$(PackageVersion.Contains('-'))">$(PackageVersion)-preview</PackageVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.CanonicalVectors.Specs" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+        <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="*.cs" Exclude="GlobalUsings.Specs.cs" Pack="true" BuildAction="Compile" PackagePath="contentFiles/cs/any/Cratis.Screenplay.Conformance/" />
+    </ItemGroup>
+</Project>
