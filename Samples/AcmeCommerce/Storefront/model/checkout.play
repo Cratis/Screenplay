@@ -172,11 +172,11 @@ module Shop
         shipTo     PostalAddress
         method     DeliveryMethod
         total      Money
-        reads BasketSize by basketId
+        reads BasketLineCount by basketId
 
         validate
           lines not empty  message "An order needs at least one line"
-          require BasketSize.lineCount > 0
+          require BasketLineCount.lineCount > 0
             message "Your basket is empty"
 
         produces CheckoutCompleted
