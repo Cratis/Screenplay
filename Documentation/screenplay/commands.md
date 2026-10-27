@@ -560,6 +560,8 @@ Inside a `rule` body and inside a `validate` block with a ` ```csharp ` fence, `
 | `context.CausedBy` | The identity that caused the command, so a rule such as "you may not approve your own request" is expressible. |
 | `context.Occurred` | When the command was received. |
 
+Stage's rendering of fenced `validate` bodies does not admit the `Tenant`, `CausedBy` and `Occurred` reads (see [Validation rules](#validation-rules)); a body that needs them is refused rather than rendered.
+
 A rule can see **who** is calling but not **what they are allowed to do** — there are no roles and no claims in a `RuleContext`. A rule that inspects those is an authorization decision wearing a validation hat, and belongs in a [policy](policies.md). See [Contexts](context.md) for all four shapes.
 
 ### What the executable model admits
