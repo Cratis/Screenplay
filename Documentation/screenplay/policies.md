@@ -169,20 +169,20 @@ A failed effective authorization yields `Unauthorized` before command validation
 When the declarative conditions cannot express the rule, drop into C#. The block answers with a `bool` — the same answer `require authenticated` gives, so a policy written in code and a policy written in conditions mean the same kind of thing and compose the same way:
 
 ````screenplay
-policy IsAdultCustomer
+policy IsDuringServiceHours
   ```csharp
-    var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
-    return dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,
-      System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
-      out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);
+    DateTimeOffset occurred = context.Occurred;
+    return occurred.Hour >= 9 && occurred.Hour < 17;
     ```
 ````
+
+Stage checks policy bodies against its pure-body allowlist. This example uses the supplied receipt time, `context.Occurred`, rather than reading the wall clock. Use `DateTimeOffset`; `System.DateTime`, parsing with `TryParse`, `UtcDateTime`, and ambient `UtcNow` reads are outside that subset.
 
 The same custom logic can live in a repository-relative file instead of an inline block:
 
 ```screenplay
-policy IsAdultCustomer
-  file Policies/IsAdultCustomer.cs
+policy IsDuringServiceHours
+  file Policies/IsDuringServiceHours.cs
 ```
 
 `file` is the *implemented by* alternative: the file provides the same `PolicyContext` and `bool` answer as the inline block, not a location for generating a declaration. The compiler does not resolve the path; an absolute path warns with `PLAY0264`.

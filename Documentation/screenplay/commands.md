@@ -511,17 +511,19 @@ validate
 
 Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/fenced-code shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactions](reactions.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
 
-Cross-field or complex rules drop into C#. The block yields the message of every rule the command breaks, and yields nothing when the command is valid:
+Cross-field or complex rules drop into C#. This fragment validates a command whose `amount` is a `Money` concept. Use `context.Artifact` for the command, generated PascalCase property names, and `.Value` for the concept's underlying value:
 
 ````screenplay
 validate
   ```csharp
-  if (context.Artifact.PaymentTerms == "immediate" && context.Artifact.Total > 1_000_000)
+  if (context.Artifact.Amount.Value <= 0)
   {
-      yield return "Invoices over 1,000,000 cannot require immediate payment";
+      yield return "A payment has to be for something";
   }
   ```
 ````
+
+Stage renders this body as `IEnumerable<string>`: each `yield return` adds a validation message in yielded order; reaching the end with no messages means valid. Bodies must stay within Stage's closed pure-body subset: no I/O, ambient clock or metadata reads (`Tenant`, `CausedBy`, `Occurred`), unbounded loops, or `yield break`. Properties marked `generated` are not available on the validation artifact.
 
 Declarative `validate` and fenced `validate` can coexist on the same command.
 
@@ -825,23 +827,34 @@ handler
   file Commands/ProcessInvoiceBatchHandler.cs
 ```
 
-Inline C#:
+Inline C#, beside the event contract it implements (using the declared `PaymentId`, `InvoiceId`, and `Money` concepts):
 
 ````screenplay
-handler
-  ```csharp
-    var events = new List<object>();
-    events.Add(new InvoiceBatchProcessingStarted(
-        BatchId: BatchId,
-        StartedAt: DateTimeOffset.UtcNow
-    ));
-    foreach (var invoiceId in InvoiceIds)
-        events.Add(new InvoiceSent(invoiceId, DateTimeOffset.UtcNow, context.Identity.Id, null));
-    return events;
+command RecordPayment
+  paymentId PaymentId identifier
+  invoiceId InvoiceId
+  amount Money
+  produces PaymentRecorded
+    for paymentId
+    paymentId = paymentId
+    invoiceId = invoiceId
+    amount = amount
+    settlesInvoice = false
+  handler
+    ```csharp
+    var command = context.Command;
+    var settles = command.Amount.Value >= 1000;
+    return new PaymentRecorded(command.PaymentId, command.InvoiceId, command.Amount, settles);
     ```
+
+event PaymentRecorded
+  paymentId PaymentId
+  invoiceId InvoiceId
+  amount Money
+  settlesInvoice Bool
 ````
 
-A command handler, whether pending or attached, may sit beside unconditional `produces` as its fixed result contract. `PLAY0035` is retired and reserved; it is no longer reported. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+A command handler, whether pending or attached, may sit beside unconditional `produces` as its fixed result contract. The productions still own the event types, count, order, destinations, and metadata; the body owns event property values. Here the handler's computed `settlesInvoice` wins over the mapped `false` — Stage does not evaluate the payload mappings instead of the body. Return the events the contract declares, not an arbitrary event count or type. `PLAY0035` is retired and reserved; it is no longer reported. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
