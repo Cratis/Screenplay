@@ -32,6 +32,10 @@ reaction <Name>
 
 A reaction declares at least one trigger. Everything under a trigger is optional.
 
+Stage's inline-body support is narrower: a body-backed reaction needs exactly one event trigger and a verified C# attachment. Its implementation envelope must identify the owning slice, use role `ReactionEffect`, context/result version 1, and capability `provider-defined`. The body must satisfy the generated synchronous `IEnumerable<object>?` return contract; effect-only fallthrough, incompatible returns, and compiler warnings refuse generation.
+
+Keep local declarations distinct from Stage's generated bindings: `event`, `context`, and the event property's PascalCase names. A collision reports `STAGE-ESM-012`; passing that check is not proof that arbitrary runtime calls are safe.
+
 ## Observer filters
 
 A reaction may declare one leaf `from Source` or `from Source.Stream`. The filter belongs to the reaction, not its trigger. It observes only facts whose stored routing names match. Unrouted facts never match. Stream ids are not filtered. Without `from`, observation is unchanged.
