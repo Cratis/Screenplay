@@ -43354,7 +43354,7 @@
       "severities": [
         "error"
       ],
-      "title": "Interaction alternatives require a click, double click or select trigger.",
+      "title": "Interaction alternatives require a click, double click, select or change trigger.",
       "reserved": false,
       "retired": false
     },
