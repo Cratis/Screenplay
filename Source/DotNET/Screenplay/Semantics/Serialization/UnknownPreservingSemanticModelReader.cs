@@ -41,11 +41,13 @@ public static class UnknownPreservingSemanticModelReader
         EsmOpaqueJson.Validate(root);
         var languageVersion = ReadLanguageVersion(root);
         var semanticVersion = ReadSemanticVersion(root);
+        ValidatePair(languageVersion, semanticVersion);
         ValidateEnvelope(root, semanticVersion);
         ValidateRange(range, languageVersion, semanticVersion);
+        if (!EsmBaselineShapes.Majors.Contains(semanticVersion.Major)) throw new InvalidSemanticContract("The package has no frozen baseline descriptor for this ESM major.");
         var registeredMinor = EsmSchemaV34Support.SemanticVersions.Where(version => version.Major == semanticVersion.Major).Max(version => version.Minor);
         var revision = SemanticRevision.Parse(root.GetProperty("revision").GetString()!);
-        var unknowns = new EsmUnknownCollector(semanticVersion.Minor > registeredMinor).Collect(root);
+        var unknowns = new EsmUnknownCollector(semanticVersion.Major, semanticVersion.Minor > registeredMinor).Collect(root);
         var canonical = new EsmAdmissionCanonicalJson(root, semanticVersion.Major, registeredMinor);
         var projectionRevision = SemanticRevision.Compute(canonical.Write(projection: true, revision: null));
         var model = SemanticModelSerializer.Deserialize(canonical.Write(projection: true, revision: projectionRevision));
@@ -69,7 +71,7 @@ public static class UnknownPreservingSemanticModelReader
 
     static SemanticVersion ReadWireVersion(JsonElement root, string property)
     {
-        var text = root.GetProperty(property).GetString()!;
+        var text = root.GetProperty(property).GetString() ?? throw new InvalidSemanticContract("The ESM wire version is malformed.");
         var parts = text.Split('.');
         if (parts.Length != 2) throw new InvalidSemanticContract("The ESM wire version is malformed.");
         if (!uint.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var major) || !uint.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var minor))
@@ -88,8 +90,6 @@ public static class UnknownPreservingSemanticModelReader
         {
             throw new InvalidSemanticContract("The ESM schema does not match the wire version.");
         }
-
-        if (!EsmBaselineShapes.Majors.Contains(version.Major)) throw new InvalidSemanticContract("The package has no frozen baseline descriptor for this ESM major.");
     }
 
     static bool IsWithin(EsmAdmissionRange range, uint major, uint minor) => range.Major != 0 && range.MinimumMinor <= range.MaximumMinor && major == range.Major && minor >= range.MinimumMinor && minor <= range.MaximumMinor;
@@ -100,7 +100,10 @@ public static class UnknownPreservingSemanticModelReader
         {
             throw new InvalidSemanticContract("The ESM wire versions are outside the caller's supported single-major range.");
         }
+    }
 
+    static void ValidatePair(LanguageVersion language, SemanticVersion semantic)
+    {
         if (language.Major != semantic.Major || language.Minor != semantic.Minor) throw new InvalidSemanticContract("The ESM language and semantic version pair must match.");
     }
 }

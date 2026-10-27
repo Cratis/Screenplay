@@ -57,7 +57,7 @@ internal sealed class EsmCanonicalDocumentWriter(uint major, uint registeredMino
     void WriteObject(Utf8JsonWriter writer, JsonElement value, EsmBaselineShape shape)
     {
         writer.WriteStartObject();
-        var fields = EsmBaselineShapes.Fields(shape);
+        var fields = EsmBaselineShapes.Fields(major, shape);
         foreach (var property in value.EnumerateObject().Where(property => fields.ContainsKey(property.Name)))
         {
             if (shape == EsmBaselineShape.Envelope) WriteEnvelopeProperty(writer, property);
@@ -71,7 +71,7 @@ internal sealed class EsmCanonicalDocumentWriter(uint major, uint registeredMino
     void WriteKnown(Utf8JsonWriter writer, JsonElement parent, EsmBaselineShape shape, JsonProperty property)
     {
         writer.WritePropertyName(property.Name);
-        WriteValue(writer, property.Value, EsmBaselineShapes.Child(shape, property.Name, parent));
+        WriteValue(writer, property.Value, EsmBaselineShapes.Child(major, shape, property.Name, parent));
     }
 
     void WriteEnvelopeProperty(Utf8JsonWriter writer, JsonProperty property)
@@ -89,6 +89,6 @@ internal sealed class EsmCanonicalDocumentWriter(uint major, uint registeredMino
         }
 
         writer.WritePropertyName(property.Name);
-        WriteValue(writer, property.Value, EsmBaselineShapes.Fields(EsmBaselineShape.Envelope)[property.Name]);
+        WriteValue(writer, property.Value, EsmBaselineShapes.Fields(major, EsmBaselineShape.Envelope)[property.Name]);
     }
 }

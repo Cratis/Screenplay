@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-internal sealed class EsmUnknownCollector(bool allowUnknowns)
+internal sealed class EsmUnknownCollector(uint major, bool allowUnknowns)
 {
     readonly ImmutableArray<UnknownEsmMember>.Builder _members = ImmutableArray.CreateBuilder<UnknownEsmMember>();
     readonly Dictionary<SemanticId, int> _ownerCounts = [];
@@ -38,7 +38,7 @@ internal sealed class EsmUnknownCollector(bool allowUnknowns)
         var owner = context.Owner;
         if (EsmBaselineShapes.IsOwner(shape) && value.TryGetProperty("id", out var identity)) owner = SemanticId.Parse(identity.GetString()!);
         var category = EsmBaselineShapes.Category(shape, value, context.Category);
-        var fields = EsmBaselineShapes.Fields(shape);
+        var fields = EsmBaselineShapes.Fields(major, shape);
         foreach (var property in value.EnumerateObject())
         {
             var memberPath = $"{path}/{property.Name}";
@@ -48,7 +48,7 @@ internal sealed class EsmUnknownCollector(bool allowUnknowns)
             }
             else
             {
-                Visit(property.Value, EsmBaselineShapes.Child(shape, property.Name, value), memberPath, (owner, category));
+                Visit(property.Value, EsmBaselineShapes.Child(major, shape, property.Name, value), memberPath, (owner, category));
             }
         }
     }
