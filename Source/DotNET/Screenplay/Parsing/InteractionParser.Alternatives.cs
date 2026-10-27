@@ -9,7 +9,13 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class InteractionParser
 {
+    // The triggers that carry an item, so a guard can choose an action list by the item's state. A change carries the
+    // item that changed, with the new value in place, so a board can run a different command for each column.
     internal static bool SupportsAlternatives(InteractionTriggerSyntax trigger) =>
+        trigger is BuiltInInteractionTriggerSyntax { Kind: InteractionTriggerKind.Click or InteractionTriggerKind.DoubleClick or InteractionTriggerKind.Select or InteractionTriggerKind.Change };
+
+    // The triggers on which an opaque `where` is deprecated in favor of a `when` block. A change keeps its opaque `where`.
+    internal static bool DeprecatesWhere(InteractionTriggerSyntax trigger) =>
         trigger is BuiltInInteractionTriggerSyntax { Kind: InteractionTriggerKind.Click or InteractionTriggerKind.DoubleClick or InteractionTriggerKind.Select };
 
     internal static ConditionSyntax? ParseStrictItemCondition(string text, SourceLocation location, SourceOptions options)

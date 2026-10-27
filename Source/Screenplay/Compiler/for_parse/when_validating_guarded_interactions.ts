@@ -87,3 +87,16 @@ describe('when validating interaction shadowing after parsing', () => {
         result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.location.path, diagnostic.location.line]).should.deep.equal([['PLAY0347', 'screen.play', 13]]);
     });
 });
+
+describe('when a change carries the item that changed', () => {
+    const board = [...declarations, '        component App.Board board', '          property cards from query Details'];
+
+    it('should choose an action list by the item the change carries', () => {
+        const source = [...board, '          on change', '            when item.status == "open"', '              notify info "Open"', '            otherwise', '              notify info "Other"'];
+        parse(source.join('\n')).diagnostics.filter(diagnostic => diagnostic.severity !== 'information').should.deep.equal([]);
+    });
+    it('should keep an opaque where on a change', () => {
+        const source = [...board, '          on change', '            where item.status == "open"', '            notify info "Open"'];
+        parse(source.join('\n')).diagnostics.map(diagnostic => diagnostic.code).should.not.include('PLAY0564');
+    });
+});

@@ -76,7 +76,8 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
         for (let child = index + 1; child < lines.length && lines[child].indent > header.indent; child++) body.push(lines[child]);
         const children = body.filter(line => line.indent === body[0]?.indent);
         const branches = children.filter(line => ['when', 'otherwise'].includes(firstWord(line.content)));
-        const supported = ['click', 'double click', 'select'].includes(on[1].trim());
+        const supported = ['click', 'double click', 'select', 'change'].includes(on[1].trim());
+        const deprecatesWhere = ['click', 'double click', 'select'].includes(on[1].trim());
         const guards = children.filter(line => where.test(line.content));
         const alternatives: GuardedInteractionAlternative[] = [];
         let otherwise: readonly InteractionExecution[] = [];
@@ -106,13 +107,13 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
             }
         }
         if (branches.length > 0) {
-            if (!supported) context.error(DiagnosticCodes.UnsupportedInteractionAlternatives, 'Interaction alternatives are only supported on click, double click and select', locationOf(header));
+            if (!supported) context.error(DiagnosticCodes.UnsupportedInteractionAlternatives, 'Interaction alternatives are only supported on click, double click, select and change', locationOf(header));
             if (guards.length > 0 || children.some(line => actions.has(firstWord(line.content)))) {
                 context.error(DiagnosticCodes.MixedInteractionAlternatives, "Interaction alternatives cannot mix with plain actions or 'where'", locationOf(header));
             }
             if (!branches.some(line => firstWord(line.content) === 'when')) context.error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded interaction requires at least one 'when' alternative", locationOf(header));
         }
-        if (supported) for (const guard of guards) deprecateWhere(context, guard);
+        if (deprecatesWhere) for (const guard of guards) deprecateWhere(context, guard);
         if (alternatives.length > 0) context.guardedInteractions.push({ location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [], alternatives, otherwise });
     }
 }

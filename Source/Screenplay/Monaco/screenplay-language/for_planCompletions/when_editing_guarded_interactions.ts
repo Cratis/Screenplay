@@ -11,7 +11,7 @@ function labels(lines: string[]) {
 }
 
 describe('when editing guarded interactions', () => {
-    for (const trigger of ['click', 'double click', 'select']) {
+    for (const trigger of ['click', 'double click', 'select', 'change']) {
         it(`offers block choices under ${trigger}`, () => expect(labels(['screen V', `  on ${trigger}`, '    '])).toContain('when …'));
         it(`offers actions inside a ${trigger} branch`, () => expect(labels(['screen V', `  on ${trigger}`, '    when item.status == "open"', '      '])).toContain('execute'));
     }

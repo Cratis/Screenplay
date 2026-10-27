@@ -1600,7 +1600,7 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0560` | Error | Alternatives occur on a trigger other than click, double click or select. Submit and non-item triggers have no structured subject in this version. |
+| `PLAY0560` | Error | Alternatives occur on a trigger other than click, double click, select or change. Submit and non-item triggers have no structured subject in this version. |
 | `PLAY0561` | Error | A binding mixes alternatives with plain actions or an opaque `where` guard. |
 | `PLAY0562` | Error | A `when` or `otherwise` branch has no actions. |
 | `PLAY0563` | Error | An interaction uses the labeled-action one-line `when … execute …` spelling. C# offers a typed block-form repair. |

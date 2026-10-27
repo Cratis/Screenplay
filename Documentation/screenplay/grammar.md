@@ -529,7 +529,7 @@ BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
    Dotted paths, $-rooted bindings, literals and other opaque text remain unchanged. *)
 
 (* A plain binding needs at least one action and at most one where guard. Choices
-   are only valid on click/double click/select, use strict item Condition operands,
+   are only valid on click/double click/select/change, use strict item Condition operands,
    and cannot mix with plain actions or where. Otherwise is optional and final.
    Item-trigger where is deprecated (Warning if strict, Information otherwise);
    other triggers keep opaque where. Set values and arguments remain opaque text.
