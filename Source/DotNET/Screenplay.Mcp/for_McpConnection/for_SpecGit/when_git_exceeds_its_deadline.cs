@@ -17,10 +17,12 @@ public class when_git_exceeds_its_deadline : Specification
     Process Start(ProcessStartInfo start)
     {
         _config = start.Environment["GIT_CONFIG_GLOBAL"]!;
-        start.FileName = "/bin/sh";
+        start.FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/sh";
         start.ArgumentList.Clear();
-        start.ArgumentList.Add("-c");
-        start.ArgumentList.Add("printf 'ready\\n'; while :; do sleep 300; done");
+        start.ArgumentList.Add(OperatingSystem.IsWindows() ? "/c" : "-c");
+        start.ArgumentList.Add(OperatingSystem.IsWindows()
+            ? "echo ready& ping -t 127.0.0.1 >nul"
+            : "printf 'ready\\n'; while :; do sleep 300; done");
         var process = Process.Start(start)!;
         try
         {

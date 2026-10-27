@@ -12,10 +12,10 @@ static class SpecGit
     static TimeSpan DefaultDeadline => TimeSpan.FromMinutes(2);
     static TimeSpan CleanupDeadline => TimeSpan.FromSeconds(5);
 
-    internal static TimeSpan Deadline =>
+    internal static TimeSpan Deadline => ValidateDeadline(
         int.TryParse(Environment.GetEnvironmentVariable(TimeoutVariable), out var seconds) && seconds > 0
             ? TimeSpan.FromSeconds(seconds)
-            : DefaultDeadline;
+            : DefaultDeadline);
 
     internal static void Run(string directory, string[] arguments) => Run(directory, arguments, Deadline);
 
@@ -27,6 +27,7 @@ static class SpecGit
 
     static async Task RunAsync(string directory, string[] arguments, TimeSpan deadline, Func<ProcessStartInfo, Process> startProcess, Func<Process, Task> waitForTermination)
     {
+        using var cancellation = new CancellationTokenSource(ValidateDeadline(deadline));
         var settings = Path.Combine(Path.GetTempPath(), $"screenplay-git-{Guid.NewGuid():N}");
         Directory.CreateDirectory(settings);
         var deleteSettings = true;
@@ -37,7 +38,6 @@ static class SpecGit
             var output = process.StandardOutput.ReadToEndAsync();
             var error = process.StandardError.ReadToEndAsync();
             var started = Stopwatch.StartNew();
-            using var cancellation = new CancellationTokenSource(deadline);
             try
             {
                 await process.WaitForExitAsync(cancellation.Token).ConfigureAwait(false);
@@ -74,6 +74,16 @@ static class SpecGit
         }
 
         DeleteSettings(settings, deleteSettings);
+    }
+
+    static TimeSpan ValidateDeadline(TimeSpan deadline)
+    {
+        if (deadline.TotalMilliseconds > int.MaxValue)
+        {
+            throw new McpFailure($"{TimeoutVariable} must not exceed {int.MaxValue} milliseconds.");
+        }
+
+        return deadline;
     }
 
     static void DeleteSettings(string settings, bool deleteSettings)
@@ -148,12 +158,14 @@ static class SpecGit
 
     static string Describe(string directory, string[] arguments) => $"git {string.Join(' ', arguments)} (in {directory})";
 
+    static string BoundedOutput(string output) => output.Length > 4000 ? $"[truncated] {output[^4000..]}" : output;
+
     static async Task<string> Drain(Task<string> output, Task<string> error)
     {
         try
         {
             var captured = await Task.WhenAll(output, error).WaitAsync(CleanupDeadline).ConfigureAwait(false);
-            return $"; stdout: {captured[0].Trim()}; stderr: {captured[1].Trim()}";
+            return $"; stdout: {BoundedOutput(captured[0].Trim())}; stderr: {BoundedOutput(captured[1].Trim())}";
         }
         catch (Exception exception)
         {
