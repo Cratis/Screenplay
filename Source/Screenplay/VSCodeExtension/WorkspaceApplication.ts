@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ApplicationCompilation, compileApplication, Diagnostic, DiagnosticCodes, normalizePlayPath, PlayPlacement } from '@cratis/screenplay-compiler';
-import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
+import { analyzeOperations, declarationHeaders, DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
 
 // What the compiler says about a file of the application that the editor's own checks cannot: whether its
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
@@ -180,6 +180,13 @@ export class WorkspaceApplication {
     // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.
     eventDeclarations(name: string): { path: string; line: number }[] {
         return [...this.#symbols].flatMap(([path, symbols]) => symbols.events.filter(event => event.name === name).map(event => ({ path, line: event.line })));
+    }
+
+    // Every place the application declares a construct of this name, whatever the construct is: a concept, a policy, a
+    // command, a read model, a screen, a template, a behavior. The files are searched in path order.
+    declarationsOf(name: string): { path: string; line: number; column: number; keyword: string }[] {
+        return [...this.#texts].sort(([left], [right]) => left.localeCompare(right)).flatMap(([path, text]) =>
+            declarationHeaders(text.split(/\r?\n/)).filter(header => header.name === name).map(header => ({ path, line: header.line, column: header.column, keyword: header.keyword })));
     }
 
     operationDeclarations(path: string): ReturnType<typeof analyzeOperations> {

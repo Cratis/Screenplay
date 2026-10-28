@@ -3,6 +3,8 @@
   "name": "screenplay",
   "words": [
     "active",
+    "statechange",
+    "stateview",
     "base32",
     "base64url",
     "bind",

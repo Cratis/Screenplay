@@ -205,6 +205,10 @@ The editor validates a workspace folder's `.play` files as one application, not 
 
 Inside the quotes of an `import`, completion offers the `.play` paths of the workspace folder.
 
+**Go to Definition** works across those files. On any name the model declares - a concept, policy, command, read model, query, screen, screen or dialog template, form, behavior, trigger, event and the rest - it opens the file that declares it, at the declaration. A name that is only referenced (`template ReviewDesk`, `authorize IsSpeaker`, `navigate to TalkList`) leads to its declaration, and a name no file declares leads nowhere.
+
+An `authorize` expression is read the way the compiler reads it: `and`, `or` and `not` are operators and parentheses group, so only the policy names are checked against the declared policies.
+
 ## Inline events in the text editor
 
 Completion offers `produces event` inside commands and `for`, typed mappings, tags, `description`, `documentation`, and rename-only `id` inside its body. Inline events appear in event-name completion, hover, Go to Definition, and the board just like standalone events. Extracting one into the same slice keeps its board identity.
