@@ -161,7 +161,11 @@ The executable semantic model binds a projection value only when it is one porta
 - paths through `causedBy.onBehalfOf`, which is optional,
 - `observationState`, which has no portable type and differs between live processing and replay.
 
-The reference executor does not evaluate event-context values yet; a projection that reads one compiles to a plan that reports it.
+The reference executor evaluates `eventSourceId` and `$eventContext.occurred` property assignments in `from`, `every` (including `all`) and `children` scopes. An occurrence is the fact's explicit timestamp, represented as invariant UTC round-trip text, for example `2026-10-02T09:00:00.1234567Z`. A deferred child keeps its own occurrence, not its parent's. An `every include children` assignment also uses the triggering child's occurrence.
+
+Use `given clock` for command-produced or `when append` facts in a specification that maps `occurred`. A fact without an explicit occurrence fails projection, even for an optional target; no partial read-model or pending-child state is published. The executor never substitutes the wall clock, a sequence number, or a default timestamp.
+
+`occurred` remains unsupported in keys (including parent, removal, composite, parts and join keys), arithmetic, JOIN property mappings, `every` mappings on a scope with joins, and nested-object scopes. Other event-context paths remain unsupported by the reference executor. The language and semantic serialization format are unchanged.
 
 ## Common Patterns
 

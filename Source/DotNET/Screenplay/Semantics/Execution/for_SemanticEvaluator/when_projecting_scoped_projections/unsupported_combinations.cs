@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_proje
 // Whatever the reference evaluator cannot execute blocks the plan instead of binding and being ignored:
 // - a projection-level 'remove via join', which Chronicle's engine wires as a child removal (ProjectionFactory.cs:297-308);
 // - a join inside a nested object, which Chronicle's engine does not wire (ProjectionFactory.cs:415-470);
-// - event-context values, which ESM v1 facts carry no occurrence context for.
+// - event-context values other than admitted event source identity and occurred assignments.
 // A fact without an event source fails when a transition keys on it.
 public class unsupported_combinations : given.a_scoped_projection_plan
 {
@@ -20,7 +20,7 @@ public class unsupported_combinations : given.a_scoped_projection_plan
         _rootJoinRemoval = _compilation;
         Plan("nested shipping\n  join customer on carrier\n    with CustomerRegistered\n      note = customerName");
         _joinInNested = _compilation;
-        Plan("from OrderShipped\n  lastSeen = $eventContext.occurred");
+        Plan("from OrderShipped\n  label = $eventContext.hash");
         _eventContext = _compilation;
         Plan("from OrderShipped\n  label = carrier");
         Project(Fact("OrderShipped", null, ("carrier", Text("post"))));
