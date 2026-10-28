@@ -72,6 +72,16 @@ export class ApplicationIndex implements vscode.Disposable {
         ));
     }
 
+    // Where a name is declared, wherever in the application that is.
+    declarations(uri: vscode.Uri, name: string): vscode.Location[] {
+        const folder = vscode.workspace.getWorkspaceFolder(uri);
+        const file = this.fileOf(uri);
+        if (folder === undefined || file === undefined) return [];
+        return file.application.declarationsOf(name).map(declaration => new vscode.Location(
+            vscode.Uri.joinPath(folder.uri, declaration.path), new vscode.Position(declaration.line, declaration.column),
+        ));
+    }
+
     dispose(): void {
         if (this.#pending !== undefined) clearTimeout(this.#pending);
         this.#subscriptions.forEach(subscription => subscription.dispose());

@@ -143,6 +143,17 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
 // The checks read the document line by line, never as a whole document's top level, so a file an import
 // places in a module or feature - holding slices or features at its top level - validates as it is written.
 // Where it is placed, and whether its imports resolve, is the compiler's to say.
+// A policy expression joins policy names with `and` and `or`, groups them with parentheses, and may put `not` before a
+// name. Only the names are policies: the operators and the parentheses are not.
+const policyOperators = new Set(['and', 'or', 'not']);
+
+// A line that continues an `authorize` expression: names, operators and parentheses, and nothing else.
+const policyContinuation = /^(?:(?:and|or|not)\s+|\()*[A-Z]\w*\)*(?:\s+(?:(?:and|or|not)\s+|\()*[A-Z]\w*\)*)*$/;
+
+function policyNames(expression: string): string[] {
+    return (expression.match(/[A-Za-z_]\w*/g) ?? []).filter((token) => !policyOperators.has(token));
+}
+
 export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
     const fences = fenceMap(lines);
     const scanned = scanDocument(lines);
@@ -229,9 +240,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         if (authorizeIndent >= 0) {
             if (
                 indentOf(line) > authorizeIndent &&
-                /^(?:or\s+)?[A-Z]\w*(?:\s+or\s+[A-Z]\w*)*$/.test(trimmed)
+                policyContinuation.test(trimmed)
             ) {
-                for (const name of trimmed.split(/\s+/).filter((token) => token !== 'or')) {
+                for (const name of policyNames(trimmed)) {
                     if (!policies.has(name)) {
                         issues.push(
                             tokenIssue(
@@ -284,7 +295,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         const authorize = trimmed.match(/^authorize\s+(.*)$/);
         if (authorize) {
             authorizeIndent = indentOf(line);
-            for (const name of authorize[1].split(/\s+/).filter((token) => token !== 'or' && token.length > 0)) {
+            for (const name of policyNames(authorize[1])) {
                 if (!policies.has(name)) {
                     issues.push(
                         tokenIssue(

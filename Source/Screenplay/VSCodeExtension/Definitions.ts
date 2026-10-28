@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { reactionReferenceAt, eventSourceIdentifier, eventSourceReferenceAt, analyzeOperations, fenceMap, languageId, operationReferenceAt, scanDocument, withoutComment } from '@cratis/screenplay-language';
+import { declarationHeaders, reactionReferenceAt, eventSourceIdentifier, eventSourceReferenceAt, analyzeOperations, fenceMap, languageId, operationReferenceAt, scanDocument, withoutComment } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
 export function registerDefinitions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
@@ -40,9 +40,16 @@ export function registerDefinitions(context: vscode.ExtensionContext, index: App
                 return uri ? [new vscode.Location(uri, new vscode.Position(target.line - 1, target.column - 1))] : [];
             }
             const eventName = reference?.name.split('.').at(-1) ?? name;
-            if (file !== undefined) return index.eventDefinitions(document.uri, eventName);
-            return scanDocument(lines).events.filter(event => event.name === eventName)
+            if (file !== undefined) {
+                const events = index.eventDefinitions(document.uri, eventName);
+                // Anything else the application declares - a concept, a policy, a command, a read model, a screen, a template, a behavior.
+                return events.length > 0 ? events : index.declarations(document.uri, name);
+            }
+            const events = scanDocument(lines).events.filter(event => event.name === eventName)
                 .map(event => new vscode.Location(document.uri, new vscode.Position(event.line, 0)));
+            if (events.length > 0) return events;
+            return declarationHeaders(lines).filter(declaration => declaration.name === name)
+                .map(declaration => new vscode.Location(document.uri, new vscode.Position(declaration.line, declaration.column)));
         },
     }));
 }
