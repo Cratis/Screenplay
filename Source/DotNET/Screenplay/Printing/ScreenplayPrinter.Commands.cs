@@ -400,7 +400,7 @@ public partial class ScreenplayPrinter
                 writer.Line("validate", code);
                 using (writer.Indent())
                 {
-                    WriteFencedCode(writer, code.Code);
+                    WriteValidationImplementation(writer, code);
                 }
 
                 break;

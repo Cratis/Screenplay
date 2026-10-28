@@ -45,6 +45,7 @@ public class when_freezing_legacy_source_syntax_bytes
         "enum-member-numbers",
         "generation",
         "generation-rule-bodies",
+        "imperative-validation-files",
         "query-validation",
         "template-references",
         "toolbar-buttons",
@@ -272,7 +273,8 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         Concepts = application.Concepts.Select(concept => concept with
         {
-            Validations = concept.Validations?.SelectMany(WithoutNewTextRuleBlock)
+            // BankAccount's additive file-backed body is protected by current shared conformance.
+            Validations = concept.Validations?.Where(validation => concept.Name != "BankAccount" || validation is not CodeValidateSyntax { File.Path: "Validations/BankAccount.cs" }).SelectMany(WithoutNewTextRuleBlock)
         })
     };
 

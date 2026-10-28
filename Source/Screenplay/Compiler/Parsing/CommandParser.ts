@@ -226,6 +226,10 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
 export function parseValidate(context: ParserContext, line: SourceLine, owner: 'command' | 'concept', ownerName: string): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
+        if (fence !== undefined && isFile(fence)) {
+            context.reader.takeSignificant();
+            return { kind: 'CodeValidateSyntax', code: null, file: parseFile(context, fence), location: locationOf(line) };
+        }
         if (fence !== undefined && fence.content.startsWith('```')) {
             context.reader.takeSignificant();
             const code = parseCode(context.valueContext, fence);

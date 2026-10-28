@@ -217,7 +217,7 @@ GenerationModifier = "alphabet", String | "prefix", String
    digits <=256. See generated-values/patterns.md for support budgets and clocks. *)
 
 ConceptValidate = "validate", ( ConceptRule | NL,
-                   INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ) ;
+                   INDENT, ( { ConceptRule } | InlineBlock | FileDirective ), DEDENT ) ;
 ConceptChecksum = "checksum", ( "luhn" | "mod11" | "mod97" ) ;
 (* Checksum is String-concept-only, not a command property rule. Both inline
    validate checksum and nested checksum forms select ESM v21. *)
@@ -931,7 +931,7 @@ PolicyRef      = Ident ;
    line at deeper indentation.                                              *)
 
 ValidateDecl   = "validate", NL,
-                   INDENT, ( { ValidationRule | RequireRule } | InlineBlock ), DEDENT ;
+                   INDENT, ( { ValidationRule | RequireRule } | InlineBlock | FileDirective ), DEDENT ;
 
 ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;

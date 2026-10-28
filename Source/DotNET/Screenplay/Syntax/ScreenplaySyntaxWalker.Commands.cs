@@ -188,7 +188,8 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitCodeValidate(CodeValidateSyntax syntax)
     {
         VisitNode(syntax);
-        VisitCodeBlock(syntax.Code);
+        if (syntax.File is not null) VisitFileReference(syntax.File);
+        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
     }
 
     /// <summary>

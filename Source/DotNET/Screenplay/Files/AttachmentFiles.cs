@@ -361,12 +361,14 @@ public static partial class AttachmentFiles
                 ReactionTriggerSyntax value => value.File,
                 FileConstraintSyntax value => value.File,
                 PolicySyntax value => value.File,
-                _ => null
+                _ => ValidationFile(node)
             };
             if (file is not null)
             {
                 Files.Add(file);
             }
         }
+
+        static FileReferenceSyntax? ValidationFile(SyntaxNode node) => (node as CodeValidateSyntax)?.File;
     }
 }

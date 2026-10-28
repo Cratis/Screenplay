@@ -132,7 +132,7 @@ public sealed partial class SemanticModelBinder
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        var requirement = RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code, $"code validation {codeValidationOrdinal++}");
+                        var requirement = RequireImplementation(SemanticImplementationRole.CommandValidation, address, code.File, code.Code, $"code validation {codeValidationOrdinal++}");
                         if (requirement is not null)
                         {
                             UsesV3 = true;

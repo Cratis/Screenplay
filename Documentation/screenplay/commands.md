@@ -525,7 +525,14 @@ validate
 
 Stage renders this body as `IEnumerable<string>`: each `yield return` adds a validation message in yielded order; reaching the end with no messages means valid. Bodies must stay within Stage's closed pure-body subset: no I/O, ambient clock or metadata reads (`Tenant`, `CausedBy`, `Occurred`), unbounded loops, or `yield break`. Properties marked `generated` are not available on the validation artifact.
 
-Declarative `validate` and fenced `validate` can coexist on the same command.
+The same imperative body can be attached from a file relative to the model root:
+
+```screenplay
+validate
+  file Validations/PositiveAmount.cs
+```
+
+The file contains only the fenced body's statements and follows the same loading, hashing and path-safety rules as other `file` attachments. Missing or refused files use the existing attachment diagnostics. Declarative `validate` and imperative `validate` can coexist on the same command.
 
 ### Named-rule implementation intent (commands only)
 
@@ -615,7 +622,7 @@ Still rejected, and why:
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
-A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Fenced `validate` blocks on commands and concepts also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
+A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Imperative `validate` blocks on commands and concepts, either fenced or file-backed, also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
 
 ### Chronological command date comparisons
 

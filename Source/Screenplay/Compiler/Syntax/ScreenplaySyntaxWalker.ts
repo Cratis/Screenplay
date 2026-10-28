@@ -401,7 +401,10 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.kind === 'DeclarativeValidateSyntax') {
             syntax.rules.forEach(node => this.visitValidationRule(node));
             syntax.requirements?.forEach(node => { this.visitNode(node); this.visitCondition(node.condition); });
-        } else if (syntax.code != null) this.visitCodeBlock(syntax.code);
+        } else {
+            if (syntax.code != null) this.visitCodeBlock(syntax.code);
+            if (syntax.file != null) this.visitFileReference(syntax.file);
+        }
     }
 
     visitValidationRule(syntax: ValidationRuleSyntax): void {

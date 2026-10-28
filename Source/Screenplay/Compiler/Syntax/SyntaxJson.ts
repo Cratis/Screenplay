@@ -111,6 +111,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],
     GenerationSyntax: ['file', 'code'],
+    CodeValidateSyntax: ['file'],
     PolicySyntax: ['description'],
     FileConstraintSyntax: ['description'],
     UniqueEventConstraintSyntax: ['description'],

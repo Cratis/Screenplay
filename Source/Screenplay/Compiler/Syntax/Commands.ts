@@ -41,6 +41,7 @@ export interface DeclarativeValidateSyntax extends SyntaxNode {
 export interface CodeValidateSyntax extends SyntaxNode {
     readonly kind: 'CodeValidateSyntax';
     readonly code?: CodeBlockSyntax | null;
+    readonly file?: FileReferenceSyntax | null;
 }
 
 export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax;

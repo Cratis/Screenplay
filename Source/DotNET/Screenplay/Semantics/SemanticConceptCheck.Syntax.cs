@@ -47,7 +47,12 @@ public static partial class SemanticConceptCheck
             {
                 var anchor = Anchor();
 
-                return code with { Location = anchor, Code = code.Code with { Location = anchor } };
+                return code with
+                {
+                    Location = anchor,
+                    Code = code.Code is { } body ? body with { Location = anchor } : null,
+                    File = code.File is { } file ? file with { Location = anchor } : null
+                };
             }
 
             return validation;
