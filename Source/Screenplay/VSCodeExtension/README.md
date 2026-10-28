@@ -32,6 +32,7 @@ a board that draws is not proof that every semantic check passes.
 - **Go to Definition** for any name a model declares - a concept, policy, command, read model, query, screen, template, behavior or event - in whichever file of the folder application declares it, as well as for reactions, event sources and operations.
 - **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code blocks.
 - `.play` files carry the Cratis icon in the explorer and editor tabs.
+- **Strings files** — `.strings` files (the per-locale text a model references with `$strings.<key>`) are highlighted: comments, dotted keys, the quoted value, `{placeholders}` and escapes. They carry the Cratis icon with a quotation badge in the lower right corner, so they are told apart from `.play` files in the explorer.
 
 ## Development
 

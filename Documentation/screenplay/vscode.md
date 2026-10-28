@@ -209,6 +209,10 @@ Inside the quotes of an `import`, completion offers the `.play` paths of the wor
 
 An `authorize` expression is read the way the compiler reads it: `and`, `or` and `not` are operators and parentheses group, so only the policy names are checked against the declared policies.
 
+## Strings files
+
+A `.strings` file, the per-locale text a model [references with `$strings`](internationalization.md), is a language of its own in the editor. Comments, dotted keys, the `=`, the quoted value, `{placeholders}` and escapes each have a scope, so the theme colors a key apart from its text and a placeholder apart from the words around it. The file carries the Cratis icon with a quotation badge in the lower right corner in the explorer and on its tab, so a strings file is told apart from a `.play` file at a glance. Line comments use `//`, and the editor closes a quote and a brace as you type.
+
 ## Inline events in the text editor
 
 Completion offers `produces event` inside commands and `for`, typed mappings, tags, `description`, `documentation`, and rename-only `id` inside its body. Inline events appear in event-name completion, hover, Go to Definition, and the board just like standalone events. Extracting one into the same slice keeps its board identity.
