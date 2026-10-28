@@ -218,7 +218,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             SemanticEventContextExpression { Value: SemanticEventContextValueKind.EventSourceIdentity } when expectedRoot == SemanticExpressionRootKind.Event && cause is not null => cause.Destination,
             SemanticEventContextExpression context when occurrence is not null => context.Value switch
             {
-                SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+                SemanticEventContextValueKind.Occurred => OccurredValue(occurrence.Occurred),
                 SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
                 SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
                 SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
@@ -228,6 +228,9 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
             _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
         };
+
+    internal static SemanticValue OccurredValue(DateTimeOffset occurred) =>
+        SemanticValue.Text(occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
 
     internal static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };

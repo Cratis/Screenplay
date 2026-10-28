@@ -69,13 +69,13 @@ public class a_model : Specification
             slice StateView History
               readmodel Timeline
                 id String key
-                at DateTime
+                at String
               query Find => Timeline optional
                 by id String
               projection BuildTimeline => Timeline
                 from Recorded
                   id = $eventSourceId
-                  at = $eventContext.occurred
+                  at = $eventContext.hash
                 remove with Removed
             slice Automation FollowUp
               reaction RecordAfterStart
