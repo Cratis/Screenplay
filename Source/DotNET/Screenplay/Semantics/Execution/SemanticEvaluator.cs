@@ -10,6 +10,21 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 public sealed partial class SemanticEvaluator : ISemanticEvaluator
 {
+    readonly SemanticRuleBodyExecution? _ruleBodies;
+
+    /// <summary>Initializes an evaluator without an implementation provider.</summary>
+    public SemanticEvaluator()
+    {
+    }
+
+    /// <summary>Initializes an evaluator with host-owned named rule execution.</summary>
+    /// <param name="provider">The host's admission and execution boundary; Screenplay runs no source code.</param>
+    /// <param name="bodies">Resolved bodies for the current compilation.</param>
+    public SemanticEvaluator(ISemanticBodyExecutionProvider provider, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _ruleBodies = new(provider, bodies);
+    }
+
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(
         SemanticExecutionPlan plan,
@@ -71,7 +86,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
         }
 
-        return new SemanticCommandExecution(plan, world, command, request).Decide();
+        return new SemanticCommandExecution(plan, world, command, request, _ruleBodies).Decide();
     }
 
     /// <summary>

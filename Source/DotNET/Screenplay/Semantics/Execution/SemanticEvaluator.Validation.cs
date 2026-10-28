@@ -41,14 +41,14 @@ public sealed partial class SemanticEvaluator
         return null;
     }
 
-    internal static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command)
+    internal static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command, bool hasRuleProvider = false)
     {
         if (!command.CodeValidations.IsEmpty)
         {
             return $"Command '{command.Name}' code validation 0";
         }
 
-        if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
+        if (!hasRuleProvider && command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
         {
             var property = command.Properties.Single(value => value.Id == predicate.Property);
             return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
@@ -58,7 +58,7 @@ public sealed partial class SemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
         foreach (var property in command.Properties)
         {
-            if (PredicateInType(property.Type, concepts, types, []) is { } name)
+            if (PredicateInType(property.Type, concepts, types, [], hasRuleProvider) is { } name)
             {
                 return name;
             }
@@ -190,24 +190,25 @@ public sealed partial class SemanticEvaluator
         SemanticTypeReference type,
         Dictionary<SemanticId, SemanticConcept> concepts,
         Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited)
+        HashSet<SemanticId> visited,
+        bool hasRuleProvider = false)
     {
         if (type.Kind == SemanticTypeReferenceKind.Concept)
         {
-            return PredicateInConcept(concepts[type.Target]);
+            return PredicateInConcept(concepts[type.Target], hasRuleProvider);
         }
 
         if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
         {
-            return PredicateInComposite(types[type.Target], concepts, types, visited);
+            return PredicateInComposite(types[type.Target], concepts, types, visited, hasRuleProvider);
         }
 
         return null;
     }
 
-    static string? PredicateInConcept(SemanticConcept concept)
+    static string? PredicateInConcept(SemanticConcept concept, bool hasRuleProvider)
     {
-        if (concept.Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) is not { } rule)
+        if (concept.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.CodeValidation || (!hasRuleProvider && rule.Kind == SemanticValidationRuleKind.RulePredicate)) is not { } rule)
         {
             return null;
         }
@@ -221,11 +222,12 @@ public sealed partial class SemanticEvaluator
         SemanticCompositeType composite,
         Dictionary<SemanticId, SemanticConcept> concepts,
         Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited)
+        HashSet<SemanticId> visited,
+        bool hasRuleProvider)
     {
         foreach (var property in composite.Properties)
         {
-            if (PredicateInType(property.Type, concepts, types, visited) is { } name) return name;
+            if (PredicateInType(property.Type, concepts, types, visited, hasRuleProvider) is { } name) return name;
         }
 
         return null;

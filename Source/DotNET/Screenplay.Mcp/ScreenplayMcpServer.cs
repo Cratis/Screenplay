@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Semantics.Execution;
+
 namespace Cratis.Screenplay.Mcp;
 
 /// <summary>
@@ -25,6 +27,14 @@ public static class ScreenplayMcpServer
     /// errors are returned as protocol responses. No console configuration, installation, update, or network
     /// operations are performed. Only explicit apply and recovery requests mutate model files.
     /// </remarks>
-    public static void Run(string? root, TextReader input, TextWriter output) =>
-        new McpConnection(new McpTools(root is null ? null : new McpRoot(root))).Run(input, output);
+    public static void Run(string? root, TextReader input, TextWriter output) => Run(root, input, output, null);
+
+    /// <summary>Runs a connection with host-owned named rule execution for run-specifications.</summary>
+    /// <param name="root">The application directory, or null to choose a root per workspace.</param>
+    /// <param name="input">The caller-owned JSON-RPC reader.</param>
+    /// <param name="output">The caller-owned JSON-RPC writer.</param>
+    /// <param name="provider">The host's admission and execution boundary, or null to retain opaque-body refusals.</param>
+    /// <remarks>Screenplay does not compile or execute C#. Provider isolation and resource limits belong to the host.</remarks>
+    public static void Run(string? root, TextReader input, TextWriter output, ISemanticBodyExecutionProvider? provider) =>
+        new McpConnection(new McpTools(root is null ? null : new McpRoot(root), provider)).Run(input, output);
 }

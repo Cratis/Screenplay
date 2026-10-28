@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -14,7 +15,7 @@ internal sealed partial class McpWorkspaces
         RefusePendingWorkspace();
         if (McpJson.OptionalString(arguments, "proposalId") is { } proposalId)
         {
-            var result = SpecificationResponse(RetainedProposal(arguments).Workspace, arguments, proposalId);
+            var result = SpecificationResponse(RetainedProposal(arguments).Workspace, arguments, _bodyProvider, proposalId);
             RefusePendingWorkspace();
 
             return result;
@@ -27,7 +28,7 @@ internal sealed partial class McpWorkspaces
             _ => McpState.Deserialize(persisted).Open(Root)
         };
         Root.Verify(workspace);
-        var response = SpecificationResponse(workspace, arguments);
+        var response = SpecificationResponse(workspace, arguments, _bodyProvider);
         Root.Verify(workspace);
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
         RefusePendingWorkspace();
@@ -35,10 +36,10 @@ internal sealed partial class McpWorkspaces
         return response;
     }
 
-    static object SpecificationResponse(ScreenplayWorkspace workspace, JsonElement arguments, string? proposalId = null)
+    static object SpecificationResponse(ScreenplayWorkspace workspace, JsonElement arguments, ISemanticBodyExecutionProvider? provider, string? proposalId = null)
     {
         CheckSpecificationRevision(workspace, arguments);
-        var report = McpSpecificationExecution.Run(workspace, McpJson.OptionalString(arguments, "specification"), McpJson.OptionalString(arguments, "scope"));
+        var report = McpSpecificationExecution.Run(workspace, McpJson.OptionalString(arguments, "specification"), McpJson.OptionalString(arguments, "scope"), provider: provider);
         var content = new
         {
             report.SourceRevision,

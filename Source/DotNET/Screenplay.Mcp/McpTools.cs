@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Mcp;
@@ -13,9 +14,9 @@ sealed class McpTools
     readonly McpSourceCache _sources = new();
     readonly Dictionary<string, Func<JsonElement, object>> _notesTools;
 
-    internal McpTools(McpRoot? root = null)
+    internal McpTools(McpRoot? root = null, ISemanticBodyExecutionProvider? provider = null)
     {
-        _workspaces = new(root);
+        _workspaces = new(root, provider);
         _notesTools = new(StringComparer.Ordinal)
         {
             ["list-model-notes"] = _workspaces.ListNotes,

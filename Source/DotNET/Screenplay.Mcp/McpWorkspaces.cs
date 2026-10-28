@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -18,14 +19,16 @@ internal sealed partial class McpWorkspaces
     readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _destinationEvidence = [];
 
     readonly McpRoot? _configuredRoot;
+    readonly ISemanticBodyExecutionProvider? _bodyProvider;
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
     McpRootBindingConflict? _rootBindingConflict;
     ImmutableArray<string> _discoveredRootPaths = [];
 
-    internal McpWorkspaces(McpRoot? root = null)
+    internal McpWorkspaces(McpRoot? root = null, ISemanticBodyExecutionProvider? provider = null)
     {
+        _bodyProvider = provider;
         _configuredRoot = root;
         _root = root;
     }

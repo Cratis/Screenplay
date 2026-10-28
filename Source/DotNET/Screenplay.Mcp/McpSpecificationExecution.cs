@@ -13,7 +13,7 @@ sealed record McpSpecificationReport(string SourceRevision, string Outcome, int 
 
 static class McpSpecificationExecution
 {
-    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null, IReadOnlySet<DocumentId>? documents = null)
+    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null, IReadOnlySet<DocumentId>? documents = null, ISemanticBodyExecutionProvider? provider = null)
     {
         var source = McpWorkspaceAnalysis.For(workspace).Source;
         var revision = source.SourceRevision;
@@ -36,7 +36,8 @@ static class McpSpecificationExecution
         }
 
         var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
-        var runner = new SemanticSpecificationRunner();
+        var evaluator = provider is null ? new SemanticEvaluator() : new SemanticEvaluator(provider, McpRuleBodies.Resolve(workspace));
+        var runner = new SemanticSpecificationRunner(evaluator);
         var results = selected.Select(assignment =>
         {
             if (admitted.Plan is not { } plan)
