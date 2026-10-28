@@ -10,6 +10,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
 {
     readonly List<Unit> _units = [];
     readonly Func<SourceLocation, DiagnosticArgument?> _locate = DiagnosticSubjects.CreateLocator(syntax);
+    readonly Func<SourceLocation, SliceSyntax?> _sliceAt = SliceOwners.CreateLocator(syntax);
 
     internal void Index()
     {
@@ -32,7 +33,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
         return _units.Find(unit => unit.Kind switch
         {
             SemanticExclusionKind.Specification => kind == "specification" && unit.Address == address,
-            SemanticExclusionKind.Slice => kind != "specification" && (address == unit.Address || address.StartsWith(unit.Address + "/", StringComparison.Ordinal)),
+            SemanticExclusionKind.Slice => kind != "specification" && unit.Syntax == _sliceAt(location),
             SemanticExclusionKind.Import => kind == "import" && unit.Address == address,
             SemanticExclusionKind.Policy => kind == "policy" && unit.Address == address,
             _ => false
@@ -62,7 +63,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
 
     void IndexFeature(string module, FeatureSyntax feature, string featurePath)
     {
-        var parent = identities.ResolveSemantic(SemanticAddress.ForFeature(identities.Application, module, featurePath));
+        var parent = identities.ResolveSemantic(SemanticAddress.ForFeature(identities.Application, module, [.. featurePath.Split('/')]));
         foreach (var slice in feature.Slices)
         {
             var address = $"{module}/{featurePath}/{slice.Name}";
@@ -73,6 +74,43 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
             }
         }
         foreach (var child in feature.Features) IndexFeature(module, child, $"{featurePath}/{child.Name}");
+    }
+
+    sealed class SliceOwners : ScreenplaySyntaxWalker
+    {
+        readonly Dictionary<SourceLocation, SliceSyntax> _exact = [];
+        readonly Dictionary<(string? Path, int Line), SliceSyntax> _lines = [];
+        SliceSyntax? _slice;
+
+        /// <inheritdoc/>
+        public override void VisitNode(SyntaxNode node)
+        {
+            if (_slice is null) return;
+            Record(node.Location);
+            foreach (var location in node.DirectiveLocations.Values) Record(location);
+        }
+
+        /// <inheritdoc/>
+        public override void VisitSlice(SliceSyntax syntax)
+        {
+            var previous = _slice;
+            _slice = syntax;
+            base.VisitSlice(syntax);
+            _slice = previous;
+        }
+
+        internal static Func<SourceLocation, SliceSyntax?> CreateLocator(ApplicationSyntax syntax)
+        {
+            var walker = new SliceOwners();
+            walker.VisitApplication(syntax);
+            return location => walker._exact.GetValueOrDefault(location) ?? walker._lines.GetValueOrDefault((location.Path, location.Line));
+        }
+
+        void Record(SourceLocation location)
+        {
+            _exact[location] = _slice!;
+            _lines[(location.Path, location.Line)] = _slice!;
+        }
     }
 
     internal sealed record Unit(SyntaxNode Syntax, SemanticExclusionKind Kind, string Address, SemanticId ParentId);
