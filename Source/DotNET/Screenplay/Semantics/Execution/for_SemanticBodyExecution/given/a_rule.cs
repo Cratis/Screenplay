@@ -24,7 +24,7 @@ public class a_rule : Specification
               event Placed
         """;
 
-    protected ISemanticBodyExecutionProvider Provider = null!;
+    protected rule_provider Provider = null!;
     protected SemanticExecutionPlan Plan = null!;
     protected SemanticExecutionRequest Request = null!;
     protected SemanticImplementationRequirement Requirement = null!;
@@ -37,21 +37,21 @@ public class a_rule : Specification
     void Establish()
     {
         Configure(Source);
-        Provider = Substitute.For<ISemanticBodyExecutionProvider>();
-        Provider.Evaluate(Arg.Any<SemanticImplementationBody>(), Arg.Any<SemanticRuleContext>()).Returns(call =>
+        Provider = new rule_provider((body, context) =>
         {
-            ReceivedBody = call.Arg<SemanticImplementationBody>();
-            Context = call.Arg<SemanticRuleContext>();
+            ReceivedBody = body;
+            Context = context;
             return Answer;
         });
     }
 
-    protected void Configure(string source)
+    protected void Configure(string source, params string[] expectedDiagnostics)
     {
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Orders"));
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("rules"), "rules", "orders.play", source);
         var compilation = new SemanticModelCompiler().Compile("Orders", SemanticDocumentSet.Create([document], catalog));
-        compilation.Diagnostics.ShouldBeEmpty();
+        compilation.Diagnostics.Count().ShouldEqual(expectedDiagnostics.Length);
+        foreach (var diagnostic in compilation.Diagnostics) expectedDiagnostics.ShouldContain(diagnostic.Code);
         Plan = SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
         Requirement = compilation.ImplementationRequirements.Single();
         Bodies = [new(Requirement, Body)];
@@ -61,5 +61,27 @@ public class a_rule : Specification
             Occurrence = new(new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero), "subject", "Name", "user"),
             Tenant = "tenant"
         };
+    }
+
+    protected sealed class rule_provider(Func<SemanticImplementationBody, SemanticRuleContext, SemanticBodyExecutionResult> evaluate) : ISemanticBodyExecutionProvider
+    {
+        internal Exception? Failure { get; set; }
+        internal Action<CancellationToken>? BeforeEvaluation { get; set; }
+        internal CancellationToken Cancellation { get; private set; }
+        internal int Disposals { get; private set; }
+
+        public ValueTask<SemanticBodyExecutionResult> EvaluateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken)
+        {
+            Cancellation = cancellationToken;
+            BeforeEvaluation?.Invoke(cancellationToken);
+            if (Failure is { } failure) throw failure;
+            return new(evaluate(body, context));
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Disposals++;
+            return ValueTask.CompletedTask;
+        }
     }
 }

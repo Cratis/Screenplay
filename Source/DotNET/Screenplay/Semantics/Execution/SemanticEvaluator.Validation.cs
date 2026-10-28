@@ -54,17 +54,8 @@ public sealed partial class SemanticEvaluator
             return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
         }
 
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
-        foreach (var property in command.Properties)
-        {
-            if (PredicateInType(property.Type, concepts, types, [], hasRuleProvider) is { } name)
-            {
-                return name;
-            }
-        }
-
-        return null;
+        var predicates = new SemanticOpaqueValidation(plan.Model.Application);
+        return command.Properties.Select(property => predicates.Find(property.Type, hasRuleProvider && !property.IsGenerated)).FirstOrDefault(name => name is not null);
     }
 
     internal static ImmutableArray<SemanticValidationFailure> ValidateRules(
@@ -136,10 +127,9 @@ public sealed partial class SemanticEvaluator
 
     internal static string? UnsupportedQueryValidation(SemanticExecutionPlan plan, SemanticKeyedQuery query, ImmutableArray<SemanticQueryFilterValue> filters)
     {
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        var predicates = new SemanticOpaqueValidation(plan.Model.Application);
         var arguments = QueryConceptArguments(query, SemanticValue.Null, filters);
-        return arguments.Select(argument => PredicateInType(argument.Type, concepts, types, [])).FirstOrDefault(name => name is not null);
+        return arguments.Select(argument => predicates.Find(argument.Type)).FirstOrDefault(name => name is not null);
     }
 
     internal static ImmutableArray<SemanticValidationFailure> ValidateQueryConcepts(
@@ -185,51 +175,4 @@ public sealed partial class SemanticEvaluator
     static bool HasMalformedShape(SemanticCommand command, ImmutableArray<SemanticPropertyValue> values) =>
         values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Count(property => !property.IsGenerated) ||
         values.Select(_ => _.TargetProperty).Distinct().Count() != values.Length;
-
-    static string? PredicateInType(
-        SemanticTypeReference type,
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited,
-        bool hasRuleProvider = false)
-    {
-        if (type.Kind == SemanticTypeReferenceKind.Concept)
-        {
-            return PredicateInConcept(concepts[type.Target], hasRuleProvider);
-        }
-
-        if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
-        {
-            return PredicateInComposite(types[type.Target], concepts, types, visited, hasRuleProvider);
-        }
-
-        return null;
-    }
-
-    static string? PredicateInConcept(SemanticConcept concept, bool hasRuleProvider)
-    {
-        if (concept.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.CodeValidation || (!hasRuleProvider && rule.Kind == SemanticValidationRuleKind.RulePredicate)) is not { } rule)
-        {
-            return null;
-        }
-
-        return rule.Kind == SemanticValidationRuleKind.CodeValidation
-            ? $"Concept '{concept.Name}' code validation {concept.Validations.Take(concept.Validations.IndexOf(rule)).Count(validation => validation.Kind == SemanticValidationRuleKind.CodeValidation)}"
-            : $"Rule '{rule.Name}' on concept '{concept.Name}'";
-    }
-
-    static string? PredicateInComposite(
-        SemanticCompositeType composite,
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited,
-        bool hasRuleProvider)
-    {
-        foreach (var property in composite.Properties)
-        {
-            if (PredicateInType(property.Type, concepts, types, visited, hasRuleProvider) is { } name) return name;
-        }
-
-        return null;
-    }
 }

@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticBodyExecution;
 
 public class when_a_provider_throws : given.a_rule
 {
-    void Establish() => Provider.Evaluate(Arg.Any<SemanticImplementationBody>(), Arg.Any<SemanticRuleContext>()).Returns(_ => throw new InvalidOperationException("not returned"));
+    void Establish() => Provider.Failure = new InvalidOperationException("not returned");
     void Because() => Result = new SemanticEvaluator(Provider, Bodies).Execute(Plan, SemanticWorld.Empty, Request);
 
     [Fact] void should_be_unsupported_not_a_crash() => Result.ShouldBeOfExactType<SemanticUnsupported>();

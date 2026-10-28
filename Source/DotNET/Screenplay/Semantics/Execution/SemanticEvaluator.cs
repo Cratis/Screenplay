@@ -11,32 +11,50 @@ namespace Cratis.Screenplay.Semantics.Execution;
 public sealed partial class SemanticEvaluator : ISemanticEvaluator
 {
     readonly SemanticRuleBodyExecution? _ruleBodies;
+    readonly ISemanticBodyExecutionProviderFactory? _providerFactory;
+    readonly IEnumerable<SemanticImplementationBody> _bodies = [];
 
     /// <summary>Initializes an evaluator without an implementation provider.</summary>
     public SemanticEvaluator()
     {
     }
 
-    /// <summary>Initializes an evaluator with host-owned named rule execution.</summary>
-    /// <param name="provider">The host's admission and execution boundary; Screenplay runs no source code.</param>
-    /// <param name="bodies">Resolved bodies for the current compilation.</param>
-    public SemanticEvaluator(ISemanticBodyExecutionProvider provider, IEnumerable<SemanticImplementationBody> bodies)
+    /// <summary>Initializes an evaluator that creates and disposes a provider for each execution or decision.</summary>
+    /// <param name="factory">The host-owned run factory.</param>
+    /// <param name="bodies">Resolved bodies for the application.</param>
+    public SemanticEvaluator(ISemanticBodyExecutionProviderFactory factory, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _providerFactory = factory;
+        _bodies = [.. bodies];
+    }
+
+    internal SemanticEvaluator(ISemanticBodyExecutionProvider provider, IEnumerable<SemanticImplementationBody> bodies)
     {
         _ruleBodies = new(provider, bodies);
     }
 
     /// <inheritdoc/>
-    public SemanticExecutionResult Execute(
+    public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
+
+    /// <inheritdoc/>
+    public SemanticExecutionResult ExecuteWithCancellation(
         SemanticExecutionPlan plan,
         SemanticWorld world,
-        SemanticExecutionRequest request)
+        SemanticExecutionRequest request,
+        CancellationToken cancellationToken)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+            return run.Evaluator.ExecuteWithCancellation(plan, world, request, cancellationToken);
+        }
+
         if (request.IsReadOnly)
         {
             return ExecuteReadOnly(plan, world, request);
         }
 
-        return Decide(plan, world, request).Commit(world);
+        return DecideWithCancellation(plan, world, request, cancellationToken).Commit(world);
     }
 
     /// <summary>
@@ -52,6 +70,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
         EstablishWorld(plan, facts, true);
 
+    /// <summary>Decides without host cancellation.</summary>
+    /// <param name="plan">The admitted plan.</param>
+    /// <param name="world">The starting world.</param>
+    /// <param name="request">The command request.</param>
+    /// <returns>The command decision.</returns>
+    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => DecideWithCancellation(plan, world, request, default);
+
     /// <summary>
     /// Decides a command against a world without settling it, so a host can commit against a later world.
     /// </summary>
@@ -63,9 +88,16 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world the decision reads.</param>
     /// <param name="request">The command request.</param>
+    /// <param name="cancellationToken">Cancellation for host-owned rule execution; cancellation maps to Unsupported.</param>
     /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
-    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    public SemanticDecision DecideWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+            return run.Evaluator.DecideWithCancellation(plan, world, request, cancellationToken);
+        }
+
         if (request.IsReadOnly)
         {
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot be decided; execute it as a query."));
@@ -86,7 +118,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
         }
 
-        return new SemanticCommandExecution(plan, world, command, request, _ruleBodies).Decide();
+        return new SemanticCommandExecution(plan, world, command, request, _ruleBodies, cancellationToken).Decide();
     }
 
     /// <summary>

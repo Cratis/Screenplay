@@ -10,13 +10,15 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// The host is responsible for language admission, isolation and resource limits. The pure capability on a
 /// requirement is a request, not a sandbox guarantee. A provider must return Unsupported for bodies it cannot safely execute.
 /// </remarks>
-public interface ISemanticBodyExecutionProvider
+public interface ISemanticBodyExecutionProvider : IAsyncDisposable
 {
     /// <summary>Evaluates a named rule against portable semantic values.</summary>
     /// <param name="body">The resolved, content-verified body and its requirement.</param>
     /// <param name="context">The rule value, artifact and caller-supplied circumstances; no roles or claims.</param>
+    /// <param name="cancellationToken">The run cancellation; the host must also enforce execution time limits.</param>
     /// <returns>A Boolean answer, or a diagnostic with no answer when execution is unsupported.</returns>
-    SemanticBodyExecutionResult Evaluate(SemanticImplementationBody body, SemanticRuleContext context);
+    /// <remarks>Timeouts and cancellation, including OperationCanceledException, map to Unsupported, never rejection.</remarks>
+    ValueTask<SemanticBodyExecutionResult> EvaluateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken);
 }
 
 /// <summary>Represents resolved source for one implementation requirement.</summary>

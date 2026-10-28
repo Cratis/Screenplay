@@ -33,8 +33,16 @@ public static class ScreenplayMcpServer
     /// <param name="root">The application directory, or null to choose a root per workspace.</param>
     /// <param name="input">The caller-owned JSON-RPC reader.</param>
     /// <param name="output">The caller-owned JSON-RPC writer.</param>
-    /// <param name="provider">The host's admission and execution boundary, or null to retain opaque-body refusals.</param>
+    /// <param name="provider">The host factory creating one disposable provider per run-specifications call, or null to retain opaque-body refusals.</param>
     /// <remarks>Screenplay does not compile or execute C#. Provider isolation and resource limits belong to the host.</remarks>
-    public static void Run(string? root, TextReader input, TextWriter output, ISemanticBodyExecutionProvider? provider) =>
-        new McpConnection(new McpTools(root is null ? null : new McpRoot(root), provider)).Run(input, output);
+    public static void Run(string? root, TextReader input, TextWriter output, ISemanticBodyExecutionProviderFactory? provider) =>
+        Run(new ScreenplayMcpRun(root, provider), input, output);
+
+    /// <summary>Runs a host-configured connection with cancellation for rule execution.</summary>
+    /// <param name="configuration">The root, run factory and host cancellation.</param>
+    /// <param name="input">The request stream.</param>
+    /// <param name="output">The response stream.</param>
+    /// <remarks>Timeout and cancellation map opaque bodies to Unsupported. The synchronous connection waits for the asynchronous provider, then disposes it before returning the report.</remarks>
+    public static void Run(ScreenplayMcpRun configuration, TextReader input, TextWriter output) =>
+        new McpConnection(new McpTools(configuration.Root is null ? null : new McpRoot(configuration.Root), configuration.ProviderFactory, configuration.CancellationToken)).Run(input, output);
 }

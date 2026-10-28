@@ -8,5 +8,5 @@ public class when_body_content_has_changed : given.a_rule
     void Because() => Result = new SemanticEvaluator(Provider, [new(Requirement, "changed")]).Execute(Plan, SemanticWorld.Empty, Request);
 
     [Fact] void should_fail_closed() => ((SemanticUnsupported)Result).Details.ShouldContain("Resolved body content does not match its requirement hash.");
-    [Fact] void should_not_call_the_provider() => Provider.DidNotReceive().Evaluate(Arg.Any<SemanticImplementationBody>(), Arg.Any<SemanticRuleContext>());
+    [Fact] void should_not_call_the_provider() => Context.ShouldBeNull();
 }

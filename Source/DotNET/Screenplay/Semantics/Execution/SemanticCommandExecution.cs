@@ -17,7 +17,8 @@ internal sealed partial class SemanticCommandExecution(
     SemanticWorld world,
     SemanticCommand command,
     SemanticExecutionRequest request,
-    SemanticRuleBodyExecution? ruleBodies = null)
+    SemanticRuleBodyExecution? ruleBodies = null,
+    CancellationToken cancellationToken = default)
 {
     const string NeedsOccurrenceMessage = "A v2 command using $context needs an occurrence supplied by the execution request.";
 
@@ -149,18 +150,7 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionResult? Validate()
     {
         var failures = SemanticEvaluator.ValidateRules(plan, command, request.Values).ToBuilder();
-        if (ruleBodies is not null)
-        {
-            foreach (var check in new SemanticRuleBodyValidation(plan.Model.Application, ruleBodies, request).Check(command))
-            {
-                if (check.Status == SemanticRuleStatus.NotEvaluable)
-                {
-                    return new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, check.Message);
-                }
-
-                if (check.Status == SemanticRuleStatus.Failed) failures.Add(new(check.Message, check.Rule.Severity));
-            }
-        }
+        if (ValidateBodies(failures) is { } unsupported) return unsupported;
         _commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
 
         // Preserve legacy failure collection, but never evaluate a protected requirement before its reads.
@@ -175,6 +165,18 @@ internal sealed partial class SemanticCommandExecution(
         if (failures.Count > 0) return ValidationFailure(failures);
 
         return NeedsOccurrenceUpFront() ? Contract(NeedsOccurrenceMessage) : null;
+    }
+
+    SemanticUnsupported? ValidateBodies(ImmutableArray<SemanticValidationFailure>.Builder failures)
+    {
+        if (ruleBodies is null) return null;
+        foreach (var check in new SemanticRuleBodyValidation(plan.Model.Application, ruleBodies, request).Check(command, cancellationToken))
+        {
+            if (check.Status == SemanticRuleStatus.NotEvaluable) return new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, check.Message);
+            if (check.Status == SemanticRuleStatus.Failed) failures.Add(new(check.Message, check.Rule.Severity));
+        }
+
+        return null;
     }
 
     SemanticRejected ValidationFailure(ImmutableArray<SemanticValidationFailure>.Builder failures) =>

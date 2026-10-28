@@ -14,9 +14,9 @@ sealed class McpTools
     readonly McpSourceCache _sources = new();
     readonly Dictionary<string, Func<JsonElement, object>> _notesTools;
 
-    internal McpTools(McpRoot? root = null, ISemanticBodyExecutionProvider? provider = null)
+    internal McpTools(McpRoot? root = null, ISemanticBodyExecutionProviderFactory? provider = null, CancellationToken cancellationToken = default)
     {
-        _workspaces = new(root, provider);
+        _workspaces = new(root, provider, cancellationToken);
         _notesTools = new(StringComparer.Ordinal)
         {
             ["list-model-notes"] = _workspaces.ListNotes,

@@ -8,5 +8,5 @@ public class when_a_body_is_not_resolved : given.a_rule
     void Because() => Result = new SemanticEvaluator(Provider, []).Execute(Plan, SemanticWorld.Empty, Request);
 
     [Fact] void should_fail_closed() => ((SemanticUnsupported)Result).Details.ShouldContain("No resolved body is available.");
-    [Fact] void should_not_call_the_provider() => Provider.DidNotReceive().Evaluate(Arg.Any<SemanticImplementationBody>(), Arg.Any<SemanticRuleContext>());
+    [Fact] void should_not_call_the_provider() => Context.ShouldBeNull();
 }

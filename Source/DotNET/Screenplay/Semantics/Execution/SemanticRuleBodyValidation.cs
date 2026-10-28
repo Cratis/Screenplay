@@ -12,53 +12,41 @@ sealed class SemanticRuleBodyValidation(SemanticApplication application, Semanti
 
     internal static bool IsPredicate(SemanticValidationRule rule) => rule.Kind == SemanticValidationRuleKind.RulePredicate;
 
-    internal IEnumerable<SemanticRuleCheck> Check(SemanticCommand command)
+    internal IEnumerable<SemanticRuleCheck> Check(SemanticCommand command, CancellationToken cancellationToken)
     {
         var values = request.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
         var artifact = SemanticValue.Composite(request.Values);
-        foreach (var rule in command.Validations.Where(IsPredicate))
-        {
-            var property = command.Properties.Single(property => property.Id == rule.Property);
-            yield return values.TryGetValue(rule.Property, out var value)
-                ? bodies.Check(rule, Context(artifact, value, property.Name))
-                : SemanticRuleBodyExecution.Unsupported(rule, "The rule property is unavailable before generation.");
-        }
-
-        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
-        {
-            foreach (var check in CheckConcepts(property.Type, values[property.Id])) yield return check;
-        }
+        var commandChecks = command.Validations.Where(IsPredicate).Select(rule =>
+            values.TryGetValue(rule.Property, out var value)
+                ? bodies.Check(rule, Context(artifact, value, command.Properties.Single(property => property.Id == rule.Property).Name), cancellationToken)
+                : SemanticRuleBodyExecution.Unsupported(rule, "The rule property is unavailable before generation."));
+        var conceptChecks = command.Properties.Where(property => !property.IsGenerated)
+            .SelectMany(property => CheckConcepts(property.Type, values[property.Id], cancellationToken));
+        return commandChecks.Concat(conceptChecks);
     }
 
-    IEnumerable<SemanticRuleCheck> CheckConcepts(SemanticTypeReference type, SemanticValue value)
+    IEnumerable<SemanticRuleCheck> CheckConcepts(SemanticTypeReference type, SemanticValue value, CancellationToken cancellationToken)
     {
-        if (type.IsCollection)
-        {
-            if (value is SemanticArrayValue array)
-            {
-                foreach (var element in array.Values)
-                {
-                    foreach (var check in CheckConcepts(type with { IsCollection = false, IsOptional = false }, element)) yield return check;
-                }
-            }
-            yield break;
-        }
-
+        if (type.IsCollection) return CheckCollection(type, value, cancellationToken);
         if (type.Kind == SemanticTypeReferenceKind.Concept)
         {
-            foreach (var rule in _concepts[type.Target].Validations.Where(IsPredicate))
-            {
-                yield return bodies.Check(rule, Context(value, value, string.Empty)) with { Concept = type.Target };
-            }
+            return _concepts[type.Target].Validations.Where(IsPredicate)
+                .Select(rule => bodies.Check(rule, Context(value, value, string.Empty), cancellationToken) with { Concept = type.Target });
         }
-        else if (type.Kind == SemanticTypeReferenceKind.CompositeType && value is SemanticCompositeValue composite)
-        {
-            var properties = _types[type.Target].Properties.ToDictionary(property => property.Id);
-            foreach (var property in composite.Properties)
-            {
-                foreach (var check in CheckConcepts(properties[property.TargetProperty].Type, property.Value)) yield return check;
-            }
-        }
+
+        return CheckComposite(type, value, cancellationToken);
+    }
+
+    IEnumerable<SemanticRuleCheck> CheckCollection(SemanticTypeReference type, SemanticValue value, CancellationToken cancellationToken) =>
+        value is SemanticArrayValue array
+            ? array.Values.SelectMany(element => CheckConcepts(type with { IsCollection = false, IsOptional = false }, element, cancellationToken))
+            : [];
+
+    IEnumerable<SemanticRuleCheck> CheckComposite(SemanticTypeReference type, SemanticValue value, CancellationToken cancellationToken)
+    {
+        if (type.Kind != SemanticTypeReferenceKind.CompositeType || value is not SemanticCompositeValue composite) return [];
+        var properties = _types[type.Target].Properties.ToDictionary(property => property.Id);
+        return composite.Properties.SelectMany(property => CheckConcepts(properties[property.TargetProperty].Type, property.Value, cancellationToken));
     }
 
     SemanticRuleContext Context(SemanticValue artifact, SemanticValue value, string property) =>

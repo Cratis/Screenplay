@@ -19,16 +19,18 @@ internal sealed partial class McpWorkspaces
     readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _destinationEvidence = [];
 
     readonly McpRoot? _configuredRoot;
-    readonly ISemanticBodyExecutionProvider? _bodyProvider;
+    readonly ISemanticBodyExecutionProviderFactory? _bodyProvider;
+    readonly CancellationToken _cancellationToken;
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
     McpRootBindingConflict? _rootBindingConflict;
     ImmutableArray<string> _discoveredRootPaths = [];
 
-    internal McpWorkspaces(McpRoot? root = null, ISemanticBodyExecutionProvider? provider = null)
+    internal McpWorkspaces(McpRoot? root = null, ISemanticBodyExecutionProviderFactory? provider = null, CancellationToken cancellationToken = default)
     {
         _bodyProvider = provider;
+        _cancellationToken = cancellationToken;
         _configuredRoot = root;
         _root = root;
     }
