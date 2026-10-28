@@ -18,6 +18,13 @@ public interface ISemanticSpecificationRunner
     /// <param name="specification">The specification semantic identity.</param>
     /// <returns>The normalized execution and deterministic comparison failures.</returns>
     SemanticSpecificationRun Run(SemanticExecutionPlan plan, SemanticId specification);
+
+    /// <summary>Runs a specification with cancellation for host-owned rules.</summary>
+    /// <param name="plan">The admitted plan.</param>
+    /// <param name="specification">The specification identity.</param>
+    /// <param name="cancellationToken">Host cancellation.</param>
+    /// <returns>The normalized run.</returns>
+    SemanticSpecificationRun RunWithCancellation(SemanticExecutionPlan plan, SemanticId specification, CancellationToken cancellationToken) => Run(plan, specification);
 }
 
 /// <summary>
@@ -51,6 +58,19 @@ public sealed record SemanticSpecificationRun(
 /// <param name="evaluator">The reference semantic evaluator.</param>
 public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : ISemanticSpecificationRunner
 {
+    readonly ISemanticBodyExecutionProviderFactory? _providerFactory;
+    readonly IEnumerable<SemanticImplementationBody> _bodies = [];
+
+    /// <summary>Initializes a runner with one host-owned provider per specification run.</summary>
+    /// <param name="factory">The provider factory.</param>
+    /// <param name="bodies">Resolved implementation bodies.</param>
+    public SemanticSpecificationRunner(ISemanticBodyExecutionProviderFactory factory, IEnumerable<SemanticImplementationBody> bodies)
+        : this(new SemanticEvaluator())
+    {
+        _providerFactory = factory;
+        _bodies = [.. bodies];
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SemanticSpecificationRunner"/> class with the reference evaluator.
     /// </summary>
@@ -59,13 +79,20 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     {
     }
 
+    /// <summary>Runs a compilation without host cancellation.</summary>
+    /// <param name="compilation">The compilation.</param>
+    /// <param name="specification">The specification identity.</param>
+    /// <returns>The normalized run.</returns>
+    public SemanticSpecificationRun Run(SemanticCompilation compilation, SemanticId specification) => RunWithCancellation(compilation, specification, default);
+
     /// <summary>
     /// Executes a source-bound specification and enriches failures with its effective fixture values and origins.
     /// </summary>
     /// <param name="compilation">The validated source compilation owning both the ESM and its provenance sidecar.</param>
     /// <param name="specification">The specification semantic identity.</param>
+    /// <param name="cancellationToken">Cancellation for host-owned rule execution.</param>
     /// <returns>The reference execution, or a failed unsupported result when plan admission fails.</returns>
-    public SemanticSpecificationRun Run(SemanticCompilation compilation, SemanticId specification)
+    public SemanticSpecificationRun RunWithCancellation(SemanticCompilation compilation, SemanticId specification, CancellationToken cancellationToken)
     {
         var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
         if (admitted.Plan is not { } plan)
@@ -75,11 +102,36 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [details]);
         }
 
-        return EnrichFailures(compilation, Run(plan, specification));
+        return EnrichFailures(compilation, RunWithCancellation(plan, specification, cancellationToken));
     }
 
     /// <inheritdoc/>
-    public SemanticSpecificationRun Run(SemanticExecutionPlan plan, SemanticId specification)
+    public SemanticSpecificationRun Run(SemanticExecutionPlan plan, SemanticId specification) => RunWithCancellation(plan, specification, default);
+
+    /// <inheritdoc/>
+    public SemanticSpecificationRun RunWithCancellation(SemanticExecutionPlan plan, SemanticId specification, CancellationToken cancellationToken)
+    {
+        if (_providerFactory is null) return WithCancellation(cancellationToken).RunCore(plan, specification);
+        using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+        return new SemanticSpecificationRunner(run.Evaluator).WithCancellation(cancellationToken).RunCore(plan, specification);
+    }
+
+    internal static SemanticSpecificationRun EnrichFailures(SemanticCompilation compilation, SemanticSpecificationRun run)
+    {
+        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(run.Specification, out var origin) ||
+            (origin.Case is null && !origin.Steps.Any(step => step.Example is not null || step.Values.Any(value => value.Origin == Syntax.Specifications.SpecificationValueOrigin.Case))))
+        {
+            return run;
+        }
+
+        var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
+            $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
+        var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
+        var prefix = origin.Case is { } row ? $"Case '{row.Name}' of '{origin.Authored.Name}': " : string.Empty;
+        return run with { Failures = [.. run.Failures.Select(failure => $"{prefix}{failure} {provenance}")] };
+    }
+
+    internal SemanticSpecificationRun RunCore(SemanticExecutionPlan plan, SemanticId specification)
     {
         if (!plan.Specifications.TryGetValue(specification, out var expected))
         {
@@ -182,20 +234,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         return new(specification, failures.IsEmpty, execution, failures);
     }
 
-    internal static SemanticSpecificationRun EnrichFailures(SemanticCompilation compilation, SemanticSpecificationRun run)
-    {
-        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(run.Specification, out var origin) ||
-            (origin.Case is null && !origin.Steps.Any(step => step.Example is not null || step.Values.Any(value => value.Origin == Syntax.Specifications.SpecificationValueOrigin.Case))))
-        {
-            return run;
-        }
-
-        var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
-            $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
-        var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
-        var prefix = origin.Case is { } row ? $"Case '{row.Name}' of '{origin.Authored.Name}': " : string.Empty;
-        return run with { Failures = [.. run.Failures.Select(failure => $"{prefix}{failure} {provenance}")] };
-    }
+    internal SemanticSpecificationRunner WithCancellation(CancellationToken cancellationToken) =>
+        cancellationToken.CanBeCanceled ? new(new SemanticCancellationEvaluator(evaluator, cancellationToken)) : this;
 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
