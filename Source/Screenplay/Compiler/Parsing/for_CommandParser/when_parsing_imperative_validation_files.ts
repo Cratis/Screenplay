@@ -6,10 +6,12 @@ import { parse } from '../../ScreenplayCompiler';
 import { toCompleteSyntaxJson } from '../../Syntax/SyntaxJson';
 import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../../Syntax/SyntaxNode';
+import { CodeValidateSyntax, DeclarativeValidateSyntax } from '../../Syntax/Commands';
 
 const cases = [
     ['concept Money : Decimal\n  validate\n    file Rules/Money.cs', 'Rules/Money.cs'],
     ['module M\n  feature F\n    slice StateChange S\n      command Pay\n        validate\n          file Rules/Pay.cs', 'Rules/Pay.cs'],
+    ['module M\n  feature F\n    slice StateChange S\n      command Pay\n        validate\n          file Pay file.cs', 'Pay file.cs'],
 ];
 
 describe('when parsing imperative validation files', () => {
@@ -23,4 +25,31 @@ describe('when parsing imperative validation files', () => {
         new Walker().visitApplication(parsed.value!);
         expect(kinds).toContain('FileReferenceSyntax');
     });
+
+    it.each(['file not empty', 'file min 1.5', 'file matches "a/b.cs"', 'file not empty\tmessage "Required"', 'file not empty\n          other not empty'])('should keep a declarative rule on a property named file: %s', body => {
+        const parsed = parse(command(body));
+        expect(parsed.diagnostics).toEqual([]);
+        const validation = parsed.value!.modules[0].features[0].slices[0].commands[0].validations[0] as DeclarativeValidateSyntax;
+        expect(validation.kind).toBe('DeclarativeValidateSyntax');
+        expect(validation.rules[0].property).toBe('file');
+    });
+
+    it('should not claim a file include when another child follows', () => {
+        const parsed = parse(command('file Rules/Pay.cs\n          other not empty'));
+        const validation = parsed.value!.modules[0].features[0].slices[0].commands[0].validations[0] as DeclarativeValidateSyntax;
+        expect(validation.kind).toBe('DeclarativeValidateSyntax');
+        expect(validation.rules[0].property).toBe('other');
+        expect(parsed.diagnostics.length).toBeGreaterThan(0);
+    });
+
+    it('should leave the next command directive outside the include', () => {
+        const parsed = parse(command('file Rules/Pay.cs\n        handler\n          file Handlers/Pay.cs'));
+        expect(parsed.diagnostics).toEqual([]);
+        const declaration = parsed.value!.modules[0].features[0].slices[0].commands[0];
+        expect((declaration.validations[0] as CodeValidateSyntax).file!.path).toBe('Rules/Pay.cs');
+        expect(declaration.handler!.file!.path).toBe('Handlers/Pay.cs');
+    });
 });
+
+const command = (body: string): string =>
+    'module M\n  feature F\n    slice StateChange S\n      command Pay\n        file String\n        other String\n        validate\n          ' + body;

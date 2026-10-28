@@ -36,6 +36,7 @@ import { parseReads } from './ReadsParser';
 import { parseProduces } from './ProducesParser';
 import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { isFileDirectiveAmongProperties } from './FileReferences';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
 const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
@@ -222,11 +223,27 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
     return identifier ?? (property.isIdentifier ? property : undefined);
 }
 
+function hasValidationOperand(line: SourceLine): boolean {
+    const match = rulePattern.exec(line.content);
+    if (match === null) return false;
+    const rule = match[2];
+    return (firstWord(rule) === 'not' && firstWord(rule.substring('not'.length).trimStart()) === 'empty') ||
+        firstWord(rule) === 'checksum' || operandPattern.test(rule);
+}
+
+function isValidationFileBody(context: ParserContext, header: SourceLine, body: SourceLine): boolean {
+    if (!isFileDirectiveAmongProperties(body) || hasValidationOperand(body)) return false;
+    const lookahead = context.reader.fork();
+    lookahead.takeSignificant();
+    const next = lookahead.peekSignificant();
+    return next === undefined || next.indent <= header.indent;
+}
+
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.
 export function parseValidate(context: ParserContext, line: SourceLine, owner: 'command' | 'concept', ownerName: string): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
-        if (fence !== undefined && isFile(fence)) {
+        if (fence !== undefined && isValidationFileBody(context, line, fence)) {
             context.reader.takeSignificant();
             return { kind: 'CodeValidateSyntax', code: null, file: parseFile(context, fence), location: locationOf(line) };
         }

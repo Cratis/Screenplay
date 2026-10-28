@@ -83,11 +83,20 @@ internal static class ValidateParser
         return null;
     }
 
+    static bool IsFileBody(ParserContext context, SourceLine header, SourceLine body)
+    {
+        if (!FileReferenceParser.IsDirectiveAmongProperties(body) || ValidationRuleParser.HasRuleOperand(body)) return false;
+        var lookahead = context.Reader.Fork();
+        lookahead.TakeSignificant();
+        var next = lookahead.PeekSignificant();
+        return next is null || next.Indent <= header.Indent;
+    }
+
     static bool TryParseImperative(ParserContext context, SourceLine line, out CodeValidateSyntax? validation)
     {
         validation = null;
         if (!context.TryPeekChild(line.Indent, out var body)) return false;
-        if (FileReferenceParser.IsDirective(body))
+        if (IsFileBody(context, line, body))
         {
             context.Reader.TakeSignificant();
             validation = new CodeValidateSyntax(null, line.Location) { File = FileReferenceParser.Parse(context, body) };

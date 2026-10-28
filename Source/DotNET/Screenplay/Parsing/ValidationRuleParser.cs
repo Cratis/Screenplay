@@ -71,6 +71,20 @@ internal static partial class ValidationRuleParser
         return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
+    /// <summary>
+    /// Recognizes a property rule before an ambiguous <c>file</c> line is claimed as an include.
+    /// </summary>
+    /// <param name="line">The candidate property rule.</param>
+    /// <returns>Whether its operand starts with validation syntax, even when its arguments are invalid.</returns>
+    internal static bool HasRuleOperand(SourceLine line)
+    {
+        var match = RuleRegex().Match(line.Content);
+        if (!match.Success) return false;
+        var rule = match.Groups[2].Value;
+        return (LineText.FirstWord(rule) == "not" && LineText.FirstWord(rule["not".Length..].TrimStart()) == "empty") ||
+            LineText.FirstWord(rule) == "checksum" || OperandRegex().IsMatch(rule);
+    }
+
     static (string Content, string? Message) SplitMessage(string content)
     {
         var match = MessageRegex().Match(content);
