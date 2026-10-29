@@ -278,7 +278,7 @@ Inside a Stage C# performer, `context` supplies `Arguments` (PascalCase argument
 
 ### Observable performers
 
-The binding is defined by [decision 0119](https://github.com/Cratis/Screenplay/blob/main/decisions/0119-live-performer-binding-contract.md). It applies to an `observable` query that returns a collection (`=> observable Talk[]`); a live query that returns one read model or an optional one has no live contract and stays a host gap.
+The binding is defined by [decision 0120](https://github.com/Cratis/Screenplay/blob/main/decisions/0120-live-performer-binding-contract.md). It applies to an `observable` query that returns a collection (`=> observable Talk[]`); a live query that returns one read model or an optional one has no live contract and stays a host gap.
 
 - **Inputs.** `readModels` is a `LiveReadModels<T>` for the declared read model `T`, `context` is the same performer context as above, and the caller arguments are available by their camelCase names.
 - **Result.** The body returns `IObservable<IEnumerable<T>>`. Each emission is the complete answer, never a delta, and nothing guarantees that consecutive emissions differ.

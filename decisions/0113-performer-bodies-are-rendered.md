@@ -13,7 +13,7 @@ applies-to:
   - Documentation/screenplay/**
 ---
 
-> **2026-10-29 — items 3 and 4 amended by [0119](0119-live-performer-binding-contract.md).** An observable collection performer now binds under ResultVersion 2; other live performers remain gaps. The decision text below is preserved.
+> **2026-10-29 — items 3 and 4 amended by [0120](0120-live-performer-binding-contract.md).** An observable collection performer now binds under ResultVersion 2; other live performers remain gaps. The decision text below is preserved.
 
 ## Context
 

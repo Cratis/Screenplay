@@ -1,5 +1,5 @@
 ---
-id: 0119
+id: 0120
 title: Live performers bind a whole-collection stream (ResultVersion 2)
 status: accepted
 stage: implemented
