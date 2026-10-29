@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
