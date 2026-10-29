@@ -13,6 +13,12 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     readonly HashSet<string> _policies = new(StringComparer.Ordinal);
     readonly HashSet<string> _reads = new(StringComparer.Ordinal);
 
+    internal IEnumerable<AdmissibleSyntax.Unit> RootOwners(IEnumerable<Diagnostic> errors)
+    {
+        _security.VisitApplication(syntax);
+        return errors.SelectMany(RootOwners);
+    }
+
     internal bool TryPlan(IReadOnlyList<Diagnostic> errors, AdmissibleExclusions plan)
     {
         _security.VisitApplication(syntax);
@@ -36,6 +42,13 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     static bool RemovedOwner(AdmissibleSecuritySyntax.ViewReference reference, AdmissibleExclusions plan) =>
         reference.Slice is { } slice && plan.Removed.Contains(slice);
 
+    IEnumerable<AdmissibleSyntax.Unit> RootOwners(Diagnostic error)
+    {
+        var policies = PoliciesFor(error).ToHashSet(StringComparer.Ordinal);
+        if (policies.Count == 0) return index.Find(error) is { } owner ? [owner] : [];
+        return syntax.Policies.Where(policy => policies.Contains(policy.Name)).Select(index.Find).OfType<AdmissibleSyntax.Unit>();
+    }
+
     bool TryAttribute(Diagnostic error, AdmissibleExclusions plan)
     {
         var policies = PoliciesFor(error).Distinct(StringComparer.Ordinal).ToArray();
@@ -57,18 +70,19 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
         _policies.Add(name);
         foreach (var use in _security.Authorizations.Where(use => use.Syntax.References().Any(reference => reference.Name == name)))
         {
-            if (!CloseAuthorization(use, diagnostic, reason, plan)) return false;
+            if (!CloseAuthorization(use, declarations[0], (diagnostic, reason), plan)) return false;
         }
         return true;
     }
 
-    bool CloseAuthorization(AdmissibleSecuritySyntax.Authorization use, Diagnostic diagnostic, string reason, AdmissibleExclusions plan)
+    bool CloseAuthorization(AdmissibleSecuritySyntax.Authorization use, PolicySyntax policy, (Diagnostic Diagnostic, string Reason) evidence, AdmissibleExclusions plan)
     {
         if (use.Slices is null) return false;
         if (use.Syntax.References().Any(reference => syntax.Policies.Count(policy => policy.Name == reference.Name) != 1)) return false;
         foreach (var slice in use.Slices)
         {
-            if (!plan.Add(slice, [diagnostic], reason)) return false;
+            if (!plan.Add(slice, [evidence.Diagnostic], evidence.Reason)) return false;
+            plan.Link(slice, policy);
         }
         plan.Removed.Add(use.Syntax);
         return true;
@@ -100,9 +114,12 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
         var views = _security.Views.Where(view => view.Name == name).ToArray();
         if (views.Length != 1 || views[0].Slice is null) return false;
         var reason = $"Excluded protected read '{name}' and every reader of its read model.";
-        foreach (var reference in _security.References.Where(reference => reference.Name == name).Concat(views))
+        var references = _security.References.Where(reference => reference.Name == name).Concat(views).ToArray();
+        var dependencies = references.Where(reference => RemovedOwner(reference, plan)).Select(reference => reference.Slice!).Distinct().ToArray();
+        foreach (var reference in references)
         {
             if (reference.Slice is null || !plan.Add(reference.Slice, errors, reason)) return false;
+            foreach (var dependency in dependencies) plan.Link(reference.Slice, dependency);
         }
         _reads.Add(name);
         return true;

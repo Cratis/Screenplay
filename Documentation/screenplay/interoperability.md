@@ -101,6 +101,12 @@ The returned `AdmissibleCompilationResult.Compilation` is the usual semantic com
 
 Security exclusions never remove protection while retaining protected behavior. A policy/authorization failure excludes the policy and every explicitly or implicitly protected slice, including nested module/feature scopes. A refused protected command read excludes its read model's slice and all reader slices. Their exclusion `Reason` names the policy or protected read. Ambiguous resolution, an unknown protected set, remaining references to excluded protection, application-level binding refusals and source errors return the original strict failure with no partial model or exclusions.
 
+Each exclusion exposes a typed `Cause` (`SemanticExclusionCause.Root` or `Dependent`) and `DependsOn`, an immutable array of `SemanticExclusionReference(Kind, Address)` values. A root has its own error in the original binding attempt, or has no evidenced excluded dependency; its dependency array is empty. A dependent names the immediate excluded units that caused its removal, not every upstream root. For a chain A → B → C where A fails, B names A and C names B. A unit with its own original error remains a root even if it also references an excluded unit.
+
+References use the same addresses as `Exclusions`, are distinct, and are ordered by kind then ordinal address. Classification uses uniquely resolved references from the original source and explicit policy/protected-read closure links; an unresolved or ambiguous reference never invents a dependency. Inherited authorization links each protected descendant to the excluded policy. Protected-read closure links the removed view and readers to the units that triggered that closure, while preserving roots with their own errors. Imports without an evidenced link remain roots. `Reason` stays a human-readable security explanation; do not parse it to determine cause. Existing constructor calls default to `Root` and an empty dependency array.
+
+These fields add evidence only: strict compilation, the retained subset, original diagnostics, source ordering and fail-closed security behavior are unchanged. No ESM version or schema version changes.
+
 ### Execution plan compilation
 
 `SemanticExecutionPlan` and `SemanticExecutionPlanCompilation` ship in `Cratis.Screenplay.Semantics.Execution`.

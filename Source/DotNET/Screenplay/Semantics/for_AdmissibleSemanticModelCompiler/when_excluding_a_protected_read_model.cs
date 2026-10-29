@@ -12,5 +12,7 @@ public class when_excluding_a_protected_read_model : given.security_documents
     [Fact] void should_bind_the_safe_subset() => _result.Compilation.Success.ShouldBeTrue();
     [Fact] void should_remove_the_view_and_every_reader() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["M/F/Write", "M/F/Lookup", "M/F/Inspect"]);
     [Fact] void should_keep_only_the_unrelated_slice() => Slices.ShouldEqual(["Kept"]);
+    [Fact] void should_preserve_each_own_error_as_root() => _result.Exclusions.ShouldEachConformTo(value => value.Cause == SemanticExclusionCause.Root);
+    [Fact] void should_not_attach_dependencies_to_roots() => _result.Exclusions.ShouldEachConformTo(value => value.DependsOn.IsEmpty);
     [Fact] void should_record_the_protected_read_closure() => _result.Exclusions.ShouldEachConformTo(value => value.Reason?.Contains("View", StringComparison.Ordinal) == true);
 }

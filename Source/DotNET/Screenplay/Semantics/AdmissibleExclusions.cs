@@ -6,13 +6,18 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
 
-sealed class AdmissibleExclusions(AdmissibleSyntax index)
+sealed class AdmissibleExclusions(AdmissibleSyntax index, AdmissibleCauses causes)
 {
     readonly Dictionary<AdmissibleSyntax.Unit, SemanticExclusion> _entries = [];
 
     internal HashSet<SyntaxNode> Removed { get; } = [];
     internal IEnumerable<SemanticExclusion> Entries => _entries.Values;
     internal IEnumerable<SliceSyntax> Slices => Removed.OfType<SliceSyntax>();
+
+    internal void Link(SyntaxNode source, SyntaxNode target)
+    {
+        if (index.Find(source) is { } from && index.Find(target) is { } to) causes.Link(from, to);
+    }
 
     internal bool Add(SyntaxNode node, IEnumerable<Diagnostic> diagnostics, string? reason)
     {

@@ -25,9 +25,11 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
 
     internal Unit? Find(SyntaxNode syntax) => _units.Find(unit => unit.Syntax == syntax);
 
-    internal Unit? Find(Diagnostic diagnostic)
+    internal Unit? Find(Diagnostic diagnostic) => diagnostic.Location is { } location ? Find(location) : null;
+
+    internal Unit? Find(SourceLocation location)
     {
-        if (diagnostic.Location is not { } location || _locate(location) is not { } owner) return null;
+        if (_locate(location) is not { } owner) return null;
         var kind = owner.Value.GetProperty("kind").GetString();
         var address = string.Join('/', owner.Value.GetProperty("path").EnumerateArray().Select(part => part.GetString()));
         return _units.Find(unit => unit.Kind switch

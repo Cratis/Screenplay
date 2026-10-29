@@ -20,4 +20,14 @@ public sealed record SemanticExclusion(SemanticExclusionKind Kind, string Addres
     /// Gets the security dependency that required this exclusion, when applicable.
     /// </summary>
     public string? Reason { get; init; }
+
+    /// <summary>
+    /// Gets whether the exclusion is a root failure or follows an excluded dependency.
+    /// </summary>
+    public SemanticExclusionCause Cause { get; init; } = SemanticExclusionCause.Root;
+
+    /// <summary>
+    /// Gets the distinct immediate excluded dependencies, ordered by kind and ordinal address.
+    /// </summary>
+    public ImmutableArray<SemanticExclusionReference> DependsOn { get; init; } = [];
 }

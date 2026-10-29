@@ -20,18 +20,18 @@ sealed class AdmissibleCompilation(IScreenplayCompiler compiler, ISemanticModelB
         syntax.SourceOptions.NumericMode == NumericMode.Exact ||
         (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic);
 
-    static AdmissibleCompilationResult Result(CompilationResult<SemanticCompilation> compilation, List<SemanticExclusion> exclusions) =>
-        new(compilation, [.. exclusions.OrderBy(exclusion => exclusion.Location.Path, StringComparer.Ordinal)
+    static AdmissibleCompilationResult Result(CompilationResult<SemanticCompilation> compilation, List<SemanticExclusion> exclusions, AdmissibleCauses causes) =>
+        new(compilation, [.. exclusions.Select(exclusion => causes.Classify(exclusion, exclusions)).OrderBy(exclusion => exclusion.Location.Path, StringComparer.Ordinal)
             .ThenBy(exclusion => exclusion.Location.Line).ThenBy(exclusion => exclusion.Location.Column)
             .ThenBy(exclusion => exclusion.Kind).ThenBy(exclusion => exclusion.Address, StringComparer.Ordinal)]);
 
-    static (ApplicationSyntax Syntax, IEnumerable<SemanticExclusion> Exclusions)? TryPrune(ApplicationSyntax syntax, SemanticIdentityCatalog identities, IEnumerable<Diagnostic> diagnostics)
+    static (ApplicationSyntax Syntax, IEnumerable<SemanticExclusion> Exclusions)? TryPrune(ApplicationSyntax syntax, SemanticIdentityCatalog identities, IEnumerable<Diagnostic> diagnostics, AdmissibleCauses causes)
     {
         var index = new AdmissibleSyntax(syntax, identities);
         index.Index();
         var errors = diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToArray();
         if (errors.Length == 0) return null;
-        var plan = new AdmissibleExclusions(index);
+        var plan = new AdmissibleExclusions(index, causes);
         if (!new AdmissibleSecurity(syntax, index).TryPlan(errors, plan)) return null;
         if (plan.Removed.Count == 0) return null;
         return (index.Remove(plan.Removed), plan.Entries);
@@ -41,14 +41,16 @@ sealed class AdmissibleCompilation(IScreenplayCompiler compiler, ISemanticModelB
     {
         var syntax = parsed.Value!;
         var exclusions = new List<SemanticExclusion>();
+        var causes = new AdmissibleCauses(syntax, documents.IdentityCatalog);
         CompilationResult<SemanticCompilation>? original = null;
         while (true)
         {
             var compilation = Bind(applicationName, syntax, documents, parsed.Diagnostics);
             original ??= compilation;
-            if (compilation.Success) return Result(compilation, exclusions);
+            if (compilation.Success) return Result(compilation, exclusions, causes);
             if (ApplicationRefusal(syntax)) return new(original, []);
-            if (TryPrune(syntax, documents.IdentityCatalog, compilation.Diagnostics) is not { } pruned) return new(original, []);
+            causes.Observe(compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+            if (TryPrune(syntax, documents.IdentityCatalog, compilation.Diagnostics, causes) is not { } pruned) return new(original, []);
             syntax = pruned.Syntax;
             exclusions.AddRange(pruned.Exclusions);
         }

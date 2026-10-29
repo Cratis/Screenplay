@@ -13,4 +13,6 @@ public class when_excluding_a_slice : given.documents
     [Fact] void should_exclude_the_failing_slice() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["M/F/Removed"]);
     [Fact] void should_record_the_kind() => _result.Exclusions.Single().Kind.ShouldEqual(SemanticExclusionKind.Slice);
     [Fact] void should_preserve_strict_failure() => _normal.Success.ShouldBeFalse();
+    [Fact] void should_report_a_root_cause() => _result.Exclusions.Single().Cause.ShouldEqual(SemanticExclusionCause.Root);
+    [Fact] void should_not_name_dependencies() => _result.Exclusions.Single().DependsOn.ShouldBeEmpty();
 }
