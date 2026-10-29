@@ -108,7 +108,7 @@ internal static class SemanticScenario
             return failure;
         }
 
-        var execution = SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller);
+        var execution = SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller, SemanticReducerBodyExecution.For(evaluator));
         return execution is SemanticAccepted acceptedScenario ? acceptedScenario with { Response = response } : execution;
     }
 

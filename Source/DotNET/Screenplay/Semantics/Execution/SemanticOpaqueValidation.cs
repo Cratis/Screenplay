@@ -12,8 +12,8 @@ sealed class SemanticOpaqueValidation(SemanticApplication application)
 
     static string? InConcept(SemanticConcept concept, bool hasRuleProvider)
     {
-        var rules = concept.Validations.Where(rule => rule.Kind == SemanticValidationRuleKind.CodeValidation);
-        if (!hasRuleProvider) rules = concept.Validations.Where(rule => rule.Kind is SemanticValidationRuleKind.CodeValidation or SemanticValidationRuleKind.RulePredicate);
+        if (hasRuleProvider) return null;
+        var rules = concept.Validations.Where(rule => rule.Kind is SemanticValidationRuleKind.CodeValidation or SemanticValidationRuleKind.RulePredicate);
         if (rules.FirstOrDefault() is not { } rule) return null;
 
         return rule.Kind == SemanticValidationRuleKind.CodeValidation
