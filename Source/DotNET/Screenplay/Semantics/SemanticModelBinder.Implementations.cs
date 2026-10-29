@@ -32,6 +32,8 @@ public sealed partial class SemanticModelBinder
             }
         }
 
+        static bool IsImperativeValidation(ValidateSyntax validation) => validation is CodeValidateSyntax or FileValidateSyntax;
+
         static string Hash(string content) =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
 
@@ -89,6 +91,13 @@ public sealed partial class SemanticModelBinder
             _implementationRequirements.Add(requirement);
             return requirement;
         }
+
+        SemanticImplementationRequirement? RequireValidationImplementation(SemanticImplementationRole role, SemanticAddress owner, ValidateSyntax validation, string member) => validation switch
+        {
+            CodeValidateSyntax code => RequireImplementation(role, owner, null, code.Code, member),
+            FileValidateSyntax file => RequireImplementation(role, owner, file.File, null, member),
+            _ => null
+        };
 
         SemanticImplementationRequirement? RequireImplementation(
             SemanticImplementationRole role,
