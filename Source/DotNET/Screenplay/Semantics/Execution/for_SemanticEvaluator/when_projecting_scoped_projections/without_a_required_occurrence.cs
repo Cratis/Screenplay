@@ -31,6 +31,21 @@ public class without_a_required_occurrence : given.a_scoped_projection_plan
         after.PendingChildren.ShouldBeEmpty();
     }
 
+    [Fact]
+    void should_remove_without_time_when_the_ancestor_handles_the_shared_removal_itself()
+    {
+        // The root removes itself for LineRemoved, so replaying the deferred child removal never applies the root's every mapping.
+        Plan("from OrderShipped\nevery include children\n  lastSeen = $eventContext.occurred\nremove with LineRemoved key orderId\nchildren lines identified by lineNumber\n  from LineAdded key lineNumber\n    parent orderId\n    count quantity\n  remove with LineRemoved key lineNumber\n    parent orderId");
+        _compilation.Issues.ShouldBeEmpty();
+        var parent = Fact("OrderShipped", FirstOrder) with { Occurred = new DateTimeOffset(2026, 10, 2, 9, 0, 0, TimeSpan.Zero) };
+        SemanticEvaluator.TryProject(_compilation.Plan!, [], new SemanticEvaluator.ProjectionState([], []), [parent], out var prior, out _failure).ShouldBeTrue();
+        prior.ReadModels.Length.ShouldEqual(1);
+        var removal = Fact("LineRemoved", SecondOrder, ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)));
+        SemanticEvaluator.TryProject(_compilation.Plan!, [parent], prior, [removal], out var after, out _failure).ShouldBeTrue();
+        _failure.ShouldBeNull();
+        after.ReadModels.ShouldBeEmpty();
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

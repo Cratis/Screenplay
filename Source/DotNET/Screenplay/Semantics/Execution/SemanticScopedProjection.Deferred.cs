@@ -9,10 +9,11 @@ namespace Cratis.Screenplay.Semantics.Execution;
 internal sealed partial class SemanticScopedProjection
 {
     // Every mapping a deferred child applies on replay: its own from and every mappings, unless it is a removal, and the
-    // 'every include children' mappings of its ancestors, which ApplyDeferred applies for both.
-    static bool ReadsOccurrence(DeferredChild deferred) =>
+    // 'every include children' mappings of the ancestors ApplyAncestors applies. Deferring and replay both run with the
+    // deferred fact as the current fact, so both select those ancestors through the same predicate.
+    bool ReadsOccurrence(DeferredChild deferred) =>
         (deferred.Removal is null ? deferred.From!.Mappings.Concat(deferred.Scope.Every?.Mappings ?? []) : [])
-            .Concat((deferred.Level.Ancestors.IsDefault ? [] : deferred.Level.Ancestors).Where(_ => _.Scope.Every is { IncludeChildren: true }).SelectMany(_ => _.Scope.Every!.Mappings))
+            .Concat(AncestorsAppliedForCurrentFact(deferred.Level).SelectMany(_ => _.Scope.Every!.Mappings))
             .Any(_ => _.Operation == SemanticProjectionOperation.Set && _.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal));
 
     // The single place a child is deferred: one that will read an occurrence its fact lacks fails now, so no pending state
@@ -145,18 +146,16 @@ internal sealed partial class SemanticScopedProjection
 
     void ApplyAncestors(Location location, Level level)
     {
-        foreach (var ancestor in level.Ancestors.IsDefault ? [] : level.Ancestors)
+        foreach (var ancestor in AncestorsAppliedForCurrentFact(level))
         {
-            // An ancestor's own handler already applied its every mappings for a shared event.
-            if (ancestor.Scope.Every is not { IncludeChildren: true } || HandlesOwnEvent(ancestor.Scope))
-            {
-                continue;
-            }
-
             var enclosing = location with { Steps = location.Steps[..ancestor.Level.Address.Length], Nested = ancestor.Level.Nested };
             Modify(enclosing, false, target => Apply(target, ancestor.Scope.Every?.Mappings ?? [], ancestor.Level.Targets, _fact, ancestor.Level.Nested.IsEmpty && ancestor.Scope.Joins.IsEmpty));
         }
     }
+
+    // An ancestor's own handler already applied its every mappings for a shared event.
+    IEnumerable<Ancestor> AncestorsAppliedForCurrentFact(Level level) =>
+        (level.Ancestors.IsDefault ? [] : level.Ancestors).Where(ancestor => ancestor.Scope.Every is { IncludeChildren: true } && !HandlesOwnEvent(ancestor.Scope));
 
     bool HandlesOwnEvent(SemanticProjectionScope scope) =>
         scope.From.Any(from => from.EventContract == _fact.EventContract) ||
