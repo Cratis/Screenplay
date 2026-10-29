@@ -1,10 +1,12 @@
 ---
 id: 0119
 title: Admit command handlers that declare a set of possible events (handler result contract v2, ESM v35)
-status: proposed
+status: accepted
 stage: none
 class: contract
 reversibility: costly
+decided: 2026-10-29
+decider: owner orchestration (delegated owner acceptance)
 amends: 0082, 0117
 applies-to:
   - Source/DotNET/Screenplay/**
