@@ -57,6 +57,9 @@ describe('when validating read-model member types in VS Code', () => {
     it('should deduplicate the same assembled compiler and language diagnostic', () => {
         const application = new WorkspaceApplication();
         application.set('model.play', source);
+        application.diagnosticsFor('model.play').map(diagnostic => [diagnostic.code, diagnostic.severity, diagnostic.message, diagnostic.location]).should.deep.equal([
+            ['PLAY0273', 'error', message, { line: 5, column: 15, path: 'model.play' }],
+        ]);
         refresh(source, application);
         editor.diagnostics.filter(diagnostic => diagnostic.range.start.line === 4).map(diagnostic => [diagnostic.code, diagnostic.message]).should.deep.equal([['PLAY0273', message]]);
     });

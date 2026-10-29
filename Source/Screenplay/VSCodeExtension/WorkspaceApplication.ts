@@ -199,7 +199,8 @@ export class WorkspaceApplication {
         const key = normalizePlayPath(path);
         const unknownEventLines = new Set<number>();
         return this.#compiled().diagnostics.filter(diagnostic => {
-            if (diagnostic.location.path !== key || !surfacedCodes.has(diagnostic.code)) return false;
+            const memberType = diagnostic.code === DiagnosticCodes.InvalidSemanticBinding && diagnostic.message.startsWith("Read model '") && diagnostic.message.includes("' references unsupported type '");
+            if (diagnostic.location.path !== key || (!surfacedCodes.has(diagnostic.code) && !memberType)) return false;
             // Contract classification and legacy capture validation can flag the same unresolved append.
             // Keep one editor finding without altering either compiler's diagnostic stream.
             if (diagnostic.code === 'PLAY0166') {
