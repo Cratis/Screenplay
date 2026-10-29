@@ -552,6 +552,8 @@ public partial class ScreenplayPrinter
         writer.Line("handler");
         using (writer.Indent())
         {
+            WritePossibleEvents(writer, handler.PossibleEvents);
+
             if (handler.Implementation is { } implementation)
             {
                 ImplementationInvariants.Validate(implementation);

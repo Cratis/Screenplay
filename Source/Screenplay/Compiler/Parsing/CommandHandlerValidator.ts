@@ -31,10 +31,23 @@ export function validateApplicationHandlers(application: ApplicationSyntax, cont
     for (const module of application.modules) module.features.forEach(validateFeature);
 }
 
+export function validateHandlerContracts(handlers: readonly { handler: HandlerSyntax | null; location: SourceLocation }[], handler: HandlerSyntax | null, hasProduces: boolean, context: ParserContext): void {
+    validateHandlerOccurrences(handlers, context);
+    validatePossibleEvents(handler, hasProduces, context);
+}
+
+export function validatePossibleEvents(handler: HandlerSyntax | null, hasProduces: boolean, context: ParserContext): void {
+    if (hasProduces && handler?.possibleEvents != null) {
+        context.error(DiagnosticCodes.InvalidPossibleEventsDeclaration, "A command cannot combine 'produces' with a handler 'may produce' set.", handler.possibleEvents.location);
+    }
+}
+
 export function validateCommandHandlers(commands: readonly CommandSyntax[], context: ParserContext): void {
     const groups = new Map<string, CommandSyntax[]>();
     for (const command of commands) groups.set(command.name, [...(groups.get(command.name) ?? []), command]);
     for (const group of groups.values()) {
         validateHandlerOccurrences(group.flatMap(command => command.handler == null ? [] : [{ handler: command.handler, location: command.handler.location }]), context);
+        const hasProduces = group.some(command => command.produces.length > 0);
+        group.forEach(command => validatePossibleEvents(command.handler, hasProduces, context));
     }
 }

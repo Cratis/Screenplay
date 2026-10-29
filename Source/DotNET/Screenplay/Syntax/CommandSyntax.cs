@@ -445,6 +445,9 @@ public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, So
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record HandlerSyntax(FileReferenceSyntax? File, CodeBlockSyntax? Code, SourceLocation Location) : SyntaxNode(Location)
 {
+    /// <summary>Gets the optional closed set of possible handler results.</summary>
+    public PossibleEventsSyntax? PossibleEvents { get; init; }
+
     /// <summary>
     /// Gets the optional implementation intent. The payload remains on this handler.
     /// </summary>

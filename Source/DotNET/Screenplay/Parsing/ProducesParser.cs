@@ -258,7 +258,7 @@ internal static partial class ProducesParser
 
     static bool IsRoute(SourceLine line) => LineText.FirstWord(line.Content) == "stream" && !line.Content.Contains('=');
 
-    static CommandStreamSyntax? ParseRoute(ParserContext context, SourceLine line, CommandStreamSyntax? previous, bool inCommand)
+    internal static CommandStreamSyntax? ParseRoute(ParserContext context, SourceLine line, CommandStreamSyntax? previous, bool inCommand)
     {
         if (!inCommand)
         {

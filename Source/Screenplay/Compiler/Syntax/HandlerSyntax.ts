@@ -5,10 +5,12 @@ import { FileReferenceSyntax } from './Constraints';
 import { CodeBlockSyntax } from './Screens';
 import { SyntaxNode } from './SyntaxNode';
 import { ImplementationSyntax } from './ImplementationSyntax';
+import { PossibleEventsSyntax } from './PossibleEventsSyntax';
 
 export interface HandlerSyntax extends SyntaxNode {
     readonly kind: 'HandlerSyntax';
     readonly file: FileReferenceSyntax | null;
     readonly code: CodeBlockSyntax | null;
     readonly implementation?: ImplementationSyntax | null;
+    readonly possibleEvents?: PossibleEventsSyntax | null;
 }

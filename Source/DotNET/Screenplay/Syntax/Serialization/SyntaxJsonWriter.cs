@@ -17,6 +17,7 @@ internal static class SyntaxJsonWriter
         foreach (var member in descriptor.Members)
         {
             var value = member.Property.GetValue(node);
+            if (OmitPossibleEvents(node, member.Name, value)) continue;
             if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
@@ -51,6 +52,13 @@ internal static class SyntaxJsonWriter
         }
 
         return result;
+    }
+
+    static bool OmitPossibleEvents(SyntaxNode node, string name, object? value)
+    {
+        if (node is not HandlerSyntax || name != "possibleEvents") return false;
+        if (value is null) return true;
+        return value is PossibleEventsSyntax possible && !possible.Events.Any();
     }
 
     static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
