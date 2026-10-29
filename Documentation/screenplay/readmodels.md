@@ -34,6 +34,14 @@ readmodel AccountBalance
   movements Int
 ```
 
+## Member value types
+
+A read-model member can use a primitive, a declared concept, a top-level [composite type](types.md), or an imported value-type name. Scalar, collection (`InvoiceLine[]`) and optional forms use the same value-type namespace. A read model has its own keyed/query identity; naming another `readmodel` does not make that view a reusable member type, even within the same slice.
+
+Declare reusable child shapes with a top-level `type`, then reference that type from the read model. A `type` inside a slice is still an unknown construct: `PLAY0029` warns at its header and its body is skipped. A member referencing that skipped type, another read model, or an undeclared name fails ordinary validation and executable binding with Error `PLAY0273` at the member's type reference. The diagnostic suggests a primitive, concept or top-level `type` instead. Previously accepted unsupported members now fail validation.
+
+[Children projections](projections/grammar.md#children-block) populate a declared composite collection; `children` does not turn a read-model identity into a value type. See the [top-level child-shape example](types.md#read-model-child-shapes).
+
 ## Keys
 
 Mark a top-level property with the trailing `key` modifier to identify an instance. Explicit keys replace inference. Without a mark, executable binding infers the identifier from one unambiguous keyed query or one `*Id` property.

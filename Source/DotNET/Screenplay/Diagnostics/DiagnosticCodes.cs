@@ -1490,7 +1490,8 @@ public static class DiagnosticCodes
     public const string SemanticMigrationRequired = "PLAY0272";
 
     /// <summary>
-    /// The source syntax and identity catalog could not produce a coherent semantic compilation.
+    /// A read-model member references an unsupported value type, or the source syntax and identity catalog
+    /// could not produce a coherent semantic compilation.
     /// </summary>
     public const string InvalidSemanticBinding = "PLAY0273";
 

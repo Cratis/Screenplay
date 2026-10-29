@@ -38,6 +38,8 @@ public class when_printing_comments_on_silently_replaced_directives : given.a_pr
         """;
 
     const string ScreenAndProjection = """
+        type AccountLine
+          n Int
         module Billing
           feature Accounts
             slice StateChange Open
@@ -55,8 +57,6 @@ public class when_printing_comments_on_silently_replaced_directives : given.a_pr
               readmodel Account
                 accountId Uuid
                 lines AccountLine[]
-              readmodel AccountLine
-                n Int
               projection P => Account // header-proj
                 from AccountOpened key accountId
                 children lines identified by n
