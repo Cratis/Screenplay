@@ -5,6 +5,8 @@ namespace Cratis.Screenplay.Semantics.for_AdmissibleSemanticModelCompiler;
 
 public class when_a_later_protected_read_closure_has_two_own_failures : given.security_documents
 {
+    IEnumerable<SemanticExclusion> Readers => _result.Exclusions.Where(value => value.Address is "M/F/Write" or "M/F/Inspect");
+
     void Establish() => Source(Protected
         .Replace("  feature F\n", "  feature F\n    slice StateView Removed\n      readmodel EarlierView\n        earlierId String\n      query Scoped => EarlierView[]\n        scoped to identity\n", StringComparison.Ordinal)
         .Replace("    slice StateView Lookup\n", "      query EarlierForWrite => EarlierView[]\n    slice StateView Lookup\n", StringComparison.Ordinal)
@@ -20,8 +22,6 @@ public class when_a_later_protected_read_closure_has_two_own_failures : given.se
     [Fact] void should_name_only_the_earlier_exclusion_for_each_reader() => Readers.ShouldEachConformTo(value => value.DependsOn.SequenceEqual(new SemanticExclusionReference[] { new(SemanticExclusionKind.Slice, "M/F/Removed") }));
     [Fact] void should_keep_the_forcing_readers_for_the_view() => _result.Exclusions[2].DependsOn.AsEnumerable().ShouldEqual([new(SemanticExclusionKind.Slice, "M/F/Write"), new(SemanticExclusionKind.Slice, "M/F/Inspect")]);
     [Fact] void should_terminate_every_dependency_path_at_a_root() => _result.Exclusions.ShouldEachConformTo(value => ReachesRoot(value, []));
-
-    IEnumerable<SemanticExclusion> Readers => _result.Exclusions.Where(value => value.Address is "M/F/Write" or "M/F/Inspect");
 
     bool ReachesRoot(SemanticExclusion exclusion, HashSet<SemanticExclusionReference> visited)
     {
