@@ -28,10 +28,11 @@ public sealed partial class SemanticModelBinder
             return !property.Type.IsCollection && (!property.IsGenerated || property.IsIdentifier);
         }
 
-        SemanticCommandHandler? BindStagedPossibleEventsHandler(SemanticAddress address, CommandSyntax command, HandlerSyntax handler)
+        SemanticCommandHandler? BindStagedPossibleEventsHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope, HandlerSyntax handler)
         {
             if (AllowPossibleEvents) return BindPossibleEventsHandler(address, command, handler);
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Handler 'may produce' sets require the staged ESM v35 binding path.", handler.PossibleEvents!.Location);
+            var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
+            Error(DiagnosticCodes.CommandHandlerRequiresAttachment, DescribedCommandAdmission.AttachmentRefusalMessage(command, null), handler.Location, DiagnosticArguments.Empty.With("subject", subject));
             return null;
         }
 

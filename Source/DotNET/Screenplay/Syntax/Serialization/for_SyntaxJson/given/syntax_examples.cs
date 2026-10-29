@@ -66,7 +66,7 @@ internal static class syntax_examples
 
     // A declared set always holds an entry (an empty set is unwritable); nested examples are too deep to populate it.
     static PossibleEventsSyntax? WithPossibleEvent(PossibleEventsSyntax? possible) =>
-        possible is null || possible.Events.Any() ? possible : possible with { Events = [(PossibleEventSyntax)Create(typeof(PossibleEventSyntax))] };
+        possible?.Events.Any() is not false ? possible : possible with { Events = [(PossibleEventSyntax)Create(typeof(PossibleEventSyntax))] };
 
     static SyntaxNode WithActionSubjectContract(SyntaxNode node) => node is ToolbarItemSyntax item ? item with { Kind = ToolbarItemKind.Action } : node;
 

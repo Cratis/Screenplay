@@ -17,7 +17,7 @@ public sealed partial class SemanticModelBinder
         SemanticCommandHandler? BindCommandHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope)
         {
             if (command.Handler is not { } handler) return null;
-            if (handler.PossibleEvents is not null) return BindStagedPossibleEventsHandler(address, command, handler);
+            if (handler.PossibleEvents is not null) return BindStagedPossibleEventsHandler(address, command, scope, handler);
 
             if (!DescribedCommandAdmission.IsDescribed(command)) return BindAttachedCommandHandler(address, command, scope, handler);
 

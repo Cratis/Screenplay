@@ -29,7 +29,7 @@ public class with_a_pending_implementation : given.a_possible_events_binder
     [Fact] void should_resolve_the_default_identifier() => ((SemanticResolvedExpression)_command.Handler!.PossibleEvents[0].Destination!).Target.ShouldEqual(_command.Properties.Single(property => property.IsIdentifier).Id);
     [Fact] void should_resolve_the_collection_identity() => ((SemanticOneOfExpression)_command.Handler!.PossibleEvents[^1].Destination!).CollectionProperty.ShouldEqual(_command.Properties.Single(property => property.Name == "ids").Id);
     [Fact] void should_count_both_event_types_as_unrouted_producers() => SemanticDecisionReadAdmission.Producers(_result.Value!.Application.Modules.Single().Features.Single().Slices).Count(value => !value.Routed).ShouldEqual(2);
-    [Fact] void should_not_enable_public_binding() => Bind(Source).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
+    [Fact] void should_not_enable_public_binding() => Bind(Source).Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Code).ShouldEqual([DiagnosticCodes.CommandHandlerRequiresAttachment]);
 
     [Fact]
     void should_preserve_the_positional_handler_contract()
