@@ -49,9 +49,10 @@ sealed class SemanticReducerBodyExecution(ISemanticBodyExecutionProvider? provid
         // Legacy paths that do not consume reducer state retain their existing admission guards and do not fold it.
         if (provider is null) return null;
         var fact = input.Fact;
-        foreach (var reducer in SemanticEvaluator.AllReducers(plan).Where(reducer => Reached(reducer, fact, plan)))
+
+        // Establishment skips non-executable reducers; state assertions and public replay keep their admission guards.
+        foreach (var reducer in SemanticEvaluator.AllReducers(plan).Where(reducer => Reached(reducer, fact, plan) && CanExecute(plan, reducer)))
         {
-            if (!TargetsSupportedModel(plan, reducer)) return $"Reducer '{reducer.Name}' requires an exclusively reducer-built read model; event-target and mixed projection/reducer models are not supported.";
             var transition = reducer.Transitions.Single(transition => transition.EventContract == fact.EventContract);
             var body = Resolve(reducer, transition, out var failure);
             if (body is null) return failure;

@@ -44,6 +44,23 @@ public class and_preserving_portable_values : given.a_reducer
         Contexts.Count.ShouldEqual(1);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_refuse_an_unusable_reducer_identity_before_history_contract_validation(bool extend)
+    {
+        Reset();
+        var fact = Fact() with { Destination = SemanticValue.Null, Context = null, Values = [] };
+        var baseline = extend ? new SemanticEvaluator().ExtendWorld(Plan, SemanticWorld.Empty, [fact]) : new SemanticEvaluator().EstablishWorld(Plan, [fact]);
+        baseline.ShouldBeOfExactType<SemanticRejected>();
+        ((SemanticRejected)baseline).Details.ShouldEqual("Fact occurrence metadata is malformed.");
+        var result = extend ? Evaluator.ExtendWorld(Plan, SemanticWorld.Empty, [fact]) : Evaluator.EstablishWorld(Plan, [fact]);
+        result.ShouldBeOfExactType<SemanticUnsupported>();
+        ((SemanticUnsupported)result).Details.ShouldContain("The event source key must be a non-null scalar identity.");
+        result.World.ShouldBeSame(SemanticWorld.Empty);
+        Contexts.ShouldBeEmpty();
+    }
+
     [Fact]
     void should_materialize_optional_properties_and_order_them_by_the_declaration()
     {
