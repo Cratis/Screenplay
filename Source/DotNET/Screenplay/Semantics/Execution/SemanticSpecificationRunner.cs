@@ -231,9 +231,6 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     internal SemanticSpecificationRunner WithCancellation(CancellationToken cancellationToken) =>
         cancellationToken.CanBeCanceled ? new(new SemanticCancellationEvaluator(evaluator, cancellationToken)) : this;
 
-    static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
-        features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
-
     static SemanticRejected? GivenFacts(SemanticExecutionPlan plan, SemanticSpecification specification, out ImmutableArray<SemanticFact> facts)
     {
         try
