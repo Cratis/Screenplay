@@ -13,6 +13,9 @@ public sealed partial class SemanticModelBinder
     {
         readonly Dictionary<QuerySyntax, int> _performedQueryRequirements = new(ReferenceEqualityComparer.Instance);
 
+        // Decision 0119: only an observable collection performer has a live result contract (2); every other performer stays at 1.
+        static uint PerformerResultVersion(SemanticPerformedQueryShape shape) => shape is { Delivery: SemanticQueryDelivery.Live, Cardinality: SemanticQueryCardinality.Many } ? 2u : 1u;
+
         bool CanBindPerformedQueryArguments(QuerySyntax query)
         {
             if (query.Performer is null) return true;
@@ -51,9 +54,6 @@ public sealed partial class SemanticModelBinder
             var authorization = EffectiveAuthorization(query.Authorize, keys, module, featurePath, queryFilterNames: query.Filters.Select(filter => filter.Name));
             _implementationRequirements[index] = _implementationRequirements[index] with { QueryShape = shape with { Authorization = authorization } };
         }
-
-        // Decision 0119: only an observable collection performer has a live result contract (2); every other performer stays at 1.
-        static uint PerformerResultVersion(SemanticPerformedQueryShape shape) => shape is { Delivery: SemanticQueryDelivery.Live, Cardinality: SemanticQueryCardinality.Many } ? 2u : 1u;
 
         SemanticPerformedQueryShape PerformedQueryShape(QuerySyntax query)
         {
