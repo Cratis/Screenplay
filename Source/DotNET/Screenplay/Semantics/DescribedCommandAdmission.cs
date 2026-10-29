@@ -54,16 +54,6 @@ internal static class DescribedCommandAdmission
         return prefix + $": {AttachmentFailureReason(requirement)}. Declare an unconditional 'produces <Event>' beside a resolved, nonempty, language-tagged handler body; split conditional or variable outcomes into separate commands, or move them to declarative 'produces ... when' without a body.";
     }
 
-    static string AttachmentFailureReason(SemanticImplementationRequirement? requirement) => requirement switch
-    {
-        null => "the handler body is empty or missing",
-        { IsAmbiguous: true } => "the command declares more than one handler",
-        { Hints.IsEmpty: false } => "the handler still carries implementation hints",
-        { AttachmentResolution: not SemanticAttachmentResolution.Resolved, File: null } => "the handler body is empty or missing",
-        { AttachmentResolution: not SemanticAttachmentResolution.Resolved } => "the handler's file could not be resolved to a nonempty body",
-        _ => "the handler body is not a resolved, nonempty, language-tagged body"
-    };
-
     internal static Diagnostic? Refusal(CommandSyntax command)
     {
         if (!command.Produces.Any())
@@ -75,6 +65,16 @@ internal static class DescribedCommandAdmission
             ? Diagnostic.Error(DiagnosticCodes.DescribedCommandCardinalityNotAdmitted, $"Described command '{command.Name}' requires unconditional productions in result version 1.", conditional.Location)
             : null;
     }
+
+    static string AttachmentFailureReason(SemanticImplementationRequirement? requirement) => requirement switch
+    {
+        null => "the handler body is empty or missing",
+        { IsAmbiguous: true } => "the command declares more than one handler",
+        { Hints.IsEmpty: false } => "the handler still carries implementation hints",
+        { AttachmentResolution: not SemanticAttachmentResolution.Resolved, File: null } => "the handler body is empty or missing",
+        { AttachmentResolution: not SemanticAttachmentResolution.Resolved } => "the handler's file could not be resolved to a nonempty body",
+        _ => "the handler body is not a resolved, nonempty, language-tagged body"
+    };
 
     static string? HandlerLanguage(string? path) => _handlerLanguages.GetValueOrDefault(Path.GetExtension(path) ?? string.Empty);
 
