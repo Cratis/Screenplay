@@ -45,7 +45,7 @@ const calendarPattern = pattern(`^calendar\\s+(?:"(${stringBodyPattern})"|from\\
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
-const operandPattern = pattern('^(not empty|length ==|decimals <=|all >=|all >|matches|not contains|contains|starts with|ends with|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
+const operandPattern = pattern('^(?:(not empty|matches|not contains|contains|starts with|ends with|max|min|rule)(?:\\s+|$)|(length ==|decimals <=|all >=|all >|>=|<=|==|!=|>|<)\\s*)(.*)$');
 const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
@@ -406,13 +406,14 @@ function parseRule(context: ParserContext, rule: string, line: SourceLine): { ki
         context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${line.content}'`, locationOf(line));
         return undefined;
     }
-    if (operand[1] === 'rule') {
-        const name = operand[2].trim();
+    const operator = operand[1] ?? operand[2];
+    if (operator === 'rule') {
+        const name = operand[3].trim();
         if (!ruleNamePattern.test(name)) {
             context.error(DiagnosticCodes.InvalidRuleName, `Invalid rule name '${name}' in '${line.content}' - expected 'rule <Name>' with an identifier`, locationOf(line));
             return undefined;
         }
         return { kind: 'Rule', value: { kind: 'PathExpressionSyntax', path: name, location: locationOf(line) } };
     }
-    return { kind: operandKinds[operand[1]], value: parseMappingSource(operand[2], locationOf(line), context) };
+    return { kind: operandKinds[operator], value: parseMappingSource(operand[3], locationOf(line), context) };
 }

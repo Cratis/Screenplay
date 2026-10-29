@@ -10,6 +10,8 @@ public class when_compiling_validation_on_a_property_named_file : given.a_compil
     CompilationResult<ApplicationSyntax>[] _rules;
     CompilationResult<ApplicationSyntax> _include;
     CompilationResult<ApplicationSyntax> _mixed;
+    CompilationResult<ApplicationSyntax>[] _wordPathIncludes;
+    CompilationResult<ApplicationSyntax>[] _operatorRules;
 
     void Because()
     {
@@ -22,6 +24,8 @@ public class when_compiling_validation_on_a_property_named_file : given.a_compil
             "file not empty\n          other not empty"
         }.Select(rule => _compiler.Parse(Source(rule)))];
         _include = _compiler.Parse(Source("file Rules/Pay file.cs"));
+        _wordPathIncludes = [.. new[] { "rules/Money.cs", "minimum.cs", "contains/X.cs" }.Select(path => _compiler.Parse(Source("file " + path)))];
+        _operatorRules = [.. new[] { "file max 10", "file min 3", "file rule Positive", "file >= 1" }.Select(rule => _compiler.Parse(Source(rule)))];
         _mixed = _compiler.Parse(Source("file Rules/Pay.cs\n          other not empty"));
     }
 
@@ -32,6 +36,13 @@ public class when_compiling_validation_on_a_property_named_file : given.a_compil
     [Fact] void should_still_accept_a_sole_path_shaped_include() => _include.Diagnostics.ShouldBeEmpty();
     [Fact] void should_preserve_the_include_path() => ((FileValidateSyntax)Validation(_include)).File.Path.ShouldEqual("Rules/Pay file.cs");
     [Fact] void should_not_claim_an_include_with_another_child() => Validation(_mixed).ShouldBeOfExactType<DeclarativeValidateSyntax>();
+    [Fact] void should_report_the_refused_include() => _mixed.Diagnostics.ShouldNotBeEmpty();
+    [Fact] void should_treat_a_path_starting_with_an_operator_word_as_an_include() => _wordPathIncludes.Select(Validation).ShouldEachConformTo(validation => validation is FileValidateSyntax);
+    [Fact] void should_keep_the_operator_word_include_paths() => _wordPathIncludes.Select(result => ((FileValidateSyntax)Validation(result)).File.Path).ShouldEqual(["rules/Money.cs", "minimum.cs", "contains/X.cs"]);
+    [Fact] void should_report_no_diagnostics_for_operator_word_includes() => _wordPathIncludes.SelectMany(result => result.Diagnostics).ShouldBeEmpty();
+    [Fact] void should_keep_an_operator_after_the_file_property_as_a_rule() => _operatorRules.Select(Validation).ShouldEachConformTo(validation => validation is DeclarativeValidateSyntax);
+    [Fact] void should_keep_the_file_subject_for_operators() => _operatorRules.Select(Validation).OfType<DeclarativeValidateSyntax>().Select(validation => validation.Rules.First().Property).ShouldEqual(["file", "file", "file", "file"]);
+    [Fact] void should_report_no_diagnostics_for_operator_rules() => _operatorRules.SelectMany(result => result.Diagnostics).ShouldBeEmpty();
     [Fact] void should_still_parse_the_rule_after_a_refused_include() => ((DeclarativeValidateSyntax)Validation(_mixed)).Rules.Single().Property.ShouldEqual("other");
 
     static ValidateSyntax Validation(CompilationResult<ApplicationSyntax> result) => result.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single();

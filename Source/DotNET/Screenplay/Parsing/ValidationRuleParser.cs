@@ -137,19 +137,20 @@ internal static partial class ValidationRuleParser
         }
 
         var operand = OperandRegex().Match(rule);
+        var ruleOperator = operand.Groups[1].Success ? operand.Groups[1].Value : operand.Groups[2].Value;
         if (!operand.Success)
         {
             context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
             return (null, null);
         }
 
-        if (operand.Groups[1].Value == "rule")
+        if (ruleOperator == "rule")
         {
-            return ParseNamedRule(context, operand.Groups[2].Value.Trim(), line);
+            return ParseNamedRule(context, operand.Groups[3].Value.Trim(), line);
         }
 
-        var value = ExpressionParser.ParseMappingSource(context, operand.Groups[2].Value, line.Location);
-        ValidationRuleKind? kind = operand.Groups[1].Value switch
+        var value = ExpressionParser.ParseMappingSource(context, operand.Groups[3].Value, line.Location);
+        ValidationRuleKind? kind = ruleOperator switch
         {
             "max" => ValidationRuleKind.Max,
             "min" => ValidationRuleKind.Min,
@@ -173,7 +174,7 @@ internal static partial class ValidationRuleParser
 
         if (kind is null)
         {
-            context.Error(DiagnosticCodes.UnknownValidationRule, $"Unknown validation rule '{operand.Groups[1].Value}'", line.Location);
+            context.Error(DiagnosticCodes.UnknownValidationRule, $"Unknown validation rule '{ruleOperator}'", line.Location);
             return (null, null);
         }
 
@@ -254,7 +255,7 @@ internal static partial class ValidationRuleParser
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex RuleRegex();
 
-    [GeneratedRegex(@"^(not empty|length ==|decimals <=|all >=|all >|matches|not contains|contains|starts with|ends with|max|min|rule|>=|<=|==|!=|>|<)\s*(.*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^(?:(not empty|matches|not contains|contains|starts with|ends with|max|min|rule)(?:\s+|$)|(length ==|decimals <=|all >=|all >|>=|<=|==|!=|>|<)\s*)(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OperandRegex();
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]

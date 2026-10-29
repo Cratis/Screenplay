@@ -35,6 +35,22 @@ describe('when parsing imperative validation files', () => {
         expect(validation.rules[0].property).toBe('file');
     });
 
+    it.each(['Rules/Money.cs', 'rules/Money.cs', 'minimum.cs', 'contains/X.cs'])('should treat a path that starts with an operator word as an include: %s', path => {
+        const parsed = parse(command('file ' + path));
+        expect(parsed.diagnostics).toEqual([]);
+        const validation = parsed.value!.modules[0].features[0].slices[0].commands[0].validations[0] as FileValidateSyntax;
+        expect(validation.kind).toBe('FileValidateSyntax');
+        expect(validation.file.path).toBe(path);
+    });
+
+    it.each(['file max 10', 'file min 3', 'file rule Positive', 'file >= 1'])('should keep an operator after the file property as a rule: %s', body => {
+        const parsed = parse(command(body));
+        expect(parsed.diagnostics).toEqual([]);
+        const validation = parsed.value!.modules[0].features[0].slices[0].commands[0].validations[0] as DeclarativeValidateSyntax;
+        expect(validation.kind).toBe('DeclarativeValidateSyntax');
+        expect(validation.rules[0].property).toBe('file');
+    });
+
     it('should not claim a file include when another child follows', () => {
         const parsed = parse(command('file Rules/Pay.cs\n          other not empty'));
         const validation = parsed.value!.modules[0].features[0].slices[0].commands[0].validations[0] as DeclarativeValidateSyntax;
