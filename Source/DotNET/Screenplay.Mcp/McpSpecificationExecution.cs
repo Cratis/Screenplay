@@ -11,10 +11,18 @@ namespace Cratis.Screenplay.Mcp;
 sealed record McpSpecificationResult(string Address, string SemanticId, string Outcome, string? ExecutionOutcome, string[] Failures, string? Capability, string? Reason);
 sealed record McpSpecificationReport(string SourceRevision, string Outcome, int Discovered, int Selected, int Executed, int Passed, int Failed, int Unsupported, Diagnostic[] Diagnostics, SemanticPlanIssue[] PlanIssues, McpSpecificationResult[] Results);
 
-static class McpSpecificationExecution
+sealed record McpSpecificationSelection(string? Specification = null, string? Scope = null, IReadOnlySet<DocumentId>? Documents = null);
+sealed record McpRuleExecution(ISemanticBodyExecutionProviderFactory? Factory, CancellationToken CancellationToken);
+sealed record McpSpecificationRun(SemanticCompilation Compilation, SemanticExecutionPlanCompilation Admitted, SemanticSpecificationRunner Runner, CancellationToken CancellationToken);
+
+internal static partial class McpSpecificationExecution
 {
-    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null, IReadOnlySet<DocumentId>? documents = null)
+    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null) =>
+        Run(workspace, new McpSpecificationSelection(specification, scope), new McpRuleExecution(null, default));
+
+    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, McpSpecificationSelection selection, McpRuleExecution execution)
     {
+        var (specification, scope, documents) = selection;
         var source = McpWorkspaceAnalysis.For(workspace).Source;
         var revision = source.SourceRevision;
         if (!workspace.Compilation.Success)
@@ -36,33 +44,9 @@ static class McpSpecificationExecution
         }
 
         var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
-        var runner = new SemanticSpecificationRunner();
-        var results = selected.Select(assignment =>
-        {
-            if (admitted.Plan is not { } plan)
-            {
-                return new McpSpecificationResult(assignment.Address, assignment.Id.ToString(), "unsupported", null, [], "Specification", string.Join("; ", admitted.Issues.Select(issue => issue.Details)));
-            }
-
-            var run = SemanticSpecificationRunner.EnrichFailures(compilation, runner.Run(plan, assignment.Id));
-            var unsupported = run.Execution as SemanticUnsupported;
-            var outcome = unsupported is not null ? "unsupported" : Outcome(run.Passed, false);
-            var failures = run.Failures.AsEnumerable();
-            if (!run.Passed && unsupported is null && run.Execution is SemanticAccepted accepted)
-            {
-                var expected = plan.Specifications[assignment.Id];
-                failures = failures.Append($"Expected facts: {string.Join("; ", expected.ThenEvents.Select(fact => DescribeFact(plan, fact.EventContract, fact.Values)))}")
-                    .Append($"Actual facts: {string.Join("; ", accepted.Facts.Select(fact => DescribeFact(plan, fact.EventContract, fact.Values)))}")
-                    .Append($"Expected read models: {string.Join("; ", expected.ThenReadModels.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))}")
-                    .Append($"Actual read models: {string.Join("; ", accepted.World.ReadModels.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))}")
-                    .Append($"Expected response: {DescribeResponse(expected.ThenReturns)}")
-                    .Append($"Actual response: {DescribeResponse(accepted.Response)}")
-                    .Append($"Expected query results: {string.Join("; ", expected.ThenQueries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}")
-                    .Append($"Actual query results: {string.Join("; ", accepted.Queries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}");
-            }
-
-            return new McpSpecificationResult(assignment.Address, assignment.Id.ToString(), outcome, run.Execution.Kind.ToString(), [.. failures], unsupported?.Capability.ToString(), unsupported?.Details);
-        }).ToArray();
+        using var bodyRun = new SemanticBodyExecutionRun(execution.Factory, compilation.Model.Application, execution.Factory is null ? [] : McpRuleBodies.Resolve(workspace), execution.CancellationToken);
+        var context = new McpSpecificationRun(compilation, admitted, new SemanticSpecificationRunner(bodyRun.Evaluator), execution.CancellationToken);
+        var results = selected.Select(assignment => Evaluate(context, assignment)).ToArray();
         var passed = results.Count(result => result.Outcome == "passed");
         var failed = results.Count(result => result.Outcome == "failed");
         var unsupportedCount = results.Count(result => result.Outcome == "unsupported");

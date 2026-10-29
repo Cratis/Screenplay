@@ -16,6 +16,7 @@ public class a_projection_block_binder : for_SemanticModelBinder.given.a_semanti
           lineNumber Int
           quantity Int?
         type OrderLine
+          lastSeen DateTime?
           parts OrderPart[]
           orderId OrderId?
           lineNumber Int
@@ -24,6 +25,7 @@ public class a_projection_block_binder : for_SemanticModelBinder.given.a_semanti
           subtotal Decimal?
           discontinued Bool?
         type Shipping
+          lastSeen DateTime?
           lines OrderLine[]?
           carrier String
           note String?

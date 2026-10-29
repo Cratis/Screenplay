@@ -250,6 +250,9 @@ public sealed record SemanticExecutionRequest(
     /// </summary>
     public SemanticCommandOccurrence? Occurrence { get; init; }
 
+    /// <summary>Gets the tenant supplied to host-owned rule execution, if known.</summary>
+    public string? Tenant { get; init; }
+
     /// <summary>
     /// Gets the typed identity of a caller-allocated event source.
     /// </summary>

@@ -17,7 +17,8 @@ internal sealed partial class SemanticScopedProjection
         Dictionary<SemanticId, SemanticValue> target,
         ImmutableArray<SemanticProjectionMapping> mappings,
         Dictionary<SemanticId, SemanticProperty> targets,
-        SemanticFact fact)
+        SemanticFact fact,
+        bool readsOccurrence)
     {
         foreach (var mapping in mappings)
         {
@@ -31,7 +32,7 @@ internal sealed partial class SemanticScopedProjection
             ModifyNested(target, mapping.Target[..^1], 0, true, container =>
             {
                 var last = mapping.Target[^1];
-                if (Operate(mapping, property, container.GetValueOrDefault(last), fact) is { } value)
+                if (Operate(mapping, property, container.GetValueOrDefault(last), fact, readsOccurrence) is { } value)
                 {
                     container[last] = value;
                 }
@@ -39,13 +40,14 @@ internal sealed partial class SemanticScopedProjection
         }
     }
 
-    SemanticValue? Operate(SemanticProjectionMapping mapping, SemanticProperty property, SemanticValue? current, SemanticFact fact)
+    // Only a property assignment of a from, every or children scope reads the occurrence; keys, joins and nested scopes keep refusing it.
+    SemanticValue? Operate(SemanticProjectionMapping mapping, SemanticProperty property, SemanticValue? current, SemanticFact fact, bool readsOccurrence)
     {
         switch (mapping.Operation)
         {
             // A null source sets the target to null (Chronicle PropertyMappers.cs:26-37).
             case SemanticProjectionOperation.Set:
-                return Evaluate(mapping.Source!, fact);
+                return Evaluate(mapping.Source!, fact, readsOccurrence);
             case SemanticProjectionOperation.Clear:
                 return SemanticValue.Null;
         }
@@ -119,7 +121,7 @@ internal sealed partial class SemanticScopedProjection
         return source;
     }
 
-    SemanticValue? Evaluate(SemanticProjectionValue value, SemanticFact fact)
+    SemanticValue? Evaluate(SemanticProjectionValue value, SemanticFact fact, bool readsOccurrence = false)
     {
         switch (value)
         {
@@ -128,6 +130,14 @@ internal sealed partial class SemanticScopedProjection
             case SemanticProjectionEventSourceIdentity:
             case SemanticProjectionEventContextValue { Path: "eventSourceId" }:
                 return fact.Context?.EventSource.Value ?? fact.Destination;
+            case SemanticProjectionEventContextValue { Path: "occurred" } when readsOccurrence:
+                if (fact.Occurred is { } occurred)
+                {
+                    return SemanticEvaluator.OccurredValue(occurred);
+                }
+
+                Fail($"Projection '{projection.Name}' reads occurred but this fact carries no occurrence time.");
+                return null;
             case SemanticProjectionEventProperty property:
                 var values = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
                 var current = values.GetValueOrDefault(property.Path[0], SemanticValue.Null);

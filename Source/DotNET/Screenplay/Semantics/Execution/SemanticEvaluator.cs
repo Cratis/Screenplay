@@ -10,18 +10,51 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 public sealed partial class SemanticEvaluator : ISemanticEvaluator
 {
+    readonly SemanticRuleBodyExecution? _ruleBodies;
+    readonly ISemanticBodyExecutionProviderFactory? _providerFactory;
+    readonly IEnumerable<SemanticImplementationBody> _bodies = [];
+
+    /// <summary>Initializes an evaluator without an implementation provider.</summary>
+    public SemanticEvaluator()
+    {
+    }
+
+    /// <summary>Initializes an evaluator that creates and disposes a provider for each execution or decision.</summary>
+    /// <param name="factory">The host-owned run factory.</param>
+    /// <param name="bodies">Resolved bodies for the application.</param>
+    public SemanticEvaluator(ISemanticBodyExecutionProviderFactory factory, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _providerFactory = factory;
+        _bodies = [.. bodies];
+    }
+
+    internal SemanticEvaluator(ISemanticBodyExecutionProvider provider, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _ruleBodies = new(provider, bodies);
+    }
+
     /// <inheritdoc/>
-    public SemanticExecutionResult Execute(
+    public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
+
+    /// <inheritdoc/>
+    public SemanticExecutionResult ExecuteWithCancellation(
         SemanticExecutionPlan plan,
         SemanticWorld world,
-        SemanticExecutionRequest request)
+        SemanticExecutionRequest request,
+        CancellationToken cancellationToken)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+            return run.Evaluator.ExecuteWithCancellation(plan, world, request, cancellationToken);
+        }
+
         if (request.IsReadOnly)
         {
             return ExecuteReadOnly(plan, world, request);
         }
 
-        return Decide(plan, world, request).Commit(world);
+        return DecideWithCancellation(plan, world, request, cancellationToken).Commit(world);
     }
 
     /// <summary>
@@ -37,6 +70,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
         EstablishWorld(plan, facts, true);
 
+    /// <summary>Decides without host cancellation.</summary>
+    /// <param name="plan">The admitted plan.</param>
+    /// <param name="world">The starting world.</param>
+    /// <param name="request">The command request.</param>
+    /// <returns>The command decision.</returns>
+    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => DecideWithCancellation(plan, world, request, default);
+
     /// <summary>
     /// Decides a command against a world without settling it, so a host can commit against a later world.
     /// </summary>
@@ -48,9 +88,16 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world the decision reads.</param>
     /// <param name="request">The command request.</param>
+    /// <param name="cancellationToken">Cancellation for host-owned rule execution; cancellation maps to Unsupported.</param>
     /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
-    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    public SemanticDecision DecideWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+            return run.Evaluator.DecideWithCancellation(plan, world, request, cancellationToken);
+        }
+
         if (request.IsReadOnly)
         {
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot be decided; execute it as a query."));
@@ -71,7 +118,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
         }
 
-        return new SemanticCommandExecution(plan, world, command, request).Decide();
+        return new SemanticCommandExecution(plan, world, command, request, _ruleBodies, cancellationToken).Decide();
     }
 
     /// <summary>
@@ -218,7 +265,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             SemanticEventContextExpression { Value: SemanticEventContextValueKind.EventSourceIdentity } when expectedRoot == SemanticExpressionRootKind.Event && cause is not null => cause.Destination,
             SemanticEventContextExpression context when occurrence is not null => context.Value switch
             {
-                SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+                SemanticEventContextValueKind.Occurred => OccurredValue(occurrence.Occurred),
                 SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
                 SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
                 SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
@@ -228,6 +275,9 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
             _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
         };
+
+    internal static SemanticValue OccurredValue(DateTimeOffset occurred) =>
+        SemanticValue.Text(occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
 
     internal static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };

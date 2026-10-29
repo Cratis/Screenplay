@@ -18,7 +18,7 @@ namespace Cratis.Screenplay.Semantics;
 /// attributed to the innermost declaration at its exact location, else at a node on the same line of the same file.
 /// A diagnostic with neither, such as a document-level refusal, carries no subject.
 /// </remarks>
-sealed class DiagnosticSubjects : ScreenplaySyntaxWalker
+sealed class DiagnosticSubjects(bool includeImports = false) : ScreenplaySyntaxWalker
 {
     const string Subject = "subject";
 
@@ -38,6 +38,13 @@ sealed class DiagnosticSubjects : ScreenplaySyntaxWalker
             _exact[location] = _owner;
             _lines[(location.Path, location.Line)] = _owner;
         }
+    }
+
+    /// <inheritdoc/>
+    public override void VisitImport(ImportSyntax syntax)
+    {
+        if (includeImports) Scoped(syntax, "import", syntax.QualifiedName, false, () => base.VisitImport(syntax));
+        else base.VisitImport(syntax);
     }
 
     /// <inheritdoc/>
@@ -115,6 +122,13 @@ sealed class DiagnosticSubjects : ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var hint in (syntax.Hints ?? []).Where(hint => hint is not null)) VisitImplementationHint(hint);
+    }
+
+    internal static Func<SourceLocation, DiagnosticArgument?> CreateLocator(ApplicationSyntax syntax)
+    {
+        var walker = new DiagnosticSubjects(includeImports: true);
+        walker.VisitApplication(syntax);
+        return walker.Find;
     }
 
     /// <summary>

@@ -128,6 +128,9 @@ concept BankAccount : String pii secret
   validate
     rule BeAValidIban message $strings.validation.bankAccount.invalid
       file Validations/BeAValidIban.cs
+  // Alternatively, attach the entire imperative validation body from a file.
+  validate
+    file Validations/BankAccount.cs
 
 concept EmailAddress : String pii
   pii reason "The billing contact address identifies the customer's contact."

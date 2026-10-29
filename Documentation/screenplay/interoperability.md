@@ -93,6 +93,14 @@ The contract ships in `Cratis.Stage.Contracts` under `Cratis.Stage.Contracts.Ren
 
 A scope identifies the application, one module, one feature, or one slice. The fully resolved profile identifies the target, renderer, versions, and immutable inputs.
 
+### Compiling an executable subset
+
+`SemanticModelCompiler` also implements `IAdmissibleSemanticModelCompiler` in `Cratis.Screenplay.Semantics`. Opt in with `CompileAdmissible(applicationName, documents)` to bind the supported subset of a source-valid application without changing the strict `ISemanticModelCompiler.Compile` contract.
+
+The returned `AdmissibleCompilationResult.Compilation` is the usual semantic compilation result. `Exclusions` lists removed specifications, slices, imports and policies in source-location order, with their addresses, parent identities, authored locations and original binder diagnostics. A failing specification leaves its slice intact; other slice-owned failures remove the whole slice. Dependencies that stop binding are excluded on subsequent passes. Final warnings remain in `Compilation.Diagnostics`.
+
+Security exclusions never remove protection while retaining protected behavior. A policy/authorization failure excludes the policy and every explicitly or implicitly protected slice, including nested module/feature scopes. A refused protected command read excludes its read model's slice and all reader slices. Their exclusion `Reason` names the policy or protected read. Ambiguous resolution, an unknown protected set, remaining references to excluded protection, application-level binding refusals and source errors return the original strict failure with no partial model or exclusions.
+
 ### Execution plan compilation
 
 `SemanticExecutionPlan` and `SemanticExecutionPlanCompilation` ship in `Cratis.Screenplay.Semantics.Execution`.

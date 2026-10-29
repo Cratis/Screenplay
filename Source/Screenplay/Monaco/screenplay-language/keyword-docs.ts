@@ -86,7 +86,7 @@ export const keywordDocs: Record<string, string> = {
     screen: 'A UI declaration. Supports intent, structure, and layout-with-code levels, or a full file reference.',
     constraint: 'A server-side rule enforced in the Chronicle kernel before events are committed.',
     authorize: 'References the policies that must all pass for the construct to execute.',
-    validate: 'Declarative validation rules, or `validate` followed by ```csharp for imperative rules — on commands and concepts.',
+    validate: 'Declarative validation rules, or `validate` followed by a ```csharp fence or `file <path>` for imperative rules — on commands and concepts.',
     checksum: 'String-concept validation: exact trailing luhn/mod11 digit or two mod97 digits over preceding ASCII digits. Also applies to supplied and stored values; generation does not silently add validation.',
     luhn: 'Luhn check digit, with standard parity from the right. Generation appends it; validate checksum luhn checks the arithmetic.',
     mod11: 'Check digit (11 - weighted sum modulo 11) modulo 11, weights 2..7 cycling from the right. Output 10 is excluded from generation support.',

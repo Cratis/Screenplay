@@ -350,6 +350,7 @@ export const policyItems: CompletionEntry[] = [
 ];
 
 export const validateItems: CompletionEntry[] = [
+    { label: 'file', insertText: 'file ${1:Validations/Check.cs}', documentation: 'An imperative validation body from a file relative to the model root, as an alternative to a code fence.' },
     { label: 'not empty', insertText: '${1:property} not empty message "${2:message}"', documentation: 'Text needs a non-whitespace character; null, empty and whitespace-only text fail. Uses Unicode White_Space (.NET char.IsWhiteSpace), including U+0085 but not U+FEFF, not JavaScript trim(). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged.' },
     { label: 'max', insertText: '${1:property} max ${2:500} message "${3:message}"', documentation: 'Maximum length or value.' },
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },

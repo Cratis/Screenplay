@@ -36,8 +36,8 @@ public class with_an_unadmitted_view : given.a_protected_command
 
     void CompileScoped()
     {
-        var source = Source.Replace("value String\n      projection Build => View", "value String\n        at DateTime\n      projection Build => View", StringComparison.Ordinal)
-            .Replace("value = value\n        remove with Removed", "value = value\n          at = $eventContext.occurred\n        remove with Removed", StringComparison.Ordinal);
+        var source = Source.Replace("value String\n      projection Build => View", "value String\n        at String\n      projection Build => View", StringComparison.Ordinal)
+            .Replace("value = value\n        remove with Removed", "value = value\n          at = $eventContext.hash\n        remove with Removed", StringComparison.Ordinal);
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Billing"));
         const string key = "scoped-protected-read";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "scoped.play", source);
