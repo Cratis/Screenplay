@@ -833,7 +833,7 @@ Multiple `produces when` blocks form mutually exclusive or overlapping branches 
 
 ## The `handler` block
 
-Declares a fully imperative implementation of the command, in C#, as either an inline block or a reference to an external file. Use it when the declarative `produces` forms cannot express the logic — batch processing, imperative branching, or anything that needs more than property mappings and conditions.
+Attaches an implementation body to the command, in C#, as either an inline block or a reference to an external file. The body supplies event property values; it does not replace `produces`. It is admitted only beside unconditional `produces` (see [what a handler body can and cannot do](#what-a-handler-body-can-and-cannot-do)).
 
 Delegating to a file:
 
@@ -872,6 +872,54 @@ event PaymentRecorded
 A command handler, whether pending or attached, may sit beside unconditional `produces` as its fixed result contract. The productions still own the event types, count, order, destinations, and metadata; the body owns event property values. Here the handler's computed `settlesInvoice` wins over the mapped `false` — Stage does not evaluate the payload mappings instead of the body. Return the events the contract declares, not an arbitrary event count or type. `PLAY0035` is retired and reserved; it is no longer reported. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
+
+### What a handler body can and cannot do
+
+A body is not an escape hatch from `produces`. The productions fix which events are appended, how many and in what order; the body only fills in their property values. Because of that, a command with a `handler` body that has no `produces`, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
+
+| Condition | What to do |
+| --- | --- |
+| The command declares no `produces` | Declare an unconditional `produces <Event>` beside the handler body |
+| A `produces ... when` sits beside the body | Declare an unconditional `produces <Event>`, split conditional or variable outcomes into separate commands, or move them to declarative `produces ... when` without a body |
+| The body is empty, missing or a file the host did not supply | Attach a resolved, nonempty, language-tagged body |
+
+Authoring hints can stay beside an attached body; they are not part of its resolved executable requirement. A requirement that still carries hints is not a resolved body. Pending intent without a body is a different shape: conditional productions report `PLAY0697` and no productions report `PLAY0696`.
+
+A body that decides how many events to append, or which event type, is not expressible. Split the outcomes into separate commands, or express each branch with declarative `produces ... when`:
+
+Refused with `PLAY0800` — the body has no `produces` beside it:
+
+````text
+command ProcessBatch
+  batchId BatchId identifier
+  handler
+    ```csharp
+    return new object[] { new BatchStarted(), new BatchCompleted() };
+    ```
+````
+
+Admitted — the events are declared, the body supplies their values:
+
+````screenplay
+command ProcessBatch
+  batchId BatchId identifier
+  produces BatchStarted
+    for batchId
+  produces BatchCompleted
+    for batchId
+  handler
+    ```csharp
+    return new object[] { new BatchStarted(context.Occurred), new BatchCompleted(context.Occurred) };
+    ```
+
+event BatchStarted
+  startedAt DateTime
+
+event BatchCompleted
+  completedAt DateTime
+````
+
+A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) keeps `ProcessInvoiceBatch` as a deliberate example of the refusal.
 
 ### Implementation intent (handlers only)
 

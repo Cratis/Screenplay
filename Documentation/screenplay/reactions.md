@@ -167,6 +167,28 @@ because its decision dependency cannot be protected. It is not admitted as an un
 invocation-only reaction leaves read protection to the invoked command; it cannot use those views as
 portable mapping values.
 
+The supported alternative is to invoke a command from the reaction and put the decision in that command's declarative `require` or mappings. A C# handler body cannot read views either, so moving the decision into a body does not help:
+
+Refused — the reaction reads a view and produces directly:
+
+```text
+reaction HandleOrder
+  when OrderPlaced
+    orderId
+    reads OrderStatus as current by orderId
+    produces OrderAcknowledged
+```
+
+Admitted — the reaction invokes a command and the command decides:
+
+```screenplay
+reaction HandleOrder
+  when OrderPlaced
+    orderId
+    invokes AcknowledgeOrder
+      orderId = orderId
+```
+
 `for each <View>` is reserved for a future view-driven trigger, not part of this grammar.
 
 ## Narrowing which occurrences run it

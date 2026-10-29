@@ -26,4 +26,5 @@ public class when_a_producing_reaction_declares_reads : given.a_semantic_binder
 
     [Fact] void should_refuse_unprotected_direct_production() => _result.Success.ShouldBeFalse();
     [Fact] void should_explain_the_protection_boundary() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("cannot protect that decision dependency", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_the_supported_alternative() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("Invoke a command from the reaction and put the decision in that command's declarative 'require' or mappings", StringComparison.Ordinal)).ShouldBeTrue();
 }
