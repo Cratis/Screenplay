@@ -24,6 +24,18 @@ describe('when parsing possible events', () => {
     it.each(['          file C.cs\n          may produce\n            Added', '          may produce\n            Added\n          may produce\n            Removed\n          file C.cs', '          implementation\n            may produce\n              Added'])('should reject misplaced sets in %s', body => {
         expect(parse(prefix + body).diagnostics.length).toBeGreaterThan(0);
     });
+    it('should keep stream and tag metadata on an entry', () => {
+        const result = parse(prefix + '          may produce\n            Added\n              stream Account.Transactions\n                streamId = month\n              tag Billing\n          file C.cs');
+        const entry = result.value.modules[0].features[0].slices[0].commands[0].handler?.possibleEvents?.events[0];
+        expect([entry?.stream?.eventSource, entry?.stream?.stream, entry?.tags.length]).toEqual(['Account', 'Transactions', 1]);
+    });
+    it.each([
+        ['Added\n              stream Account.Transactions\n              stream Account.Other', 'PLAY0504'],
+        ['Added\n              stream Transactions', 'PLAY0504'],
+        ['Added\n              tag', 'PLAY0148']
+    ])('should reject invalid metadata %s', (entry, code) => {
+        expect(parse(prefix + '          may produce\n            ' + entry + '\n          file C.cs').diagnostics.map(diagnostic => diagnostic.code)).toContain(code);
+    });
     it('should reject mixed contracts', () => {
         expect(parse(prefix + declaration + '          file C.cs\n        produces Added').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0822');
     });
