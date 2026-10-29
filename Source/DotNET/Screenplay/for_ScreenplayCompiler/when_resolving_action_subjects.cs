@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
 public class when_resolving_action_subjects : given.a_compiler
 {
-    const string Source = "concept ItemId : Uuid\nconcept TenantId : Uuid\nmodule Work\n  feature Items\n    slice StateView List\n      readmodel Row\n        rowId ItemId key\n        itemId TenantId\n        ready Boolean\n      query Rows => Row[]\n      command Retry\n        itemId ItemId identifier\n      screen List\n        data Row[] via query Rows\n        action Retry";
+    const string Source = "concept ItemId : Uuid\nconcept TenantId : Uuid\nmodule Work\n  feature Items\n    slice StateView List\n      readmodel Row\n        rowId ItemId key\n        itemId TenantId\n        ready Bool\n      query Rows => Row[]\n      command Retry\n        itemId ItemId identifier\n      screen List\n        data Row[] via query Rows\n        action Retry";
 
     [Theory]
     [InlineData("", ScreenActionSubjectKind.Item)]

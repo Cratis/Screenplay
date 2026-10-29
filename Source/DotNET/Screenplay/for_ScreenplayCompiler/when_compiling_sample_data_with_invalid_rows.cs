@@ -21,7 +21,7 @@ public class when_compiling_sample_data_with_invalid_rows : given.a_compiler
                 name String
                 revenue Decimal
                 age Int
-                active Boolean
+                active Bool
                 status Status
                 notes String optional
 

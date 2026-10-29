@@ -15,7 +15,7 @@ public class when_printing_sample_data : given.a_printer
               readmodel Customer
                 name String
                 revenue Decimal
-                active Boolean
+                active Bool
                 notes String optional
               readmodel Tickets
                 subject String

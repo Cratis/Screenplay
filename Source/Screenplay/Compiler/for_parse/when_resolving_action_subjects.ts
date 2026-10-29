@@ -8,7 +8,7 @@ import { ScreenActionSyntax, ScreenGuardedActionSyntax } from '../Syntax/Screens
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
 
-const source = 'concept ItemId : Uuid\nconcept TenantId : Uuid\nmodule Work\n  feature Items\n    slice StateView List\n      readmodel Row\n        rowId ItemId key\n        itemId TenantId\n        ready Boolean\n      query Rows => Row[]\n      command Retry\n        itemId ItemId identifier\n      screen List\n        data Row[] via query Rows\n        action Retry';
+const source = 'concept ItemId : Uuid\nconcept TenantId : Uuid\nmodule Work\n  feature Items\n    slice StateView List\n      readmodel Row\n        rowId ItemId key\n        itemId TenantId\n        ready Bool\n      query Rows => Row[]\n      command Retry\n        itemId ItemId identifier\n      screen List\n        data Row[] via query Rows\n        action Retry';
 const screen = (application: ApplicationSyntax) => application.modules[0].features[0].slices[0].screens[0];
 const action = (application: ApplicationSyntax) => screen(application).directives[1] as ScreenActionSyntax;
 
