@@ -33,10 +33,12 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         _ruleBodies = new(provider, bodies);
         ReducerBodies = new(provider, _ruleBodies);
         PolicyBodies = new(provider, _ruleBodies);
+        HandlerBodies = new(provider, _ruleBodies);
     }
 
     internal SemanticReducerBodyExecution ReducerBodies { get; } = SemanticReducerBodyExecution.None;
     internal SemanticPolicyBodyExecution PolicyBodies { get; } = SemanticPolicyBodyExecution.None;
+    internal SemanticCommandBodyExecution HandlerBodies { get; } = SemanticCommandBodyExecution.None;
 
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
@@ -97,13 +99,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world the decision reads.</param>
     /// <param name="request">The command request.</param>
-    /// <param name="cancellationToken">Cancellation for host-owned rule execution; cancellation maps to Unsupported.</param>
+    /// <param name="cancellationToken">Cancellation for host execution. Command handlers propagate requested cancellation and typed execution faults; other provider roles retain their Unsupported mapping.</param>
     /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
     public SemanticDecision DecideWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
-        if (_providerFactory is null) return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(_ruleBodies, ReducerBodies, PolicyBodies, null);
+        if (_providerFactory is null) return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(_ruleBodies, ReducerBodies, PolicyBodies, HandlerBodies, null);
         using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
-        return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(run.Evaluator._ruleBodies, run.Evaluator.ReducerBodies, run.Evaluator.PolicyBodies, () => new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken));
+        return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(run.Evaluator._ruleBodies, run.Evaluator.ReducerBodies, run.Evaluator.PolicyBodies, run.Evaluator.HandlerBodies, () => new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken));
     }
 
     /// <summary>

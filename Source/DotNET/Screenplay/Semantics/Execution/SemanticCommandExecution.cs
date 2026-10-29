@@ -20,6 +20,7 @@ internal sealed partial class SemanticCommandExecution(
     SemanticRuleBodyExecution? ruleBodies,
     SemanticReducerBodyExecution reducers,
     SemanticPolicyBodyExecution policies,
+    SemanticCommandBodyExecution handlers,
     Func<SemanticBodyExecutionRun>? commitRun,
     CancellationToken cancellationToken)
 {
@@ -52,14 +53,13 @@ internal sealed partial class SemanticCommandExecution(
 
         if (command.Handler is { } handler)
         {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, $"Command '{command.Name}' handler body requires a target (requirement {handler.RequirementId}); the reference executor does not run implementation bodies."));
+            if (Handle(handler.RequirementId) is { } refusal) return SemanticDecision.Refused(refusal);
         }
-
-        foreach (var produced in command.Produces)
+        else
         {
-            if (Produce(produced) is { } production)
+            foreach (var produced in command.Produces)
             {
-                return SemanticDecision.Refused(production);
+                if (Produce(produced) is { } production) return SemanticDecision.Refused(production);
             }
         }
 
@@ -238,7 +238,7 @@ internal sealed partial class SemanticCommandExecution(
         (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
         (produced.Condition is not null && Evaluate(produced.Condition) is SemanticBooleanValue { Value: false });
 
-    SemanticExecutionResult? Produce(SemanticProducedEvent produced)
+    SemanticExecutionResult? Produce(SemanticProducedEvent produced, ImmutableArray<SemanticPropertyValue>? handlerValues = null)
     {
         if (IsSkipped(produced))
         {
@@ -268,10 +268,9 @@ internal sealed partial class SemanticCommandExecution(
             return Contract("A v2 allocated event source requires its declared scalar identity type.");
         }
 
-        var values = produced.Mappings
-            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, Evaluate(mapping.Source, request.Occurrence)))
-            .ToImmutableArray();
-        if (HasContextMapping(produced) && ValidateContextMappings(produced, values) is { } mappingRefusal)
+        var values = handlerValues ?? [.. produced.Mappings
+            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, Evaluate(mapping.Source, request.Occurrence)))];
+        if (handlerValues is null && HasContextMapping(produced) && ValidateContextMappings(produced, values) is { } mappingRefusal)
         {
             return mappingRefusal;
         }

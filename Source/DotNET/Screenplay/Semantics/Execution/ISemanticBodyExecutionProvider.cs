@@ -39,6 +39,22 @@ public interface ISemanticBodyExecutionProvider : IAsyncDisposable
     ValueTask<SemanticPolicyBodyResult> AuthorizeAsync(SemanticImplementationBody body, SemanticPolicyContext context, CancellationToken cancellationToken) =>
         new(SemanticPolicyBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Policy", body)));
 
+    /// <summary>
+    /// Executes an attached, constrained result-v1 command handler.
+    /// </summary>
+    /// <param name="body">The resolved, content-verified implementation.</param>
+    /// <param name="context">The command and known circumstances, without invented values.</param>
+    /// <param name="cancellationToken">Run cancellation; hosts must also enforce time limits.</param>
+    /// <returns>Ordered event payloads, or unsupported for admission refusal. Existing providers remain unsupported by default.</returns>
+    /// <remarks>
+    /// Admitted handler faults propagate as <see cref="SemanticCommandBodyFaultException"/> before any events are produced or committed.
+    /// Hosts may report time or memory limits with its typed kind. Other exceptions become Faulted; unrequested cancellation becomes Cancelled.
+    /// Cancellation requested through the supplied token propagates as the original OperationCanceledException. Malformed payloads remain unsupported.
+    /// These fault semantics apply only to command handlers, not other provider roles.
+    /// </remarks>
+    ValueTask<SemanticCommandBodyResult> HandleAsync(SemanticImplementationBody body, SemanticCommandContext context, CancellationToken cancellationToken) =>
+        new(SemanticCommandBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Command handler", body)));
+
     /// <summary>Executes one reducer transition against its portable context.</summary>
     /// <param name="body">The resolved, content-verified transition body.</param>
     /// <param name="context">The prior state, event and caller-supplied circumstances.</param>

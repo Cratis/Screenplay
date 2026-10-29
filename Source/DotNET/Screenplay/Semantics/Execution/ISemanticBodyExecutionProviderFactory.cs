@@ -19,7 +19,8 @@ public interface ISemanticBodyExecutionProviderFactory
     /// Creation failures, timeouts and cancellation make opaque bodies Unsupported. A factory-backed decision disposes
     /// its decision-body provider before returning. Each commit with reducer work or a requested query's opaque policy
     /// requests and disposes a fresh provider using the decision's captured cancellation token; repeated commits may
-    /// therefore call this factory again. Purely portable commits do not request a provider.
+    /// therefore call this factory again. Purely portable commits do not request a provider. Handler bodies run only
+    /// during the decision, never again at commit.
     /// </remarks>
     ValueTask<ISemanticBodyExecutionProvider> CreateAsync(SemanticApplication application, IReadOnlyDictionary<string, SemanticImplementationBody> bodies, CancellationToken cancellationToken);
 }

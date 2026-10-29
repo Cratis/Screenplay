@@ -75,3 +75,7 @@ and an older Stage refuses or degrades a fresh attached envelope without crashin
 vectors; linkage and executor rejection specs; TypeScript compiler and board specs; generated
 contract-catalog parity; and a Stage-side regression against a freshly bound envelope. No golden
 under the frozen described-command corpus is regenerated.
+
+## Implementation note — #1099 S5
+
+An explicitly supplied reference-run provider may now execute the already-admitted constrained attachment after the existing authorization, validation, reads, routing and generated-fixture phases. The default executor and pending/missing/unresolved/stale bodies still refuse with ImplementationBody and the RequirementId. Handler outputs obey decision 0082's payload-only result v1; event envelopes and append behavior remain declarative. Validation, policy and reducer requirements keep their `pure` capability checks; only CommandHandler accepts `provider-defined`. The host owns language admission, compilation, isolation and time limits. This execution seam changes no parser admission, canonical ESM, serialized ABI or version. Verification is pending the #1099 gate.
