@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
 
