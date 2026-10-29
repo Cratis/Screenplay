@@ -110,3 +110,4 @@
 | [0113](0113-performer-bodies-are-rendered.md) | Performer bodies are rendered, with a documented typed context | proposed | none | — | — |
 | [0114](0114-events-capture-keys-by-event-source.md) | Let an events capture key by its event source (ESM v33) | accepted | implemented | 2026-10-24 | Sindre Alstad Wilting (delegated repository acceptance) |
 | [0115](0115-a-specification-runs-its-own-slice-only.md) | A specification runs its own slice only, and states the commands its reactions invoke (ESM v34) | accepted | implemented | 2026-10-25 | Einar Ingebrigtsen |
+| [0119](0119-live-performer-binding-contract.md) | Live performers bind a whole-collection stream (ResultVersion 2) | accepted | implemented | 2026-10-29 | woksin (Q-136, delegated through L0) |

@@ -36,7 +36,8 @@ public sealed partial class SemanticModelBinder
             if (requirement is null) return;
 
             // RequireImplementation appends the requirement it returns; attach the shape to that same entry.
-            _implementationRequirements[^1] = requirement with { QueryShape = PerformedQueryShape(query) };
+            var shape = PerformedQueryShape(query);
+            _implementationRequirements[^1] = requirement with { QueryShape = shape, ResultVersion = PerformerResultVersion(shape) };
             _performedQueryRequirements[query] = _implementationRequirements.Count - 1;
         }
 
@@ -50,6 +51,9 @@ public sealed partial class SemanticModelBinder
             var authorization = EffectiveAuthorization(query.Authorize, keys, module, featurePath, queryFilterNames: query.Filters.Select(filter => filter.Name));
             _implementationRequirements[index] = _implementationRequirements[index] with { QueryShape = shape with { Authorization = authorization } };
         }
+
+        // Decision 0119: only an observable collection performer has a live result contract (2); every other performer stays at 1.
+        static uint PerformerResultVersion(SemanticPerformedQueryShape shape) => shape is { Delivery: SemanticQueryDelivery.Live, Cardinality: SemanticQueryCardinality.Many } ? 2u : 1u;
 
         SemanticPerformedQueryShape PerformedQueryShape(QuerySyntax query)
         {

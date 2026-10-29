@@ -11,5 +11,7 @@ public class and_it_is_observable : given.a_performed_query
 
     [Fact] void should_be_live() => _shape.Delivery.ShouldEqual(SemanticQueryDelivery.Live);
     [Fact] void should_return_many() => _shape.Cardinality.ShouldEqual(SemanticQueryCardinality.Many);
+    [Fact] void should_carry_the_live_result_version() => RequirementOf("LiveFigures").ResultVersion.ShouldEqual(2u);
+    [Fact] void should_keep_the_first_context_version() => RequirementOf("LiveFigures").ContextVersion.ShouldEqual(1u);
     [Fact] void should_have_no_arguments() => _shape.Arguments.ShouldBeEmpty();
 }
