@@ -1,62 +1,41 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
-using Cratis.Screenplay.Diagnostics;
-using Cratis.Screenplay.Indexing;
-using Cratis.Screenplay.Syntax;
-
 namespace Cratis.Screenplay.Semantics;
 
-sealed class AdmissibleCauses
+sealed class AdmissibleCauses(Func<AdmissibleDependencies> dependencies)
 {
-    readonly AdmissibleSyntax _owners;
-    readonly AdmissibleSecurity _security;
-    readonly Dictionary<SemanticExclusionReference, HashSet<SemanticExclusionReference>> _dependencies = [];
-    readonly HashSet<SemanticExclusionReference> _roots = [];
-    bool _observed;
+    readonly Lazy<AdmissibleDependencies> _dependencies = new(dependencies);
+    readonly Dictionary<SemanticExclusionReference, SemanticExclusion> _recorded = [];
+    int _round;
 
-    internal AdmissibleCauses(ApplicationSyntax syntax, SemanticIdentityCatalog identities)
+    internal IEnumerable<SemanticExclusion> Classify(IReadOnlyList<AdmissibleExclusions.Entry> entries)
     {
-        _owners = new(syntax, identities);
-        _owners.Index();
-        _security = new(syntax, _owners);
-        var index = new AuthoringIndex();
-        index.VisitApplication(syntax);
-        index.Complete(syntax);
-        foreach (var resolution in index.ResolvedReferences.Where(value => value.Candidates.Length == 1))
+        _round++;
+        var graph = _round > 1 && (entries.Any(entry => entry.Own) || _dependencies.IsValueCreated) ? _dependencies.Value : null;
+        var current = entries.ToDictionary(entry => Reference(entry.Exclusion), entry => entry.Exclusion);
+        var classified = entries.Select(entry => Classify(entry, current, graph)).ToArray();
+        foreach (var exclusion in classified) _recorded.Add(Reference(exclusion), exclusion);
+        return classified;
+    }
+
+    internal static IOrderedEnumerable<SemanticExclusion> Order(IEnumerable<SemanticExclusion> exclusions) =>
+        exclusions.OrderBy(exclusion => exclusion.Location.Path, StringComparer.Ordinal)
+            .ThenBy(exclusion => exclusion.Location.Line).ThenBy(exclusion => exclusion.Location.Column)
+            .ThenBy(exclusion => exclusion.Kind).ThenBy(exclusion => exclusion.Address, StringComparer.Ordinal);
+
+    SemanticExclusion Classify(AdmissibleExclusions.Entry entry, IReadOnlyDictionary<SemanticExclusionReference, SemanticExclusion> current, AdmissibleDependencies? graph)
+    {
+        var earlier = graph?.Of(Reference(entry.Exclusion)).Where(_recorded.ContainsKey).ToArray() ?? [];
+        if (entry.Own && earlier.Length == 0) return entry.Exclusion;
+        var causes = earlier.Concat(entry.ForcedBy).Distinct().ToArray();
+        if (causes.Length == 0) return entry.Exclusion;
+        return entry.Exclusion with
         {
-            var source = _owners.Find(resolution.Reference.Location);
-            var target = _owners.Find(resolution.Candidates[0].Location);
-            if (source is not null && target is not null) Link(source, target);
-        }
+            Cause = SemanticExclusionCause.Dependent,
+            DependsOn = [.. Order(causes.Select(cause => _recorded.TryGetValue(cause, out var excluded) ? excluded : current[cause])).Select(Reference)]
+        };
     }
 
-    internal void Observe(IEnumerable<Diagnostic> errors)
-    {
-        if (_observed) return;
-        _observed = true;
-        _roots.UnionWith(_security.RootOwners(errors).Select(Reference));
-    }
-
-    internal void Link(AdmissibleSyntax.Unit source, AdmissibleSyntax.Unit target)
-    {
-        var from = Reference(source);
-        var to = Reference(target);
-        if (from == to) return;
-        if (!_dependencies.TryGetValue(from, out var targets)) _dependencies[from] = targets = [];
-        targets.Add(to);
-    }
-
-    internal SemanticExclusion Classify(SemanticExclusion exclusion, IEnumerable<SemanticExclusion> excluded)
-    {
-        var reference = new SemanticExclusionReference(exclusion.Kind, exclusion.Address);
-        if (_roots.Contains(reference)) return exclusion;
-        var removed = excluded.Select(value => new SemanticExclusionReference(value.Kind, value.Address)).ToHashSet();
-        var dependencies = _dependencies.GetValueOrDefault(reference, [])
-            .Where(removed.Contains).OrderBy(value => value.Kind).ThenBy(value => value.Address, StringComparer.Ordinal).ToImmutableArray();
-        return dependencies.IsEmpty ? exclusion : exclusion with { Cause = SemanticExclusionCause.Dependent, DependsOn = dependencies };
-    }
-
-    static SemanticExclusionReference Reference(AdmissibleSyntax.Unit unit) => new(unit.Kind, unit.Address);
+    static SemanticExclusionReference Reference(SemanticExclusion exclusion) => new(exclusion.Kind, exclusion.Address);
 }

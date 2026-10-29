@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Identifies an excluded admissible unit.
+/// Names another entry in the same <see cref="AdmissibleCompilationResult.Exclusions"/> list.
 /// </summary>
 /// <param name="Kind">The kind of unit.</param>
 /// <param name="Address">The address used in the exclusion list.</param>

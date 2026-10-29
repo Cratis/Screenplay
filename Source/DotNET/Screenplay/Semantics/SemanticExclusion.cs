@@ -27,7 +27,8 @@ public sealed record SemanticExclusion(SemanticExclusionKind Kind, string Addres
     public SemanticExclusionCause Cause { get; init; } = SemanticExclusionCause.Root;
 
     /// <summary>
-    /// Gets the distinct immediate excluded dependencies, ordered by kind and ordinal address.
+    /// Gets the immediate exclusions that forced this one, ordered like <see cref="AdmissibleCompilationResult.Exclusions"/>.
+    /// This array is empty for <see cref="SemanticExclusionCause.Root"/>.
     /// </summary>
     public ImmutableArray<SemanticExclusionReference> DependsOn { get; init; } = [];
 }

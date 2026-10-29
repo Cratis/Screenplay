@@ -11,6 +11,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
     readonly List<Unit> _units = [];
     readonly Func<SourceLocation, DiagnosticArgument?> _locate = DiagnosticSubjects.CreateLocator(syntax);
     readonly Func<SourceLocation, SliceSyntax?> _sliceAt = SliceOwners.CreateLocator(syntax);
+    readonly Func<SourceLocation, IReadOnlyList<SyntaxNode>> _unitsAt = SliceOwners.CreateUnitsLocator(syntax);
 
     internal void Index()
     {
@@ -25,11 +26,9 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
 
     internal Unit? Find(SyntaxNode syntax) => _units.Find(unit => unit.Syntax == syntax);
 
-    internal Unit? Find(Diagnostic diagnostic) => diagnostic.Location is { } location ? Find(location) : null;
-
-    internal Unit? Find(SourceLocation location)
+    internal Unit? Find(Diagnostic diagnostic)
     {
-        if (_locate(location) is not { } owner) return null;
+        if (diagnostic.Location is not { } location || _locate(location) is not { } owner) return null;
         var kind = owner.Value.GetProperty("kind").GetString();
         var address = string.Join('/', owner.Value.GetProperty("path").EnumerateArray().Select(part => part.GetString()));
         return _units.Find(unit => unit.Kind switch
@@ -41,6 +40,8 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
             _ => false
         });
     }
+
+    internal IReadOnlyList<Unit> UnitsAt(SourceLocation location) => [.. _unitsAt(location).Select(Find).OfType<Unit>()];
 
     internal ApplicationSyntax Remove(HashSet<SyntaxNode> removed) => syntax with
     {
@@ -82,7 +83,10 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
     {
         readonly Dictionary<SourceLocation, SliceSyntax> _exact = [];
         readonly Dictionary<(string? Path, int Line), SliceSyntax> _lines = [];
+        readonly Dictionary<SourceLocation, SpecificationSyntax> _specifications = [];
+        readonly Dictionary<(string? Path, int Line), SpecificationSyntax> _specificationLines = [];
         SliceSyntax? _slice;
+        SpecificationSyntax? _specification;
 
         /// <inheritdoc/>
         public override void VisitNode(SyntaxNode node)
@@ -101,6 +105,22 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
             _slice = previous;
         }
 
+        /// <inheritdoc/>
+        public override void VisitSpecification(SpecificationSyntax syntax)
+        {
+            var previous = _specification;
+            _specification = syntax;
+            base.VisitSpecification(syntax);
+            _specification = previous;
+        }
+
+        internal static Func<SourceLocation, IReadOnlyList<SyntaxNode>> CreateUnitsLocator(ApplicationSyntax syntax)
+        {
+            var walker = new SliceOwners();
+            walker.VisitApplication(syntax);
+            return walker.UnitsAt;
+        }
+
         internal static Func<SourceLocation, SliceSyntax?> CreateLocator(ApplicationSyntax syntax)
         {
             var walker = new SliceOwners();
@@ -108,10 +128,21 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
             return location => walker._exact.GetValueOrDefault(location) ?? walker._lines.GetValueOrDefault((location.Path, location.Line));
         }
 
+        IReadOnlyList<SyntaxNode> UnitsAt(SourceLocation location)
+        {
+            var slice = _exact.GetValueOrDefault(location) ?? _lines.GetValueOrDefault((location.Path, location.Line));
+            if (slice is null) return [];
+            var specification = _specifications.GetValueOrDefault(location) ?? _specificationLines.GetValueOrDefault((location.Path, location.Line));
+            return specification is null ? [slice] : [specification, slice];
+        }
+
         void Record(SourceLocation location)
         {
             _exact[location] = _slice!;
             _lines[(location.Path, location.Line)] = _slice!;
+            if (_specification is null) return;
+            _specifications[location] = _specification;
+            _specificationLines[(location.Path, location.Line)] = _specification;
         }
     }
 

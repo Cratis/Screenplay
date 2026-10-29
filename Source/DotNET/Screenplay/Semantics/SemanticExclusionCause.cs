@@ -8,9 +8,13 @@ namespace Cratis.Screenplay.Semantics;
 /// </summary>
 public enum SemanticExclusionCause
 {
-    /// <summary>The unit has its own error or no evidenced excluded dependency.</summary>
+    /// <summary>
+    /// The unit was excluded for its own binder errors, without an earlier excluded dependency.
+    /// </summary>
     Root,
 
-    /// <summary>The unit was excluded because an immediate dependency was excluded.</summary>
+    /// <summary>
+    /// The unit was excluded because an earlier dependency was excluded or a security closure forced it out.
+    /// </summary>
     Dependent
 }
