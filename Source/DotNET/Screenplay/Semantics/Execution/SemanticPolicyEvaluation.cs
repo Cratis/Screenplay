@@ -36,11 +36,13 @@ internal static class SemanticPolicyEvaluation
         }
         if (caller is not { Roles.IsDefault: false, Claims.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
 
-        Func<SemanticPolicyContext> context = () => new(
+        SemanticPolicyContext Context() => new(
             new([.. properties.Where(property => artifact.ContainsKey(property.Name)).Select(property => new SemanticPropertyValue(property.Id, artifact[property.Name]))]),
             hasPolicySubject && (subject is SemanticTextValue or SemanticNumberValue or SemanticBooleanValue) ? SemanticValueRules.CaptureText(subject) : null,
-            SemanticBodyIdentity.From(caller), tenant, occurred);
-        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties, bodies ?? SemanticPolicyBodyExecution.None, context, cancellationToken);
+            SemanticBodyIdentity.From(caller),
+            tenant,
+            occurred);
+        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties, bodies ?? SemanticPolicyBodyExecution.None, Context, cancellationToken);
     }
 
     internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>

@@ -142,9 +142,18 @@ sealed class SemanticQueryRun(
             }
             properties = [.. properties, .. query.KeyParts.Select(part => new SemanticProperty(part.Id, part.Name, part.Type, false))];
         }
-        var authorization = SemanticPolicyEvaluation.Evaluate(query.Authorization, plan, caller, arguments, key, properties,
-            bodies: policies, tenant: tenant, occurred: occurred, cancellationToken: cancellationToken,
-            hasPolicySubject: query.Argument is not null && query.KeyParts.IsEmpty);
+        var authorization = SemanticPolicyEvaluation.Evaluate(
+            query.Authorization,
+            plan,
+            caller,
+            arguments,
+            key,
+            properties,
+            bodies: policies,
+            tenant: tenant,
+            occurred: occurred,
+            hasPolicySubject: query.Argument is not null && query.KeyParts.IsEmpty,
+            cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {
             SemanticPolicyOutcome.Unsupported => new SemanticUnsupported(
