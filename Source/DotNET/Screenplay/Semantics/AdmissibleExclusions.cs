@@ -37,8 +37,10 @@ sealed class AdmissibleExclusions(AdmissibleSyntax index)
         if (forcedBy is null)
         {
             _own.Add(unit);
+            _forcedBy.Remove(unit);
             return;
         }
+        if (_own.Contains(unit)) return;
         _forcedBy.TryAdd(unit, [.. forcedBy.Select(index.Find).OfType<AdmissibleSyntax.Unit>().Where(cause => cause != unit).Distinct()]);
     }
 

@@ -13,9 +13,10 @@ sealed class AdmissibleCauses(Func<AdmissibleDependencies> dependencies)
     {
         _round++;
         var graph = _round > 1 && (entries.Any(entry => entry.Own) || _dependencies.IsValueCreated) ? _dependencies.Value : null;
-        var current = entries.ToDictionary(entry => Reference(entry.Exclusion), entry => entry.Exclusion);
+        var current = entries.GroupBy(entry => Reference(entry.Exclusion))
+            .ToDictionary(group => group.Key, group => Order(group.Select(entry => entry.Exclusion)).First());
         var classified = entries.Select(entry => Classify(entry, current, graph)).ToArray();
-        foreach (var exclusion in classified) _recorded.Add(Reference(exclusion), exclusion);
+        foreach (var exclusion in Order(classified)) _recorded.TryAdd(Reference(exclusion), exclusion);
         return classified;
     }
 
@@ -28,7 +29,7 @@ sealed class AdmissibleCauses(Func<AdmissibleDependencies> dependencies)
     {
         var earlier = graph?.Of(Reference(entry.Exclusion)).Where(_recorded.ContainsKey).ToArray() ?? [];
         if (entry.Own && earlier.Length == 0) return entry.Exclusion;
-        var causes = earlier.Concat(entry.ForcedBy).Distinct().ToArray();
+        var causes = (entry.Own ? earlier : earlier.Concat(entry.ForcedBy)).Distinct().ToArray();
         if (causes.Length == 0) return entry.Exclusion;
         return entry.Exclusion with
         {
