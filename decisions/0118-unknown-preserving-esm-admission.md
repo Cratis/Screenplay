@@ -35,6 +35,16 @@ Canonical classification is independent of semantic reader knowledge. Reconstruc
 the whole document and require exact byte equality, and verify the full `rev1:`
 over canonical bytes without the envelope revision. Hashing input alone is insufficient.
 
+### D1 implementation note: writer vocabulary, not reader permissiveness
+
+C(M.0) describes what the published writer emits, not every field the strict reader
+accepts. `SemanticModelCanonicalJson.WriteEvent` emits `predecessor` and
+`priorRevisions` only from major 4, although the strict reader's field table accepts
+those names in earlier majors. `WriteTransition` emits affected-instance
+`cardinality` only before major 4, although the strict reader still accepts it in
+later majors. The frozen descriptors intentionally preserve these writer boundaries;
+the existing strict reader and its permissive field gates remain unchanged.
+
 ### D2: Allocation, not reading
 
 Only additive, ignorable members on the latest published major can receive a minor,

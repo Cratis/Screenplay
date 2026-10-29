@@ -38,6 +38,7 @@ public static class UnknownPreservingSemanticModelReader
 
     static UnknownPreservingSemanticDocument ReadDocument(JsonElement root, byte[] bytes, EsmAdmissionRange range)
     {
+        // Reject duplicate members and non-NFC text before plan §1b's wire-pair checks so an ambiguous envelope is never interpreted.
         EsmOpaqueJson.Validate(root);
         var languageVersion = ReadLanguageVersion(root);
         var semanticVersion = ReadSemanticVersion(root);
