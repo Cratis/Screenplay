@@ -29,6 +29,7 @@ describe('when parsing declarations', () => {
             '      readmodel ProjectSummary',
             '        description "A project at a glance"',
             '        id ProjectId',
+            'concept ProjectId : Uuid',
         );
         slice = result.value.modules[0].features[0].slices[0];
     });

@@ -22,8 +22,12 @@ function playFiles(folder: string): string[] {
     });
 }
 
+function unsupportedMember(file: string, line: number, model: string, member: string, type: string): string {
+    return `${join(corpus, file)}:${line} PLAY0273 Read model '${model}' member '${member}' references unsupported type '${type}'. Use a primitive, concept or top-level 'type'; read-model shapes and slice-local 'type' declarations are not member types.`;
+}
+
 // Scan rejection fixtures too: semantic refusals may parse successfully, while deliberately invalid
-// authoring sources pin their exact diagnostics. EventRoutes modules also need their sibling source
+// authoring sources pin their exact diagnostics. Modules and folder fragments also need sibling
 // declarations; this single-file scan pins their isolated-fragment diagnostics, not folder admission.
 describe('when parsing the repository samples', () => {
     let files: string[];
@@ -42,6 +46,10 @@ describe('when parsing the repository samples', () => {
 
     it('should report only the expected rejection and isolated-fragment diagnostics', () => {
         errors.should.deep.equal([
+            unsupportedMember('AcmeAdmissions/v29/source.module.play', 67, 'Basket', 'basketId', 'BasketId'),
+            unsupportedMember('AcmeAdmissions/v29/source.module.play', 68, 'Basket', 'total', 'Money'),
+            unsupportedMember('CompositeReadModelKeys/v27/source/module.play', 12, 'PaymentTotals', 'invoiceId', 'InvoiceId'),
+            unsupportedMember('CompositeReadModelKeys/v27/source/module.play', 13, 'PaymentTotals', 'method', 'PaymentMethod'),
             `${join(eventRoutes, 'composite-commands/source/module.play')}:9 PLAY0034 Unexpected 'streamId' in command body`,
             `${join(eventRoutes, 'composites/source/module.play')}:9 PLAY0034 Unexpected 'streamId' in command body`,
             ...[25, 35, 43, 57].map(line => `${join(eventRoutes, 'composites/source/module.play')}:${line} PLAY0549 Stream 'Account.Ledger' is NotFound; routing requires one physical source and stream.`),
@@ -67,7 +75,26 @@ describe('when parsing the repository samples', () => {
             ...[41, 46].map(line => `${join(eventRoutes, 'specifications/source/module.play')}:${line} PLAY0549 Stream 'Account.Archive' is NotFound; routing requires one physical source and stream.`),
             `${join(eventRoutes, 'specifications/source/module.play')}:50 PLAY0549 Stream 'Account.Notes' is NotFound; routing requires one physical source and stream.`,
             `${join(corpus, 'GeneratedConceptRules/v20/source/declarations.play')}:8 PLAY0699 Match pattern: lookaround at offset 1. ${portableMatchSuggestions.lookaround}`,
+            unsupportedMember('QueryFilters/v14/source/module.play', 6, 'Item', 'status', 'Status'),
+            unsupportedMember('QueryValidation/v18/source/module.play', 5, 'Invoice', 'number', 'InvoiceNumber'),
+            unsupportedMember('QueryValidation/v18/source/module.play', 6, 'Invoice', 'customer', 'CustomerCode'),
+            ...[
+                'RegisterProject/v1-legacy/source/folder',
+                'RegisterProject/v1-legacy/source/relocated/Archive',
+                'RegisterProject/v1-legacy/source/reordered',
+                'RegisterProject/v2/source/folder',
+            ].flatMap(folder => [
+                unsupportedMember(`${folder}/Projects/Registration/ProjectLookup/ProjectLookup.play`, 11, 'ProjectSummary', 'projectId', 'ProjectId'),
+                unsupportedMember(`${folder}/Projects/Registration/ProjectLookup/ProjectLookup.play`, 12, 'ProjectSummary', 'name', 'ProjectName'),
+            ]),
             `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`,
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemComments/WorkItemComments.play', 5, 'CommentView', 'commentId', 'CommentId'),
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemComments/WorkItemComments.play', 6, 'CommentView', 'workItemId', 'WorkItemId'),
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemDetails/WorkItemDetails.play', 5, 'WorkItemDetails', 'workItemId', 'WorkItemId'),
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemDetails/WorkItemDetails.play', 7, 'WorkItemDetails', 'status', 'WorkStatus'),
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemList/WorkItemList.play', 5, 'WorkItemSummary', 'workItemId', 'WorkItemId'),
+            unsupportedMember('ScreenComposition/v1/source/folder/Workspaces/Tracking/WorkItemList/WorkItemList.play', 7, 'WorkItemSummary', 'status', 'WorkStatus'),
+            unsupportedMember('SourcelessGivens/source.module.play', 95, 'Profile', 'accountId', 'AccountId'),
             // Action-subject packs include deliberate parser recovery and malformed clause/input cases.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:40 PLAY0036 Command 'TwoIdentifiers' already marks 'itemId' as identifier - only one property can be the identifier`,
             ...[142, 144, 147].map(line => `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:${line} PLAY0817 Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action`),

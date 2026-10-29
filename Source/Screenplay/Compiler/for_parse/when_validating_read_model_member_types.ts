@@ -12,7 +12,7 @@ describe('when validating read-model member types', () => {
         const result = parse(prefix + `        child ${type}\n      readmodel Child\n        value String`, 'model.play');
         result.success.should.be.false;
         result.diagnostics.should.deep.equal([{
-            code: 'PLAY0273', severity: 'error', message, location: { line: 5, column: 15, path: 'model.play' },
+            code: 'PLAY0273', severity: 'error', message, location: { line: 5, column: 15, path: 'model.play' }, arguments: {},
         }]);
     });
     it('should retain the warning for a skipped slice-local type and diagnose its member', () => {
