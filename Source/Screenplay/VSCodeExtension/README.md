@@ -29,8 +29,10 @@ a board that draws is not proof that every semantic check passes.
 - **Sub-language highlighting** for the Projection Declaration Language (PDL) inside `projection` blocks and the Change Data Capture Language (CDL) inside `capture` blocks.
 - **IntelliSense** — context-aware completions for constructs, clauses, and in-scope symbols: policies after `authorize`, events after `on` and `produces`, `file`/`csharp` after `handler`, concepts and primitives in type positions, and resolvable module/feature targets after `depends on`, nearest scope first, excluding targets already declared across workspace files.
 - **Hover documentation** for keywords, concepts, policies, and events.
+- **Go to Definition** for any name a model declares - a concept, policy, command, read model, query, screen, template, behavior or event - in whichever file of the folder application declares it, as well as for reactions, event sources and operations.
 - **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code blocks.
 - `.play` files carry the Cratis icon in the explorer and editor tabs.
+- **Strings files** — `.strings` files (the per-locale text a model references with `$strings.<key>`) are highlighted: comments, dotted keys, the quoted value, `{placeholders}` and escapes. They carry the Cratis icon with a quotation badge in the lower right corner, so they are told apart from `.play` files in the explorer.
 
 ## Development
 

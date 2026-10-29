@@ -511,19 +511,28 @@ validate
 
 Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/fenced-code shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactions](reactions.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
 
-Cross-field or complex rules drop into C#. The block yields the message of every rule the command breaks, and yields nothing when the command is valid:
+Cross-field or complex rules drop into C#. This fragment validates a command whose `amount` is a `Money` concept. Use `context.Artifact` for the command, generated PascalCase property names, and `.Value` for the concept's underlying value:
 
 ````screenplay
 validate
   ```csharp
-  if (context.Artifact.PaymentTerms == "immediate" && context.Artifact.Total > 1_000_000)
+  if (context.Artifact.Amount.Value <= 0)
   {
-      yield return "Invoices over 1,000,000 cannot require immediate payment";
+      yield return "A payment has to be for something";
   }
   ```
 ````
 
-Declarative `validate` and fenced `validate` can coexist on the same command.
+Stage renders this body as `IEnumerable<string>`: each `yield return` adds a validation message in yielded order; reaching the end with no messages means valid. Bodies must stay within Stage's closed pure-body subset: no I/O, ambient clock or metadata reads (`Tenant`, `CausedBy`, `Occurred`), unbounded loops, or `yield break`. Properties marked `generated` are not available on the validation artifact.
+
+The same imperative body can be attached from a file relative to the model root:
+
+```screenplay
+validate
+  file Validations/PositiveAmount.cs
+```
+
+The file contains only the fenced body's statements and follows the same loading, hashing and path-safety rules as other `file` attachments. Missing or refused files use the existing attachment diagnostics. Declarative `validate` and imperative `validate` can coexist on the same command.
 
 ### Named-rule implementation intent (commands only)
 
@@ -557,6 +566,8 @@ Inside a `rule` body and inside a `validate` block with a ` ```csharp ` fence, `
 | `context.Tenant` | The tenant the command is executing for. |
 | `context.CausedBy` | The identity that caused the command, so a rule such as "you may not approve your own request" is expressible. |
 | `context.Occurred` | When the command was received. |
+
+Stage's rendering of fenced `validate` bodies does not admit the `Tenant`, `CausedBy` and `Occurred` reads (see [Validation rules](#validation-rules)); a body that needs them is refused rather than rendered.
 
 A rule can see **who** is calling but not **what they are allowed to do** — there are no roles and no claims in a `RuleContext`. A rule that inspects those is an authorization decision wearing a validation hat, and belongs in a [policy](policies.md). See [Contexts](context.md) for all four shapes.
 
@@ -611,7 +622,13 @@ Still rejected, and why:
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
-A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Fenced `validate` blocks on commands and concepts also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
+A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Imperative `validate` blocks on commands and concepts, either fenced or file-backed, also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. Without a host-supplied provider, the reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
+
+A host supplies an `ISemanticBodyExecutionProviderFactory` and resolved `SemanticImplementationBody` values to `SemanticEvaluator` or `SemanticSpecificationRunner`, or passes a factory to the four-argument `ScreenplayMcpServer.Run` overload for `run-specifications`. Each execution, decision or specification run creates an isolated provider through `ValueTask<ISemanticBodyExecutionProvider> CreateAsync(SemanticApplication application, IReadOnlyDictionary<string, SemanticImplementationBody> bodies, CancellationToken cancellationToken)`. The factory receives the resolved application (including concepts and context declarations) and a read-only requirement-id-to-body map. MCP resolves inline and file bodies from the selected workspace snapshot and creates one provider for the entire selected specification run. Screenplay awaits `DisposeAsync` before returning, including after rejection, Unsupported, exceptions and cancellation. A failed factory makes opaque bodies Unsupported, never false. No provider is reused across runs. A factory-backed `Decide` disposes its validation provider before returning the decision. Each later `Commit` with reducer work opens a fresh provider from that factory with the decision's captured cancellation token and disposes it before returning. Repeated commits therefore request separate providers; an abandoned decision or a commit without reducer work creates no reducer scope. A factory failure during commit is Unsupported. Named command-property rules and nested concept rules receive portable semantic values through `SemanticRuleContext`: `Artifact`, `Value`, `Property`, `Tenant`, `CausedBy` (without roles or claims), and `Occurred`. The occurrence time comes from the execution request, not the machine clock; unspecified circumstances remain null. Concept rules see their own value as both artifact and value, with an empty property path. Predicate rejection uses the authored message and severity. Providers implement `ValueTask<SemanticBodyExecutionResult> EvaluateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken)` and `IAsyncDisposable`. Provider diagnostics and exceptions produce `SemanticUnsupported` with the requirement identity; diagnostics have control characters removed and are limited to 500 characters. Timeouts and cancellation, including `OperationCanceledException`, map to Unsupported, never predicate rejection. The synchronous evaluator and runner expose `ExecuteWithCancellation`, `DecideWithCancellation` and `RunWithCancellation` methods; MCP hosts use `ScreenplayMcpServer.RunConfigured(new ScreenplayMcpRun(root, factory, cancellationToken), input, output)`. These synchronous entry points wait for asynchronous provider completion and disposal; hosts remain responsible for enforcing execution limits and terminating isolated workers. Unresolved or hash-mismatched bodies are not passed to the provider.
+
+Command and concept code validations use `ValueTask<SemanticValidationBodyResult> ValidateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken)`. Existing providers default to Unsupported for this method. `SemanticValidationBodyResult.Valid()` accepts with no messages; `Invalid(params string[] messages)` rejects with one error-severity failure per message, preserving text and order; `Unsupported(string diagnostic)` refuses execution. Null or default message arrays, null entries, a null result, or any diagnostic (even alongside messages) are Unsupported. Command blocks receive the whole supplied command as both `Artifact` and `Value`, with an empty `Property`; concept blocks receive their own value in both fields. Execution collects declarative command failures first, then named command rules, command code blocks in authored order, and reached concept rules in their declared order (including nested composite and collection values). It invokes every reached block once, even after an earlier validation rejection, but stops at the first Unsupported block. Unsupported execution is never treated as a validation rejection. MCP resolves both inline and file-backed validation bodies through the same isolated per-run factory.
+
+Screenplay ships no C# executor. The host must enforce language/API admission, isolation and resource limits; capability `pure` is not a sandbox. The standalone tool supplies no provider. Reducer transitions use the same body-provider seam; see [Host execution of reducer transitions](readmodels.md#host-execution-of-reducer-transitions). Opaque concept rules on query arguments and rules on generated command-property concepts remain unsupported by this body-provider seam.
 
 ### Chronological command date comparisons
 
@@ -825,23 +842,34 @@ handler
   file Commands/ProcessInvoiceBatchHandler.cs
 ```
 
-Inline C#:
+Inline C#, beside the event contract it implements (using the declared `PaymentId`, `InvoiceId`, and `Money` concepts):
 
 ````screenplay
-handler
-  ```csharp
-    var events = new List<object>();
-    events.Add(new InvoiceBatchProcessingStarted(
-        BatchId: BatchId,
-        StartedAt: DateTimeOffset.UtcNow
-    ));
-    foreach (var invoiceId in InvoiceIds)
-        events.Add(new InvoiceSent(invoiceId, DateTimeOffset.UtcNow, context.Identity.Id, null));
-    return events;
+command RecordPayment
+  paymentId PaymentId identifier
+  invoiceId InvoiceId
+  amount Money
+  produces PaymentRecorded
+    for paymentId
+    paymentId = paymentId
+    invoiceId = invoiceId
+    amount = amount
+    settlesInvoice = false
+  handler
+    ```csharp
+    var command = context.Command;
+    var settles = command.Amount.Value >= 1000;
+    return new PaymentRecorded(command.PaymentId, command.InvoiceId, command.Amount, settles);
     ```
+
+event PaymentRecorded
+  paymentId PaymentId
+  invoiceId InvoiceId
+  amount Money
+  settlesInvoice Bool
 ````
 
-A command handler, whether pending or attached, may sit beside unconditional `produces` as its fixed result contract. `PLAY0035` is retired and reserved; it is no longer reported. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+A command handler, whether pending or attached, may sit beside unconditional `produces` as its fixed result contract. The productions still own the event types, count, order, destinations, and metadata; the body owns event property values. Here the handler's computed `settlesInvoice` wins over the mapped `false` — Stage does not evaluate the payload mappings instead of the body. Return the events the contract declares, not an arbitrary event count or type. `PLAY0035` is retired and reserved; it is no longer reported. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 

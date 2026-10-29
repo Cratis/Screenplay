@@ -110,7 +110,7 @@ export interface DocumentSymbols {
     triggers: NamedSymbol[];
 }
 
-const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
+const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)\s*$/;
 const enumerationMemberPattern = new RegExp(`^@?([a-z_][${bmpWordCharacters}]*)(?:\\s*=\\s*(-?(?:0|[1-9][0-9]*)))?(?:\\s*//.*)?$`);
 const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?(\s+subject)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;

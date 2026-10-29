@@ -29,17 +29,9 @@ internal static class ValidateParser
     {
         if (line.Content == "validate")
         {
-            if (context.TryPeekChild(line.Indent, out var fence) && fence.Content.StartsWith("```", StringComparison.Ordinal))
+            if (TryParseImperative(context, line, out var imperative))
             {
-                context.Reader.TakeSignificant();
-                if (fence.Content is not ("```csharp" or "```java"))
-                {
-                    context.Error(DiagnosticCodes.ExpectedCodeFence, "Expected '```csharp' or '```java' after 'validate'", fence.Location);
-                    return null;
-                }
-
-                var implementation = CodeBlockParser.Parse(context, fence);
-                return implementation is null ? null : new CodeValidateSyntax(implementation, line.Location);
+                return imperative;
             }
 
             var rules = new List<ValidationRuleSyntax>();
@@ -89,5 +81,39 @@ internal static class ValidateParser
         context.Error(DiagnosticCodes.InvalidValidateDeclaration, $"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
         context.SkipBlock(line.Indent);
         return null;
+    }
+
+    static bool IsFileBody(ParserContext context, SourceLine header, SourceLine body)
+    {
+        if (!FileReferenceParser.IsDirectiveAmongProperties(body) || ValidationRuleParser.HasRuleOperand(body)) return false;
+        var lookahead = context.Reader.Fork();
+        lookahead.TakeSignificant();
+        var next = lookahead.PeekSignificant();
+        return next is null || next.Indent <= header.Indent;
+    }
+
+    static bool TryParseImperative(ParserContext context, SourceLine line, out ValidateSyntax? validation)
+    {
+        validation = null;
+        if (!context.TryPeekChild(line.Indent, out var body)) return false;
+        if (IsFileBody(context, line, body))
+        {
+            context.Reader.TakeSignificant();
+            var file = FileReferenceParser.Parse(context, body);
+            validation = file is null ? null : new FileValidateSyntax(file, line.Location);
+            return true;
+        }
+
+        if (!body.Content.StartsWith("```", StringComparison.Ordinal)) return false;
+        context.Reader.TakeSignificant();
+        if (body.Content is not ("```csharp" or "```java"))
+        {
+            context.Error(DiagnosticCodes.ExpectedCodeFence, "Expected '```csharp' or '```java' after 'validate'", body.Location);
+            return true;
+        }
+
+        var implementation = CodeBlockParser.Parse(context, body);
+        validation = implementation is null ? null : new CodeValidateSyntax(implementation, line.Location);
+        return true;
     }
 }

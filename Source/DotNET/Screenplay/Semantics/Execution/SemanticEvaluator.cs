@@ -10,18 +10,54 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 public sealed partial class SemanticEvaluator : ISemanticEvaluator
 {
+    readonly SemanticRuleBodyExecution? _ruleBodies;
+    readonly ISemanticBodyExecutionProviderFactory? _providerFactory;
+    readonly IEnumerable<SemanticImplementationBody> _bodies = [];
+
+    /// <summary>Initializes an evaluator without an implementation provider.</summary>
+    public SemanticEvaluator()
+    {
+    }
+
+    /// <summary>Initializes an evaluator that creates and disposes providers for executions, decisions and reducer-bearing commits.</summary>
+    /// <param name="factory">The host-owned run factory.</param>
+    /// <param name="bodies">Resolved bodies for the application.</param>
+    public SemanticEvaluator(ISemanticBodyExecutionProviderFactory factory, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _providerFactory = factory;
+        _bodies = [.. bodies];
+    }
+
+    internal SemanticEvaluator(ISemanticBodyExecutionProvider provider, IEnumerable<SemanticImplementationBody> bodies)
+    {
+        _ruleBodies = new(provider, bodies);
+        ReducerBodies = new(provider, _ruleBodies);
+    }
+
+    internal SemanticReducerBodyExecution ReducerBodies { get; } = SemanticReducerBodyExecution.None;
+
     /// <inheritdoc/>
-    public SemanticExecutionResult Execute(
+    public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
+
+    /// <inheritdoc/>
+    public SemanticExecutionResult ExecuteWithCancellation(
         SemanticExecutionPlan plan,
         SemanticWorld world,
-        SemanticExecutionRequest request)
+        SemanticExecutionRequest request,
+        CancellationToken cancellationToken)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+            return run.Evaluator.ExecuteWithCancellation(plan, world, request, cancellationToken);
+        }
+
         if (request.IsReadOnly)
         {
             return ExecuteReadOnly(plan, world, request);
         }
 
-        return Decide(plan, world, request).Commit(world);
+        return DecideWithCancellation(plan, world, request, cancellationToken).Commit(world);
     }
 
     /// <summary>
@@ -34,8 +70,19 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="facts">The ordered existing facts; no read-model snapshots are required.</param>
     /// <returns>An accepted established world, a contract rejection, or an unsupported projection.</returns>
-    public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
-        EstablishWorld(plan, facts, true);
+    public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts)
+    {
+        if (_providerFactory is null) return EstablishWorld(plan, facts, true, CancellationToken.None);
+        using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, CancellationToken.None);
+        return run.Evaluator.EstablishWorld(plan, facts, true, CancellationToken.None);
+    }
+
+    /// <summary>Decides without host cancellation.</summary>
+    /// <param name="plan">The admitted plan.</param>
+    /// <param name="world">The starting world.</param>
+    /// <param name="request">The command request.</param>
+    /// <returns>The command decision.</returns>
+    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => DecideWithCancellation(plan, world, request, default);
 
     /// <summary>
     /// Decides a command against a world without settling it, so a host can commit against a later world.
@@ -48,30 +95,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world the decision reads.</param>
     /// <param name="request">The command request.</param>
+    /// <param name="cancellationToken">Cancellation for host-owned rule execution; cancellation maps to Unsupported.</param>
     /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
-    public SemanticDecision Decide(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    public SemanticDecision DecideWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
-        if (request.IsReadOnly)
-        {
-            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot be decided; execute it as a query."));
-        }
-
-        if (!plan.Commands.TryGetValue(request.Command, out var command))
-        {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan."));
-        }
-
-        if (plan.UnadmittedArtifacts.Contains(command.Id))
-        {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation."));
-        }
-
-        if (request.Queries.IsDefault)
-        {
-            return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
-        }
-
-        return new SemanticCommandExecution(plan, world, command, request).Decide();
+        if (_providerFactory is null) return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(_ruleBodies, ReducerBodies, null);
+        using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
+        return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(run.Evaluator._ruleBodies, run.Evaluator.ReducerBodies, () => new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken));
     }
 
     /// <summary>
@@ -82,7 +112,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// then only they are projected onto the world's read models and pending children. No constraint is checked and nothing is
     /// published, because the facts are already in the log. The world of <c>ExtendWorld(Establish(a), b)</c> equals the world of
     /// <c>Establish(a + b)</c>; the result is not equal as a whole, because its accepted facts hold only <paramref name="facts"/>.
-    /// A reached reducer is unsupported. On failure the result carries the unchanged input world.
+    /// A reached reducer requires executable transition bodies and a provider. On failure the result carries the unchanged input world.
     /// </remarks>
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world to extend.</param>
@@ -90,6 +120,12 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <returns>An accepted result holding the extended world, a contract rejection, or an unsupported projection.</returns>
     public SemanticExecutionResult ExtendWorld(SemanticExecutionPlan plan, SemanticWorld world, ImmutableArray<SemanticFact> facts)
     {
+        if (_providerFactory is not null)
+        {
+            using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, CancellationToken.None);
+            return run.Evaluator.ExtendWorld(plan, world, facts);
+        }
+        if (ReducerBodies.InvalidIdentity(plan, facts) is { } keyFailure) return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, keyFailure);
         if (facts.IsDefault)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Extension facts cannot be default.");
@@ -102,7 +138,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
                 return rejection with { World = world };
             }
 
-            if (ReachedByHistory(plan, facts) is { } reducer)
+            if (ReachedByHistory(plan, facts, ReducerBodies) is { } reducer)
             {
                 return new SemanticUnsupported(
                     world,
@@ -110,7 +146,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
                     $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
             }
 
-            if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure))
+            if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure, ReducerBodies, CancellationToken.None))
             {
                 return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
             }
@@ -128,7 +164,16 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         SemanticWorld world,
         SemanticFact fact,
         ImmutableArray<SemanticQueryRequest> queries,
-        SemanticCaller? caller)
+        SemanticCaller? caller) => Append(plan, world, fact, queries, caller, SemanticReducerBodyExecution.None, CancellationToken.None);
+
+    internal static SemanticExecutionResult Append(
+        SemanticExecutionPlan plan,
+        SemanticWorld world,
+        SemanticFact fact,
+        ImmutableArray<SemanticQueryRequest> queries,
+        SemanticCaller? caller,
+        SemanticReducerBodyExecution reducers,
+        CancellationToken cancellationToken)
     {
         var facts = ImmutableArray.Create(fact);
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts) is { } violated)
@@ -136,12 +181,12 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
         }
 
-        if (ReachedReducer(plan, facts) is { } reachedReducer)
+        if (ReachedReducer(plan, facts, reducers) is { } reachedReducer)
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure))
+        if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure, reducers, cancellationToken))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
         }
@@ -157,7 +202,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
         }
 
-        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller);
+        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller, reducers);
     }
 
     // Projects from supplied snapshots without validating facts. The public establishment operation intentionally
@@ -186,14 +231,15 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         SemanticWorld tentative,
         ImmutableArray<SemanticFact> facts,
         ImmutableArray<SemanticQueryRequest> queries,
-        SemanticCaller? caller)
+        SemanticCaller? caller,
+        SemanticReducerBodyExecution reducers)
     {
         if (queries.IsDefault)
         {
             return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
-        var run = new SemanticQueryRun(plan, original, tentative, caller);
+        var run = new SemanticQueryRun(plan, original, tentative, caller, reducers);
         var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
         foreach (var queryRequest in queries)
         {
@@ -218,7 +264,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             SemanticEventContextExpression { Value: SemanticEventContextValueKind.EventSourceIdentity } when expectedRoot == SemanticExpressionRootKind.Event && cause is not null => cause.Destination,
             SemanticEventContextExpression context when occurrence is not null => context.Value switch
             {
-                SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+                SemanticEventContextValueKind.Occurred => OccurredValue(occurrence.Occurred),
                 SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
                 SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
                 SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
@@ -229,19 +275,25 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
         };
 
+    internal static SemanticValue OccurredValue(DateTimeOffset occurred) =>
+        SemanticValue.Text(occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+
     internal static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
 
-    internal static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+    internal static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, SemanticReducerBodyExecution reducers) =>
         plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6)
             ? plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
-                .FirstOrDefault(reducer => reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract &&
+                .FirstOrDefault(reducer => !reducers.CanExecute(plan, reducer) && reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract &&
                      (reducer.From?.Matches(plan.Model.Application, fact.Route) != false))))
             : null;
 
     internal static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>
         plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
             .FirstOrDefault(reducer => reducer.ReadModel == readModel);
+
+    internal static IEnumerable<SemanticReducer> AllReducers(SemanticExecutionPlan plan) =>
+        plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features));
 
     internal static IEnumerable<SemanticReducer> Reducers(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.SelectMany(slice => slice.Reducers).Concat(Reducers(feature.Features)));
@@ -261,13 +313,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
 
-    static SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
     {
         if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
         }
 
-        return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller);
+        return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller, ReducerBodies);
     }
 }

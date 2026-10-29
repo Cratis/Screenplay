@@ -78,6 +78,21 @@
                     "light": "./resources/logo.png",
                     "dark": "./resources/logo.png"
                 }
+            },
+            {
+                "id": "screenplay-strings",
+                "aliases": [
+                    "Screenplay Strings",
+                    "screenplay-strings"
+                ],
+                "extensions": [
+                    ".strings"
+                ],
+                "configuration": "./strings-language-configuration.json",
+                "icon": {
+                    "light": "./resources/strings-logo.png",
+                    "dark": "./resources/strings-logo.png"
+                }
             }
         ],
         "grammars": [
@@ -93,6 +108,11 @@
                     "meta.embedded.block.html": "html",
                     "meta.embedded.block.sql": "sql"
                 }
+            },
+            {
+                "language": "screenplay-strings",
+                "scopeName": "source.screenplay-strings",
+                "path": "./syntaxes/screenplay-strings.tmLanguage.json"
             }
         ],
         "configuration": {

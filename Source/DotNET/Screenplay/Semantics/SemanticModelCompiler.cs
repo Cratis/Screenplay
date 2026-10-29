@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Semantics;
 /// </summary>
 /// <param name="compiler">The source syntax compiler.</param>
 /// <param name="binder">The semantic model binder.</param>
-public sealed class SemanticModelCompiler(IScreenplayCompiler compiler, ISemanticModelBinder binder) : ISemanticModelCompiler
+public sealed class SemanticModelCompiler(IScreenplayCompiler compiler, ISemanticModelBinder binder) : ISemanticModelCompiler, IAdmissibleSemanticModelCompiler
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SemanticModelCompiler"/> class with default collaborators.
@@ -19,6 +19,10 @@ public sealed class SemanticModelCompiler(IScreenplayCompiler compiler, ISemanti
         : this(new ScreenplayCompiler(), new SemanticModelBinder())
     {
     }
+
+    /// <inheritdoc/>
+    public AdmissibleCompilationResult CompileAdmissible(string applicationName, SemanticDocumentSet documents) =>
+        new AdmissibleCompilation(compiler, binder).Compile(applicationName, documents);
 
     /// <inheritdoc/>
     public CompilationResult<SemanticCompilation> Compile(string applicationName, SemanticDocumentSet documents)

@@ -16,7 +16,8 @@ sealed class SemanticQueryRun(
     SemanticExecutionPlan plan,
     SemanticWorld original,
     SemanticWorld tentative,
-    SemanticCaller? caller)
+    SemanticCaller? caller,
+    SemanticReducerBodyExecution reducers)
 {
     /// <summary>
     /// Answers one query request.
@@ -114,7 +115,7 @@ sealed class SemanticQueryRun(
     }
 
     SemanticUnsupported? RefuseReducer(SemanticId readModel, SemanticExecutionCapability capability) =>
-        SemanticEvaluator.ReducerFor(plan, readModel) is { } reducer
+        SemanticEvaluator.AllReducers(plan).FirstOrDefault(reducer => reducer.ReadModel == readModel && !reducers.CanExecute(plan, reducer)) is { } reducer
             ? new SemanticUnsupported(
                 original,
                 capability,

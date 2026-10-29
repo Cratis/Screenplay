@@ -9,11 +9,12 @@ public sealed partial class SemanticEvaluator
 {
     // Specifications also retain legacy given events without an event source; their null destination must not
     // become a fabricated identity. All supplied identities, payloads, tags and projections use the same core.
-    internal SemanticExecutionResult EstablishSpecificationWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
-        EstablishWorld(plan, facts, false);
+    internal SemanticExecutionResult EstablishSpecificationWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, CancellationToken cancellationToken) =>
+        EstablishWorld(plan, facts, false, cancellationToken);
 
-    internal SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, bool publicReplay)
+    internal SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, bool publicReplay, CancellationToken cancellationToken)
     {
+        if (ReducerBodies.InvalidIdentity(plan, facts) is { } keyFailure) return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, keyFailure);
         try
         {
             if (ValidateHistory(plan, facts, publicReplay) is { } rejection)
@@ -26,7 +27,7 @@ public sealed partial class SemanticEvaluator
             return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
         }
 
-        var reducer = ReachedByHistory(plan, facts);
+        var reducer = ReachedByHistory(plan, facts, ReducerBodies);
         if (publicReplay && reducer is not null)
         {
             return new SemanticUnsupported(
@@ -37,7 +38,7 @@ public sealed partial class SemanticEvaluator
 
         try
         {
-            if (!TryProject(plan, [], new ProjectionState([], []), facts, out var state, out var failure))
+            if (!TryProject(plan, [], new ProjectionState([], []), facts, out var state, out var failure, ReducerBodies, cancellationToken))
             {
                 return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, failure!);
             }
@@ -154,15 +155,15 @@ public sealed partial class SemanticEvaluator
         validator.Validate(context.EventSource.Value, requiredType, "event source identity");
     }
 
-    static SemanticReducer? ReachedByHistory(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+    static SemanticReducer? ReachedByHistory(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, SemanticReducerBodyExecution reducers) =>
         plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
             .FirstOrDefault(candidate =>
             {
                 var matchingFacts = facts.Where(fact => candidate.From?.Matches(plan.Model.Application, fact.Route) != false).ToArray();
                 var observedEvents = matchingFacts.Select(fact => fact.EventContract).ToHashSet();
 
-                return candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
+                return !reducers.CanExecute(plan, candidate) && (candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
                     (matchingFacts.Length > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
-                        projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value))));
+                        projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value)))));
             });
 }

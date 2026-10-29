@@ -12,7 +12,7 @@ import { reset, state } from '../vscode.stub';
 function definitions(source: string, application?: WorkspaceApplication) {
     const uri = vscode.Uri.file('/workspace/current.play');
     const eventDefinitions = vi.fn(() => [new vscode.Location(uri, new vscode.Position(50, 0))]);
-    const index = { fileOf: () => application ? { path: 'current.play', application } : undefined, eventDefinitions } as unknown as ApplicationIndex;
+    const index = { fileOf: () => application ? { path: 'current.play', application } : undefined, eventDefinitions, declarations: () => [] } as unknown as ApplicationIndex;
     registerDefinitions({ subscriptions: [] } as unknown as vscode.ExtensionContext, index);
     const provider = state.definitionProviders.at(-1)!.provider as vscode.DefinitionProvider;
     const lines = source.split('\n');
@@ -105,5 +105,29 @@ describe('when navigating operation targets', () => {
             expect(operationCompletions(lines, 8, '    recipient = te', symbols)?.map(entry => entry.label)).toEqual(['text']);
             expect(hoverContent(lines, 8, 'text', 17, 21, symbols)).toContain('Command source');
         }
+    });
+});
+
+describe('when navigating to any other declaration', () => {
+    beforeEach(() => { reset(); state.workspaceFolder = '/workspace'; });
+    it('should fall back to what the application declares under the name', () => {
+        const application = new WorkspaceApplication();
+        application.set('current.play', 'command Submit\n  talkId TalkId identifier');
+        application.set('shared/concepts.play', 'concept TalkId : Uuid');
+        const uri = vscode.Uri.file('/workspace/current.play');
+        const declarations = vi.fn(() => [new vscode.Location(vscode.Uri.file('/workspace/shared/concepts.play'), new vscode.Position(0, 8))]);
+        const index = { fileOf: () => ({ path: 'current.play', application }), eventDefinitions: () => [], declarations } as unknown as ApplicationIndex;
+        registerDefinitions({ subscriptions: [] } as unknown as vscode.ExtensionContext, index);
+        const provider = state.definitionProviders.at(-1)!.provider as vscode.DefinitionProvider;
+        const lines = ['command Submit', '  talkId TalkId identifier'];
+        const document = {
+            uri,
+            getText: (range?: vscode.Range) => range ? lines[1].slice(range.start.character, range.end.character) : lines.join('\n'),
+            getWordRangeAtPosition: () => new vscode.Range(1, 9, 1, 15),
+        } as unknown as vscode.TextDocument;
+
+        provider.provideDefinition(document, new vscode.Position(1, 10), {} as vscode.CancellationToken);
+
+        expect(declarations).toHaveBeenCalledWith(uri, 'TalkId');
     });
 });

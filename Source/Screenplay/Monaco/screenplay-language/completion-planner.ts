@@ -283,7 +283,7 @@ export function planCompletions(
             const parent = withoutComment(lines[index]);
             if (parent.trim().length === 0 || indentOf(parent) >= parentIndent) continue;
             parentIndent = indentOf(parent);
-            if (/^\s*on\s+(?:click|double click|select)\s*$/.test(parent)) {
+            if (/^\s*on\s+(?:click|double click|select|change)\s*$/.test(parent)) {
                 return { kind: 'entries', entries: chain[0] === 'on' ? items.interactionChoiceItems : items.interactionActionItems };
             }
             if (/^\s*(?:screen|behavior|specification|reaction)\b/.test(parent)) break;

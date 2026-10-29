@@ -1,0 +1,20 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+concept Money : Decimal
+  validate
+    min 0
+  validate
+    file Validations/Money.cs
+  validate
+    ```csharp
+    if (context.Artifact.Value < 0) yield return "Negative amount";
+    ```
+
+module Billing
+  feature Payments
+    slice StateChange Pay
+      command Pay
+        amount Money
+        validate
+          file Validations/Pay.cs

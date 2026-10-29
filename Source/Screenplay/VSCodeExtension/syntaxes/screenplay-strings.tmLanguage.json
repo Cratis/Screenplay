@@ -1,0 +1,32 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Screenplay Strings",
+    "scopeName": "source.screenplay-strings",
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#assignment" }
+    ],
+    "repository": {
+        "comment": {
+            "name": "comment.line.double-slash.screenplay-strings",
+            "match": "//.*$"
+        },
+        "assignment": {
+            "begin": "^\\s*([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\s*(=)\\s*(\")",
+            "beginCaptures": {
+                "1": { "name": "variable.other.key.screenplay-strings" },
+                "2": { "name": "keyword.operator.assignment.screenplay-strings" },
+                "3": { "name": "punctuation.definition.string.begin.screenplay-strings" }
+            },
+            "end": "(\")|$",
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.string.end.screenplay-strings" }
+            },
+            "contentName": "string.quoted.double.screenplay-strings",
+            "patterns": [
+                { "name": "constant.character.escape.screenplay-strings", "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})" },
+                { "name": "variable.parameter.placeholder.screenplay-strings", "match": "\\{[A-Za-z_][\\w.]*\\}" }
+            ]
+        }
+    }
+}

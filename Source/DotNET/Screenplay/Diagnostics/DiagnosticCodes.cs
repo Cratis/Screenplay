@@ -2804,7 +2804,7 @@ public static class DiagnosticCodes
     public const string UnusedPurpose = "PLAY0606";
 
     /// <summary>
-    /// Interaction alternatives require a click, double click or select trigger.
+    /// Interaction alternatives require a click, double click, select or change trigger.
     /// </summary>
     public const string UnsupportedInteractionAlternatives = "PLAY0560";
 
