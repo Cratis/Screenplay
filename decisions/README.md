@@ -110,3 +110,4 @@
 | [0113](0113-performer-bodies-are-rendered.md) | Performer bodies are rendered, with a documented typed context | proposed | none | — | — |
 | [0114](0114-events-capture-keys-by-event-source.md) | Let an events capture key by its event source (ESM v33) | accepted | implemented | 2026-10-24 | Sindre Alstad Wilting (delegated repository acceptance) |
 | [0115](0115-a-specification-runs-its-own-slice-only.md) | A specification runs its own slice only, and states the commands its reactions invoke (ESM v34) | accepted | implemented | 2026-10-25 | Einar Ingebrigtsen |
+| [0118](0118-unknown-preserving-esm-admission.md) | Opt-in unknown-preserving ESM admission and minor allocation | accepted | none | 2026-10-26 | L13 (owner orchestration) |
