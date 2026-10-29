@@ -10,7 +10,9 @@ public class when_excluding_duplicate_imports : given.documents
 
     [Fact] void should_bind_the_subset() => _result.Compilation.Success.ShouldBeTrue();
     [Fact] void should_keep_the_unrelated_slice() => Slices.ShouldEqual(["Kept"]);
-    [Fact] void should_preserve_both_import_exclusions() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["External.View", "External.View"]);
-    [Fact] void should_preserve_source_order() => _result.Exclusions.Select(value => value.Location.Line).ShouldEqual([1, 2]);
-    [Fact] void should_report_both_imports_as_roots() => _result.Exclusions.ShouldEachConformTo(value => value.Cause == SemanticExclusionCause.Root && value.DependsOn.IsEmpty);
+    [Fact] void should_exclude_the_merged_import_once() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["External.View"]);
+    [Fact] void should_preserve_the_first_import_location() => _result.Exclusions.Select(value => value.Location.Line).ShouldEqual([1]);
+    [Fact] void should_keep_metadata_deterministic() => _compiler.CompileAdmissible("Example", _documents).Exclusions.Select(value => (value.Kind, value.Address, value.Location, value.Cause))
+        .ShouldEqual(_result.Exclusions.Select(value => (value.Kind, value.Address, value.Location, value.Cause)));
+    [Fact] void should_report_the_import_as_root() => _result.Exclusions.ShouldEachConformTo(value => value.Cause == SemanticExclusionCause.Root && value.DependsOn.IsEmpty);
 }

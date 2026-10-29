@@ -7,8 +7,8 @@ public class when_a_later_protected_read_closure_has_two_own_failures : given.se
 {
     IEnumerable<SemanticExclusion> Readers => _result.Exclusions.Where(value => value.Address is "M/F/Write" or "M/F/Inspect");
 
-    void Establish() => Source(Protected
-        .Replace("  feature F\n", "  feature F\n    slice StateView Removed\n      readmodel EarlierView\n        earlierId String\n      query Scoped => EarlierView[]\n        scoped to identity\n", StringComparison.Ordinal)
+    void Establish() => Source(AdmittedProtected
+        .Replace("  feature F\n", "  feature F\n    slice StateView Removed\n      readmodel EarlierView\n        earlierViewId String\n      query Scoped => EarlierView[]\n        scoped to identity\n", StringComparison.Ordinal)
         .Replace("    slice StateView Lookup\n", "      query EarlierForWrite => EarlierView[]\n    slice StateView Lookup\n", StringComparison.Ordinal)
         .Replace("    slice StateChange Kept\n", "      query EarlierForInspect => EarlierView[]\n    slice StateChange Kept\n", StringComparison.Ordinal));
 

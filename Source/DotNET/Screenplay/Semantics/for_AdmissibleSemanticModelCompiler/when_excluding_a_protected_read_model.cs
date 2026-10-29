@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.for_AdmissibleSemanticModelCompiler;
 
 public class when_excluding_a_protected_read_model : given.security_documents
 {
-    void Establish() => Source("command reads protected\nmodule M\n  feature F\n    slice StateChange Write\n      command Save\n        id String identifier\n        reads View by id\n    slice StateView Lookup\n      readmodel View\n        id String key\n      query Scoped => View optional\n        by id String\n        scoped to identity\n    slice StateChange Inspect\n      command Inspect\n        id String identifier\n        reads View by id\n    slice StateChange Kept\n");
+    void Establish() => Source(AdmittedProtected.Replace("        by id String\n", "        by id String\n        scoped to identity\n", StringComparison.Ordinal));
     void Because() => _result = _compiler.CompileAdmissible("Example", _documents);
 
     [Fact] void should_have_a_strict_binding_failure() => _normal.Success.ShouldBeFalse();
