@@ -40,7 +40,7 @@ public sealed partial class SemanticModelBinder
             }
             else if (!DescribedCommandAdmission.IsResolvedBody(requirement))
             {
-                RefusePossibleEventsBody(command, requirement, handler.Location);
+                RefusePossibleEventsBody(command, requirement, handler.Location, address);
                 return null;
             }
 
@@ -56,10 +56,11 @@ public sealed partial class SemanticModelBinder
             return null;
         }
 
-        void RefusePossibleEventsBody(CommandSyntax command, SemanticImplementationRequirement requirement, SourceLocation location) => Error(
+        void RefusePossibleEventsBody(CommandSyntax command, SemanticImplementationRequirement requirement, SourceLocation location, SemanticAddress owner) => Error(
             DiagnosticCodes.CommandHandlerRequiresAttachment,
             $"Command '{command.Name}' has an attached handler whose implementation requirement '{requirement.RequirementId}' must resolve to a non-empty, language-tagged body.",
-            location);
+            location,
+            DiagnosticArguments.Empty.With("subject", DiagnosticArgument.Declaration("command", owner.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice or SemanticAddressPartKind.Declaration).Select(part => part.Key))));
 
         ImmutableArray<SemanticProducedEvent> BindPossibleEvents(CommandSyntax command, Dictionary<string, SemanticProperty> properties, Dictionary<string, BoundEvent> events)
         {
