@@ -36,6 +36,9 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     static bool RemovedOwner(AdmissibleSecuritySyntax.ViewReference reference, AdmissibleExclusions plan) =>
         reference.Slice is { } slice && plan.Removed.Contains(slice);
 
+    static bool IsRemovedReadReference(AdmissibleSecuritySyntax.ViewReference reference, string name, AdmissibleExclusions plan) =>
+        reference.Name == name && RemovedOwner(reference, plan);
+
     bool TryAttribute(Diagnostic error, AdmissibleExclusions plan)
     {
         var policies = PoliciesFor(error).Distinct(StringComparer.Ordinal).ToArray();
@@ -111,8 +114,8 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     }
 
     SliceSyntax[] ReadTriggers(string name, AdmissibleExclusions plan) =>
-        [.. _security.Reads.Concat(_security.Views).Where(reference => reference.Name == name)
-            .Where(reference => RemovedOwner(reference, plan)).Select(reference => reference.Slice!).Distinct()];
+        [.. _security.Reads.Concat(_security.Views).Where(reference => IsRemovedReadReference(reference, name, plan))
+            .Select(reference => reference.Slice!).Distinct()];
 
     IEnumerable<string> PoliciesFor(Diagnostic diagnostic)
     {

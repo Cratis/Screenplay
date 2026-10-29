@@ -13,7 +13,9 @@ sealed class AdmissibleExclusions(AdmissibleSyntax index)
     readonly Dictionary<AdmissibleSyntax.Unit, AdmissibleSyntax.Unit[]> _forcedBy = [];
 
     internal HashSet<SyntaxNode> Removed { get; } = [];
-    internal IEnumerable<Entry> Entries => _entries.Select(entry => new Entry(entry.Value, _own.Contains(entry.Key),
+    internal IEnumerable<Entry> Entries => _entries.Select(entry => new Entry(
+        entry.Value,
+        _own.Contains(entry.Key),
         [.. _forcedBy.GetValueOrDefault(entry.Key, []).Select(unit => new SemanticExclusionReference(unit.Kind, unit.Address))]));
     internal IEnumerable<SliceSyntax> Slices => Removed.OfType<SliceSyntax>();
 
