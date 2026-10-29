@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
+
 namespace Cratis.Screenplay.Semantics.for_AdmissibleSemanticModelCompiler;
 
 public class when_excluding_an_import : given.documents
@@ -12,4 +14,10 @@ public class when_excluding_an_import : given.documents
     [Fact] void should_remove_the_import_and_its_consumer() => _result.Exclusions.Select(value => value.Kind).ShouldEqual([SemanticExclusionKind.Import, SemanticExclusionKind.Slice]);
     [Fact] void should_name_the_import() => _result.Exclusions[0].Address.ShouldEqual("External.View");
     [Fact] void should_keep_the_independent_slice() => Slices.ShouldEqual(["Kept"]);
+    [Fact] void should_report_the_import_as_root() => _result.Exclusions[0].Cause.ShouldEqual(SemanticExclusionCause.Root);
+    [Fact] void should_not_name_import_dependencies() => _result.Exclusions[0].DependsOn.ShouldBeEmpty();
+    [Fact] void should_report_the_import_error_in_the_first_binding_pass() => _normal.Diagnostics.Where(value => value.Severity == DiagnosticSeverity.Error).Select(value => value.Location?.Line).ShouldContain(1);
+    [Fact] void should_report_the_consumer_error_in_the_first_binding_pass() => _normal.Diagnostics.Where(value => value.Severity == DiagnosticSeverity.Error).Select(value => value.Location?.Line).ShouldContain(6);
+    [Fact] void should_report_the_first_pass_consumer_as_root() => _result.Exclusions[1].Cause.ShouldEqual(SemanticExclusionCause.Root);
+    [Fact] void should_not_name_dependencies_for_the_first_pass_consumer() => _result.Exclusions[1].DependsOn.ShouldBeEmpty();
 }

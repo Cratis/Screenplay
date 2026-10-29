@@ -20,4 +20,15 @@ public sealed record SemanticExclusion(SemanticExclusionKind Kind, string Addres
     /// Gets the security dependency that required this exclusion, when applicable.
     /// </summary>
     public string? Reason { get; init; }
+
+    /// <summary>
+    /// Gets whether the exclusion is a root failure or follows an excluded dependency.
+    /// </summary>
+    public SemanticExclusionCause Cause { get; init; } = SemanticExclusionCause.Root;
+
+    /// <summary>
+    /// Gets the immediate exclusions that forced this one, ordered like <see cref="AdmissibleCompilationResult.Exclusions"/>.
+    /// This array is empty for <see cref="SemanticExclusionCause.Root"/>.
+    /// </summary>
+    public ImmutableArray<SemanticExclusionReference> DependsOn { get; init; } = [];
 }

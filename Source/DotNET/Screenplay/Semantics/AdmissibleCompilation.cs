@@ -21,11 +21,9 @@ sealed class AdmissibleCompilation(IScreenplayCompiler compiler, ISemanticModelB
         (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic);
 
     static AdmissibleCompilationResult Result(CompilationResult<SemanticCompilation> compilation, List<SemanticExclusion> exclusions) =>
-        new(compilation, [.. exclusions.OrderBy(exclusion => exclusion.Location.Path, StringComparer.Ordinal)
-            .ThenBy(exclusion => exclusion.Location.Line).ThenBy(exclusion => exclusion.Location.Column)
-            .ThenBy(exclusion => exclusion.Kind).ThenBy(exclusion => exclusion.Address, StringComparer.Ordinal)]);
+        new(compilation, [.. AdmissibleCauses.Order(exclusions)]);
 
-    static (ApplicationSyntax Syntax, IEnumerable<SemanticExclusion> Exclusions)? TryPrune(ApplicationSyntax syntax, SemanticIdentityCatalog identities, IEnumerable<Diagnostic> diagnostics)
+    static (ApplicationSyntax Syntax, IEnumerable<AdmissibleExclusions.Entry> Entries)? TryPrune(ApplicationSyntax syntax, SemanticIdentityCatalog identities, IEnumerable<Diagnostic> diagnostics)
     {
         var index = new AdmissibleSyntax(syntax, identities);
         index.Index();
@@ -41,6 +39,7 @@ sealed class AdmissibleCompilation(IScreenplayCompiler compiler, ISemanticModelB
     {
         var syntax = parsed.Value!;
         var exclusions = new List<SemanticExclusion>();
+        var causes = new AdmissibleCauses(() => AdmissibleDependencies.For(parsed.Value!, documents.IdentityCatalog));
         CompilationResult<SemanticCompilation>? original = null;
         while (true)
         {
@@ -50,7 +49,7 @@ sealed class AdmissibleCompilation(IScreenplayCompiler compiler, ISemanticModelB
             if (ApplicationRefusal(syntax)) return new(original, []);
             if (TryPrune(syntax, documents.IdentityCatalog, compilation.Diagnostics) is not { } pruned) return new(original, []);
             syntax = pruned.Syntax;
-            exclusions.AddRange(pruned.Exclusions);
+            exclusions.AddRange(causes.Classify([.. pruned.Entries]));
         }
     }
 

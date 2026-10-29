@@ -13,5 +13,8 @@ public class when_excluding_a_policy : given.security_documents
     [Fact] void should_exclude_the_policy_and_both_protected_slices() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["Access", "M/F/Write", "M/F/Lookup"]);
     [Fact] void should_keep_only_the_unrelated_slice() => Slices.ShouldEqual(["Kept"]);
     [Fact] void should_remove_the_policy() => _result.Compilation.Value!.Model.Application.Policies.ShouldBeEmpty();
+    [Fact] void should_report_the_policy_as_root() => _result.Exclusions[0].Cause.ShouldEqual(SemanticExclusionCause.Root);
+    [Fact] void should_report_authorization_as_dependent() => _result.Exclusions.Skip(1).ShouldEachConformTo(value => value.Cause == SemanticExclusionCause.Dependent);
+    [Fact] void should_name_the_excluded_policy() => _result.Exclusions.Skip(1).ShouldEachConformTo(value => value.DependsOn.SequenceEqual(new SemanticExclusionReference[] { new(SemanticExclusionKind.Policy, "Access") }));
     [Fact] void should_explain_the_security_closure() => _result.Exclusions.ShouldEachConformTo(value => value.Reason?.Contains("Access", StringComparison.Ordinal) == true);
 }
