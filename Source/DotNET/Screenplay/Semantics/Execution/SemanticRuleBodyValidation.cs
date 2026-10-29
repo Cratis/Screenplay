@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Contexts;
 
 namespace Cratis.Screenplay.Semantics.Execution;
@@ -22,7 +23,12 @@ sealed class SemanticRuleBodyValidation(SemanticApplication application, Semanti
                 : SemanticRuleBodyExecution.Unsupported(rule, "The rule property is unavailable before generation."));
         var conceptChecks = command.Properties.Where(property => !property.IsGenerated)
             .SelectMany(property => CheckConcepts(property.Type, values[property.Id], cancellationToken));
-        return commandChecks.Concat(conceptChecks);
+        var codeChecks = command.CodeValidations.SelectMany(validation => bodies.CheckValidation(
+            new SemanticValidationRule(default, SemanticValidationRuleKind.CodeValidation, null, null) { RequirementId = validation.RequirementId },
+            SemanticImplementationRole.CommandValidation,
+            Context(artifact, artifact, string.Empty),
+            cancellationToken));
+        return commandChecks.Concat(codeChecks).Concat(conceptChecks);
     }
 
     IEnumerable<SemanticRuleCheck> CheckConcepts(SemanticTypeReference type, SemanticValue value, CancellationToken cancellationToken)
@@ -30,11 +36,21 @@ sealed class SemanticRuleBodyValidation(SemanticApplication application, Semanti
         if (type.IsCollection) return CheckCollection(type, value, cancellationToken);
         if (type.Kind == SemanticTypeReferenceKind.Concept)
         {
-            return _concepts[type.Target].Validations.Where(IsPredicate)
-                .Select(rule => bodies.Check(rule, Context(value, value, string.Empty), cancellationToken) with { Concept = type.Target });
+            return _concepts[type.Target].Validations.SelectMany(rule => CheckConceptRule(rule, value, cancellationToken))
+                .Select(check => check with { Concept = type.Target });
         }
 
         return CheckComposite(type, value, cancellationToken);
+    }
+
+    ImmutableArray<SemanticRuleCheck> CheckConceptRule(SemanticValidationRule rule, SemanticValue value, CancellationToken cancellationToken)
+    {
+        if (rule.Kind == SemanticValidationRuleKind.CodeValidation)
+        {
+            return bodies.CheckValidation(rule, SemanticImplementationRole.ConceptValidation, Context(value, value, string.Empty), cancellationToken);
+        }
+
+        return IsPredicate(rule) ? [bodies.Check(rule, Context(value, value, string.Empty), cancellationToken)] : [];
     }
 
     IEnumerable<SemanticRuleCheck> CheckCollection(SemanticTypeReference type, SemanticValue value, CancellationToken cancellationToken) =>

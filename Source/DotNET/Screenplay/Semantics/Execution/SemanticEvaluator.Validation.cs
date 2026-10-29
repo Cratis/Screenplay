@@ -43,7 +43,7 @@ public sealed partial class SemanticEvaluator
 
     internal static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command, bool hasRuleProvider = false)
     {
-        if (!command.CodeValidations.IsEmpty)
+        if (!hasRuleProvider && !command.CodeValidations.IsEmpty)
         {
             return $"Command '{command.Name}' code validation 0";
         }

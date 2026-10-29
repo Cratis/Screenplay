@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Semantics.Execution;
 
 /// <summary>
-/// Supplies host-owned execution of named rule predicates. Screenplay does not compile or run source code.
+/// Supplies host-owned execution of named rule predicates and code validations. Screenplay does not compile or run source code.
 /// </summary>
 /// <remarks>
 /// The host is responsible for language admission, isolation and resource limits. The pure capability on a
@@ -19,6 +19,15 @@ public interface ISemanticBodyExecutionProvider : IAsyncDisposable
     /// <returns>A Boolean answer, or a diagnostic with no answer when execution is unsupported.</returns>
     /// <remarks>Timeouts and cancellation, including OperationCanceledException, map to Unsupported, never rejection.</remarks>
     ValueTask<SemanticBodyExecutionResult> EvaluateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken);
+
+    /// <summary>Executes a command or concept code validation against portable semantic values.</summary>
+    /// <param name="body">The resolved, content-verified body and its requirement.</param>
+    /// <param name="context">The whole command or concept value and caller-supplied circumstances.</param>
+    /// <param name="cancellationToken">The run cancellation; the host must also enforce execution time limits.</param>
+    /// <returns>Validation messages, or an unsupported result when execution is unavailable.</returns>
+    /// <remarks>Exceptions and cancellation map to Unsupported, never rejection. Existing providers remain unsupported by default.</remarks>
+    ValueTask<SemanticValidationBodyResult> ValidateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken) =>
+        new(SemanticValidationBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Code validation", body)));
 }
 
 /// <summary>Represents resolved source for one implementation requirement.</summary>
