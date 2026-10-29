@@ -160,12 +160,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 31.0 | The `anonymous` policy condition (`require anonymous`): a policy every caller satisfies, with or without an identity, as the whole authorization of a command or query (released in Screenplay v4.240.6) | 31 | [0103](https://github.com/Cratis/Screenplay/blob/main/decisions/0103-admit-the-anonymous-policy-condition-in-esm-v31.md), [0092](https://github.com/Cratis/Screenplay/blob/main/decisions/0092-the-language-is-frozen-at-esm-v28.md) | `full-esm-v31.json` | `AnonymousPoliciesCorpus.V31` |
 | 32.0 | Typed event capture keys preserve the agreed source-property identity on capture appends and specification fixtures (released in Screenplay v4.241.0) | 32 | [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) | `full-esm-v32.json` | `EsmGoldenVectors.Get(32)` |
 | 33.0 | An events capture keyed by its event source (`key <property> is event source`) (released in Screenplay v4.242.0) | 33 | [0114](https://github.com/Cratis/Screenplay/blob/main/decisions/0114-events-capture-keys-by-event-source.md) | `full-esm-v33.json` | `EsmGoldenVectors.Get(33)` |
-
-#### Claimed, unreleased version
-
-| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
-| --- | --- | --- | --- | --- | --- |
-| 34.0 | A specification stating the commands its slice's reactions invoke (`then invokes <Command>`) | 34 | [0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md) | `full-esm-v34.json` | `EsmGoldenVectors.Get(34)` |
+| 34.0 | A specification stating the commands its slice's reactions invoke (`then invokes <Command>`) (released in Screenplay v4.246.0) | 34 | [0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md) | `full-esm-v34.json` | `EsmGoldenVectors.Get(34)` |
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.
 
