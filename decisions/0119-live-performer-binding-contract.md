@@ -51,6 +51,13 @@ accepted proposal on Cratis/Screenplay#1077.
    ambient tenant or user state. There is no paging.
 8. **ZeroOrOne and One are deferred.** A later decision gives them their own result version.
 
+**Done when:** the binder stamps `ResultVersion 2` and `ContextVersion 1` only on an observable collection performer, every
+other performer keeps `(1, 1)`, and the documentation states the live contract.
+
+**Verify by:** binder specs for live collection, live single, live optional and snapshot performers; the MCP
+`implementation-requirements` view reporting both versions; and the unchanged ESM hash in
+`and_the_executable_model_is_serialized`.
+
 ## Options considered
 
 - `IAsyncEnumerable<T>` result: rejected, the host stream is `IObservable` end to end.

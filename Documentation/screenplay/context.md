@@ -35,7 +35,7 @@ public record QueryContext(
     DateTimeOffset Occurred);
 ```
 
-A live query performer receives the same context, captured once per subscription, so `ReceivedAt` does not advance. It has no cancellation member: disposing the subscription ends the stream. See [observable performers](queries.md#observable-performers).
+`QueryContext` is the portable sketch. The context a Stage performer body actually receives has `Arguments`, `Tenant`, `Identity` and `ReceivedAt` only, with no causation or `Occurred` member (see [the `performer` block](queries.md#the-performer-block)). A live performer body receives that same context, captured once per subscription, so `ReceivedAt` does not advance. It has no cancellation member: disposing the subscription ends the stream. See [observable performers](queries.md#observable-performers).
 
 A validation rule is given a `RuleContext` — what is being validated, and nothing about what the caller is allowed to do:
 
