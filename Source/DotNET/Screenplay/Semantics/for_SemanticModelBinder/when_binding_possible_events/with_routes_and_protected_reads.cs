@@ -18,7 +18,7 @@ public class with_routes_and_protected_reads : given.a_possible_events_binder
         var source = "eventsource Store\n  identifier Uuid\n  stream Main\n" + Source.Replace("            Created\n", "            Created\n              stream Store.Main\n              tag \"audit\"\n", StringComparison.Ordinal);
         var result = BindPossible(source);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        var entry = Command(result.Value!).Handler!.PossibleEvents.First();
+        var entry = Command(result.Value!).Handler!.PossibleEvents[0];
         entry.Route.ShouldNotBeNull();
         entry.Tags.ShouldNotBeEmpty();
         SemanticDecisionReadAdmission.Producers(result.Value!.Application.Modules.Single().Features.Single().Slices).ShouldContain(value => value.EventContract == entry.EventContract && value.Routed);

@@ -11,6 +11,23 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static ImmutableArray<SemanticProducedEvent> CommandResults(SemanticCommandHandler? handler, ImmutableArray<SemanticProducedEvent> produced) =>
+            handler is { ResultVersion: 2 } ? handler.PossibleEvents : produced;
+
+        static SemanticProperty? PossibleEventProperty(PossibleEventSyntax entry, Dictionary<string, SemanticProperty> properties)
+        {
+            if (entry.Property is not null) return properties.GetValueOrDefault(entry.Property);
+            var identifiers = properties.Values.Where(value => value.IsIdentifier).ToArray();
+            return identifiers.Length == 1 ? identifiers[0] : null;
+        }
+
+        static bool IsPossibleEventDestination(SemanticProperty? property, bool oneOf)
+        {
+            if (property?.Type.IsOptional is not false) return false;
+            if (oneOf) return property.Type.IsCollection && !property.IsGenerated;
+            return !property.Type.IsCollection && (!property.IsGenerated || property.IsIdentifier);
+        }
+
         SemanticCommandHandler? BindStagedPossibleEventsHandler(SemanticAddress address, CommandSyntax command, HandlerSyntax handler)
         {
             if (AllowPossibleEvents) return BindPossibleEventsHandler(address, command, handler);
@@ -20,9 +37,6 @@ public sealed partial class SemanticModelBinder
 
         SemanticCommandHandler? BindPossibleEventsContract(SemanticCommandHandler? handler, CommandSyntax command, Dictionary<string, SemanticProperty> properties, Dictionary<string, BoundEvent> events) =>
             handler is { ResultVersion: 2 } ? handler with { PossibleEvents = BindPossibleEvents(command, properties, events) } : handler;
-
-        static ImmutableArray<SemanticProducedEvent> CommandResults(SemanticCommandHandler? handler, ImmutableArray<SemanticProducedEvent> produced) =>
-            handler is { ResultVersion: 2 } ? handler.PossibleEvents : produced;
 
         SemanticCommandHandler? BindPossibleEventsHandler(SemanticAddress address, CommandSyntax command, HandlerSyntax handler)
         {
@@ -49,7 +63,8 @@ public sealed partial class SemanticModelBinder
 
         SemanticImplementationRequirement? RequirePossibleEventsImplementation(SemanticAddress address, HandlerSyntax handler)
         {
-            var (file, code) = HandlerBody(handler);
+            var file = handler.File;
+            var code = handler.Code;
             if (file is not null || code is not null) return RequireImplementation(SemanticImplementationRole.CommandHandler, address, file, code, resultVersion: 2);
             if (handler.Implementation is not null) return RequirePendingImplementation(address, handler, resultVersion: 2);
             Error(DiagnosticCodes.InvalidPossibleEventSet, "A handler 'may produce' set requires an implementation declaration or a handler body.", handler.Location);
@@ -106,18 +121,5 @@ public sealed partial class SemanticModelBinder
             return entry.OneOf ? new SemanticOneOfExpression(property!.Id) : SemanticExpression.Property(SemanticExpressionRootKind.Command, property!.Id);
         }
 
-        static SemanticProperty? PossibleEventProperty(PossibleEventSyntax entry, Dictionary<string, SemanticProperty> properties)
-        {
-            if (entry.Property is not null) return properties.GetValueOrDefault(entry.Property);
-            var identifiers = properties.Values.Where(value => value.IsIdentifier).ToArray();
-            return identifiers.Length == 1 ? identifiers[0] : null;
-        }
-
-        static bool IsPossibleEventDestination(SemanticProperty? property, bool oneOf)
-        {
-            if (property is null || property.Type.IsOptional) return false;
-            if (oneOf) return property.Type.IsCollection && !property.IsGenerated;
-            return !property.Type.IsCollection && (!property.IsGenerated || property.IsIdentifier);
-        }
     }
 }

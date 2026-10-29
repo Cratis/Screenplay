@@ -9,6 +9,15 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
+    static Dictionary<SyntaxNode, EffectiveSpecificationStep> PossibleEventSteps(EffectiveSpecificationApplication expansion)
+    {
+        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
+        return steps;
+    }
+
+    static IEnumerable<SemanticSlice> PossibleEventSlices(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(PossibleEventSlices));
+
     // Deliberately does not create an ExecutableSemanticModel or run the v1-v34 validators/serializer on a v35 graph.
     internal CompilationResult<PossibleEventsBinding> BindForPossibleEvents(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
     {
@@ -27,7 +36,7 @@ public sealed partial class SemanticModelBinder
             var requirements = context.ImplementationRequirements;
             var descriptors = SemanticTypedContextCatalog.Create(application, requirements, strict: !context.HasErrors);
             var versions = SelectBoundVersions(application, SemanticVersion.V1, context.UsesStoredEventNames) ?? (LanguageVersion.V1, SemanticVersion.V1);
-            return new(context.HasErrors ? null : new(application, versions.Item1, versions.Item2), context.Diagnostics)
+            return new(context.HasErrors ? null : new(application, versions.Language, versions.Semantic), context.Diagnostics)
             {
                 ImplementationRequirements = requirements,
                 TypedContextDescriptors = descriptors
@@ -51,15 +60,6 @@ public sealed partial class SemanticModelBinder
             TypedContextDescriptors = legacy.TypedContextDescriptors
         };
     }
-
-    static Dictionary<SyntaxNode, EffectiveSpecificationStep> PossibleEventSteps(EffectiveSpecificationApplication expansion)
-    {
-        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
-        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
-        return steps;
-    }
-
-    static IEnumerable<SemanticSlice> PossibleEventSlices(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(PossibleEventSlices));
 
     sealed class PossibleEventsDetector : ScreenplaySyntaxWalker
     {

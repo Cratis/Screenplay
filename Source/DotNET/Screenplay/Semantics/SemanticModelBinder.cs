@@ -338,8 +338,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps, EffectiveSpecificationApplication expansion, int utcAssessmentYear)
     {
-        internal bool AllowPossibleEvents { get; init; }
-
         readonly List<Diagnostic> _diagnostics = [];
         readonly Dictionary<SemanticId, EffectiveSpecification> _specificationOrigins = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];
@@ -352,6 +350,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
+
+        internal bool AllowPossibleEvents { get; init; }
 
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 

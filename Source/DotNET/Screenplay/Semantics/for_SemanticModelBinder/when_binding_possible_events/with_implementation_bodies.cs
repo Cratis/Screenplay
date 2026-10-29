@@ -44,13 +44,13 @@ public class with_implementation_bodies : given.a_possible_events_binder
     {
         var result = BindPossible("concept Id : Uuid\n" + Source.Replace("id Uuid identifier", "id Id generated identifier", StringComparison.Ordinal));
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        ((SemanticResolvedExpression)Command(result.Value!).Handler!.PossibleEvents.First().Destination!).Target.ShouldEqual(Command(result.Value!).Properties.Single(property => property.IsIdentifier).Id);
+        ((SemanticResolvedExpression)Command(result.Value!).Handler!.PossibleEvents[0].Destination!).Target.ShouldEqual(Command(result.Value!).Properties.Single(property => property.IsIdentifier).Id);
     }
 
     [Fact]
     void should_preserve_the_legacy_candidate_version_and_result_contract()
     {
-        var legacy = Prefix + Properties + "        handler\n          implementation\n        produces Created\n          for id";
+        const string legacy = Prefix + Properties + "        handler\n          implementation\n        produces Created\n          for id";
         var result = BindPossible(legacy);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         result.Value!.SemanticVersion.ShouldEqual(SemanticVersion.V23);
