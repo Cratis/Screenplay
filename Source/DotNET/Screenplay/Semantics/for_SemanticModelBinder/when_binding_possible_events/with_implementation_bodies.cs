@@ -30,7 +30,6 @@ public class with_implementation_bodies : given.a_possible_events_binder
 
     [Theory]
     [InlineData("          file Handler.cs")]
-    [InlineData("          ```\n          return null;\n          ```")]
     [InlineData("          ```csharp\n          ```")]
     void should_retain_v1_body_admission_constraints(string body)
     {

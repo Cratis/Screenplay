@@ -42,6 +42,19 @@ public class when_authoring_possible_events : given.a_compiler
     void should_reject_non_contract_entry_shapes(string entry) =>
         _compiler.Parse(Prefix + "          may produce\n            " + entry + "\n          file C.cs").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidPossibleEventsDeclaration).ShouldBeTrue();
 
+    [Theory]
+    [InlineData("", 6)]
+    [InlineData(Declaration, 10)]
+    void should_reject_an_inline_body_without_a_language_at_parse_time(string declaration, int line)
+    {
+        var parsed = _compiler.Parse(Prefix + declaration + "          ```\n          return null;\n          ```");
+        parsed.Success.ShouldBeFalse();
+        var diagnostic = parsed.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.ExpectedCodeFence);
+        diagnostic.Message.ShouldEqual("Expected a registered language on the opening fence, not '```'");
+        diagnostic.Severity.ShouldEqual(DiagnosticSeverity.Error);
+        diagnostic.Location.Line.ShouldEqual(line);
+    }
+
     [Fact]
     void should_reject_a_mixed_legacy_contract() =>
         _compiler.Parse(Prefix + Declaration + "          file C.cs\n        produces Added").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidPossibleEventsDeclaration).ShouldBeTrue();
