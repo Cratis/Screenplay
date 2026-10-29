@@ -369,6 +369,6 @@ public static partial class AttachmentFiles
             }
         }
 
-        static FileReferenceSyntax? ValidationFile(SyntaxNode node) => (node as CodeValidateSyntax)?.File;
+        static FileReferenceSyntax? ValidationFile(SyntaxNode node) => (node as FileValidateSyntax)?.File;
     }
 }

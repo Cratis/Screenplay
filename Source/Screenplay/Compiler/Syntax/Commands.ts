@@ -41,10 +41,15 @@ export interface DeclarativeValidateSyntax extends SyntaxNode {
 export interface CodeValidateSyntax extends SyntaxNode {
     readonly kind: 'CodeValidateSyntax';
     readonly code?: CodeBlockSyntax | null;
-    readonly file?: FileReferenceSyntax | null;
 }
 
-export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax;
+// A validate block whose implementation is attached from a file.
+export interface FileValidateSyntax extends SyntaxNode {
+    readonly kind: 'FileValidateSyntax';
+    readonly file: FileReferenceSyntax;
+}
+
+export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax | FileValidateSyntax;
 
 export interface CommandSyntax extends SyntaxNode {
     readonly kind: 'CommandSyntax';

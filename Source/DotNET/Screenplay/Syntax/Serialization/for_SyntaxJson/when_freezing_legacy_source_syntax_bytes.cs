@@ -274,7 +274,7 @@ public class when_freezing_legacy_source_syntax_bytes
         Concepts = application.Concepts.Select(concept => concept with
         {
             // BankAccount's additive file-backed body is protected by current shared conformance.
-            Validations = concept.Validations?.Where(validation => concept.Name != "BankAccount" || validation is not CodeValidateSyntax { File.Path: "Validations/BankAccount.cs" }).SelectMany(WithoutNewTextRuleBlock)
+            Validations = concept.Validations?.Where(validation => concept.Name != "BankAccount" || validation is not FileValidateSyntax { File.Path: "Validations/BankAccount.cs" }).SelectMany(WithoutNewTextRuleBlock)
         })
     };
 

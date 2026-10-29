@@ -146,6 +146,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case CodeValidateSyntax code:
                 VisitCodeValidate(code);
                 break;
+            case FileValidateSyntax file:
+                VisitFileValidate(file);
+                break;
             default:
                 VisitNode(syntax);
                 break;
@@ -188,8 +191,17 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitCodeValidate(CodeValidateSyntax syntax)
     {
         VisitNode(syntax);
-        if (syntax.File is not null) VisitFileReference(syntax.File);
-        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+        VisitCodeBlock(syntax.Code);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="FileValidateSyntax"/> node and its file reference.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FileValidateSyntax"/> to visit.</param>
+    public virtual void VisitFileValidate(FileValidateSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitFileReference(syntax.File);
     }
 
     /// <summary>

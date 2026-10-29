@@ -100,6 +100,7 @@ internal static class SyntaxKinds
         typeof(FileConstraintSyntax),
         typeof(FileImportSyntax),
         typeof(FileReferenceSyntax),
+        typeof(FileValidateSyntax),
         typeof(FormColumnSyntax),
         typeof(ExposureSyntax),
         typeof(ExposedPropertySyntax),

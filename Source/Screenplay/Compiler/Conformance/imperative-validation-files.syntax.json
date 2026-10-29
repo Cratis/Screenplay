@@ -58,7 +58,7 @@
                   "streamCandidates": [],
                   "validations": [
                     {
-                      "kind": "CodeValidateSyntax",
+                      "kind": "FileValidateSyntax",
                       "file": {
                         "kind": "FileReferenceSyntax",
                         "path": "Validations/Pay.cs"

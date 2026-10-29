@@ -92,14 +92,15 @@ internal static class ValidateParser
         return next is null || next.Indent <= header.Indent;
     }
 
-    static bool TryParseImperative(ParserContext context, SourceLine line, out CodeValidateSyntax? validation)
+    static bool TryParseImperative(ParserContext context, SourceLine line, out ValidateSyntax? validation)
     {
         validation = null;
         if (!context.TryPeekChild(line.Indent, out var body)) return false;
         if (IsFileBody(context, line, body))
         {
             context.Reader.TakeSignificant();
-            validation = new CodeValidateSyntax(null, line.Location) { File = FileReferenceParser.Parse(context, body) };
+            var file = FileReferenceParser.Parse(context, body);
+            validation = file is null ? null : new FileValidateSyntax(file, line.Location);
             return true;
         }
 

@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Reflection;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Files.for_AttachmentFiles;
 
@@ -41,8 +43,9 @@ public class when_loading_imperative_validation_files : Specification
         requirement.BodySpan!.Value.End.ShouldEqual(Body.Length);
         file.Contents["Validations/Positive.cs"].ShouldEqual(Body);
         file.Diagnostics.ShouldBeEmpty();
-        Validation(file.Syntax, concept).Code.ShouldBeNull();
-        Validation(file.Syntax, concept).File!.Path.ShouldEqual("Validations/Positive.cs");
+        Validation(file.Syntax, concept).ShouldBeOfExactType<FileValidateSyntax>();
+        ((FileValidateSyntax)Validation(file.Syntax, concept)).File.Path.ShouldEqual("Validations/Positive.cs");
+        ((CodeValidateSyntax)Validation(inline.Syntax, concept)).Code.ShouldNotBeNull();
         Rule(file.Result, concept).ShouldEqual(Rule(inline.Result, concept));
     }
 
@@ -52,10 +55,12 @@ public class when_loading_imperative_validation_files : Specification
     void should_round_trip_the_file_form(bool concept)
     {
         var bound = Bind(Source(concept, "file Validations/Positive.cs"));
-        var printed = new ScreenplayPrinter().Print(bound.Syntax);
+        var revived = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(bound.Syntax));
+        Validation(revived, concept).ShouldBeOfExactType<FileValidateSyntax>();
+        var printed = new ScreenplayPrinter().Print(revived);
         var reparsed = new ScreenplayCompiler().Compile(printed);
         reparsed.Success.ShouldBeTrue();
-        Validation(reparsed.Value!, concept).File!.Path.ShouldEqual("Validations/Positive.cs");
+        ((FileValidateSyntax)Validation(reparsed.Value!, concept)).File.Path.ShouldEqual("Validations/Positive.cs");
     }
 
     [Theory]
@@ -77,9 +82,9 @@ public class when_loading_imperative_validation_files : Specification
         ? result.Value!.Model.Application.Concepts.Single().Validations.Single()
         : result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().CodeValidations.Single();
 
-    static CodeValidateSyntax Validation(ApplicationSyntax syntax, bool concept) => (CodeValidateSyntax)(concept
+    static ValidateSyntax Validation(ApplicationSyntax syntax, bool concept) => concept
         ? syntax.Concepts.Single().Validations.Single()
-        : syntax.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single());
+        : syntax.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single();
 
     (CompilationResult<SemanticCompilation> Result, ApplicationSyntax Syntax, ImmutableDictionary<string, string> Contents, ImmutableArray<Diagnostic> Diagnostics) Bind(string source)
     {
@@ -97,6 +102,14 @@ public class when_loading_imperative_validation_files : Specification
     static string Source(bool concept, string body) => concept
         ? $"concept Amount : Decimal\n  validate\n    {body}\nmodule Projects\n  feature Registration\n    slice StateChange Register\n      command Register\n        amount Amount"
         : $"module Projects\n  feature Registration\n    slice StateChange Register\n      command Register\n        amount Decimal\n        validate\n          {body}";
+
+    [Fact]
+    void should_keep_the_inline_code_property_non_nullable() =>
+        new NullabilityInfoContext().Create(typeof(CodeValidateSyntax).GetProperty(nameof(CodeValidateSyntax.Code))!).ReadState.ShouldEqual(NullabilityState.NotNull);
+
+    [Fact]
+    void should_keep_the_inline_constructor_parameter_non_nullable() =>
+        new NullabilityInfoContext().Create(typeof(CodeValidateSyntax).GetConstructors().Single().GetParameters()[0]).ReadState.ShouldEqual(NullabilityState.NotNull);
 
     void Destroy() => Directory.Delete(_root, true);
 }

@@ -375,32 +375,17 @@ public partial class ScreenplayPrinter
 
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
-                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}", requirement);
-                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
-                        {
-                            using (writer.Indent())
-                            {
-                                if (requirement.Severity != ValidationSeverity.Error)
-                                {
-                                    writer.DirectiveLine(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart(), requirement, "severity");
-                                }
-
-                                if (requirement.Message is not null)
-                                {
-                                    writer.DirectiveLine($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}", requirement, "message");
-                                }
-                            }
-                        }
+                        WriteValidationRequirement(writer, requirement);
                     }
                 }
 
                 break;
             }
-            case CodeValidateSyntax code:
-                writer.Line("validate", code);
+            case CodeValidateSyntax or FileValidateSyntax:
+                writer.Line("validate", validate);
                 using (writer.Indent())
                 {
-                    WriteValidationImplementation(writer, code);
+                    WriteValidationImplementation(writer, validate);
                 }
 
                 break;

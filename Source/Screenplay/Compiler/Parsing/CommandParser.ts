@@ -223,6 +223,11 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
     return identifier ?? (property.isIdentifier ? property : undefined);
 }
 
+function parseValidationFile(context: ParserContext, header: SourceLine, body: SourceLine): ValidateSyntax | undefined {
+    const file = parseFile(context, body);
+    return file === undefined ? undefined : { kind: 'FileValidateSyntax', file, location: locationOf(header) };
+}
+
 function hasValidationOperand(line: SourceLine): boolean {
     const match = rulePattern.exec(line.content);
     if (match === null) return false;
@@ -245,7 +250,7 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
         const fence = context.peekChild(line.indent);
         if (fence !== undefined && isValidationFileBody(context, line, fence)) {
             context.reader.takeSignificant();
-            return { kind: 'CodeValidateSyntax', code: null, file: parseFile(context, fence), location: locationOf(line) };
+            return parseValidationFile(context, line, fence);
         }
         if (fence !== undefined && fence.content.startsWith('```')) {
             context.reader.takeSignificant();

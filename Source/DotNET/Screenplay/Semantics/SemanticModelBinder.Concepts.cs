@@ -40,11 +40,11 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
-                    if (validation is CodeValidateSyntax code)
+                    if (IsImperativeValidation(validation))
                     {
                         var member = $"code validation {codeValidationOrdinal++}";
                         var name = $"Concept '{concept.Name}' {member}";
-                        var requirement = RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), code.File, code.Code, member);
+                        var requirement = RequireValidationImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), validation, member);
                         if (requirement is not null)
                         {
                             UsesV3 = true;
@@ -54,8 +54,8 @@ public sealed partial class SemanticModelBinder
                                 RequirementId = requirement.RequirementId
                             };
                             validations.Add(bound);
-                            inspect?.Invoke(code, bound);
-                            ValidateGenerationRule(concept, generation, bound, code.Location);
+                            inspect?.Invoke(validation, bound);
+                            ValidateGenerationRule(concept, generation, bound, validation.Location);
                         }
                     }
 

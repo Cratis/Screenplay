@@ -30,7 +30,7 @@ public class when_compiling_validation_on_a_property_named_file : given.a_compil
     [Fact] void should_keep_the_file_property_subject() => _rules.Select(Validation).OfType<DeclarativeValidateSyntax>().Select(validation => validation.Rules.First().Property).ShouldEqual(["file", "file", "file", "file", "file"]);
     [Fact] void should_keep_the_other_rule() => ((DeclarativeValidateSyntax)Validation(_rules[^1])).Rules.Count().ShouldEqual(2);
     [Fact] void should_still_accept_a_sole_path_shaped_include() => _include.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_preserve_the_include_path() => ((CodeValidateSyntax)Validation(_include)).File!.Path.ShouldEqual("Rules/Pay file.cs");
+    [Fact] void should_preserve_the_include_path() => ((FileValidateSyntax)Validation(_include)).File.Path.ShouldEqual("Rules/Pay file.cs");
     [Fact] void should_not_claim_an_include_with_another_child() => Validation(_mixed).ShouldBeOfExactType<DeclarativeValidateSyntax>();
     [Fact] void should_still_parse_the_rule_after_a_refused_include() => ((DeclarativeValidateSyntax)Validation(_mixed)).Rules.Single().Property.ShouldEqual("other");
 

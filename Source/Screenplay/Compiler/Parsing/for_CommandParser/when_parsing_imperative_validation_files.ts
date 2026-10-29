@@ -6,7 +6,7 @@ import { parse } from '../../ScreenplayCompiler';
 import { toCompleteSyntaxJson } from '../../Syntax/SyntaxJson';
 import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../../Syntax/SyntaxNode';
-import { CodeValidateSyntax, DeclarativeValidateSyntax } from '../../Syntax/Commands';
+import { FileValidateSyntax, DeclarativeValidateSyntax } from '../../Syntax/Commands';
 
 const cases = [
     ['concept Money : Decimal\n  validate\n    file Rules/Money.cs', 'Rules/Money.cs'],
@@ -19,6 +19,7 @@ describe('when parsing imperative validation files', () => {
         const parsed = parse(source);
         expect(parsed.diagnostics).toEqual([]);
         const json = toCompleteSyntaxJson(parsed.value!);
+        expect(JSON.stringify(json)).toContain('"kind":"FileValidateSyntax"');
         expect(JSON.stringify(json)).toContain(`"path":"${path}"`);
         const kinds: string[] = [];
         class Walker extends ScreenplaySyntaxWalker { visitNode(node: SyntaxNode): void { kinds.push(node.kind); } }
@@ -46,7 +47,7 @@ describe('when parsing imperative validation files', () => {
         const parsed = parse(command('file Rules/Pay.cs\n        handler\n          file Handlers/Pay.cs'));
         expect(parsed.diagnostics).toEqual([]);
         const declaration = parsed.value!.modules[0].features[0].slices[0].commands[0];
-        expect((declaration.validations[0] as CodeValidateSyntax).file!.path).toBe('Rules/Pay.cs');
+        expect((declaration.validations[0] as FileValidateSyntax).file.path).toBe('Rules/Pay.cs');
         expect(declaration.handler!.file!.path).toBe('Handlers/Pay.cs');
     });
 });
