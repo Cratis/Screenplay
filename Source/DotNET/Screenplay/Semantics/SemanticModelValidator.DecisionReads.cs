@@ -31,7 +31,7 @@ internal static partial class SemanticModelValidator
                 if (identifiers.Length != 1) throw new InvalidSemanticContract("A decision read view must have one event-source instance key.");
                 RequireCompatible(key.Type, identifiers[0].Type, "decision read key");
                 var projections = slices.SelectMany(slice => slice.Projections).Where(projection => projection.Target == SemanticProjectionTargetKind.ReadModel && projection.ReadModel == view.Id).ToArray();
-                var routed = SemanticDecisionReadAdmission.Routed(command.Route is not null, false, projections, SemanticDecisionReadAdmission.Producers(slices));
+                var routed = SemanticDecisionReadAdmission.Routed(command.Route is not null, SemanticDecisionReadAdmission.HasPossibleEventRoute(command), projections, SemanticDecisionReadAdmission.Producers(slices));
                 var reducer = slices.SelectMany(slice => slice.Reducers).Any(value => value.ReadModel == view.Id);
                 if (SemanticDecisionReadAdmission.View(projections, reducer, routed) is { } refusal)
                     throw new InvalidSemanticContract($"Decision read '{read.Name}' is unprotectable: {refusal}.");

@@ -34,7 +34,7 @@ internal static class SemanticHandlerLinkage
         if (requirement.Role != SemanticImplementationRole.CommandHandler || requirement.Source.SemanticId != command.Id ||
             requirement.Owner.Kind != SemanticKind.Command || requirement.Owner.Name != command.Name || requirement.Member is not null ||
             requirement.RequirementId != ImplementationRequirementIdentity.Create(command.Id, SemanticImplementationRole.CommandHandler, null) ||
-            requirement.ContextVersion != 1 || requirement.ResultVersion != 1 || command.Handler!.ResultVersion != 1 || requirement.RequiredCapability != "provider-defined")
+            requirement.ContextVersion != 1 || command.Handler!.ResultVersion is not (1 or 2) || requirement.ResultVersion != command.Handler.ResultVersion || requirement.RequiredCapability != "provider-defined")
         {
             throw new InvalidSemanticContract("CommandHandler role, owner, identity, capability or context/result version does not match the described command.");
         }

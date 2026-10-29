@@ -102,7 +102,7 @@ public sealed partial class SemanticModelBinder
             var input = command.Properties.Single(property => property.Name == key.Name);
             if (declarations.Compatible(input.Type, viewKey[0].Type) != true) return SemanticDecisionReadRefusal.KeyType;
             var projections = _decisionProjections.Where(entry => entry.Value.Any(value => value.ReadModel == view.Model.Id)).ToArray();
-            var routed = SemanticDecisionReadAdmission.Routed(command.Stream is not null, projections.Any(entry => entry.Key.Sequence is not null), projections.SelectMany(entry => entry.Value), DecisionReadProducers());
+            var routed = SemanticDecisionReadAdmission.Routed(HasRoutedCommand(command), projections.Any(entry => entry.Key.Sequence is not null), projections.SelectMany(entry => entry.Value), DecisionReadProducers());
             return SemanticDecisionReadAdmission.View(projections.SelectMany(entry => entry.Value), false, routed);
         }
 

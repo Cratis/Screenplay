@@ -36,7 +36,7 @@ export function validateHandlerContracts(handlers: readonly { handler: HandlerSy
     validatePossibleEvents(handler, hasProduces, context);
 }
 
-export function validatePossibleEvents(handler: HandlerSyntax | null, hasProduces: boolean, context: ParserContext): void {
+export function validatePossibleEvents(handler: HandlerSyntax | null | undefined, hasProduces: boolean, context: ParserContext): void {
     if (hasProduces && handler?.possibleEvents != null) {
         context.error(DiagnosticCodes.InvalidPossibleEventsDeclaration, "A command cannot combine 'produces' with a handler 'may produce' set.", handler.possibleEvents.location);
     }

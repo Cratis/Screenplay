@@ -45,6 +45,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.Modules.SelectMany(module => module.Features).SelectMany(PossibleEventSlices).SelectMany(slice => slice.Commands).Any(command => command.Handler is { ResultVersion: 2 })) return (new(35, 0), new(35, 0));
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
         if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
         return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
@@ -337,6 +338,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps, EffectiveSpecificationApplication expansion, int utcAssessmentYear)
     {
+        internal bool AllowPossibleEvents { get; init; }
+
         readonly List<Diagnostic> _diagnostics = [];
         readonly Dictionary<SemanticId, EffectiveSpecification> _specificationOrigins = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];
