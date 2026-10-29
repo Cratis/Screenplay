@@ -19,13 +19,13 @@ describe('when parsing possible events', () => {
         expect(JSON.stringify(toSyntaxJson(result.value))).toContain('PossibleEventsSyntax');
     });
     it.each(['Added when active', 'Added\n            Added for other', 'Added for cmd.accountId', 'Added for 123', 'Added\n              value = accountId', 'Added\n              for accountId'])('should reject %s', entry => {
-        expect(parse(prefix + '          may produce\n            ' + entry + '\n          file C.cs').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0817');
+        expect(parse(prefix + '          may produce\n            ' + entry + '\n          file C.cs').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0822');
     });
     it.each(['          file C.cs\n          may produce\n            Added', '          may produce\n            Added\n          may produce\n            Removed\n          file C.cs', '          implementation\n            may produce\n              Added'])('should reject misplaced sets in %s', body => {
         expect(parse(prefix + body).diagnostics.length).toBeGreaterThan(0);
     });
     it('should reject mixed contracts', () => {
-        expect(parse(prefix + declaration + '          file C.cs\n        produces Added').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0817');
+        expect(parse(prefix + declaration + '          file C.cs\n        produces Added').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0822');
     });
     it('should omit absent and empty sets from legacy bytes', () => {
         const handler = parse(prefix + '          file C.cs').value.modules[0].features[0].slices[0].commands[0].handler!;
