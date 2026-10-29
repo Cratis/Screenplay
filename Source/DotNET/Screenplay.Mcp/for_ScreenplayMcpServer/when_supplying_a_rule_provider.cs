@@ -116,7 +116,7 @@ public class when_supplying_a_rule_provider : Specification
         lines.AddRange(Enumerable.Range(3, runs).Select(id => Request(id, "tools/call", new { name = "run-specifications", arguments = new { } })));
         using var input = new StringReader(string.Join('\n', lines));
         using var output = new StringWriter();
-        ScreenplayMcpServer.Run(new ScreenplayMcpRun(_root, provider, cancellationToken), input, output);
+        ScreenplayMcpServer.RunConfigured(new ScreenplayMcpRun(_root, provider, cancellationToken), input, output);
         using var response = JsonDocument.Parse(output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries)[^1]);
         return response.RootElement.GetProperty("result").GetProperty("structuredContent").Clone();
     }
