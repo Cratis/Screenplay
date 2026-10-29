@@ -29,6 +29,16 @@ public interface ISemanticBodyExecutionProvider : IAsyncDisposable
     ValueTask<SemanticValidationBodyResult> ValidateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken) =>
         new(SemanticValidationBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Code validation", body)));
 
+    /// <summary>
+    /// Evaluates a policy predicate against the supplied semantic artifact and caller.
+    /// </summary>
+    /// <param name="body">The resolved, content-verified policy implementation.</param>
+    /// <param name="context">The artifact, caller and known circumstances.</param>
+    /// <param name="cancellationToken">Run cancellation; hosts must also enforce time limits.</param>
+    /// <returns>An allow, deny, or unsupported answer. Existing providers remain unsupported by default.</returns>
+    ValueTask<SemanticPolicyBodyResult> AuthorizeAsync(SemanticImplementationBody body, SemanticPolicyContext context, CancellationToken cancellationToken) =>
+        new(SemanticPolicyBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Policy", body)));
+
     /// <summary>Executes one reducer transition against its portable context.</summary>
     /// <param name="body">The resolved, content-verified transition body.</param>
     /// <param name="context">The prior state, event and caller-supplied circumstances.</param>

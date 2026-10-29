@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Semantics.Execution;
 
 /// <summary>
-/// Creates an isolated provider for one evaluation, specification run, or reducer-bearing commit.
+/// Creates an isolated provider for one evaluation, specification run, or commit needing reducer or query-policy work.
 /// </summary>
 public interface ISemanticBodyExecutionProviderFactory
 {
@@ -17,9 +17,9 @@ public interface ISemanticBodyExecutionProviderFactory
     /// <returns>A run-owned provider, disposed even after failure or cancellation.</returns>
     /// <remarks>
     /// Creation failures, timeouts and cancellation make opaque bodies Unsupported. A factory-backed decision disposes
-    /// its validation provider before returning. Each commit with reducer work requests and disposes a fresh provider
-    /// using the decision's captured cancellation token; repeated commits may therefore call this factory again.
-    /// No commit provider is requested without reducer work.
+    /// its decision-body provider before returning. Each commit with reducer work or a requested query's opaque policy
+    /// requests and disposes a fresh provider using the decision's captured cancellation token; repeated commits may
+    /// therefore call this factory again. Purely portable commits do not request a provider.
     /// </remarks>
     ValueTask<ISemanticBodyExecutionProvider> CreateAsync(SemanticApplication application, IReadOnlyDictionary<string, SemanticImplementationBody> bodies, CancellationToken cancellationToken);
 }

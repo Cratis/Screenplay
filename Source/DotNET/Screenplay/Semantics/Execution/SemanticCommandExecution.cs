@@ -19,6 +19,7 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionRequest request,
     SemanticRuleBodyExecution? ruleBodies,
     SemanticReducerBodyExecution reducers,
+    SemanticPolicyBodyExecution policies,
     Func<SemanticBodyExecutionRun>? commitRun,
     CancellationToken cancellationToken)
 {
@@ -103,13 +104,13 @@ internal sealed partial class SemanticCommandExecution(
         var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties, request.RunsAs);
+        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties.Where(property => !property.IsGenerated), request.RunsAs, policies, request.Tenant, request.Occurrence?.Occurred, cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {
             SemanticPolicyOutcome.Unsupported => new SemanticUnsupported(
                 world,
                 SemanticExecutionCapability.Authorization,
-                $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
+                authorization.Details ?? $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
             SemanticPolicyOutcome.Deny => new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized."),
             _ => null
         };
@@ -331,15 +332,17 @@ internal sealed partial class SemanticCommandExecution(
 
     SemanticExecutionResult SettleWithProvider(SemanticWorld commitWorld, SemanticExecutionResponse? response)
     {
-        if (commitRun is null || !SemanticEvaluator.AllReducers(plan).Any(reducer => _facts.Any(fact => SemanticReducerBodyExecution.Reached(reducer, fact, plan))))
+        if (commitRun is null ||
+            (!SemanticEvaluator.AllReducers(plan).Any(reducer => _facts.Any(fact => SemanticReducerBodyExecution.Reached(reducer, fact, plan))) &&
+             !request.Queries.Any(query => policies.HasProvider && plan.Queries.TryGetValue(query.Query, out var declared) && SemanticPolicyBodyExecution.RequiredBy(plan, declared.Authorization))))
         {
-            return Settle(commitWorld, response, reducers);
+            return Settle(commitWorld, response, reducers, policies);
         }
         using var run = commitRun();
-        return Settle(commitWorld, response, run.Evaluator.ReducerBodies);
+        return Settle(commitWorld, response, run.Evaluator.ReducerBodies, run.Evaluator.PolicyBodies);
     }
 
-    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response, SemanticReducerBodyExecution reducerExecution)
+    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response, SemanticReducerBodyExecution reducerExecution, SemanticPolicyBodyExecution policyExecution)
     {
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (RejectReusedGeneratedSource(world) is { } reused) return reused;
@@ -381,7 +384,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         var tentative = world.Commit(facts, state.ReadModels, state.PendingChildren);
-        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller, reducerExecution);
+        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller, reducerExecution, policyExecution, request.Tenant, request.Occurrence?.Occurred, cancellationToken);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
     }
 }

@@ -48,6 +48,9 @@ sealed class SemanticBodyExecutionRun : IDisposable, IAsyncDisposable
         public ValueTask<SemanticReducerBodyResult> ReduceAsync(SemanticImplementationBody body, SemanticReducerContext context, CancellationToken cancellationToken) =>
             new(SemanticReducerBodyResult.Unsupported(diagnostic));
 
+        public ValueTask<SemanticPolicyBodyResult> AuthorizeAsync(SemanticImplementationBody body, SemanticPolicyContext context, CancellationToken cancellationToken) =>
+            new(SemanticPolicyBodyResult.Unsupported(diagnostic));
+
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

@@ -92,6 +92,8 @@ So there is one arrow and one direction: to find where a read model's state come
 
 **Exactly one thing may build a read model.** Two builders is a compile error — either could have produced the value in front of a reader, and nothing in the document would say which. Note this is about the read model, not the slice: a slice may still declare [several projections](projections/index.md#several-projections-in-one-slice), each building a different read model.
 
+Query authorization can also use verified policy bodies through a host's opt-in `ISemanticBodyExecutionProvider.AuthorizeAsync`. The policy receives semantic key-argument ids, the single key as subject when available, caller roles/claims and known tenant/time. Allow continues the query; deny rejects as unauthorized. Unsupported answers, source failures, exceptions and cancellation remain Authorization unsupported. A command's failed follow-up query does not commit tentative facts or read-model changes. Query performers are still outside this seam.
+
 ## Reducers
 
 Some views are not expressible as a projection. "Current state plus this event gives the next state" — a running balance that depends on the previous one, a state machine, a computed view that reads what it already holds. `reducer` is for exactly those:
@@ -150,7 +152,7 @@ Return `SemanticReducerBodyResult.Next(composite)` for a complete next state or 
 
 History folds in order into isolated instances keyed by read model and raw event-source identity. Given history, given read-model seeds, appended events, command productions, reaction batches, replay/extension and read-only assertions share this behavior. Every reached reducer must be executable; resolving just the first cannot admit a later unresolved reducer. Unsupported work returns the original input world, not a partial fold. Mixed projection/reducer models and event-target reducers remain refused by name.
 
-A factory supplies one live provider per execution or selected specification run. `Decide` retains S2's separate validation scope; each `Commit` with reducer work requests a fresh provider with the captured cancellation token and disposes it before returning, including after failure. Factories may therefore be asked for one provider per commit of the same decision. No commit provider is requested without reducer work; factory failure at commit is Unsupported.
+A factory supplies one live provider per execution or selected specification run, shared by validations, policies and reducers. `Decide` disposes its decision-body scope before returning; each `Commit` needing reducer work or an opaque policy in a requested query's compiled gate requests a fresh provider with the captured cancellation token and disposes it before returning, including after failure. Factories may therefore be asked for one provider per commit of the same decision. A purely portable commit does not request a provider; factory failure at commit is Unsupported.
 
 ## See also
 
