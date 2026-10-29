@@ -5,7 +5,8 @@
    read model has exactly one projection or reducer (STAGE-ESM-007). The dashboard read model is projected from the events instead - the
    shape the sample used before the performer: every `from` states every counter, because any event may be the first one a row sees.
 2. `add total by unitPrice * quantity` (ESM v29) adds a product of two event values; Chronicle's projection engine adds one event property
-   (STAGE-ESM-050). The total is left out of the variant: its mapping, its read-model property, the screen field and the assertions.
+   (STAGE-ESM-050). The total is left out of the variant: its mapping, its read-model property, the screen field and the assertions -
+   only inside the slice that holds the product, because the same name can be a command or event field in another slice.
 usage: stand_in_for_unrendered.py <variant-folder>
 """
 import re, sys, glob
@@ -54,14 +55,24 @@ for f in glob.glob(root + '/*/model/*.play'):
     m = re.search(r'(?m)^( *)query CurrentPurchasingFigures => observable PurchasingFigures\[\]\n(?:\1  .*\n|\n)*?(?=\1\S|\n\1\S|\1screen)', t)
     if m and 'performer' in m.group(0):
         t = t[:m.start()] + PURCHASING_FIGURES + '\n' + t[m.end():].lstrip('\n'); stood_in += 1
-    # 2. products: drop the target everywhere in the file
-    for pm in list(re.finditer(r'(?m)^ *(?:add|subtract) (\w+) by \w+ \* \w+\n', t)):
-        target = pm.group(1)
-        t = t.replace(pm.group(0), '')
-        t = re.sub(r'(?m)^ *%s +\S+( optional)?\n' % target, '', t)            # the read-model property
-        t = re.sub(r'(?m)^ *field %s +label .*\n' % target, '', t)            # a summary field of a screen
-        t = re.sub(r'(?m)^ *column %s +label .*\n' % target, '', t)           # a table column
-        t = re.sub(r'(?m)^ *%s += .*\n' % target, '', t)                      # an expected value
-        stood_in += 1
+    # 2. products: drop the target within the slice that holds the product, and nowhere else (the same name can be a command or event field)
+    lines = t.splitlines(keepends=True); out = []; i = 0
+    while i < len(lines):
+        sm = re.match(r'( *)slice ', lines[i])
+        if not sm:
+            out.append(lines[i]); i += 1; continue
+        indent = len(sm.group(1)); j = i + 1
+        while j < len(lines) and (not lines[j].strip() or len(lines[j]) - len(lines[j].lstrip(' ')) > indent): j += 1
+        s = ''.join(lines[i:j])
+        for pm in list(re.finditer(r'(?m)^ *(?:add|subtract) (\w+) by \w+ \* \w+\n', s)):
+            target = pm.group(1)
+            s = s.replace(pm.group(0), '')
+            s = re.sub(r'(?m)^ *%s +\S+( optional)?\n' % target, '', s)            # the read-model property
+            s = re.sub(r'(?m)^ *field %s +label .*\n' % target, '', s)            # a summary field of a screen
+            s = re.sub(r'(?m)^ *column %s +label .*\n' % target, '', s)           # a table column
+            s = re.sub(r'(?m)^ *%s += .*\n' % target, '', s)                      # an expected value
+            stood_in += 1
+        out.append(s); i = j
+    t = ''.join(out)
     if t != o: write(f, t)
 print('stand_in_for_unrendered: %d construct(s) replaced' % stood_in)

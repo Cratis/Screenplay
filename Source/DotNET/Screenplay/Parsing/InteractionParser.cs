@@ -347,7 +347,7 @@ internal static partial class InteractionParser
         {
             if (!SupportsAlternatives(trigger))
             {
-                context.Error(DiagnosticCodes.UnsupportedInteractionAlternatives, "Interaction alternatives are only supported on click, double click and select", line.Location);
+                context.Error(DiagnosticCodes.UnsupportedInteractionAlternatives, "Interaction alternatives are only supported on click, double click, select and change", line.Location);
             }
 
             if (actions.Count > 0 || condition is not null)
@@ -365,7 +365,7 @@ internal static partial class InteractionParser
             context.Error(DiagnosticCodes.InteractionBindingWithoutActions, $"'{line.Content}' declares no actions - a trigger with nothing to do is never what was meant", line.Location);
         }
 
-        if (condition is not null && SupportsAlternatives(trigger))
+        if (condition is not null && DeprecatesWhere(trigger))
         {
             var location = directiveLocations["where"];
             const string message = "Opaque 'where' on click, double click and select is deprecated; use block-form 'when' item conditions";

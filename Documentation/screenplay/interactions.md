@@ -70,7 +70,7 @@ An interaction trigger is never declared. It exists only as the `on` clause of a
 | `on double click` | it is activated twice | the element's data item |
 | `on select` | selection changes in an items control | the selected item |
 | `on submit` | a form is submitted and passes the modeled validation | the form's values |
-| `on change` | a bound value changes | the old and new value |
+| `on change` | a bound value changes, or the user changes an item of a component that presents items, such as moving a card on a board | the old and new value; for an item, the changed item and the new value |
 | `on load` / `on unload` | the element or screen becomes live, or is torn down | route parameters |
 | `on enter` / `on leave` | the screen is navigated to, or away from | route parameters |
 | `on event <Event>` | a modeled domain event is observed | the event's payload |
@@ -83,7 +83,7 @@ The last two rows are the bridge to the backend vocabulary, and the reason this 
 
 ## Choose an action list by item state
 
-`on click`, `on double click` and `on select` can choose one whole action list:
+`on click`, `on double click`, `on select` and `on change` can choose one whole action list:
 
 ```screenplay
 table Invoices
@@ -100,11 +100,54 @@ Use exactly the [guarded action condition grammar](screens.md#one-action-several
 
 The first matching branch runs once against the rendered item when the gesture occurs: no refetch first, no re-evaluation while the list runs. No match runs the fallback if present, otherwise nothing. No subject runs nothing, **including fallback**. Failure, denial or unavailable commands never fall through; commands still enforce their own rules. This differs from a labeled action's click-time refresh check because the interaction displays no choice beforehand.
 
-A table's click or double click uses the activated row; `select` uses the newly selected item. Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject in this version; unresolved or equally near data subjects produce PLAY0346.
+A table's click or double click uses the activated row; `select` uses the newly selected item; `change` uses the item that changed (see [Bind an item change to a command](#bind-an-item-change-to-a-command)). Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject in this version; unresolved or equally near data subjects produce PLAY0346.
 
 `on submit` has no alternatives: `item` means populated data, not submitted form values. Event, change, interval and application triggers also have no alternatives. The one-line `on row-click navigate to … by …` stays unchanged.
 
-Opaque `where` is deprecated **only** on click, double click and select (PLAY0564). A strict item condition produces a warning and a C# typed repair to one `when` block with no fallback; repairs require individual review and refuse comment loss. Other guard text produces Information without a repair. Event/change/application `where` remains opaque and unchanged. TypeScript reports the same diagnostics but does not offer these repairs.
+Opaque `where` is deprecated **only** on click, double click and select (PLAY0564); a `change` keeps it. A strict item condition produces a warning and a C# typed repair to one `when` block with no fallback; repairs require individual review and refuse comment loss. Other guard text produces Information without a repair. Event/change/application `where` remains opaque and unchanged. TypeScript reports the same diagnostics but does not offer these repairs.
+
+## Bind an item change to a command
+
+A component that presents items can tell the document that the user changed one: a kanban board moves a card to another column, a list changes the status of a row. That is an `on change` on the component, and it carries **the item that changed**, the way `on select` carries the selected item. Bind the command's inputs to the item, and to the value it changed to, exactly as you would bind a view's property to a view model in XAML:
+
+```screenplay
+screen ReviewBoard
+  data TalkSummary[] via query AllTalks
+
+  component Cratis.Blueprint.Default.kanbanBoard talkBoard
+    property columns = [{"id":"submitted","label":"Submitted"},{"id":"accepted","label":"Accepted"},{"id":"withdrawn","label":"Withdrawn"}]
+    property cards from query AllTalks
+    property cardId = "talkId"
+    property cardColumn = "status"
+    on change
+      when item.status == "accepted"
+        execute AcceptTalk
+          with talkId from item.talkId
+      when item.status == "withdrawn"
+        execute WithdrawTalk
+          with talkId from item.talkId
+      otherwise
+        notify warning "A talk cannot move back to Submitted"
+```
+
+What a change binds:
+
+| Binding | Means |
+| --- | --- |
+| `item` | the item that changed: its row from the component's query, with the property the user changed (here `status`, named by `cardColumn`) already holding the new value. `item.talkId` and `item.status` read the row's own fields, so the command's inputs are bound to the data and not to the widget |
+| `value` | the new value of the changed property, such as the column the card was dropped in |
+| `previous` | the value it had before |
+
+A command that takes the new value as an input binds it the same way, so one command can serve every column:
+
+```screenplay
+on change
+  execute MoveTalk
+    with talkId from item.talkId
+    with status from value
+```
+
+Two rules keep this honest. The command still enforces its own rules, so a move it refuses (a constraint, an authorization) is not applied: the component shows the data again once the command has been answered, and `on failure` runs as it does for any `execute`. And a component reports an item change only when it lets the user change items; a read-only component raises none.
 
 ## Actions
 

@@ -68,7 +68,7 @@ query GetInvoice => InvoiceDetailsReadModel
   by invoiceId InvoiceId
 ```
 
-The marker qualifies only *how* the result arrives, so everything else about the query is unchanged: `observable` composes with `[]` and `optional` (`observable InvoiceDetailsReadModel optional`), with `by` and `filter` parameters, with `authorize`, and with a `performer`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>` — and gets the updates for free.
+The marker qualifies only *how* the result arrives: `observable` composes with `[]` and `optional` (`observable InvoiceDetailsReadModel optional`), with `by` and `filter` parameters, and with `authorize`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>`. The language also accepts `observable` with a `performer`, but Stage does not render live performer execution yet; use a snapshot performer for custom query logic.
 
 The result `=> observable optional` means an observable result whose type is named `optional`, not an optional result of a type named `observable`. The leading `observable` is read first. To make that result optional, write `=> observable optional optional`.
 
@@ -235,7 +235,9 @@ A query call is identified by the query, its `by` key and its supplied filter va
 
 ## The `performer` block
 
-Most queries need nothing more than their return type — the read model a [projection](projections/index.md) already builds is the answer. When a query does need its own logic, `performer` is where it goes. It is the query's counterpart to a command's [handler](commands.md#the-handler-block), and it takes the same two shapes: a `file` reference, or an inline block.
+Most queries need nothing more than their return type — the read model a [projection](projections/index.md) already builds is the answer. When a snapshot query needs its own logic, `performer` is where it goes. Stage loads the read-model collection once as `readModels` and runs a verified synchronous C# body to return the result. It is the query's counterpart to a command's [handler](commands.md#the-handler-block), and it takes the same two shapes: a `file` reference, or an inline block.
+
+An `observable` query with a `performer` currently renders as an explicit gap in Stage, not a live implementation. Stage reports `STAGE-IMPL-006` and emits a method throwing `NotImplementedException`; the plan's outcome is `Partial`, even if rendering reports success. It does not apply the body to read-model updates. See [#1077](https://github.com/Cratis/Screenplay/issues/1077) for the observable performer binding contract.
 
 Delegating to a file:
 
@@ -249,14 +251,11 @@ query GetInvoiceSummary => InvoiceSummaryReadModel
 Inline, in a top-level language:
 
 ````screenplay
-query GetOverdueInvoices => OverdueInvoicesReadModel[]
-  description "Invoices past their due date, oldest first"
+query LargestPayments => PaymentSummary[]
+  description "The five largest payments"
   performer
     ```csharp
-      return readModels
-          .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
-          .Where(invoice => invoice.TenantId == context.Tenant)
-          .OrderBy(invoice => invoice.DueDate);
+      return readModels.OrderByDescending(payment => payment.Amount).Take(5);
       ```
 ````
 
@@ -275,7 +274,7 @@ query ListLineItems => InvoiceLineReportReadModel[]
       ```
 ````
 
-Inside a performer, `context` is the [`QueryContext`](context.md) — the query's arguments, the tenant, the caller, the identity recorded as having caused it, the causation, and when the query was received. A `file` reference compiles against the same type, so moving a block out to a file changes nothing about what it can see.
+Inside a Stage C# performer, `context` supplies `Arguments` (PascalCase argument properties), `Tenant` (string), `Identity` (`ClaimsPrincipal`), and `ReceivedAt` (`DateTimeOffset`). Caller arguments are also available by their camelCase parameter names. There is no command causation, `CausedBy`, or event `Occurred` member. A verified C# `file` body uses the same bindings; other languages, missing or invalid attachments, and body compilation errors render as gaps rather than executable performers.
 
 ### A query a performer answers is an opaque read
 

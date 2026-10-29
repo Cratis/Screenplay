@@ -60,7 +60,9 @@ static class SemanticScopedProjectionIssues
             yield return Block(projection, "A join, children block or 'remove via join' inside a nested object is not wired by Chronicle's engine (ProjectionFactory.cs:415-470).");
         }
 
-        if (Mappings(scope).Any(_ => UnsupportedContext(_.Source)) ||
+        if (scope.From.SelectMany(_ => _.Mappings).Any(_ => UnsupportedMapping(_, !nested)) ||
+            scope.Joins.Any(_ => UsesEventContext(_.Key) || _.Mappings.Any(mapping => UnsupportedMapping(mapping, false))) ||
+            (scope.Every?.Mappings.Any(_ => UnsupportedMapping(_, !nested && scope.Joins.IsEmpty)) ?? false) ||
             scope.From.Any(_ => UsesEventContext(_.Key) || UsesEventContext(_.ParentKey)) ||
             scope.Removals.Any(_ => UsesEventContext(_.Key) || UsesEventContext(_.ParentKey)) ||
             scope.JoinRemovals.Any(_ => UsesEventContext(_.Key)))
@@ -68,19 +70,19 @@ static class SemanticScopedProjectionIssues
             yield return new(
                 projection.Id,
                 SemanticPlanIssueKind.UnsupportedEventContext,
-                "An event-context value other than the event source identity needs occurrence context that ESM v1 facts do not carry.");
+                "Event context is supported only for event source identity and occurred property assignments in from, every and children scopes; occurred is unsupported in keys, joins, arithmetic, every mappings with joins and nested objects.");
         }
 
-        foreach (var issue in scope.Children.SelectMany(_ => Walk(projection, _.Scope, false)).Concat(scope.Nested.SelectMany(_ => Walk(projection, _.Scope, true))))
+        foreach (var issue in scope.Children.SelectMany(_ => Walk(projection, _.Scope, nested)).Concat(scope.Nested.SelectMany(_ => Walk(projection, _.Scope, true))))
         {
             yield return issue;
         }
     }
 
-    static IEnumerable<SemanticProjectionMapping> Mappings(SemanticProjectionScope scope) =>
-        scope.From.SelectMany(_ => _.Mappings)
-            .Concat(scope.Joins.SelectMany(_ => _.Mappings))
-            .Concat(scope.Every?.Mappings ?? []);
+    static bool UnsupportedMapping(SemanticProjectionMapping mapping, bool allowOccurred) =>
+        UnsupportedContext(mapping.Factor) ||
+        (UnsupportedContext(mapping.Source) && !(allowOccurred && mapping.Operation == SemanticProjectionOperation.Set &&
+            mapping.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal) && mapping.Factor is null));
 
     static bool UsesEventContext(SemanticProjectionKey? key) => key switch
     {

@@ -9,9 +9,9 @@ about products, stock and order status arrives as a PUBLIC event and is translat
 | `PublishOrder` | Translate (outbound) | `CheckoutCompleted` -> public P4 `OrderPlaced` |
 | `RegisterCustomer`, `CloseCustomerAccount` | StateChange | constraint `UniqueCustomerEmail`, concept rule on `EmailAddress` |
 | `AddToBasket`, `ChangeBasketQuantity`, `RemoveFromBasket` | StateChange | `AddToBasket` reads the listing (`reads ListedProduct by sku`) and refuses a sold-out product |
-| `EnterShippingAddress`, `ChooseDeliveryMethod`, `CheckOut` | StateChange | the three CommandForms of the Checkout wizard; `CheckOut` reads the basket size and the customer account |
+| `EnterShippingAddress`, `ChooseDeliveryMethod`, `CheckOut` | StateChange | the three CommandForms of the Checkout wizard; `CheckOut` decides on the basket's line count (`BasketLineCount`, a decision-only view keyed `id`) |
 | `EmptyBasketAfterCheckout` | Automation | `CheckoutCompleted` -> `ClearBasketContents` |
-| `ProductBrowse`, `ProductPage`, `BasketView`, `CheckoutProgress`, `CustomerAccounts`, `MyOrders` | StateView | read models; `BasketView` uses `children`, `ProductBrowse` has a filtered search query |
+| `ProductBrowse`, `ProductPage`, `BasketView`, `BasketLineCounting`, `CheckoutProgress`, `CustomerAccounts`, `MyOrders` | StateView | read models; `BasketView` uses `children`, `ProductBrowse` has a filtered search query; `BasketLineCounting` is a support view only `CheckOut`'s protected read uses (no screen) |
 
 Screens: `Browse` (own template `ProductGrid`: a card grid with a filters rail), `Basket`, `ProductPage` and `OrderTracking` (own template `SideSummary`: lines beside a summary),
 `Checkout` (blueprint `WizardScreen`: a stepper is what a wizard is), `MyOrders` (`ListScreen`). Both own templates live in `model/templates.play` and carry content: the

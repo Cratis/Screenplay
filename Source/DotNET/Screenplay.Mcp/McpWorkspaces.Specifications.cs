@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -35,10 +36,26 @@ internal sealed partial class McpWorkspaces
         return response;
     }
 
-    static object SpecificationResponse(ScreenplayWorkspace workspace, JsonElement arguments, string? proposalId = null)
+    static void CheckSpecificationRevision(ScreenplayWorkspace workspace, JsonElement arguments)
+    {
+        var sourceRevision = McpSourceRevision.For(workspace.Documents);
+        var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
+        if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expected is null)
+        {
+            throw new McpFailure("Subsequent source pages require expectedSourceRevision from the first page.", -32602);
+        }
+
+        if (expected is not null && expected != sourceRevision)
+        {
+            throw new McpFailure("StaleSourceRevision: source changed between specification pages; start a new run.") { FailureKind = "StaleSourceRevision" };
+        }
+    }
+
+    object SpecificationResponse(ScreenplayWorkspace workspace, JsonElement arguments, string? proposalId = null)
     {
         CheckSpecificationRevision(workspace, arguments);
-        var report = McpSpecificationExecution.Run(workspace, McpJson.OptionalString(arguments, "specification"), McpJson.OptionalString(arguments, "scope"));
+        var selection = new McpSpecificationSelection(McpJson.OptionalString(arguments, "specification"), McpJson.OptionalString(arguments, "scope"));
+        var report = McpSpecificationExecution.Run(workspace, selection, new McpRuleExecution(_bodyProvider, _cancellationToken));
         var content = new
         {
             report.SourceRevision,
@@ -62,20 +79,5 @@ internal sealed partial class McpWorkspaces
         response["proposalId"] = JsonValue.Create(proposalId);
 
         return McpJson.ToolResult(response, report.Outcome != "passed");
-    }
-
-    static void CheckSpecificationRevision(ScreenplayWorkspace workspace, JsonElement arguments)
-    {
-        var sourceRevision = McpSourceRevision.For(workspace.Documents);
-        var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
-        if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expected is null)
-        {
-            throw new McpFailure("Subsequent source pages require expectedSourceRevision from the first page.", -32602);
-        }
-
-        if (expected is not null && expected != sourceRevision)
-        {
-            throw new McpFailure("StaleSourceRevision: source changed between specification pages; start a new run.") { FailureKind = "StaleSourceRevision" };
-        }
     }
 }

@@ -205,7 +205,7 @@ module Shop
         basketId  BasketId key
         lines     BasketLine[]
 
-      // The count CheckOut decides on. A command's protected read refuses read models with children, so it is its own small view.
+      // How many lines a basket holds and what they were worth: the basket summary and the shop's topbar indicator. CheckOut decides on BasketLineCount (below).
       readmodel BasketSize
         description "How many lines a basket holds"
         basketId   BasketId key
@@ -307,3 +307,61 @@ module Shop
         then readmodel BasketContents
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49},{"sku":"ACM-2000","productName":"Acme backpack","quantity":1,"unitPrice":899}]
+
+    // The count CheckOut decides on. Chronicle's decision reads find a read model's key only in a property named id, and a
+    // protected read refuses a view with children or without a removal - so the decision has its own small view, apart from
+    // BasketSize (which keeps basketId so its filter lines up with AllBaskets).
+    slice StateView BasketLineCounting
+      description "How many lines a basket holds, for the checkout decision"
+
+      readmodel BasketLineCount
+        description "The number of lines in a basket, keyed for a protected read"
+        id        BasketId key
+        lineCount Int
+
+      query GetBasketLineCount => BasketLineCount optional
+        by id BasketId
+
+      projection BasketLineCountProjection => BasketLineCount
+        from BasketLineAdded
+          increment lineCount
+        from BasketLineRemoved
+          decrement lineCount
+        remove with BasketCleared
+
+      specification CountingTheLinesInABasket
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-2000"
+          productName = "Acme backpack"
+          quantity    = 1
+          unitPrice   = 899
+        given BasketLineRemoved
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku = "ACM-1000"
+        then readmodel BasketLineCount
+          id        = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          lineCount = 1
+
+      specification ForgettingAClearedBasket
+        given caller
+          authenticated
+          role "Shopper"
+        given BasketLineAdded
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          sku         = "ACM-1000"
+          productName = "Acme mug"
+          quantity    = 2
+          unitPrice   = 49
+        given BasketCleared
+          for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+        then no readmodel BasketLineCount for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"

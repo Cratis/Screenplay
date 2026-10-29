@@ -41,30 +41,21 @@ public sealed partial class SemanticEvaluator
         return null;
     }
 
-    internal static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command)
+    internal static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command, bool hasRuleProvider = false)
     {
-        if (!command.CodeValidations.IsEmpty)
+        if (!hasRuleProvider && !command.CodeValidations.IsEmpty)
         {
             return $"Command '{command.Name}' code validation 0";
         }
 
-        if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
+        if (!hasRuleProvider && command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
         {
             var property = command.Properties.Single(value => value.Id == predicate.Property);
             return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
         }
 
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
-        foreach (var property in command.Properties)
-        {
-            if (PredicateInType(property.Type, concepts, types, []) is { } name)
-            {
-                return name;
-            }
-        }
-
-        return null;
+        var predicates = new SemanticOpaqueValidation(plan.Model.Application);
+        return command.Properties.Select(property => predicates.Find(property.Type, hasRuleProvider && !property.IsGenerated)).FirstOrDefault(name => name is not null);
     }
 
     internal static ImmutableArray<SemanticValidationFailure> ValidateRules(
@@ -136,10 +127,9 @@ public sealed partial class SemanticEvaluator
 
     internal static string? UnsupportedQueryValidation(SemanticExecutionPlan plan, SemanticKeyedQuery query, ImmutableArray<SemanticQueryFilterValue> filters)
     {
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        var predicates = new SemanticOpaqueValidation(plan.Model.Application);
         var arguments = QueryConceptArguments(query, SemanticValue.Null, filters);
-        return arguments.Select(argument => PredicateInType(argument.Type, concepts, types, [])).FirstOrDefault(name => name is not null);
+        return arguments.Select(argument => predicates.Find(argument.Type)).FirstOrDefault(name => name is not null);
     }
 
     internal static ImmutableArray<SemanticValidationFailure> ValidateQueryConcepts(
@@ -185,49 +175,4 @@ public sealed partial class SemanticEvaluator
     static bool HasMalformedShape(SemanticCommand command, ImmutableArray<SemanticPropertyValue> values) =>
         values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Count(property => !property.IsGenerated) ||
         values.Select(_ => _.TargetProperty).Distinct().Count() != values.Length;
-
-    static string? PredicateInType(
-        SemanticTypeReference type,
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited)
-    {
-        if (type.Kind == SemanticTypeReferenceKind.Concept)
-        {
-            return PredicateInConcept(concepts[type.Target]);
-        }
-
-        if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
-        {
-            return PredicateInComposite(types[type.Target], concepts, types, visited);
-        }
-
-        return null;
-    }
-
-    static string? PredicateInConcept(SemanticConcept concept)
-    {
-        if (concept.Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) is not { } rule)
-        {
-            return null;
-        }
-
-        return rule.Kind == SemanticValidationRuleKind.CodeValidation
-            ? $"Concept '{concept.Name}' code validation {concept.Validations.Take(concept.Validations.IndexOf(rule)).Count(validation => validation.Kind == SemanticValidationRuleKind.CodeValidation)}"
-            : $"Rule '{rule.Name}' on concept '{concept.Name}'";
-    }
-
-    static string? PredicateInComposite(
-        SemanticCompositeType composite,
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited)
-    {
-        foreach (var property in composite.Properties)
-        {
-            if (PredicateInType(property.Type, concepts, types, visited) is { } name) return name;
-        }
-
-        return null;
-    }
 }

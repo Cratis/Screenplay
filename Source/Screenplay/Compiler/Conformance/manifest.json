@@ -6,6 +6,7 @@
         { "name": "reaction-batches", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/AtomicReactionBatches/v22/source/declarations.play" },
         { "name": "generation", "path": "Source/Screenplay/Compiler/Conformance/generation.play" },
         { "name": "generation-rule-bodies", "path": "Source/Screenplay/Compiler/Conformance/generation-rule-bodies.play" },
+        { "name": "imperative-validation-files", "path": "Source/Screenplay/Compiler/Conformance/imperative-validation-files.play" },
         { "name": "generation-checksum-validation", "path": "Source/Screenplay/Compiler/Conformance/generation-checksum-validation.play" },
         { "name": "enum-member-numbers", "path": "Source/Screenplay/Compiler/Conformance/enum-member-numbers.play" },
         { "name": "read-model-keys", "path": "Source/Screenplay/Compiler/Conformance/read-model-keys.play" },

@@ -16,7 +16,11 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionPlan plan,
     SemanticWorld world,
     SemanticCommand command,
-    SemanticExecutionRequest request)
+    SemanticExecutionRequest request,
+    SemanticRuleBodyExecution? ruleBodies,
+    SemanticReducerBodyExecution reducers,
+    Func<SemanticBodyExecutionRun>? commitRun,
+    CancellationToken cancellationToken)
 {
     const string NeedsOccurrenceMessage = "A v2 command using $context needs an occurrence supplied by the execution request.";
 
@@ -59,7 +63,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         var response = SemanticEvaluator.Response(command.Response, _commandValues);
-        return new(world, _dependencies, commitWorld => Settle(commitWorld, response));
+        return new(world, _dependencies, commitWorld => SettleWithProvider(commitWorld, response));
     }
 
     static bool HasContextMapping(SemanticProducedEvent produced) =>
@@ -114,7 +118,7 @@ internal sealed partial class SemanticCommandExecution(
     // Ordering between generated declarative validators and attached code is not portable.
     // Refuse to infer a validation outcome after authorization, before evaluating any validators.
     SemanticUnsupported? RefuseOpaqueValidation() =>
-        SemanticEvaluator.UnsupportedValidation(plan, command) is { } rule
+        SemanticEvaluator.UnsupportedValidation(plan, command, ruleBodies is not null) is { } rule
             ? new SemanticUnsupported(
                 world,
                 SemanticExecutionCapability.Command,
@@ -148,6 +152,7 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionResult? Validate()
     {
         var failures = SemanticEvaluator.ValidateRules(plan, command, request.Values).ToBuilder();
+        if (ValidateBodies(failures) is { } unsupported) return unsupported;
         _commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
 
         // Preserve legacy failure collection, but never evaluate a protected requirement before its reads.
@@ -162,6 +167,18 @@ internal sealed partial class SemanticCommandExecution(
         if (failures.Count > 0) return ValidationFailure(failures);
 
         return NeedsOccurrenceUpFront() ? Contract(NeedsOccurrenceMessage) : null;
+    }
+
+    SemanticUnsupported? ValidateBodies(ImmutableArray<SemanticValidationFailure>.Builder failures)
+    {
+        if (ruleBodies is null) return null;
+        foreach (var check in new SemanticRuleBodyValidation(plan.Model.Application, ruleBodies, request).Check(command, cancellationToken))
+        {
+            if (check.Status == SemanticRuleStatus.NotEvaluable) return new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, check.Message);
+            if (check.Status == SemanticRuleStatus.Failed) failures.Add(new(check.Message, check.Rule.Severity));
+        }
+
+        return null;
     }
 
     SemanticRejected ValidationFailure(ImmutableArray<SemanticValidationFailure>.Builder failures) =>
@@ -312,7 +329,17 @@ internal sealed partial class SemanticCommandExecution(
             Route = (produced.Route ?? command.Route) is { } effectiveRoute ? _routes[effectiveRoute] : null
         };
 
-    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response)
+    SemanticExecutionResult SettleWithProvider(SemanticWorld commitWorld, SemanticExecutionResponse? response)
+    {
+        if (commitRun is null || !SemanticEvaluator.AllReducers(plan).Any(reducer => _facts.Any(fact => SemanticReducerBodyExecution.Reached(reducer, fact, plan))))
+        {
+            return Settle(commitWorld, response, reducers);
+        }
+        using var run = commitRun();
+        return Settle(commitWorld, response, run.Evaluator.ReducerBodies);
+    }
+
+    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response, SemanticReducerBodyExecution reducerExecution)
     {
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (RejectReusedGeneratedSource(world) is { } reused) return reused;
@@ -332,12 +359,12 @@ internal sealed partial class SemanticCommandExecution(
             return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
         }
 
-        if (SemanticEvaluator.ReachedReducer(plan, _facts.ToImmutable()) is { } reachedReducer)
+        if (SemanticEvaluator.ReachedReducer(plan, _facts.ToImmutable(), reducerExecution) is { } reachedReducer)
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!SemanticEvaluator.TryProject(plan, world.Facts, new SemanticEvaluator.ProjectionState(world.ReadModels, world.PendingChildren), _facts.ToImmutable(), out var state, out var projectionFailure))
+        if (!SemanticEvaluator.TryProject(plan, world.Facts, new SemanticEvaluator.ProjectionState(world.ReadModels, world.PendingChildren), _facts.ToImmutable(), out var state, out var projectionFailure, reducerExecution, cancellationToken))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
         }
@@ -354,7 +381,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         var tentative = world.Commit(facts, state.ReadModels, state.PendingChildren);
-        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller);
+        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller, reducerExecution);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
     }
 }

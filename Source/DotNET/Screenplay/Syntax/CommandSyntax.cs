@@ -333,11 +333,18 @@ public record RequirementSyntax(ConditionSyntax Condition, string? Message, Sour
 }
 
 /// <summary>
-/// Represents a <c>validate csharp</c> block holding inline code.
+/// Represents an imperative <c>validate</c> block holding inline code.
 /// </summary>
 /// <param name="Code">The inline <see cref="CodeBlockSyntax"/>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record CodeValidateSyntax(CodeBlockSyntax Code, SourceLocation Location) : ValidateSyntax(Location);
+
+/// <summary>
+/// Represents an imperative <c>validate</c> block whose body is attached from a file.
+/// </summary>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> containing the validation body.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record FileValidateSyntax(FileReferenceSyntax File, SourceLocation Location) : ValidateSyntax(Location);
 
 /// <summary>
 /// Represents a single declarative validation rule.

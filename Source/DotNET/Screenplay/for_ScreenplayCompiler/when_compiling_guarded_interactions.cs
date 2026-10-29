@@ -52,9 +52,39 @@ public class when_compiling_guarded_interactions : given.a_compiler
     [Fact] void should_round_trip_printed_alternatives() => _compiler.Compile(_printed).Diagnostics.ShouldBeEmpty();
     [Fact] void should_round_trip_syntax_transport() => SyntaxJson.StructurallyEqual(_result.Value!, SyntaxJson.Deserialize(SyntaxJson.Serialize(_result.Value!))).ShouldBeTrue();
 
+    // A change carries the item that changed, so a board can run a different command for each column a card is moved to.
+    [Fact]
+    void should_choose_an_action_list_by_the_item_a_change_carries()
+    {
+        var source = Source.Replace("on double click", "on change", StringComparison.Ordinal);
+        var result = _compiler.Compile(source);
+        var binding = result.Value!.Modules.Single().Features.Single().Slices.Single().Screens.Single().Directives.OfType<ScreenTableSyntax>().Single().Behaviors.Single().Bindings.Single();
+        result.Diagnostics.ShouldBeEmpty();
+        binding.Alternatives.Count().ShouldEqual(2);
+        binding.Otherwise.ShouldNotBeNull();
+    }
+
+    // Only click, double click and select deprecate an opaque `where`; a change keeps it.
+    [Fact]
+    void should_keep_an_opaque_where_on_a_change() => _compiler.Compile("""
+        module Work
+          feature Items
+            slice StateView Details
+              readmodel Item
+                status String
+              query ItemDetails => Item[]
+              command Retry
+              screen Details
+                data Item[] via query ItemDetails
+                table Item
+                  column status
+                  on change
+                    where item.status == "failed"
+                    execute Retry
+        """).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyInteractionWhere).ShouldBeFalse();
+
     [Theory]
     [InlineData("submit")]
-    [InlineData("change")]
     [InlineData("event Changed")]
     [InlineData("Signal")]
     void should_reject_non_item_triggers(string trigger) => _compiler.Compile(Source.Replace("on double click", $"on {trigger}", StringComparison.Ordinal)).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedInteractionAlternatives).ShouldBeTrue();

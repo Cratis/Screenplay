@@ -227,6 +227,16 @@ The named `email` pattern has the fixed definition documented under [command val
 
 Inside the block `context` is the [`RuleContext`](context.md) — for a concept rule there is no surrounding artifact, so `context.Artifact` and `context.Value` are both the concept's own value. The block yields the message of every rule the value breaks, and yields nothing when the value is valid.
 
+The same imperative body can live in a file instead of a fence:
+
+```screenplay
+concept EmailAddress : String pii
+  validate
+    file Validations/AllowedEmailDomain.cs
+```
+
+The path is relative to the model root and must stay inside it. The file contains the body that would otherwise appear inside the fence, including any `yield return` statements. Folder compilation loads and hashes it using the same attachment rules as a named rule's `file` body. Consumers receive the same opaque concept-validation requirement, with file provenance instead of an inline span. A missing or refused path uses the existing attachment diagnostics (`PLAY0432` or `PLAY0430`).
+
 Enum concepts can combine their values with validate blocks — the values remain identifiers with optional numbers and the blocks are recognized by the `validate` keyword:
 
 ```screenplay
@@ -261,7 +271,7 @@ concept Money : Decimal
 
 In `decimals <= <n>` the operand is a whole number from 0 to 28 and the subject is a `Decimal` value. See [command validation](commands.md#validation-rules).
 
-The executable semantic model enforces portable concept rules on **command input and query arguments**: every value of the concept, including each collection element and values inside composite [types](types.md). Query authorization runs first, then argument shape checks, then the rules on the `by` key and every supplied filter value; omitted optional filters are not validated. A violation rejects with `Validation`, not an empty result, in every ESM version. From ESM v18, one actionless queried call with `then error` asserts that rejection; see [query validation rejections](specifications.md#query-validation-rejections). A named rule with an inline or file body and a fenced concept `validate` block bind as opaque v3 attachments with a `pure` requirement; the reference evaluator cannot execute them and reports `SemanticUnsupported` for commands or supplied query arguments carrying that concept, including nested and collection properties. It does not enforce those rules on event payloads or read-model state. The executable semantic model admits the same rules for a concept as for a command property, and rejects the same ones for the same reasons — see [what the executable model admits](commands.md#what-the-executable-model-admits). `all >` and `all >=` quantify over a collection, which a concept's own value never is, so they belong on the command property instead.
+The executable semantic model enforces portable concept rules on **command input and query arguments**: every value of the concept, including each collection element and values inside composite [types](types.md). Query authorization runs first, then argument shape checks, then the rules on the `by` key and every supplied filter value; omitted optional filters are not validated. A violation rejects with `Validation`, not an empty result, in every ESM version. From ESM v18, one actionless queried call with `then error` asserts that rejection; see [query validation rejections](specifications.md#query-validation-rejections). A named rule with an inline or file body and an imperative concept `validate` block (fenced or file-backed) bind as opaque v3 attachments with a `pure` requirement; the reference evaluator cannot execute them and reports `SemanticUnsupported` for commands or supplied query arguments carrying that concept, including nested and collection properties. It does not enforce those rules on event payloads or read-model state. The executable semantic model admits the same rules for a concept as for a command property, and rejects the same ones for the same reasons — see [what the executable model admits](commands.md#what-the-executable-model-admits). `all >` and `all >=` quantify over a collection, which a concept's own value never is, so they belong on the command property instead.
 
 In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 

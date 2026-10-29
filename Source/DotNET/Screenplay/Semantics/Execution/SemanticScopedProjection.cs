@@ -85,7 +85,7 @@ internal sealed partial class SemanticScopedProjection(
         if (scope.Every is { SubscribesToAllEvents: true } every && EventSource() is { } key)
         {
             var document = RootDocument(key, true)!;
-            Apply(document.State, every.Mappings, root.Targets, _fact);
+            Apply(document.State, every.Mappings, root.Targets, _fact, scope.Joins.IsEmpty);
         }
     }
 
@@ -140,8 +140,8 @@ internal sealed partial class SemanticScopedProjection(
         ApplyAncestors(location, level);
         Modify(location, true, target =>
         {
-            Apply(target, from.Mappings, level.Targets, _fact);
-            Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact);
+            Apply(target, from.Mappings, level.Targets, _fact, level.Nested.IsEmpty);
+            Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact, level.Nested.IsEmpty && scope.Joins.IsEmpty);
             if (level.Nested.IsEmpty)
             {
                 BackfillJoins(target, from, scope, level);
@@ -164,8 +164,8 @@ internal sealed partial class SemanticScopedProjection(
                 var matchProperty = level.Address.IsEmpty ? join.On : level.Address[^1].IdentifiedBy;
                 if (target.TryGetValue(matchProperty, out var on) && SemanticValueRules.AreEqual(on, value))
                 {
-                    Apply(target, join.Mappings, level.Targets, _fact);
-                    Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact);
+                    Apply(target, join.Mappings, level.Targets, _fact, false);
+                    Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact, false);
                 }
             });
         }
@@ -188,7 +188,7 @@ internal sealed partial class SemanticScopedProjection(
             var joined = observed.LastOrDefault(candidate => candidate.EventContract == join.EventContract && MatchesJoinKey(join, candidate, on));
             if (joined is not null)
             {
-                Apply(target, join.Mappings, level.Targets, joined);
+                Apply(target, join.Mappings, level.Targets, joined, false);
             }
         }
     }
