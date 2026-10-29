@@ -56,7 +56,7 @@ public sealed partial class SemanticModelBinder
         void ValidatePossibleEventRoute(SemanticExpression? destination, SemanticTypeReference identifier, Dictionary<string, SemanticProperty> properties, SourceLocation location)
         {
             if (destination is not SemanticOneOfExpression oneOf) return;
-            var elementType = properties.Values.Single(property => property.Id == oneOf.Property).Type with { IsCollection = false };
+            var elementType = properties.Values.Single(property => property.Id == oneOf.CollectionProperty).Type with { IsCollection = false };
             if (elementType != identifier) Error(DiagnosticCodes.InvalidSemanticBinding, "Possible-event destination element type must match its routed source's identifier type.", location);
         }
 

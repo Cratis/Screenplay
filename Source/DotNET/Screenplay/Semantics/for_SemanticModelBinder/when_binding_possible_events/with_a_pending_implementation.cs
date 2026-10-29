@@ -27,7 +27,7 @@ public class with_a_pending_implementation : given.a_possible_events_binder
     [Fact] void should_emit_the_typed_context() => _result.TypedContextDescriptors.Single().RequirementId.ShouldEqual(_command.Handler!.RequirementId);
     [Fact] void should_keep_unmapped_event_payloads() => _command.Handler!.PossibleEvents.All(entry => entry.Mappings.IsEmpty).ShouldBeTrue();
     [Fact] void should_resolve_the_default_identifier() => ((SemanticResolvedExpression)_command.Handler!.PossibleEvents.First().Destination!).Target.ShouldEqual(_command.Properties.Single(property => property.IsIdentifier).Id);
-    [Fact] void should_resolve_the_collection_identity() => ((SemanticOneOfExpression)_command.Handler!.PossibleEvents.Last().Destination!).Property.ShouldEqual(_command.Properties.Single(property => property.Name == "ids").Id);
+    [Fact] void should_resolve_the_collection_identity() => ((SemanticOneOfExpression)_command.Handler!.PossibleEvents.Last().Destination!).CollectionProperty.ShouldEqual(_command.Properties.Single(property => property.Name == "ids").Id);
     [Fact] void should_count_both_event_types_as_unrouted_producers() => SemanticDecisionReadAdmission.Producers(_result.Value!.Application.Modules.Single().Features.Single().Slices).Count(value => !value.Routed).ShouldEqual(2);
     [Fact] void should_not_enable_public_binding() => Bind(Source).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
 

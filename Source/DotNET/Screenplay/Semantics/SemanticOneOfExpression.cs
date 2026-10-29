@@ -3,6 +3,6 @@
 
 namespace Cratis.Screenplay.Semantics;
 
-/// <summary>A destination selected from the command-input collection identified by <paramref name="Property"/>.</summary>
-/// <param name="Property">The stable identity of the collection property.</param>
-public sealed record SemanticOneOfExpression(SemanticId Property) : SemanticExpression(SemanticExpressionKind.OneOf);
+/// <summary>A destination selected from the command-input collection identified by <paramref name="CollectionProperty"/>.</summary>
+/// <param name="CollectionProperty">The stable identity of the collection property.</param>
+public sealed record SemanticOneOfExpression(SemanticId CollectionProperty) : SemanticExpression(SemanticExpressionKind.OneOf);
