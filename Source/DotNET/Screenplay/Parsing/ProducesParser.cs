@@ -99,6 +99,33 @@ internal static partial class ProducesParser
         };
     }
 
+    internal static CommandStreamSyntax? ParseRoute(ParserContext context, SourceLine line, CommandStreamSyntax? previous, bool inCommand)
+    {
+        if (!inCommand)
+        {
+            context.Error(DiagnosticCodes.ProductionRouteOutsideCommand, "Only command event productions can declare a stream route.", line.Location);
+            context.SkipBlock(line.Indent);
+            return previous;
+        }
+        if (previous is not null)
+        {
+            context.Error(DiagnosticCodes.InvalidCommandStream, "A production can declare at most one stream route.", line.Location);
+            context.SkipBlock(line.Indent);
+            return previous;
+        }
+        var match = ProductionRouteRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidCommandStream, "Expected 'stream <Source>.<Stream>'.", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+        var location = line.LocationAt(match.Groups[1].Index);
+        var candidate = new PropertySyntax("stream", new(match.Groups[1].Value, false, false, location), line.Location);
+
+        return EventSourceParser.ParseRoute(context, line, candidate, false);
+    }
+
     /// <summary>
     /// Parses the body of a produces declaration - where the event lands, its tags and its mappings.
     /// </summary>
@@ -257,33 +284,6 @@ internal static partial class ProducesParser
     }
 
     static bool IsRoute(SourceLine line) => LineText.FirstWord(line.Content) == "stream" && !line.Content.Contains('=');
-
-    internal static CommandStreamSyntax? ParseRoute(ParserContext context, SourceLine line, CommandStreamSyntax? previous, bool inCommand)
-    {
-        if (!inCommand)
-        {
-            context.Error(DiagnosticCodes.ProductionRouteOutsideCommand, "Only command event productions can declare a stream route.", line.Location);
-            context.SkipBlock(line.Indent);
-            return previous;
-        }
-        if (previous is not null)
-        {
-            context.Error(DiagnosticCodes.InvalidCommandStream, "A production can declare at most one stream route.", line.Location);
-            context.SkipBlock(line.Indent);
-            return previous;
-        }
-        var match = ProductionRouteRegex().Match(line.Content);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidCommandStream, "Expected 'stream <Source>.<Stream>'.", line.Location);
-            context.SkipBlock(line.Indent);
-            return null;
-        }
-        var location = line.LocationAt(match.Groups[1].Index);
-        var candidate = new PropertySyntax("stream", new(match.Groups[1].Value, false, false, location), line.Location);
-
-        return EventSourceParser.ParseRoute(context, line, candidate, false);
-    }
 
     [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*\.[A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ProductionRouteRegex();

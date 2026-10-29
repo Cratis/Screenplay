@@ -122,6 +122,5 @@ public sealed partial class SemanticModelBinder
 
             return entry.OneOf ? new SemanticOneOfExpression(property!.Id) : SemanticExpression.Property(SemanticExpressionRootKind.Command, property!.Id);
         }
-
     }
 }

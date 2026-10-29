@@ -9,15 +9,6 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
-    static Dictionary<SyntaxNode, EffectiveSpecificationStep> PossibleEventSteps(EffectiveSpecificationApplication expansion)
-    {
-        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
-        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
-        return steps;
-    }
-
-    static IEnumerable<SemanticSlice> PossibleEventSlices(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(PossibleEventSlices));
-
     // Deliberately does not create an ExecutableSemanticModel or run the v1-v34 validators/serializer on a v35 graph.
     internal CompilationResult<PossibleEventsBinding> BindForPossibleEvents(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
     {
@@ -50,6 +41,15 @@ public sealed partial class SemanticModelBinder
             };
         }
     }
+
+    static Dictionary<SyntaxNode, EffectiveSpecificationStep> PossibleEventSteps(EffectiveSpecificationApplication expansion)
+    {
+        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
+        return steps;
+    }
+
+    static IEnumerable<SemanticSlice> PossibleEventSlices(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(PossibleEventSlices));
 
     CompilationResult<PossibleEventsBinding> BindLegacyPossibleEvents(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
     {
