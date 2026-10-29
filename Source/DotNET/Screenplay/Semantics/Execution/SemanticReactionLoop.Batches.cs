@@ -56,12 +56,12 @@ internal sealed partial class SemanticReactionLoop
 
     SemanticExecutionResult ProjectBatch(ImmutableArray<SemanticFact> facts)
     {
-        if (SemanticEvaluator.ReachedReducer(plan, facts) is { } reducer)
+        if (SemanticEvaluator.ReachedReducer(plan, facts, SemanticReducerBodyExecution.For(evaluator)) is { } reducer)
         {
             return new SemanticUnsupported(World, SemanticExecutionCapability.Projection, $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!SemanticEvaluator.TryProject(plan, World.Facts, new SemanticEvaluator.ProjectionState(World.ReadModels, World.PendingChildren), facts, out var state, out var failure))
+        if (!SemanticEvaluator.TryProject(plan, World.Facts, new SemanticEvaluator.ProjectionState(World.ReadModels, World.PendingChildren), facts, out var state, out var failure, SemanticReducerBodyExecution.For(evaluator), SemanticReducerBodyExecution.TokenFor(evaluator)))
         {
             return new SemanticUnsupported(World, SemanticExecutionCapability.Projection, failure!);
         }

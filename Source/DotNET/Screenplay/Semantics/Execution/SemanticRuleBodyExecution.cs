@@ -17,6 +17,18 @@ sealed class SemanticRuleBodyExecution(ISemanticBodyExecutionProvider provider, 
 
     internal static string Sanitize(string diagnostic) => string.Concat(diagnostic.Where(character => !char.IsControl(character)).Take(500));
 
+    internal static bool MatchesHash(SemanticImplementationBody body)
+    {
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(body.Content))).ToLowerInvariant();
+        return hash == body.Requirement.ContentHash;
+    }
+
+    internal SemanticImplementationBody? FindBody(string? id, SemanticImplementationRole role)
+    {
+        if (id is null || !_bodies.TryGetValue(id, out var body)) return null;
+        return body.Requirement.Role == role ? body : null;
+    }
+
     internal SemanticRuleCheck Check(SemanticValidationRule rule, SemanticRuleContext context, CancellationToken cancellationToken)
     {
         if (FindBody(rule.RequirementId, SemanticImplementationRole.RulePredicate) is not { } body)
@@ -72,18 +84,6 @@ sealed class SemanticRuleBodyExecution(ISemanticBodyExecutionProvider provider, 
         result is { Satisfied: { } satisfied, Diagnostic: null }
             ? new(satisfied ? SemanticRuleStatus.Satisfied : SemanticRuleStatus.Failed, rule, rule.Message ?? $"Validation rule '{rule.Name}' failed.")
             : Unsupported(rule, result?.Diagnostic ?? "The provider supplied no predicate result.");
-
-    static bool MatchesHash(SemanticImplementationBody body)
-    {
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(body.Content))).ToLowerInvariant();
-        return hash == body.Requirement.ContentHash;
-    }
-
-    SemanticImplementationBody? FindBody(string? id, SemanticImplementationRole role)
-    {
-        if (id is null || !_bodies.TryGetValue(id, out var body)) return null;
-        return body.Requirement.Role == role ? body : null;
-    }
 
     SemanticRuleCheck Evaluate(SemanticValidationRule rule, SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken)
     {

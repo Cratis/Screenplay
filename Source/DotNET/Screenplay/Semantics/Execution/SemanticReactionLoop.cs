@@ -116,7 +116,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"The scenario appends more than {MaximumFacts} facts; its reactions do not settle.");
         }
 
-        var result = SemanticEvaluator.Append(plan, World, fact, [], null);
+        var result = SemanticEvaluator.Append(plan, World, fact, [], null, SemanticReducerBodyExecution.For(evaluator), SemanticReducerBodyExecution.TokenFor(evaluator));
         if (result is not SemanticAccepted accepted)
         {
             return result;

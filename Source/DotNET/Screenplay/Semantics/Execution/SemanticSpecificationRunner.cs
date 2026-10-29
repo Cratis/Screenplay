@@ -148,15 +148,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             plan = plan.IsolatedTo(slice);
         }
 
-        var reducer = plan.Model.Application.Modules.SelectMany(module => AllSlices(module.Features))
-            .SelectMany(slice => slice.Reducers)
-            .FirstOrDefault(candidate => (candidate.From is null && (
-                expected.GivenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
-                expected.ThenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
-                expected.ThenAbsentReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
-                expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel))) ||
-                (candidate.From is { } filter && candidate.Transitions.Any(transition => expected.GivenEvents.Any(fact =>
-                    fact.EventContract == transition.EventContract && filter.Matches(plan.Model.Application, plan.FormatFixtureRoute(fact.Route))))));
+        var reducer = UnexecutableReducer(plan, expected, SemanticReducerBodyExecution.For(evaluator));
         if (reducer is not null)
         {
             var unsupported = new SemanticUnsupported(
@@ -179,7 +171,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
-        var establishment = EstablishWorld(plan, expected, out var world);
+        var establishment = EstablishWorld(plan, expected, out var world, evaluator);
         if (establishment is not SemanticAccepted)
         {
             var details = establishment switch
@@ -228,7 +220,9 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                     Route = plan.FormatFixtureRoute(appended.Route)
                 },
                 queries,
-                expected.GivenCaller)
+                expected.GivenCaller,
+                SemanticReducerBodyExecution.For(evaluator),
+                SemanticReducerBodyExecution.TokenFor(evaluator))
             : evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
         var failures = Compare(plan, expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
@@ -260,10 +254,25 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
     }
 
+    static SemanticReducer? UnexecutableReducer(SemanticExecutionPlan plan, SemanticSpecification expected, SemanticReducerBodyExecution execution) =>
+        SemanticEvaluator.AllReducers(plan).FirstOrDefault(candidate => !execution.CanExecute(plan, candidate) &&
+            (AssertsReducerState(plan, expected, candidate) || MatchesReducerHistory(plan, expected, candidate)));
+
+    static bool AssertsReducerState(SemanticExecutionPlan plan, SemanticSpecification expected, SemanticReducer candidate) =>
+        candidate.From is null && (expected.GivenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+            expected.ThenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+            expected.ThenAbsentReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+            expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel));
+
+    static bool MatchesReducerHistory(SemanticExecutionPlan plan, SemanticSpecification expected, SemanticReducer candidate) =>
+        candidate.From is { } filter && candidate.Transitions.Any(transition => expected.GivenEvents.Any(fact =>
+            fact.EventContract == transition.EventContract && filter.Matches(plan.Model.Application, plan.FormatFixtureRoute(fact.Route))));
+
     static SemanticExecutionResult EstablishWorld(
         SemanticExecutionPlan plan,
         SemanticSpecification specification,
-        out SemanticWorld world)
+        out SemanticWorld world,
+        ISemanticEvaluator evaluator)
     {
         if (GivenFacts(plan, specification, out var facts) is { } rejected)
         {
@@ -271,7 +280,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return rejected;
         }
 
-        var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
+        var establishment = SemanticReducerBodyExecution.EstablishSpecificationWorld(evaluator, plan, facts);
         if (establishment is not SemanticAccepted accepted)
         {
             world = SemanticWorld.Empty;

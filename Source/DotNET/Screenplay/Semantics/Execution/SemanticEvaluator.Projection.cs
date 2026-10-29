@@ -15,7 +15,7 @@ public sealed partial class SemanticEvaluator
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure)
     {
-        var projected = TryProject(plan, history, new ProjectionState(current, []), facts, out var state, out failure);
+        var projected = TryProject(plan, history, new ProjectionState(current, []), facts, out var state, out failure, SemanticReducerBodyExecution.None, CancellationToken.None);
         readModels = state.ReadModels;
         return projected;
     }
@@ -26,7 +26,18 @@ public sealed partial class SemanticEvaluator
         ProjectionState current,
         ImmutableArray<SemanticFact> facts,
         out ProjectionState state,
-        out string? failure)
+        out string? failure) =>
+        TryProject(plan, history, current, facts, out state, out failure, SemanticReducerBodyExecution.None, CancellationToken.None);
+
+    internal static bool TryProject(
+        SemanticExecutionPlan plan,
+        ImmutableArray<SemanticFact> history,
+        ProjectionState current,
+        ImmutableArray<SemanticFact> facts,
+        out ProjectionState state,
+        out string? failure,
+        SemanticReducerBodyExecution reducers,
+        CancellationToken cancellationToken)
     {
         state = current;
         if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
@@ -48,6 +59,12 @@ public sealed partial class SemanticEvaluator
             if (projection.Apply(fact) is { } projectionFailure)
             {
                 failure = projectionFailure;
+                return false;
+            }
+
+            if (reducers.Apply(plan, new(fact, (ulong)observed.Count), instances, cancellationToken) is { } reducerFailure)
+            {
+                failure = reducerFailure;
                 return false;
             }
 

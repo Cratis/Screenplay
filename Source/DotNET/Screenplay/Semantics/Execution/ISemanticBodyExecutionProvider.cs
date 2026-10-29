@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Semantics.Execution;
 
 /// <summary>
-/// Supplies host-owned execution of named rule predicates and code validations. Screenplay does not compile or run source code.
+/// Supplies host-owned execution of named rule predicates, code validations and reducer transitions. Screenplay does not compile or run source code.
 /// </summary>
 /// <remarks>
 /// The host is responsible for language admission, isolation and resource limits. The pure capability on a
@@ -28,6 +28,15 @@ public interface ISemanticBodyExecutionProvider : IAsyncDisposable
     /// <remarks>Exceptions and cancellation map to Unsupported, never rejection. Existing providers remain unsupported by default.</remarks>
     ValueTask<SemanticValidationBodyResult> ValidateAsync(SemanticImplementationBody body, SemanticRuleContext context, CancellationToken cancellationToken) =>
         new(SemanticValidationBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Code validation", body)));
+
+    /// <summary>Executes one reducer transition against its portable context.</summary>
+    /// <param name="body">The resolved, content-verified transition body.</param>
+    /// <param name="context">The prior state, event and caller-supplied circumstances.</param>
+    /// <param name="cancellationToken">Run cancellation; hosts must enforce time limits as well.</param>
+    /// <returns>The next state, an explicit deletion, or an unsupported diagnostic.</returns>
+    /// <remarks>Exceptions and cancellation map to Unsupported. Existing providers remain unsupported by default.</remarks>
+    ValueTask<SemanticReducerBodyResult> ReduceAsync(SemanticImplementationBody body, SemanticReducerContext context, CancellationToken cancellationToken) =>
+        new(SemanticReducerBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Reducer transition", body)));
 }
 
 /// <summary>Represents resolved source for one implementation requirement.</summary>
