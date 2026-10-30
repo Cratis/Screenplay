@@ -39,19 +39,7 @@ internal sealed partial class McpWorkspaces
             members = descriptor.Members.Select(member => new
             {
                 member.Name,
-                type = new
-                {
-                    member.Type.Kind,
-                    modelType = DescribeModelType(member.Type.ModelType),
-                    shape = member.Type.Shape?.ToString(),
-                    member.Type.RuntimeToken,
-                    properties = member.Type.Properties.Select(property => new
-                    {
-                        property.Name,
-                        id = property.Id.ToString(),
-                        type = DescribeModelType(property.Type)
-                    })
-                },
+                type = DescribeContextType(member.Type),
                 member.IsNullable,
                 member.IsDerived,
                 source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value }
@@ -60,7 +48,7 @@ internal sealed partial class McpWorkspaces
         if (descriptor.Result is null) return legacy;
         var node = (JsonObject)JsonSerializer.SerializeToNode(legacy, McpJson.Options)!;
         node["resultVersion"] = descriptor.Result.ResultVersion;
-        node["result"] = JsonSerializer.SerializeToNode(descriptor.Result, McpJson.Options);
+        node["result"] = JsonSerializer.SerializeToNode(DescribeResult(descriptor.Result), McpJson.Options);
         return node;
     }
 
@@ -299,6 +287,35 @@ internal sealed partial class McpWorkspaces
             page = McpPaging.Page(proposal.Workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, proposal.Workspace.Revision.ToString())
         };
     }
+
+    static object DescribeResult(SemanticHandlerResultDescriptor result) => new
+    {
+        result.ResultVersion,
+        entries = result.Entries.Select(entry => new
+        {
+            eventContract = entry.EventContract.ToString(),
+            entry.EventName,
+            entry.EventRevision,
+            payload = DescribeContextType(entry.Payload),
+            entry.DestinationKind,
+            entry.DestinationProperty,
+            destinationType = entry.DestinationType is null ? null : DescribeContextType(entry.DestinationType)
+        })
+    };
+
+    static object DescribeContextType(SemanticContextType type) => new
+    {
+        type.Kind,
+        modelType = DescribeModelType(type.ModelType),
+        shape = type.Shape?.ToString(),
+        type.RuntimeToken,
+        properties = type.Properties.Select(property => new
+        {
+            property.Name,
+            id = property.Id.ToString(),
+            type = DescribeModelType(property.Type)
+        })
+    };
 
     static object? DescribeModelType(SemanticTypeReference? type) => type is null ? null : new
     {
