@@ -114,3 +114,4 @@
 | [0119](0119-admit-command-handlers-that-declare-possible-events.md) | Admit command handlers that declare a set of possible events (handler result contract v2, ESM v35) | accepted | none | 2026-10-29 | owner orchestration (delegated owner acceptance) |
 | [0120](0120-live-performer-binding-contract.md) | Live performers bind a whole-collection stream (ResultVersion 2) | accepted | implemented | 2026-10-29 | woksin (Q-136, delegated through L0) |
 | [0122](0122-information-diagnostics-for-redundant-spellings.md) | Report redundant key braces and implicit authorization conjunction as Information | accepted | none | 2026-10-19 | woksin (delegated, L0) |
+| [0123](0123-store-backed-sequences-through-a-chronicle-allocator.md) | Store-backed sequences through a Chronicle allocator (design only, no gapless guarantee) | proposed | none | — | proposed by L73 for woksin's review (Q-168) |
