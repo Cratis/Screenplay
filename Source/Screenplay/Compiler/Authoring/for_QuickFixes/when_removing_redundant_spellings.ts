@@ -49,6 +49,21 @@ describe('when removing redundant spellings', () => {
         expect(count(edited, DiagnosticCodes.ImplicitAuthorizationConjunction)).toBe(0);
     });
 
+    it.each([
+        ['        authorize Staff\n        authorize Managers Auditors\n', '        authorize Staff\n        authorize Managers and Auditors\n', 13],
+        ['        authorize Staff\n        authorize Managers\n        authorize Auditors Staff\n', '        authorize Staff\n        authorize Managers\n        authorize Auditors and Staff\n', 14],
+    ])('should write the and on the sibling directive that carries it in %j', (source, expected, line) => {
+        const fixes = findQuickFixes(command + source, { line, diagnosticCode: DiagnosticCodes.ImplicitAuthorizationConjunction });
+        expect(fixes).toHaveLength(1);
+        const edited = applyQuickFixEdits(command + source, fixes[0].edits)!;
+        expect(edited).toBe(command + expected);
+        expect(shape(edited)).toBe(shape(command + source));
+    });
+
+    it('should refuse a closing brace indented as deep as the parts', () => {
+        expect(findQuickFixes(head + '          key {\n            id = id\n            }\n', { line: 14 })).toEqual([]);
+    });
+
     it('should offer nothing for the canonical spellings', () => {
         expect(findQuickFixes(command + '        authorize Staff and Managers\n', { line: 12 })).toEqual([]);
     });

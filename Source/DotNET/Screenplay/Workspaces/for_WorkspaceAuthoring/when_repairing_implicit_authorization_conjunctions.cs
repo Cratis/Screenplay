@@ -34,6 +34,23 @@ public class when_repairing_implicit_authorization_conjunctions
         SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value!, new ScreenplayCompiler().Parse(Head + expected).Value!).ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("        authorize Staff\n        authorize Managers Auditors\n", "        authorize Staff\n        authorize Managers and Auditors\n", 13)]
+    [InlineData("        authorize Staff\n        authorize Managers\n        authorize Auditors Staff\n", "        authorize Staff\n        authorize Managers\n        authorize Auditors and Staff\n", 14)]
+    [InlineData("        authorize Staff Managers\n        authorize Auditors Staff\n", "        authorize Staff and Managers\n        authorize Auditors Staff\n", 12)]
+    void should_write_the_and_on_the_sibling_directive_that_carries_it(string source, string expected, int line)
+    {
+        var workspace = Workspace(Head + source);
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var diagnostic = index.Diagnostics.First(value => value.Code == DiagnosticCodes.ImplicitAuthorizationConjunction);
+        diagnostic.Location.Line.ShouldEqual(line);
+        var repair = WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic).Single();
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
+        result.Accepted.ShouldBeTrue();
+        result.Workspace!.Documents.Single().Text.ShouldEqual(Head + expected);
+        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value!, new ScreenplayCompiler().Parse(Head + expected).Value!).ShouldBeTrue();
+    }
+
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create(
         "Model",
         [WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(source))],

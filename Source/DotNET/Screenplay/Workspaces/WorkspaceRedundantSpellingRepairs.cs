@@ -24,7 +24,13 @@ public sealed record RemoveRedundantKeyBraces(WorkspaceNodeHandle Target, Compos
 /// </summary>
 /// <param name="Target">The original authorize occurrence.</param>
 /// <param name="Expected">The authorize declaration expected in the base snapshot.</param>
-public sealed record InsertExplicitAuthorizationConjunction(WorkspaceNodeHandle Target, AuthorizeSyntax Expected) : WorkspaceAstOperation;
+public sealed record InsertExplicitAuthorizationConjunction(WorkspaceNodeHandle Target, AuthorizeSyntax Expected) : WorkspaceAstOperation
+{
+    /// <summary>
+    /// Gets the source location of the one sibling <c>authorize</c> directive to repair, or <c>null</c> for the first directive of the owning declaration.
+    /// </summary>
+    public SourceLocation? Directive { get; init; }
+}
 
 internal static partial class WorkspaceRedundantSpellingRepairs
 {
@@ -52,7 +58,7 @@ internal static partial class WorkspaceRedundantSpellingRepairs
         }
 
         var isKey = diagnostic.Code == DiagnosticCodes.RedundantCompositeKeyBraces;
-        var matching = index.Entries.Where(entry => entry.Location == diagnostic.Location && (isKey ? entry.Node is CompositeKeySyntax : entry.Node is AuthorizeSyntax)).ToArray();
+        var matching = index.Entries.Where(entry => isKey ? entry.Location == diagnostic.Location && entry.Node is CompositeKeySyntax : entry.Node is AuthorizeSyntax authorize && Owns(authorize, diagnostic.Location)).ToArray();
         if (matching.Length != 1)
         {
             return [];
@@ -61,7 +67,7 @@ internal static partial class WorkspaceRedundantSpellingRepairs
         var entry = matching[0];
         WorkspaceAstOperation operation = isKey
             ? new RemoveRedundantKeyBraces(entry.Handle, (CompositeKeySyntax)entry.Node)
-            : new InsertExplicitAuthorizationConjunction(entry.Handle, (AuthorizeSyntax)entry.Node);
+            : new InsertExplicitAuthorizationConjunction(entry.Handle, (AuthorizeSyntax)entry.Node) { Directive = diagnostic.Location };
         var repair = new WorkspaceDiagnosticRepair(diagnostic.Code, entry.Handle, [operation])
         {
             RequiredFormatting = WorkspaceAuthoringFormatting.PreserveTrivia,
@@ -73,7 +79,7 @@ internal static partial class WorkspaceRedundantSpellingRepairs
     internal static bool Matches(WorkspaceAstOperation left, WorkspaceAstOperation right) => (left, right) switch
     {
         (RemoveRedundantKeyBraces a, RemoveRedundantKeyBraces b) => a.Target == b.Target && SyntaxJson.StructurallyEqual(a.Expected, b.Expected),
-        (InsertExplicitAuthorizationConjunction a, InsertExplicitAuthorizationConjunction b) => a.Target == b.Target && SyntaxJson.StructurallyEqual(a.Expected, b.Expected),
+        (InsertExplicitAuthorizationConjunction a, InsertExplicitAuthorizationConjunction b) => a.Target == b.Target && a.Directive == b.Directive && SyntaxJson.StructurallyEqual(a.Expected, b.Expected),
         _ => false
     };
 
@@ -106,8 +112,14 @@ internal static partial class WorkspaceRedundantSpellingRepairs
                 _ => throw new InvalidWorkspaceAuthoring("Unsupported redundant spelling repair.")
             };
             var target = TargetOf(operation)!;
-            if (target.Document != document.Id || index.Find(target)?.Node is not { } original || !SyntaxJson.StructurallyEqual(original, node!) ||
-                !reported.Any(diagnostic => diagnostic.Code == code && diagnostic.Location == original.Location) || !selected.Add(original.Location))
+            if (target.Document != document.Id || index.Find(target)?.Node is not { } original || !SyntaxJson.StructurallyEqual(original, node!))
+            {
+                throw new InvalidWorkspaceAuthoring("The redundant spelling repair does not match an original reported occurrence.");
+            }
+
+            var occurrence = operation is InsertExplicitAuthorizationConjunction { Directive: { } directive } ? directive : original.Location;
+            if ((original is AuthorizeSyntax owner && !Owns(owner, occurrence)) ||
+                !reported.Any(diagnostic => diagnostic.Code == code && diagnostic.Location == occurrence) || !selected.Add(occurrence))
             {
                 throw new InvalidWorkspaceAuthoring("The redundant spelling repair does not match an original reported occurrence.");
             }
@@ -119,7 +131,7 @@ internal static partial class WorkspaceRedundantSpellingRepairs
             }
             else
             {
-                InsertConjunctions(lines, original.Location.Line - 1);
+                InsertConjunctions(lines, occurrence.Line - 1);
                 conjunction++;
             }
         }
@@ -151,6 +163,12 @@ internal static partial class WorkspaceRedundantSpellingRepairs
         var bytes = Encoding.UTF8.GetBytes(candidate);
         return WorkspaceDocument.Create(document.Id, document.StableKey, document.Path, document.Encoding == WorkspaceTextEncoding.Utf8WithBom ? [0xef, 0xbb, 0xbf, .. bytes] : bytes);
     }
+
+    // Combining sibling authorize directives keeps only the first location on the node, but every later directive's requirement keeps its own line.
+    internal static bool Owns(AuthorizeSyntax authorize, SourceLocation location) => authorize.Location == location || Mentions(authorize.Requirement, location);
+
+    static bool Mentions(PolicyRequirementSyntax requirement, SourceLocation location) => requirement.Location == location ||
+        (requirement is LogicalPolicyRequirementSyntax logical && (Mentions(logical.Left, location) || Mentions(logical.Right, location)));
 
     static void RemoveBraces(List<string> lines, int keyLine, HashSet<int> deleted)
     {
@@ -188,10 +206,14 @@ internal static partial class WorkspaceRedundantSpellingRepairs
                     // A final line without an ending leaves the previous ending as the new last one; drop it to keep the file's last bytes.
                     lines[next - 1] = Split(lines[next - 1]).Body;
                 }
+
+                return;
             }
 
             break;
         }
+
+        throw new InvalidWorkspaceAuthoring("The composite key has no closing brace at the key's indentation.");
     }
 
     static void InsertConjunctions(List<string> lines, int authorizeLine)

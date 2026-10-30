@@ -43,6 +43,15 @@ public class when_repairing_redundant_key_braces
     }
 
     [Fact]
+    void should_refuse_a_closing_brace_indented_as_deep_as_the_parts()
+    {
+        var workspace = Workspace(Head + "          key {\n            id = id\n            }\n");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var diagnostic = index.Diagnostics.Single(value => value.Code == DiagnosticCodes.RedundantCompositeKeyBraces);
+        WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic).ShouldBeEmpty();
+    }
+
+    [Fact]
     void should_not_offer_a_repair_for_a_key_without_braces()
     {
         var workspace = Workspace(Head + "          key Composite\n            id = id\n");

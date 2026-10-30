@@ -340,7 +340,8 @@ public static class WorkspaceDiagnosticRepairs
             (code == DiagnosticCodes.CaptureEventsRecordFixture && WorkspaceCaptureEventRepairs.Matches(entry, diagnostic)) ||
             (code == DiagnosticCodes.RedundantEventId && entry.Node.DirectiveLocations.GetValueOrDefault("id") == diagnostic.Location) ||
             (code == DiagnosticCodes.LegacyComplianceMarker && entry.Node.DirectiveLocations.Values.Contains(diagnostic.Location)) ||
-            (code == DiagnosticCodes.LegacyInteractionWhere && entry.Node.DirectiveLocations.GetValueOrDefault("where") == diagnostic.Location)))
+            (code == DiagnosticCodes.LegacyInteractionWhere && entry.Node.DirectiveLocations.GetValueOrDefault("where") == diagnostic.Location) ||
+            (code == DiagnosticCodes.ImplicitAuthorizationConjunction && entry.Node is AuthorizeSyntax authorize && WorkspaceRedundantSpellingRepairs.Owns(authorize, diagnostic.Location))))
             .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
             .Where(repair => repair.Subject == subject);
     }
