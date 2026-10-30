@@ -66,7 +66,7 @@ export function useDependencyOverlay<TId extends { toString(): string }>(overlay
 // the root is detached while the links mount and the links measure nothing; they only appear once an unrelated
 // class changes under the board. After the root is attached, change a class on it and back in one go, which is
 // the signal the links already watch. TODO: remove when the board attaches its root before measuring
-// (see upstream-event-models-bug.md).
+// (https://github.com/Cratis/StudioIssues/issues/1258).
 function useMeasureSliceLinks(links: readonly unknown[] | undefined, boardHost: RefObject<Element | null> | undefined) {
     useEffect(() => {
         if (links === undefined || boardHost === undefined) return;
