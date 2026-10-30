@@ -49,6 +49,8 @@ public class when_describing_performed_query_shapes : given.a_connection
     [Fact] void should_address_the_returned_read_model() => Performed.GetProperty("queryShape").GetProperty("readModel").GetProperty("address").GetProperty("kind").GetString().ShouldEqual("ReadModel");
     [Fact] void should_report_the_cardinality() => Performed.GetProperty("queryShape").GetProperty("cardinality").GetString().ShouldEqual("Many");
     [Fact] void should_report_live_delivery() => Performed.GetProperty("queryShape").GetProperty("delivery").GetString().ShouldEqual("Live");
+    [Fact] void should_report_the_live_result_version() => Performed.GetProperty("resultVersion").GetInt32().ShouldEqual(2);
+    [Fact] void should_report_the_first_context_version() => Performed.GetProperty("contextVersion").GetInt32().ShouldEqual(1);
     [Fact] void should_name_the_filter() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("name").GetString().ShouldEqual("status");
     [Fact] void should_report_the_filter_kind() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("kind").GetString().ShouldEqual("Filter");
     [Fact] void should_report_the_filter_type() => Performed.GetProperty("queryShape").GetProperty("arguments")[0].GetProperty("type").GetProperty("primitive").GetString().ShouldEqual("Text");
