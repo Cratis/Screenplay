@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -103,8 +104,9 @@ sealed class AdmissibleSecuritySyntax : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitProjection(ProjectionSyntax syntax)
     {
-        if (syntax.ReadModel is { } target) References.Add(new(target, _slice));
-        else CertainViewReferences = false;
+        var targets = ScreenplayValidator.ProjectionBuiltReadModelNames(syntax).ToArray();
+        foreach (var target in targets) References.Add(new(target, _slice));
+        if (targets.Length == 0) CertainViewReferences = false;
         base.VisitProjection(syntax);
     }
 
