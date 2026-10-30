@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { BoardToExtensionMessage, ExtensionToBoardMessage } from '../Webview/BoardMessage';
+import { BoardToExtensionMessage, BoardViewOptions, ExtensionToBoardMessage } from '../Webview/BoardMessage';
 import { BoardRefresh } from './BoardRefresh';
 import { boardHtml, createNonce } from './boardHtml';
 import { ViewOptionsStore } from './ViewOptionsStore';
@@ -19,10 +19,15 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
     constructor(private readonly extensionUri: vscode.Uri, private readonly viewOptions: ViewOptionsStore) {}
 
     static register(context: vscode.ExtensionContext): void {
+        const provider = new EventModelBoardEditor(context.extensionUri,
+            new ViewOptionsStore(context.globalState, () => vscode.workspace.getConfiguration('screenplay.eventModelBoard')));
         context.subscriptions.push(vscode.window.registerCustomEditorProvider(
-            eventModelBoardViewType,
-            new EventModelBoardEditor(context.extensionUri, new ViewOptionsStore(context.globalState)),
-            { webviewOptions: { retainContextWhenHidden: true } }));
+            eventModelBoardViewType, provider, { webviewOptions: { retainContextWhenHidden: true } }));
+        context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration('screenplay.eventModelBoard.density') || event.affectsConfiguration('screenplay.eventModelBoard.textSize')) {
+                provider.broadcastViewOptions();
+            }
+        }));
     }
 
     resolveCustomTextEditor(document: vscode.TextDocument, panel: vscode.WebviewPanel): void {
@@ -42,12 +47,7 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
                 void panel.webview.postMessage({ type: 'viewOptions', options: this.viewOptions.options } satisfies ExtensionToBoardMessage);
                 board.now();
             } else if (message.type === 'viewOptionsChanged') {
-                void this.viewOptions.save(message.options);
-                for (const other of this.#boards) {
-                    if (other !== panel.webview) {
-                        void other.postMessage({ type: 'viewOptions', options: message.options } satisfies ExtensionToBoardMessage);
-                    }
-                }
+                return this.saveViewOptions(message.options);
             } else if (message.type === 'showSource') {
                 const file = message.path !== undefined && board.root !== undefined ? vscode.Uri.joinPath(board.root, message.path) : document.uri;
                 void showSource(file, message.line);
@@ -58,6 +58,22 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
             board.dispose();
             received.dispose();
         });
+    }
+
+    private broadcastViewOptions(): void {
+        const options = this.viewOptions.options;
+        for (const board of this.#boards) {
+            void board.postMessage({ type: 'viewOptions', options } satisfies ExtensionToBoardMessage);
+        }
+    }
+
+    private async saveViewOptions(options: BoardViewOptions): Promise<void> {
+        try {
+            await this.viewOptions.save(options);
+        } catch (error) {
+            void vscode.window.showWarningMessage(`Could not save board view options: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        this.broadcastViewOptions();
     }
 }
 

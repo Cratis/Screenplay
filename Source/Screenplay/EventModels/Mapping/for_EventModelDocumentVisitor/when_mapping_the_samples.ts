@@ -44,6 +44,27 @@ describe('when mapping the samples', () => {
     it('should find the samples', () => documents.size.should.be.greaterThan(3));
     it('should map every sample into a document the board can read', () => problems.should.deep.equal([]));
 
+    it('should retain every authored module and feature description', () => {
+        const descriptionOf = (node: { description?: string | null }) => node.description?.trim() ? node.description : undefined;
+        const checkFeatures = (features: readonly FeatureSyntax[], mapped: FeatureDocument[], path: string[]): void => {
+            for (const feature of features) {
+                const document = mapped.find(candidate => candidate.name === feature.name)!;
+                const at = [...path, feature.name];
+                ({ path: at, description: document.description }).should.deep.equal({ path: at, description: descriptionOf(feature) });
+                checkFeatures(feature.features, document.subFeatures, at);
+            }
+        };
+        for (const [sample, application] of applications) {
+            const modules = documents.get(sample)!.collections.flatMap(collection => collection.modules);
+            for (const module of application.modules) {
+                const document = modules.find(candidate => candidate.name === module.name)!;
+                const path = [sample, module.name];
+                ({ path, description: document.description }).should.deep.equal({ path, description: descriptionOf(module) });
+                checkFeatures(module.features, document.features, path);
+            }
+        }
+    });
+
     // A screen is drawn in the row of every persona allowed to use it; the samples gate every screen so that
     // one is, and none falls to the generic user.
     it('should draw every screen for a persona', () =>

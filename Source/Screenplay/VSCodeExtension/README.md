@@ -34,6 +34,17 @@ a board that draws is not proof that every semantic check passes.
 - `.play` files carry the Cratis icon in the explorer and editor tabs.
 - **Strings files** — `.strings` files (the per-locale text a model references with `$strings.<key>`) are highlighted: comments, dotted keys, the quoted value, `{placeholders}` and escapes. They carry the Cratis icon with a quotation badge in the lower right corner, so they are told apart from `.play` files in the explorer.
 
+## Board spacing and text size
+
+The event model board starts with **comfortable** spacing and **medium** text. In VS Code's User Settings, choose:
+
+- `screenplay.eventModelBoard.density`: `compact`, `comfortable` (default), or `spacious`.
+- `screenplay.eventModelBoard.textSize`: `small`, `medium` (default), or `large`.
+
+These are user preferences, not workspace or model settings: they are not written into `.play` files and apply across open boards and later sessions. Changes in Settings update open boards immediately. Text size is independent of density and canvas zoom. Compact is available when fitting more on screen matters; the default gives the model more room. Invalid settings fall back to comfortable spacing or medium text without resetting your existing View choices. Changing Properties, detail level, or connections in the board's View menu keeps your spacing and text size.
+
+This increment changes only the VS Code board. MCP overview defaults remain unchanged for a later increment.
+
 ## Development
 
 From the repository root, build the packages the extension bundles, then the extension:
