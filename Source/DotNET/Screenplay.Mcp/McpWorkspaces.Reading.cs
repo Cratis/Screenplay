@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
@@ -16,6 +17,52 @@ internal sealed partial class McpWorkspaces
 {
     static readonly string[] _eventSourceViews = ["event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics"];
     static readonly string[] _operationIntentViews = ["operation-intents", "system-intents", "operation-intent-details", "system-intent-details", "ordered-productions"];
+
+    internal static object DescribeDescriptor(SemanticTypedContextDescriptor descriptor)
+    {
+        var legacy = new
+        {
+            descriptor.RequirementId,
+            role = descriptor.Role.ToString(),
+            descriptor.ContextVersion,
+            modelRevision = descriptor.ModelRevision?.ToString(),
+            descriptor.IsWrapperReady,
+            types = descriptor.Types.Select(type => new
+            {
+                id = type.Id.ToString(),
+                type.Name,
+                kind = type.Kind.ToString(),
+                primitive = type.Primitive.ToString(),
+                properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = DescribeModelType(property.Type) })
+            }),
+            operationId = descriptor.OperationId?.ToString(),
+            members = descriptor.Members.Select(member => new
+            {
+                member.Name,
+                type = new
+                {
+                    member.Type.Kind,
+                    modelType = DescribeModelType(member.Type.ModelType),
+                    shape = member.Type.Shape?.ToString(),
+                    member.Type.RuntimeToken,
+                    properties = member.Type.Properties.Select(property => new
+                    {
+                        property.Name,
+                        id = property.Id.ToString(),
+                        type = DescribeModelType(property.Type)
+                    })
+                },
+                member.IsNullable,
+                member.IsDerived,
+                source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value }
+            })
+        };
+        if (descriptor.Result is null) return legacy;
+        var node = (JsonObject)JsonSerializer.SerializeToNode(legacy, McpJson.Options)!;
+        node["resultVersion"] = descriptor.Result.ResultVersion;
+        node["result"] = JsonSerializer.SerializeToNode(descriptor.Result, McpJson.Options);
+        return node;
+    }
 
     internal object ReadWorkspace(JsonElement arguments)
     {
@@ -252,44 +299,6 @@ internal sealed partial class McpWorkspaces
             page = McpPaging.Page(proposal.Workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, proposal.Workspace.Revision.ToString())
         };
     }
-
-    static object DescribeDescriptor(SemanticTypedContextDescriptor descriptor) => new
-    {
-        descriptor.RequirementId,
-        role = descriptor.Role.ToString(),
-        descriptor.ContextVersion,
-        modelRevision = descriptor.ModelRevision?.ToString(),
-        descriptor.IsWrapperReady,
-        types = descriptor.Types.Select(type => new
-        {
-            id = type.Id.ToString(),
-            type.Name,
-            kind = type.Kind.ToString(),
-            primitive = type.Primitive.ToString(),
-            properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = DescribeModelType(property.Type) })
-        }),
-        operationId = descriptor.OperationId?.ToString(),
-        members = descriptor.Members.Select(member => new
-        {
-            member.Name,
-            type = new
-            {
-                member.Type.Kind,
-                modelType = DescribeModelType(member.Type.ModelType),
-                shape = member.Type.Shape?.ToString(),
-                member.Type.RuntimeToken,
-                properties = member.Type.Properties.Select(property => new
-                {
-                    property.Name,
-                    id = property.Id.ToString(),
-                    type = DescribeModelType(property.Type)
-                })
-            },
-            member.IsNullable,
-            member.IsDerived,
-            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value }
-        })
-    };
 
     static object? DescribeModelType(SemanticTypeReference? type) => type is null ? null : new
     {

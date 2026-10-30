@@ -213,7 +213,8 @@ internal sealed partial class SemanticCommandExecution(
     SemanticRejected? ResolveRoutes()
     {
         _routes = new(ReferenceEqualityComparer.Instance);
-        foreach (var declaredRoute in command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>())
+        foreach (var declaredRoute in command.Produces.Select(produced => produced.Route).Append(command.Route)
+            .Concat((command.Handler?.PossibleEvents ?? []).Select(produced => produced.Route)).OfType<SemanticCommandRoute>())
         {
             var (source, stream) = SemanticEventRouting.Resolve(plan.Model.Application, declaredRoute.Source, declaredRoute.Stream);
             var scalar = declaredRoute.StreamId is null ? null : Evaluate(declaredRoute.StreamId);
@@ -238,7 +239,7 @@ internal sealed partial class SemanticCommandExecution(
         (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
         (produced.Condition is not null && Evaluate(produced.Condition) is SemanticBooleanValue { Value: false });
 
-    SemanticExecutionResult? Produce(SemanticProducedEvent produced, ImmutableArray<SemanticPropertyValue>? handlerValues = null)
+    SemanticExecutionResult? Produce(SemanticProducedEvent produced, ImmutableArray<SemanticPropertyValue>? handlerValues = null, SemanticValue? destinationValue = null)
     {
         if (IsSkipped(produced))
         {
@@ -251,9 +252,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         var destinationExpression = produced.Destination ?? _defaultDestination?.Value;
-        var destination = destinationExpression is null
-            ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
-            : Evaluate(destinationExpression);
+        var destination = destinationValue ?? ResolveDestination(destinationExpression);
         if (destination is null)
         {
             return new SemanticUnsupported(

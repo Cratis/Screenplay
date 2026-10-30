@@ -69,15 +69,7 @@ internal static class SemanticTypedContextCatalog
                 case SemanticImplementationRole.CommandHandler:
                     foreach (var command in commands.Where(value => value.Id == requirement.Source.SemanticId))
                     {
-                        matches.Add(Descriptor(
-                            requirement,
-                            command.Id,
-                            Shaped("Command", command.Id, SemanticContextSourceKinds.Command, command.Properties),
-                            Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
-                            Fixed("Identity", SemanticContextRuntimeTokens.Identity),
-                            Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
-                            Fixed("Causation", SemanticContextRuntimeTokens.Causation),
-                            Fixed("Occurred", SemanticContextRuntimeTokens.DateTime)));
+                        matches.Add(HandlerDescriptor(requirement, command, events));
                     }
                     break;
                 case SemanticImplementationRole.ValueGeneration:
@@ -224,13 +216,72 @@ internal static class SemanticTypedContextCatalog
                 foreach (var property in properties) Visit(property.Type);
             }
         }
-        foreach (var member in descriptor.Members)
+        void VisitType(SemanticContextType? contextType)
         {
-            if (member.Type.ModelType is { } type) Visit(type);
-            foreach (var property in member.Type.Properties) Visit(property.Type);
+            if (contextType?.ModelType is { } type) Visit(type);
+            foreach (var property in contextType?.Properties ?? []) Visit(property.Type);
+        }
+        foreach (var member in descriptor.Members) VisitType(member.Type);
+        foreach (var entry in descriptor.Result?.Entries ?? [])
+        {
+            VisitType(entry.Payload);
+            VisitType(entry.DestinationType);
         }
         return definitions.ToImmutable();
     }
+
+    static SemanticTypedContextDescriptor HandlerDescriptor(SemanticImplementationRequirement requirement, SemanticCommand command, IEnumerable<SemanticEventContract> events) => Descriptor(
+        requirement,
+        command.Id,
+        Shaped("Command", command.Id, SemanticContextSourceKinds.Command, command.Properties),
+        Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+        Fixed("Identity", SemanticContextRuntimeTokens.Identity),
+        Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
+        Fixed("Causation", SemanticContextRuntimeTokens.Causation),
+        Fixed("Occurred", SemanticContextRuntimeTokens.DateTime)) with
+    {
+        Result = HandlerResult(command, events)
+    };
+
+    static SemanticHandlerResultDescriptor? HandlerResult(SemanticCommand command, IEnumerable<SemanticEventContract> events) => command.Handler?.ResultVersion == 2 ? new(
+        2,
+        [.. command.Handler.PossibleEvents.Select(entry => HandlerResultEntry(
+            command,
+            entry,
+            events.SingleOrDefault(value => value.Id == entry.EventContract)
+                ?? throw new InvalidSemanticContract($"Handler result event '{entry.EventContract}' is unresolved.")))]) : null;
+
+    static SemanticHandlerResultEntry HandlerResultEntry(SemanticCommand command, SemanticProducedEvent entry, SemanticEventContract contract)
+    {
+        var propertyId = entry.Destination switch
+        {
+            SemanticResolvedExpression scalar => (SemanticId?)scalar.Target,
+            SemanticOneOfExpression oneOf => oneOf.CollectionProperty,
+            _ => null
+        };
+        var property = command.Properties.SingleOrDefault(value => value.Id == propertyId);
+        return new(
+            contract.Id,
+            contract.Name,
+            contract.Revision.Value,
+            Shaped("Payload", contract.Id, SemanticContextSourceKinds.CurrentEvent, contract.Properties).Type,
+            ResultDestinationKind(entry.Destination))
+        {
+            DestinationProperty = property?.Name,
+            DestinationType = ResultDestinationType(property, entry.Destination)
+        };
+    }
+
+    static string ResultDestinationKind(SemanticExpression? destination) => destination switch
+    {
+        SemanticOneOfExpression => SemanticHandlerResultDestinationKinds.OneOf,
+        SemanticResolvedExpression => SemanticHandlerResultDestinationKinds.Scalar,
+        _ => SemanticHandlerResultDestinationKinds.Default
+    };
+
+    static SemanticContextType? ResultDestinationType(SemanticProperty? property, SemanticExpression? destination) => property is null
+        ? null
+        : Model(destination is SemanticOneOfExpression ? property.Type with { IsCollection = false } : property.Type);
 
     static IEnumerable<SemanticSlice> AllSlices(SemanticModule module) => module.Features.SelectMany(AllSlices);
     static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(AllSlices));

@@ -317,10 +317,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     };
 
     internal static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
-        expression is SemanticResolvedExpression resolved
-            ? command.Properties.Single(property => property.Id == resolved.Target).Type
-            : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
-                throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
+        expression switch
+        {
+            SemanticResolvedExpression resolved => command.Properties.Single(property => property.Id == resolved.Target).Type,
+            SemanticOneOfExpression oneOf => command.Properties.Single(property => property.Id == oneOf.CollectionProperty).Type with { IsCollection = false },
+            _ => (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
+                throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.")
+        };
 
     SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
