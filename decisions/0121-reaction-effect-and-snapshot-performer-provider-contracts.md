@@ -2,7 +2,7 @@
 id: 0121
 title: Reaction-effect and snapshot-performer provider contracts on the body-execution seam
 status: accepted
-stage: none
+stage: implemented
 class: contract
 reversibility: reversible
 decided: 2026-10-30
