@@ -82,6 +82,14 @@ the drawing; arrow keys move between nodes and edges, Enter selects, and Escape 
 Choose **Board** to return to the timeline. The map does not change the model or
 highlight the board, and inferred dependencies do not prove executable readiness.
 
+[Timeline findings](../imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
+
+### Highlight dependencies on the board
+
+Click a slice, feature or module header on the board, or focus it and press Enter or Space, to select that scope. Its slices are marked **selected**; the slices they depend on, directly or through other slices, are marked **dependency**; the slices that depend on them are marked **dependant**; everything else is dimmed. Each mark has its own outline and a marker on the header, and is also announced in words, so it never rests on color alone. Links between the marked slices are drawn as arcs above the board, with dashed, thicker links where a dependency crosses a feature or module boundary. Dependencies use the same default kinds as the map (**uses facts from**, **reacts to**, **decides from**), whichever kinds the map has checked.
+
+Select the same header again to clear the highlight. It also clears when an edit removes the selected scope. The Current and Proposed boards each highlight their own dependencies. With nothing selected the board is drawn as usual. Selecting on the board is separate from the map: map selections do not highlight the board.
+
 If the board cannot read or draw the model, **Board** and **Map** stay in the
 toolbar. The Board view says why, and the Map stays available when the dependencies
 were compiled. A failure in one view leaves the other in place. If compiling gives no
