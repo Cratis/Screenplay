@@ -5,7 +5,7 @@ import { describe, it } from 'vitest';
 import { DiagnosticCodes } from '../../Diagnostics/DiagnosticCodes';
 import { parseCaptureSource } from '../../ScreenplayCompiler';
 
-const warnings = (when: string) => parseCaptureSource(`capture C\n  map\n    a = \$.a\n  append Added\n    when ${when}\n      a = \$.a\n`).diagnostics.filter(_ => _.code === DiagnosticCodes.HostLanguageExpression);
+const warnings = (when: string) => parseCaptureSource(`capture C\n  map\n    a = $.a\n  append Added\n    when ${when}\n      a = $.a\n`).diagnostics.filter(_ => _.code === DiagnosticCodes.HostLanguageExpression);
 
 describe('when rejecting host language when clauses', () => {
     it('should warn once for a property clause', () => {
