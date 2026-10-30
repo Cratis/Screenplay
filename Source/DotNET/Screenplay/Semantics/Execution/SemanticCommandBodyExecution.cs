@@ -51,7 +51,7 @@ sealed class SemanticCommandBodyExecution(ISemanticBodyExecutionProvider? provid
         SemanticModelProvenance.Declares(plan.Model, requirement.Owner, command.Id) &&
         requirement.RequirementId == ImplementationRequirementIdentity.Create(command.Id, SemanticImplementationRole.CommandHandler, null);
 
-    static bool IsResolved(SemanticImplementationRequirement requirement, int resultVersion) =>
+    static bool IsResolved(SemanticImplementationRequirement requirement, uint resultVersion) =>
         !string.IsNullOrWhiteSpace(requirement.Language) && requirement.AttachmentResolution == SemanticAttachmentResolution.Resolved &&
         requirement.ContextVersion == 1 && requirement.ResultVersion == resultVersion;
 }
