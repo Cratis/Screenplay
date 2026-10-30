@@ -110,12 +110,13 @@ export interface SliceDocument {
     commentCount: number;
 }
 
-// A finding the board draws beside what it names. Screenplay uses only whole-specification information, targeted by
-// the specification's id, to show a specification's authored routing without lengthening its title.
+// A finding the board draws in the slice header. Specification-targeted information also shows authored routing
+// beside the specification without lengthening its title; timeline findings target only the slice header.
 export interface SliceAnnotationDocument {
     severity: 'information' | 'warning' | 'error';
     message: string;
-    specificationId: string;
+    code?: string;
+    specificationId?: string;
 }
 
 // Something from outside the model a translation turns into events - for a capture, the system it reads.

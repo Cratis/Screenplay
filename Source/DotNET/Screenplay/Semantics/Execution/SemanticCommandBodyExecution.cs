@@ -14,7 +14,7 @@ sealed class SemanticCommandBodyExecution(ISemanticBodyExecutionProvider? provid
         if (bodies?.FindBody(handler.RequirementId, SemanticImplementationRole.CommandHandler) is not { } body ||
             !IsVerified(plan, command, body))
         {
-            return SemanticCommandBodyResult.Unsupported("No resolved, content-verified result-v1 handler is available.");
+            return SemanticCommandBodyResult.Unsupported($"No resolved, content-verified result-v{handler.ResultVersion} handler is available.");
         }
         cancellationToken.ThrowIfCancellationRequested();
         SemanticCommandBodyResult result;
@@ -42,8 +42,8 @@ sealed class SemanticCommandBodyExecution(ISemanticBodyExecutionProvider? provid
     }
 
     static bool IsVerified(SemanticExecutionPlan plan, SemanticCommand command, SemanticImplementationBody body) =>
-        command.Handler!.ResultVersion == 1 && HasIdentity(plan, command, body.Requirement) &&
-        IsResolvedV1(body.Requirement) && SemanticRuleBodyExecution.MatchesHash(body);
+        command.Handler!.ResultVersion is 1 or 2 && HasIdentity(plan, command, body.Requirement) &&
+        IsResolved(body.Requirement, command.Handler.ResultVersion) && SemanticRuleBodyExecution.MatchesHash(body);
 
     static bool HasIdentity(SemanticExecutionPlan plan, SemanticCommand command, SemanticImplementationRequirement requirement) =>
         requirement.Source.SemanticId == command.Id && requirement.Owner.Kind == SemanticKind.Command &&
@@ -51,7 +51,7 @@ sealed class SemanticCommandBodyExecution(ISemanticBodyExecutionProvider? provid
         SemanticModelProvenance.Declares(plan.Model, requirement.Owner, command.Id) &&
         requirement.RequirementId == ImplementationRequirementIdentity.Create(command.Id, SemanticImplementationRole.CommandHandler, null);
 
-    static bool IsResolvedV1(SemanticImplementationRequirement requirement) =>
+    static bool IsResolved(SemanticImplementationRequirement requirement, int resultVersion) =>
         !string.IsNullOrWhiteSpace(requirement.Language) && requirement.AttachmentResolution == SemanticAttachmentResolution.Resolved &&
-        requirement.ContextVersion == 1 && requirement.ResultVersion == 1;
+        requirement.ContextVersion == 1 && requirement.ResultVersion == resultVersion;
 }

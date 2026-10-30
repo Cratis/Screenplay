@@ -479,4 +479,6 @@ export const DiagnosticCodes = {
     InvalidToolbarButton: 'PLAY0760',
     InvalidPossibleEventsDeclaration: 'PLAY0822',
     InvalidPossibleEventSet: 'PLAY0823',
+    RedundantCompositeKeyBraces: 'PLAY0824',
+    ImplicitAuthorizationConjunction: 'PLAY0825',
 } as const;

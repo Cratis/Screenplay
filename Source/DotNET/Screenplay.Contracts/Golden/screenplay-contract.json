@@ -46159,6 +46159,28 @@
       "title": "A handler possible-event set violates its result contract.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0824",
+      "name": "RedundantCompositeKeyBraces",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "A composite key is written with braces that the indented form already makes redundant.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0825",
+      "name": "ImplicitAuthorizationConjunction",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "An authorize declaration writes adjacent policies without the and they mean.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

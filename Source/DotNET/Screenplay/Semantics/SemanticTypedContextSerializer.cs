@@ -12,57 +12,71 @@ public static class SemanticTypedContextSerializer
     static readonly JsonSerializerOptions _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     /// <summary>Produces stable UTF-8 JSON bytes suitable for shared contract vectors.</summary>
-    public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors) => JsonSerializer.SerializeToUtf8Bytes(
-        new
-        {
-            contractRevision = SemanticTypedContextDescriptor.ContractRevision,
-            typeKinds = new[] { SemanticContextTypeKinds.Runtime, SemanticContextTypeKinds.Shape, SemanticContextTypeKinds.Model },
-            sourceKinds = new[]
+    /// <param name="descriptors">The descriptors to serialize.</param>
+    /// <exception cref="InvalidOperationException">A descriptor contains a handler result contract.</exception>
+    public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
+    {
+        if (descriptors.Any(descriptor => descriptor.Result is not null)) throw new InvalidOperationException("Handler result descriptors are not yet portable.");
+        return JsonSerializer.SerializeToUtf8Bytes(
+            new
             {
-                SemanticContextSourceKinds.ContextContract, SemanticContextSourceKinds.Derived, SemanticContextSourceKinds.Command,
-                SemanticContextSourceKinds.ReadModel, SemanticContextSourceKinds.CurrentEvent, SemanticContextSourceKinds.EventSourceId,
-                SemanticContextSourceKinds.ModelProperty, SemanticContextSourceKinds.ConceptValue, SemanticContextSourceKinds.ValidatedProperty,
-                SemanticContextSourceKinds.ValidatedArtifact, SemanticContextSourceKinds.AuthorizedOperation,
-                SemanticContextSourceKinds.CommandIdentifier, SemanticContextSourceKinds.QueryKey, SemanticContextSourceKinds.Unavailable
-            },
-            runtimeTokens = new[]
-            {
-                SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
-                SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
-                SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation
-            },
-            descriptors = descriptors.Select(descriptor => new
-            {
-                descriptor.RequirementId,
-                role = descriptor.Role.ToString(),
-                descriptor.ContextVersion,
-                operationId = descriptor.OperationId?.ToString(),
-                descriptor.IsWrapperReady,
-                types = descriptor.Types.Select(type => new
+                contractRevision = SemanticTypedContextDescriptor.ContractRevision,
+                typeKinds = new[] { SemanticContextTypeKinds.Runtime, SemanticContextTypeKinds.Shape, SemanticContextTypeKinds.Model },
+                sourceKinds = new[]
                 {
-                    id = type.Id.ToString(), type.Name, kind = type.Kind.ToString(), primitive = type.Primitive.ToString(),
-                    properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
-                }),
-                members = descriptor.Members.Select(member => new
+                    SemanticContextSourceKinds.ContextContract, SemanticContextSourceKinds.Derived, SemanticContextSourceKinds.Command,
+                    SemanticContextSourceKinds.ReadModel, SemanticContextSourceKinds.CurrentEvent, SemanticContextSourceKinds.EventSourceId,
+                    SemanticContextSourceKinds.ModelProperty, SemanticContextSourceKinds.ConceptValue, SemanticContextSourceKinds.ValidatedProperty,
+                    SemanticContextSourceKinds.ValidatedArtifact, SemanticContextSourceKinds.AuthorizedOperation,
+                    SemanticContextSourceKinds.CommandIdentifier, SemanticContextSourceKinds.QueryKey, SemanticContextSourceKinds.Unavailable
+                },
+                runtimeTokens = new[]
                 {
-                    member.Name, member.IsNullable, member.IsDerived,
-                    type = new
+                    SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
+                    SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
+                    SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation
+                },
+                descriptors = descriptors.Select(descriptor => new
+                {
+                    descriptor.RequirementId,
+                    role = descriptor.Role.ToString(),
+                    descriptor.ContextVersion,
+                    operationId = descriptor.OperationId?.ToString(),
+                    descriptor.IsWrapperReady,
+                    types = descriptor.Types.Select(type => new
                     {
-                        member.Type.Kind,
-                        modelType = Reference(member.Type.ModelType),
-                        shape = member.Type.Shape?.ToString(),
-                        member.Type.RuntimeToken,
-                        properties = member.Type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
-                    },
-                    source = new
+                        id = type.Id.ToString(),
+                        type.Name,
+                        kind = type.Kind.ToString(),
+                        primitive = type.Primitive.ToString(),
+                        properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
+                    }),
+                    members = descriptor.Members.Select(member => new
                     {
-                        member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path,
-                        member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value
-                    }
+                        member.Name,
+                        member.IsNullable,
+                        member.IsDerived,
+                        type = new
+                        {
+                            member.Type.Kind,
+                            modelType = Reference(member.Type.ModelType),
+                            shape = member.Type.Shape?.ToString(),
+                            member.Type.RuntimeToken,
+                            properties = member.Type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
+                        },
+                        source = new
+                        {
+                            member.Source.Kind,
+                            semanticId = member.Source.SemanticId?.ToString(),
+                            member.Source.Path,
+                            member.Source.ConstantValue,
+                            eventRevision = member.Source.EventRevision?.Value
+                        }
+                    })
                 })
-            })
-        },
-        _options);
+            },
+            _options);
+    }
 
     static object? Reference(SemanticTypeReference? type) => type is null ? null : new
     {

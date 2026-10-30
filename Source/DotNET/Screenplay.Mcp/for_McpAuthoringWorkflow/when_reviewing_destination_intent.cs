@@ -12,7 +12,7 @@ public class when_reviewing_destination_intent : given.a_destination_repair
     {
         Initialize();
         var capabilities = Result("repair-capabilities");
-        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(13);
+        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(15);
         capabilities.GetProperty("actions").EnumerateArray().Any(action => action.GetProperty("diagnosticCode").GetString() == "PLAY0470").ShouldBeFalse();
         var intent = capabilities.GetProperty("intentActions").EnumerateArray().Single();
         intent.GetProperty("diagnosticCode").GetString().ShouldEqual("PLAY0470");

@@ -32,11 +32,20 @@ internal static partial class AuthorizeParser
             text += " " + child.Content;
         }
 
-        var tokens = Tokenize(text);
+        var tokens = Tokenize(text, out var implicitConjunction);
         if (tokens.Count == 0)
         {
             context.Error(DiagnosticCodes.AuthorizeWithoutPolicy, "Expected at least one policy after 'authorize'", line.Location);
             return null;
+        }
+
+        if (implicitConjunction)
+        {
+            context.Add(new(
+                DiagnosticSeverity.Information,
+                DiagnosticCodes.ImplicitAuthorizationConjunction,
+                "Write 'and' between adjacent policies in 'authorize'.",
+                line.Location));
         }
 
         var requirement = LogicalConditionParser.Parse<PolicyRequirementSyntax>(
@@ -56,6 +65,35 @@ internal static partial class AuthorizeParser
         (_, null) => first,
         _ => new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location)
     };
+
+    /// <summary>
+    /// Finds where an implicit conjunction sits between adjacent operands in one line of an authorize.
+    /// </summary>
+    /// <param name="text">The comment-free text of the line, after the <c>authorize</c> keyword on the first line.</param>
+    /// <param name="previous">The last token of the preceding text, updated to the last token of this text.</param>
+    /// <returns>The offsets in <paramref name="text"/> of each operand that needs an <c>and</c> before it.</returns>
+    internal static List<int> ImplicitConjunctionOffsets(string text, ref string? previous)
+    {
+        var offsets = new List<int>();
+        foreach (Match match in TokenRegex().Matches(text))
+        {
+            if (previous is not null && IsOperandEnd(previous) && IsOperandStart(match.Value))
+            {
+                offsets.Add(match.Index);
+            }
+
+            previous = match.Value;
+        }
+
+        return offsets;
+    }
+
+    /// <summary>
+    /// Gets whether a line continues an <c>authorize</c> declaration.
+    /// </summary>
+    /// <param name="content">The comment-free content of the following line.</param>
+    /// <returns>True when the line is a continuation.</returns>
+    internal static bool IsContinuation(string content) => ContinuationRegex().IsMatch(content);
 
     static PolicyRequirementSyntax? ParseReference(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
@@ -79,6 +117,7 @@ internal static partial class AuthorizeParser
     /// Splits the text of an authorize into tokens, making the conjunction between adjacent policies explicit.
     /// </summary>
     /// <param name="text">The text to tokenize.</param>
+    /// <param name="implicitConjunction">Whether an <c>and</c> was synthesized between adjacent operands.</param>
     /// <returns>The tokens, with a synthesized <c>and</c> wherever two operands sit side by side.</returns>
     /// <remarks>
     /// <c>authorize A B</c> has always meant both, by writing them next to each other. Turning that into the
@@ -86,14 +125,16 @@ internal static partial class AuthorizeParser
     /// groups here exactly as it groups in a policy - which is the whole point: two policies next to each
     /// other and two policies joined by <c>or</c> used to produce a flat list that could not say which.
     /// </remarks>
-    static List<string> Tokenize(string text)
+    static List<string> Tokenize(string text, out bool implicitConjunction)
     {
+        implicitConjunction = false;
         var tokens = new List<string>();
         foreach (var token in TokenRegex().Matches(text).Select(_ => _.Value))
         {
             if (tokens.Count > 0 && IsOperandEnd(tokens[^1]) && IsOperandStart(token))
             {
                 tokens.Add("and");
+                implicitConjunction = true;
             }
 
             tokens.Add(token);

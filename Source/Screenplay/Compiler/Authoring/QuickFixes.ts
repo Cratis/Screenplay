@@ -9,6 +9,7 @@ import { ValidationRuleSyntax } from '../Syntax/Commands';
 import { stringBodyPattern } from '../Text/StringLiteral';
 import { complianceWireName } from '../Parsing/ConceptComplianceParser';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
+import { implicitConjunctionTokens, isAuthorizeContinuation } from '../Parsing/AuthorizeParser';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
 import { SliceSyntax } from '../Syntax/Structure';
@@ -55,6 +56,8 @@ const quickFixDiagnosticCodes: ReadonlySet<unknown> = new Set([
     DiagnosticCodes.RedundantEventId,
     DiagnosticCodes.PublicTranslationRequiresDirection,
     DiagnosticCodes.LegacyProfileLayout,
+    DiagnosticCodes.RedundantCompositeKeyBraces,
+    DiagnosticCodes.ImplicitAuthorizationConjunction,
 ]);
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
@@ -167,6 +170,9 @@ function prepareLocalQuickFixes(source: string, options: Pick<QuickFixOptions, '
         } else if (diagnostic.code === DiagnosticCodes.LegacyProfileLayout) {
             const fix = legacyProfileLayoutFix(lines, line.number - 1, diagnostic.code);
             if (fix !== undefined) byLine.set(line.number, { line: line.number, fix });
+        } else if (diagnostic.code === DiagnosticCodes.RedundantCompositeKeyBraces || diagnostic.code === DiagnosticCodes.ImplicitAuthorizationConjunction) {
+            const fix = diagnostic.code === DiagnosticCodes.RedundantCompositeKeyBraces ? redundantKeyBracesFix(source, lines, line.number - 1, diagnostic.code) : implicitAuthorizationFix(source, lines, line.number - 1, diagnostic.code);
+            if (fix !== undefined) byLine.set(line.number, { line: line.number, fix });
         } else if (diagnostic.code === DiagnosticCodes.RedundantEventId && commentStart(line.raw) < 0) {
             const declaration = events.get(line.number);
             if (declaration?.id !== declaration?.name || declaration === undefined) continue;
@@ -271,6 +277,51 @@ function legacyProfileLayoutFix(lines: readonly { readonly number: number; reado
     return hasRoot
         ? { diagnosticCode, title: 'Remove the ignored layout line', scope: 'occurrence', edits: [{ start: line.startOffset, length: (lines[layout.index + 1]?.startOffset ?? line.startOffset + line.raw.length) - line.startOffset, text: '' }] }
         : { diagnosticCode, title: "Use 'root template' instead of 'layout'", scope: 'occurrence', edits: [{ start: line.startOffset + layout.indent, length: 'layout'.length, text: 'root template' }] };
+}
+
+type QuickFixLine = { readonly number: number; readonly raw: string; readonly indent: number; readonly content: string; readonly startOffset: number };
+
+// One edit from the opening brace to the end of the closing line, so the fix removes exactly one diagnostic. A closing brace that carries a comment is left alone.
+function redundantKeyBracesFix(source: string, lines: readonly QuickFixLine[], keyIndex: number, diagnosticCode: string): QuickFix | undefined {
+    const key = lines[keyIndex];
+    if (!key.content.endsWith('{')) return undefined;
+    const brace = key.indent + key.content.length - 1;
+    const prefix = key.raw.slice(0, brace).trimEnd().length;
+    for (let index = keyIndex + 1; index < lines.length; index++) {
+        const candidate = lines[index];
+        if (candidate.content.length === 0 || candidate.indent > key.indent) continue;
+        if (candidate.indent !== key.indent || candidate.content !== '}' || candidate.raw.trim() !== '}') return undefined;
+        const next = lines[index + 1];
+        const keep = source.slice(key.startOffset + key.raw.length, candidate.startOffset);
+        const text = key.raw.slice(brace + 1) + (next === undefined ? keep.replace(/\r?\n$/, '') : keep);
+        const start = key.startOffset + prefix;
+        return { diagnosticCode, title: 'Remove the redundant composite key braces', scope: 'occurrence', edits: [{ start, length: (next?.startOffset ?? source.length) - start, text }] };
+    }
+    return undefined;
+}
+
+// One edit from the first to the last operand that needs an 'and', so the fix removes exactly one diagnostic.
+function implicitAuthorizationFix(source: string, lines: readonly QuickFixLine[], authorizeIndex: number, diagnosticCode: string): QuickFix | undefined {
+    const first = lines[authorizeIndex];
+    if (!first.content.startsWith('authorize')) return undefined;
+    const found: { index: number; length: number }[] = [];
+    let previous: string | undefined;
+    const visit = (line: QuickFixLine, from: number): void => {
+        const result = implicitConjunctionTokens(line.content.slice(from), previous);
+        previous = result.previous;
+        for (const token of result.tokens) found.push({ index: line.startOffset + line.indent + from + token.index, length: token.length });
+    };
+    visit(first, 'authorize'.length);
+    for (let index = authorizeIndex + 1; index < lines.length; index++) {
+        const line = lines[index];
+        if (line.content.length === 0) continue;
+        if (line.indent <= first.indent || !isAuthorizeContinuation(line.content)) break;
+        visit(line, 0);
+    }
+    if (found.length === 0) return undefined;
+    const last = found[found.length - 1];
+    const text = found.map((token, index) => 'and ' + source.slice(token.index, index < found.length - 1 ? found[index + 1].index : token.index + token.length)).join('');
+    return { diagnosticCode, title: "Write 'and' between the adjacent authorize policies", scope: 'occurrence', edits: [{ start: found[0].index, length: last.index + last.length - found[0].index, text }] };
 }
 
 function duplicateComplianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {

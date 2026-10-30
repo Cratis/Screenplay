@@ -23,6 +23,7 @@ export { stringBodyPattern, unescapeString } from './Text/StringLiteral';
 export { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from './Text/SourceStreamNames';
 export { authoredOrderOf, authoredOrderKey, copyAuthoredOrder, recordAuthoredOrder } from './Files/AuthoredOrder';
 export { selectOrderingRoot } from './Files/OrderingRoot';
+export { timelineOrderFindings, type TimelineFinding } from './Files/TimelineOrder';
 export * from './Files/PlayFolderMerge';
 export * from './Files/PlayApplicationAssembly';
 export * from './Files/PlayDocumentSource';

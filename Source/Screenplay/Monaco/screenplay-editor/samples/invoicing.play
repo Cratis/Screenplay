@@ -3076,7 +3076,7 @@ module Invoicing
         plan      InstallmentPlan
 
         authorize OwnsInvoice and IsAdultCustomer
-                  IsWithinCreditLimit
+                  and IsWithinCreditLimit
 
         validate
           plan.installments min 2   message "A plan has at least two installments"

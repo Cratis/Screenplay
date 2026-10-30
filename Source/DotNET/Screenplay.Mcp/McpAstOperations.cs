@@ -17,6 +17,8 @@ static class McpAstOperations
         RemoveDuplicateComplianceMarkers duplicates => new { operation = "remove-duplicate-compliance-markers", target = McpAstHandles.Describe(duplicates.Target) },
         MigrateComplianceMarkerSpelling compliance => new { operation = "migrate-compliance-marker", target = McpAstHandles.Describe(compliance.Target), compliance.Line },
         MigrateOptionalTypeSpelling migrate => new { operation = "migrate-optional-type", target = McpAstHandles.Describe(migrate.Target) },
+        RemoveRedundantKeyBraces braces => new { operation = "remove-redundant-key-braces", target = McpAstHandles.Describe(braces.Target) },
+        InsertExplicitAuthorizationConjunction authorize => new { operation = "insert-authorization-conjunction", target = McpAstHandles.Describe(authorize.Target) },
         AddWorkspaceNode add => new { operation = "add", parent = McpAstHandles.Describe(add.Parent), add.Member, add.Index },
         ReplaceWorkspaceNode replace => new { operation = "replace", target = McpAstHandles.Describe(replace.Target) },
         RemoveWorkspaceNode remove => new { operation = "remove", target = McpAstHandles.Describe(remove.Target) },

@@ -26,6 +26,7 @@ export function parseAuthorize(context: ParserContext, line: SourceLine): Author
         context.error(DiagnosticCodes.AuthorizeWithoutPolicy, 'Expected at least one policy after \'authorize\'', location);
         return null;
     }
+    if (hasImplicitConjunction(text)) context.information(DiagnosticCodes.ImplicitAuthorizationConjunction, 'Write \'and\' between adjacent policies in \'authorize\'.', location);
     const parser = new RequirementParser(context, tokens, location);
     const requirement = parser.parse();
     return requirement === null ? null : { kind: 'AuthorizeSyntax', requirement, location };
@@ -51,6 +52,24 @@ function tokenize(text: string): string[] {
         tokens.push(token);
     }
     return tokens;
+}
+
+export function isAuthorizeContinuation(content: string): boolean {
+    return continuationPattern.test(content);
+}
+
+/** Finds each operand of one authorize line that sits directly after another operand, so an 'and' belongs before it. */
+export function implicitConjunctionTokens(text: string, previous: string | undefined): { readonly tokens: readonly { readonly index: number; readonly length: number }[]; readonly previous: string | undefined } {
+    const tokens: { index: number; length: number }[] = [];
+    for (const match of text.matchAll(tokenPattern)) {
+        if (previous !== undefined && isOperandEnd(previous) && isOperandStart(match[0])) tokens.push({ index: match.index, length: match[0].length });
+        previous = match[0];
+    }
+    return { tokens, previous };
+}
+
+function hasImplicitConjunction(text: string): boolean {
+    return implicitConjunctionTokens(text, undefined).tokens.length > 0;
 }
 
 const isName = (token: string): boolean => token !== '(' && token !== ')' && token !== 'and' && token !== 'or';
