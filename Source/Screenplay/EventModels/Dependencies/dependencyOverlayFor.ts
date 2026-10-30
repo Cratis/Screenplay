@@ -10,7 +10,8 @@ import { dependencyHighlight } from './dependencyHighlight';
 export function dependencyOverlayFor(application: ApplicationSyntax): DependencyOverlay {
     const graph = DependencyGraph.for(application);
     const nodes = new Map(graph.nodes.map(node => [node.key, node]));
-    const idsOf = (keys: readonly string[]) => [...new Set(keys.flatMap(key => { const id = boardIdOf(nodes.get(key)!); return id === undefined ? [] : [id]; }))];
+    // The default kinds only reach slices, features and modules, which all have board ids; contexts need outsideTheModel.
+    const idsOf = (keys: readonly string[]) => [...new Set(keys.map(key => boardIdOf(nodes.get(key)!)!))];
     const containers = graph.nodes.filter(node => node.kind === 'module' || node.kind === 'feature');
     const containersOf = (node: DependencyNode) => containers.filter(container => container.scope.length < node.scope.length && container.scope.every((name, index) => node.scope[index] === name));
     const scopes: DependencyOverlayScope[] = [];
@@ -25,9 +26,8 @@ export function dependencyOverlayFor(application: ApplicationSyntax): Dependency
         const ancestors = idsOf([...highlight.selected, ...highlight.dependencies, ...highlight.dependants].flatMap(key => containersOf(nodes.get(key)!).map(container => container.key))).filter(item => !emphasised.has(item));
         const links = new Map<string, DependencyOverlayLink>();
         for (const edge of highlight.edges) {
-            const from = boardIdOf(nodes.get(edge.source)!);
-            const to = boardIdOf(nodes.get(edge.target)!);
-            if (from === undefined || to === undefined) continue;
+            const from = boardIdOf(nodes.get(edge.source)!)!;
+            const to = boardIdOf(nodes.get(edge.target)!)!;
             const key = `${from}>${to}`;
             links.set(key, { from, to, crossing: edge.crossing || links.get(key)?.crossing === true });
         }
