@@ -54,6 +54,12 @@ sealed class SemanticBodyExecutionRun : IDisposable, IAsyncDisposable
         public ValueTask<SemanticCommandBodyResult> HandleAsync(SemanticImplementationBody body, SemanticCommandContext context, CancellationToken cancellationToken) =>
             new(SemanticCommandBodyResult.Unsupported(diagnostic));
 
+        public ValueTask<SemanticReactionBodyResult> ReactAsync(SemanticImplementationBody body, SemanticReactionContext context, CancellationToken cancellationToken) =>
+            new(SemanticReactionBodyResult.Unsupported(diagnostic));
+
+        public ValueTask<SemanticPerformerBodyResult> PerformAsync(SemanticImplementationBody body, SemanticPerformerContext context, CancellationToken cancellationToken) =>
+            new(SemanticPerformerBodyResult.Unsupported(diagnostic));
+
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

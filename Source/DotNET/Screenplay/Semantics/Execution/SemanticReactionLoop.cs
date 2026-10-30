@@ -68,8 +68,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Takes facts an action already appended to the world, so the reactions to them run.
     /// </summary>
     /// <param name="facts">The appended facts.</param>
-    /// <param name="occurred">When they occurred, or <c>null</c> when the scenario states no clock.</param>
-    /// <returns>An unsupported result when the scenario appends too many facts; otherwise <c>null</c>.</returns>
+    /// <param name="occurred">When they occurred, or <see langword="null"/> when the scenario states no clock.</param>
+    /// <returns>An unsupported result when the scenario appends too many facts; otherwise <see langword="null"/>.</returns>
     public SemanticExecutionResult? Observe(IEnumerable<SemanticFact> facts, DateTimeOffset? occurred)
     {
         foreach (var fact in facts)
@@ -91,7 +91,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// </summary>
     /// <param name="accepted">The tentative accepted command transaction.</param>
     /// <param name="occurred">When its facts occurred.</param>
-    /// <returns>An unsupported result retaining the prior world when the batch exceeds the budget; otherwise <c>null</c>.</returns>
+    /// <returns>An unsupported result retaining the prior world when the batch exceeds the budget; otherwise <see langword="null"/>.</returns>
     public SemanticExecutionResult? AcceptCommand(SemanticAccepted accepted, DateTimeOffset? occurred)
     {
         if (_facts.Count + accepted.Facts.Length > MaximumFacts)
@@ -107,8 +107,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Appends a fact - enforcing append constraints and projecting it - and takes it for the reactions to it.
     /// </summary>
     /// <param name="fact">The fact.</param>
-    /// <param name="occurred">When it occurred, or <c>null</c> when the scenario states no clock.</param>
-    /// <returns>The rejected or unsupported result, or <c>null</c> when the fact was appended.</returns>
+    /// <param name="occurred">When it occurred, or <see langword="null"/> when the scenario states no clock.</param>
+    /// <returns>The rejected or unsupported result, or <see langword="null"/> when the fact was appended.</returns>
     public SemanticExecutionResult? Append(SemanticFact fact, DateTimeOffset? occurred)
     {
         if (_facts.Count >= MaximumFacts)
@@ -130,7 +130,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// <summary>
     /// Runs the reactions to every fact taken, and to what they set off, until none remain.
     /// </summary>
-    /// <returns>The rejected or unsupported result, or <c>null</c> when the reactions settled.</returns>
+    /// <returns>The rejected or unsupported result, or <see langword="null"/> when the reactions settled.</returns>
     public SemanticExecutionResult? Settle()
     {
         var captures = new List<(SemanticFact Fact, DateTimeOffset? Occurred)>();
@@ -165,7 +165,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// <param name="reaction">The reaction receiving the fact.</param>
     /// <param name="fact">The existing fact, which is not appended again.</param>
     /// <param name="occurred">When the new delivery occurs.</param>
-    /// <returns>A failure, or <c>null</c> when the delivery succeeds or is filtered out.</returns>
+    /// <returns>A failure, or <see langword="null"/> when the delivery succeeds or is filtered out.</returns>
     public SemanticExecutionResult? Redeliver(SemanticReaction reaction, SemanticFact fact, DateTimeOffset? occurred)
     {
         if (reaction.From?.Matches(plan.Model.Application, fact.Route) == false) return null;
@@ -186,8 +186,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// <param name="values">The values the occurrence carries.</param>
     /// <param name="root">Whether the values are an event's or an application trigger's.</param>
     /// <param name="cause">The fact that set the reaction off, when an event did.</param>
-    /// <param name="occurred">When the occurrence happened, or <c>null</c> when the scenario states no clock.</param>
-    /// <returns>The rejected or unsupported result, or <c>null</c> when the reaction ran or its 'where' excluded it.</returns>
+    /// <param name="occurred">When the occurrence happened, or <see langword="null"/> when the scenario states no clock.</param>
+    /// <returns>The rejected or unsupported result, or <see langword="null"/> when the reaction ran or its 'where' excluded it.</returns>
     public SemanticExecutionResult? Fire(
         SemanticReaction reaction,
         SemanticReactionTrigger trigger,
@@ -201,12 +201,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             return null;
         }
 
+        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         if (trigger.RequirementId is not null)
         {
-            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has an opaque body and requires a target provider to run it.");
+            return FireBody(reaction, trigger, cause, occurrence);
         }
-
-        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
         try
         {
@@ -324,14 +323,9 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
             Occurrence = occurrence,
-            ReactionOrigin = reaction.Id,
-            RunsAs = reaction.RunsAs,
-            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty,
-            GeneratedValues = TakePinned(command)
+            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
         };
-
-        var result = evaluator.Execute(plan, World, request);
-        _invocations.Add(new(command.Id, commandValues, result is SemanticAccepted));
+        var result = RunInvoked(reaction, command, request);
         if (result is not SemanticAccepted accepted)
         {
             if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&
@@ -349,6 +343,18 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         // A value the specification pinned with 'given generated' reaches generation; an unpinned one reports IdentityAllocation.
         // A command another slice owns is that slice's behavior: in an isolated run its outcome decides the reaction, its facts are not adopted.
         return plan.Runs(command.Id) ? AcceptCommand(accepted, occurrence?.Occurred) : null;
+    }
+
+    SemanticExecutionResult RunInvoked(SemanticReaction reaction, SemanticCommand command, SemanticExecutionRequest request)
+    {
+        var result = evaluator.Execute(plan, World, request with
+        {
+            ReactionOrigin = reaction.Id,
+            RunsAs = reaction.RunsAs,
+            GeneratedValues = TakePinned(command)
+        });
+        _invocations.Add(new(command.Id, request.Values, result is SemanticAccepted));
+        return result;
     }
 
     SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>
