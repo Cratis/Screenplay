@@ -153,6 +153,20 @@
                     "scope": "machine",
                     "markdownDescription": "Also run the C# completeness checks after a saved `.play` file. Needs the C# repair bridge (`screenplay.repairs`); the findings appear a moment after the save, labelled as C# checks. Off by default."
                 },
+                "screenplay.eventModelBoard.density": {
+                    "type": "string",
+                    "enum": ["compact", "comfortable", "spacious"],
+                    "default": "comfortable",
+                    "scope": "application",
+                    "description": "Spacing between elements on the event model board. Compact fits more on screen; comfortable is the readable default; spacious gives elements more room."
+                },
+                "screenplay.eventModelBoard.textSize": {
+                    "type": "string",
+                    "enum": ["small", "medium", "large"],
+                    "default": "medium",
+                    "scope": "application",
+                    "description": "Text size on the event model board, independent of spacing density and canvas zoom."
+                },
                 "screenplay.sourceRoot": {
                     "type": [
                         "string",
