@@ -29,6 +29,19 @@ its board. For other places to open the same board, see
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
 
+## Board readability
+
+The event model board starts with **comfortable** spacing and **medium** text.
+In VS Code's User Settings, choose:
+
+- `screenplay.eventModelBoard.density`: `compact`, `comfortable` (default), or `spacious`.
+- `screenplay.eventModelBoard.textSize`: `small`, `medium` (default), or `large`.
+
+These user preferences apply across open boards and later sessions, not to your
+workspace or `.play` files. Settings changes update open boards immediately.
+Text size is independent of spacing and canvas zoom; changing native **View**
+options keeps both readability choices.
+
 ## Restricted Mode
 
 In an untrusted workspace, the board and local language assistance (including
