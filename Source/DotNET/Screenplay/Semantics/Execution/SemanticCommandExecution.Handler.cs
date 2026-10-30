@@ -29,7 +29,7 @@ internal sealed partial class SemanticCommandExecution
         ImmutableArray<ImmutableArray<SemanticPropertyValue>> payloads;
         try
         {
-            payloads = SemanticCommandPayloads.Validate(plan, command, handlers.Handle(command, context, cancellationToken));
+            payloads = SemanticCommandPayloads.Validate(plan, command, handlers.Handle(plan, command, context, cancellationToken));
         }
         catch (InvalidSemanticContract exception)
         {

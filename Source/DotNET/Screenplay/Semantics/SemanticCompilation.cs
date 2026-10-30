@@ -93,6 +93,7 @@ public sealed class SemanticCompilation
             }
         }
 
+        SemanticModelProvenance.Record(model, documents.IdentityCatalog.Application, index.Declarations);
         return new(model, documents, validatedSourceMap);
     }
 
