@@ -40578,7 +40578,7 @@
       "severities": [
         "error"
       ],
-      "title": "The source syntax and identity catalog could not produce a coherent semantic compilation.",
+      "title": "A read-model member references an unsupported value type, or the source syntax and identity catalog could not produce a coherent semantic compilation.",
       "reserved": false,
       "retired": false
     },
