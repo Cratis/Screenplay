@@ -13,7 +13,7 @@ public class a_possible_events_binder : for_SemanticModelBinder.given.a_semantic
     protected const string Pending = "        handler\n          may produce\n            Created\n            Removed for one of ids\n          implementation\n            hint \"Return only the chosen events\"\n";
     protected const string Source = Prefix + Properties + Pending;
 
-    private protected CompilationResult<PossibleEventsBinding> BindPossible(string source, ImmutableDictionary<string, string>? attachments = null, Func<ApplicationSyntax, ApplicationSyntax>? transform = null)
+    private protected CompilationResult<SemanticCompilation> BindPossible(string source, ImmutableDictionary<string, string>? attachments = null, Func<ApplicationSyntax, ApplicationSyntax>? transform = null)
     {
         var parsed = new ScreenplayCompiler().Parse(source);
         Assert.True(parsed.Success, string.Join('\n', parsed.Diagnostics.Select(diagnostic => diagnostic.Message)));
@@ -21,10 +21,10 @@ public class a_possible_events_binder : for_SemanticModelBinder.given.a_semantic
         var catalog = SemanticIdentityCatalog.Empty(_applicationIdentity);
         const string key = "application-document";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);
-        return _binder.BindForPossibleEvents("Projects", syntax, SemanticDocumentSet.Create([document], catalog, attachments));
+        return _binder.Bind("Projects", syntax, SemanticDocumentSet.Create([document], catalog, attachments));
     }
 
-    private protected static SemanticCommand Command(PossibleEventsBinding binding) => binding.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+    private protected static SemanticCommand Command(SemanticCompilation binding) => binding.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
 
     protected static ApplicationSyntax TransformCommands(ApplicationSyntax application, Func<CommandSyntax, CommandSyntax> transform) => application with
     {

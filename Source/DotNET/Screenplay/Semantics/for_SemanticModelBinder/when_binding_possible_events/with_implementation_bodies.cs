@@ -52,7 +52,7 @@ public class with_implementation_bodies : given.a_possible_events_binder
         const string legacy = Prefix + Properties + "        handler\n          implementation\n        produces Created\n          for id";
         var result = BindPossible(legacy);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        result.Value!.SemanticVersion.ShouldEqual(SemanticVersion.V23);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V23);
         Command(result.Value!).Handler!.ResultVersion.ShouldEqual(1u);
         Command(result.Value!).Handler!.PossibleEvents.ShouldBeEmpty();
         result.ImplementationRequirements.Single().ResultVersion.ShouldEqual(1u);

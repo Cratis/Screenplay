@@ -29,14 +29,6 @@ public sealed partial class SemanticModelBinder
             return !property.Type.IsCollection && (!property.IsGenerated || property.IsIdentifier);
         }
 
-        SemanticCommandHandler? BindStagedPossibleEventsHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope, HandlerSyntax handler)
-        {
-            if (AllowPossibleEvents) return BindPossibleEventsHandler(address, command, handler);
-            var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
-            Error(DiagnosticCodes.CommandHandlerRequiresAttachment, DescribedCommandAdmission.AttachmentRefusalMessage(command, null), handler.Location, DiagnosticArguments.Empty.With("subject", subject));
-            return null;
-        }
-
         SemanticCommandHandler? BindPossibleEventsContract(SemanticCommandHandler? handler, CommandSyntax command, Dictionary<string, SemanticProperty> properties, Dictionary<string, BoundEvent> events) =>
             handler is { ResultVersion: 2 } ? handler with { PossibleEvents = BindPossibleEvents(command, properties, events) } : handler;
 

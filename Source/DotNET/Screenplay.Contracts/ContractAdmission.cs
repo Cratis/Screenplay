@@ -253,6 +253,7 @@ static class ContractAdmission
                 ProtectedReads,
                 Slice + Event + Command.Replace("value String", "value String\n        validate\n          value rule BeUnique", StringComparison.Ordinal),
                 Slice + Event + Command + "        handler\n          implementation\n            hint \"Choose the payload\"\n",
+                Slice + Event + "      command Record\n        id String identifier\n        handler\n          may produce\n            Recorded for id\n          implementation\n",
                 Slice + "      command Record\n        value String\n        returns value\n        handler\n          implementation\n",
                 Slice + Event + Command.Replace("produces Recorded\n          value = value", "produces when value == \"test\"\n          Recorded\n            value = value", StringComparison.Ordinal) + "        handler\n          implementation\n",
                 Slice + Event + Command.Replace("value String", "value String\n        id Uuid identifier", StringComparison.Ordinal).Replace("value = value", "for id\n          value = value", StringComparison.Ordinal),

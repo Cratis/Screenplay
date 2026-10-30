@@ -1405,20 +1405,21 @@ module Invoicing
             severity error
             message "Action must be send or cancel"
 
-        // Deliberately refused (PLAY0800): this body has no unconditional produces beside it,
-        // so this showcases the refusal. See Documentation/screenplay/commands.md, "The handler block".
         handler
+          may produce
+            InvoiceBatchProcessingStarted for batchId
+            InvoiceSent for one of invoiceIds
+            InvoiceCancelled for one of invoiceIds
+            InvoiceBatchProcessingCompleted for batchId
           ```csharp
-          var events = new List<object>();
-          events.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));
+          result.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));
           foreach (var id in InvoiceIds)
-              events.Add(Action switch {
+              result.Add(id, Action switch {
                   "send"   => new InvoiceSent(context.Occurred, null),
                   "cancel" => new InvoiceCancelled("Batch", context.Occurred, context.Identity.Id, "Batch"),
                   _        => throw new InvalidOperationException($"Unknown action: {Action}")
               });
-          events.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));
-          return events;
+          result.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));
           ```
 
       event InvoiceBatchProcessingStarted

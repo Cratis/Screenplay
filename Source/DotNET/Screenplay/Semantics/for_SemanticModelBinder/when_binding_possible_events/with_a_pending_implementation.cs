@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_possi
 
 public class with_a_pending_implementation : given.a_possible_events_binder
 {
-    CompilationResult<PossibleEventsBinding> _result;
+    CompilationResult<SemanticCompilation> _result;
     SemanticCommand _command;
 
     void Because()
@@ -17,7 +17,7 @@ public class with_a_pending_implementation : given.a_possible_events_binder
         _command = Command(_result.Value!);
     }
 
-    [Fact] void should_select_only_the_candidate_v35_graph() => (_result.Value!.LanguageVersion.Major, _result.Value!.SemanticVersion.Major).ShouldEqual((35u, 35u));
+    [Fact] void should_select_only_the_candidate_v35_graph() => (_result.Value!.Model.LanguageVersion.Major, _result.Value!.Model.SemanticVersion.Major).ShouldEqual((35u, 35u));
     [Fact] void should_not_invent_legacy_productions() => _command.Produces.ShouldBeEmpty();
     [Fact] void should_use_result_contract_v2() => (_command.Handler!.ResultVersion, _result.ImplementationRequirements.Single().ResultVersion).ShouldEqual((2u, 2u));
     [Fact] void should_keep_the_context_contract_at_v1() => _result.ImplementationRequirements.Single().ContextVersion.ShouldEqual(1u);
@@ -28,8 +28,8 @@ public class with_a_pending_implementation : given.a_possible_events_binder
     [Fact] void should_keep_unmapped_event_payloads() => _command.Handler!.PossibleEvents.All(entry => entry.Mappings.IsEmpty).ShouldBeTrue();
     [Fact] void should_resolve_the_default_identifier() => ((SemanticResolvedExpression)_command.Handler!.PossibleEvents[0].Destination!).Target.ShouldEqual(_command.Properties.Single(property => property.IsIdentifier).Id);
     [Fact] void should_resolve_the_collection_identity() => ((SemanticOneOfExpression)_command.Handler!.PossibleEvents[^1].Destination!).CollectionProperty.ShouldEqual(_command.Properties.Single(property => property.Name == "ids").Id);
-    [Fact] void should_count_both_event_types_as_unrouted_producers() => SemanticDecisionReadAdmission.Producers(_result.Value!.Application.Modules.Single().Features.Single().Slices).Count(value => !value.Routed).ShouldEqual(2);
-    [Fact] void should_not_enable_public_binding() => Bind(Source).Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Code).ShouldEqual([DiagnosticCodes.CommandHandlerRequiresAttachment]);
+    [Fact] void should_count_both_event_types_as_unrouted_producers() => SemanticDecisionReadAdmission.Producers(_result.Value!.Model.Application.Modules.Single().Features.Single().Slices).Count(value => !value.Routed).ShouldEqual(2);
+    [Fact] void should_enable_public_binding() => Bind(Source).Success.ShouldBeTrue();
 
     [Fact]
     void should_preserve_the_positional_handler_contract()

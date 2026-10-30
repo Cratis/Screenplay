@@ -172,6 +172,12 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 33.0 | An events capture keyed by its event source (`key <property> is event source`) (released in Screenplay v4.242.0) | 33 | [0114](https://github.com/Cratis/Screenplay/blob/main/decisions/0114-events-capture-keys-by-event-source.md) | `full-esm-v33.json` | `EsmGoldenVectors.Get(33)` |
 | 34.0 | A specification stating the commands its slice's reactions invoke (`then invokes <Command>`) (released in Screenplay v4.246.0) | 34 | [0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md) | `full-esm-v34.json` | `EsmGoldenVectors.Get(34)` |
 
+#### Claimed, unreleased version
+
+| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
+| --- | --- | --- | --- | --- | --- |
+| 35.0 | Command handlers that declare their possible events (`handler` → `may produce`, `for one of`): handler result contract v2 | 35 | [0119](https://github.com/Cratis/Screenplay/blob/main/decisions/0119-admit-command-handlers-that-declare-possible-events.md) | `full-esm-v35.json` | `PossibleEventsCorpus.V35` |
+
 Conformance-only footnote: under [decision 0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md#exception-to-0066-conformance-only-reserved-pairs), minor `4294967295` is reserved, never allocated or registered, and is not an ESM version or a table row. Strict readers refuse these pairs. Packaged conformance-vector bytes freeze on first publication; 0066 still freezes their bytes, not a version contract.
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.

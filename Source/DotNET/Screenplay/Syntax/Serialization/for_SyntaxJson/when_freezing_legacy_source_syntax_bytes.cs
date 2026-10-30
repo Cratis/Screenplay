@@ -104,6 +104,10 @@ public class when_freezing_legacy_source_syntax_bytes
                 _ => parsed
             };
 
+            // Only this living sample converted its batch handler to result v2. Its v35/sample specs
+            // protect the new body; this projection restores that one body from the frozen vector.
+            if (name == "invoicing-sample") legacy = WithLegacyBatchBody(legacy, folder);
+
             // Numbered members have a new conformance vector. Strip only the living samples' new pins
             // from the pre-numbering baseline; every old name, value and numeric token stays protected.
             if (name == "library-sample" || name == "invoicing-sample" || name == "invoicing-editor-sample")
@@ -184,6 +188,37 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    static ApplicationSyntax WithLegacyBatchBody(ApplicationSyntax application, string folder)
+    {
+        using var frozen = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(folder, "LegacySyntax", "invoicing-sample.json")));
+        var module = frozen.RootElement.GetProperty("modules").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "Invoicing");
+        var feature = module.GetProperty("features").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "InvoiceManagement");
+        var slice = feature.GetProperty("slices").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "ProcessInvoiceBatch");
+        var command = slice.GetProperty("commands").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "ProcessInvoiceBatch");
+        var body = command.GetProperty("handler").GetProperty("code").GetProperty("code").GetString()!;
+        return application with { Modules = application.Modules.Select(value => WithLegacyBatchBody(value, body)) };
+    }
+
+    static ModuleSyntax WithLegacyBatchBody(ModuleSyntax module, string body) => module.Name == "Invoicing" ? module with
+    {
+        Features = module.Features.Select(feature => WithLegacyBatchBody(feature, body))
+    } : module;
+
+    static FeatureSyntax WithLegacyBatchBody(FeatureSyntax feature, string body) => feature.Name == "InvoiceManagement" ? feature with
+    {
+        Slices = feature.Slices.Select(slice => WithLegacyBatchBody(slice, body))
+    } : feature;
+
+    static SliceSyntax WithLegacyBatchBody(SliceSyntax slice, string body) => slice.Name == "ProcessInvoiceBatch" ? slice with
+    {
+        Commands = slice.Commands.Select(command => WithLegacyBatchBody(command, body))
+    } : slice;
+
+    static CommandSyntax WithLegacyBatchBody(CommandSyntax command, string body) => command.Name == "ProcessInvoiceBatch" ? command with
+    {
+        Handler = command.Handler! with { Code = command.Handler.Code! with { Code = body }, PossibleEvents = null }
+    } : command;
 
     static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with
     {
