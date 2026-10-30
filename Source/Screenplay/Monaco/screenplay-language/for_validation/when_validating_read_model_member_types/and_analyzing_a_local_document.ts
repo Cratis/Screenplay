@@ -15,12 +15,12 @@ describe('when analyzing unsupported local read-model member types', () => {
             code: 'PLAY0273', severity: 'error', message, line: 4, startColumn: 15, endColumn: lines[4].length + 1,
         }]);
     });
-    it('should reject a skipped slice-local type rather than hoisting it', () => {
+    it('should not reject a member referencing a skipped slice-local type', () => {
         const lines = [...prefix, '        child Child[]', '      type Child', '        value String'];
-        validateLines(lines).filter(issue => issue.line === 4).map(issue => issue.code).should.deep.equal(['PLAY0273']);
+        validateLines(lines).filter(issue => issue.code === 'PLAY0273').should.be.empty;
     });
-    it('should reject an undeclared member without a competing generic warning', () => {
-        validateLines([...prefix, '        child Child[]']).filter(issue => issue.line === 4).map(issue => [issue.code, issue.severity]).should.deep.equal([['PLAY0273', 'error']]);
+    it('should not reject an undeclared member', () => {
+        validateLines([...prefix, '        child Child[]']).filter(issue => issue.code === 'PLAY0273').should.be.empty;
     });
     it('should retain ordinary unknown-type warnings outside read models', () => {
         validateLines(['module M', '  feature F', '    slice StateChange S', '      event E', '        child Child']).some(issue => issue.code === 'PLAY0165' && issue.severity === 'warning').should.be.true;

@@ -11,6 +11,6 @@ public class and_the_type_is_slice_local : given.a_member
     [Fact] void should_keep_the_unknown_construct_warning() => Result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0029").Severity.ShouldEqual(Diagnostics.DiagnosticSeverity.Warning);
     [Fact] void should_keep_the_warning_at_the_local_header() => Result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0029").Location.Line.ShouldEqual(6);
     [Fact] void should_keep_the_unknown_construct_message() => Result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0029").Message.ShouldEqual("Unknown construct 'type' in slice 'View'");
-    [Fact] void should_reject_the_member_type() => Result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0273").Message.ShouldEqual(Message);
-    [Fact] void should_report_only_the_warning_and_member_error() => Result.Diagnostics.Count().ShouldEqual(2);
+    [Fact] void should_compile_successfully() => Result.Success.ShouldBeTrue();
+    [Fact] void should_report_only_the_unknown_construct_warning() => Result.Diagnostics.Single().Code.ShouldEqual("PLAY0029");
 }

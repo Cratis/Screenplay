@@ -120,7 +120,7 @@ Unknown type 'InvoiceLine' on 'lines' of event 'InvoiceRegistered' -
 declare it with 'concept InvoiceLine : <Primitive>' or 'type InvoiceLine'
 ```
 
-Read-model members are stricter: an unsupported member type is Error `PLAY0273`, not the general unknown-type warning above. See [Member value types](readmodels.md#member-value-types).
+For read-model members, a known read-model shape used outside the value-type namespace is a compile error (`PLAY0273`). Undeclared names are not rejected at compile time. A slice-local `type` is skipped with Warning `PLAY0029`; referencing it fails semantic binding (`screenplay test`) with `PLAY0273` at the member, as does any name outside the value-type namespace. See [Member value types](readmodels.md#member-value-types).
 
 Concept and type names share one namespace — declaring both a `concept InvoiceLine` and a `type InvoiceLine` is an error.
 
