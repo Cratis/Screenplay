@@ -220,6 +220,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceOptionalityRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (WorkspaceRedundantSpellingRepairs.Handles(diagnostic.Code))
+        {
+            return WorkspaceRedundantSpellingRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.DeprecatedStudioTextRulePattern)
         {
             return WorkspaceTextRuleRepairs.Find(index, revision, diagnostic, verifyRepair);
@@ -359,6 +364,7 @@ public static class WorkspaceDiagnosticRepairs
                 (RemoveDuplicateComplianceMarkers left, RemoveDuplicateComplianceMarkers right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (MigrateComplianceMarkerSpelling left, MigrateComplianceMarkerSpelling right) => left.Target == right.Target && left.Line == right.Line && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (MigrateOptionalTypeSpelling left, MigrateOptionalTypeSpelling right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
+                (RemoveRedundantKeyBraces or InsertExplicitAuthorizationConjunction, _) => WorkspaceRedundantSpellingRepairs.Matches(pair.First, pair.Second),
                 (AddWorkspaceNode left, AddWorkspaceNode right) => left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
                     SyntaxJson.StructurallyEqual(left.ExpectedParent, right.ExpectedParent) && SyntaxJson.StructurallyEqual(left.Node, right.Node),
                 (ReplaceWorkspaceNode left, ReplaceWorkspaceNode right) => left.Target == right.Target &&
@@ -377,7 +383,7 @@ public static class WorkspaceDiagnosticRepairs
 
     static bool PermitsFormatting(string code, WorkspaceAuthoringFormatting formatting) =>
         formatting == WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments ||
-        ((code == DiagnosticCodes.LegacyOptionalSuffix || code == DiagnosticCodes.LegacyComplianceMarker || code == DiagnosticCodes.DuplicateComplianceMarker) && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
+        ((code == DiagnosticCodes.LegacyOptionalSuffix || code == DiagnosticCodes.LegacyComplianceMarker || code == DiagnosticCodes.DuplicateComplianceMarker || WorkspaceRedundantSpellingRepairs.Handles(code)) && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()
     {

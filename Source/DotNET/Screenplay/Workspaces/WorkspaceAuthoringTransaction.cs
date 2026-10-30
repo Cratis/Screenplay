@@ -158,10 +158,17 @@ sealed class WorkspaceAuthoringTransaction(
             throw new InvalidWorkspaceAuthoring("Duplicate compliance repairs require a target and expected concept.");
         }
 
+        if (request.Operations.Any(WorkspaceRedundantSpellingRepairs.IsMalformed))
+        {
+            throw new InvalidWorkspaceAuthoring("Redundant spelling repairs require a target and expected syntax.");
+        }
+
+        var redundantSpellings = request.Operations.Where(operation => WorkspaceRedundantSpellingRepairs.TargetOf(operation) is not null)
+            .GroupBy(operation => WorkspaceRedundantSpellingRepairs.TargetOf(operation)!.Document).ToArray();
         var duplicateComplianceRemovals = request.Operations.OfType<RemoveDuplicateComplianceMarkers>().GroupBy(operation => operation.Target.Document).ToArray();
         var spellingMigrations = request.Operations.OfType<MigrateOptionalTypeSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
         var complianceMigrations = request.Operations.OfType<MigrateComplianceMarkerSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
-        edits.Prepare([.. request.Operations.Where(operation => operation is not (MigrateOptionalTypeSpelling or MigrateComplianceMarkerSpelling or RemoveDuplicateComplianceMarkers))]);
+        edits.Prepare([.. request.Operations.Where(operation => operation is not (MigrateOptionalTypeSpelling or MigrateComplianceMarkerSpelling or RemoveDuplicateComplianceMarkers or RemoveRedundantKeyBraces or InsertExplicitAuthorizationConjunction))]);
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocuments = ImmutableArray.CreateBuilder<string>();
@@ -239,6 +246,18 @@ sealed class WorkspaceAuthoringTransaction(
             }
 
             candidates[removals.Key] = WorkspaceDuplicateComplianceRepairs.Print(index, document, [.. removals], request.Formatting, _diagnostics);
+        }
+
+        foreach (var spellings in redundantSpellings)
+        {
+            if (edits.Touched.Contains(spellings.Key) || targeted.Contains(spellings.Key) || spellingMigrations.Any(group => group.Key == spellings.Key) ||
+                complianceMigrations.Any(group => group.Key == spellings.Key) || duplicateComplianceRemovals.Any(group => group.Key == spellings.Key) ||
+                !candidates.TryGetValue(spellings.Key, out var document))
+            {
+                throw new InvalidWorkspaceAuthoring("A redundant spelling repair requires an existing document not targeted by another edit.");
+            }
+
+            candidates[spellings.Key] = WorkspaceRedundantSpellingRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
         }
 
         // The logical move planner supplies exact occurrence lineage and proves all fragments and

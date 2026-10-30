@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpRepairCapabilities
 {
-    static readonly string[] _actions = ["PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0786", "PLAY0787"];
+    static readonly string[] _actions = ["PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0786", "PLAY0787", "PLAY0824", "PLAY0825"];
 
     internal static object Read() => McpJson.ToolResult(new
     {
@@ -19,7 +19,7 @@ static class McpRepairCapabilities
         {
             diagnosticCode = code,
             tool = "propose-repair",
-            requiredFormatting = code == "PLAY0653" ? "PreserveTrivia" : "CanonicalizeTouchedDocuments",
+            requiredFormatting = code == "PLAY0653" || code == "PLAY0824" || code == "PLAY0825" ? "PreserveTrivia" : "CanonicalizeTouchedDocuments",
             pinRepairEvidence = string.Equals(code, "PLAY0166", StringComparison.Ordinal) || string.Equals(code, "PLAY0478", StringComparison.Ordinal)
         }),
         intentActions = new[]
