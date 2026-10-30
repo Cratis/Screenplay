@@ -19,7 +19,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     {
     }
 
-    /// <summary>Initializes an evaluator that creates and disposes providers for executions, decisions and reducer-bearing commits.</summary>
+    /// <summary>Initializes an evaluator that creates and disposes providers for executions, decisions and commits needing reducers or query policies.</summary>
     /// <param name="factory">The host-owned run factory.</param>
     /// <param name="bodies">Resolved bodies for the application.</param>
     public SemanticEvaluator(ISemanticBodyExecutionProviderFactory factory, IEnumerable<SemanticImplementationBody> bodies)
@@ -32,9 +32,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     {
         _ruleBodies = new(provider, bodies);
         ReducerBodies = new(provider, _ruleBodies);
+        PolicyBodies = new(provider, _ruleBodies);
+        HandlerBodies = new(provider, _ruleBodies);
     }
 
     internal SemanticReducerBodyExecution ReducerBodies { get; } = SemanticReducerBodyExecution.None;
+    internal SemanticPolicyBodyExecution PolicyBodies { get; } = SemanticPolicyBodyExecution.None;
+    internal SemanticCommandBodyExecution HandlerBodies { get; } = SemanticCommandBodyExecution.None;
 
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
@@ -54,7 +58,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
 
         if (request.IsReadOnly)
         {
-            return ExecuteReadOnly(plan, world, request);
+            return ExecuteReadOnly(plan, world, request, cancellationToken);
         }
 
         return DecideWithCancellation(plan, world, request, cancellationToken).Commit(world);
@@ -95,13 +99,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="world">The world the decision reads.</param>
     /// <param name="request">The command request.</param>
-    /// <param name="cancellationToken">Cancellation for host-owned rule execution; cancellation maps to Unsupported.</param>
+    /// <param name="cancellationToken">Cancellation for host execution. Command handlers propagate requested cancellation and typed execution faults; other provider roles retain their Unsupported mapping.</param>
     /// <returns>The decision; a refused decision returns its refusal from <see cref="SemanticDecision.Commit"/> and has empty dependencies.</returns>
     public SemanticDecision DecideWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
-        if (_providerFactory is null) return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(_ruleBodies, ReducerBodies, null);
+        if (_providerFactory is null) return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(_ruleBodies, ReducerBodies, PolicyBodies, HandlerBodies, null);
         using var run = new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken);
-        return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(run.Evaluator._ruleBodies, run.Evaluator.ReducerBodies, () => new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken));
+        return new SemanticDecisionExecution(plan, world, request, cancellationToken).Decide(run.Evaluator._ruleBodies, run.Evaluator.ReducerBodies, run.Evaluator.PolicyBodies, run.Evaluator.HandlerBodies, () => new SemanticBodyExecutionRun(_providerFactory, plan.Model.Application, _bodies, cancellationToken));
     }
 
     /// <summary>
@@ -173,7 +177,8 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         ImmutableArray<SemanticQueryRequest> queries,
         SemanticCaller? caller,
         SemanticReducerBodyExecution reducers,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        SemanticPolicyBodyExecution? policies = null)
     {
         var facts = ImmutableArray.Create(fact);
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts) is { } violated)
@@ -202,7 +207,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
         }
 
-        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller, reducers);
+        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller, reducers, policies, cancellationToken: cancellationToken);
     }
 
     // Projects from supplied snapshots without validating facts. The public establishment operation intentionally
@@ -232,14 +237,18 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         ImmutableArray<SemanticFact> facts,
         ImmutableArray<SemanticQueryRequest> queries,
         SemanticCaller? caller,
-        SemanticReducerBodyExecution reducers)
+        SemanticReducerBodyExecution reducers,
+        SemanticPolicyBodyExecution? policies = null,
+        string? tenant = null,
+        DateTimeOffset? occurred = null,
+        CancellationToken cancellationToken = default)
     {
         if (queries.IsDefault)
         {
             return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
-        var run = new SemanticQueryRun(plan, original, tentative, caller, reducers);
+        var run = new SemanticQueryRun(plan, original, tentative, caller, reducers, policies ?? SemanticPolicyBodyExecution.None, tenant, occurred, cancellationToken);
         var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
         foreach (var queryRequest in queries)
         {
@@ -313,13 +322,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
 
-    SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
     {
         if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
         }
 
-        return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller, ReducerBodies);
+        return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller, ReducerBodies, PolicyBodies, request.Tenant, request.Occurrence?.Occurred, cancellationToken);
     }
 }

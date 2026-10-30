@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 
 sealed class SemanticDecisionExecution(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken)
 {
-    internal SemanticDecision Decide(SemanticRuleBodyExecution? rules, SemanticReducerBodyExecution reducers, Func<SemanticBodyExecutionRun>? commitRun)
+    internal SemanticDecision Decide(SemanticRuleBodyExecution? rules, SemanticReducerBodyExecution reducers, SemanticPolicyBodyExecution policies, SemanticCommandBodyExecution handlers, Func<SemanticBodyExecutionRun>? commitRun)
     {
         if (request.IsReadOnly)
         {
@@ -27,6 +27,6 @@ sealed class SemanticDecisionExecution(SemanticExecutionPlan plan, SemanticWorld
             return SemanticDecision.Refused(new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default."));
         }
 
-        return new SemanticCommandExecution(plan, world, command, request, rules, reducers, commitRun, cancellationToken).Decide();
+        return new SemanticCommandExecution(plan, world, command, request, rules, reducers, policies, handlers, commitRun, cancellationToken).Decide();
     }
 }

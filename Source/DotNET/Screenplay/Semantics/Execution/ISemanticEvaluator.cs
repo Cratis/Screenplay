@@ -17,11 +17,11 @@ public interface ISemanticEvaluator
     /// <returns>The normalized accepted, rejected, conflict, or unsupported result.</returns>
     SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request);
 
-    /// <summary>Executes a request with host rule cancellation.</summary>
+    /// <summary>Executes a request with host implementation cancellation.</summary>
     /// <param name="plan">The compiled plan.</param>
     /// <param name="world">The starting world.</param>
     /// <param name="request">The request.</param>
-    /// <param name="cancellationToken">Cancellation for host rule execution; cancellation and timeouts map to Unsupported.</param>
+    /// <param name="cancellationToken">Cancellation for host execution. Command handlers propagate requested cancellation and typed execution faults; other provider roles retain their Unsupported mapping.</param>
     /// <returns>The normalized result.</returns>
     SemanticExecutionResult ExecuteWithCancellation(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request, CancellationToken cancellationToken) => Execute(plan, world, request);
 }

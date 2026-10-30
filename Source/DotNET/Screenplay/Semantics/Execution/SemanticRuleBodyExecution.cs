@@ -26,7 +26,8 @@ sealed class SemanticRuleBodyExecution(ISemanticBodyExecutionProvider provider, 
     internal SemanticImplementationBody? FindBody(string? id, SemanticImplementationRole role)
     {
         if (id is null || !_bodies.TryGetValue(id, out var body)) return null;
-        return body.Requirement.Role == role ? body : null;
+        var capability = role == SemanticImplementationRole.CommandHandler ? "provider-defined" : "pure";
+        return body.Requirement.Role == role && body.Requirement.RequiredCapability == capability ? body : null;
     }
 
     internal SemanticRuleCheck Check(SemanticValidationRule rule, SemanticRuleContext context, CancellationToken cancellationToken)

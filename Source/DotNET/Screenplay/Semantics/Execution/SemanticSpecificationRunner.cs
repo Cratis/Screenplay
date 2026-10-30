@@ -222,7 +222,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 queries,
                 expected.GivenCaller,
                 SemanticReducerBodyExecution.For(evaluator),
-                SemanticReducerBodyExecution.TokenFor(evaluator))
+                SemanticReducerBodyExecution.TokenFor(evaluator),
+                SemanticPolicyBodyExecution.For(evaluator))
             : evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
         var failures = Compare(plan, expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
