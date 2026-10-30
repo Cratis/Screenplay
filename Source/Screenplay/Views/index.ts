@@ -9,3 +9,7 @@ export { defaultDependencyMapOptions } from './DependencyMapOptions';
 export type { DependencyMapOptions } from './DependencyMapOptions';
 export { dependencyMapMenuItems } from './dependencyMapMenuItems';
 export type { DependencyMapMenuItem } from './dependencyMapMenuItems';
+export { overlayState } from './dependencyOverlay';
+export type { OverlayEmphasis, OverlayLink, OverlayState } from './dependencyOverlay';
+export { useDependencyOverlay } from './useDependencyOverlay';
+export type { DependencyOverlayBoardProps, OverlayModel } from './useDependencyOverlay';

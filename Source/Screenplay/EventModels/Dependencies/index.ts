@@ -13,3 +13,5 @@ export { boardIdOf } from './boardIdOf';
 export { dependencyMapFor } from './dependencyMapFor';
 export { dependencyHighlight } from './dependencyHighlight';
 export { layoutDependencyMap } from './layoutDependencyMap';
+export type { DependencyOverlay, DependencyOverlayLink, DependencyOverlayScope } from './DependencyOverlay';
+export { dependencyOverlayFor } from './dependencyOverlayFor';

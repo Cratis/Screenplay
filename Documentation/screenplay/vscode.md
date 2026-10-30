@@ -151,6 +151,12 @@ Choose **Board** to return to the timeline; map selections do not highlight the 
 The selected node or edge, and its details, stay selected when you edit and the board
 refreshes, as long as that item still exists. If it is gone, the selection clears.
 
+### Highlight dependencies on the board
+
+Click a slice, feature or module header on the board, or focus it and press Enter or Space, to select that scope. Its slices are marked **selected**; the slices they depend on, directly or through other slices, are marked **dependency**; the slices that depend on them are marked **dependant**; everything else is dimmed. Each mark has its own outline and a marker on the header, and is also announced in words, so it never rests on color alone. Links between the marked slices are drawn as arcs above the board, with dashed, thicker links where a dependency crosses a feature or module boundary. Dependencies use the same default kinds as the map (**uses facts from**, **reacts to**, **decides from**), whichever kinds the map has checked.
+
+Select the same header again to clear the highlight. It also clears when an edit removes the selected scope, and a board narrowed to a folder or file still shows dependencies from the whole application but draws links only to slices it shows. With nothing selected the board is drawn as usual. Selecting on the board is separate from the map: map selections do not highlight the board.
+
 ## View options
 
 The **View** button in the upper right of the board offers the view options Cratis Studio has:

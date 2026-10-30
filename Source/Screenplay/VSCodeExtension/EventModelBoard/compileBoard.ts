@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ApplicationSyntax, CompilationResult } from '@cratis/screenplay-compiler';
-import { dependencyMapFor, timelineAnnotations, toEventModelDocument, withSliceAnnotations } from '@cratis/screenplay-event-models';
+import { dependencyMapFor, dependencyOverlayFor, timelineAnnotations, toEventModelDocument, withSliceAnnotations } from '@cratis/screenplay-event-models';
 import { BoardProblem, ShowBoardMessage } from '../Webview/BoardMessage';
 
 // The board for a compiled application: its document, and the problems compiling found. The board is drawn
@@ -12,6 +12,7 @@ export function boardFor(compilation: CompilationResult<ApplicationSyntax>, name
         type: 'show',
         document: withSliceAnnotations(toEventModelDocument(compilation.value, name), timelineAnnotations(wholeApplication, compilation.diagnostics)),
         dependencies: dependencyMapFor(wholeApplication),
+        overlay: dependencyOverlayFor(wholeApplication),
         problems: compilation.diagnostics.map(diagnostic => {
             const problem: BoardProblem = {
                 severity: diagnostic.severity,

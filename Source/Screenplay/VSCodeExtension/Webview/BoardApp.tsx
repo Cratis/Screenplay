@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { ToolbarButton } from '@cratis/components/Toolbar';
-import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView } from '@cratis/screenplay-views';
-import type { DependencyMap } from '@cratis/screenplay-event-models';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
+import type { DependencyMap, DependencyOverlay } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
@@ -17,8 +17,11 @@ import { vscode } from './vscodeApi';
 interface Board {
     readonly document: unknown;
     readonly dependencies: DependencyMap;
+    readonly overlay?: DependencyOverlay;
     readonly problems: readonly BoardProblem[];
 }
+
+const noOverlay: DependencyOverlay = { scopes: [] };
 
 // The board for one .play document. The extension sends the compiled document whenever the text changes;
 // the board keeps what it remembers - collapsed modules, the viewport - because the ids are stable.
@@ -50,7 +53,7 @@ export const BoardApp = () => {
     useEffect(() => {
         const receive = (event: MessageEvent<ExtensionToBoardMessage>) => {
             if (event.data.type === 'show') {
-                setBoard({ document: event.data.document, dependencies: event.data.dependencies, problems: event.data.problems });
+                setBoard({ document: event.data.document, dependencies: event.data.dependencies, overlay: event.data.overlay, problems: event.data.problems });
             }
         };
         window.addEventListener('message', receive);
@@ -69,6 +72,7 @@ export const BoardApp = () => {
         }
     }, [board]);
 
+    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model);
     if (board === undefined || model === undefined) {
         return <div className='screenplay-board__message'>Compiling…</div>;
     }
@@ -89,7 +93,7 @@ export const BoardApp = () => {
                         <MenuDropdownOpenProvider>
                             <EventModelPresentationProvider presentation={presentation} onChange={changePresentation}>
                                 <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(defaultPresentation)}>
-                                    <EventModelBoard document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                                    <EventModelBoard document={model} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                                 </BoardErrorBoundary>
                             </EventModelPresentationProvider>
                         </MenuDropdownOpenProvider>
