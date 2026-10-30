@@ -19,7 +19,7 @@ public class when_compiling_sample_data : given.a_compiler
                 name String
                 revenue Decimal
                 age Int
-                active Boolean
+                active Bool
                 notes String optional
 
         sample data NordicDemo

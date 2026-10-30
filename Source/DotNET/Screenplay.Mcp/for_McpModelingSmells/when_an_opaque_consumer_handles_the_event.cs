@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Mcp.for_McpModelingSmells;
 
 public class when_an_opaque_consumer_handles_the_event : given.a_model
 {
-    const string Summary = "\n    slice StateView Summary\n      readmodel ApprovalSummary\n        count Int32\n      reducer ApprovalAudit => ApprovalSummary\n        on RevisionApproved\n";
+    const string Summary = "\n    slice StateView Summary\n      readmodel ApprovalSummary\n        count Int\n      reducer ApprovalAudit => ApprovalSummary\n        on RevisionApproved\n";
     const string Reaction = "\n    slice Automation Follow\n      reaction FollowApproval\n        when RevisionApproved\n";
 
     JsonElement[] _control = [];

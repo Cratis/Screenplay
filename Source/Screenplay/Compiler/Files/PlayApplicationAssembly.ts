@@ -16,6 +16,7 @@ import { validateProjectionTargets } from '../Parsing/ProjectionTargetValidator'
 import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceValidator';
 import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReadModelKeys } from '../Parsing/ReadModelKeyValidator';
+import { validateReadModelMemberTypes } from '../Parsing/ReadModelMemberTypeValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
 import { effectiveStructuralInteractions } from '../Parsing/StructuralInteractionSites';
@@ -104,6 +105,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateIdentifierCompliance(effective, context);
     validateEventSubjects(merged.value, context);
     validateReadModelKeys(merged.value, context);
+    validateReadModelMemberTypes(merged.value, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);

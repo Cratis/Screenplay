@@ -66,6 +66,9 @@ describe('when parsing slice members', () => {
             '            projectId = projectId',
             '        every 2 hours',
             '        at 09:30 on Monday',
+            'concept ProjectName : String',
+            'type Member',
+            '  memberId Uuid',
         );
         [registration, lookup, reminders] = result.value.modules[0].features[0].slices;
     });

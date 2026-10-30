@@ -16,6 +16,10 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## Reusable read-model member shapes
+
+Child records such as `InvoiceLineItem` are top-level `type` declarations referenced by read-model members. They are value shapes, not other read-model identities; a slice-local `type` is skipped with Warning `PLAY0029`, and referencing an unsupported member type produces Error `PLAY0273`. Use the [top-level composite pattern](../../Documentation/screenplay/types.md#read-model-child-shapes), including for collections populated by a children projection. This guidance does not change the showcase's executable admission.
+
 ## Atomic reaction batches
 
 The root declares `reaction batches atomic` for all imported and local reactions. Direct productions from one trigger occurrence and each selected refusal branch form independent all-or-none batches (ESM v22); commands remain separate transactions. Omission preserves legacy per-fact behavior, not the default recommended for new models. The showcase still contains other constructs outside executable admission.
