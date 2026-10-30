@@ -40,7 +40,8 @@ describe('when parsing personas and authorization', () => {
             '          or IsAuditor');
     });
 
-    it('should read without diagnostics', () => result.diagnostics.should.deep.equal([]));
+    it('should read without diagnostics beyond the information on the implicit conjunction', () =>
+        result.diagnostics.map(diagnostic => `${diagnostic.code}:${diagnostic.severity}@${diagnostic.location.line}`).should.deep.equal(['PLAY0825:information@14']));
     it('should read every persona', () => result.value.personas.map(persona => persona.name).should.deep.equal(['Accountant', 'Guest']));
     it('should read a persona description', () => result.value.personas[0].description!.should.equal('Keeps the books'));
     it('should read the policies a persona holds', () => result.value.personas[0].policies.should.deep.equal(['IsAccountant', 'CanManageInvoice']));
