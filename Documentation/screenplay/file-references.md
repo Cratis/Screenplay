@@ -38,34 +38,39 @@ A command handler may nest this same `file` under an [`implementation` wrapper](
 ## A worked example
 
 ```screenplay
-slice StateChange RegisterInvoice
-  description "Registers an invoice against a customer"
-  file Invoicing/RegisterInvoice/RegisterInvoice.cs
+concept InvoiceId : Uuid
+  file Invoicing/InvoiceId.cs
 
-  command RegisterInvoice
-    invoiceId InvoiceId identifier
+module Invoicing
+  feature Invoices
+    slice StateChange RegisterInvoice
+      description "Registers an invoice against a customer"
+      file Invoicing/RegisterInvoice/RegisterInvoice.cs
 
-    produces InvoiceRegistered
-      invoiceId = invoiceId
+      command RegisterInvoice
+        invoiceId InvoiceId identifier
 
-  event InvoiceRegistered
-    file Invoicing/RegisterInvoice/RegisterInvoice.cs
-    invoiceId InvoiceId
+        produces InvoiceRegistered
+          invoiceId = invoiceId
 
-  readmodel Invoice
-    file Invoicing/RegisterInvoice/Invoice.cs
-    invoiceId InvoiceId
+      event InvoiceRegistered
+        file Invoicing/RegisterInvoice/RegisterInvoice.cs
+        invoiceId InvoiceId
 
-  projection Invoices => Invoice
-    file Invoicing/RegisterInvoice/Invoices.cs
-    from InvoiceRegistered
-      invoiceId = invoiceId
+      readmodel Invoice
+        file Invoicing/RegisterInvoice/Invoice.cs
+        invoiceId InvoiceId
 
-  specification RegisteringAnInvoice
-    file Invoicing/RegisterInvoice/when_registering_an_invoice.cs
-    when RegisterInvoice
-      invoiceId = "0f5f5f7f-0f6f-4f47-9f39-5c1f2f0a1a9f"
-    then InvoiceRegistered
+      projection Invoices => Invoice
+        file Invoicing/RegisterInvoice/Invoices.cs
+        from InvoiceRegistered
+          invoiceId = invoiceId
+
+      specification RegisteringAnInvoice
+        file Invoicing/RegisterInvoice/when_registering_an_invoice.cs
+        when RegisterInvoice
+          invoiceId = "0f5f5f7f-0f6f-4f47-9f39-5c1f2f0a1a9f"
+        then InvoiceRegistered
 ```
 
 Several declarations naming the same file is normal and correct — a Cratis slice keeps its backend artifacts in one file by convention.
