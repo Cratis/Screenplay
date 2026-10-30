@@ -7,6 +7,7 @@ import { ExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions
 import { ExactNumber, isExactNumberToken, parseExactNumber } from '../Syntax/ExactNumber';
 import { nativePattern, pattern } from '../Text/patterns';
 import { unescapeString } from '../Text/StringLiteral';
+import { warnOnHostLanguageFragment } from './HostLanguageFragments';
 import { ParserContext } from './ParserContext';
 import { InvalidStructuredValue, StructuredValueParser } from './StructuredValueParser';
 
@@ -76,6 +77,7 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     if ((nativeIdentifiers || context?.sourceOptions.numericMode === 'exact' ? nativePathPattern : pathPattern).test(text)) {
         return { kind: 'PathExpressionSyntax', path: text, location };
     }
+    if (context !== undefined) warnOnHostLanguageFragment(context, text, location);
     return { kind: 'RawExpressionSyntax', text, location };
 }
 

@@ -41,6 +41,11 @@ internal static partial class ConditionParser
             return null;
         }
 
+        if (!strict)
+        {
+            HostLanguageFragments.Warn(context, text, location);
+        }
+
         return LogicalConditionParser.Parse<ConditionSyntax>(
             context,
             [.. Tokenize(regex, text)],

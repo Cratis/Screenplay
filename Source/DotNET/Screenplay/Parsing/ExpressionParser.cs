@@ -192,6 +192,7 @@ internal static partial class ExpressionParser
             return new PathExpressionSyntax(text, location);
         }
 
+        HostLanguageFragments.Warn(context, text, location);
         return new RawExpressionSyntax(text, location);
     }
 

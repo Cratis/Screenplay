@@ -11,6 +11,7 @@ import { nativePattern as pattern, pattern as legacyPattern } from '../Text/patt
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseTag } from './DeclarationParsers';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { warnOnHostLanguageFragment } from './HostLanguageFragments';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
@@ -201,6 +202,7 @@ function parseWhen(context: ParserContext, line: SourceLine): CaptureWhenSyntax 
         return value('Expression', [], null, null, trigger);
     }
     if (trigger.length === 0) { context.error(DiagnosticCodes.WhenWithoutTrigger, "Expected a trigger after 'when'", location); return null; }
+    warnOnHostLanguageFragment(context, trigger, location);
     const tokens: string[] = [...(trigger.match(context.sourceOptions.numericMode === 'exact' ? new RegExp(`"${stringBodyPattern}"|[^\\s]+`, 'gu') : whenTokens) ?? [])];
     const unquote = (text: string): string => text.startsWith('"') && text.endsWith('"') ? unescapeString(text.substring(1, text.length - 1)) : text;
     if (tokens.length === 0) { context.error(DiagnosticCodes.InvalidWhenClause, `Invalid 'when' clause '${line.content}'`, location); return null; }

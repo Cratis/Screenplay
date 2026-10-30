@@ -349,6 +349,7 @@ internal static partial class CaptureParser
 
     static CaptureWhenSyntax? ParseWhenPropertyClause(ParserContext context, SourceLine line, string trigger)
     {
+        HostLanguageFragments.Warn(context, trigger, line.Location);
         var tokens = (context.SourceOptions.NumericMode == NumericMode.Exact ? ExactWhenTokenRegex() : WhenTokenRegex()).Matches(trigger).Select(_ => _.Value).ToList();
         if (tokens.Count == 0)
         {

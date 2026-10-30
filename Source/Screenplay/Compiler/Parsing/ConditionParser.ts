@@ -9,6 +9,7 @@ import { parseClockOperand } from './ClockOperandParser';
 import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { stringBodyPattern } from '../Text/StringLiteral';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { warnOnHostLanguageFragment } from './HostLanguageFragments';
 import { ParserContext } from './ParserContext';
 
 const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'NotEqual', '>': 'GreaterThan', '>=': 'GreaterThanOrEqual', '<': 'LessThan', '<=': 'LessThanOrEqual', contains: 'Contains', 'starts with': 'StartsWith' };
@@ -29,6 +30,7 @@ export function parseCondition(context: ParserContext, text: string, location: S
             return null;
         }
     }
+    if (!strict) warnOnHostLanguageFragment(context, text, location);
     const tokens = text.match(regex) ?? [];
     let position = 0;
     const operand = (missingCode: string, missingMessage: string): { text: string; expression: ExpressionSyntax | null } | null => {

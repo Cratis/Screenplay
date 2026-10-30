@@ -3666,4 +3666,7 @@ public static class DiagnosticCodes
 
     /// <summary>A handler possible-event set violates its result contract.</summary>
     public const string InvalidPossibleEventSet = "PLAY0823";
+
+    /// <summary>A raw expression or condition carries a host-language operator or call outside an admitted context.</summary>
+    public const string HostLanguageExpression = "PLAY0826";
 }

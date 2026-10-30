@@ -33,6 +33,8 @@ export class ParserContext {
     authoredDeclarations = false;
     deferIdentityValidation = false;
     streamCandidates?: CommandStreamCandidates;
+    // The context a quiet value context reports through when a diagnostic must still reach the document.
+    reportingContext: ParserContext = this;
 
     // Structural enrichment of formerly opaque Legacy fields must not add diagnostics. Exact operands
     // use the owning context so representability failures cannot turn into successful opaque syntax.
@@ -40,6 +42,7 @@ export class ParserContext {
         if (this.sourceOptions.numericMode === 'exact') return this;
         const context = new ParserContext(this.reader, this.path, this.languages);
         context.sourceOptions = this.sourceOptions;
+        context.reportingContext = this.reportingContext;
         return context;
     }
 
