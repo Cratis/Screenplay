@@ -79,6 +79,9 @@ public sealed record SemanticTypedContextDescriptor(
     /// <summary>Independent version of this sidecar contract; not an ESM schema or attachment revision.</summary>
     public const uint ContractRevision = 1;
 
+    /// <summary>Gets the result-v2 handler contract; null for legacy contexts.</summary>
+    public SemanticHandlerResultDescriptor? Result { get; init; }
+
     /// <summary>Revision of the ESM produced in the same compilation; null for failed compilations such as unbound handlers.</summary>
     public SemanticRevision? ModelRevision { get; internal init; }
 

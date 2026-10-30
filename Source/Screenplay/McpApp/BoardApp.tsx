@@ -3,7 +3,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
-import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView } from '@cratis/screenplay-views';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
+import type { DependencyOverlay } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChangeLabel } from './boardChangeLabel';
 import { boardChanges } from './boardChanges';
@@ -15,6 +16,8 @@ import { BoardTools } from './BoardTools';
 import { compileBoards } from './compileBoards';
 import { ShownModel } from './ShownModel';
 import { useHost } from './useHost';
+
+const noOverlay: DependencyOverlay = { scopes: [] };
 
 // The event model board for what the visualize-model tool sent. With a proposal or a sketch the board
 // starts on what the change would make of the application, and the toolbar switches to how it is now.
@@ -86,6 +89,8 @@ export const BoardApp = () => {
         }
     }, [board]);
 
+    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
+
     const style = { height: boardHeight(host.container) };
     if (boards === undefined) {
         return <div className='screenplay-mcp-board__message' style={style}>Reading the model…</div>;
@@ -116,7 +121,7 @@ export const BoardApp = () => {
                         <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
                     </> : (
                         <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
-                            <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                            <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                         </BoardErrorBoundary>
                     )}
                 </div>
