@@ -72,7 +72,7 @@ export const BoardApp = () => {
         }
     }, [board]);
 
-    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model);
+    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
     if (board === undefined || model === undefined) {
         return <div className='screenplay-board__message'>Compiling…</div>;
     }

@@ -42,9 +42,8 @@ export const emphasisCount = (board: Element) => board.querySelectorAll('.event-
 export const slicelinks = (board: Element, emphasis: 'within' | 'crossing') => board.querySelectorAll(`[data-slice-link="${emphasis}"]`).length;
 export const allSliceLinks = (board: Element) => board.querySelectorAll('[data-slice-link]').length;
 
-// The board measures its slice links when the selection mounts them and again whenever a class changes under it,
-// the way it does as soon as a pointer moves over a card. Change one, and give the board its frame to measure.
-export async function remeasureSliceLinks(board: Element): Promise<void> {
-    board.querySelector('[data-slice-col]')?.classList.toggle('measure-again');
-    await new Promise(resolve => setTimeout(resolve, 50));
+// The board draws its links a few frames after the selection: the host asks it to measure on the next frame,
+// and it measures its slice columns on the one after.
+export async function waitForAFrame(): Promise<void> {
+    for (let frame = 0; frame < 3; frame++) await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
 }

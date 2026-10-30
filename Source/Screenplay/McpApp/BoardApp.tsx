@@ -89,7 +89,7 @@ export const BoardApp = () => {
         }
     }, [board]);
 
-    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model);
+    const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
 
     const style = { height: boardHeight(host.container) };
     if (boards === undefined) {

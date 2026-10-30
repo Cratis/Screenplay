@@ -10,7 +10,7 @@ import { parse } from '@cratis/screenplay-compiler';
 import { BoardApp } from '../BoardApp';
 import { boardFor } from '../../EventModelBoard/compileBoard';
 import { prepareBoardDom } from '../../../Views/for_DependencyMapView/given/real_board_dom';
-import { scopeSelectionSource, allSliceLinks, emphasisCount, emphasisOf, layOutSliceColumns, remeasureSliceLinks, scopeHeader, slicelinks } from '../../../Views/for_DependencyMapView/given/scope_selection';
+import { scopeSelectionSource, allSliceLinks, emphasisCount, emphasisOf, layOutSliceColumns, waitForAFrame, scopeHeader, slicelinks } from '../../../Views/for_DependencyMapView/given/scope_selection';
 
 vi.mock('../vscodeApi', () => ({ vscode: { postMessage: vi.fn() } }));
 
@@ -19,7 +19,7 @@ let root: Root;
 let board: Element;
 let restore: () => void;
 
-const settle = () => act(() => remeasureSliceLinks(board));
+const settle = () => act(() => waitForAFrame());
 const click = async (label: string) => { await act(async () => { scopeHeader(board, label).dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 })); }); await settle(); };
 const pressEnter = async (label: string) => { await act(async () => { scopeHeader(board, label).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); }); await settle(); };
 
