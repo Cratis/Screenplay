@@ -31,8 +31,10 @@ internal static class SemanticDecisionReadAdmission
     }
 
     // Capture appends have no output-route member in the admitted ESM; their source filter is not an output route.
+    internal static bool HasPossibleEventRoute(SemanticCommand command) => command.Handler is { ResultVersion: 2 } handler && handler.PossibleEvents.Any(entry => entry.Route is not null);
+
     internal static IEnumerable<(SemanticId EventContract, bool Routed)> Producers(IEnumerable<SemanticSlice> slices) =>
-        slices.SelectMany(slice => ProducerItems(slice.Commands).SelectMany(command => ProducerItems(command.Produces).Select(produced =>
+        slices.SelectMany(slice => ProducerItems(slice.Commands).SelectMany(command => ProducerItems(command.Produces).Concat(command.Handler is { ResultVersion: 2 } handler ? ProducerItems(handler.PossibleEvents) : []).Select(produced =>
                 (produced.EventContract, command.Route is not null || produced.Route is not null)))
             .Concat(ProducerItems(slice.Reactions).SelectMany(reaction => ProducerItems(reaction.Triggers)).SelectMany(trigger =>
                 ProducerItems(trigger.Produces).Concat(ProducerItems(trigger.Invokes).SelectMany(invocation => ProducerItems(invocation.OnRefused)).SelectMany(branch => ProducerItems(branch.Produces))))

@@ -3660,4 +3660,10 @@ public static class DiagnosticCodes
     /// A specification states <c>then invokes</c> a command no reaction of its own slice invokes.
     /// </summary>
     public const string UnreachableSpecificationInvocation = "PLAY0816";
+
+    /// <summary>A handler possible-event declaration is malformed.</summary>
+    public const string InvalidPossibleEventsDeclaration = "PLAY0822";
+
+    /// <summary>A handler possible-event set violates its result contract.</summary>
+    public const string InvalidPossibleEventSet = "PLAY0823";
 }

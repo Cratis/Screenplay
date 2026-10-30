@@ -231,6 +231,7 @@
     "maps",
     "matches",
     "max",
+    "may",
     "message",
     "min",
     "minute",
@@ -258,6 +259,7 @@
     "occurred",
     "of",
     "on",
+    "one",
     "oneWay",
     "open",
     "operation",
@@ -293,6 +295,7 @@
     "presentation",
     "preserve",
     "primary",
+    "produce",
     "produces",
     "profile",
     "projection",
@@ -46132,6 +46135,28 @@
         "warning"
       ],
       "title": "A guarded screen action cannot obtain an item from a collection.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0822",
+      "name": "InvalidPossibleEventsDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A handler possible-event declaration is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0823",
+      "name": "InvalidPossibleEventSet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A handler possible-event set violates its result contract.",
       "reserved": false,
       "retired": false
     }

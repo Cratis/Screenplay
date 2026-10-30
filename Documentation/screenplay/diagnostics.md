@@ -20,6 +20,8 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0819` | Warning | Effective row binding differs from legacy case-insensitive name matching. Make intent explicit; a safe repair may retain legacy mappings. |
 | `PLAY0820` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
 | `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
+| `PLAY0822` | Error | A handler `may produce` declaration is malformed: an entry is not `<Event>`, `<Event> for <property>` or `<Event> for one of <collection property>`, an event is declared twice, or the command also declares `produces`. |
+| `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. Admission is internal until ESM v35. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

@@ -477,4 +477,6 @@ export const DiagnosticCodes = {
     // Retired by ESM v16; preserved for compatibility with earlier native compiler diagnostics.
     EventIdPinNotCarriedToRenderers: 'PLAY0686',
     InvalidToolbarButton: 'PLAY0760',
+    InvalidPossibleEventsDeclaration: 'PLAY0822',
+    InvalidPossibleEventSet: 'PLAY0823',
 } as const;

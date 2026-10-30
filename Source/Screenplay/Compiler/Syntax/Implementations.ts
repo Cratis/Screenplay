@@ -4,5 +4,7 @@
 export type { FileReferenceSyntax } from './Constraints';
 export type { CodeBlockSyntax } from './Screens';
 export type { HandlerSyntax } from './HandlerSyntax';
+export type { PossibleEventsSyntax } from './PossibleEventsSyntax';
+export type { PossibleEventSyntax } from './PossibleEventSyntax';
 export type { ImplementationSyntax } from './ImplementationSyntax';
 export type { ImplementationHintSyntax } from './ImplementationHintSyntax';

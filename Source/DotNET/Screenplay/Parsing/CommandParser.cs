@@ -230,7 +230,7 @@ internal static partial class CommandParser
         }
 
         properties = [.. properties.Where(property => !removed.Contains(property))];
-        CommandHandlerValidator.Validate(handlers, context);
+        CommandHandlerValidator.Validate(handlers, handler, produces.Count > 0, context);
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {
@@ -394,6 +394,19 @@ internal static partial class CommandParser
     }
 
     static HandlerSyntax? ParseHandler(ParserContext context, SourceLine line)
+    {
+        PossibleEventsSyntax? possible = null;
+        if (context.TryPeekChild(line.Indent, out var first) && first.Content == "may produce")
+        {
+            context.Reader.TakeSignificant();
+            possible = PossibleEventsParser.Parse(context, first);
+        }
+
+        var handler = ParseHandlerBody(context, line);
+        return handler is null ? null : handler with { PossibleEvents = possible };
+    }
+
+    static HandlerSyntax? ParseHandlerBody(ParserContext context, SourceLine line)
     {
         if (!context.TryPeekChild(line.Indent, out var body))
         {

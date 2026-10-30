@@ -295,6 +295,7 @@ public static partial class SemanticModelCanonicalJson
 
     static void WriteCommand(Utf8JsonWriter writer, SemanticCommand command, SemanticVersion version)
     {
+        RefuseUnpublishedHandler(command.Handler, version);
         writer.WriteStartObject();
         WriteId(writer, command.Id);
         CanonicalJson.WriteString(writer, "name", command.Name);

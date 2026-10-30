@@ -7,6 +7,7 @@ import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { unescapeString } from '../Text/StringLiteral';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parsePossibleEvents } from './PossibleEventsParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 // Match ImplementationHintText's White_Space set, not ECMAScript \s. A hint stays on one CR/LF-delimited source line.
@@ -57,6 +58,13 @@ export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyn
 }
 
 export function parseHandler(context: ParserContext, handler: SourceLine): HandlerSyntax | null {
+    const first = context.peekChild(handler.indent);
+    const possibleEvents = first?.content === 'may produce' ? parsePossibleEvents(context, context.reader.takeSignificant()!) : null;
+    const parsed = parseHandlerBody(context, handler);
+    return parsed === null || possibleEvents === null ? parsed : { ...parsed, possibleEvents };
+}
+
+function parseHandlerBody(context: ParserContext, handler: SourceLine): HandlerSyntax | null {
     const body = context.peekChild(handler.indent);
     if (body === undefined) {
         context.error(DiagnosticCodes.HandlerWithoutImplementation, "Expected a 'file' directive or an inline code block in the handler", locationOf(handler));

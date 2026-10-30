@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { validateHandlerOccurrences } from './CommandHandlerValidator';
+import { validateHandlerContracts } from './CommandHandlerValidator';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { RequirementSyntax } from '../Syntax/Conditions';
 import { parseCondition } from './ConditionParser';
@@ -206,7 +206,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             response = parsed;
         }
     }
-    validateHandlerOccurrences(handlers, context);
+    validateHandlerContracts(handlers, handler, produces.length > 0, context);
     const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     dependencySources.set(syntax, { reads: referenceReads, concurrency });
