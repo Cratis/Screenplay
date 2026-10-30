@@ -11,6 +11,7 @@
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
     invalidSemanticBinding: 'PLAY0273',
+    hostLanguageExpression: 'PLAY0826',
     unknownMatchPattern: 'PLAY0366',
     invalidMatchPattern: 'PLAY0367',
     patternOutsidePortableMatchDialect: 'PLAY0699',

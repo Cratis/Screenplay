@@ -12,5 +12,5 @@ public class when_consistency_depends_on_opaque_mapping_expressions : given.a_co
     void Because() => _result = _compiler.Compile(Source.Replace("note = note", "note = Transform(note)", StringComparison.Ordinal));
 
     [Fact] void should_not_execute_or_guess_the_mapping_expression() => _result.Success.ShouldBeTrue();
-    [Fact] void should_report_no_consistency_error() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_only_the_host_language_warning() => _result.Diagnostics.Single().Code.ShouldEqual("PLAY0826");
 }

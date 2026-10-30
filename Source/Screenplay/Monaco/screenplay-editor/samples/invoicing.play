@@ -888,7 +888,6 @@ module Invoicing
           currency       = currency
           paymentTerms   = paymentTerms
           dueDate        = dueDate
-          total          = lines.sum(l => l.quantity * l.unitPrice)
           registeredAt   = $context.occurred
           registeredBy   = $context.identity.id
           registeredFor  = $context.tenant
@@ -947,7 +946,7 @@ module Invoicing
         currency       CurrencyCode
         paymentTerms   PaymentTerms
         dueDate        Date
-        total          Money
+        total          Money optional
         registeredAt   DateTime
         registeredBy   String
         registeredFor  TenantId

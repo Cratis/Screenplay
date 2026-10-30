@@ -2593,14 +2593,6 @@
                         },
                         {
                           "kind": "PropertyMappingSyntax",
-                          "property": "total",
-                          "source": {
-                            "kind": "RawExpressionSyntax",
-                            "text": "lines.sum(l => l.quantity * l.unitPrice)"
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
                           "property": "registeredAt",
                           "source": {
                             "kind": "ContextExpressionSyntax",
@@ -3208,7 +3200,7 @@
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
-                        "isOptional": false,
+                        "isOptional": true,
                         "name": "Money"
                       }
                     },

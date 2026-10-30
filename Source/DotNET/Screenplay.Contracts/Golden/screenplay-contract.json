@@ -46159,6 +46159,17 @@
       "title": "A handler possible-event set violates its result contract.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0826",
+      "name": "HostLanguageExpression",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A raw expression or condition carries a host-language operator or call outside an admitted context.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

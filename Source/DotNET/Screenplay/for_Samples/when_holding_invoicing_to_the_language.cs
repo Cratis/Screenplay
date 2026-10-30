@@ -31,6 +31,7 @@ public class when_holding_invoicing_to_the_language : Specification
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
+        (typeof(RawExpressionSyntax), "Samples/AcmeCommerce/Sales/translation/receive.play", "A raw expression is syntax-only (PLAY0268 where bound), so Samples/Invoicing no longer maps one; capture sources show it."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
