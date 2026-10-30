@@ -18,9 +18,9 @@ public class and_the_batch_is_invalid : given.a_reaction_effect
         Answer = InvalidAnswer(kind);
         Fire();
         Failure.ShouldBeOfExactType<SemanticUnsupported>();
-        ((SemanticUnsupported)Failure!).Capability.ShouldEqual(SemanticExecutionCapability.Reaction);
-        ((SemanticUnsupported)Failure!).Details.ShouldContain(Bodies.Single().Requirement.RequirementId);
-        ((SemanticUnsupported)Failure!).Details.Any(char.IsControl).ShouldBeFalse();
+        ((SemanticUnsupported)Failure).Capability.ShouldEqual(SemanticExecutionCapability.Reaction);
+        ((SemanticUnsupported)Failure).Details.ShouldContain(Bodies.Single().Requirement.RequirementId);
+        ((SemanticUnsupported)Failure).Details.Any(char.IsControl).ShouldBeFalse();
         Loop.Facts.ShouldBeEmpty();
         Loop.Invocations.ShouldBeEmpty();
     }

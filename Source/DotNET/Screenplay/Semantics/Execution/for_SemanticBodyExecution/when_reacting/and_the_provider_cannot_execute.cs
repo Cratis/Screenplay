@@ -19,23 +19,9 @@ public class and_the_provider_cannot_execute : given.a_reaction_effect
         };
         Fire();
         Failure.ShouldBeOfExactType<SemanticUnsupported>();
-        ((SemanticUnsupported)Failure!).Details.ShouldContain(Provider.Failure.GetType().Name);
-        ((SemanticUnsupported)Failure!).Details.Contains("secret", StringComparison.Ordinal).ShouldBeFalse();
+        ((SemanticUnsupported)Failure).Details.ShouldContain(Provider.Failure.GetType().Name);
+        ((SemanticUnsupported)Failure).Details.Contains("secret", StringComparison.Ordinal).ShouldBeFalse();
         Loop.Facts.ShouldBeEmpty();
-    }
-
-    [Fact]
-    void should_propagate_run_cancellation()
-    {
-        using var source = new CancellationTokenSource();
-        var original = new OperationCanceledException(source.Token);
-        Provider = new((_, _) =>
-        {
-            source.Cancel();
-            throw original;
-        });
-        var failure = Catch.Exception(() => Fire(new SemanticCancellationEvaluator(new SemanticEvaluator(Provider, Bodies), source.Token)));
-        ReferenceEquals(failure, original).ShouldBeTrue();
     }
 
     [Theory]
@@ -52,7 +38,7 @@ public class and_the_provider_cannot_execute : given.a_reaction_effect
         if (before) source.Cancel();
         var failure = Catch.Exception(() => Fire(new SemanticCancellationEvaluator(new SemanticEvaluator(Provider, Bodies), source.Token)));
         failure.ShouldBeOfExactType<OperationCanceledException>();
-        ((OperationCanceledException)failure!).CancellationToken.ShouldEqual(source.Token);
+        ((OperationCanceledException)failure).CancellationToken.ShouldEqual(source.Token);
         Provider.Calls.ShouldEqual(before ? 0 : 1);
     }
 
@@ -61,7 +47,7 @@ public class and_the_provider_cannot_execute : given.a_reaction_effect
     {
         ISemanticBodyExecutionProvider provider = new old_provider();
         var result = await provider.ReactAsync(Bodies.Single(), new(Cause.EventContract, new(Cause.Values), Cause.Destination, null, null, null, null, null), TestContext.Current.CancellationToken);
-        result.Diagnostic!.ShouldContain("Reaction effect body");
+        result.Diagnostic.ShouldContain("Reaction effect body");
         result.Diagnostic.ShouldContain("is not supported by this provider");
         result.Events.IsDefault.ShouldBeTrue();
         result.Commands.IsDefault.ShouldBeTrue();

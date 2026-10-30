@@ -72,9 +72,9 @@ public class a_reaction_effect : Specification
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("effects"), "effects", "orders.play", source);
         var compilation = new SemanticModelCompiler().Compile("Orders", SemanticDocumentSet.Create([document], catalog));
         compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error).ShouldBeEmpty();
-        var planned = SemanticExecutionPlan.Compile(compilation.Value!.Model);
+        var planned = SemanticExecutionPlan.Compile(compilation.Value.Model);
         planned.Issues.ShouldBeEmpty();
-        Plan = planned.Plan!;
+        Plan = planned.Plan;
         Bodies = [.. compilation.ImplementationRequirements.Select(requirement => new SemanticImplementationBody(requirement, Body))];
         Reaction = Plan.Reactions.Single();
         var requested = Plan.Events.Values.Single(contract => contract.Name == "Requested");

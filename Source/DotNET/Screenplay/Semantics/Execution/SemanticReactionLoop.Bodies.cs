@@ -7,6 +7,16 @@ namespace Cratis.Screenplay.Semantics.Execution;
 
 internal sealed partial class SemanticReactionLoop
 {
+    static bool SupportsBody(SemanticReaction reaction, SemanticReactionTrigger trigger, SemanticFact cause) =>
+        reaction.Triggers.Length == 1 && trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == cause.EventContract && trigger.Produces.IsEmpty && trigger.Invokes.IsEmpty;
+
+    static void ValidateBodyResult(SemanticReactionBodyResult result)
+    {
+        if (result.Diagnostic is not null) throw new InvalidSemanticContract(result.Diagnostic);
+        if (result.Events.IsDefault && result.Commands.IsDefault) throw new InvalidSemanticContract("The provider returned no reaction result.");
+        if (!result.Events.IsDefaultOrEmpty && !result.Commands.IsDefaultOrEmpty) throw new InvalidSemanticContract("The reaction body returned a mixed event and command batch.");
+    }
+
     SemanticExecutionResult? FireBody(SemanticReaction reaction, SemanticReactionTrigger trigger, SemanticFact? cause, SemanticCommandOccurrence? occurrence)
     {
         if (!SemanticReactionBodyExecution.For(evaluator).HasProvider)
@@ -30,16 +40,6 @@ internal sealed partial class SemanticReactionLoop
         {
             return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' body (requirement {trigger.RequirementId}): {SemanticRuleBodyExecution.Sanitize(exception.Message)}");
         }
-    }
-
-    static bool SupportsBody(SemanticReaction reaction, SemanticReactionTrigger trigger, SemanticFact cause) =>
-        reaction.Triggers.Length == 1 && trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == cause.EventContract && trigger.Produces.IsEmpty && trigger.Invokes.IsEmpty;
-
-    static void ValidateBodyResult(SemanticReactionBodyResult result)
-    {
-        if (result.Diagnostic is not null) throw new InvalidSemanticContract(result.Diagnostic);
-        if (result.Events.IsDefault && result.Commands.IsDefault) throw new InvalidSemanticContract("The provider returned no reaction result.");
-        if (!result.Events.IsDefaultOrEmpty && !result.Commands.IsDefaultOrEmpty) throw new InvalidSemanticContract("The reaction body returned a mixed event and command batch.");
     }
 
     SemanticExecutionResult? ProduceBodyEvents(SemanticReaction reaction, ImmutableArray<SemanticReactionEffect> effects, SemanticFact cause, SemanticCommandOccurrence? occurrence)

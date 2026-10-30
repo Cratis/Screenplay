@@ -85,7 +85,8 @@ public class when_supplying_a_reaction_effect_provider : Specification
     [Fact] void should_satisfy_the_specification() => _enabled.GetProperty("passed").GetInt32().ShouldEqual(1);
     [Fact] void should_have_no_unsupported_run() => _enabled.GetProperty("unsupported").GetInt32().ShouldEqual(0);
     [Fact] void should_reuse_one_provider() => _factory.Providers.Count.ShouldEqual(1);
-    [Fact] void should_resolve_all_roles() => _factory.Providers.Single().Calls.ShouldEqual([
+    [Fact]
+    void should_resolve_all_roles() => _factory.Providers.Single().Calls.ShouldEqual([
         SemanticImplementationRole.ReactionEffect, SemanticImplementationRole.PolicyPredicate,
         SemanticImplementationRole.CommandValidation, SemanticImplementationRole.CommandHandler, SemanticImplementationRole.ReducerTransition]);
     [Fact] void should_dispose_once_at_run_end() => _factory.Providers.Single().Disposals.ShouldEqual(1);

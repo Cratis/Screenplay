@@ -25,6 +25,10 @@ public sealed partial class SemanticModelBinder
 
         internal bool UsesReactionIdentity { get; private set; }
 
+        static string ReactionReadsDiagnostic(string reaction, string readModel, bool hasBody) => hasBody
+            ? $"Reaction '{reaction}' has an implementation body and reads '{readModel}', but ESM v6 cannot protect that decision dependency (decision 0006). A reaction body has no read access (decision 0121): return or invoke a command and put the decision in that command's declarative 'require' or mappings."
+            : $"Reaction '{reaction}' reads '{readModel}' before producing directly, but ESM v6 cannot protect that decision dependency (decision 0006). Invoke a command from the reaction and put the decision in that command's declarative 'require' or mappings.";
+
         static IEnumerable<SemanticSlice> AllBoundSlices(SemanticFeature feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllBoundSlices));
 
@@ -136,10 +140,6 @@ public sealed partial class SemanticModelBinder
 
             return new(id, reaction.Name, boundTriggers) { From = BindObserverFilter(reaction.From), RunsAs = runsAs };
         }
-
-        static string ReactionReadsDiagnostic(string reaction, string readModel, bool hasBody) => hasBody
-            ? $"Reaction '{reaction}' has an implementation body and reads '{readModel}', but ESM v6 cannot protect that decision dependency (decision 0006). A reaction body has no read access (decision 0121): return or invoke a command and put the decision in that command's declarative 'require' or mappings."
-            : $"Reaction '{reaction}' reads '{readModel}' before producing directly, but ESM v6 cannot protect that decision dependency (decision 0006). Invoke a command from the reaction and put the decision in that command's declarative 'require' or mappings.";
 
         SemanticReactionTrigger? BindReactionTrigger(
             SemanticAddress slice,

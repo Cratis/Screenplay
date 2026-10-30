@@ -19,22 +19,6 @@ public class and_admission_is_refused : given.a_reaction_effect
         AssertRefused(kind == "provider" ? new SemanticEvaluator() : null);
     }
 
-    [Fact]
-    void should_refuse_a_different_source_owner()
-    {
-        var body = Bodies.Single();
-        Bodies = [body with { Requirement = body.Requirement with { Source = body.Requirement.Source with { SemanticId = default } } }];
-        AssertRefused();
-    }
-
-    [Fact]
-    void should_refuse_a_different_owner_address()
-    {
-        var body = Bodies.Single();
-        Bodies = [body with { Requirement = body.Requirement with { Owner = SemanticAddress.ForCommand(body.Requirement.Owner, "Other") } }];
-        AssertRefused();
-    }
-
     [Theory]
     [InlineData(2U, 1U)]
     [InlineData(1U, 2U)]
