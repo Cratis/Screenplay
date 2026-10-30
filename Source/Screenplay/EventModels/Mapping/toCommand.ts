@@ -7,6 +7,7 @@ import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { SliceScope } from './SliceScope';
 import { EventOwners } from './EventOwners';
 import { expressionText } from './expressionText';
+import { proseOf } from './proseOf';
 
 // The rule kinds the board has an equivalent for, by the name it shows. Equal, NotEqual, the element-wise
 // rules and named rules have none and are left out rather than mapped onto their nearest neighbor - the
@@ -34,6 +35,7 @@ export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: Sc
     return {
         id: scope.idOf('command', command.name),
         name: command.name,
+        ...proseOf(command),
         schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
         logicDescription: [detailsOf(command), command.handler && !command.stream ? commandHandlerDetails : '', readsDetails(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),

@@ -6,6 +6,7 @@ import { emptyGuid } from '../Document/identity';
 import { ReadModelItemDocument, SliceSpecificationDocument, SpecificationCallerDocument, SpecificationReadModelDocument, SpecificationScreenplayMetadata, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
 import { EventOwners } from './EventOwners';
+import { proseOf } from './proseOf';
 import { SliceScope } from './SliceScope';
 
 // A slice's specifications as the board shows them - the port of Studio's SpecificationSyntaxVisitor. A
@@ -40,6 +41,7 @@ export function toSpecifications(
                     : { id: at('error', index), name: 'error' }),
                 ...(specification.thenDenied == null ? [] : [{ id: at('denied', 0), name: 'denied' }]),
             ],
+            ...proseOf({ description: specification.description }),
             collapsed: false,
         };
         const metadata: SpecificationScreenplayMetadata = {};
