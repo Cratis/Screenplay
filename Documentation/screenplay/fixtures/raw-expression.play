@@ -1,0 +1,12 @@
+// Syntax-only: a mapping source that matches no known form is kept as an opaque raw expression (PLAY0268 where it is bound).
+// This is a documentation fixture, not an executable Samples application.
+module M
+  feature F
+    slice StateChange S
+      event Added
+        total Money optional
+      command C
+        price Money
+        quantity Int
+        produces Added
+          total = price * quantity
