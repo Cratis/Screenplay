@@ -113,3 +113,4 @@
 | [0118](0118-unknown-preserving-esm-admission.md) | Opt-in unknown-preserving ESM admission and minor allocation | accepted | none | 2026-10-26 | L13 (owner orchestration) |
 | [0119](0119-admit-command-handlers-that-declare-possible-events.md) | Admit command handlers that declare a set of possible events (handler result contract v2, ESM v35) | accepted | none | 2026-10-29 | owner orchestration (delegated owner acceptance) |
 | [0120](0120-live-performer-binding-contract.md) | Live performers bind a whole-collection stream (ResultVersion 2) | accepted | implemented | 2026-10-29 | woksin (Q-136, delegated through L0) |
+| [0121](0121-reaction-effect-and-snapshot-performer-provider-contracts.md) | Reaction-effect and snapshot-performer provider contracts on the body-execution seam (#1099 S6) | accepted | none | 2026-10-30 | woksin (delegated through L0) |
