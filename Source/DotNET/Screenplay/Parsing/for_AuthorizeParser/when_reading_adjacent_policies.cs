@@ -25,7 +25,7 @@ public class when_reading_adjacent_policies
         reported[0].Location.Line.ShouldEqual(5);
         var explicitParsed = compiler.Parse(Prefix + explicitForm);
         explicitParsed.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.ImplicitAuthorizationConjunction).ShouldBeFalse();
-        SyntaxJson.StructurallyEqual(parsed.Value!, explicitParsed.Value!).ShouldBeTrue();
+        SyntaxJson.StructurallyEqual(parsed.Value, explicitParsed.Value).ShouldBeTrue();
     }
 
     [Theory]

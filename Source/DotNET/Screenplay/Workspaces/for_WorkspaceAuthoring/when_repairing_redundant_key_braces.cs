@@ -28,9 +28,9 @@ public class when_repairing_redundant_key_braces
         repair.RequiredFormatting.ShouldEqual(WorkspaceAuthoringFormatting.PreserveTrivia);
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
         result.Accepted.ShouldBeTrue();
-        result.Workspace!.Documents.Single().Text.ShouldEqual(expected);
+        result.Workspace.Documents.Single().Text.ShouldEqual(expected);
         result.AuthoringDiagnostics.Any(value => value.Code == DiagnosticCodes.RedundantCompositeKeyBraces).ShouldBeFalse();
-        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(source).Value!, new ScreenplayCompiler().Parse(result.Workspace.Documents.Single().Text).Value!).ShouldBeTrue();
+        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(source).Value, new ScreenplayCompiler().Parse(result.Workspace.Documents.Single().Text).Value).ShouldBeTrue();
     }
 
     [Fact]

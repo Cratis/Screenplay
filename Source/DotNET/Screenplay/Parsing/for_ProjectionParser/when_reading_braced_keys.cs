@@ -29,6 +29,6 @@ public class when_reading_braced_keys
         var compiler = new ScreenplayCompiler();
         var braced = compiler.CompileProjection(Braced);
         braced.Success.ShouldBeTrue();
-        SyntaxJson.StructurallyEqual(braced.Value!, compiler.CompileProjection(Plain).Value!).ShouldBeTrue();
+        SyntaxJson.StructurallyEqual(braced.Value, compiler.CompileProjection(Plain).Value).ShouldBeTrue();
     }
 }

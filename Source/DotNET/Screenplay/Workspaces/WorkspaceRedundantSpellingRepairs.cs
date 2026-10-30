@@ -27,7 +27,7 @@ public sealed record RemoveRedundantKeyBraces(WorkspaceNodeHandle Target, Compos
 public sealed record InsertExplicitAuthorizationConjunction(WorkspaceNodeHandle Target, AuthorizeSyntax Expected) : WorkspaceAstOperation
 {
     /// <summary>
-    /// Gets the source location of the one sibling <c>authorize</c> directive to repair, or <c>null</c> for the first directive of the owning declaration.
+    /// Gets the source location of the one sibling <c>authorize</c> directive to repair, or <see langword="null"/> for the first directive of the owning declaration.
     /// </summary>
     public SourceLocation? Directive { get; init; }
 }

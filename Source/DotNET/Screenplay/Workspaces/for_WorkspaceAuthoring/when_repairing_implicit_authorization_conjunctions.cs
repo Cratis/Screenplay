@@ -29,9 +29,9 @@ public class when_repairing_implicit_authorization_conjunctions
         repair.RequiredFormatting.ShouldEqual(WorkspaceAuthoringFormatting.PreserveTrivia);
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
         result.Accepted.ShouldBeTrue();
-        result.Workspace!.Documents.Single().Text.ShouldEqual(Head + expected);
+        result.Workspace.Documents.Single().Text.ShouldEqual(Head + expected);
         result.AuthoringDiagnostics.Any(value => value.Code == DiagnosticCodes.ImplicitAuthorizationConjunction).ShouldBeFalse();
-        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value!, new ScreenplayCompiler().Parse(Head + expected).Value!).ShouldBeTrue();
+        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value, new ScreenplayCompiler().Parse(Head + expected).Value).ShouldBeTrue();
     }
 
     [Theory]
@@ -47,8 +47,27 @@ public class when_repairing_implicit_authorization_conjunctions
         var repair = WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic).Single();
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
         result.Accepted.ShouldBeTrue();
-        result.Workspace!.Documents.Single().Text.ShouldEqual(Head + expected);
-        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value!, new ScreenplayCompiler().Parse(Head + expected).Value!).ShouldBeTrue();
+        result.Workspace.Documents.Single().Text.ShouldEqual(Head + expected);
+        SyntaxJson.StructurallyEqual(new ScreenplayCompiler().Parse(Head + source).Value, new ScreenplayCompiler().Parse(Head + expected).Value).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_repair_each_of_two_sibling_directives_by_its_own_diagnostic_and_refuse_the_shared_subject()
+    {
+        const string source = "        authorize Staff Managers\n        authorize Auditors Staff\n";
+        var workspace = Workspace(Head + source);
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var diagnostics = index.Diagnostics.Where(value => value.Code == DiagnosticCodes.ImplicitAuthorizationConjunction).ToArray();
+        diagnostics.Select(value => value.Location.Line).ShouldContainOnly(12, 13);
+        var repairs = diagnostics.Select(value => WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, value).Single()).ToArray();
+        repairs[0].Subject.ShouldEqual(repairs[1].Subject);
+        WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repairs[0], Request(workspace)).Workspace.Documents.Single().Text
+            .ShouldEqual(Head + "        authorize Staff and Managers\n        authorize Auditors Staff\n");
+        WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repairs[1], Request(workspace)).Workspace.Documents.Single().Text
+            .ShouldEqual(Head + "        authorize Staff Managers\n        authorize Auditors and Staff\n");
+        var ambiguous = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, DiagnosticCodes.ImplicitAuthorizationConjunction, repairs[0].Subject, Request(workspace));
+        ambiguous.Accepted.ShouldBeFalse();
+        ambiguous.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair).ShouldBeTrue();
     }
 
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create(
