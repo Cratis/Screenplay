@@ -39,6 +39,8 @@ import { SyntaxNode } from './SyntaxNode';
 import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
+import { PossibleEventsSyntax } from './PossibleEventsSyntax';
+import { PossibleEventSyntax } from './PossibleEventSyntax';
 import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormSyntax, TriggerDataSyntax } from './DependencySources';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
@@ -342,9 +344,21 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitHandler(syntax: HandlerSyntax): void {
         this.visitNode(syntax);
+        if (syntax.possibleEvents != null) this.visitPossibleEvents(syntax.possibleEvents);
         if (syntax.implementation != null) this.visitImplementation(syntax.implementation);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+
+    visitPossibleEvents(syntax: PossibleEventsSyntax): void {
+        this.visitNode(syntax);
+        syntax.events.forEach(entry => this.visitPossibleEvent(entry));
+    }
+
+    visitPossibleEvent(syntax: PossibleEventSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.stream !== null) this.visitCommandStream(syntax.stream);
+        syntax.tags.forEach(tag => this.visitTag(tag));
     }
 
     visitImplementation(syntax: ImplementationSyntax): void {

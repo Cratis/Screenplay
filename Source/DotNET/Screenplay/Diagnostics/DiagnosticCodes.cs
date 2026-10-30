@@ -1490,7 +1490,8 @@ public static class DiagnosticCodes
     public const string SemanticMigrationRequired = "PLAY0272";
 
     /// <summary>
-    /// The source syntax and identity catalog could not produce a coherent semantic compilation.
+    /// A read-model member references an unsupported value type, or the source syntax and identity catalog
+    /// could not produce a coherent semantic compilation.
     /// </summary>
     public const string InvalidSemanticBinding = "PLAY0273";
 
@@ -3659,4 +3660,10 @@ public static class DiagnosticCodes
     /// A specification states <c>then invokes</c> a command no reaction of its own slice invokes.
     /// </summary>
     public const string UnreachableSpecificationInvocation = "PLAY0816";
+
+    /// <summary>A handler possible-event declaration is malformed.</summary>
+    public const string InvalidPossibleEventsDeclaration = "PLAY0822";
+
+    /// <summary>A handler possible-event set violates its result contract.</summary>
+    public const string InvalidPossibleEventSet = "PLAY0823";
 }

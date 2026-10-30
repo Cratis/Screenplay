@@ -85,6 +85,26 @@ type Invoice
   lines   InvoiceLine[]
 ```
 
+## Read-model child shapes
+
+Declare a `type` at document level, not inside a module, feature or slice. Use it for the reusable value shape of a [read-model member](readmodels.md#member-value-types), rather than referencing another read model:
+
+```screenplay
+type InvoiceLine
+  lineNumber Int
+  description String
+
+module Billing
+  feature Invoices
+    slice StateView Details
+      readmodel InvoiceDetails
+        invoiceId Uuid key
+        lines InvoiceLine[]
+        selectedLine InvoiceLine optional
+```
+
+Both scalar and collection members resolve `InvoiceLine` as a composite value type. A `readmodel InvoiceLine` would instead declare a view identity and cannot supply this member type. A slice-local `type` is skipped with Warning `PLAY0029`; referencing it from a member produces Error `PLAY0273` at that member. Keep the type at the top level, including when it is declared in another imported file. A [children projection](projections/grammar.md#children-block) can populate `lines`; it does not change type resolution.
+
 ## Where types earn their keep — compliance
 
 This is the reason to reach for a type rather than leaving a shape undeclared. A `[PII]` value buried inside a child record is still personal data, and Chronicle still encrypts and erases it. But if the shape is never declared, nothing in the document says so — and a reader auditing the model sees a smaller PII surface than the application actually has.
@@ -99,6 +119,8 @@ The compiler resolves every property type reference against the primitives, the 
 Unknown type 'InvoiceLine' on 'lines' of event 'InvoiceRegistered' -
 declare it with 'concept InvoiceLine : <Primitive>' or 'type InvoiceLine'
 ```
+
+For read-model members, a known read-model shape used outside the value-type namespace is a compile error (`PLAY0273`). Undeclared names are not rejected at compile time. A slice-local `type` is skipped with Warning `PLAY0029`; referencing it fails semantic binding (`screenplay test`) with `PLAY0273` at the member, as does any name outside the value-type namespace. See [Member value types](readmodels.md#member-value-types).
 
 Concept and type names share one namespace — declaring both a `concept InvoiceLine` and a `type InvoiceLine` is an error.
 

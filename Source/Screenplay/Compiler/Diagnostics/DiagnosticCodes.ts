@@ -4,6 +4,7 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    InvalidSemanticBinding: 'PLAY0273',
     InvalidActionSubjectClause: 'PLAY0817',
     InferredActionSubject: 'PLAY0818',
     ChangedActionSubject: 'PLAY0819',
@@ -476,4 +477,6 @@ export const DiagnosticCodes = {
     // Retired by ESM v16; preserved for compatibility with earlier native compiler diagnostics.
     EventIdPinNotCarriedToRenderers: 'PLAY0686',
     InvalidToolbarButton: 'PLAY0760',
+    InvalidPossibleEventsDeclaration: 'PLAY0822',
+    InvalidPossibleEventSet: 'PLAY0823',
 } as const;

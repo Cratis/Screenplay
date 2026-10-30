@@ -183,7 +183,7 @@ ESM v21 adds pattern, random and implementation generation. Numeric fixtures and
 
 A generated identifier supplies an inline production's implicit destination. Plain `produces` without `for` keeps its separate legacy allocation channel; a generation fixture never satisfies that allocation. A response-only command records no facts. No response differs from a scalar response whose optional source is `Null`. Record fields preserve authored order and have external contract names, not independent semantic identities.
 
-Responses also parse beside a handler. ESM v23 admits described command handlers with unconditional event productions; response-only pending handlers are refused (`PLAY0696`). File/inline handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
+Responses also parse beside a handler. ESM v23 admits described command handlers with unconditional event productions; response-only pending handlers are refused (`PLAY0696`). Constrained, resolved file/inline handlers also use ESM v23 context/result v1; operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. The compilers and editors resolve returned names in form `on submit` and command `on success` continuations; renderers bind the actual response values. Using a returned name under that command's `on failure` reports `PLAY0685`, unless an existing local binding or an outer successful response supplies it. See [continuation values](interactions.md#returned-values-in-continuations). This authoring rule adds no ESM fields and does not deliver end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
 
 The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [specification fixtures and return assertions](specifications.md#generated-fixtures-and-return-expectations).
 
@@ -833,7 +833,7 @@ Multiple `produces when` blocks form mutually exclusive or overlapping branches 
 
 ## The `handler` block
 
-Declares a fully imperative implementation of the command, in C#, as either an inline block or a reference to an external file. Use it when the declarative `produces` forms cannot express the logic — batch processing, imperative branching, or anything that needs more than property mappings and conditions.
+Attaches an implementation body to the command, in C#, as either an inline block or a reference to an external file. The body supplies event property values; it does not replace `produces`. It is admitted only beside unconditional `produces` (see [what a handler body can and cannot do](#what-a-handler-body-can-and-cannot-do)).
 
 Delegating to a file:
 
@@ -873,6 +873,54 @@ A command handler, whether pending or attached, may sit beside unconditional `pr
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
+### What a handler body can and cannot do
+
+A body is not an escape hatch from `produces`. The productions fix which events are appended, how many and in what order; the body only fills in their property values. Because of that, a command with a `handler` body that has no `produces`, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
+
+| Condition | What to do |
+| --- | --- |
+| The command declares no `produces` | Declare an unconditional `produces <Event>` beside the handler body |
+| A `produces ... when` sits beside the body | Declare an unconditional `produces <Event>`, split conditional or variable outcomes into separate commands, or move them to declarative `produces ... when` without a body |
+| The body is empty, missing or a file the host did not supply | Attach a resolved, nonempty, language-tagged body |
+
+Authoring hints can stay beside an attached body; they are not part of its resolved executable requirement. A requirement that still carries hints is not a resolved body. Pending intent without a body is a different shape: conditional productions report `PLAY0697` and no productions report `PLAY0696`.
+
+A body that decides how many events to append, or which event type, is not expressible. Split the outcomes into separate commands, or express each branch with declarative `produces ... when`:
+
+Refused with `PLAY0800` — the body has no `produces` beside it:
+
+````text
+command ProcessBatch
+  batchId BatchId identifier
+  handler
+    ```csharp
+    return new object[] { new BatchStarted(), new BatchCompleted() };
+    ```
+````
+
+Admitted — the events are declared, the body supplies their values:
+
+````screenplay
+command ProcessBatch
+  batchId BatchId identifier
+  produces BatchStarted
+    for batchId
+  produces BatchCompleted
+    for batchId
+  handler
+    ```csharp
+    return new object[] { new BatchStarted(context.Occurred), new BatchCompleted(context.Occurred) };
+    ```
+
+event BatchStarted
+  startedAt DateTime
+
+event BatchCompleted
+  completedAt DateTime
+````
+
+A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) keeps `ProcessInvoiceBatch` as a deliberate example of the refusal.
+
 ### Implementation intent (handlers only)
 
 You can keep implementation guidance beside the handler's existing attachment:
@@ -902,11 +950,11 @@ A pending command handler with unconditional `produces` is a **described command
 
 Neither renderers nor reference execution evaluate these event-property mappings. The exemption is limited to payload values; mapping type checks still apply. Binding reports information `PLAY0695` naming the command and RequirementId. No productions (including response-only pending commands) fails binding with `PLAY0696`; conditional `produces when` fails with `PLAY0697`. Result v1 does not admit repeated/occurrence productions or body-decided cardinality, and the body cannot reject. Source remains valid when binding refuses it. Legacy command `reads` remains outside admission.
 
-Reference execution evaluates authorization, validation, routing and generated values in their ordinary order, then returns **Unsupported (`ImplementationBody`)** when it reaches the body, directly or through an invoking reaction. The reason names the command and RequirementId; no production mapping runs or event is emitted. Earlier denial/validation specifications still execute; unsupported specifications are counted separately and an all-unsupported run is never green. Historical `given` events remain ordinary facts.
+Without an executing provider, reference execution evaluates authorization, validation, routing and generated values in their ordinary order, then returns **Unsupported (`ImplementationBody`)** when it reaches the body, directly or through an invoking reaction. The reason names the command and RequirementId; no production mapping runs or event is emitted. Earlier denial/validation specifications still execute; unsupported specifications are counted separately and an all-unsupported run is never green. Historical `given` events remain ordinary facts.
 
 **Attached bodies.** A nonempty tagged fence (direct or wrapped) or a host-resolved file may keep the same unconditional `produces` contract and bind in ESM v23. The resolved CommandHandler sidecar carries context/result v1, a lowercase SHA-256 of the exact body, a body span or authored file reference, and a language. Handler file extensions infer `csharp` (`.cs`), `typescript` (`.ts`), `javascript` (`.js`), `java`, `kotlin` (`.kt`), `elixir` (`.ex`) or `go`; other file languages are refused. Inline language tags remain target-defined. Authoring hints stay in syntax; resolved sidecars have empty hints. No `PLAY0695` is reported for a resolved body. Missing or empty bodies, unknown file languages, no productions and conditional productions retain `PLAY0800`. Pending intents retain `PLAY0695`/`PLAY0696`/`PLAY0697` unchanged.
 
-The RequirementId and ESM payload do not change when a pending intent becomes attached; resolution lives in the sidecar, not the serialized model. The reference executor still refuses body execution with `ImplementationBody`, naming the RequirementId and emitting no facts. Bodies are opaque and are not rewritten or interpreted. A target must separately admit the language and implementation; binding is not proof that Stage can render or execute it, and it is not a reuse or regeneration promise.
+The RequirementId and ESM payload do not change when a pending intent becomes attached; resolution lives in the sidecar, not the serialized model. The default reference executor still refuses body execution with `ImplementationBody`, naming the RequirementId and emitting no facts. An opt-in host `ISemanticBodyExecutionProvider.HandleAsync` can execute verified, attached result-v1 handlers. It receives the validated command, including supplied generated fixtures, and known tenant, authorization identity, audit identity and occurrence time; unavailable values and causation remain null. `HandleAsync` receives `SemanticCommandContext` and returns `SemanticCommandBodyResult.Produced(payloads)`: one semantic composite per unconditional `produces` line, in declaration order. The result carries no event types, destinations, tags, routing, occurrence metadata, append envelope, rejection or decisions. The event type is selected solely by the matching declared produces line. Cardinality, property ids, required/optional values, nested composites, collections and concept membership are validated before any facts commit. Optional omissions become semantic nulls. Destinations, typed occurrence context, routing, tags and append metadata remain Screenplay-owned; property mappings are never evaluated. Missing/stale bodies, admission refusal and malformed answers stay unsupported with the command and RequirementId, not denial or client rejection. Admitted handler execution faults instead propagate as `SemanticCommandBodyFaultException`, carrying the RequirementId, original exception and `Faulted`, `TimedOut`, `MemoryExceeded` or `Cancelled` kind, before any events are produced or committed. Hosts report time and memory limits with the typed exception; other throws become `Faulted`, and unrequested cancellation becomes `Cancelled`. Cancellation requested through the supplied run token propagates the original `OperationCanceledException` and token. These fault semantics apply only to handlers; other provider roles retain their existing behaviour. Body-decided cardinality, repeated/conditional productions, result v2 and query performers remain unsupported. Bodies are opaque and are not rewritten or interpreted. A target must separately admit the language and implementation; binding is not proof that Stage can render or execute it, and it is not a reuse or regeneration promise.
 
 | Owner | `implementation` wrapper |
 | --- | --- |

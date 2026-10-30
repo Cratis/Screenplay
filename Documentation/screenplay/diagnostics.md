@@ -20,6 +20,8 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0819` | Warning | Effective row binding differs from legacy case-insensitive name matching. Make intent explicit; a safe repair may retain legacy mappings. |
 | `PLAY0820` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
 | `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
+| `PLAY0822` | Error | A handler `may produce` declaration is malformed: an entry is not `<Event>`, `<Event> for <property>` or `<Event> for one of <collection property>`, an event is declared twice, or the command also declares `produces`. |
+| `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. Admission is internal until ESM v35. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
@@ -335,7 +337,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0026` | Error | A line in a layout, screen template or dialog template body opens a block none of them declares anything by. |
 | `PLAY0027` | Error | A `slice` line is not `slice <Type> <Name>`, or direction is malformed, repeated or declared outside Translate. Legacy directionless translations remain accepted. |
 | `PLAY0028` | Error | A slice is declared with a type the language does not have. |
-| `PLAY0029` | Warning | A line in a slice body opens with a word a slice declares nothing by. |
+| `PLAY0029` | Warning | A line in a slice body opens with a word a slice declares nothing by. This includes a slice-local `type`: its block is skipped, not registered as a reusable type. |
 
 ### Personas
 
@@ -352,7 +354,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
 | `PLAY0035` | Retired | No longer reported. Pending and attached command handlers may declare unconditional `produces` as result contract v1. This code remains reserved forever. |
-| `PLAY0800` | Error | A file/inline command handler lacks a constrained result contract or resolved nonempty language-tagged body. Unconditional `produces` plus a resolved attachment binds in ESM v23 without this diagnostic. The `subject` argument identifies the command; hosts switch on this code rather than matching message text. |
+| `PLAY0800` | Error | A file/inline command handler lacks a constrained result contract or resolved nonempty language-tagged body. Unconditional `produces` plus a resolved attachment binds in ESM v23 without this diagnostic. The `subject` argument identifies the command; hosts switch on this code rather than matching message text. The message names the failed condition when the command declares a `produces` (a conditional `produces ... when`, or an empty, unresolved or hinted body); the fix is an unconditional `produces <Event>` beside a resolved handler body, or separate commands for conditional outcomes. A command with no `produces` keeps the short message. See [what a handler body can and cannot do](commands.md#what-a-handler-body-can-and-cannot-do). |
 | `PLAY0695` | Information | A described command is admitted in ESM v23 but its pending payload implementation needs a target. The message names the command and RequirementId. |
 | `PLAY0696` | Error | A pending command handler has no productions, including response-only commands. Source remains valid; executable binding requires at least one production. |
 | `PLAY0697` | Error | A pending command handler has conditional productions (`produces when`). Result contract v1 requires unconditional productions. |
@@ -1088,8 +1090,10 @@ itself what an unresolvable one means.
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
-| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including reserved stored source `Default` or stream `All` names (also through `id` pins), stored-name collisions, an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision, an authorization policy, property rule or requirement referencing a generated value before generation, or a `produces` or `invokes` mapping that assigns a property of an incompatible type, such as an optional value into a required property; the diagnostic is located at the mapping and names the property and both types. |
+| `PLAY0273` | Error | A read-model member references a known read-model shape outside the value-type namespace, reported at compile time and binding at the member's type reference with its original file/line/column and guidance to use a primitive, concept or top-level `type`. Semantic binding also rejects skipped slice-local `type` names and undeclared names at the member; compile-time validation does not. Also, syntax and identity information cannot produce a coherent semantic compilation, including reserved stored source `Default` or stream `All` names (also through `id` pins), stored-name collisions, an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision, an authorization policy, property rule or requirement referencing a generated value before generation, or a `produces` or `invokes` mapping that assigns a property of an incompatible type, such as an optional value into a required property; the diagnostic is located at the mapping and names the property and both types. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
+
+For read-model members, both compilers and editor validation share `PLAY0273` for known read-model shapes outside the value-type namespace; imported files are composed before checking. A slice-local `type` is skipped with Warning `PLAY0029` at its header, without a compile-time member error. Referencing it fails semantic binding (`screenplay test`) with `PLAY0273` at the member, as does any undeclared name outside the value-type namespace. See [member value types](readmodels.md#member-value-types). Other property owners retain their existing unknown-type warning behavior.
 
 Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
 

@@ -82,3 +82,7 @@ Screenplay: [#139](https://github.com/Cratis/Screenplay/issues/139). Decisions: 
 ## Status notes
 
 **2026-09-24 — accepted and implemented.** Accepted as written; the decision text is unchanged. The references above to what decision 0004 "proposes" now point at an accepted record. `feature/policy-predicate-role` merged as [#251](https://github.com/Cratis/Screenplay/pull/251) and shipped in v4.29.0, with the specs named under *Verification* in the tree. It is not yet `verified`.
+
+### Implementation note — #1099 S4
+
+The opt-in reference-run provider seam adds `AuthorizeAsync` for verified PolicyPredicate attachments, still capability `pure` and context/result v1. Its explicit allow, deny or unsupported answer occupies the same authored operand position; exceptions, cancellation, malformed answers and source failures remain Authorization unsupported, never denial. Default execution without a provider remains unchanged. The semantic context projects property ids, known subject/tenant/time, and authorization roles and claims without inventing audit identity or generated values. A factory owns one live specification/execution scope; two-step commits needing query-policy work use fresh scopes. This note does not amend the accepted language, canonical bytes, ABI or version. Verification is pending the #1099 gate.

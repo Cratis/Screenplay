@@ -51,6 +51,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier, commandProperty: true) with { IsGenerated = property.IsGenerated }).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
+            handler = BindPossibleEventsContract(handler, command, propertiesByName, events);
             var boundReads = BindDecisionReads(command, propertiesByName, scope);
             if (properties.Any(property => property.IsGenerated) || command.Response is not null) UsesV7 = true;
             if (properties.Any(property => property.IsGenerated)) ValidateGeneratedProperties(command, propertiesByName);
@@ -110,7 +111,7 @@ public sealed partial class SemanticModelBinder
                 Handler = handler,
                 Reads = boundReads,
                 Response = BindResponse(command, propertiesByName),
-                Route = BindCommandRoute(command, propertiesByName, produced),
+                Route = BindCommandRoute(command, propertiesByName, CommandResults(handler, produced)),
                 CodeValidations = codeValidations,
                 Requirements = requirements,
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))

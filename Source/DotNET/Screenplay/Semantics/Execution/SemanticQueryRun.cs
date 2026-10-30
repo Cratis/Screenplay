@@ -17,7 +17,11 @@ sealed class SemanticQueryRun(
     SemanticWorld original,
     SemanticWorld tentative,
     SemanticCaller? caller,
-    SemanticReducerBodyExecution reducers)
+    SemanticReducerBodyExecution reducers,
+    SemanticPolicyBodyExecution policies,
+    string? tenant,
+    DateTimeOffset? occurred,
+    CancellationToken cancellationToken)
 {
     /// <summary>
     /// Answers one query request.
@@ -138,13 +142,24 @@ sealed class SemanticQueryRun(
             }
             properties = [.. properties, .. query.KeyParts.Select(part => new SemanticProperty(part.Id, part.Name, part.Type, false))];
         }
-        var authorization = SemanticPolicyEvaluation.Evaluate(query.Authorization, plan, caller, arguments, key, properties);
+        var authorization = SemanticPolicyEvaluation.Evaluate(
+            query.Authorization,
+            plan,
+            caller,
+            arguments,
+            key,
+            properties,
+            bodies: policies,
+            tenant: tenant,
+            occurred: occurred,
+            hasPolicySubject: query.Argument is not null && query.KeyParts.IsEmpty,
+            cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {
             SemanticPolicyOutcome.Unsupported => new SemanticUnsupported(
                 original,
                 SemanticExecutionCapability.Authorization,
-                $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
+                authorization.Details ?? $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
             SemanticPolicyOutcome.Deny => new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized."),
             _ => null
         };

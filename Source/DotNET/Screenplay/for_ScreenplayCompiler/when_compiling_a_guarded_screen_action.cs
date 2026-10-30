@@ -16,7 +16,7 @@ public class when_compiling_a_guarded_screen_action : given.a_compiler
               readmodel Item
                 itemId Uuid
                 status String
-                answered Boolean
+                answered Bool
               query ItemDetails => Item
               command Retry
                 itemId Uuid

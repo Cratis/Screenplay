@@ -11,4 +11,7 @@ public class when_excluding_inherited_authorization : given.security_documents
     [Fact] void should_bind_the_safe_subset() => _result.Compilation.Success.ShouldBeTrue();
     [Fact] void should_remove_every_protected_descendant() => _result.Exclusions.Select(value => value.Address).ShouldEqual(["Access", "M/F/First", "M/F/Second", "M/F/Nested/Third"]);
     [Fact] void should_keep_the_other_feature() => Slices.ShouldEqual(["Kept"]);
+    [Fact] void should_report_the_policy_as_root() => _result.Exclusions[0].Cause.ShouldEqual(SemanticExclusionCause.Root);
+    [Fact] void should_report_every_protected_descendant_as_dependent() => _result.Exclusions.Skip(1).ShouldEachConformTo(value => value.Cause == SemanticExclusionCause.Dependent);
+    [Fact] void should_name_the_inherited_policy() => _result.Exclusions.Skip(1).ShouldEachConformTo(value => value.DependsOn.SequenceEqual(new SemanticExclusionReference[] { new(SemanticExclusionKind.Policy, "Access") }));
 }

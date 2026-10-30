@@ -1,0 +1,12 @@
+// Syntax-only: a handler `may produce` set is parsed, printed and transported, but is not bound publicly yet (PLAY0800, #1102).
+// This is a documentation fixture, not an executable Samples application.
+module M
+  feature F
+    slice StateChange S
+      command C
+        handler
+          may produce
+            Added
+            Removed for accountId
+            Updated for one of accountIds
+          file C.cs

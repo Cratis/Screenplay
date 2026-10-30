@@ -36,6 +36,9 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     static bool RemovedOwner(AdmissibleSecuritySyntax.ViewReference reference, AdmissibleExclusions plan) =>
         reference.Slice is { } slice && plan.Removed.Contains(slice);
 
+    static bool IsRemovedReadReference(AdmissibleSecuritySyntax.ViewReference reference, string name, AdmissibleExclusions plan) =>
+        reference.Name == name && RemovedOwner(reference, plan);
+
     bool TryAttribute(Diagnostic error, AdmissibleExclusions plan)
     {
         var policies = PoliciesFor(error).Distinct(StringComparer.Ordinal).ToArray();
@@ -57,18 +60,18 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
         _policies.Add(name);
         foreach (var use in _security.Authorizations.Where(use => use.Syntax.References().Any(reference => reference.Name == name)))
         {
-            if (!CloseAuthorization(use, diagnostic, reason, plan)) return false;
+            if (!CloseAuthorization(use, declarations[0], (diagnostic, reason), plan)) return false;
         }
         return true;
     }
 
-    bool CloseAuthorization(AdmissibleSecuritySyntax.Authorization use, Diagnostic diagnostic, string reason, AdmissibleExclusions plan)
+    bool CloseAuthorization(AdmissibleSecuritySyntax.Authorization use, PolicySyntax policy, (Diagnostic Diagnostic, string Reason) evidence, AdmissibleExclusions plan)
     {
         if (use.Slices is null) return false;
         if (use.Syntax.References().Any(reference => syntax.Policies.Count(policy => policy.Name == reference.Name) != 1)) return false;
         foreach (var slice in use.Slices)
         {
-            if (!plan.Add(slice, [diagnostic], reason)) return false;
+            if (!plan.Add(slice, [evidence.Diagnostic], evidence.Reason, forcedBy: [policy])) return false;
         }
         plan.Removed.Add(use.Syntax);
         return true;
@@ -100,13 +103,19 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
         var views = _security.Views.Where(view => view.Name == name).ToArray();
         if (views.Length != 1 || views[0].Slice is null) return false;
         var reason = $"Excluded protected read '{name}' and every reader of its read model.";
-        foreach (var reference in _security.References.Where(reference => reference.Name == name).Concat(views))
+        var references = _security.References.Where(reference => reference.Name == name).Concat(views).ToArray();
+        var triggers = ReadTriggers(name, plan);
+        foreach (var reference in references)
         {
-            if (reference.Slice is null || !plan.Add(reference.Slice, errors, reason)) return false;
+            if (reference.Slice is null || !plan.Add(reference.Slice, errors, reason, forcedBy: triggers)) return false;
         }
         _reads.Add(name);
         return true;
     }
+
+    SliceSyntax[] ReadTriggers(string name, AdmissibleExclusions plan) =>
+        [.. _security.Reads.Concat(_security.Views).Where(reference => IsRemovedReadReference(reference, name, plan))
+            .Select(reference => reference.Slice!).Distinct()];
 
     IEnumerable<string> PoliciesFor(Diagnostic diagnostic)
     {

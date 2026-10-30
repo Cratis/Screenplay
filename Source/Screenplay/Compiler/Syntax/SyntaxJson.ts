@@ -218,6 +218,11 @@ function isAlwaysOmitted(value: SyntaxNode, member: string): boolean {
     return omitted.has(member) || (value.kind === 'OperationSyntax' && member === 'usesLocation');
 }
 
+function omitsPossibleEvents(kind: string, member: string, value: unknown): boolean {
+    if (kind !== 'HandlerSyntax' || member !== 'possibleEvents') return false;
+    return value == null || (value as { events: unknown[] }).events.length === 0;
+}
+
 function writeNode(value: SyntaxNode, owningMode: string, complete: boolean): SyntaxJsonValue {
     if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
     validateSyntaxInvariants(value);
@@ -228,6 +233,7 @@ function writeNode(value: SyntaxNode, owningMode: string, complete: boolean): Sy
     for (const member of projectedMemberNames(value, structural, owningMode, complete)) {
         const memberValue = structural[member];
         if (isOmittedByDefault(value.kind, member, memberValue)) continue;
+        if (omitsPossibleEvents(value.kind, member, memberValue)) continue;
         result[member] = write(memberValue, owningMode, complete);
     }
     return result;

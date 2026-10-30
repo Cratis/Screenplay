@@ -10,7 +10,7 @@ internal enum SemanticPolicyOutcome
     Unsupported
 }
 
-internal readonly record struct SemanticPolicyDecision(SemanticPolicyOutcome Outcome, string? Policy = null);
+internal readonly record struct SemanticPolicyDecision(SemanticPolicyOutcome Outcome, string? Policy = null, string? Details = null);
 
 internal static class SemanticPolicyEvaluation
 {
@@ -21,7 +21,12 @@ internal static class SemanticPolicyEvaluation
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
         IEnumerable<SemanticProperty> properties,
-        SemanticReactionIdentity? runsAs = null)
+        SemanticReactionIdentity? runsAs = null,
+        SemanticPolicyBodyExecution? bodies = null,
+        string? tenant = null,
+        DateTimeOffset? occurred = null,
+        bool hasPolicySubject = true,
+        CancellationToken cancellationToken = default)
     {
         if (authorization is null || IsAnonymous(authorization, plan)) return new(SemanticPolicyOutcome.Allow);
         if (runsAs is not null)
@@ -31,7 +36,13 @@ internal static class SemanticPolicyEvaluation
         }
         if (caller is not { Roles.IsDefault: false, Claims.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
 
-        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties);
+        SemanticPolicyContext Context() => new(
+            new([.. properties.Where(property => artifact.ContainsKey(property.Name)).Select(property => new SemanticPropertyValue(property.Id, artifact[property.Name]))]),
+            hasPolicySubject && (subject is SemanticTextValue or SemanticNumberValue or SemanticBooleanValue) ? SemanticValueRules.CaptureText(subject) : null,
+            SemanticBodyIdentity.From(caller),
+            tenant,
+            occurred);
+        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties, bodies ?? SemanticPolicyBodyExecution.None, Context, cancellationToken);
     }
 
     internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
@@ -47,15 +58,22 @@ internal static class SemanticPolicyEvaluation
         Principal caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
-        IEnumerable<SemanticProperty> properties)
+        IEnumerable<SemanticProperty> properties,
+        SemanticPolicyBodyExecution bodies,
+        Func<SemanticPolicyContext> context,
+        CancellationToken cancellationToken)
     {
         if (authorization is SemanticPolicyReference reference)
         {
-            var condition = plan.Model.Application.Policies.Single(policy => policy.Name == reference.Name).Condition;
-            return condition is SemanticOpaquePolicyCondition
-                ? new(SemanticPolicyOutcome.Unsupported, reference.Name)
-                : new(EvaluateCondition(condition, plan, caller, artifact, subject, properties).IsTrue
-                    ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
+            var policy = plan.Model.Application.Policies.Single(policy => policy.Name == reference.Name);
+            if (policy.Condition is SemanticOpaquePolicyCondition opaque)
+            {
+                return bodies.HasProvider
+                    ? bodies.Authorize(policy, opaque, context(), cancellationToken)
+                    : new(SemanticPolicyOutcome.Unsupported, reference.Name);
+            }
+            return new(EvaluateCondition(policy.Condition, plan, caller, artifact, subject, properties).IsTrue
+                ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
         }
 
         if (authorization is not SemanticLogicalAuthorization logical ||
@@ -64,7 +82,7 @@ internal static class SemanticPolicyEvaluation
             throw new InvalidSemanticContract("Unknown authorization node or operator.");
         }
 
-        var left = EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties);
+        var left = EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties, bodies, context, cancellationToken);
 
         // Preserve authored order: an opaque left operand cannot be skipped to evaluate the right.
         if ((logical.Operator == SemanticLogicalOperator.And && left.Outcome == SemanticPolicyOutcome.Deny) ||
@@ -75,7 +93,7 @@ internal static class SemanticPolicyEvaluation
 
         if (left.Outcome == SemanticPolicyOutcome.Unsupported) return left;
 
-        return EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties);
+        return EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties, bodies, context, cancellationToken);
     }
 
     static SemanticPolicyTruth EvaluateCondition(

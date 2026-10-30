@@ -34,6 +34,14 @@ readmodel AccountBalance
   movements Int
 ```
 
+## Member value types
+
+A read-model member can use a primitive, a declared concept, a top-level [composite type](types.md), or an imported value-type name. Scalar, collection (`InvoiceLine[]`) and optional forms use the same value-type namespace. A read model has its own keyed/query identity; naming another `readmodel` does not make that view a reusable member type, even within the same slice.
+
+Declare reusable child shapes with a top-level `type`, then reference that type from the read model. Using a known read-model shape as a member type is a compile error (`PLAY0273`), unless its name also resolves in the value-type namespace. A `type` inside a slice is still an unknown construct: `PLAY0029` warns at its header and its body is skipped. Compile-time validation does not reject a member referencing that skipped type or an undeclared name. Semantic binding (`screenplay test`) rejects any member outside the value-type namespace with Error `PLAY0273` at the member's type reference. The diagnostic suggests a primitive, concept or top-level `type` instead.
+
+[Children projections](projections/grammar.md#children-block) populate a declared composite collection; `children` does not turn a read-model identity into a value type. See the [top-level child-shape example](types.md#read-model-child-shapes).
+
 ## Keys
 
 Mark a top-level property with the trailing `key` modifier to identify an instance. Explicit keys replace inference. Without a mark, executable binding infers the identifier from one unambiguous keyed query or one `*Id` property.
@@ -91,6 +99,8 @@ reducer    Balance  => AccountBalance     ← or a reducer does, never both
 So there is one arrow and one direction: to find where a read model's state comes from, you look for the thing pointing at it. A read model that declared its own sources would be a second, opposite arrow saying the same thing, and the two would eventually disagree.
 
 **Exactly one thing may build a read model.** Two builders is a compile error — either could have produced the value in front of a reader, and nothing in the document would say which. Note this is about the read model, not the slice: a slice may still declare [several projections](projections/index.md#several-projections-in-one-slice), each building a different read model.
+
+Query authorization can also use verified policy bodies through a host's opt-in `ISemanticBodyExecutionProvider.AuthorizeAsync`. The policy receives semantic key-argument ids, the single key as subject when available, caller roles/claims and known tenant/time. Allow continues the query; deny rejects as unauthorized. Unsupported answers, source failures, exceptions and cancellation remain Authorization unsupported. A command's failed follow-up query does not commit tentative facts or read-model changes. Query performers are still outside this seam.
 
 ## Reducers
 
@@ -150,7 +160,7 @@ Return `SemanticReducerBodyResult.Next(composite)` for a complete next state or 
 
 History folds in order into isolated instances keyed by read model and raw event-source identity. Given history, given read-model seeds, appended events, command productions, reaction batches, replay/extension and read-only assertions share this behavior. Every reached reducer must be executable; resolving just the first cannot admit a later unresolved reducer. Unsupported work returns the original input world, not a partial fold. Mixed projection/reducer models and event-target reducers remain refused by name.
 
-A factory supplies one live provider per execution or selected specification run. `Decide` retains S2's separate validation scope; each `Commit` with reducer work requests a fresh provider with the captured cancellation token and disposes it before returning, including after failure. Factories may therefore be asked for one provider per commit of the same decision. No commit provider is requested without reducer work; factory failure at commit is Unsupported.
+A factory supplies one live provider per execution or selected specification run, shared by validations, policies, handlers and reducers. `Decide` disposes its decision-body scope before returning; each `Commit` needing reducer work or an opaque policy in a requested query's compiled gate requests a fresh provider with the captured cancellation token and disposes it before returning, including after failure. Factories may therefore be asked for one provider per commit of the same decision. Handler bodies run once at decision, not again at commit. A purely portable commit does not request a provider; factory failure at commit is Unsupported.
 
 ## See also
 

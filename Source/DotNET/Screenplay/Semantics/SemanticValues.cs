@@ -151,7 +151,10 @@ public enum SemanticExpressionKind
     /// <summary>
     /// A property of a declared protected command read.
     /// </summary>
-    ReadPath = 4
+    ReadPath = 4,
+
+    /// <summary>One destination selected from a required command-input collection.</summary>
+    OneOf = 5
 }
 
 /// <summary>

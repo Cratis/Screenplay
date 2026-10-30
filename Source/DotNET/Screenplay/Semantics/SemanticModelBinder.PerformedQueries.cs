@@ -13,6 +13,9 @@ public sealed partial class SemanticModelBinder
     {
         readonly Dictionary<QuerySyntax, int> _performedQueryRequirements = new(ReferenceEqualityComparer.Instance);
 
+        // Decision 0120: only an observable collection performer has a live result contract (2); every other performer stays at 1.
+        static uint PerformerResultVersion(SemanticPerformedQueryShape shape) => shape is { Delivery: SemanticQueryDelivery.Live, Cardinality: SemanticQueryCardinality.Many } ? 2u : 1u;
+
         bool CanBindPerformedQueryArguments(QuerySyntax query)
         {
             if (query.Performer is null) return true;
@@ -36,7 +39,8 @@ public sealed partial class SemanticModelBinder
             if (requirement is null) return;
 
             // RequireImplementation appends the requirement it returns; attach the shape to that same entry.
-            _implementationRequirements[^1] = requirement with { QueryShape = PerformedQueryShape(query) };
+            var shape = PerformedQueryShape(query);
+            _implementationRequirements[^1] = requirement with { QueryShape = shape, ResultVersion = PerformerResultVersion(shape) };
             _performedQueryRequirements[query] = _implementationRequirements.Count - 1;
         }
 

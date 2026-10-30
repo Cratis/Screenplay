@@ -59,8 +59,8 @@ describe('when validating guarded screen actions', () => {
         parse(source).diagnostics.filter(diagnostic => guardedCode(diagnostic.code)).should.deep.equal([]);
     });
 
-    it('should follow declared read-model shapes inside a subject', () => {
-        const source = ['module M', '  feature F', '    slice StateView S', '      readmodel Child', '        status String', '      readmodel Item', '        child Child', '      query Details => Item', '      command Retry', '      screen Details', '        data Item via query Details', '        action "Again"', '          when item.child.status == "open" execute Retry'].join('\n');
+    it('should follow declared composite shapes inside a subject', () => {
+        const source = ['type Child', '  status String', 'module M', '  feature F', '    slice StateView S', '      readmodel Item', '        child Child', '      query Details => Item', '      command Retry', '      screen Details', '        data Item via query Details', '        action "Again"', '          when item.child.status == "open" execute Retry'].join('\n');
         parse(source).diagnostics.should.deep.equal([]);
     });
 

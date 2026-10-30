@@ -69,7 +69,7 @@ public sealed partial class SemanticModelBinder
             return new(0, text.Length, 1, 1, line, column);
         }
 
-        SemanticImplementationRequirement? RequirePendingImplementation(SemanticAddress owner, HandlerSyntax handler)
+        SemanticImplementationRequirement? RequirePendingImplementation(SemanticAddress owner, HandlerSyntax handler, uint resultVersion = 1)
         {
             var location = handler.Location;
             var document = DocumentAt(location);
@@ -82,7 +82,7 @@ public sealed partial class SemanticModelBinder
             {
                 RequirementId = ImplementationRequirementIdentity.Create(assignment.Id, SemanticImplementationRole.CommandHandler, null),
                 ContextVersion = 1,
-                ResultVersion = 1,
+                ResultVersion = resultVersion,
                 RequiredCapability = "provider-defined",
                 AttachmentResolution = SemanticAttachmentResolution.Pending,
                 Hints = [.. handler.Implementation!.Hints.Select(hint => hint.Text)],
@@ -104,7 +104,8 @@ public sealed partial class SemanticModelBinder
             SemanticAddress owner,
             FileReferenceSyntax? file,
             CodeBlockSyntax? code,
-            string? member = null)
+            string? member = null,
+            uint resultVersion = 1)
         {
             if (file is null && code is null)
             {
@@ -147,7 +148,7 @@ public sealed partial class SemanticModelBinder
             {
                 RequirementId = identity,
                 ContextVersion = 1,
-                ResultVersion = 1,
+                ResultVersion = resultVersion,
                 RequiredCapability = role is SemanticImplementationRole.ReducerTransition or SemanticImplementationRole.RulePredicate or
                     SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.PolicyPredicate ? "pure" : "provider-defined",
                 AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile,

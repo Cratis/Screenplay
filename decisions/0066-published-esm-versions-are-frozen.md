@@ -72,3 +72,7 @@ Exact number literals (0064, PR #641) take the next version, v11, at admission, 
 ## Related
 
 Amends 0025 item 2 and records the retroactive exception for 0063. Builds on 0004 and 0043. Tracked in [Screenplay#647](https://github.com/Cratis/Screenplay/issues/647).
+
+## Status notes
+
+**2026-10-26 — conformance-only exception.** [Decision 0118, Exception to 0066: conformance-only reserved pairs](0118-unknown-preserving-esm-admission.md#exception-to-0066-conformance-only-reserved-pairs) excludes pairs with minor `4294967295` from ESM version publication/allocation. They are never registered or version-table rows, and strict readers refuse them. Their packaged vector bytes do freeze on first publication as hash-pinned fixtures; new cases use new files. All real published versions remain frozen.

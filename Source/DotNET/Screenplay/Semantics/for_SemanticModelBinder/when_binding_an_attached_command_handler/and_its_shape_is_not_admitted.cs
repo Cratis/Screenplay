@@ -13,13 +13,45 @@ public class and_its_shape_is_not_admitted : given.a_semantic_binder
     [Theory]
     [InlineData("        produces Chosen\n        handler\n          file Missing.cs\n")]
     [InlineData("        handler\n          ```csharp\n          return null;\n          ```\n")]
-    [InlineData("        produces Chosen when true\n        handler\n          ```csharp\n          return null;\n          ```\n")]
+    [InlineData("        value String\n        produces when value == \"x\"\n          Chosen\n            value = value\n        handler\n          ```csharp\n          return null;\n          ```\n")]
     [InlineData("        produces Chosen\n        handler\n          ```csharp\n          \n          ```\n")]
     void should_refuse_an_unconstrained_body(string body)
     {
-        var result = Bind(and_the_inline_body_is_constrained.Prefix + body);
+        var result = BindParsedBody(body);
         result.Success.ShouldBeFalse();
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment);
+    }
+
+    [Theory]
+    [InlineData("        handler\n          ```csharp\n          return null;\n          ```\n", "Command 'Choose' handler requires a constrained implementation attachment.")]
+    [InlineData("        value String\n        produces when value == \"x\"\n          Chosen\n            value = value\n        handler\n          ```csharp\n          return null;\n          ```\n", "a conditional 'produces ... when' cannot sit beside a handler body. Declare an unconditional 'produces <Event>' beside the handler body")]
+    [InlineData("        value String\n        produces when value == \"x\"\n          Chosen\n            value = value\n        handler\n          ```csharp\n          return null;\n          ```\n", "split conditional or variable outcomes into separate commands, or move them to declarative 'produces ... when' without a body")]
+    [InlineData("        produces Chosen\n        handler\n          ```csharp\n          \n          ```\n", "the handler body is empty or missing")]
+    [InlineData("        produces Chosen\n        handler\n          file Missing.cs\n", "the handler's file could not be resolved to a nonempty body")]
+    void should_name_the_failed_condition(string body, string fragment)
+    {
+        var result = BindParsedBody(body);
+        var refusal = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment);
+        refusal.Message.ShouldContain(fragment);
+        refusal.Severity.ShouldEqual(DiagnosticSeverity.Error);
+    }
+
+    CompilationResult<SemanticCompilation> BindParsedBody(string body)
+    {
+        var source = and_the_inline_body_is_constrained.Prefix + body;
+        var parsed = new ScreenplayCompiler().Parse(source);
+        Assert.True(parsed.Success, string.Join('\n', parsed.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        return Bind(source);
+    }
+
+    [Fact]
+    void should_name_hints_remaining_in_the_requirement()
+    {
+        var source = and_the_inline_body_is_constrained.Source;
+        var command = new ScreenplayCompiler().Compile(source).Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+        var requirement = Bind(source).ImplementationRequirements.Single() with { Hints = ["Pending guidance"] };
+        DescribedCommandAdmission.IsResolvedBody(requirement).ShouldBeFalse();
+        DescribedCommandAdmission.AttachmentRefusalMessage(command, requirement).ShouldContain("the handler still carries implementation hints");
     }
 
     [Theory]

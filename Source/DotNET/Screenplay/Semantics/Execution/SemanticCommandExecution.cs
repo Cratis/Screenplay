@@ -19,6 +19,8 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionRequest request,
     SemanticRuleBodyExecution? ruleBodies,
     SemanticReducerBodyExecution reducers,
+    SemanticPolicyBodyExecution policies,
+    SemanticCommandBodyExecution handlers,
     Func<SemanticBodyExecutionRun>? commitRun,
     CancellationToken cancellationToken)
 {
@@ -51,14 +53,13 @@ internal sealed partial class SemanticCommandExecution(
 
         if (command.Handler is { } handler)
         {
-            return SemanticDecision.Refused(new SemanticUnsupported(world, SemanticExecutionCapability.ImplementationBody, $"Command '{command.Name}' handler body requires a target (requirement {handler.RequirementId}); the reference executor does not run implementation bodies."));
+            if (Handle(handler.RequirementId) is { } refusal) return SemanticDecision.Refused(refusal);
         }
-
-        foreach (var produced in command.Produces)
+        else
         {
-            if (Produce(produced) is { } production)
+            foreach (var produced in command.Produces)
             {
-                return SemanticDecision.Refused(production);
+                if (Produce(produced) is { } production) return SemanticDecision.Refused(production);
             }
         }
 
@@ -103,13 +104,13 @@ internal sealed partial class SemanticCommandExecution(
         var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties, request.RunsAs);
+        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties.Where(property => !property.IsGenerated), request.RunsAs, policies, request.Tenant, request.Occurrence?.Occurred, cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {
             SemanticPolicyOutcome.Unsupported => new SemanticUnsupported(
                 world,
                 SemanticExecutionCapability.Authorization,
-                $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
+                authorization.Details ?? $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider."),
             SemanticPolicyOutcome.Deny => new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized."),
             _ => null
         };
@@ -237,7 +238,7 @@ internal sealed partial class SemanticCommandExecution(
         (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
         (produced.Condition is not null && Evaluate(produced.Condition) is SemanticBooleanValue { Value: false });
 
-    SemanticExecutionResult? Produce(SemanticProducedEvent produced)
+    SemanticExecutionResult? Produce(SemanticProducedEvent produced, ImmutableArray<SemanticPropertyValue>? handlerValues = null)
     {
         if (IsSkipped(produced))
         {
@@ -267,10 +268,9 @@ internal sealed partial class SemanticCommandExecution(
             return Contract("A v2 allocated event source requires its declared scalar identity type.");
         }
 
-        var values = produced.Mappings
-            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, Evaluate(mapping.Source, request.Occurrence)))
-            .ToImmutableArray();
-        if (HasContextMapping(produced) && ValidateContextMappings(produced, values) is { } mappingRefusal)
+        var values = handlerValues ?? [.. produced.Mappings
+            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, Evaluate(mapping.Source, request.Occurrence)))];
+        if (handlerValues is null && HasContextMapping(produced) && ValidateContextMappings(produced, values) is { } mappingRefusal)
         {
             return mappingRefusal;
         }
@@ -331,15 +331,17 @@ internal sealed partial class SemanticCommandExecution(
 
     SemanticExecutionResult SettleWithProvider(SemanticWorld commitWorld, SemanticExecutionResponse? response)
     {
-        if (commitRun is null || !SemanticEvaluator.AllReducers(plan).Any(reducer => _facts.Any(fact => SemanticReducerBodyExecution.Reached(reducer, fact, plan))))
+        if (commitRun is null ||
+            (!SemanticEvaluator.AllReducers(plan).Any(reducer => _facts.Any(fact => SemanticReducerBodyExecution.Reached(reducer, fact, plan))) &&
+             !request.Queries.Any(query => policies.HasProvider && plan.Queries.TryGetValue(query.Query, out var declared) && SemanticPolicyBodyExecution.RequiredBy(plan, declared.Authorization))))
         {
-            return Settle(commitWorld, response, reducers);
+            return Settle(commitWorld, response, reducers, policies);
         }
         using var run = commitRun();
-        return Settle(commitWorld, response, run.Evaluator.ReducerBodies);
+        return Settle(commitWorld, response, run.Evaluator.ReducerBodies, run.Evaluator.PolicyBodies);
     }
 
-    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response, SemanticReducerBodyExecution reducerExecution)
+    SemanticExecutionResult Settle(SemanticWorld world, SemanticExecutionResponse? response, SemanticReducerBodyExecution reducerExecution, SemanticPolicyBodyExecution policyExecution)
     {
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (RejectReusedGeneratedSource(world) is { } reused) return reused;
@@ -381,7 +383,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         var tentative = world.Commit(facts, state.ReadModels, state.PendingChildren);
-        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller, reducerExecution);
+        var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, facts, request.Queries, request.Caller, reducerExecution, policyExecution, request.Tenant, request.Occurrence?.Occurred, cancellationToken);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
     }
 }

@@ -45,6 +45,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.Modules.SelectMany(module => module.Features).SelectMany(PossibleEventSlices).SelectMany(slice => slice.Commands).Any(command => command.Handler is { ResultVersion: 2 })) return (new(35, 0), new(35, 0));
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
         if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
         return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
@@ -141,6 +142,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
+        var memberTypes = ParserContext.ForDiagnostics();
+        ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
+        admission.AddRange(memberTypes.Diagnostics);
         if (syntax.Identity?.Details.Any() == true)
         {
             var identityAdmission = new IdentityAdmission(syntax);
@@ -349,6 +353,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
+
+        internal bool AllowPossibleEvents { get; init; }
 
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 

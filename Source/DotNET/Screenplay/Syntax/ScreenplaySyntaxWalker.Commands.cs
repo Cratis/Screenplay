@@ -309,6 +309,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitHandler(HandlerSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.PossibleEvents is not null) VisitPossibleEvents(syntax.PossibleEvents);
         if (syntax.Implementation is not null)
         {
             VisitImplementation(syntax.Implementation);
@@ -323,6 +324,23 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitCodeBlock(syntax.Code);
         }
+    }
+
+    /// <summary>Visits a handler's declared set of possible events.</summary>
+    /// <param name="syntax">The set to visit.</param>
+    public virtual void VisitPossibleEvents(PossibleEventsSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var entry in syntax.Events) VisitPossibleEvent(entry);
+    }
+
+    /// <summary>Visits a possible event and its route and tags.</summary>
+    /// <param name="syntax">The entry to visit.</param>
+    public virtual void VisitPossibleEvent(PossibleEventSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Stream is not null) VisitCommandStream(syntax.Stream);
+        foreach (var tag in syntax.Tags) VisitTag(tag);
     }
 
     /// <summary>

@@ -160,7 +160,7 @@ public sealed partial class SemanticModelBinder
             {
                 if ((trigger.Produces ?? []).Any() || requirement is not null)
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' reads '{reads.ReadModel}' before producing directly, but ESM v6 cannot protect that decision dependency (decision 0006).", reads.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' reads '{reads.ReadModel}' before producing directly, but ESM v6 cannot protect that decision dependency (decision 0006). Invoke a command from the reaction and put the decision in that command's declarative 'require' or mappings.", reads.Location);
                 }
                 else
                 {

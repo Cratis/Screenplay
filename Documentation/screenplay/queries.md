@@ -237,7 +237,7 @@ A query call is identified by the query, its `by` key and its supplied filter va
 
 Most queries need nothing more than their return type — the read model a [projection](projections/index.md) already builds is the answer. When a snapshot query needs its own logic, `performer` is where it goes. Stage loads the read-model collection once as `readModels` and runs a verified synchronous C# body to return the result. It is the query's counterpart to a command's [handler](commands.md#the-handler-block), and it takes the same two shapes: a `file` reference, or an inline block.
 
-An `observable` query with a `performer` currently renders as an explicit gap in Stage, not a live implementation. Stage reports `STAGE-IMPL-006` and emits a method throwing `NotImplementedException`; the plan's outcome is `Partial`, even if rendering reports success. It does not apply the body to read-model updates. See [#1077](https://github.com/Cratis/Screenplay/issues/1077) for the observable performer binding contract.
+An `observable` collection query with a `performer` has its own binding, described under [Observable performers](#observable-performers). An `observable` query that returns one read model, or an optional one, is still an explicit gap in Stage (`STAGE-IMPL-006`, a method throwing `NotImplementedException`, outcome `Partial`).
 
 Delegating to a file:
 
@@ -276,11 +276,55 @@ query ListLineItems => InvoiceLineReportReadModel[]
 
 Inside a Stage C# performer, `context` supplies `Arguments` (PascalCase argument properties), `Tenant` (string), `Identity` (`ClaimsPrincipal`), and `ReceivedAt` (`DateTimeOffset`). Caller arguments are also available by their camelCase parameter names. There is no command causation, `CausedBy`, or event `Occurred` member. A verified C# `file` body uses the same bindings; other languages, missing or invalid attachments, and body compilation errors render as gaps rather than executable performers.
 
+### Observable performers
+
+The binding is defined by [decision 0120](https://github.com/Cratis/Screenplay/blob/main/decisions/0120-live-performer-binding-contract.md). It applies to an `observable` query that returns a collection (`=> observable Talk[]`); a live query that returns one read model or an optional one has no live contract and stays a host gap.
+
+- **Inputs.** `readModels` is a `LiveReadModels<T>` for the declared read model `T`, `context` is the same performer context as above, and the caller arguments are available by their camelCase names.
+- **Result.** The body returns `IObservable<IEnumerable<T>>`. Each emission is the complete answer, never a delta, and nothing guarantees that consecutive emissions differ.
+- **Live source.** `LiveReadModels<T>` is an `IObservable<IEnumerable<T>>` with no other members. On subscribe it emits the current collection, then the whole collection after each change. The host declares the type; no package does.
+- **Reads.** The body reads only the declared read model, through `readModels`. A host that cannot observe that read model reports a gap; the binder does not refuse it.
+- **Lifetime.** The host subscribes once per client subscription and disposes it on unsubscribe, disconnect or shutdown. Disposal is the only cancellation: `context` has no cancellation member. `OnError` and `OnCompleted` end the subscription, and the host does not resubscribe.
+- **Capture.** `context` is captured once per subscription, so `ReceivedAt` does not advance.
+- **Version.** The `QueryPerformer` requirement carries `ContextVersion` 1 and `ResultVersion` 2. Every other performer stays at 1 and 1.
+
+```csharp
+public interface LiveReadModels<T> : IObservable<IEnumerable<T>>
+{
+}
+```
+
+Inline:
+
+````screenplay
+query OpenTalks => observable Talk[]
+  filter track String
+  performer
+    ```csharp
+      return readModels.Select(talks => talks.Where(talk => talk.Track == track).OrderBy(talk => talk.Title));
+      ```
+````
+
+Delegating to a file:
+
+```screenplay
+query OpenTalks => observable Talk[]
+  filter track String
+  performer
+    file Queries/OpenTalks.cs
+```
+
+The content of `Queries/OpenTalks.cs` is the same method body:
+
+```csharp
+return readModels.Select(talks => talks.Where(talk => talk.Track == track).OrderBy(talk => talk.Title));
+```
+
 ### A query a performer answers is an opaque read
 
 The code decides what a performer returns, so no declarative shape can be executed or specified. Binding does not refuse the application merely for having a performer. The query is listed as code the model needs (`QueryPerformer`), reported as `PLAY0270` information (`Query '<name>' is performed by code`), and left out of the executable model: it takes no part in the plan and no specification can assert it. A specification whose `then query` names a performer query is left out of the executable specifications with the same information; every other declaration and specification of the application keeps running with `screenplay test`. Everything else about the query — its read model, the screen bound to it, its authorization — is unchanged.
 
-The `QueryPerformer` requirement carries the query's shape, so a host can render the query without running it: the read model it returns (name, semantic identity and address), its cardinality (`One`, `ZeroOrOne` or `Many`, as for any other query), whether it is observable (`Live`) or a snapshot, and its caller-supplied arguments — each `by` key and key part, then each filter, with its type and whether it is optional. A performer query with a `by` or `filter` argument sourced from `$context` is refused with `PLAY0810`, naming the query and argument. Context-sourced performer arguments are not supported; use caller-supplied arguments instead. Other arguments sourced with `from`, such as literals, remain omitted from the shape. The shape lives only on the requirement: it is not part of the executable model, so it changes neither the canonical model bytes nor its version.
+The `QueryPerformer` requirement carries the query's shape, so a host can render the query without running it: the read model it returns (name, semantic identity and address), its cardinality (`One`, `ZeroOrOne` or `Many`, as for any other query), whether it is observable (`Live`) or a snapshot, the requirement's `ResultVersion` (2 for an observable collection, otherwise 1), and its caller-supplied arguments — each `by` key and key part, then each filter, with its type and whether it is optional. A performer query with a `by` or `filter` argument sourced from `$context` is refused with `PLAY0810`, naming the query and argument. Context-sourced performer arguments are not supported; use caller-supplied arguments instead. Other arguments sourced with `from`, such as literals, remain omitted from the shape. The shape lives only on the requirement: it is not part of the executable model, so it changes neither the canonical model bytes nor its version.
 
 A read model a performer composes therefore sits next to projected read models without making the application `unbound`. Specify the declarative part (the events that feed it) as usual; the performer's own logic is realization metadata that a test of the real code covers.
 

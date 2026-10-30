@@ -28,11 +28,32 @@ internal static class CommandHandlerValidator
     }
 
     // Programmatic composition may retain same-named command parts instead of parsing one body.
+    internal static void Validate(IEnumerable<(HandlerSyntax? Handler, SourceLocation Location)> handlers, HandlerSyntax? handler, bool hasProduces, ParserContext context)
+    {
+        Validate(handlers, context);
+        ValidatePossibleEvents(handler, hasProduces, context);
+    }
+
+    internal static void ValidatePossibleEvents(HandlerSyntax? handler, bool hasProduces, ParserContext context)
+    {
+        if (hasProduces && handler?.PossibleEvents is { } possible)
+        {
+            context.Error(DiagnosticCodes.InvalidPossibleEventsDeclaration, "A command cannot combine 'produces' with a handler 'may produce' set.", possible.Location);
+        }
+    }
+
     internal static void Validate(IEnumerable<CommandSyntax> commands, ParserContext context)
     {
         foreach (var group in commands.GroupBy(command => command.Name, StringComparer.Ordinal))
         {
             Validate(group.Where(command => command.Handler is not null).Select(command => (command.Handler, command.Handler!.Location)), context);
+            if (group.Any(command => command.Produces.Any()))
+            {
+                foreach (var possible in group.Select(command => command.Handler?.PossibleEvents).OfType<PossibleEventsSyntax>())
+                {
+                    context.Error(DiagnosticCodes.InvalidPossibleEventsDeclaration, "A command cannot combine 'produces' with a handler 'may produce' set.", possible.Location);
+                }
+            }
         }
     }
 }

@@ -43,9 +43,11 @@ public class a_performed_query : for_SemanticModelBinder.given.a_semantic_binder
 
     protected CompilationResult<SemanticCompilation> _result;
 
-    protected SemanticPerformedQueryShape ShapeOf(string query) =>
+    protected SemanticImplementationRequirement RequirementOf(string query) =>
         _result.ImplementationRequirements.Single(requirement =>
-            requirement.Role == SemanticImplementationRole.QueryPerformer && requirement.Owner.Name == query).QueryShape!;
+            requirement.Role == SemanticImplementationRole.QueryPerformer && requirement.Owner.Name == query);
+
+    protected SemanticPerformedQueryShape ShapeOf(string query) => RequirementOf(query).QueryShape!;
 
     void Establish() => _result = Bind(Source);
 }

@@ -17,6 +17,8 @@ public sealed partial class SemanticModelBinder
         SemanticCommandHandler? BindCommandHandler(SemanticAddress address, CommandSyntax command, DeclarationScope scope)
         {
             if (command.Handler is not { } handler) return null;
+            if (handler.PossibleEvents is not null) return BindStagedPossibleEventsHandler(address, command, scope, handler);
+
             if (!DescribedCommandAdmission.IsDescribed(command)) return BindAttachedCommandHandler(address, command, scope, handler);
 
             if (DescribedCommandAdmission.Refusal(command) is { } refusal)
@@ -46,7 +48,7 @@ public sealed partial class SemanticModelBinder
             if (IsConstrainedBody(command, attached)) return new(attached!.RequirementId, 1);
 
             var subject = DiagnosticArgument.Declaration("command", [.. scope.Segments, command.Name]);
-            Error(DiagnosticCodes.CommandHandlerRequiresAttachment, $"Command '{command.Name}' handler requires a constrained implementation attachment.", handler.Location, DiagnosticArguments.Empty.With("subject", subject));
+            Error(DiagnosticCodes.CommandHandlerRequiresAttachment, DescribedCommandAdmission.AttachmentRefusalMessage(command, attached), handler.Location, DiagnosticArguments.Empty.With("subject", subject));
             return null;
         }
     }

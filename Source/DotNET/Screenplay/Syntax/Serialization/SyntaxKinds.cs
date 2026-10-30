@@ -119,7 +119,7 @@ internal static class SyntaxKinds
         typeof(FormPopulateViaQuerySyntax),
         typeof(FormSyntax),
         typeof(FromSyntax),
-        typeof(HandlerSyntax),
+        typeof(HandlerSyntax), typeof(PossibleEventsSyntax), typeof(PossibleEventSyntax),
         typeof(ImplementationSyntax),
         typeof(ImplementationHintSyntax),
         typeof(SystemSyntax),

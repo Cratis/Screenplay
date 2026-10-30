@@ -95,7 +95,7 @@ public sealed record SemanticImplementationRequirement(
     /// <summary>The version of the role's context contract.</summary>
     public uint ContextVersion { get; init; } = 1;
 
-    /// <summary>The version of the role's result contract.</summary>
+    /// <summary>The version of the role's result contract: 1, except 2 for an observable collection QueryPerformer (decision 0120).</summary>
     public uint ResultVersion { get; init; } = 1;
 
     /// <summary>The capability the target provider must admit; Screenplay does not enforce provider allowlists.</summary>

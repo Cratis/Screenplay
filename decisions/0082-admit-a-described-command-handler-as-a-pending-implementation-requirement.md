@@ -154,3 +154,7 @@ explicit. Realization needs another decision before filled bodies survive a re-r
 ## Related
 
 #307, #362; decisions 0002, 0012, 0023, 0004 (admission); Cratis/Stage#316 (design v2, L18b).
+
+## Implementation note — #1099 S5
+
+The opt-in reference-run `HandleAsync` seam executes only a resolved, content-verified, provider-defined CommandHandler with context/result v1. `SemanticCommandBodyResult` carries positional semantic composites only: one payload per unconditional produces line, in declaration order, including separate slots when lines name the same event. There are no event descriptors, destinations, tags, routing, occurrence metadata, append envelopes, decisions or rejection channels in the answer. The executor validates the whole batch and required/optional typed properties before producing facts through the existing declarative machinery; mappings remain hints and are not evaluated. Pending handlers and default providers remain unsupported. No canonical bytes, ESM/ABI version or decision wording above changes; result v2, conditional/repeated productions and body-decided cardinality remain outside this seam. Verification is pending the #1099 gate.

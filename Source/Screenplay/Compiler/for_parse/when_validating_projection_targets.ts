@@ -41,7 +41,7 @@ describe('when validating projection targets', () => {
     });
 
     it('should not guess an external element shape', () => {
-        const result = compile('module M', '  feature F', '    slice StateView S', '      event E',
+        const result = compile('import Contracts.External', 'module M', '  feature F', '    slice StateView S', '      event E',
             '      readmodel V', '        detail External', '      projection P => V', '        nested detail',
             '          from E', '            missing = "value"');
         result.diagnostics.should.deep.equal([]);

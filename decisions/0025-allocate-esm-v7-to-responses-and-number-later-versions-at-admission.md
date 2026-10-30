@@ -124,3 +124,5 @@ Screenplay: [#285](https://github.com/Cratis/Screenplay/issues/285), [#300](http
 ## Status notes
 
 **2026-10-07 — accepted.** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. The partial-supersession banner in 0023 records the accepted allocation; its original decision text is preserved.
+
+**2026-10-26 — minor allocation and reading.** [Decision 0118](0118-unknown-preserving-esm-admission.md) admits additive, ignorable minors only on the latest published major, separately from caller-range reading of any supported major. It allocates no real minor and reserves conformance-only pairs under an explicit exception to 0066.

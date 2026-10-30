@@ -31,6 +31,7 @@ public sealed partial class SemanticModelBinder
                 }
                 foreach (var production in produced)
                 {
+                    ValidatePossibleEventRoute(production.Destination, identifier, properties, route.Location);
                     if (production.Destination is SemanticResolvedExpression destination && properties.Values.Single(property => property.Id == destination.Target).Type != identifier)
                     {
                         Error(DiagnosticCodes.InvalidSemanticBinding, $"Command '{command.Name}' production destination type must match its routed source's identifier type.", route.Location);
@@ -50,6 +51,13 @@ public sealed partial class SemanticModelBinder
             }
 
             return new(source.Id, stream.Id) { StreamId = scalar, StreamIdParts = parts.ToImmutable() };
+        }
+
+        void ValidatePossibleEventRoute(SemanticExpression? destination, SemanticTypeReference identifier, Dictionary<string, SemanticProperty> properties, SourceLocation location)
+        {
+            if (destination is not SemanticOneOfExpression oneOf) return;
+            var elementType = properties.Values.Single(property => property.Id == oneOf.CollectionProperty).Type with { IsCollection = false };
+            if (elementType != identifier) Error(DiagnosticCodes.InvalidSemanticBinding, "Possible-event destination element type must match its routed source's identifier type.", location);
         }
 
         SemanticExpression? BindRouteExpression(ExpressionSyntax expression, SemanticTypeReference type, Dictionary<string, SemanticProperty> properties, string command)

@@ -22,6 +22,9 @@
                           Link="Esm/%(Filename)%(Extension)"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalCorpus.Esm.%(Filename)%(Extension)" />
+        <EmbeddedResource Include="EsmConformance/*.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalCorpus.EsmConformance.%(Filename)%(Extension)" />
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
     </ItemGroup>
 </Project>

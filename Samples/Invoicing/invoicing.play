@@ -1405,8 +1405,8 @@ module Invoicing
             severity error
             message "Action must be send or cancel"
 
-        // The escape hatch when produces cannot say it: an imperative handler
-        // compiled against CommandContext.
+        // Deliberately refused (PLAY0800): this body has no unconditional produces beside it,
+        // so this showcases the refusal. See Documentation/screenplay/commands.md, "The handler block".
         handler
           ```csharp
           var events = new List<object>();

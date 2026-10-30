@@ -38,7 +38,7 @@ public class when_validating_guarded_action_shadowing
 
     static CompilationResult<Syntax.ApplicationSyntax> Compile(string alternatives)
     {
-        const string Source = "module Work\n  feature Items\n    slice StateView Details\n      readmodel Item\n        status String\n        ready Boolean\n      query Details => Item\n      command Retry\n      screen Details\n        data Item via query Details\n        action \"Again\"\n          ";
+        const string Source = "module Work\n  feature Items\n    slice StateView Details\n      readmodel Item\n        status String\n        ready Bool\n      query Details => Item\n      command Retry\n      screen Details\n        data Item via query Details\n        action \"Again\"\n          ";
         return new ScreenplayCompiler().Compile(Source + alternatives.Replace("\n", "\n          ", StringComparison.Ordinal));
     }
 }
