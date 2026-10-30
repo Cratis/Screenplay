@@ -8,6 +8,6 @@ public class and_the_type_is_undeclared : given.a_member
     protected override string SliceDeclarations => string.Empty;
     void Because() => Result = Compiler.Compile(Source);
 
-    [Fact] void should_fail_instead_of_leaving_an_unresolved_member() => Result.Success.ShouldBeFalse();
-    [Fact] void should_explain_the_unsupported_type_once() => Result.Diagnostics.Single().Message.ShouldEqual(Message);
+    [Fact] void should_compile_successfully() => Result.Success.ShouldBeTrue();
+    [Fact] void should_not_report_an_unsupported_member_type() => Result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0273").ShouldBeFalse();
 }

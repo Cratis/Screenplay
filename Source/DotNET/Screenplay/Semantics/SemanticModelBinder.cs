@@ -142,7 +142,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
         var memberTypes = ParserContext.ForDiagnostics();
-        ReadModelMemberTypeValidator.Validate(syntax, memberTypes);
+        ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
         admission.AddRange(memberTypes.Diagnostics);
         if (syntax.Identity?.Details.Any() == true)
         {

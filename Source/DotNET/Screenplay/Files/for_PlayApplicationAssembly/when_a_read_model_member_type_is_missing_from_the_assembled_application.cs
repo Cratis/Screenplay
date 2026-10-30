@@ -15,9 +15,6 @@ public class when_a_read_model_member_type_is_missing_from_the_assembled_applica
         ["values.play"] = "type Other\n  value String"
     }));
 
-    [Fact] void should_fail_validation() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_only_one_error() => _result.Diagnostics.Single().Code.ShouldEqual("PLAY0273");
-    [Fact] void should_locate_the_member_file() => _result.Diagnostics.Single().Location.Path.ShouldEqual("model.play");
-    [Fact] void should_locate_the_member_line() => _result.Diagnostics.Single().Location.Line.ShouldEqual(6);
-    [Fact] void should_locate_the_member_column() => _result.Diagnostics.Single().Location.Column.ShouldEqual(18);
+    [Fact] void should_compile_successfully() => _result.Success.ShouldBeTrue();
+    [Fact] void should_not_report_an_unsupported_member_type() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0273").ShouldBeFalse();
 }

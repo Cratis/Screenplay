@@ -11,13 +11,14 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class ReadModelMemberTypeValidator
 {
-    internal static void Validate(ApplicationSyntax application, ParserContext context)
+    internal static void Validate(ApplicationSyntax application, ParserContext context, bool rejectUnknownTypes = false)
     {
         var slices = ScreenplayValidator.ScopedSlices(application).Select(entry => entry.Slice).ToArray();
         var names = DocumentNames.Of(application, slices);
         foreach (var model in slices.SelectMany(slice => slice.ReadModels ?? []))
         {
-            foreach (var property in model.Properties.Where(property => !names.Types.Contains(property.Type.Name)))
+            foreach (var property in model.Properties.Where(property => !names.Types.Contains(property.Type.Name) &&
+                (rejectUnknownTypes || names.ReadModels.Contains(property.Type.Name))))
             {
                 context.Error(
                     DiagnosticCodes.InvalidSemanticBinding,

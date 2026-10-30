@@ -10,7 +10,7 @@ const lines = ['import "values.play"', 'module M', '  feature F', '    slice Sta
 
 describe('when receiving assembled member-type diagnostics', () => {
     it('should forward the compiler error once with the real member span', () => {
-        const values = 'type Other\n  value String';
+        const values = 'module M\n  feature F\n    slice StateView Children\n      readmodel Child\n        value String';
         const result = compileApplication(new Map([['model.play', lines.join('\n')], ['values.play', values]]), ['model.play']);
         const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.location.path === 'model.play');
         const issues = validateLines(lines, { path: 'model.play', application: scanDocument(values.split('\n')), compilerDiagnostics: diagnostics });

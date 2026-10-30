@@ -54,6 +54,19 @@ describe('when validating read-model member types in VS Code', () => {
             ['PLAY0273', vscode.DiagnosticSeverity.Error, message, 14],
         ]);
     });
+    it('should not reject an undeclared member type', () => {
+        refresh(source.split('\n').slice(0, 5).join('\n'));
+        editor.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').should.be.empty;
+    });
+    it('should not reject a member referencing a skipped slice-local type locally or after assembly', () => {
+        const text = source.replace('readmodel Child', 'type Child');
+        refresh(text);
+        editor.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').should.be.empty;
+        const application = new WorkspaceApplication();
+        application.set('model.play', text);
+        refresh(text, application);
+        editor.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').should.be.empty;
+    });
     it('should deduplicate the same assembled compiler and language diagnostic', () => {
         const application = new WorkspaceApplication();
         application.set('model.play', source);

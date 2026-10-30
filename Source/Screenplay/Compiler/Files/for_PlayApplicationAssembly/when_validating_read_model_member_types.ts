@@ -14,13 +14,11 @@ describe('when validating assembled read-model member types', () => {
         result.success.should.be.true;
         result.diagnostics.should.be.empty;
     });
-    it('should preserve the referencing member location when the assembled type is absent', () => {
+    it('should not reject a member when the assembled type is absent', () => {
         const result = compileApplication(new Map([
             ['model.play', model], ['values.play', 'type Other\n  value String'],
         ]), ['model.play']);
-        result.success.should.be.false;
-        result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity, diagnostic.location]).should.deep.equal([
-            ['PLAY0273', 'error', { line: 6, column: 15, path: 'model.play' }],
-        ]);
+        result.success.should.be.true;
+        result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').should.be.empty;
     });
 });

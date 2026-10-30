@@ -15,21 +15,32 @@ describe('when validating read-model member types', () => {
             code: 'PLAY0273', severity: 'error', message, location: { line: 5, column: 15, path: 'model.play' }, arguments: {},
         }]);
     });
-    it('should retain the warning for a skipped slice-local type and diagnose its member', () => {
+    it.each([
+        '      projection Child',
+        '      projection Build => Child',
+        '      projection Build\n        variant Child',
+        '      reducer Build => Child',
+    ])('should reject a read-model name built by %s', declaration => {
+        const result = parse(prefix + '        child Child[]\n' + declaration);
+        result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').map(diagnostic => diagnostic.message).should.deep.equal([message]);
+    });
+    it('should retain only the warning for a skipped slice-local type', () => {
         const result = parse(prefix + '        child Child[]\n      type Child\n        value String');
+        result.success.should.be.true;
         result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.severity, diagnostic.location.line]).should.deep.equal([
-            ['PLAY0029', 'warning', 6], ['PLAY0273', 'error', 5],
+            ['PLAY0029', 'warning', 6],
         ]);
         result.diagnostics[0].message.should.equal("Unknown construct 'type' in slice 'View'");
-        result.diagnostics[1].message.should.equal(message);
     });
     it('should leave an unused slice-local type warning-only', () => {
         const result = parse(prefix + '        child String\n      type Child\n        value String');
         result.success.should.be.true;
         result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0029']);
     });
-    it('should reject an undeclared type', () => {
-        parse(prefix + '        child Child[]').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0273']);
+    it('should not reject an undeclared member type', () => {
+        const result = parse(prefix + '        child Child[]');
+        result.success.should.be.true;
+        result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0273').should.be.empty;
     });
     it('should not admit a sibling read model as a value type', () => {
         parse(prefix + '        child Child[]\n    slice StateView Other\n      readmodel Child\n        value String').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0273']);
