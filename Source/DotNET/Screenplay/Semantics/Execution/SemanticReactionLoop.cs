@@ -201,12 +201,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             return null;
         }
 
+        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         if (trigger.RequirementId is not null)
         {
-            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has an opaque body and requires a target provider to run it.");
+            return FireBody(reaction, trigger, cause, occurrence);
         }
-
-        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
         try
         {
@@ -324,14 +323,9 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
             Occurrence = occurrence,
-            ReactionOrigin = reaction.Id,
-            RunsAs = reaction.RunsAs,
-            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty,
-            GeneratedValues = TakePinned(command)
+            CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
         };
-
-        var result = evaluator.Execute(plan, World, request);
-        _invocations.Add(new(command.Id, commandValues, result is SemanticAccepted));
+        var result = RunInvoked(reaction, command, request);
         if (result is not SemanticAccepted accepted)
         {
             if (!invocation.OnRefused.IsDefaultOrEmpty && SemanticInvocationRefusalEvaluation.Classify(result) is { } refusal &&
@@ -349,6 +343,18 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         // A value the specification pinned with 'given generated' reaches generation; an unpinned one reports IdentityAllocation.
         // A command another slice owns is that slice's behavior: in an isolated run its outcome decides the reaction, its facts are not adopted.
         return plan.Runs(command.Id) ? AcceptCommand(accepted, occurrence?.Occurred) : null;
+    }
+
+    SemanticExecutionResult RunInvoked(SemanticReaction reaction, SemanticCommand command, SemanticExecutionRequest request)
+    {
+        var result = evaluator.Execute(plan, World, request with
+        {
+            ReactionOrigin = reaction.Id,
+            RunsAs = reaction.RunsAs,
+            GeneratedValues = TakePinned(command)
+        });
+        _invocations.Add(new(command.Id, request.Values, result is SemanticAccepted));
+        return result;
     }
 
     SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>

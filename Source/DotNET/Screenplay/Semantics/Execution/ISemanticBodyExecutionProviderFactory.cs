@@ -20,7 +20,8 @@ public interface ISemanticBodyExecutionProviderFactory
     /// its decision-body provider before returning. Each commit with reducer work or a requested query's opaque policy
     /// requests and disposes a fresh provider using the decision's captured cancellation token; repeated commits may
     /// therefore call this factory again. Purely portable commits do not request a provider. Handler bodies run only
-    /// during the decision, never again at commit.
+    /// during the decision, never again at commit. Reaction effects share the specification run's provider
+    /// with validations, policies, handlers and reducers; a reaction never disposes it.
     /// </remarks>
     ValueTask<ISemanticBodyExecutionProvider> CreateAsync(SemanticApplication application, IReadOnlyDictionary<string, SemanticImplementationBody> bodies, CancellationToken cancellationToken);
 }

@@ -34,11 +34,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         ReducerBodies = new(provider, _ruleBodies);
         PolicyBodies = new(provider, _ruleBodies);
         HandlerBodies = new(provider, _ruleBodies);
+        ReactionBodies = new(provider, _ruleBodies);
     }
 
     internal SemanticReducerBodyExecution ReducerBodies { get; } = SemanticReducerBodyExecution.None;
     internal SemanticPolicyBodyExecution PolicyBodies { get; } = SemanticPolicyBodyExecution.None;
     internal SemanticCommandBodyExecution HandlerBodies { get; } = SemanticCommandBodyExecution.None;
+    internal SemanticReactionBodyExecution ReactionBodies { get; } = SemanticReactionBodyExecution.None;
 
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
