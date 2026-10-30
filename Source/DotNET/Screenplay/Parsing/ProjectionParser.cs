@@ -531,6 +531,15 @@ internal static partial class ProjectionParser
         if (context.TryPeekChild(line.Indent, out _))
         {
             var type = text.TrimEnd('{').Trim();
+            if (text.EndsWith('{'))
+            {
+                context.Add(new(
+                    DiagnosticSeverity.Information,
+                    DiagnosticCodes.RedundantCompositeKeyBraces,
+                    "Write the composite key without braces; the indented parts already belong to the key.",
+                    line.Location));
+            }
+
             var parts = new List<KeyPartSyntax>();
             while (context.TryPeekChild(line.Indent, out var child))
             {

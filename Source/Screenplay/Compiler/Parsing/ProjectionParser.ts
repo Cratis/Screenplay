@@ -326,6 +326,7 @@ function parseEntersOn(context: ParserContext, line: SourceLine): ProjectionEnte
 function parseKey(context: ParserContext, line: SourceLine): KeySyntax {
     const text = line.content.substring('key'.length).trim();
     if (context.peekChild(line.indent) === undefined) return { kind: 'ExpressionKeySyntax', expression: parseProjectionExpression(text, locationOf(line), context), location: locationOf(line) };
+    if (text.endsWith('{')) context.information(DiagnosticCodes.RedundantCompositeKeyBraces, 'Write the composite key without braces; the indented parts already belong to the key.', locationOf(line));
     const parts: KeyPartSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();

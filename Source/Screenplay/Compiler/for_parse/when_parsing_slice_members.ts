@@ -73,8 +73,8 @@ describe('when parsing slice members', () => {
         [registration, lookup, reminders] = result.value.modules[0].features[0].slices;
     });
 
-    it('should report the undeclared constraint property', () => {
-        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0391@18']);
+    it('should report the undeclared constraint property and the redundant key braces', () => {
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0824@33', 'PLAY0391@18']);
     });
 
     it('should read the command properties, including one named like a directive', () => {
