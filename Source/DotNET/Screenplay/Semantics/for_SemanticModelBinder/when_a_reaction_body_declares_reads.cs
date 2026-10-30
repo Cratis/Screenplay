@@ -1,0 +1,28 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
+
+public class when_a_reaction_body_declares_reads : given.a_semantic_binder
+{
+    CompilationResult<SemanticCompilation> _result;
+    void Because() => _result = Bind(
+        """
+        module Billing
+          feature Decisions
+            slice Automation Direct
+              readmodel Decision
+                id String
+              event Began
+              reaction Decide
+                when Began
+                  reads Decision
+                  ```csharp
+                  return null;
+                  ```
+        """);
+
+    [Fact] void should_refuse_unprotected_body_reads() => _result.Success.ShouldBeFalse();
+    [Fact] void should_explain_the_protection_boundary() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("cannot protect that decision dependency", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_the_body_boundary() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("A reaction body has no read access", StringComparison.Ordinal)).ShouldBeTrue();
+}

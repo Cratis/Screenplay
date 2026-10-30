@@ -23,17 +23,18 @@ internal static class SemanticHandlerResultValidation
         if (result.Items.IsDefault) return new([], "handler returned no v2 result", null);
         if (result.Items.Length > maximumItems) return Refuse(maximumItems, $"handler returned more than {maximumItems} result items");
 
+        var validator = new SemanticValueValidator(plan.Model.Application.Concepts.ToDictionary(concept => concept.Id), plan.Model.Application.Types.ToDictionary(type => type.Id));
         var items = ImmutableArray.CreateBuilder<SemanticHandlerResultItem>();
         for (var index = 0; index < result.Items.Length; index++)
         {
-            var (item, reason) = ValidateItem(plan, command, commandValues, result.Items[index]);
+            var (item, reason) = ValidateItem(plan, validator, command, commandValues, result.Items[index]);
             if (reason is not null) return Refuse(index, reason);
             items.Add(item!);
         }
         return new(items.ToImmutable(), null, null);
     }
 
-    static (SemanticHandlerResultItem? Item, string? Reason) ValidateItem(SemanticExecutionPlan plan, SemanticCommand command, IReadOnlyDictionary<SemanticId, SemanticValue> commandValues, SemanticCommandBodyItem item)
+    static (SemanticHandlerResultItem? Item, string? Reason) ValidateItem(SemanticExecutionPlan plan, SemanticValueValidator validator, SemanticCommand command, IReadOnlyDictionary<SemanticId, SemanticValue> commandValues, SemanticCommandBodyItem item)
     {
         if (item is null) return (null, "handler returned a null item");
         var entry = command.Handler!.PossibleEvents.SingleOrDefault(entry => entry.EventContract == item.EventContract);
@@ -41,8 +42,7 @@ internal static class SemanticHandlerResultValidation
         if (DestinationViolation(entry, item, commandValues) is { } reason) return (null, reason);
         try
         {
-            // S4: replaced by ValidateEvent once Screenplay#1099 (S6) lands
-            var values = SemanticCommandPayloads.Validate(plan, command with { Produces = [entry] }, SemanticCommandBodyResult.Produced([item.Payload]))[0];
+            var values = SemanticCommandPayloads.ValidateEvent(validator, plan.Events[entry.EventContract], item.Payload, "handler");
             var destination = ResolveDestination(entry, item, commandValues);
             return (new(entry, SemanticValue.Composite(values), destination), null);
         }
