@@ -6,4 +6,6 @@ export * from './Document/identity';
 export * from './Schemas/SchemaSynthesizer';
 export * from './Mapping/EventModelDocumentVisitor';
 export * from './Mapping/compileEventModelApplication';
+export * from './Mapping/timelineAnnotations';
+export * from './Mapping/withSliceAnnotations';
 export * from './Dependencies';

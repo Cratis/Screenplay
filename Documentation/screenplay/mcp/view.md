@@ -82,6 +82,8 @@ the drawing; arrow keys move between nodes and edges, Enter selects, and Escape 
 Choose **Board** to return to the timeline. The map does not change the model or
 highlight the board, and inferred dependencies do not prove executable readiness.
 
+[Timeline findings](../imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
+
 If the board cannot read or draw the model, **Board** and **Map** stay in the
 toolbar. The Board view says why, and the Map stays available when the dependencies
 were compiled. A failure in one view leaves the other in place. If compiling gives no

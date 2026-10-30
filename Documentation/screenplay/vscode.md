@@ -14,6 +14,8 @@ The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.
 
 The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
 
+[Timeline findings](imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
+
 ```bash
 code --install-extension cratis.screenplay
 ```
