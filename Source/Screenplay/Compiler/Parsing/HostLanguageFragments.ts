@@ -29,21 +29,57 @@ function skipQuoted(text: string, start: number): number {
     return text.length;
 }
 
+function isStringQuote(character: string): boolean {
+    return character === '"' || character === '\'';
+}
+
+function isOpaqueQuote(character: string): boolean {
+    return isStringQuote(character) || character === '`';
+}
+
+function depthChange(character: string): number {
+    if (character === '{' || character === '[') return 1;
+    if (character === '}' || character === ']') return -1;
+    return 0;
+}
+
 function skipStructured(text: string, start: number): number {
     let depth = 0;
     let index = start;
-    while (index < text.length) {
-        const character = text[index];
-        if (character === '"' || character === '\'') {
+    do {
+        if (isStringQuote(text[index])) {
             index = skipQuoted(text, index);
-            continue;
+        } else {
+            depth += depthChange(text[index]);
+            index++;
         }
-        if (character === '{' || character === '[') depth++;
-        else if (character === '}' || character === ']') depth--;
-        index++;
-        if (depth === 0) break;
-    }
+    } while (depth > 0 && index < text.length);
     return index;
+}
+
+// The end of a quoted string, template or structured value starting at the index, or null when none starts there.
+function skipOpaque(text: string, index: number): number | null {
+    if (isOpaqueQuote(text[index])) return skipQuoted(text, index);
+    if (depthChange(text[index]) > 0) return skipStructured(text, index);
+    return null;
+}
+
+function doubledOperatorAt(text: string, index: number): HostLanguageFragment | null {
+    const character = text[index];
+    const isOperatorCharacter = character === '&' || character === '|';
+    return isOperatorCharacter && text[index + 1] === character ? { fragment: character + character, offset: index } : null;
+}
+
+function identifierEnd(text: string, start: number): number {
+    if (!isIdentifierStart(text[start])) return start;
+    let end = start;
+    while (end < text.length && isIdentifierPart(text[end])) end++;
+    return end;
+}
+
+function callAt(text: string, start: number, end: number): HostLanguageFragment | null {
+    const word = text.substring(start, end);
+    return text[end] === '(' && !wordOperators.has(word) ? { fragment: `${word}(`, offset: start } : null;
 }
 
 // Finds the first host-language operator or call ('&&', '||', 'Name(') outside quoted strings, backtick templates and
@@ -51,32 +87,37 @@ function skipStructured(text: string, start: number): number {
 export function findHostLanguageFragment(text: string): HostLanguageFragment | null {
     let index = 0;
     while (index < text.length) {
-        const character = text[index];
-        if (character === '"' || character === '\'' || character === '`') {
-            index = skipQuoted(text, index);
-        } else if (character === '{' || character === '[') {
-            index = skipStructured(text, index);
-        } else if ((character === '&' || character === '|') && text[index + 1] === character) {
-            return { fragment: character + character, offset: index };
-        } else if (isIdentifierStart(character)) {
-            let end = index;
-            while (end < text.length && isIdentifierPart(text[end])) end++;
-            const word = text.substring(index, end);
-            if (text[end] === '(' && !wordOperators.has(word)) return { fragment: `${word}(`, offset: index };
-            index = end;
-        } else {
-            index++;
+        const opaqueEnd = skipOpaque(text, index);
+        if (opaqueEnd !== null) {
+            index = opaqueEnd;
+            continue;
         }
+
+        const operator = doubledOperatorAt(text, index);
+        if (operator !== null) return operator;
+
+        const end = identifierEnd(text, index);
+        if (end === index) {
+            index++;
+            continue;
+        }
+
+        const call = callAt(text, index, end);
+        if (call !== null) return call;
+        index = end;
     }
     return null;
+}
+
+function messageFor(fragment: string): string {
+    if (fragment === '&&') return "Host-language '&&' is not Screenplay - use 'and'";
+    if (fragment === '||') return "Host-language '||' is not Screenplay - use 'or'";
+    return `Host-language call '${fragment}' is not Screenplay - move it into an inline code block or a 'rule'`;
 }
 
 export function warnOnHostLanguageFragment(context: ParserContext, text: string, location: SourceLocation): void {
     const found = findHostLanguageFragment(text);
     if (found === null) return;
-    const message = found.fragment === '&&' ? "Host-language '&&' is not Screenplay - use 'and'"
-        : found.fragment === '||' ? "Host-language '||' is not Screenplay - use 'or'"
-            : `Host-language call '${found.fragment}' is not Screenplay - move it into an inline code block or a 'rule'`;
     // Legacy value contexts are quiet; the C# compiler reports this warning there too.
-    context.reportingContext.warning(DiagnosticCodes.HostLanguageExpression, message, location);
+    context.reportingContext.warning(DiagnosticCodes.HostLanguageExpression, messageFor(found.fragment), location);
 }

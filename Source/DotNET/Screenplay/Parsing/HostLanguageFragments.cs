@@ -25,35 +25,30 @@ internal static class HostLanguageFragments
         var index = 0;
         while (index < text.Length)
         {
-            var character = text[index];
-            if (character is '"' or '\'' or '`')
+            if (SkipOpaque(text, index) is { } opaqueEnd)
             {
-                index = SkipQuoted(text, index);
+                index = opaqueEnd;
+                continue;
             }
-            else if (character is '{' or '[')
-            {
-                index = SkipStructured(text, index);
-            }
-            else if ((character == '&' || character == '|') && index + 1 < text.Length && text[index + 1] == character)
-            {
-                return (new string(character, 2), index);
-            }
-            else if (IsIdentifierStart(character))
-            {
-                var end = index;
-                while (end < text.Length && IsIdentifierPart(text[end])) end++;
-                var word = text[index..end];
-                if (end < text.Length && text[end] == '(' && !_wordOperators.Contains(word))
-                {
-                    return ($"{word}(", index);
-                }
 
-                index = end;
+            if (DoubledOperatorAt(text, index) is { } operatorFragment)
+            {
+                return operatorFragment;
             }
-            else
+
+            var end = IdentifierEnd(text, index);
+            if (end == index)
             {
                 index++;
+                continue;
             }
+
+            if (CallAt(text, index, end) is { } call)
+            {
+                return call;
+            }
+
+            index = end;
         }
 
         return null;
@@ -72,13 +67,7 @@ internal static class HostLanguageFragments
             return;
         }
 
-        var message = found.Fragment switch
-        {
-            "&&" => "Host-language '&&' is not Screenplay - use 'and'",
-            "||" => "Host-language '||' is not Screenplay - use 'or'",
-            _ => $"Host-language call '{found.Fragment}' is not Screenplay - move it into an inline code block or a 'rule'"
-        };
-        context.Warning(DiagnosticCodes.HostLanguageExpression, message, location);
+        context.Warning(DiagnosticCodes.HostLanguageExpression, MessageFor(found.Fragment), location);
     }
 
     static bool IsIdentifierStart(char character) => char.IsLetter(character) || character == '_';
@@ -103,24 +92,67 @@ internal static class HostLanguageFragments
         return text.Length;
     }
 
+    static string MessageFor(string fragment) => fragment switch
+    {
+        "&&" => "Host-language '&&' is not Screenplay - use 'and'",
+        "||" => "Host-language '||' is not Screenplay - use 'or'",
+        _ => $"Host-language call '{fragment}' is not Screenplay - move it into an inline code block or a 'rule'"
+    };
+
+    static bool IsStringQuote(char character) => character is '"' or '\'';
+
+    static int DepthChange(char character) => character switch
+    {
+        '{' or '[' => 1,
+        '}' or ']' => -1,
+        _ => 0
+    };
+
+    static int? SkipOpaque(string text, int index)
+    {
+        if (IsStringQuote(text[index]) || text[index] == '`') return SkipQuoted(text, index);
+        if (DepthChange(text[index]) > 0) return SkipStructured(text, index);
+        return null;
+    }
+
+    static (string Fragment, int Offset)? DoubledOperatorAt(string text, int index)
+    {
+        var character = text[index];
+        var isOperatorCharacter = character is '&' or '|';
+        return isOperatorCharacter && index + 1 < text.Length && text[index + 1] == character ? (new string(character, 2), index) : null;
+    }
+
+    static int IdentifierEnd(string text, int start)
+    {
+        if (!IsIdentifierStart(text[start])) return start;
+        var end = start;
+        while (end < text.Length && IsIdentifierPart(text[end])) end++;
+        return end;
+    }
+
+    static (string Fragment, int Offset)? CallAt(string text, int start, int end)
+    {
+        var word = text[start..end];
+        return end < text.Length && text[end] == '(' && !_wordOperators.Contains(word) ? ($"{word}(", start) : null;
+    }
+
     static int SkipStructured(string text, int start)
     {
         var depth = 0;
         var index = start;
-        while (index < text.Length)
+        do
         {
-            var character = text[index];
-            if (character is '"' or '\'')
+            if (IsStringQuote(text[index]))
             {
                 index = SkipQuoted(text, index);
-                continue;
             }
-
-            if (character is '{' or '[') depth++;
-            else if (character is '}' or ']') depth--;
-            index++;
-            if (depth == 0) break;
+            else
+            {
+                depth += DepthChange(text[index]);
+                index++;
+            }
         }
+        while (depth > 0 && index < text.Length);
 
         return index;
     }
