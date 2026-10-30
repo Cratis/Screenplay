@@ -758,7 +758,7 @@ The mapping is admitted when all of these hold: both concepts are over the same 
 | Environment | `= $env.<VAR_NAME>` | Environment variable |
 | String constant | `= "value"` | Literal string |
 | Numeric constant | `= 0` | Literal number |
-| Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
+| Expression | `= price * quantity` | Any other text is a raw expression: syntax-only, reported as `PLAY0268` where it is bound. Host-language `&&`, `||` or calls in it report warning `PLAY0826` |
 
 Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md). The ESM v2 `produces` subset is narrower: occurrence time and the three audit identity fields (`identity.id`/`causedBy.subject`, `name`, `userName`). Other entries above remain syntax-only for portable produces mappings and report `PLAY0268`. Explicit `for <command-identifier>` binds a typed state-change destination separately from event properties. When the event does not duplicate that identifier as a payload property, it selects ESM v2; historical v1 models that copy it into both places retain their canonical v1 bytes. Produced v2 facts carry the identity in event context even when the payload has no ID.
 
@@ -805,7 +805,7 @@ produces InvoiceLineItemAdded
 
 produces InvoiceRunningTotalUpdated
   for invoiceId
-  adjustment = lines.sum(l => l.quantity * l.unitPrice * (1 - l.discountPct / 100))
+  adjustment = adjustment
 ```
 
 ### Conditional produces

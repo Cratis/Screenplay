@@ -34,7 +34,7 @@ the TypeScript compiler (which has no binder), accept the text silently.
    expression, in a non-strict condition, or in a capture `when` property clause.
 2. **Admitted contexts.** Inline code blocks and capture backtick guards are unchanged and stay silent. Quoted strings,
    backtick templates and structured values are not scanned. Strict guarded-action conditions keep PLAY0344 alone.
-3. **The allowed call set is empty.** `grammar.md` names no method; arithmetic and `!` are not covered by this rule.
+3. **The allowed call set is empty.** `grammar.md` names no method; arithmetic and `!` are not covered by this rule. The documented `.sum(...)` mapping example was never executable (a raw expression is syntax-only, PLAY0268), so the docs and the Invoicing sample were corrected.
 4. **Escalation.** Ships as Warning; becomes an Error in the release that introduces the next language version.
 5. **No syntax change.** The node stays a raw expression, so the printer, workspace edits, syntax vectors and the ESM are
    unchanged.
