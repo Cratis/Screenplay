@@ -34,11 +34,13 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         ReducerBodies = new(provider, _ruleBodies);
         PolicyBodies = new(provider, _ruleBodies);
         HandlerBodies = new(provider, _ruleBodies);
+        ReactionBodies = new(provider, _ruleBodies);
     }
 
     internal SemanticReducerBodyExecution ReducerBodies { get; } = SemanticReducerBodyExecution.None;
     internal SemanticPolicyBodyExecution PolicyBodies { get; } = SemanticPolicyBodyExecution.None;
     internal SemanticCommandBodyExecution HandlerBodies { get; } = SemanticCommandBodyExecution.None;
+    internal SemanticReactionBodyExecution ReactionBodies { get; } = SemanticReactionBodyExecution.None;
 
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request) => ExecuteWithCancellation(plan, world, request, default);
@@ -92,7 +94,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// Decides a command against a world without settling it, so a host can commit against a later world.
     /// </summary>
     /// <remarks>
-    /// <see cref="Execute"/> is <c>Decide(...).Commit(world)</c> at one world. A host that appends to a store extends the decided
+    /// <see cref="Execute"/> is <c lang="csharp">Decide(...).Commit(world)</c> at one world. A host that appends to a store extends the decided
     /// world with facts written in the meantime (<see cref="ExtendWorld"/>) and commits against that world. A read-only
     /// request is refused with a contract rejection; run it through <see cref="Execute"/>.
     /// </remarks>
@@ -114,8 +116,8 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
     /// <remarks>
     /// The facts are validated as <see cref="EstablishWorld(SemanticExecutionPlan, ImmutableArray{SemanticFact})"/> validates them,
     /// then only they are projected onto the world's read models and pending children. No constraint is checked and nothing is
-    /// published, because the facts are already in the log. The world of <c>ExtendWorld(Establish(a), b)</c> equals the world of
-    /// <c>Establish(a + b)</c>; the result is not equal as a whole, because its accepted facts hold only <paramref name="facts"/>.
+    /// published, because the facts are already in the log. The world of <c lang="csharp">ExtendWorld(Establish(a), b)</c> equals the world of
+    /// <c lang="csharp">Establish(a + b)</c>; the result is not equal as a whole, because its accepted facts hold only <paramref name="facts"/>.
     /// A reached reducer requires executable transition bodies and a provider. On failure the result carries the unchanged input world.
     /// </remarks>
     /// <param name="plan">The capability-admitted plan.</param>

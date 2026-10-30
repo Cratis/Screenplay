@@ -34,6 +34,14 @@ A reaction declares at least one trigger. Everything under a trigger is optional
 
 Stage's inline-body support is narrower: a body-backed reaction needs exactly one event trigger and a verified C# attachment. Its implementation envelope must identify the owning slice, use role `ReactionEffect`, context/result version 1, and capability `provider-defined`. The body must satisfy the generated synchronous `IEnumerable<object>?` return contract; effect-only fallthrough, incompatible returns, and compiler warnings refuse generation.
 
+The reference run can execute a body when the host supplies an `ISemanticBodyExecutionProvider` and a resolved, content-verified attachment (decision 0121). It calls `ReactAsync` only for a standalone body on exactly one event trigger, after `where` passes. The body cannot combine with `produces`, `invokes`, routing overrides or reads. Clock and application triggers remain Unsupported. Without a provider, the reaction stays opaque.
+
+`SemanticReactionContext` version 1 carries the event type, typed payload, event source and `RunsAs`. `Occurred` comes from the run's clock. `Tenant`, `CausedBy` and `Causation` are null when the run cannot supply them; `RunsAs` never supplies an audit identity. There is no read access or sequence number.
+
+`ReactAsync` returns `SemanticReactionBodyResult.Empty`, an ordered event batch, or an ordered command batch. Missing, default and mixed results are Unsupported, never Empty. The run checks every target and payload before settling anything; command payloads cannot supply generated properties. Events inherit the triggering event's source and context, plus the clock's occurrence and the reaction's origin. An application using `reaction batches atomic` reserves the whole event batch before adopting it. Commands run through their own authorization and validation, with the reaction's origin and `RunsAs`. A later refusal leaves earlier commands settled, as with `invokes` without `on refused`.
+
+Other combinations, unverified bodies and provider failures are Unsupported with Reaction capability. Run cancellation propagates. The host owns language execution and limits; this seam supplies no C# executor. A body declaring `reads` fails binding (`PLAY0268`): return or invoke a command and put its protected decision there.
+
 Keep local declarations distinct from Stage's generated bindings: `event`, `context`, and the event property's PascalCase names. A collision reports `STAGE-ESM-012`; passing that check is not proof that arbitrary runtime calls are safe.
 
 ## Observer filters
@@ -163,7 +171,7 @@ trigger and must not match a trigger value. `by` must name a value taken by that
 so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
 command leaves the command's decision to that command and its own reads. ESM v6 does not add protected
 reaction reads: a trigger with `reads` that produces directly, or has an opaque effect body, fails binding
-because its decision dependency cannot be protected. It is not admitted as an unguarded decision. An
+because its decision dependency cannot be protected. A reaction body has no read access, even with a body provider (decision 0121). It is not admitted as an unguarded decision. An
 invocation-only reaction leaves read protection to the invoked command; it cannot use those views as
 portable mapping values.
 

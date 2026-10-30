@@ -55,6 +55,32 @@ public interface ISemanticBodyExecutionProvider : IAsyncDisposable
     ValueTask<SemanticCommandBodyResult> HandleAsync(SemanticImplementationBody body, SemanticCommandContext context, CancellationToken cancellationToken) =>
         new(SemanticCommandBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Command handler", body)));
 
+    /// <summary>
+    /// Runs a standalone event-trigger reaction body after its where guard passed.
+    /// </summary>
+    /// <param name="body">The resolved, content-verified result-version-1 reaction body.</param>
+    /// <param name="context">The typed event context without read access.</param>
+    /// <param name="cancellationToken">Cancellation for this run.</param>
+    /// <returns>Empty, events or commands; the whole batch is validated before settlement.</returns>
+    /// <remarks>
+    /// Missing results, faults, timeouts and non-run cancellation are Unsupported with Reaction capability.
+    /// Cancellation of the run itself propagates. Existing providers default to Unsupported.
+    /// </remarks>
+    ValueTask<SemanticReactionBodyResult> ReactAsync(SemanticImplementationBody body, SemanticReactionContext context, CancellationToken cancellationToken) =>
+        new(SemanticReactionBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Reaction effect", body)));
+
+    /// <summary>
+    /// Defines the optional Snapshot Many performer seam at context and result version 1 (decision 0121).
+    /// The reference run does not call it until performer queries are admitted to the executable model.
+    /// </summary>
+    /// <param name="body">The resolved snapshot performer body.</param>
+    /// <param name="context">Typed arguments and an immutable snapshot of the declared read model only.</param>
+    /// <param name="cancellationToken">Cancellation for this run.</param>
+    /// <returns>A non-null ordered row array, with empty as success. Missing, null or malformed rows are Unsupported, never empty success.</returns>
+    /// <remarks>Live performers and Snapshot One/ZeroOrOne are outside this contract. Existing providers default to Unsupported.</remarks>
+    ValueTask<SemanticPerformerBodyResult> PerformAsync(SemanticImplementationBody body, SemanticPerformerContext context, CancellationToken cancellationToken) =>
+        new(SemanticPerformerBodyResult.Unsupported(SemanticBodyExecutionDefaults.NotImplemented("Query performer", body)));
+
     /// <summary>Executes one reducer transition against its portable context.</summary>
     /// <param name="body">The resolved, content-verified transition body.</param>
     /// <param name="context">The prior state, event and caller-supplied circumstances.</param>

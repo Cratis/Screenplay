@@ -15,29 +15,41 @@ static class SemanticCommandPayloads
             throw new InvalidSemanticContract("The handler must return one composite payload per produces line.");
         }
         var validator = new SemanticValueValidator(plan.Model.Application.Concepts.ToDictionary(concept => concept.Id), plan.Model.Application.Types.ToDictionary(type => type.Id));
-        return [.. command.Produces.Zip(result.Payloads).Select(pair => ValidateEvent(plan, validator, pair.First, pair.Second))];
+        return [.. command.Produces.Zip(result.Payloads).Select(pair => ValidateEvent(validator, plan.Events[pair.First.EventContract], pair.Second, "handler"))];
     }
 
-    static ImmutableArray<SemanticPropertyValue> ValidateEvent(SemanticExecutionPlan plan, SemanticValueValidator validator, SemanticProducedEvent produced, SemanticValue payload)
+    internal static ImmutableArray<SemanticPropertyValue> ValidateEvent(SemanticValueValidator validator, SemanticEventContract contract, SemanticValue payload, string label)
     {
         if (payload is not SemanticCompositeValue composite || !SemanticValueRules.ValidProperties(composite.Properties))
         {
-            throw new InvalidSemanticContract("The handler returned a malformed event payload.");
+            throw new InvalidSemanticContract($"The {label} returned a malformed event payload.");
         }
-        var contract = plan.Events[produced.EventContract];
         if (composite.Properties.Any(value => contract.Properties.All(property => property.Id != value.TargetProperty)))
         {
-            throw new InvalidSemanticContract("The handler returned an unknown event property.");
+            throw new InvalidSemanticContract($"The {label} returned an unknown event property.");
         }
-        return [.. contract.Properties.Select(property => ValidateProperty(validator, composite, property))];
+        return [.. contract.Properties.Select(property => ValidateProperty(validator, composite, property, $"{label} event"))];
     }
 
-    static SemanticPropertyValue ValidateProperty(SemanticValueValidator validator, SemanticCompositeValue composite, SemanticProperty property)
+    internal static ImmutableArray<SemanticPropertyValue> ValidateCommand(SemanticValueValidator validator, SemanticCommand command, SemanticValue payload, string label)
+    {
+        if (payload is not SemanticCompositeValue composite || !SemanticValueRules.ValidProperties(composite.Properties))
+        {
+            throw new InvalidSemanticContract($"The {label} returned a malformed command payload.");
+        }
+        if (composite.Properties.Any(value => command.Properties.All(property => property.Id != value.TargetProperty || property.IsGenerated)))
+        {
+            throw new InvalidSemanticContract($"The {label} returned an unknown or generated command property.");
+        }
+        return [.. command.Properties.Where(property => !property.IsGenerated).Select(property => ValidateProperty(validator, composite, property, $"{label} command"))];
+    }
+
+    static SemanticPropertyValue ValidateProperty(SemanticValueValidator validator, SemanticCompositeValue composite, SemanticProperty property, string label)
     {
         var supplied = composite.Properties.SingleOrDefault(value => value.TargetProperty == property.Id);
-        if (supplied is null && !property.Type.IsOptional) throw new InvalidSemanticContract($"Required handler event property '{property.Name}' is missing.");
+        if (supplied is null && !property.Type.IsOptional) throw new InvalidSemanticContract($"Required {label} property '{property.Name}' is missing.");
         var value = supplied?.Value ?? SemanticValue.Null;
-        validator.Validate(value, property.Type, $"handler event property '{property.Name}'");
+        validator.Validate(value, property.Type, $"{label} property '{property.Name}'");
         return new(property.Id, value);
     }
 }
