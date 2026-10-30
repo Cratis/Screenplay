@@ -139,7 +139,7 @@ StringLiteral   = '"', { StringChar }, '"' ;
 NumberLiteral   = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
 NullLiteral     = "null" ;
 
-RawExpression   = (* freeform expression captured verbatim *) ;
+RawExpression   = (* freeform expression captured verbatim; '&&', '||' and calls warn PLAY0826 *) ;
 LineValue       = (* remainder of the line, captured verbatim *) ;
 
 Path            = Ident, { ".", Ident } ;

@@ -113,3 +113,4 @@
 | [0118](0118-unknown-preserving-esm-admission.md) | Opt-in unknown-preserving ESM admission and minor allocation | accepted | none | 2026-10-26 | L13 (owner orchestration) |
 | [0119](0119-admit-command-handlers-that-declare-possible-events.md) | Admit command handlers that declare a set of possible events (handler result contract v2, ESM v35) | accepted | none | 2026-10-29 | owner orchestration (delegated owner acceptance) |
 | [0120](0120-live-performer-binding-contract.md) | Live performers bind a whole-collection stream (ResultVersion 2) | accepted | implemented | 2026-10-29 | woksin (Q-136, delegated through L0) |
+| [0124](0124-host-language-fragments-warn-then-error.md) | Host-language operators and calls outside admitted contexts warn now and become errors in the next language version | accepted | none | 2026-10-30 | woksin (Q-168, delegated through L0) |

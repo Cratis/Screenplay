@@ -22,6 +22,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
 | `PLAY0822` | Error | A handler `may produce` declaration is malformed: an entry is not `<Event>`, `<Event> for <property>` or `<Event> for one of <collection property>`, an event is declared twice, or the command also declares `produces`. |
 | `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. Admission is internal until ESM v35. |
+| `PLAY0826` | Warning | A mapping source, condition or capture `when` clause contains host-language `&&`, `||` or a call outside inline code and capture backtick guards. Ships as Warning; becomes an Error in the release that introduces the next language version (decision 0124). |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

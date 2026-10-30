@@ -1088,6 +1088,9 @@ MappingSource  = Ident                         (* command property   *)
                | StructuredValue
                | Expression ;
 
+(* No method-call form is admitted outside inline code and capture backtick
+   guards: '&&', '||' and calls in a raw expression warn PLAY0826. *)
+
 StructuredValue = "[", [ JSONValue, { ",", JSONValue } ], "]"
                 | "{", [ JSONString, ":", JSONValue,
                          { ",", JSONString, ":", JSONValue } ], "}" ;
@@ -1114,7 +1117,7 @@ ContextRoot    = "command" | "arguments" | "tenant" | "causedBy"
 IdentityProp   = "id" | "name" | "userName" | "isAuthenticated"
                | "roles" | "claims" ;
 
-Expression     = (* arithmetic / method-call expression — freeform *) ;
+Expression     = (* any other text is kept as an opaque raw expression; '&&', '||' and calls warn PLAY0826 *) ;
 
 (* -------------------------------------------------------------- *)
 (* Operations — syntax-only                                        *)
