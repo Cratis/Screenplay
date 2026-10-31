@@ -15,9 +15,10 @@ public class ProjectionBenchmarks
     ProjectionWorkload _rootOnly = null!;
     ProjectionWorkload _childWithoutSharedEvents = null!;
     ProjectionWorkload _childWithSharedEvents = null!;
+    ProjectionWorkload _childWithSharedEventsDistinctChildren = null!;
 
     /// <summary>
-    /// Compiles the three scope shapes and prepares their immutable fact histories.
+    /// Compiles the scope shapes and prepares their four immutable fact histories.
     /// </summary>
     [GlobalSetup]
     public void Setup()
@@ -25,6 +26,7 @@ public class ProjectionBenchmarks
         _rootOnly = ProjectionWorkload.Create(withChild: false, shared: false);
         _childWithoutSharedEvents = ProjectionWorkload.Create(withChild: true, shared: false);
         _childWithSharedEvents = ProjectionWorkload.Create(withChild: true, shared: true);
+        _childWithSharedEventsDistinctChildren = ProjectionWorkload.Create(withChild: true, shared: true, distinctChildren: true);
     }
 
     /// <summary>Projects facts into a root-only projection.</summary>
@@ -41,4 +43,11 @@ public class ProjectionBenchmarks
     /// <returns>The number of projected roots, consumed by BenchmarkDotNet.</returns>
     [Benchmark]
     public int ChildWithSharedEvents() => _childWithSharedEvents.Project();
+
+    /// <summary>
+    /// Projects shared updates across 1,000 distinct children, measuring creation-index growth.
+    /// </summary>
+    /// <returns>The number of projected roots, consumed by BenchmarkDotNet.</returns>
+    [Benchmark]
+    public int ChildWithSharedEventsDistinctChildren() => _childWithSharedEventsDistinctChildren.Project();
 }

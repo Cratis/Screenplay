@@ -55,7 +55,7 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
                     label = label
         """;
 
-    internal static ProjectionWorkload Create(bool withChild, bool shared)
+    internal static ProjectionWorkload Create(bool withChild, bool shared, bool distinctChildren = false)
     {
         var source = ModelSource + (withChild ? "\n        children Child[]" : string.Empty) + "\n" + ProjectionSource +
             (shared ? "\n" + SharedParentBlock : string.Empty) + (withChild ? "\n" + ChildScope : string.Empty);
@@ -75,7 +75,7 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
 
         var executable = SemanticExecutionPlan.Compile(compilation.Value!.Model);
         var executablePlan = executable.Plan ?? throw new InvalidSemanticContract("Benchmark projection was not admitted.");
-        return new(executablePlan, BuildFacts(executablePlan, withChild, shared));
+        return new(executablePlan, BuildFacts(executablePlan, withChild, shared, distinctChildren));
     }
 
     internal int Project()
@@ -88,12 +88,17 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
         return readModels.Length;
     }
 
-    static ImmutableArray<SemanticFact> BuildFacts(SemanticExecutionPlan executablePlan, bool withChild, bool shared)
+    static ImmutableArray<SemanticFact> BuildFacts(SemanticExecutionPlan executablePlan, bool withChild, bool shared, bool distinctChildren)
     {
         var root = Fact(executablePlan, "RootChanged", "root");
         if (!withChild)
         {
             return [.. Enumerable.Repeat(root, FactCount)];
+        }
+
+        if (distinctChildren)
+        {
+            return DistinctChildFacts(executablePlan, root);
         }
 
         var added = Fact(executablePlan, "ChildAdded", "child");
@@ -108,6 +113,27 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
         return result.MoveToImmutable();
     }
 
+    static ImmutableArray<SemanticFact> DistinctChildFacts(SemanticExecutionPlan executablePlan, SemanticFact root)
+    {
+        const int childCount = 1_000;
+        var result = ImmutableArray.CreateBuilder<SemanticFact>(FactCount);
+        var changes = new SemanticFact[childCount];
+        result.Add(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var identity = $"child-{index}";
+            result.Add(Fact(executablePlan, "ChildAdded", identity));
+            changes[index] = Fact(executablePlan, "ChildChanged", identity);
+        }
+
+        for (var index = 0; result.Count < FactCount; index++)
+        {
+            result.Add(changes[index % childCount]);
+        }
+
+        return result.MoveToImmutable();
+    }
+
     static SemanticFact Fact(SemanticExecutionPlan executablePlan, string name, string source)
     {
         var contract = executablePlan.Events.Values.Single(candidate => candidate.Name == name);
@@ -115,6 +141,6 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
             contract.Id,
             new SemanticTextValue(source),
             [.. contract.Properties.Select(property => new SemanticPropertyValue(
-                property.Id, new SemanticTextValue(property.Name == "childId" ? "child" : "root")))]);
+                property.Id, new SemanticTextValue(property.Name == "childId" ? source : "root")))]);
     }
 }

@@ -16,6 +16,32 @@ internal sealed partial class SemanticScopedProjection
             .Concat(scope.Removals.Select(_ => _.EventContract))
             .Concat(scope.JoinRemovals.Select(_ => _.EventContract));
 
+    static (SemanticProjectionKey? Key, SemanticProjectionKey? ParentKey) CreationKeys(SemanticProjectionScope scope, SemanticId contract)
+    {
+        foreach (var from in scope.From)
+        {
+            if (from.EventContract == contract)
+            {
+                return (from.Key, from.ParentKey);
+            }
+        }
+
+        return RemovalKeys(scope, contract);
+    }
+
+    static (SemanticProjectionKey? Key, SemanticProjectionKey? ParentKey) RemovalKeys(SemanticProjectionScope scope, SemanticId contract)
+    {
+        foreach (var removal in scope.Removals)
+        {
+            if (removal.EventContract == contract)
+            {
+                return (removal.Key, removal.ParentKey);
+            }
+        }
+
+        return (null, null);
+    }
+
     bool SharesEventWithParent(Level level)
     {
         // Avoid a capturing predicate on the ordinary, non-shared child path.
@@ -71,16 +97,7 @@ internal sealed partial class SemanticScopedProjection
             return null;
         }
 
-        var from = scope.From.FirstOrDefault(candidate => candidate.EventContract == creation.EventContract);
-        var key = from?.Key;
-        var parentKey = from?.ParentKey;
-        if (from is null)
-        {
-            var removal = scope.Removals.FirstOrDefault(candidate => candidate.EventContract == creation.EventContract);
-            key = removal?.Key;
-            parentKey = removal?.ParentKey;
-        }
-
+        var (key, parentKey) = CreationKeys(scope, creation.EventContract);
         if (key is null)
         {
             return null;
@@ -178,10 +195,23 @@ internal sealed partial class SemanticScopedProjection
         internal static bool CanIndex(SemanticValue value) => value switch
         {
             SemanticNullValue or SemanticTextValue or SemanticNumberValue or SemanticBooleanValue => true,
-            SemanticArrayValue array => array.Values.All(CanIndex),
+            SemanticArrayValue array => CanIndexArray(array),
             SemanticCompositeValue composite => CanIndexComposite(composite),
             _ => false
         };
+
+        static bool CanIndexArray(SemanticArrayValue array)
+        {
+            foreach (var value in array.Values)
+            {
+                if (!CanIndex(value))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         // Keep the same value rules without AreEqual's LINQ/closure allocations on dictionary probes.
         static bool ValuesEqual(SemanticValue left, SemanticValue right) => (left, right) switch
