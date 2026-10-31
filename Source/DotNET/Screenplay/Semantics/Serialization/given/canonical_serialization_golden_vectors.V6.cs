@@ -39,7 +39,8 @@ public static partial class canonical_serialization_golden_vectors
         {
             Destination = new(uuid, SemanticExpression.Property(SemanticExpressionRootKind.Command, Id(7131)))
         };
-        var handler = new SemanticReaction(Id(7150), "BatchHandler",
+        var handler = new SemanticReaction(Id(7150),
+        "BatchHandler",
         [
             new(SemanticReactionTriggerKind.ApplicationTrigger)
             {
@@ -47,7 +48,9 @@ public static partial class canonical_serialization_golden_vectors
                 Where = new SemanticComparison(new(Id(7002), null), SemanticComparisonOperator.GreaterThan, new(default, SemanticValue.Number(0))),
                 Produces =
                 [
-                    new(batchReceived.Id, null, SemanticExpression.Property(SemanticExpressionRootKind.Trigger, Id(7001)),
+                    new(batchReceived.Id,
+                    null,
+                    SemanticExpression.Property(SemanticExpressionRootKind.Trigger, Id(7001)),
                     [
                         new(Id(7111), SemanticExpression.Property(SemanticExpressionRootKind.Trigger, Id(7001))),
                         new(Id(7112), SemanticExpression.Property(SemanticExpressionRootKind.Trigger, Id(7002))),
@@ -63,7 +66,8 @@ public static partial class canonical_serialization_golden_vectors
             },
             new(SemanticReactionTriggerKind.Startup) { RequirementId = "reaction-startup" }
         ]);
-        var clock = new SemanticReaction(Id(7160), "Clock",
+        var clock = new SemanticReaction(Id(7160),
+        "Clock",
         [
             new(SemanticReactionTriggerKind.Interval)
             {
@@ -79,7 +83,14 @@ public static partial class canonical_serialization_golden_vectors
             new(SemanticReactionTriggerKind.Schedule) { At = 0, OnDayOfMonth = 1, RequirementId = "reaction-monthly" },
             new(SemanticReactionTriggerKind.Shutdown)
         ]);
-        var automation = new SemanticSlice(Id(7100), "Automations", SemanticSliceKind.Automation, [batchReceived, tickRecorded, batchAcknowledged], [acknowledge], [], [], [],
+        var automation = new SemanticSlice(Id(7100),
+        "Automations",
+        SemanticSliceKind.Automation,
+        [batchReceived, tickRecorded, batchAcknowledged],
+        [acknowledge],
+        [],
+        [],
+        [],
         [
             Specification(Id(7170), "fires a batch") with
             {
@@ -135,7 +146,9 @@ public static partial class canonical_serialization_golden_vectors
         {
             Children =
             [
-                new("lineItems", "lineNumber", [new(SemanticCaptureMapKind.Value, ["product"]) { Source = "name" }],
+                new("lineItems",
+                "lineNumber",
+                [new(SemanticCaptureMapKind.Value, ["product"]) { Source = "name" }],
                 [
                     new(lineChanged.Id, text, new(SemanticCaptureConditionKind.Added, []), [new(Id(7231)) { Field = "lineNumber" }]),
                     new(lineChanged.Id, text, new(SemanticCaptureConditionKind.Removed, []), [new(Id(7231)) { Field = "lineNumber" }])
@@ -143,7 +156,14 @@ public static partial class canonical_serialization_golden_vectors
             ],
             Nested = [new("contact", [], [new(contactChanged.Id, text, new(SemanticCaptureConditionKind.AnyChanged, ["email"]), [new(Id(7241)) { Field = "email" }])])]
         };
-        var translate = new SemanticSlice(Id(7200), "LegacySync", SemanticSliceKind.Translate, [statusChanged, lineChanged, contactChanged], [], [], [], [],
+        var translate = new SemanticSlice(Id(7200),
+        "LegacySync",
+        SemanticSliceKind.Translate,
+        [statusChanged, lineChanged, contactChanged],
+        [],
+        [],
+        [],
+        [],
         [
             Specification(Id(7250), "captures a legacy record") with
             {
