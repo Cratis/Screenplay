@@ -61,7 +61,9 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
             throw new InvalidSemanticContract("Benchmark source did not parse.");
         }
 
-        var compilation = new SemanticModelBinder().Bind("ProjectionBenchmarks", parsed.Value!, SemanticDocumentSet.Empty);
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("ProjectionBenchmarks"));
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("application"), "application", "application.play", source);
+        var compilation = new SemanticModelBinder().Bind("ProjectionBenchmarks", parsed.Value!, SemanticDocumentSet.Create([document], catalog));
         if (!compilation.Success)
         {
             throw new InvalidSemanticContract("Benchmark source did not bind.");
@@ -104,11 +106,11 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
 
     static SemanticFact Fact(SemanticExecutionPlan executablePlan, string name, string source)
     {
-        var contract = executablePlan.EventContracts.Values.Single(candidate => candidate.Name.Value == name);
+        var contract = executablePlan.Events.Values.Single(candidate => candidate.Name == name);
         return new(
             contract.Id,
-            new SemanticCompositeValue([.. contract.Properties.Select(property => new SemanticPropertyValue(
-                property.Id, new SemanticTextValue(property.Name.Value == "childId" ? "child" : "root")))]),
-            new SemanticTextValue(source));
+            new SemanticTextValue(source),
+            [.. contract.Properties.Select(property => new SemanticPropertyValue(
+                property.Id, new SemanticTextValue(property.Name == "childId" ? "child" : "root")))]);
     }
 }
