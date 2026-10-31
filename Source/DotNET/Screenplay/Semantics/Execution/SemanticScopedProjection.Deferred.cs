@@ -158,7 +158,7 @@ internal sealed partial class SemanticScopedProjection
     {
         foreach (var ancestor in AncestorsAppliedForCurrentFact(level))
         {
-            if (_ancestorsApplied?.Add(ancestor.Scope) == false)
+            if (!_replayingDeferred && !(_ancestorsApplied ??= new(ReferenceEqualityComparer.Instance)).Add(ancestor.Scope))
             {
                 continue;
             }

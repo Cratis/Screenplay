@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
+
 namespace Cratis.Screenplay.Semantics.Execution;
 
 /// <summary>
@@ -14,7 +16,39 @@ internal sealed partial class SemanticScopedProjection
             .Concat(scope.Removals.Select(_ => _.EventContract))
             .Concat(scope.JoinRemovals.Select(_ => _.EventContract));
 
-    bool SharesEventWithParent(Level level) => level.Ancestors[^1].Scope.From.Any(from => from.EventContract == _fact.EventContract);
+    bool SharesEventWithParent(Level level)
+    {
+        // Avoid a capturing predicate on the ordinary, non-shared child path.
+        foreach (var from in level.Ancestors[^1].Scope.From)
+        {
+            if (from.EventContract == _fact.EventContract)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool IsCreationContract(HashSet<SemanticId> contracts, SemanticId contract) =>
+        contract != _fact.EventContract && contracts.Contains(contract);
+
+    SemanticFact? FindCreationEvent(SemanticProjectionScope scope, SemanticValue identity)
+    {
+        var contracts = OwnedContractCache.Get(scope);
+        // Preserve arrival order and structural semantic source equality.
+        // An index would need a matching SemanticValue comparer, not record equality.
+        for (var index = 0; index < observed.Count; index++)
+        {
+            var fact = observed[index];
+            if (IsCreationContract(contracts, fact.EventContract) && SemanticValueRules.AreEqual(SourceOf(fact), identity))
+            {
+                return fact;
+            }
+        }
+
+        return null;
+    }
 
     // FindChildCreationEvent takes the first earlier event of another own type whose event source is the child key
     // (Chronicle KeyResolvers.cs:586-635). A failed historical resolution falls back without retaining its failure.
@@ -25,9 +59,7 @@ internal sealed partial class SemanticScopedProjection
             return null;
         }
 
-        var contracts = OwnEventContracts(scope).Where(contract => contract != _fact.EventContract).ToHashSet();
-        var creation = observed.FirstOrDefault(fact => contracts.Contains(fact.EventContract) && SemanticValueRules.AreEqual(SourceOf(fact), identity));
-        if (creation is null)
+        if (FindCreationEvent(scope, identity) is not { } creation)
         {
             return null;
         }
@@ -64,5 +96,15 @@ internal sealed partial class SemanticScopedProjection
             _fact = current;
             _failure = failure;
         }
+    }
+
+    // Scope records are immutable. Weak keys keep cached sets alive only as long as their scopes, across per-fact
+    // projector instances and concurrent evaluator runs. This holder is reached only for a shared event.
+    static class OwnedContractCache
+    {
+        static readonly ConditionalWeakTable<SemanticProjectionScope, HashSet<SemanticId>> _contracts = new();
+
+        internal static HashSet<SemanticId> Get(SemanticProjectionScope scope) =>
+            _contracts.GetValue(scope, static candidate => OwnEventContracts(candidate).ToHashSet());
     }
 }
