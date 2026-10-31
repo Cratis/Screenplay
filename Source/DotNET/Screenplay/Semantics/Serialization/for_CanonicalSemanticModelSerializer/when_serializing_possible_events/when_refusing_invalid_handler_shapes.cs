@@ -38,15 +38,15 @@ public class when_refusing_invalid_handler_shapes : Specification
     void should_refuse_one_of_in_a_legacy_production()
     {
         var root = Model();
-        var command = documents.Find(root, "handler").Parent!.AsObject();
-        var entry = command["handler"]!["possibleEvents"]![2]!.DeepClone().AsObject();
+        var command = documents.Find(root, "handler").Parent.AsObject();
+        var entry = command["handler"]["possibleEvents"][2].DeepClone().AsObject();
         entry["condition"] = null;
         entry["mappings"] = new JsonArray();
         command["produces"] = new JsonArray(entry);
         Refuse(root);
     }
 
-    static JsonObject Model() => JsonNode.Parse(SemanticModelSerializer.Serialize(given.canonical_serialization_golden_vectors.CreateSemanticModelV35()))!.AsObject();
+    static JsonObject Model() => JsonNode.Parse(SemanticModelSerializer.Serialize(given.canonical_serialization_golden_vectors.CreateSemanticModelV35())).AsObject();
 
     static void Refuse(JsonObject root)
     {

@@ -32,7 +32,7 @@ public class when_preserving_possible_events_before_v35 : Specification
             })]
         };
         var baseline = ExecutableSemanticModel.Create(LanguageVersion.V34, SemanticVersion.V34, application);
-        var root = JsonNode.Parse(SemanticModelSerializer.Serialize(baseline))!.AsObject();
+        var root = JsonNode.Parse(SemanticModelSerializer.Serialize(baseline)).AsObject();
         root["languageVersion"] = $"34.{uint.MaxValue}";
         root["semanticVersion"] = $"34.{uint.MaxValue}";
         documents.Find(root, "handler")["possibleEvents"] = new JsonArray();

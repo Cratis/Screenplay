@@ -14,13 +14,13 @@ public class when_writing_a_possible_event_set : for_SemanticModelBinder.when_bi
 
     void Establish()
     {
-        _model = BindPossible(Source).Value!.Model;
+        _model = BindPossible(Source).Value.Model;
         _bytes = SemanticModelSerializer.Serialize(_model);
         _json = Encoding.UTF8.GetString(_bytes);
     }
 
     [Fact] void should_write_possible_events_after_result_version() => _json.ShouldContain("\"resultVersion\":2,\"possibleEvents\":[");
-    [Fact] void should_write_one_of_with_its_property() => _json.ShouldContain("{\"kind\":\"oneOf\",\"property\":\"" + ((SemanticOneOfExpression)_model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().Handler!.PossibleEvents[1].Destination!).CollectionProperty);
+    [Fact] void should_write_one_of_with_its_property() => _json.ShouldContain("{\"kind\":\"oneOf\",\"property\":\"" + ((SemanticOneOfExpression)_model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().Handler.PossibleEvents[1].Destination).CollectionProperty);
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(_bytes)).ShouldEqual(_bytes);
 
     [Fact]
@@ -46,7 +46,7 @@ public class when_writing_a_possible_event_set : for_SemanticModelBinder.when_bi
                 {
                     Slices = [.. feature.Slices.Select(slice => slice with
                     {
-                        Commands = [.. slice.Commands.Select(command => command with { Produces = [command.Handler!.PossibleEvents[1]] })]
+                        Commands = [.. slice.Commands.Select(command => command with { Produces = [command.Handler.PossibleEvents[1]] })]
                     })]
                 })]
             })]

@@ -15,9 +15,9 @@ public class when_binding_the_batch_invoicing_slice : Specification
 
     void Because()
     {
-        var root = Directory.GetParent(DocumentationExamples.Root())!.FullName;
+        var root = Directory.GetParent(DocumentationExamples.Root()).FullName;
         var source = File.ReadAllText(Path.Combine(root, "Samples/Invoicing/invoicing.play"));
-        var application = new ScreenplayCompiler().Parse(source).Value!;
+        var application = new ScreenplayCompiler().Parse(source).Value;
         var module = application.Modules.Single(value => value.Name == "Invoicing");
         var feature = module.Features.Single(value => value.Name == "InvoiceManagement");
         var batch = feature.Slices.Single(value => value.Name == "ProcessInvoiceBatch");
@@ -38,12 +38,12 @@ public class when_binding_the_batch_invoicing_slice : Specification
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("sample"), "sample", "invoicing.play", source);
         _result = new SemanticModelBinder().Bind("Invoicing", focused, SemanticDocumentSet.Create([document], catalog));
         Assert.True(_result.Success, string.Join('\n', _result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        _command = _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+        _command = _result.Value.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
     }
 
-    [Fact] void should_select_v35() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V35);
-    [Fact] void should_use_result_contract_v2() => _command.Handler!.ResultVersion.ShouldEqual(2U);
-    [Fact] void should_declare_four_possible_events() => _command.Handler!.PossibleEvents.Length.ShouldEqual(4);
-    [Fact] void should_reference_one_invoice_at_a_time() => _command.Handler!.PossibleEvents.Skip(1).Take(2).All(entry => entry.Destination is SemanticOneOfExpression).ShouldBeTrue();
+    [Fact] void should_select_v35() => _result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V35);
+    [Fact] void should_use_result_contract_v2() => _command.Handler.ResultVersion.ShouldEqual(2U);
+    [Fact] void should_declare_four_possible_events() => _command.Handler.PossibleEvents.Length.ShouldEqual(4);
+    [Fact] void should_reference_one_invoice_at_a_time() => _command.Handler.PossibleEvents.Skip(1).Take(2).All(entry => entry.Destination is SemanticOneOfExpression).ShouldBeTrue();
     [Fact] void should_not_refuse_the_attachment() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.CommandHandlerRequiresAttachment).ShouldBeFalse();
 }

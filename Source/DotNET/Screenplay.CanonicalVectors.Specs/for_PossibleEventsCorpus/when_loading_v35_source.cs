@@ -47,13 +47,13 @@ public class when_loading_v35_source : Specification
         var documents = form.Documents.Select(document => SemanticSourceDocument.Create(catalog.ResolveDocument(document.StableKey), document.StableKey, document.DisplayPath, document.Text));
         var result = new SemanticModelCompiler().Compile("PossibleEvents", SemanticDocumentSet.Create([.. documents], catalog));
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        return result.Value!.Model;
+        return result.Value.Model;
     }
 
     static string Root([CallerFilePath] string path = "")
     {
         var directory = Directory.GetParent(path);
         while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Documentation"))) directory = directory.Parent;
-        return directory!.FullName;
+        return directory.FullName;
     }
 }

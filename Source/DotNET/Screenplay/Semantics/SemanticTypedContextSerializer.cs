@@ -90,15 +90,22 @@ public static class SemanticTypedContextSerializer
         result.ResultVersion,
         entries = result.Entries.Select(entry => new
         {
-            eventContract = entry.EventContract.ToString(), entry.EventName, entry.EventRevision,
-            payload = ContextType(entry.Payload), entry.DestinationKind, entry.DestinationProperty,
+            eventContract = entry.EventContract.ToString(),
+            entry.EventName,
+            entry.EventRevision,
+            payload = ContextType(entry.Payload),
+            entry.DestinationKind,
+            entry.DestinationProperty,
             destinationType = entry.DestinationType is null ? null : ContextType(entry.DestinationType)
         })
     };
 
     static object ContextType(SemanticContextType type) => new
     {
-        type.Kind, modelType = Reference(type.ModelType), shape = type.Shape?.ToString(), type.RuntimeToken,
+        type.Kind,
+        modelType = Reference(type.ModelType),
+        shape = type.Shape?.ToString(),
+        type.RuntimeToken,
         properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
     };
 

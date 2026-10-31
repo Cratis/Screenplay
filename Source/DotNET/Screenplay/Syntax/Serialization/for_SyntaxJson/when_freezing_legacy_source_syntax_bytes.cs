@@ -196,7 +196,7 @@ public class when_freezing_legacy_source_syntax_bytes
         var feature = module.GetProperty("features").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "InvoiceManagement");
         var slice = feature.GetProperty("slices").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "ProcessInvoiceBatch");
         var command = slice.GetProperty("commands").EnumerateArray().Single(node => node.GetProperty("name").GetString() == "ProcessInvoiceBatch");
-        var body = command.GetProperty("handler").GetProperty("code").GetProperty("code").GetString()!;
+        var body = command.GetProperty("handler").GetProperty("code").GetProperty("code").GetString();
         return application with { Modules = application.Modules.Select(value => WithLegacyBatchBody(value, body)) };
     }
 
@@ -217,7 +217,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static CommandSyntax WithLegacyBatchBody(CommandSyntax command, string body) => command.Name == "ProcessInvoiceBatch" ? command with
     {
-        Handler = command.Handler! with { Code = command.Handler.Code! with { Code = body }, PossibleEvents = null }
+        Handler = command.Handler with { Code = command.Handler.Code with { Code = body }, PossibleEvents = null }
     } : command;
 
     static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with

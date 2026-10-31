@@ -13,7 +13,7 @@ public class when_gating_one_of : Specification
     [Fact]
     void should_refuse_the_kind_below_v35()
     {
-        var error = Catch.Exception(() => Read("{\"kind\":\"oneOf\"}", 34, true));
+        var error = Catch.Exception(() => Read(/*lang=json*/ "{\"kind\":\"oneOf\"}", 34, true));
         error.ShouldBeOfExactType<InvalidSemanticContract>();
         error.Message.ShouldContain("oneOf requires schema v35");
     }

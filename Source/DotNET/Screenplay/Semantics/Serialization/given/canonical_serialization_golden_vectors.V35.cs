@@ -16,9 +16,9 @@ public static partial class canonical_serialization_golden_vectors
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Billing"));
         const string key = "application-document";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);
-        var result = new SemanticModelBinder(2026).Bind("Billing", new ScreenplayCompiler().Parse(source).Value!, SemanticDocumentSet.Create([document], catalog));
+        var result = new SemanticModelBinder(2026).Bind("Billing", new ScreenplayCompiler().Parse(source).Value, SemanticDocumentSet.Create([document], catalog));
         if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        return result.Value!.Model;
+        return result.Value.Model;
     }
 }
 #endif

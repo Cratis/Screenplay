@@ -21,7 +21,7 @@ public class with_routes_and_protected_reads : given.a_possible_events_binder
         var entry = Command(result.Value!).Handler!.PossibleEvents[0];
         entry.Route.ShouldNotBeNull();
         entry.Tags.ShouldNotBeEmpty();
-        SemanticDecisionReadAdmission.Producers(result.Value!.Model.Application.Modules.Single().Features.Single().Slices).ShouldContain(value => value.EventContract == entry.EventContract && value.Routed);
+        SemanticDecisionReadAdmission.Producers(result.Value.Model.Application.Modules.Single().Features.Single().Slices).ShouldContain(value => value.EventContract == entry.EventContract && value.Routed);
     }
 
     [Fact]
