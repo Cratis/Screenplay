@@ -2,12 +2,18 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains.InProcess.Emit;
 
 var artifacts = Environment.GetEnvironmentVariable("SCREENPLAY_BENCHMARK_ARTIFACTS") ??
     Path.Combine(".ai-work", "132", "BenchmarkDotNet.Artifacts");
-var config = ManualConfig.Create(DefaultConfig.Instance).WithArtifactsPath(artifacts);
+// Mutate CLI-selected jobs too, so --job dry never generates a project or looks up an executable.
+var config = ManualConfig.Create(DefaultConfig.Instance)
+    .WithArtifactsPath(artifacts)
+    .AddJob(Job.ShortRun.AsDefault())
+    .AddJob(Job.Default.WithToolchain(InProcessEmitToolchain.Instance).AsMutator());
 var summaries = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config).ToArray();
 if (summaries.Length == 0)
 {
