@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-internal sealed class EsmUnknownCollector(uint major, bool allowUnknowns)
+internal sealed class EsmUnknownCollector(uint major, bool allowUnknowns, uint registeredMinor = 0)
 {
     readonly ImmutableArray<UnknownEsmMember>.Builder _members = ImmutableArray.CreateBuilder<UnknownEsmMember>();
     readonly Dictionary<SemanticId, int> _ownerCounts = [];
@@ -42,6 +42,7 @@ internal sealed class EsmUnknownCollector(uint major, bool allowUnknowns)
         foreach (var property in value.EnumerateObject())
         {
             var memberPath = $"{path}/{property.Name}";
+            if (EsmMinorMembers.IsPromoted(major, registeredMinor, shape, property.Name)) continue;
             if (!fields.ContainsKey(property.Name))
             {
                 Add(property, memberPath, owner, category);

@@ -184,6 +184,7 @@ internal static partial class SemanticModelValidator
         {
             Register(readModel.Id, readModel.Name, "read model");
             RegisterProperties(readModel.Properties, $"read model '{readModel.Name}'");
+            SemanticReadModelPropertyOrder.Validate(readModel);
             _readModels.Add(readModel.Id, readModel);
         }
 

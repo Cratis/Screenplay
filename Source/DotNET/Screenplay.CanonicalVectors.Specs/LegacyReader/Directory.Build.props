@@ -1,0 +1,3 @@
+<Project>
+    <!-- Keep the old-reader probe independent of the repository's compiler and test harness. -->
+</Project>
