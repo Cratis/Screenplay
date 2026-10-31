@@ -11,7 +11,7 @@ public class when_overriding_one_option : Specification
     {
         var read = new ValidationGateReadResult("/model", "/model/screenplay.json", new(["navigation"], true, "M.F", "fail"), null);
         DeclaredValidationGate[] commandLines = [new(["query-keys", "field-origins"]), new(WarningsAsErrors: false), new(Scope: "N"), new(OpenQuestions: "report")];
-        _gates = commandLines.Select(commandLine => ValidationGateResolver.Resolve(read, commandLine).Gate).ToArray();
+        _gates = commandLines.Select(commandLine => Assert.IsType<EffectiveValidationGate>(ValidationGateResolver.Resolve(read, commandLine).Gate)).ToArray();
     }
 
     [Fact] void should_replace_rather_than_extend_file_checks() => _gates[0].Checks.Value.ToArray().ShouldEqual(new[] { "field-origins", "query-keys" });
