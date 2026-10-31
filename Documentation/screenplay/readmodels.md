@@ -141,6 +141,7 @@ A rule's body compiles against `ReducerContext`, in scope as `context`, and answ
 | `State` | the read model before this event — **`null` for the first event on an instance** |
 | `Event` | the event being folded in |
 | `Key` | the identity of the instance being built |
+| `KeyAs<T>()` | `Key` as the read model's single key type; see [Context](context.md) |
 | `Tenant` | the tenant the events are being reduced for |
 | `Occurred` | when the event occurred |
 | `SequenceNumber` | the event's position in its sequence |
