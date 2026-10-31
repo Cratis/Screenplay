@@ -40,7 +40,7 @@ internal static class PublicEventUsageValidator
     }
 
     /// <summary>
-    /// Finds the projections and reducers whose <c>=&gt;</c> target resolves to an event rather than a read model.
+    /// Finds the projections and reducers whose <c lang="screenplay">=&gt;</c> target resolves to an event rather than a read model.
     /// </summary>
     /// <param name="application">The assembled <see cref="ApplicationSyntax"/>.</param>
     /// <returns>The projection and reducer nodes that publish an event.</returns>
@@ -269,9 +269,22 @@ internal static class PublicEventUsageValidator
         }
         else if (((output && use is not CaptureAppendSyntax) || use is CaptureSourceSettingSyntax) && !context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownEvent && diagnostic.Location == use.Location))
         {
-            context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{name}' - declare its contract before classifying its usage.", use.Location);
+            ReportUnknownEvent(name, use, context);
         }
 
         return null;
+    }
+
+    static void ReportUnknownEvent(string name, SyntaxNode use, ParserContext context)
+    {
+        var message = $"Unknown event '{name}' - declare its contract before classifying its usage.";
+        if (use is CaptureSourceSettingSyntax && name.Contains('.'))
+        {
+            context.Error(DiagnosticCodes.UnknownEvent, message, use.Location);
+        }
+        else
+        {
+            context.Warning(DiagnosticCodes.UnknownEvent, message, use.Location);
+        }
     }
 }
