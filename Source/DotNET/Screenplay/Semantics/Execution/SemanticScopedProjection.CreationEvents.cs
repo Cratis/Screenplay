@@ -36,6 +36,7 @@ internal sealed partial class SemanticScopedProjection
     SemanticFact? FindCreationEvent(SemanticProjectionScope scope, SemanticValue identity)
     {
         var contracts = OwnedContractCache.Get(scope);
+
         // Preserve arrival order and structural semantic source equality.
         // An index would need a matching SemanticValue comparer, not record equality.
         for (var index = 0; index < observed.Count; index++)
@@ -102,9 +103,9 @@ internal sealed partial class SemanticScopedProjection
     // projector instances and concurrent evaluator runs. This holder is reached only for a shared event.
     static class OwnedContractCache
     {
-        static readonly ConditionalWeakTable<SemanticProjectionScope, HashSet<SemanticId>> _contracts = new();
+        static readonly ConditionalWeakTable<SemanticProjectionScope, HashSet<SemanticId>> _contracts = [];
 
         internal static HashSet<SemanticId> Get(SemanticProjectionScope scope) =>
-            _contracts.GetValue(scope, static candidate => OwnEventContracts(candidate).ToHashSet());
+            _contracts.GetValue(scope, static candidate => [.. OwnEventContracts(candidate)]);
     }
 }

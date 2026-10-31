@@ -93,6 +93,7 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
         var added = Fact(executablePlan, "ChildAdded", "child");
         var changed = Fact(executablePlan, "ChildChanged", "child");
         var result = ImmutableArray.CreateBuilder<SemanticFact>(FactCount);
+
         // Place creation halfway through the shared history so historical lookup is not always an early hit.
         var precedingRoots = shared ? FactCount / 2 : 1;
         result.AddRange(Enumerable.Repeat(root, precedingRoots));
