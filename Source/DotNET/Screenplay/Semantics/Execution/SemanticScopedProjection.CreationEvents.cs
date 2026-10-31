@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
 namespace Cratis.Screenplay.Semantics.Execution;
@@ -18,28 +19,31 @@ internal sealed partial class SemanticScopedProjection
 
     static (SemanticProjectionKey? Key, SemanticProjectionKey? ParentKey) CreationKeys(SemanticProjectionScope scope, SemanticId contract)
     {
-        foreach (var from in scope.From)
+        if (FirstWithContract(scope.From, static _ => _.EventContract, contract) is { } from)
         {
-            if (from.EventContract == contract)
-            {
-                return (from.Key, from.ParentKey);
-            }
+            return (from.Key, from.ParentKey);
         }
 
-        return RemovalKeys(scope, contract);
-    }
-
-    static (SemanticProjectionKey? Key, SemanticProjectionKey? ParentKey) RemovalKeys(SemanticProjectionScope scope, SemanticId contract)
-    {
-        foreach (var removal in scope.Removals)
+        if (FirstWithContract(scope.Removals, static _ => _.EventContract, contract) is { } removal)
         {
-            if (removal.EventContract == contract)
-            {
-                return (removal.Key, removal.ParentKey);
-            }
+            return (removal.Key, removal.ParentKey);
         }
 
         return (null, null);
+    }
+
+    static T? FirstWithContract<T>(ImmutableArray<T> items, Func<T, SemanticId> contractOf, SemanticId contract)
+        where T : class
+    {
+        foreach (var item in items)
+        {
+            if (contractOf(item) == contract)
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 
     bool SharesEventWithParent(Level level)
@@ -186,6 +190,11 @@ internal sealed partial class SemanticScopedProjection
 
     sealed class CreationSourceComparer : IEqualityComparer<(SemanticId Contract, SemanticValue Source)>
     {
+        interface IElementMatch<T>
+        {
+            static abstract bool Matches(ImmutableArray<T> candidates, int index, T value);
+        }
+
         public bool Equals((SemanticId Contract, SemanticValue Source) x, (SemanticId Contract, SemanticValue Source) y) =>
             x.Contract == y.Contract && ValuesEqual(x.Source, y.Source);
 
@@ -230,16 +239,24 @@ internal sealed partial class SemanticScopedProjection
             _ => false
         };
 
-        static bool ArraysEqual(SemanticArrayValue left, SemanticArrayValue right)
+        static bool ArraysEqual(SemanticArrayValue left, SemanticArrayValue right) =>
+            AllMatch<SemanticValue, PositionalMatch>(left.Values, right.Values);
+
+        static bool CompositesEqual(SemanticCompositeValue left, SemanticCompositeValue right) =>
+            AllMatch<SemanticPropertyValue, UnorderedPropertyMatch>(left.Properties, right.Properties);
+
+        // The matcher is a struct type argument so the per-element check is a direct, inlinable call on the comparer's per-probe path.
+        static bool AllMatch<T, TMatch>(ImmutableArray<T> left, ImmutableArray<T> right)
+            where TMatch : struct, IElementMatch<T>
         {
-            if (left.Values.Length != right.Values.Length)
+            if (left.Length != right.Length)
             {
                 return false;
             }
 
-            for (var index = 0; index < left.Values.Length; index++)
+            for (var index = 0; index < left.Length; index++)
             {
-                if (!ValuesEqual(left.Values[index], right.Values[index]))
+                if (!TMatch.Matches(right, index, left[index]))
                 {
                     return false;
                 }
@@ -248,27 +265,9 @@ internal sealed partial class SemanticScopedProjection
             return true;
         }
 
-        static bool CompositesEqual(SemanticCompositeValue left, SemanticCompositeValue right)
+        static bool ContainsProperty(ImmutableArray<SemanticPropertyValue> candidates, SemanticPropertyValue property)
         {
-            if (left.Properties.Length != right.Properties.Length)
-            {
-                return false;
-            }
-
-            foreach (var property in left.Properties)
-            {
-                if (!ContainsProperty(right, property))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        static bool ContainsProperty(SemanticCompositeValue composite, SemanticPropertyValue property)
-        {
-            foreach (var candidate in composite.Properties)
+            foreach (var candidate in candidates)
             {
                 if (candidate.TargetProperty == property.TargetProperty && ValuesEqual(candidate.Value, property.Value))
                 {
@@ -337,6 +336,16 @@ internal sealed partial class SemanticScopedProjection
             }
 
             return HashCode.Combine(composite.Properties.Length, hash);
+        }
+
+        readonly struct PositionalMatch : IElementMatch<SemanticValue>
+        {
+            public static bool Matches(ImmutableArray<SemanticValue> candidates, int index, SemanticValue value) => ValuesEqual(value, candidates[index]);
+        }
+
+        readonly struct UnorderedPropertyMatch : IElementMatch<SemanticPropertyValue>
+        {
+            public static bool Matches(ImmutableArray<SemanticPropertyValue> candidates, int index, SemanticPropertyValue value) => ContainsProperty(candidates, value);
         }
     }
 }
