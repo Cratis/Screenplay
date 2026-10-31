@@ -8,7 +8,8 @@ using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
 
 var artifacts = Environment.GetEnvironmentVariable("SCREENPLAY_BENCHMARK_ARTIFACTS") ??
-    Path.Combine(".ai-work", "132", "BenchmarkDotNet.Artifacts");
+    "BenchmarkDotNet.Artifacts";
+
 // Mutate CLI-selected jobs too, so --job dry never generates a project or looks up an executable.
 var config = ManualConfig.Create(DefaultConfig.Instance)
     .WithArtifactsPath(artifacts)
