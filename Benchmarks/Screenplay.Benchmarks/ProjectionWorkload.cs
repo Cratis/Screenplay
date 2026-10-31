@@ -17,23 +17,25 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
           label String?
         module Demo
           feature Items
-            event RootChanged
-              rootId Id
-              label String
-            event ChildAdded
-              rootId Id
-              childId Id
-              label String
-            event ChildChanged
-              rootId Id
-              childId Id
-              label String
-            readmodel Root
-              rootId Id
-              label String?
+            slice StateView Browse
+              event RootChanged
+                rootId Id
+                label String
+              event ChildAdded
+                rootId Id
+                childId Id
+                label String
+              event ChildChanged
+                rootId Id
+                childId Id
+                label String
+              readmodel Root
+                rootId Id
+                label String?
         """;
     const string ProjectionSource = """
-            slice Browse
+              query RootById => Root?
+                by rootId Id
               projection Root => Root
                 from RootChanged key rootId
                   label = label
@@ -44,21 +46,23 @@ sealed class ProjectionWorkload(SemanticExecutionPlan plan, ImmutableArray<Seman
         """;
     const string ChildScope = """
                 children children identified by childId
-                  from ChildAdded key childId parent rootId
+                  from ChildAdded key childId
+                    parent rootId
                     childId = childId
                     label = label
-                  from ChildChanged key childId parent rootId
+                  from ChildChanged key childId
+                    parent rootId
                     label = label
         """;
 
     internal static ProjectionWorkload Create(bool withChild, bool shared)
     {
-        var source = ModelSource + (withChild ? "\n      children Child[]" : string.Empty) + "\n" + ProjectionSource +
+        var source = ModelSource + (withChild ? "\n        children Child[]" : string.Empty) + "\n" + ProjectionSource +
             (shared ? "\n" + SharedParentBlock : string.Empty) + (withChild ? "\n" + ChildScope : string.Empty);
         var parsed = new ScreenplayCompiler().Parse(source);
         if (!parsed.Success)
         {
-            throw new InvalidSemanticContract("Benchmark source did not parse.");
+            throw new InvalidSemanticContract($"Benchmark source did not parse.{Environment.NewLine}{string.Join(Environment.NewLine, parsed.Diagnostics.Select(diagnostic => $"{diagnostic.Code} ({diagnostic.Location.Line},{diagnostic.Location.Column}): {diagnostic.Message}"))}");
         }
 
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("ProjectionBenchmarks"));
