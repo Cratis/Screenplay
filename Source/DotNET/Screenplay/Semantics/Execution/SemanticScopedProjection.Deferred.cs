@@ -42,6 +42,14 @@ internal sealed partial class SemanticScopedProjection
         }
 
         var location = LocateChild(level, identity, parent);
+
+        // A shared event updates a child an earlier event of its own created, where that event placed it (Chronicle
+        // KeyResolvers.cs:390-418). Only inside the document the event reaches: Chronicle saves the change under that root key.
+        if (location is not null && LocateViaCreationEvent(scope, level, identity) is { } created && ReferenceEquals(created.Document, location.Document))
+        {
+            return created;
+        }
+
         if (location is null && _failure is null)
         {
             Defer(new(projection.Id, _fact, from, scope, level, identity, parent));
@@ -76,7 +84,9 @@ internal sealed partial class SemanticScopedProjection
         var ancestor = level.Ancestors[^1];
 
         // FindParentEvent treats a shared event as the parent event itself, then resolves the parent's key.
-        var shared = ancestor.Scope.From.FirstOrDefault(candidate => candidate.EventContract == _fact.EventContract);
+        var shared = SharesEventWithParent(level)
+            ? ancestor.Scope.From.FirstOrDefault(candidate => candidate.EventContract == _fact.EventContract)
+            : null;
         return shared is null ? Key(parentKey ?? SemanticProjectionKey.EventSourceIdentity) : Key(shared.Key);
     }
 
