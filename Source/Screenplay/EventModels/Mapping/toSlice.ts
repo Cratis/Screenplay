@@ -49,6 +49,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         queries: slice.queries.map(query => ({
             id: scope.idOf('query', query.name),
             name: query.name,
+            ...proseOf({ description: query.description }),
             parameters: [query.by, ...query.byParts ?? [], ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
         actors: toUserExperience(slice.screens, scope.path, audience),
