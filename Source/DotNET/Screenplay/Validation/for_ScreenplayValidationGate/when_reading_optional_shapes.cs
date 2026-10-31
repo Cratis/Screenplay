@@ -23,5 +23,5 @@ public class when_reading_optional_shapes : given.a_gate_file
 
     [Fact] void should_accept_every_shape_and_parser_selection() => _results.All(result => result.Declaration is not null && result.Failure is null).ShouldBeTrue();
     [Fact] void should_leave_omitted_values_undeclared() => _results[0].Declaration.ShouldEqual(new DeclaredValidationGate());
-    [Fact] void should_distinguish_empty_checks_from_omission() => _results[3].Declaration.Checks.Value.ShouldBeEmpty();
+    [Fact] void should_distinguish_empty_checks_from_omission() => Assert.NotNull(_results[3].Declaration.Checks).ShouldBeEmpty();
 }
