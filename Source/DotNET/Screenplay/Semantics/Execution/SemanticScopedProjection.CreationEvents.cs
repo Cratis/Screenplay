@@ -36,12 +36,18 @@ internal sealed partial class SemanticScopedProjection
     SemanticFact? FindCreationEvent(SemanticProjectionScope scope, SemanticValue identity)
     {
         var contracts = OwnedContractCache.Get(scope);
-
-        // Preserve arrival order and structural semantic source equality.
-        // An index would need a matching SemanticValue comparer, not record equality.
-        for (var index = 0; index < observed.Count; index++)
+        var index = CreationEventIndex.For(observed);
+        index.Observe(observed);
+        if (index.CanLookup(identity))
         {
-            var fact = observed[index];
+            return index.Find(contracts, _fact.EventContract, identity);
+        }
+
+        // Malformed composites with duplicate properties make AreEqual asymmetric. They (and unknown
+        // variants) cannot be dictionary keys with that equality; preserve the original scan for such runs.
+        for (var position = 0; position < observed.Count; position++)
+        {
+            var fact = observed[position];
             if (IsCreationContract(contracts, fact.EventContract) && SemanticValueRules.AreEqual(SourceOf(fact), identity))
             {
                 return fact;
@@ -107,5 +113,200 @@ internal sealed partial class SemanticScopedProjection
 
         internal static HashSet<SemanticId> Get(SemanticProjectionScope scope) =>
             _contracts.GetValue(scope, static candidate => [.. OwnEventContracts(candidate)]);
+    }
+
+    // TryProject owns a fresh, append-only observed list per run. Projectors are per fact, so weakly key
+    // the lazy index by that list, not by the plan/scope. Catch up before every lookup, including deferred replay.
+    sealed class CreationEventIndex
+    {
+        static readonly ConditionalWeakTable<IReadOnlyList<SemanticFact>, CreationEventIndex> _runs = [];
+        readonly Dictionary<(SemanticId Contract, SemanticValue Source), (int Position, SemanticFact Fact)> _first = new(new CreationSourceComparer());
+        int _observedCount;
+        bool _requiresScan;
+
+        internal static CreationEventIndex For(IReadOnlyList<SemanticFact> facts) =>
+            _runs.GetValue(facts, static _ => new());
+
+        internal void Observe(IReadOnlyList<SemanticFact> facts)
+        {
+            for (; _observedCount < facts.Count; _observedCount++)
+            {
+                var fact = facts[_observedCount];
+                var source = SourceOf(fact);
+                if (!CreationSourceComparer.CanIndex(source))
+                {
+                    _requiresScan = true;
+                    continue;
+                }
+
+                _first.TryAdd((fact.EventContract, source), (_observedCount, fact));
+            }
+        }
+
+        internal bool CanLookup(SemanticValue source) => !_requiresScan && CreationSourceComparer.CanIndex(source);
+
+        internal SemanticFact? Find(HashSet<SemanticId> contracts, SemanticId current, SemanticValue source)
+        {
+            var earliest = int.MaxValue;
+            SemanticFact? first = null;
+            foreach (var contract in contracts)
+            {
+                if (contract == current)
+                {
+                    continue;
+                }
+
+                if (_first.TryGetValue((contract, source), out var candidate) && candidate.Position < earliest)
+                {
+                    earliest = candidate.Position;
+                    first = candidate.Fact;
+                }
+            }
+
+            return first;
+        }
+    }
+
+    sealed class CreationSourceComparer : IEqualityComparer<(SemanticId Contract, SemanticValue Source)>
+    {
+        public bool Equals((SemanticId Contract, SemanticValue Source) x, (SemanticId Contract, SemanticValue Source) y) =>
+            x.Contract == y.Contract && ValuesEqual(x.Source, y.Source);
+
+        public int GetHashCode((SemanticId Contract, SemanticValue Source) obj) =>
+            HashCode.Combine(obj.Contract, ValueHash(obj.Source));
+
+        internal static bool CanIndex(SemanticValue value) => value switch
+        {
+            SemanticNullValue or SemanticTextValue or SemanticNumberValue or SemanticBooleanValue => true,
+            SemanticArrayValue array => array.Values.All(CanIndex),
+            SemanticCompositeValue composite => CanIndexComposite(composite),
+            _ => false
+        };
+
+        // Keep the same value rules without AreEqual's LINQ/closure allocations on dictionary probes.
+        static bool ValuesEqual(SemanticValue left, SemanticValue right) => (left, right) switch
+        {
+            (SemanticNullValue, SemanticNullValue) => true,
+            (SemanticTextValue x, SemanticTextValue y) => string.Equals(x.Value, y.Value, StringComparison.Ordinal),
+            (SemanticNumberValue x, SemanticNumberValue y) => x.Value == y.Value,
+            (SemanticBooleanValue x, SemanticBooleanValue y) => x.Value == y.Value,
+            _ => ContainersEqual(left, right)
+        };
+
+        static bool ContainersEqual(SemanticValue left, SemanticValue right) => (left, right) switch
+        {
+            (SemanticArrayValue x, SemanticArrayValue y) => ArraysEqual(x, y),
+            (SemanticCompositeValue x, SemanticCompositeValue y) => CompositesEqual(x, y),
+            _ => false
+        };
+
+        static bool ArraysEqual(SemanticArrayValue left, SemanticArrayValue right)
+        {
+            if (left.Values.Length != right.Values.Length)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < left.Values.Length; index++)
+            {
+                if (!ValuesEqual(left.Values[index], right.Values[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static bool CompositesEqual(SemanticCompositeValue left, SemanticCompositeValue right)
+        {
+            if (left.Properties.Length != right.Properties.Length)
+            {
+                return false;
+            }
+
+            foreach (var property in left.Properties)
+            {
+                if (!ContainsProperty(right, property))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static bool ContainsProperty(SemanticCompositeValue composite, SemanticPropertyValue property)
+        {
+            foreach (var candidate in composite.Properties)
+            {
+                if (candidate.TargetProperty == property.TargetProperty && ValuesEqual(candidate.Value, property.Value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static bool CanIndexComposite(SemanticCompositeValue composite)
+        {
+            for (var index = 0; index < composite.Properties.Length; index++)
+            {
+                if (!CanIndex(composite.Properties[index].Value) || HasEarlierProperty(composite, index))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static bool HasEarlierProperty(SemanticCompositeValue composite, int index)
+        {
+            for (var earlier = 0; earlier < index; earlier++)
+            {
+                if (composite.Properties[earlier].TargetProperty == composite.Properties[index].TargetProperty)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Match AreEqual: ordinal text, numeric decimal equality (including scale), ordered arrays,
+        // and order-independent composite properties. No normalization objects are allocated.
+        static int ValueHash(SemanticValue value) => value switch
+        {
+            SemanticTextValue text => text.Value?.GetHashCode(StringComparison.Ordinal) ?? 0,
+            SemanticNumberValue number => number.Value.GetHashCode(),
+            SemanticBooleanValue boolean => boolean.Value.GetHashCode(),
+            SemanticArrayValue array => ArrayHash(array),
+            SemanticCompositeValue composite => CompositeHash(composite),
+            _ => 0
+        };
+
+        static int ArrayHash(SemanticArrayValue array)
+        {
+            HashCode hash = default;
+            foreach (var value in array.Values)
+            {
+                hash.Add(ValueHash(value));
+            }
+
+            return hash.ToHashCode();
+        }
+
+        static int CompositeHash(SemanticCompositeValue composite)
+        {
+            var hash = 0;
+            foreach (var property in composite.Properties)
+            {
+                hash ^= HashCode.Combine(property.TargetProperty, ValueHash(property.Value));
+            }
+
+            return HashCode.Combine(composite.Properties.Length, hash);
+        }
     }
 }
