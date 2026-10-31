@@ -19,11 +19,17 @@ public class when_printing_a_folder_merge_with_a_first_line_feature : Specificat
                 navigate to List
               screen template Shell
                 main
-            """, "module.play", PlayPlacement.Document, ScreenplayLanguageRegistry.Default);
+            """,
+            "module.play",
+            PlayPlacement.Document,
+            ScreenplayLanguageRegistry.Default);
         var feature = ScreenplayCompiler.ParsePlaced("""
             feature View
               slice StateView List
-            """, "feature.play", new(["Example"]), ScreenplayLanguageRegistry.Default);
+            """,
+            "feature.play",
+            new(["Example"]),
+            ScreenplayLanguageRegistry.Default);
         var application = PlayFolderMerge.Merge([module, feature]).Value!;
         _printed = new ScreenplayPrinter().Print(application);
     }

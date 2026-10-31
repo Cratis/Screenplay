@@ -36,9 +36,15 @@ public class event_route_models : Specification
     internal static SemanticFixtureRoute Fixture(SemanticValue key) => new(Source.Id, Stream.Id) { StreamId = key };
 
     internal static SemanticSpecification Specification() => new(
-        SemanticId.Create(SemanticAddress.ForSpecification(SliceAddress, "Scenario")), "Scenario", [], [],
+        SemanticId.Create(SemanticAddress.ForSpecification(SliceAddress, "Scenario")),
+        "Scenario",
+        [],
+        [],
         new(Command.Id, [new(Identity.Id, SemanticValue.Text("project-1")), new(Key.Id, SemanticValue.Text("2026-10"))]),
-        [new(Event.Id, [])], [], [], []);
+        [new(Event.Id, [])],
+        [],
+        [],
+        []);
 
     internal static SemanticExecutionPlan Plan(
         SemanticCommand? command = null,
@@ -51,28 +57,45 @@ public class event_route_models : Specification
         // A specification runs only its own slice, so with reactions it belongs to the automation that declares them.
         var automated = !reactions.IsDefaultOrEmpty;
         ImmutableArray<SemanticSpecification> declared = specifications.IsDefault ? [] : specifications;
-        var slice = new SemanticSlice(SemanticId.Create(SliceAddress), "Slice", SemanticSliceKind.StateChange,
-            [Event, Before], noCommands ? [] : [command ?? Command], [], [], [], automated ? [] : declared);
+        var slice = new SemanticSlice(
+            SemanticId.Create(SliceAddress),
+            "Slice",
+            SemanticSliceKind.StateChange,
+            [Event, Before],
+            noCommands ? [] : [command ?? Command],
+            [],
+            [],
+            [],
+            automated ? [] : declared);
         var automation = new SemanticSlice(SemanticId.Create(AutomationAddress), "Automation", SemanticSliceKind.Automation, [], [], [], [], [], automated ? declared : [])
         {
             Reactions = reactions.IsDefault ? [] : reactions
         };
-        var application = new SemanticApplication(SemanticId.Create(SemanticAddress.ForApplication(Application)), "Routes",
-            [new(IntegerId, "Period", SemanticPrimitiveType.WholeNumber, [], []), new(GeneratedId, "GeneratedId", SemanticPrimitiveType.Uuid, [], [])], [],
-            [new(SemanticId.Create(SemanticAddress.ForModule(Application, "Module")), "Module",
+        var application = new SemanticApplication(
+            SemanticId.Create(SemanticAddress.ForApplication(Application)),
+            "Routes",
+            [new(IntegerId, "Period", SemanticPrimitiveType.WholeNumber, [], []), new(GeneratedId, "GeneratedId", SemanticPrimitiveType.Uuid, [], [])],
+            [],
+            [new(
+                SemanticId.Create(SemanticAddress.ForModule(Application, "Module")),
+                "Module",
                 [new(SemanticId.Create(SemanticAddress.ForFeature(Application, "Module", "Feature")), "Feature", [], reactions.IsDefaultOrEmpty ? [slice] : [slice, automation])])])
         {
             EventSources = legacy ? [] : [source ?? Source],
             Policies = [new("Authenticated", new SemanticAuthenticatedCondition())]
         };
-        var model = ExecutableSemanticModel.Create(legacy ? LanguageVersion.V7 : LanguageVersion.V8,
-            legacy ? SemanticVersion.V7 : SemanticVersion.V8, application);
+        var model = ExecutableSemanticModel.Create(
+            legacy ? LanguageVersion.V7 : LanguageVersion.V8,
+            legacy ? SemanticVersion.V7 : SemanticVersion.V8,
+            application);
 
         return SemanticExecutionPlan.Compile(model).Plan!;
     }
 
-    internal static SemanticExecutionRequest Request(SemanticValue key) => SemanticExecutionRequest.Create(Command.Id,
-        [new(Identity.Id, SemanticValue.Text("project-1")), new(Key.Id, key)], []);
+    internal static SemanticExecutionRequest Request(SemanticValue key) => SemanticExecutionRequest.Create(
+        Command.Id,
+        [new(Identity.Id, SemanticValue.Text("project-1")), new(Key.Id, key)],
+        []);
 
     internal static SemanticFact Fact(SemanticEventRoute? route, SemanticId? contract = null) => new(contract ?? Event.Id, SemanticValue.Text("project-1"), [])
     {
@@ -80,6 +103,10 @@ public class event_route_models : Specification
         Route = route
     };
 
-    static SemanticEventContract EventNamed(string name) => new(SemanticId.Create(SemanticAddress.ForEventContract(SliceAddress, name)),
-        EventContractId.Create(Application, name), EventContractRevision.Initial, name, []);
+    static SemanticEventContract EventNamed(string name) => new(
+        SemanticId.Create(SemanticAddress.ForEventContract(SliceAddress, name)),
+        EventContractId.Create(Application, name),
+        EventContractRevision.Initial,
+        name,
+        []);
 }
