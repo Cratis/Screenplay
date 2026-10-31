@@ -148,6 +148,11 @@ internal sealed partial class SemanticScopedProjection
     {
         foreach (var ancestor in AncestorsAppliedForCurrentFact(level))
         {
+            if (_ancestorsApplied?.Add(ancestor.Scope) == false)
+            {
+                continue;
+            }
+
             var enclosing = location with { Steps = location.Steps[..ancestor.Level.Address.Length], Nested = ancestor.Level.Nested };
             Modify(enclosing, false, target => Apply(target, ancestor.Scope.Every?.Mappings ?? [], ancestor.Level.Targets, _fact, ancestor.Level.Nested.IsEmpty && ancestor.Scope.Joins.IsEmpty));
         }

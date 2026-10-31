@@ -36,6 +36,10 @@ internal sealed partial class SemanticScopedProjection(
     SemanticFact _fact = null!;
     string? _failure;
 
+    // Scopes whose 'every include children' mappings already ran for the current fact (Chronicle subscribes them once
+    // per event type to the level's own event stream, ChildEveryEventMappings.cs:55-71). Null during deferred replay.
+    HashSet<SemanticProjectionScope>? _ancestorsApplied = new(ReferenceEqualityComparer.Instance);
+
     /// <summary>
     /// Projects one fact.
     /// </summary>
@@ -58,6 +62,8 @@ internal sealed partial class SemanticScopedProjection(
 
         if (_failure is null && handled)
         {
+            // Each resolved deferred child gives its event to its ancestors again (ResolveFutures.ProvideToAncestors:207-219).
+            _ancestorsApplied = null;
             ResolvePending();
         }
 
