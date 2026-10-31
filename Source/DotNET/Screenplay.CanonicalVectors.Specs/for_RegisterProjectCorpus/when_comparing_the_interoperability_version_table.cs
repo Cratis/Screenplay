@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reflection;
+using Cratis.Screenplay.CanonicalCorpus;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_RegisterProjectCorpus;
@@ -34,12 +35,23 @@ public class when_comparing_the_interoperability_version_table : Specification
             var version = SemanticVersion.Parse(row[0]);
             row[2].ShouldEqual(version.Major.ToString(System.Globalization.CultureInfo.InvariantCulture));
             row[3].ShouldContain("https://github.com/Cratis/Screenplay/blob/main/decisions/");
-            row[4].ShouldEqual($"`full-esm-v{version.Major}.json`");
-            using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v{version.Major}.json")!;
-            using var memory = new MemoryStream();
-            golden.CopyTo(memory);
-            SemanticModelSerializer.Deserialize(memory.ToArray()).SemanticVersion.ShouldEqual(version);
+            var filename = version.Minor > 0 ? $"full-esm-v{version}.json" : $"full-esm-v{version.Major}.json";
+            row[4].ShouldEqual($"`{filename}`");
+            SemanticModelSerializer.Deserialize(GoldenBytes(version, filename)).SemanticVersion.ShouldEqual(version);
         }
+    }
+
+    static byte[] GoldenBytes(SemanticVersion version, string filename)
+    {
+        if (version.Minor > 0)
+        {
+            return [.. EsmGoldenVectors.GetMinor(version).Bytes];
+        }
+
+        using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.{filename}")!;
+        using var memory = new MemoryStream();
+        golden.CopyTo(memory);
+        return memory.ToArray();
     }
 
     static string[][] Rows(string text, string heading)
