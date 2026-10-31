@@ -43550,8 +43550,9 @@
     {
       "code": "PLAY0166",
       "name": "UnknownEvent",
-      "severity": "warning",
+      "severity": "error",
       "severities": [
+        "error",
         "warning"
       ],
       "title": "An event is referred to that nothing in the document or its imports declares.",

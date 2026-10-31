@@ -18,6 +18,7 @@ interface DiagnosticVector {
     readonly files?: Readonly<Record<string, readonly string[]>>;
     readonly roots?: readonly string[];
     readonly locations?: readonly string[];
+    readonly severities?: readonly string[];
 }
 
 function diagnosticResult(vector: DiagnosticVector) {
@@ -72,6 +73,7 @@ describe('when holding the compilers to the diagnostic vectors', () => {
             const diagnostics = diagnosticResult(vector).diagnostics;
             diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`)
                 .should.deep.equal(vector.diagnostics);
+            if (vector.severities !== undefined) diagnostics.map(diagnostic => diagnostic.severity).should.deep.equal(vector.severities);
             if (vector.locations !== undefined) diagnostics.map(diagnostic => `${diagnostic.location.path}:${diagnostic.location.line}:${diagnostic.location.column}`).should.deep.equal(vector.locations);
             if (vector.arguments !== undefined) diagnostics.map(diagnostic => diagnostic.arguments ?? {}).should.deep.equal(vector.arguments);
             if (vector.messages !== undefined) diagnostics.map(diagnostic => diagnostic.message).should.deep.equal(vector.messages);
