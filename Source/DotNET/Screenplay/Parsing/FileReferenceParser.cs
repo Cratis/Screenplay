@@ -62,16 +62,33 @@ internal static partial class FileReferenceParser
     public static FileReferenceSyntax Parse(ParserContext context, SourceLine line)
     {
         var path = PathOf(line);
+        WarnWhenAbsolute(context, path, line.Location);
+        return new(path, line.Location);
+    }
+
+    /// <summary>
+    /// Reports a path that names a place on one machine, for the blocks that read a path somewhere other than a <c>file</c> line.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="path">The authored path.</param>
+    /// <param name="location">The <see cref="SourceLocation"/> to report at.</param>
+    public static void WarnWhenAbsolute(ParserContext context, string path, SourceLocation location)
+    {
         if (AbsolutePathRegex().IsMatch(path))
         {
             context.Warning(
                 DiagnosticCodes.AbsoluteFileReference,
                 $"'{path}' is an absolute path - a file reference is relative to the repository root, so it means the same thing on every machine",
-                line.Location);
+                location);
         }
-
-        return new(path, line.Location);
     }
+
+    /// <summary>
+    /// Reads the path of a <c>file</c> directive without consuming it, or an empty string when the line is not one.
+    /// </summary>
+    /// <param name="line">The <see cref="SourceLine"/> to look at.</param>
+    /// <returns>The authored path.</returns>
+    public static string PathOfDirective(SourceLine line) => PathOf(line);
 
     /// <summary>
     /// Parses a file directive, preserving the location of a replaced file for comment placement.

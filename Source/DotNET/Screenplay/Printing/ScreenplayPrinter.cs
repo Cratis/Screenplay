@@ -218,6 +218,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteApplicationExperience(ScreenplayWriter writer, ApplicationSyntax application)
     {
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
+        WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
         WriteSection(writer, application.SampleDataPacks, WriteSampleDataPack);

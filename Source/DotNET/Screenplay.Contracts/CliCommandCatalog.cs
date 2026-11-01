@@ -103,6 +103,11 @@ public static class CliCommandCatalog
     /// </summary>
     public static CliCommand Report { get; } = new("report", "processing [<file.play|folder>]", [ProcessingFormat, ControllerName, ControllerContact]);
 
+    /// <summary>
+    /// Gets the command listing the environment keys a model needs, and which of them are secrets.
+    /// </summary>
+    public static CliCommand EnvironmentKeys { get; } = new("environment", "[<file.play|folder>]", [Format]);
+
     /// <summary>Gets the release admission label option.</summary>
     public static CliOption Release { get; } = new("--release", "<label>");
 
@@ -128,7 +133,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, BaselineAdmit, BaselineCheck, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, BaselineAdmit, BaselineCheck, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

@@ -361,11 +361,17 @@ public static partial class AttachmentFiles
                 ReactionTriggerSyntax value => value.File,
                 FileConstraintSyntax value => value.File,
                 PolicySyntax value => value.File,
+                OnboardingEmailSyntax value => value.File,
                 _ => ValidationFile(node)
             };
             if (file is not null)
             {
                 Files.Add(file);
+            }
+
+            if (node is OnboardingLegalTermsSyntax terms)
+            {
+                Files.AddRange(terms.Documents);
             }
         }
 

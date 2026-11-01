@@ -349,6 +349,24 @@ authentication
   provider OpenId name Partner
   provider OpenId name CustomerPortal
 
+// How people get in. Authoring metadata only: the sender address and the mail server are environment values,
+// found by name (see Documentation/screenplay/environments.md), never part of the model.
+onboarding
+  signup open creates tenant
+  invite tenant as FinanceController
+  invite member
+    by FinanceController, InvoiceManager
+    grant Accountant, Auditor
+  legal terms
+    file Legal/terms-of-service.md
+    file Legal/privacy-policy.md
+  offering Starter
+  emails
+    invitation file Emails/invitation.html
+    welcome file Emails/welcome.html
+    signupDeclined file Emails/signup-declined.html
+    images Emails/Images
+
 // Additional caller details describe the application, not token built-ins.
 // These sources are authoring metadata only; no executable clause reads them.
 identity
