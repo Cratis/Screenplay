@@ -155,6 +155,7 @@ internal static partial class ScreenplayValidator
 
         ValidatePersonaPolicies(application, names.Policies, allowUnresolvedPersonaPolicies, context);
         ValidateDuplicateProviders(application, context);
+        ValidateOnboarding(application, allowUnresolvedPersonaPolicies, context);
         ValidateSeeds(application, names.Events, context);
     }
 

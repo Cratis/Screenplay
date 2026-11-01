@@ -108,6 +108,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitAuthentication(syntax.Authentication);
         }
 
+        if (syntax.Onboarding is not null)
+        {
+            VisitOnboarding(syntax.Onboarding);
+        }
+
         foreach (var theme in syntax.Themes ?? [])
         {
             VisitTheme(theme);

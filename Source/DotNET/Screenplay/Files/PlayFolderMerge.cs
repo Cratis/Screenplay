@@ -74,6 +74,7 @@ internal static partial class PlayFolderMerge
             CommandReadMode = MergeCommandReadMode(applications, context),
             TimeZone = MergeTimeZone(applications, context),
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
+            Onboarding = OnlyOne(applications.Select(application => application.Onboarding), onboarding => onboarding.Location, "onboarding block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],

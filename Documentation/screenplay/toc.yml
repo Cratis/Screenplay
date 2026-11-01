@@ -31,6 +31,8 @@
   href: personas.md
 - name: Authentication
   href: authentication.md
+- name: Onboarding
+  href: onboarding.md
 - name: Identity details
   href: identity.md
 - name: UI profile

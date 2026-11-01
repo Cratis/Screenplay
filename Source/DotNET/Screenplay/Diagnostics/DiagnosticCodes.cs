@@ -3676,4 +3676,42 @@ public static class DiagnosticCodes
     /// An <c>authorize</c> declaration writes adjacent policies without the <c>and</c> they mean.
     /// </summary>
     public const string ImplicitAuthorizationConjunction = "PLAY0825";
+
+    // The onboarding block - how people get into the application.
+
+    /// <summary>
+    /// An <c>onboarding</c> line carries anything beyond the keyword.
+    /// </summary>
+    public const string InvalidOnboardingDeclaration = "PLAY0826";
+
+    /// <summary>
+    /// A document or folder declares more than one onboarding block, and an application has at most one.
+    /// </summary>
+    public const string DuplicateOnboarding = "PLAY0827";
+
+    /// <summary>
+    /// An onboarding block is declared by an application that declares no <c>authentication</c> block.
+    /// </summary>
+    public const string OnboardingWithoutAuthentication = "PLAY0828";
+
+    /// <summary>
+    /// A line of an onboarding block is not one of its directives, or one of them is malformed or incomplete.
+    /// </summary>
+    public const string InvalidOnboardingDirective = "PLAY0829";
+
+    /// <summary>
+    /// An onboarding block states the same thing twice: a second <c>signup</c>, <c>legal terms</c>, <c>offering</c>,
+    /// <c>emails</c> or <c>images</c>, a second invitation of one kind, or a second template for one email.
+    /// </summary>
+    public const string DuplicateOnboardingDirective = "PLAY0830";
+
+    /// <summary>
+    /// An invitation's <c>by</c>, <c>grant</c> or <c>as</c> names a persona nothing in the application declares.
+    /// </summary>
+    public const string UnknownOnboardingPersona = "PLAY0831";
+
+    /// <summary>
+    /// The <c>emails</c> block names an email onboarding does not send.
+    /// </summary>
+    public const string UnknownOnboardingEmail = "PLAY0832";
 }

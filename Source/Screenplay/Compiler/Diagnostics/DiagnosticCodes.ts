@@ -481,4 +481,11 @@ export const DiagnosticCodes = {
     InvalidPossibleEventSet: 'PLAY0823',
     RedundantCompositeKeyBraces: 'PLAY0824',
     ImplicitAuthorizationConjunction: 'PLAY0825',
+    InvalidOnboardingDeclaration: 'PLAY0826',
+    DuplicateOnboarding: 'PLAY0827',
+    OnboardingWithoutAuthentication: 'PLAY0828',
+    InvalidOnboardingDirective: 'PLAY0829',
+    DuplicateOnboardingDirective: 'PLAY0830',
+    UnknownOnboardingPersona: 'PLAY0831',
+    UnknownOnboardingEmail: 'PLAY0832',
 } as const;

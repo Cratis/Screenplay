@@ -197,6 +197,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
+        Onboarding = null,
         Purposes = [],
         StickyNotes = [],
         Seeds = application.Seeds?.Select(seed => seed with { Name = null, X = null, Y = null }),
