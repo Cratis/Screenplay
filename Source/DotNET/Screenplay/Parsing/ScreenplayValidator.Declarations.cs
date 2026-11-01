@@ -61,6 +61,40 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    static void ValidateOnboarding(ApplicationSyntax application, bool allowUnresolved, ParserContext context)
+    {
+        if (application.Onboarding is not { } onboarding)
+        {
+            return;
+        }
+
+        void Report(string code, string message, SourceLocation location)
+        {
+            if (allowUnresolved)
+            {
+                context.Warning(code, message, location);
+            }
+            else
+            {
+                context.Error(code, message, location);
+            }
+        }
+
+        if (application.Authentication is null)
+        {
+            Report(DiagnosticCodes.OnboardingWithoutAuthentication, "An onboarding block needs an authentication block - people can only be let in to an application that signs them in", onboarding.Location);
+        }
+
+        var personas = (application.Personas ?? []).Select(persona => persona.Name).ToHashSet(StringComparer.Ordinal);
+        foreach (var invitation in onboarding.Invitations)
+        {
+            foreach (var name in invitation.By.Concat(invitation.Grant).Where(name => !personas.Contains(name)).Distinct(StringComparer.Ordinal))
+            {
+                Report(DiagnosticCodes.UnknownOnboardingPersona, $"Unknown persona '{name}' in an invitation - declare it with 'persona {name}'", invitation.Location);
+            }
+        }
+    }
+
     static void ValidateSeeds(ApplicationSyntax application, HashSet<string> knownEvents, ParserContext context)
     {
         foreach (var seed in application.Seeds ?? [])

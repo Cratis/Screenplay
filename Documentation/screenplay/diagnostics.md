@@ -24,6 +24,13 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. Admission is internal until ESM v35. |
 | `PLAY0824` | Information | A composite key is written with braces (`key {` ... `}`) that the indented parts already make redundant. A repair removes the braces. |
 | `PLAY0825` | Information | An `authorize` declaration writes adjacent policies without the `and` they mean. A repair writes the `and`. |
+| `PLAY0826` | Error | An `onboarding` line carries anything beyond the keyword. See [onboarding](onboarding.md). |
+| `PLAY0827` | Error | An application declares more than one `onboarding` block; it has at most one. |
+| `PLAY0828` | Error | An `onboarding` block is declared by an application with no `authentication` block. Draft authoring reports it as a warning until the folder is assembled. |
+| `PLAY0829` | Error | A line of an `onboarding` block is not one of its directives, or a directive is malformed or incomplete (a member invitation without `by` or `grant`, empty `legal terms`, a bad `offering` name). |
+| `PLAY0830` | Error | An `onboarding` block states the same thing twice: a second `signup`, `legal terms`, `offering`, `emails` or `images`, a second invitation of one kind, or a second template for one email. |
+| `PLAY0831` | Error | An invitation's `as`, `by` or `grant` names a persona nothing declares. Draft authoring reports it as a warning. |
+| `PLAY0832` | Error | The `emails` block names an email onboarding does not send; the emails are `invitation`, `welcome` and `signupDeclined`. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

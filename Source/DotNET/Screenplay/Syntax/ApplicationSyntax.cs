@@ -51,6 +51,11 @@ public record ApplicationSyntax(
     public IdentitySyntax? Identity { get; init; }
 
     /// <summary>
+    /// Gets the authoring-only <c>onboarding</c> block - how people sign up, are invited and accept terms.
+    /// </summary>
+    public OnboardingSyntax? Onboarding { get; init; }
+
+    /// <summary>
     /// Gets the explicit reaction production mode, inherited by the composed application.
     /// Absence preserves legacy per-fact production.
     /// </summary>

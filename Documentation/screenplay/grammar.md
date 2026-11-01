@@ -27,11 +27,11 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
-(* At most one domain, authentication block and identity block. Put domain first; the compiler
+(* At most one domain, authentication block, onboarding block and identity block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
 
 (* A document a FileImport placed in a module or feature holds, besides the
@@ -323,6 +323,44 @@ ProviderDecl   = "provider", Ident, [ "name", Ident ], NL ;
    the application needs to know rather than what it is, and they differ per
    environment while the document does not. "name" distinguishes two providers
    of the same kind, which a generic OpenId or OAuth provider needs.         *)
+
+(* -------------------------------------------------------------- *)
+(* Onboarding                                                      *)
+(* -------------------------------------------------------------- *)
+
+OnboardingDecl = "onboarding", NL,
+                 INDENT,
+                   { SignupDecl | InviteTenantDecl | InviteMemberDecl | LegalTermsDecl
+                   | OfferingDecl | EmailsDecl },
+                 DEDENT ;
+
+SignupDecl     = "signup", "open", ( "creates" | "joins" ), "tenant", NL ;
+
+InviteTenantDecl = "invite", "tenant", "as", PersonaList, NL ;
+
+InviteMemberDecl = "invite", "member", NL,
+                 INDENT, ( ( "by", PersonaList, NL, "grant", PersonaList, NL )
+                         | ( "grant", PersonaList, NL, "by", PersonaList, NL ) ), DEDENT ;
+
+PersonaList    = Ident, { ",", Ident } ;
+
+LegalTermsDecl = "legal", "terms", NL,
+                 INDENT, FileDirective, { FileDirective }, DEDENT ;
+
+OfferingDecl   = "offering", Ident, NL ;
+
+EmailsDecl     = "emails", NL,
+                 INDENT, { EmailTemplateDecl | ImagesDecl }, DEDENT ;
+
+EmailTemplateDecl = ( "invitation" | "welcome" | "signupDeclined" ), "file", FilePath, NL ;
+
+ImagesDecl     = "images", FilePath, NL ;
+
+(* Each directive appears at most once, and an invitation of each kind at most
+   once. The block needs an authentication block and every persona must be
+   declared. Self-signup is off without a signup line. The offering is an opaque
+   name resolved where the application is provisioned; the sender and the mail
+   server are environment values, never in the model - see environments.md.   *)
 
 (* -------------------------------------------------------------- *)
 (* Themes and ui profiles                                          *)

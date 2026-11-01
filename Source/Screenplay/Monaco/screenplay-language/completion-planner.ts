@@ -53,7 +53,7 @@ export interface CompletionScope {
 const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
 
 function topLevelEntries(document: readonly string[]): CompletionEntry[] {
-    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')) && !(item.label === 'identity' && declaredIn(document, 'identity')));
+    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')) && !(item.label === 'onboarding' && declaredIn(document, 'onboarding')) && !(item.label === 'identity' && declaredIn(document, 'identity')));
 }
 
 const isTemplate = (header: string | undefined) => /^(?:screen|dialog)\s+template\b/.test(header ?? '');
@@ -106,6 +106,14 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return chain.includes('ui') ? scope.profileIdentityItems : items.identityItems;
         case 'authentication':
             return scope.authenticationItems;
+        case 'onboarding':
+            return scope.onboardingItems;
+        case 'invite':
+            return scope.inviteMemberItems;
+        case 'legal':
+            return scope.legalTermsItems;
+        case 'emails':
+            return scope.emailItems;
         case 'seed':
             return scope.seedItems;
         case 'theme':

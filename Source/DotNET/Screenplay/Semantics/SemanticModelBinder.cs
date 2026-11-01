@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Environments;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -300,7 +301,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax));
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -499,6 +500,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             if (syntax.Authentication is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Authentication providers are realization metadata and are not part of ESM v1 behavior.", syntax.Authentication.Location);
+            }
+
+            if (syntax.Onboarding is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Onboarding is realization metadata and is not part of ESM v1 behavior.", syntax.Onboarding.Location);
             }
 
             foreach (var seed in syntax.Seeds ?? [])

@@ -126,6 +126,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
+| `onboarding` with open self-signup, tenant and member invitations, legal terms, an offering and email templates; the sender and mail server are [environment values](../../Documentation/screenplay/environments.md) | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |

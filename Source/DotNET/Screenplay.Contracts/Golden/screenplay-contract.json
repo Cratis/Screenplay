@@ -87,6 +87,7 @@
     "corners",
     "correlation",
     "count",
+    "creates",
     "criminal",
     "csharp",
     "dark",
@@ -111,6 +112,7 @@
     "documentation",
     "domain",
     "double",
+    "emails",
     "emphasis",
     "employmentLaw",
     "empty",
@@ -165,6 +167,7 @@
     "givencontexts",
     "global",
     "goal",
+    "grant",
     "green",
     "grid",
     "group",
@@ -188,6 +191,7 @@
     "identity",
     "ignore",
     "image",
+    "images",
     "implementation",
     "import",
     "in",
@@ -201,11 +205,13 @@
     "int",
     "interest",
     "interval",
+    "invite",
     "invokes",
     "is",
     "item",
     "items",
     "join",
+    "joins",
     "jpeg",
     "jpg",
     "key",
@@ -214,6 +220,7 @@
     "layout",
     "leave",
     "legacy",
+    "legal",
     "legalClaims",
     "legalObligation",
     "legitimateInterests",
@@ -232,6 +239,7 @@
     "matches",
     "max",
     "may",
+    "member",
     "message",
     "min",
     "minute",
@@ -258,7 +266,9 @@
     "observable",
     "occurred",
     "of",
+    "offering",
     "on",
+    "onboarding",
     "one",
     "oneWay",
     "open",
@@ -370,6 +380,7 @@
     "short",
     "show",
     "sidebar",
+    "signup",
     "size",
     "slice",
     "slot",
@@ -398,6 +409,8 @@
     "tag",
     "target",
     "template",
+    "tenant",
+    "terms",
     "text",
     "theme",
     "then",
@@ -457,6 +470,7 @@
     "layout",
     "module",
     "numbers",
+    "onboarding",
     "persona",
     "policy",
     "purpose",
@@ -20487,6 +20501,435 @@
           "status": "refused",
           "diagnostic": "PLAY0268",
           "issue": "https://github.com/Cratis/Screenplay/issues/285"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "authentication\n  provider GitHub\nonboarding\n  signup open creates tenant\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 22,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 23,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 24,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 25,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 26,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 27,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 28,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 29,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 30,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 31,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 32,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 33,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 34,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 22,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 23,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 24,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 25,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 26,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 27,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 28,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 29,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 30,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 31,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 32,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 33,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 34,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
         }
       ]
     },
@@ -46181,6 +46624,85 @@
       "title": "An authorize declaration writes adjacent policies without the and they mean.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0826",
+      "name": "InvalidOnboardingDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An onboarding line carries anything beyond the keyword.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0827",
+      "name": "DuplicateOnboarding",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A document or folder declares more than one onboarding block, and an application has at most one.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0828",
+      "name": "OnboardingWithoutAuthentication",
+      "severity": "error",
+      "severities": [
+        "error",
+        "warning"
+      ],
+      "title": "An onboarding block is declared by an application that declares no authentication block.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0829",
+      "name": "InvalidOnboardingDirective",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line of an onboarding block is not one of its directives, or one of them is malformed or incomplete.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0830",
+      "name": "DuplicateOnboardingDirective",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An onboarding block states the same thing twice: a second signup, legal terms, offering, emails or images, a second invitation of one kind, or a second template for one email.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0831",
+      "name": "UnknownOnboardingPersona",
+      "severity": "error",
+      "severities": [
+        "error",
+        "warning"
+      ],
+      "title": "An invitation\u0027s by, grant or as names a persona nothing in the application declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0832",
+      "name": "UnknownOnboardingEmail",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The emails block names an email onboarding does not send.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -52397,6 +52919,14 @@
       "options": [
         "--controller-contact",
         "--controller-name",
+        "--format"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "environment",
+      "usage": "screenplay environment [\u003Cfile.play|folder\u003E] [--format text|json]",
+      "options": [
         "--format"
       ],
       "aliases": []

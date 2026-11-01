@@ -402,6 +402,10 @@ Do not parse the file's JSON yourself.
 
 `screenplay report processing [<file.play|folder>] --format json|markdown|csv` derives a controller's [record of processing](purposes.md#record-of-processing) from error-free source. The default format is Markdown and the default path is the current directory. Supply `--controller-name` and `--controller-contact` explicitly; the model does not infer them. The report records declarations and limited structural derivations, not legal advice or verified runtime protection. Source errors exit `1`; bad arguments, unavailable paths and empty model directories exit `2`. A model with no purposes yields zero rows.
 
+## List the environment keys a model needs
+
+`screenplay environment [<file.play|folder>] [--format text|json]` lists the keys a model needs from the [environment](environments.md) it runs in — each authentication provider's `clientId` and `clientSecret`, the mail settings of onboarding — and marks the ones that must be secrets. The default path is the current directory and the default format is text, one key per line. Source errors exit `1` and list nothing; bad arguments, unavailable paths and empty model directories exit `2`. A model that needs nothing prints a single line saying so.
+
 ## Check structural completeness
 
 Select additional warnings and information with `--check data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation,purposes`, `--check enum-pinning` (or `PLAY0671`) or `--check all`. Combine with `--warnaserror` to gate on findings, and with `--scope` to limit the reported set. Checks are not part of ordinary compilation and run only when the whole application has no source errors. Otherwise output reports `completeness checks skipped: the model has N error(s)`. See [Completeness checks](completeness.md) for rules and exemptions.

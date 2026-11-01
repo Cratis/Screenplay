@@ -61,6 +61,15 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitOnboarding(OnboardingSyntax syntax)
+    {
+        Declare("Onboarding", "onboarding", syntax, null, new { syntaxOnly = true, authoringMetadata = true });
+        _scope.Add("onboarding");
+        base.VisitOnboarding(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
     public override void VisitEventSource(EventSourceSyntax syntax)
     {
         _ownership.VisitEventSource(syntax);

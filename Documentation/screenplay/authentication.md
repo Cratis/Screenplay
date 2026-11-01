@@ -51,7 +51,9 @@ That is not an omission. Authority URLs, client ids and the credentials that go 
 
 Configuration lines under a provider are therefore a compile error rather than something quietly ignored — a document that states them is saying something the language does not express, and hiding that would be worse than reporting it.
 
-A runtime such as Stage resolves the configuration itself. Provider identities are realization metadata, not part of the executable semantic model (ESM). A renderer can get them from a successful syntax compilation result:
+A runtime such as Stage resolves the configuration itself, by name. Each provider's `Identity` — its alias when it has one, otherwise its name — is its key, so `provider OpenId name Partner` is configured under `authentication.providers.Partner`, with `clientId` and `clientSecret` (a secret) and, for `OpenId`, an `authority`. The full convention, and what the model and an environment each own, is in [environments](environments.md).
+
+Provider identities are realization metadata, not part of the executable semantic model (ESM). A renderer can read them from a successful syntax compilation result:
 
 ```csharp
 var parsed = new ScreenplayCompiler().Compile(source);
@@ -66,4 +68,8 @@ else
 }
 ```
 
-Each `AuthenticationProviderSyntax` has `Name`, optional `Alias`, and `Identity` (alias if present, otherwise name). The [compiler's visitors](visitors.md) can traverse the same syntax. `SemanticModelCompiler.Compile(...)` returns a `SemanticCompilation` with `Model`, `Documents`, and `SourceMap`, but **no typed provider companion view**: a renderer receiving only that result must parse its source documents separately to obtain provider declarations. There is currently no lossless, provider-typed semantic compilation companion API; do not infer provider identities from ESM. How the runtime stores provider configuration — a secret store, environment variables, or another host mechanism — is its own business.
+Each `AuthenticationProviderSyntax` has `Name`, optional `Alias`, and `Identity` (alias if present, otherwise name). The [compiler's visitors](visitors.md) can traverse the same syntax.
+
+A renderer that holds only a semantic compilation does not need to parse the source again to know what the environment must supply. `SemanticCompilation.Environment` lists the keys of every provider (and of [onboarding](onboarding.md)), with the ones that must be secrets marked; `EnvironmentRequirements.For(syntax)` does the same from a syntax compilation. Do not infer provider identities from ESM. How the runtime stores the values — a secret store, environment variables, or another host mechanism — is its own business.
+
+An application that lets people sign up or invites them declares [onboarding](onboarding.md) next to `authentication`.

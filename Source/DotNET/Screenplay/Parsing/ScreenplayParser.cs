@@ -40,6 +40,7 @@ internal static partial class ScreenplayParser
         DomainSyntax? domain = null;
         AuthenticationSyntax? authentication = null;
         IdentitySyntax? identity = null;
+        OnboardingSyntax? onboarding = null;
         ReactionProductionMode? reactionProductionMode = null;
         var sawReactionBatches = false;
         CommandReadMode? commandReadMode = null;
@@ -107,7 +108,7 @@ internal static partial class ScreenplayParser
                     sawReactionBatches = true;
                     break;
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || onboarding is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
                     break;
                 case "import" when FileImportParser.IsFileImport(line.Content):
                     // A top level import belongs to whatever the document's top level is - the application, or the
@@ -190,6 +191,9 @@ internal static partial class ScreenplayParser
                 case "authentication":
                     authentication = AuthenticationParser.Parse(context, line, authentication);
                     break;
+                case "onboarding":
+                    onboarding = OnboardingParser.Parse(context, line, onboarding);
+                    break;
                 case "module" when !placement.IsDocument:
                     ParseModuleInPlacedFile(context, line, placement, moduleBody);
                     break;
@@ -256,6 +260,7 @@ internal static partial class ScreenplayParser
         return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
         {
             Identity = identity,
+            Onboarding = onboarding,
             ReactionProductionMode = reactionProductionMode,
             CommandReadMode = commandReadMode,
             TimeZone = timeZone,
@@ -431,7 +436,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
+                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
