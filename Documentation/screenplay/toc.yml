@@ -33,6 +33,8 @@
   href: authentication.md
 - name: Onboarding
   href: onboarding.md
+- name: Environments
+  href: environments.md
 - name: Identity details
   href: identity.md
 - name: UI profile

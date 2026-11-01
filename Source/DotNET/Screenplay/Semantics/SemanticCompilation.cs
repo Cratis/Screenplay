@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Environments;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
@@ -37,6 +38,13 @@ public sealed class SemanticCompilation
     /// Gets the source-bound effective specifications and value origins. This sidecar is not part of ESM bytes.
     /// </summary>
     public ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins { get; private init; } = ImmutableDictionary.Create<SemanticId, EffectiveSpecification>();
+
+    /// <summary>
+    /// Gets the environment values the model needs to run - one per provider setting and per onboarding mail setting.
+    /// This sidecar is not part of ESM bytes: providers and onboarding are realization metadata, and this is how a
+    /// runtime reads what they need from a compilation without parsing the source again.
+    /// </summary>
+    public EnvironmentRequirements Environment { get; private init; } = EnvironmentRequirements.None;
 
     /// <summary>
     /// Creates a compilation after cross-checking the model, identity catalog, documents, and source map.
@@ -97,7 +105,10 @@ public sealed class SemanticCompilation
     }
 
     internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = origins };
+        new(Model, Documents, SourceMap) { SpecificationOrigins = origins, Environment = Environment };
+
+    internal SemanticCompilation WithEnvironment(EnvironmentRequirements environment) =>
+        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = environment };
 }
 
 sealed class SemanticCompilationIndex

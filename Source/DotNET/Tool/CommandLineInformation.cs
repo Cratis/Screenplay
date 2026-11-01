@@ -16,6 +16,7 @@ static class CommandLineInformation
           {CliCommandCatalog.Test.Usage}
           {CliCommandCatalog.Mcp.Usage}
           {CliCommandCatalog.Contract.Usage}
+          {CliCommandCatalog.EnvironmentKeys.Usage}
           screenplay {CliCommandCatalog.Help.Aliases[0]}
           screenplay {CliCommandCatalog.Version.Aliases[0]}
 
@@ -34,6 +35,8 @@ static class CommandLineInformation
         Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
         test runs the deterministic in-memory reference evaluator, without external services.
         test exit codes: 0 all selected specifications passed, 1 failed, 2 could not run, 3 unsupported or unbound.
+        environment lists the keys a model needs from the environment it runs in, and marks which are secrets.
+        environment exit codes: 0 listed, 1 the model has errors, 2 could not run.
         The MCP server uses stdio; a supplied root must exist unless --create-root is used.
         Open an empty model folder through MCP to create its first typed document.
         MCP proposals do not write files; review them before invoking apply.
