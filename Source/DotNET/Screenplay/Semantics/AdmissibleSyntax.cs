@@ -9,6 +9,9 @@ namespace Cratis.Screenplay.Semantics;
 
 sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog identities)
 {
+    const string Startup = "Startup";
+    const string Shutdown = "Shutdown";
+
     readonly List<Unit> _units = [];
     readonly Func<SourceLocation, DiagnosticArgument?> _locate = DiagnosticSubjects.CreateLocator(syntax);
     readonly Func<SourceLocation, SliceSyntax?> _sliceAt = SliceOwners.CreateLocator(syntax);
@@ -19,6 +22,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
         var application = identities.ResolveSemantic(SemanticAddress.ForApplication(identities.Application));
         foreach (var import in syntax.Imports) _units.Add(new(import, SemanticExclusionKind.Import, import.QualifiedName, application));
         foreach (var policy in syntax.Policies) _units.Add(new(policy, SemanticExclusionKind.Policy, policy.Name, application));
+        foreach (var trigger in syntax.Triggers ?? []) _units.Add(new(trigger, SemanticExclusionKind.Trigger, trigger.Name, application));
         foreach (var module in syntax.Modules)
         {
             foreach (var feature in module.Features) IndexFeature(module.Name, feature, feature.Name);
@@ -38,6 +42,7 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
             SemanticExclusionKind.Slice => kind != "specification" && unit.Syntax == _sliceAt(location),
             SemanticExclusionKind.Import => kind == "import" && unit.Address == address,
             SemanticExclusionKind.Policy => kind == "policy" && unit.Address == address,
+            SemanticExclusionKind.Trigger => PrunableTrigger(unit, kind, address),
             _ => false
         });
     }
@@ -48,12 +53,18 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
     {
         Imports = [.. syntax.Imports.Where(import => !removed.Contains(import))],
         Policies = [.. syntax.Policies.Where(policy => !removed.Contains(policy))],
+        Triggers = syntax.Triggers is { } triggers ? [.. triggers.Where(trigger => !removed.Contains(trigger))] : null,
         Modules = [.. syntax.Modules.Select(module => module with
         {
             Authorize = module.Authorize is { } authorize && removed.Contains(authorize) ? null : module.Authorize,
             Features = [.. module.Features.Select(feature => Prune(feature, removed))]
         })]
     };
+
+    static bool PrunableTrigger(Unit unit, string? kind, string address) =>
+        kind == "trigger" && unit.Address == address &&
+        !string.Equals(unit.Address, Startup, StringComparison.Ordinal) &&
+        !string.Equals(unit.Address, Shutdown, StringComparison.Ordinal);
 
     static FeatureSyntax Prune(FeatureSyntax feature, HashSet<SyntaxNode> removed) => feature with
     {
