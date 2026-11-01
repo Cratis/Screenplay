@@ -30,7 +30,13 @@ public sealed partial class SemanticModelBinder
         var application = SemanticReadModelPropertyOrder.Apply(compilation.Model.Application);
         if (!SemanticReadModelPropertyOrder.IsUsed(application)) return new(result);
         var model = ExecutableSemanticModel.Create(LanguageVersion.V34_1, SemanticVersion.V34_1, application, assessmentYear);
-        var updated = SemanticCompilation.Create(model, compilation.Documents, compilation.SourceMap).WithSpecificationOrigins(compilation.SpecificationOrigins);
-        return new(result with { Value = updated });
+        var updated = SemanticCompilation.Create(model, compilation.Documents, compilation.SourceMap)
+            .WithSpecificationOrigins(compilation.SpecificationOrigins)
+            .WithEnvironment(compilation.Environment);
+        return new(result with
+        {
+            Value = updated,
+            TypedContextDescriptors = [.. result.TypedContextDescriptors.Select(value => value with { ModelRevision = model.Revision })]
+        });
     }
 }
