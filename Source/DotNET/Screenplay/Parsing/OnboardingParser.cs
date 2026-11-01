@@ -151,7 +151,7 @@ internal static partial class OnboardingParser
 
     static void AddInvitation(ParserContext context, State state, OnboardingInvitationSyntax invitation)
     {
-        if (state.Invitations.Any(existing => existing.Kind == invitation.Kind))
+        if (state.Invitations.Exists(existing => existing.Kind == invitation.Kind))
         {
             context.Error(DiagnosticCodes.DuplicateOnboardingDirective, $"Duplicate invitation of a {invitation.Kind.ToString().ToLowerInvariant()} - an onboarding block has at most one of each kind", invitation.Location);
             return;
@@ -277,7 +277,7 @@ internal static partial class OnboardingParser
         {
             context.Error(DiagnosticCodes.UnknownOnboardingEmail, $"Unknown email '{kind}' - onboarding sends {string.Join(", ", OnboardingEmailSyntax.Kinds)}", line.Location);
         }
-        else if (templates.Any(template => template.Kind == kind))
+        else if (templates.Exists(template => template.Kind == kind))
         {
             Duplicate(context, $"{kind} email", line);
         }
@@ -306,19 +306,6 @@ internal static partial class OnboardingParser
         }
     }
 
-    sealed class State
-    {
-        public OnboardingSignupSyntax? Signup { get; set; }
-
-        public List<OnboardingInvitationSyntax> Invitations { get; } = [];
-
-        public OnboardingLegalTermsSyntax? LegalTerms { get; set; }
-
-        public OnboardingOfferingSyntax? Offering { get; set; }
-
-        public OnboardingEmailsSyntax? Emails { get; set; }
-    }
-
     [GeneratedRegex(@"^signup\s+open\s+(creates|joins)\s+tenant$", RegexOptions.NonBacktracking)]
     private static partial Regex SignupRegex();
 
@@ -336,4 +323,17 @@ internal static partial class OnboardingParser
 
     [GeneratedRegex(@"^images\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ImagesRegex();
+
+    sealed class State
+    {
+        public OnboardingSignupSyntax? Signup { get; set; }
+
+        public List<OnboardingInvitationSyntax> Invitations { get; } = [];
+
+        public OnboardingLegalTermsSyntax? LegalTerms { get; set; }
+
+        public OnboardingOfferingSyntax? Offering { get; set; }
+
+        public OnboardingEmailsSyntax? Emails { get; set; }
+    }
 }

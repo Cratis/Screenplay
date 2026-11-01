@@ -7,6 +7,41 @@ namespace Cratis.Screenplay.Printing;
 
 public partial class ScreenplayPrinter
 {
+    static void WriteInvitation(ScreenplayWriter writer, OnboardingInvitationSyntax invitation)
+    {
+        if (invitation.Kind == OnboardingInvitationKind.Tenant)
+        {
+            writer.Line($"invite tenant as {string.Join(", ", invitation.Grant)}", invitation);
+            return;
+        }
+
+        using var anchor = writer.Anchor(invitation);
+        writer.Line("invite member");
+        using (writer.Indent())
+        {
+            writer.Line($"by {string.Join(", ", invitation.By)}");
+            writer.Line($"grant {string.Join(", ", invitation.Grant)}");
+        }
+    }
+
+    static void WriteEmails(ScreenplayWriter writer, OnboardingEmailsSyntax emails)
+    {
+        using var anchor = writer.Anchor(emails);
+        writer.Line("emails");
+        using (writer.Indent())
+        {
+            foreach (var template in emails.Templates)
+            {
+                writer.Line($"{template.Kind} file {template.File.Path}", template);
+            }
+
+            if (emails.Images is { } images)
+            {
+                writer.Line($"images {images.Path}", images);
+            }
+        }
+    }
+
     void WriteOnboarding(ScreenplayWriter writer, OnboardingSyntax onboarding)
     {
         using var anchor = writer.Anchor(onboarding);
@@ -45,41 +80,6 @@ public partial class ScreenplayPrinter
             if (onboarding.Emails is { } emails)
             {
                 WriteEmails(writer, emails);
-            }
-        }
-    }
-
-    static void WriteInvitation(ScreenplayWriter writer, OnboardingInvitationSyntax invitation)
-    {
-        if (invitation.Kind == OnboardingInvitationKind.Tenant)
-        {
-            writer.Line($"invite tenant as {string.Join(", ", invitation.Grant)}", invitation);
-            return;
-        }
-
-        using var anchor = writer.Anchor(invitation);
-        writer.Line("invite member");
-        using (writer.Indent())
-        {
-            writer.Line($"by {string.Join(", ", invitation.By)}");
-            writer.Line($"grant {string.Join(", ", invitation.Grant)}");
-        }
-    }
-
-    static void WriteEmails(ScreenplayWriter writer, OnboardingEmailsSyntax emails)
-    {
-        using var anchor = writer.Anchor(emails);
-        writer.Line("emails");
-        using (writer.Indent())
-        {
-            foreach (var template in emails.Templates)
-            {
-                writer.Line($"{template.Kind} file {template.File.Path}", template);
-            }
-
-            if (emails.Images is { } images)
-            {
-                writer.Line($"images {images.Path}", images);
             }
         }
     }

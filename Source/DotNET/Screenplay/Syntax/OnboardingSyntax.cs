@@ -6,6 +6,30 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
+/// What a self-signup does.
+/// </summary>
+public enum OnboardingSignupOutcome
+{
+    /// <summary>A sign-up creates a new tenant (organization) for the person signing up.</summary>
+    CreatesTenant,
+
+    /// <summary>A sign-up asks to join a tenant that already exists.</summary>
+    JoinsTenant
+}
+
+/// <summary>
+/// What an invitation is for.
+/// </summary>
+public enum OnboardingInvitationKind
+{
+    /// <summary>The invitation creates a new tenant for the invitee.</summary>
+    Tenant,
+
+    /// <summary>The invitation brings the invitee into an existing tenant.</summary>
+    Member
+}
+
+/// <summary>
 /// Represents a top level <c>onboarding</c> block declaring how people get into the application:
 /// signing up, being invited, accepting legal terms and the emails sent along the way.
 /// </summary>
@@ -44,35 +68,11 @@ public record OnboardingSyntax(SourceLocation Location) : SyntaxNode(Location)
 }
 
 /// <summary>
-/// What a self-signup does.
-/// </summary>
-public enum OnboardingSignupOutcome
-{
-    /// <summary>A sign-up creates a new tenant (organization) for the person signing up.</summary>
-    CreatesTenant,
-
-    /// <summary>A sign-up asks to join a tenant that already exists.</summary>
-    JoinsTenant
-}
-
-/// <summary>
 /// Represents <c>signup open creates tenant</c> or <c>signup open joins tenant</c>.
 /// </summary>
 /// <param name="Outcome">What a sign-up leads to.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record OnboardingSignupSyntax(OnboardingSignupOutcome Outcome, SourceLocation Location) : SyntaxNode(Location);
-
-/// <summary>
-/// What an invitation is for.
-/// </summary>
-public enum OnboardingInvitationKind
-{
-    /// <summary>The invitation creates a new tenant for the invitee.</summary>
-    Tenant,
-
-    /// <summary>The invitation brings the invitee into an existing tenant.</summary>
-    Member
-}
 
 /// <summary>
 /// Represents an <c>invite tenant as &lt;Persona&gt;</c> or an <c>invite member</c> block with <c>by</c> and <c>grant</c>.

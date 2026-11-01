@@ -35,7 +35,7 @@ public sealed record EnvironmentRequirements(ImmutableArray<EnvironmentKey> Keys
     /// <summary>
     /// Gets requirements that need nothing from the environment.
     /// </summary>
-    public static EnvironmentRequirements None { get; } = new(ImmutableArray<EnvironmentKey>.Empty);
+    public static EnvironmentRequirements None { get; } = new([]);
 
     /// <summary>
     /// Gets the keys that must be supplied as secrets.
