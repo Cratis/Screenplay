@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Parsing;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Syntax.Specifications;
 
@@ -10,6 +11,10 @@ public static partial class SpecificationExamples
 {
     private sealed partial class Expansion
     {
+        readonly Dictionary<object, Dictionary<EventSyntax, TypeRefSyntax?>> _destinationTypes = new(ReferenceEqualityComparer.Instance);
+        List<Dictionary<EventSyntax, List<EventSyntax>>>? _foldedEvents;
+        EventSyntax[]? _declaredEvents;
+
         static TypeRefSyntax? UniqueDestinationType(IEnumerable<TypeRefSyntax> types) =>
             types.DistinctBy(type => (type.Name, type.IsOptional, type.IsCollection)).ToArray() is [var type] ? type : null;
 
@@ -90,7 +95,7 @@ public static partial class SpecificationExamples
                         var eventDeclaration = _declarations!.Event(occurrence.EventType, scope);
                         if (eventDeclaration is null) return null;
                         var local = _slices.Find(owner => owner.Scope.Segments.SequenceEqual(scope.Segments)).Slice;
-                        return UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
+                        return DestinationType(eventDeclaration, local);
                     }
                     properties = _declarations!.Event(occurrence.EventType, scope)?.Properties;
                     break;
@@ -133,6 +138,15 @@ public static partial class SpecificationExamples
             return _declarations!.Property(properties, property, out _)?.Type;
         }
 
+        // Memoized per expansion by declaring slice and resolved event; unresolved and ambiguous (null) results are cached too.
+        TypeRefSyntax? DestinationType(EventSyntax eventDeclaration, SliceSyntax? local)
+        {
+            var key = (object?)local ?? _slices;
+            if (!_destinationTypes.TryGetValue(key, out var events)) _destinationTypes[key] = events = new(ReferenceEqualityComparer.Instance);
+            if (events.TryGetValue(eventDeclaration, out var cached)) return cached;
+            return events[eventDeclaration] = UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
+        }
+
         IEnumerable<TypeRefSyntax> CommandDestinationTypesFor(EventSyntax eventDeclaration, SliceSyntax? local = null)
         {
             foreach (var (slice, scope) in _slices.Where(owner => local is null || ReferenceEquals(owner.Slice, local)))
@@ -153,7 +167,7 @@ public static partial class SpecificationExamples
             if (!visited.Add(eventDeclaration)) yield break;
             var commandTypes = CommandDestinationTypesFor(eventDeclaration).ToArray();
             foreach (var type in commandTypes) yield return type;
-            foreach (var (slice, scope) in _slices)
+            foreach (var ((slice, scope), foldedEvents) in _slices.Zip(FoldedEventsBySlice()))
             {
                 foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
                 {
@@ -181,8 +195,43 @@ public static partial class SpecificationExamples
                 {
                     yield return UniqueDestinationType(commandTypes) ?? new("String", false, false, eventDeclaration.Location);
                 }
+                foreach (var folded in foldedEvents.GetValueOrDefault(eventDeclaration, []))
+                {
+                    foreach (var type in EventDestinationTypes(folded, visited)) yield return type;
+                }
             }
         }
+
+        // An outbound event projection publishes the facts it folds, so those facts' event-source types are the event's.
+        // Indexed once per expansion, per declaring slice, rather than resolving every projection for every lookup.
+        List<Dictionary<EventSyntax, List<EventSyntax>>> FoldedEventsBySlice() =>
+            _foldedEvents ??= [.. _slices.Select(owner => FoldedEvents(owner.Slice, owner.Scope))];
+
+        Dictionary<EventSyntax, List<EventSyntax>> FoldedEvents(SliceSyntax slice, DeclarationScope scope)
+        {
+            var published = new Dictionary<EventSyntax, List<EventSyntax>>(ReferenceEqualityComparer.Instance);
+            foreach (var projection in slice.Projections)
+            {
+                if (PublishedEvent(projection, scope) is not { } target) continue;
+                if (!published.TryGetValue(target, out var folded)) published[target] = folded = [];
+                folded.AddRange(projection.Blocks.SelectMany(block => FoldedEvents(block, scope)));
+            }
+
+            return published;
+        }
+
+        EventSyntax? PublishedEvent(ProjectionSyntax projection, DeclarationScope scope) =>
+            projection.ReadModel is { } target && _declarations!.Resolve(target, scope, owner => owner.ReadModels ?? [], item => item.Name) is null
+                ? _declarations.Event(target, scope)
+                : null;
+
+        IEnumerable<EventSyntax> FoldedEvents(ProjectionBlockSyntax block, DeclarationScope scope) => block switch
+        {
+            FromSyntax from => from.Events.Select(spec => _declarations!.Event(spec.Event, scope)).OfType<EventSyntax>(),
+            EverySyntax or AllSyntax => _declaredEvents ??= [.. _slices.SelectMany(owner => EventDeclarations.In(owner.Slice)
+                .Select(declared => _declarations!.Event(declared.Name, owner.Scope))).OfType<EventSyntax>()],
+            _ => []
+        };
 
         IEnumerable<PropertySyntax>? QueryProperties(string name, DeclarationScope scope)
         {

@@ -56,7 +56,7 @@ public sealed partial class SemanticModelBinder
                 .Select(property => BindTypeReference(property!.Type))
                 .Distinct()];
 
-        // The event-source types every producer of an event gives it - commands, reactions and captures - read from
+        // The event-source types every producer of an event gives it - commands, reactions, event projections and captures - read from
         // the syntax, so a specification can type 'for' on an event whichever slice produces it.
         SemanticTypeReference[] ProducerEventSourceTypes(string eventName, HashSet<string> visited, bool includeCaptures = true)
         {
@@ -90,6 +90,7 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            types.AddRange(FoldedProducerTypes(eventName, visited));
             var appended = AllSlices().SelectMany(entry => entry.Slice.Captures)
                 .SelectMany(capture => capture.Appends
                     .Concat(capture.Children.SelectMany(children => children.Appends))
