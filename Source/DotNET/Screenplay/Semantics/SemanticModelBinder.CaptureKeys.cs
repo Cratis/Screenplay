@@ -3,7 +3,6 @@
 
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
-using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -91,31 +90,7 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            // An outbound event projection publishes the facts it folds, so those facts' source types are the event's.
-            var folded = new List<string>();
-            foreach (var projection in AllSlices().SelectMany(entry => entry.Slice.Projections).Where(projection =>
-                projection.ReadModel is not null && ShortName(projection.ReadModel) == eventName &&
-                !_readModels.ContainsKey(eventName) && _events.ContainsKey(eventName)))
-            {
-                foreach (var block in projection.Blocks)
-                {
-                    switch (block)
-                    {
-                        case FromSyntax from:
-                            folded.AddRange(from.Events.Select(spec => ShortName(spec.Event)));
-                            break;
-                        case EverySyntax or AllSyntax:
-                            folded.AddRange(_events.Keys);
-                            break;
-                    }
-                }
-            }
-
-            foreach (var source in folded.Distinct().Where(source => _events.ContainsKey(source) && !visited.Contains(source)).ToArray())
-            {
-                types.AddRange(ProducerEventSourceTypes(source, visited));
-            }
-
+            types.AddRange(FoldedProducerTypes(eventName, visited));
             var appended = AllSlices().SelectMany(entry => entry.Slice.Captures)
                 .SelectMany(capture => capture.Appends
                     .Concat(capture.Children.SelectMany(children => children.Appends))

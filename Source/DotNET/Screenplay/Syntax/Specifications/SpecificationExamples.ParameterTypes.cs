@@ -11,6 +11,9 @@ public static partial class SpecificationExamples
 {
     private sealed partial class Expansion
     {
+        List<Dictionary<EventSyntax, List<EventSyntax>>>? _foldedEvents;
+        EventSyntax[]? _declaredEvents;
+
         static TypeRefSyntax? UniqueDestinationType(IEnumerable<TypeRefSyntax> types) =>
             types.DistinctBy(type => (type.Name, type.IsOptional, type.IsCollection)).ToArray() is [var type] ? type : null;
 
@@ -154,7 +157,7 @@ public static partial class SpecificationExamples
             if (!visited.Add(eventDeclaration)) yield break;
             var commandTypes = CommandDestinationTypesFor(eventDeclaration).ToArray();
             foreach (var type in commandTypes) yield return type;
-            foreach (var (slice, scope) in _slices)
+            foreach (var ((slice, scope), foldedEvents) in _slices.Zip(FoldedEventsBySlice()))
             {
                 foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
                 {
@@ -182,7 +185,7 @@ public static partial class SpecificationExamples
                 {
                     yield return UniqueDestinationType(commandTypes) ?? new("String", false, false, eventDeclaration.Location);
                 }
-                foreach (var folded in FoldedEvents(slice, scope, eventDeclaration))
+                foreach (var folded in foldedEvents.GetValueOrDefault(eventDeclaration, []))
                 {
                     foreach (var type in EventDestinationTypes(folded, visited)) yield return type;
                 }
@@ -190,34 +193,35 @@ public static partial class SpecificationExamples
         }
 
         // An outbound event projection publishes the facts it folds, so those facts' event-source types are the event's.
-        IEnumerable<EventSyntax> FoldedEvents(SliceSyntax slice, DeclarationScope scope, EventSyntax eventDeclaration)
+        // Indexed once per expansion, per declaring slice, rather than resolving every projection for every lookup.
+        List<Dictionary<EventSyntax, List<EventSyntax>>> FoldedEventsBySlice() =>
+            _foldedEvents ??= [.. _slices.Select(owner => FoldedEvents(owner.Slice, owner.Scope))];
+
+        Dictionary<EventSyntax, List<EventSyntax>> FoldedEvents(SliceSyntax slice, DeclarationScope scope)
         {
-            foreach (var projection in slice.Projections.Where(projection => projection.ReadModel is { } target &&
-                _declarations!.Resolve(target, scope, owner => owner.ReadModels ?? [], item => item.Name) is null &&
-                ReferenceEquals(_declarations.Event(target, scope), eventDeclaration)))
+            var published = new Dictionary<EventSyntax, List<EventSyntax>>(ReferenceEqualityComparer.Instance);
+            foreach (var projection in slice.Projections)
             {
-                foreach (var block in projection.Blocks)
-                {
-                    if (block is FromSyntax from)
-                    {
-                        foreach (var name in from.Events.Select(spec => spec.Event))
-                        {
-                            if (_declarations!.Event(name, scope) is { } source) yield return source;
-                        }
-                    }
-                    else if (block is EverySyntax or AllSyntax)
-                    {
-                        foreach (var (owner, ownerScope) in _slices)
-                        {
-                            foreach (var declared in EventDeclarations.In(owner))
-                            {
-                                if (_declarations!.Event(declared.Name, ownerScope) is { } source) yield return source;
-                            }
-                        }
-                    }
-                }
+                if (PublishedEvent(projection, scope) is not { } target) continue;
+                if (!published.TryGetValue(target, out var folded)) published[target] = folded = [];
+                folded.AddRange(projection.Blocks.SelectMany(block => FoldedEvents(block, scope)));
             }
+
+            return published;
         }
+
+        EventSyntax? PublishedEvent(ProjectionSyntax projection, DeclarationScope scope) =>
+            projection.ReadModel is { } target && _declarations!.Resolve(target, scope, owner => owner.ReadModels ?? [], item => item.Name) is null
+                ? _declarations.Event(target, scope)
+                : null;
+
+        IEnumerable<EventSyntax> FoldedEvents(ProjectionBlockSyntax block, DeclarationScope scope) => block switch
+        {
+            FromSyntax from => from.Events.Select(spec => _declarations!.Event(spec.Event, scope)).OfType<EventSyntax>(),
+            EverySyntax or AllSyntax => _declaredEvents ??= [.. _slices.SelectMany(owner => EventDeclarations.In(owner.Slice)
+                .Select(declared => _declarations!.Event(declared.Name, owner.Scope))).OfType<EventSyntax>()],
+            _ => []
+        };
 
         IEnumerable<PropertySyntax>? QueryProperties(string name, DeclarationScope scope)
         {
