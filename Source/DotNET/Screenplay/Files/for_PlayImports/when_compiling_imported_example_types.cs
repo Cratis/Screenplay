@@ -91,6 +91,7 @@ public class when_compiling_imported_example_types : Specification
             SemanticSourceDocument.Create(catalog.ResolveDocument("declarations"), "declarations", "declarations.play", Declarations)
         ],
         catalog));
+
         // Named imports remain syntax-only in ESM v1. File imports assemble the same declarations
         // without that admission restriction; fully qualified example types still resolve across documents.
         var fileImporting = Importing

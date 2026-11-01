@@ -50,5 +50,4 @@ public class and_gates_short_circuit : given.a_policy
         else ((SemanticRejected)result).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
         Contexts.Count.ShouldEqual(invocations);
     }
-
 }

@@ -12,7 +12,9 @@ public class when_a_reaction_filters_by_stream : event_route_models
     [InlineData(true)]
     void should_observe_only_matching_routed_facts(bool routed)
     {
-        var reaction = new SemanticReaction(SemanticId.Create(SemanticAddress.ForReaction(AutomationAddress, "Follow")), "Follow",
+        var reaction = new SemanticReaction(
+            SemanticId.Create(SemanticAddress.ForReaction(AutomationAddress, "Follow")),
+            "Follow",
             [new(SemanticReactionTriggerKind.Event) { Source = Event.Id, Produces = [new(Before.Id, null, null, [])] }]);
         var address = SemanticAddress.ForReadModel(SliceAddress, "Unchanged");
         var readModel = new SemanticReadModel(SemanticId.Create(address), "Unchanged", [new(SemanticId.Create(SemanticAddress.ForProperty(address, "id")), "id", Text, true)]);

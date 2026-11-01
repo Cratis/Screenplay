@@ -75,7 +75,7 @@ public class when_an_event_and_trigger_share_a_name : given.a_compiler
             """);
 
         result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}")
-            .ShouldContainOnly(Enumerable.Repeat("PLAY0515@14", errors).ToArray());
+            .ShouldContainOnly([.. Enumerable.Repeat("PLAY0515@14", errors)]);
     }
 
     [Fact]

@@ -418,6 +418,7 @@ public class when_freezing_legacy_source_syntax_bytes
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
         Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))
             .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
+
         // The anonymous policy, its persona and the public module have their own conformance vector (decision 0103).
         Policies = application.Policies.Where(policy => policy.Name is not ("IsPerson" or "Anyone")),
         Personas = application.Personas.Where(persona => persona.Name is not ("InvoiceDraftCreator" or "Visitor")).Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
@@ -563,6 +564,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+
             // The living sample now guards editing by draft status; retain the pre-feature plain
             // action list only in frozen bytes. Current vectors and native interaction specs cover it.
             ScreenTableSyntax table => table with

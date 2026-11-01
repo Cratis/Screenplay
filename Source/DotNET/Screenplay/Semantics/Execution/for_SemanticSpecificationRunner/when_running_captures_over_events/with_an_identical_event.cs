@@ -13,7 +13,8 @@ public class with_an_identical_event : given.an_event_capture
           when added
         append Modified
           when status
-        """, """
+        """,
+        """
         given Arrived
           id = "parcel"
           status = "sent"

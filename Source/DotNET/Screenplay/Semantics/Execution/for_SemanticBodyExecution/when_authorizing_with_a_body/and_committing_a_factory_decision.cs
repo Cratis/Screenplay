@@ -23,8 +23,8 @@ public class and_committing_a_factory_decision : given.a_policy
     }
 
     [Fact] void should_allow_both_commits() => new[] { _first, _second }.All(result => result is SemanticAccepted).ShouldBeTrue();
-    [Fact] void should_not_call_the_disposed_decision_provider() => _factory.Providers.Select(provider => provider.Calls).ShouldEqual(new[] { 1, 1, 1 });
-    [Fact] void should_dispose_each_scope_once() => _factory.Providers.Select(provider => provider.Disposals).ShouldEqual(new[] { 1, 1, 1 });
+    [Fact] void should_not_call_the_disposed_decision_provider() => _factory.Providers.Select(provider => provider.Calls).ShouldEqual([1, 1, 1]);
+    [Fact] void should_dispose_each_scope_once() => _factory.Providers.Select(provider => provider.Disposals).ShouldEqual([1, 1, 1]);
 
     [Fact]
     void should_dispose_an_abandoned_decision_scope()

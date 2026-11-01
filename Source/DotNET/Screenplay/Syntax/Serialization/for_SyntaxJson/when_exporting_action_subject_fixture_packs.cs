@@ -202,7 +202,10 @@ public class when_exporting_action_subject_fixture_packs : Specification
             Assert.True(actual.GetArrayLength() == expected.GetArrayLength(), path);
             for (var index = 0; index < expected.GetArrayLength(); index++) Compare(expected[index], actual[index], $"{path}[{index}]");
         }
-        else Assert.True(JsonElement.DeepEquals(expected, actual), path);
+        else
+        {
+            Assert.True(JsonElement.DeepEquals(expected, actual), path);
+        }
     }
 
     static string Fixtures([CallerFilePath] string path = "")

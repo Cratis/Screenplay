@@ -8,6 +8,7 @@ public class a_model_without_v10_features : a_model_to_corrupt
     void Establish()
     {
         _application = WithIdentity(null);
+
         // The released golden has precise, unused Key inputs that count as exact-number use at v11.
         // Normalize only these non-route inputs here, so this context also has no v11 feature; leave the golden and route values unchanged.
         _application = WithNonRouteNumber(42m);

@@ -7,7 +7,7 @@ public class when_checking_calendar_date_ordering : Specification
 {
     SemanticRuleCheck[] _results;
 
-    void Because() => _results = new[]
+    void Because() => _results = [.. new[]
     {
         SemanticValidationRuleKind.Equal,
         SemanticValidationRuleKind.NotEqual,
@@ -15,8 +15,8 @@ public class when_checking_calendar_date_ordering : Specification
         SemanticValidationRuleKind.GreaterThanOrEqual,
         SemanticValidationRuleKind.LessThan,
         SemanticValidationRuleKind.LessThanOrEqual
-    }.Select(kind => SemanticDateComparisons.Check(new(default, kind, SemanticValue.Text("2026-01-01"), null), SemanticValue.Text("2026-01-02"), SemanticPrimitiveType.Date)).ToArray();
+    }.Select(kind => SemanticDateComparisons.Check(new(default, kind, SemanticValue.Text("2026-01-01"), null), SemanticValue.Text("2026-01-02"), SemanticPrimitiveType.Date))];
 
-    [Fact] void should_apply_each_comparison_to_calendar_dates() => _results.Select(result => result.Status).ShouldEqual(new[] { SemanticRuleStatus.Failed, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Failed, SemanticRuleStatus.Failed });
+    [Fact] void should_apply_each_comparison_to_calendar_dates() => _results.Select(result => result.Status).ShouldEqual([SemanticRuleStatus.Failed, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Satisfied, SemanticRuleStatus.Failed, SemanticRuleStatus.Failed]);
     [Fact] void should_use_the_reference_default_message() => _results[0].Message.ShouldEqual("A value must equal '2026-01-01'.");
 }

@@ -41,8 +41,11 @@ public class when_running_event_routes : event_route_models
                 WhenAppended = new(Event.Id, []) { EventSource = new(Text, SemanticValue.Text("project-1")), Route = routed ? Fixture(SemanticValue.Text("append")) : null },
                 ThenEvents = []
             };
+
             // A direct reaction supplies the success outcome, without inheriting the append's route.
-            var reaction = new SemanticReaction(SemanticId.Create(SemanticAddress.ForReaction(AutomationAddress, "Follow")), "Follow",
+            var reaction = new SemanticReaction(
+                SemanticId.Create(SemanticAddress.ForReaction(AutomationAddress, "Follow")),
+                "Follow",
                 [new(SemanticReactionTriggerKind.Event) { Source = Event.Id, Produces = [new(Before.Id, null, null, [])] }]);
             appended = appended with { ThenEvents = [new(Before.Id, []) { Unrouted = true }] };
             var performed = new SemanticSpecificationRunner().Run(Plan(specifications: [appended], reactions: [reaction]), appended.Id);

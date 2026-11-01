@@ -10,7 +10,8 @@ public class with_history_before_a_transition : given.an_event_capture
           when status from "sent" to "delivered"
           id = $.id
           status = $.status
-        """, """
+        """,
+        """
         given Arrived
           for "foreign-stream"
           id = "parcel"

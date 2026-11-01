@@ -7,7 +7,7 @@ public class when_resolving_omitted_options : Specification
 {
     EffectiveValidationGate _gate;
     void Because() => _gate = ValidationGateResolver.Resolve(new("/model", "/model/screenplay.json", new(["navigation", "PLAY0534", "field-origins"], true, "M.F", "fail"), null), new()).Gate;
-    [Fact] void should_expand_deduplicate_and_order_checks() => _gate.Checks.Value.ToArray().ShouldEqual(new[] { "field-origins", "navigation" });
+    [Fact] void should_expand_deduplicate_and_order_checks() => _gate.Checks.Value.ToArray().ShouldEqual(["field-origins", "navigation"]);
     [Fact] void should_keep_declared_warnings_as_errors() => _gate.WarningsAsErrors.Value.ShouldBeTrue();
     [Fact] void should_keep_the_declared_scope() => _gate.Scope.Value.ShouldEqual("M.F");
     [Fact] void should_keep_the_declared_questions_mode() => _gate.OpenQuestions.Value.ShouldEqual("fail");
