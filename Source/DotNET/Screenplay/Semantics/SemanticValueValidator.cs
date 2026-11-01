@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics;
@@ -60,8 +61,11 @@ static class SemanticValueRules
 
 sealed class SemanticValueValidator(
     IReadOnlyDictionary<SemanticId, SemanticConcept> concepts,
-    IReadOnlyDictionary<SemanticId, SemanticCompositeType> types)
+    IReadOnlyDictionary<SemanticId, SemanticCompositeType> types,
+    bool memoize = false)
 {
+    readonly HashSet<ValidatedComposite>? _validated = memoize ? [] : null;
+
     public void Validate(SemanticValue value, SemanticTypeReference target, string description) =>
         Validate(value, target, description, 0);
 
@@ -83,6 +87,11 @@ sealed class SemanticValueValidator(
 
     void Validate(SemanticValue value, SemanticTypeReference target, string description, int depth)
     {
+        if (value is SemanticCompositeValue composite && _validated?.Contains(new(composite, target, depth)) == true)
+        {
+            return;
+        }
+
         ValidateNode(value, depth);
         if (value is SemanticNullValue)
         {
@@ -102,9 +111,10 @@ sealed class SemanticValueValidator(
             }
 
             var elementType = target with { IsCollection = false, IsOptional = false };
+            var elementDescription = $"element of {description}";
             foreach (var element in array.Values)
             {
-                Validate(element, elementType, $"element of {description}", depth + 1);
+                Validate(element, elementType, elementDescription, depth + 1);
             }
 
             return;
@@ -179,6 +189,8 @@ sealed class SemanticValueValidator(
         {
             throw new InvalidSemanticContract($"A {description} is missing one or more required properties of '{compositeType.Name}'.");
         }
+
+        _validated?.Add(new(objectValue, target, depth));
     }
 
     void ValidateVariant(SemanticValue value, int depth)
@@ -242,4 +254,12 @@ sealed class SemanticValueValidator(
         SemanticTypeReferenceKind.Concept when concepts.TryGetValue(type.Target, out var concept) => concept.Primitive,
         _ => SemanticPrimitiveType.Unknown
     };
+
+    readonly record struct ValidatedComposite(SemanticCompositeValue Value, SemanticTypeReference Target, int Depth)
+    {
+        public bool Equals(ValidatedComposite other) =>
+            ReferenceEquals(Value, other.Value) && Target == other.Target && Depth == other.Depth;
+
+        public override int GetHashCode() => HashCode.Combine(RuntimeHelpers.GetHashCode(Value), Target, Depth);
+    }
 }
