@@ -56,8 +56,8 @@ applies-to:
 
 What should an unauthenticated caller's audit identity be?
 
-- **U1, recommended:** explicit values only, independent of authentication. This is portable and has no target constant. The cost is that a specification can pair an anonymous caller with a named identity, a state a live Cratis host never produces.
-- **U2:** the language defines a "not set" identity that a bodyless `given identity not set` selects, using Chronicle's `Identity.NotSet` values. This matches the live Cratis host, but it puts a Chronicle constant into portable semantics, and Axon would have to reproduce it.
+- **U1, recommended:** explicit values only, independent of authentication. This is portable and has no target constant. The cost is that a specification can pair an anonymous caller with a named identity. A live Cratis host can produce that state too: Chronicle's ASP.NET Core identity provider does not check authentication, so an unauthenticated principal that carries a `sub` claim gets a named audit identity (Chronicle `Source/Clients/AspNetCore/Identities/IdentityProvider.cs:22-37` at c27f48316f), while Arc treats unauthenticated callers as anonymous (`Source/DotNET/Arc.Core/Identity/IdentityProvider.cs:135-137` at 0986d097a).
+- **U2:** the language defines a "not set" identity that a bodyless `given identity not set` selects, using Chronicle's `Identity.NotSet` values. This matches the live Cratis host only for claimless ordinary HTTP requests (requests without an HTTP context get `Identity.System`, `BaseIdentityProvider.cs:26`), and it puts a Chronicle constant into portable semantics, and Axon would have to reproduce it.
 - **U3:** `given identity` with an unauthenticated caller is an error. Strict, but the unauthenticated acceptance case in #1097 can then only show `Unsupported`.
 
 The syntax, binding and propagation slices do not depend on this answer; only the anonymous-case specs and diagnostics do.
