@@ -9,7 +9,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
-public class when_freezing_legacy_source_syntax_bytes
+public partial class when_freezing_legacy_source_syntax_bytes
 {
     static readonly HashSet<string> _featureVectors =
     [
@@ -165,7 +165,7 @@ public class when_freezing_legacy_source_syntax_bytes
             }
 
             // The samples name their shell with root template; the frozen bytes predate it and carry the same name as the legacy layout.
-            text = Regex.Replace(text, "\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", "\"layout\":\"$2\",$1");
+            text = LayoutShell().Replace(text, "\"layout\":\"$2\",$1");
 
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
@@ -184,6 +184,9 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    [GeneratedRegex("\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex LayoutShell();
 
     static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with
     {

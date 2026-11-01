@@ -21,6 +21,6 @@ public class when_declaring_decision_read_refusals : Specification
 
     [Fact] void should_map_every_refusal_to_a_keyword() => _mapped.Length.ShouldEqual(Enum.GetValues<SemanticDecisionReadRefusal>().Length);
     [Fact] void should_map_every_refusal_to_a_distinct_keyword() => _mapped.Distinct().Count().ShouldEqual(_mapped.Length);
-    [Fact] void should_declare_exactly_the_mapped_keywords() => _declared.OrderBy(value => value, StringComparer.Ordinal).ShouldEqual(_mapped.OrderBy(value => value, StringComparer.Ordinal));
+    [Fact] void should_declare_exactly_the_mapped_keywords() => _declared.Order(StringComparer.Ordinal).ShouldEqual(_mapped.Order(StringComparer.Ordinal));
     [Fact] void should_spell_every_keyword_in_lowercase_with_hyphens() => _mapped.ShouldEachConformTo(value => value.All(character => char.IsAsciiLetterLower(character) || character == '-'));
 }

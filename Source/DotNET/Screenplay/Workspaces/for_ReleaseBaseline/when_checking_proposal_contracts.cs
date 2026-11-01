@@ -50,7 +50,7 @@ public class when_checking_proposal_contracts : given.a_baseline_workspace
 
     ScreenplayWorkspace Renamed(string before, string after)
     {
-        var entry = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is ConceptSyntax { Name: "Protected" } && before == "Protected" || entry.Node is PropertySyntax { Name: "value" } && before == "value");
+        var entry = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => (entry.Node is ConceptSyntax { Name: "Protected" } && before == "Protected") || (entry.Node is PropertySyntax { Name: "value" } && before == "value"));
         var proposal = Workspace.ProposeRename(new()
         {
             ExpectedRevision = Workspace.Revision,

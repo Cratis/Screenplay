@@ -93,6 +93,6 @@ public class when_validating_query_concepts : Specification
         return new SemanticEvaluator().Execute(
             plan,
             SemanticWorld.Empty,
-            new SemanticExecutionRequest(default, [], [request], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+            new SemanticExecutionRequest(default, [], [request], []) { IsReadOnly = true });
     }
 }

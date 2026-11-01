@@ -58,5 +58,5 @@ public class when_selecting_by_query_filters : Specification
     SemanticExecutionResult Execute(SemanticWorld world, ImmutableArray<SemanticQueryFilterValue> filters, SemanticKeyedQuery? query = null, SemanticValue? key = null) => new SemanticEvaluator().Execute(
         _plan,
         world,
-        new SemanticExecutionRequest(default, [], [new((query ?? _query).Id, key ?? SemanticValue.Null) { Filters = filters }], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+        new SemanticExecutionRequest(default, [], [new((query ?? _query).Id, key ?? SemanticValue.Null) { Filters = filters }], []) { IsReadOnly = true });
 }

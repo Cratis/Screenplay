@@ -43,7 +43,7 @@ public class when_collecting_query_validation_failures : Specification
         _rejected = (SemanticRejected)new SemanticEvaluator().Execute(
             plan,
             SemanticWorld.Empty,
-            new SemanticExecutionRequest(default, [], [request], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+            new SemanticExecutionRequest(default, [], [request], []) { IsReadOnly = true });
     }
 
     [Fact] void should_validate_the_key_then_filters_in_declaration_order() => _rejected.ValidationFailures.Select(failure => failure.Message).ShouldEqual(["Invalid key", "Invalid status", "Invalid category"]);

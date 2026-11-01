@@ -10,6 +10,7 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
 public class when_exporting_action_subject_fixture_packs : Specification
 {
+    static readonly JsonSerializerOptions _indented = new() { WriteIndented = true };
     readonly Dictionary<string, JsonElement> _exports = [];
     ApplicationSyntax _raw;
     ApplicationSyntax _effective;
@@ -113,7 +114,7 @@ public class when_exporting_action_subject_fixture_packs : Specification
         foreach (var (name, value) in _exports)
         {
             var path = Path.Combine(_directory, $"native.{name}.json");
-            if (regenerate) File.WriteAllText(path, JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true }) + "\n");
+            if (regenerate) File.WriteAllText(path, JsonSerializer.Serialize(value, _indented) + "\n");
             else Assert.True(JsonElement.DeepEquals(value, JsonDocument.Parse(File.ReadAllText(path)).RootElement), path);
         }
         Assert.False(regenerate, "Fixture pack regenerated; review and rerun without SCREENPLAY_REGENERATE_ACTION_SUBJECT_FIXTURES");

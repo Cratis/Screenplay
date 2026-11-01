@@ -13,8 +13,7 @@ public class when_desugaring_studio_text_rules : given.a_semantic_binder
     [Fact]
     void should_bind_the_shared_studio_and_first_class_forms_to_identical_bytes()
     {
-        var values = new[] { "", "A", ".", "$", "\\", "/", "#", " ", "é雪", "\n", "-", "]", "😀" };
-        foreach (var value in values)
+        foreach (var value in new[] { "", "A", ".", "$", "\\", "/", "#", " ", "é雪", "\n", "-", "]", "😀" })
         {
             foreach (var v1 in new[] { true, false })
             {

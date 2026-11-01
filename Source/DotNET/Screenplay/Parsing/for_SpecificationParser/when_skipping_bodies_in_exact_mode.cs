@@ -35,7 +35,7 @@ public class when_skipping_bodies_in_exact_mode
     [Fact]
     void should_not_read_a_fenced_line_or_a_property_named_numbers_as_a_directive()
     {
-        var result = _compiler.Parse("numbers exact\n" + "module M\n  feature F\n    slice StateChange S\n      specification Sp\n        then no result\n          ```text\nnumbers exact\n          ```\n          numbers = 1\n");
+        var result = _compiler.Parse("numbers exact\nmodule M\n  feature F\n    slice StateChange S\n      specification Sp\n        then no result\n          ```text\nnumbers exact\n          ```\n          numbers = 1\n");
         result.Diagnostics.Any(d => d.Code == DiagnosticCodes.InvalidNumericDirective).ShouldBeFalse();
     }
 

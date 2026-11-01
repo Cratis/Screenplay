@@ -16,7 +16,7 @@ public class and_the_documents_hold_a_subset_of_the_model : given.a_workspace_wi
 
     [Fact] void should_compile() => _rehomed.Compilation.Success.ShouldBeTrue();
     [Fact] void should_keep_the_semantic_ids_of_present_declarations() =>
-        _rehomed.IdentityCatalog.Semantics.All(assignment => Original.IdentityCatalog.Semantics.Contains(assignment)).ShouldBeTrue();
+        _rehomed.IdentityCatalog.Semantics.All(Original.IdentityCatalog.Semantics.Contains).ShouldBeTrue();
     [Fact] void should_keep_assignments_for_the_present_declarations() => _rehomed.IdentityCatalog.Semantics.ShouldNotBeEmpty();
     [Fact] void should_drop_the_assignments_of_absent_declarations() =>
         _rehomed.IdentityCatalog.Semantics.Length.ShouldBeLessThan(Original.IdentityCatalog.Semantics.Length);

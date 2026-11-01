@@ -14,11 +14,10 @@ public class when_checking_the_documented_example : Specification
             SemanticValidationRuleKind.GreaterThan,
             SemanticValue.Text("2026-01-01T00:00:00.0000000Z"),
             "Choose a later instant.");
-        var check = SemanticDateComparisons.Check(
+        _check = SemanticDateComparisons.Check(
             rule,
             SemanticValue.Text("2026-01-01T02:00:00+02:00"),
             SemanticPrimitiveType.DateTime);
-        _check = check;
     }
 
     [Fact] void should_report_the_documented_status() => _check.Status.ShouldEqual(SemanticRuleStatus.Failed);
