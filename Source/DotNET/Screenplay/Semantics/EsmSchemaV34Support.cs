@@ -13,12 +13,12 @@ public static class EsmSchemaV34Support
     /// <summary>
     /// Gets the supported language versions.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV33Support.LanguageVersions, LanguageVersion.V34];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV33Support.LanguageVersions, LanguageVersion.V34, LanguageVersion.V34_1];
 
     /// <summary>
     /// Gets the supported semantic versions.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV33Support.SemanticVersions, SemanticVersion.V34];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV33Support.SemanticVersions, SemanticVersion.V34, SemanticVersion.V34_1];
 
     /// <summary>
     /// Determines whether the exact version pair has defined meaning.
@@ -28,7 +28,8 @@ public static class EsmSchemaV34Support
     /// <returns>Whether the pair is supported.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
         EsmSchemaV33Support.Supports(languageVersion, semanticVersion) ||
-        (languageVersion == LanguageVersion.V34 && semanticVersion == SemanticVersion.V34);
+        (languageVersion == LanguageVersion.V34 && semanticVersion == SemanticVersion.V34) ||
+        (languageVersion == LanguageVersion.V34_1 && semanticVersion == SemanticVersion.V34_1);
 
     /// <summary>
     /// Rejects unsupported version pairs.

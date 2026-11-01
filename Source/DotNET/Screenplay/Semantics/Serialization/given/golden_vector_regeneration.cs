@@ -49,12 +49,12 @@ public static class golden_vector_regeneration
 
     internal static void Regenerate(string request, string directory)
     {
-        var current = frozen_esm_goldens.CurrentVersion;
-        if (request != "1" && int.TryParse(request, NumberStyles.None, CultureInfo.InvariantCulture, out var version) && version > 0 && version < current)
+        var current = SemanticVersion.V34_1.ToString();
+        if (request != "1" && int.TryParse(request, NumberStyles.None, CultureInfo.InvariantCulture, out var version) && version > 0 && version <= frozen_esm_goldens.CurrentVersion)
         {
             throw new GoldenVectorsRegenerated($"ESM v{version} full golden is frozen. Older goldens cannot be regenerated; only the current ESM v{current} golden may be rewritten.");
         }
-        if (request != "1" && request != current.ToString(CultureInfo.InvariantCulture))
+        if (request != "1" && request != current)
         {
             throw new GoldenVectorsRegenerated($"Unknown golden regeneration request '{request}'. Use {Variable}=1 or {current} for the current full ESM golden.");
         }
@@ -63,8 +63,8 @@ public static class golden_vector_regeneration
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV34();
-        if (model.SemanticVersion.Major != current)
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV34_1();
+        if (model.SemanticVersion.ToString() != current)
         {
             throw new GoldenVectorsRegenerated($"The current golden builder must select ESM v{current}; nothing was regenerated.");
         }

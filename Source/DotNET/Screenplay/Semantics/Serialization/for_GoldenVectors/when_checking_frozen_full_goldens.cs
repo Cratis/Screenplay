@@ -14,7 +14,7 @@ public class when_checking_frozen_full_goldens(ITestOutputHelper output) : Speci
     void should_pin_every_byte_of_every_version_below_current()
     {
         var manifest = frozen_esm_goldens.Sha256;
-        var expected = Enumerable.Range(1, frozen_esm_goldens.CurrentVersion - 1).ToArray();
+        var expected = Enumerable.Range(1, frozen_esm_goldens.CurrentVersion).ToArray();
         expected.ShouldNotBeEmpty();
         manifest.Keys.Order().ShouldEqual(expected);
         foreach (var version in expected)
