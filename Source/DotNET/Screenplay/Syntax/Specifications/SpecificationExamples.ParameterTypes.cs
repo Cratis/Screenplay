@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Parsing;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Syntax.Specifications;
 
@@ -180,6 +181,40 @@ public static partial class SpecificationExamples
                     .Any(append => ReferenceEquals(_declarations!.Event(append.Event, scope), eventDeclaration)))
                 {
                     yield return UniqueDestinationType(commandTypes) ?? new("String", false, false, eventDeclaration.Location);
+                }
+                foreach (var folded in FoldedEvents(slice, scope, eventDeclaration))
+                {
+                    foreach (var type in EventDestinationTypes(folded, visited)) yield return type;
+                }
+            }
+        }
+
+        // An outbound event projection publishes the facts it folds, so those facts' event-source types are the event's.
+        IEnumerable<EventSyntax> FoldedEvents(SliceSyntax slice, DeclarationScope scope, EventSyntax eventDeclaration)
+        {
+            foreach (var projection in slice.Projections.Where(projection => projection.ReadModel is { } target &&
+                _declarations!.Resolve(target, scope, owner => owner.ReadModels ?? [], item => item.Name) is null &&
+                ReferenceEquals(_declarations.Event(target, scope), eventDeclaration)))
+            {
+                foreach (var block in projection.Blocks)
+                {
+                    if (block is FromSyntax from)
+                    {
+                        foreach (var name in from.Events.Select(spec => spec.Event))
+                        {
+                            if (_declarations!.Event(name, scope) is { } source) yield return source;
+                        }
+                    }
+                    else if (block is EverySyntax or AllSyntax)
+                    {
+                        foreach (var (owner, ownerScope) in _slices)
+                        {
+                            foreach (var declared in EventDeclarations.In(owner))
+                            {
+                                if (_declarations!.Event(declared.Name, ownerScope) is { } source) yield return source;
+                            }
+                        }
+                    }
                 }
             }
         }

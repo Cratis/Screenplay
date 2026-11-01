@@ -4,6 +4,7 @@
 import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax, PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
+import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
@@ -146,6 +147,17 @@ function eventDestinationType(reference: string, local: SliceSyntax, application
             }
             if (slice.captures.flatMap(capture => [...capture.appends, ...capture.children.flatMap(child => child.appends), ...capture.nested.flatMap(nested => nested.appends)]).some(append => declarations.event(append.event, slice) === event))
                 types.push(uniqueDestinationType(commandTypes(event)) ?? { kind: 'TypeRefSyntax', name: 'String', isOptional: false, isCollection: false, location: event.location });
+            // An outbound event projection publishes the facts it folds, so those facts' event-source types are the event's.
+            for (const projection of slice.projections.filter(projection => projection.readModel !== null
+                && declarations.resolve(projection.readModel, slice, owner => owner.readModels) === null
+                && declarations.event(projection.readModel, slice) === event)) {
+                for (const block of projection.blocks) {
+                    const folded = block.kind === 'FromSyntax' ? block.events.map(spec => declarations.event(spec.event, slice))
+                        : block.kind === 'EverySyntax' || block.kind === 'AllSyntax'
+                            ? declarations.slices.flatMap(owner => eventDeclarations(owner.slice).map(declared => declarations.event(declared.name, owner.slice))) : [];
+                    for (const source of folded) if (source !== null) types.push(...producerTypes(source, visited));
+                }
+            }
         }
         return types;
     };
