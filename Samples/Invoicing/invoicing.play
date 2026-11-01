@@ -568,6 +568,178 @@ behavior RefreshOnEnter
     refresh query
 
 // ============================================================
+// Lifecycle and process: top level, like policies and personas
+//
+// The state machine says where an invoice is, derived from what already happened to it; the workflow is the long-running
+// process an overdue invoice sets off - commands, a decision, waits, an approval and a fan-out over the invoice's lines.
+// ============================================================
+
+statemachine InvoiceLifecycle
+  description "Where an invoice is, from draft to settled"
+  follows InvoiceDetailsReadModel
+  state Draft initial
+    on InvoiceSent -> Sent
+    on InvoiceCancelled -> Cancelled
+  state Sent
+    on InvoicePaid -> Paid
+    on InvoiceMarkedOverdue when status == "overdue" -> Overdue
+    on InvoiceCancelled -> Cancelled
+  state Overdue
+    entering send ApplyLateFee
+    entering start CollectOverdue
+    on InvoicePaid -> Paid
+    on InvoiceCancelled -> Cancelled
+  state Paid final
+  state Cancelled final
+
+  specification AnOverdueInvoiceIsChased
+    description "Going overdue charges the late fee and sets the collection process off"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    then is Overdue
+    then sends ApplyLateFee
+    then starts CollectOverdue
+
+  specification AnUnsentInvoiceCannotGoOverdue
+    description "A draft that is reported overdue stays a draft: Draft allows no such transition"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    then is Draft
+
+workflow CollectOverdue
+  description "Chases an overdue invoice: a late fee, a wait for the payment and, failing that, a write-off the finance controller approves"
+  for InvoiceDetailsReadModel
+  trigger when InvoiceLifecycle enters Overdue
+    -> ApplyFee
+  trigger Daily every 1 days
+    -> ApplyFee
+  trigger Manual manual
+    -> ApplyFee
+  action ApplyFee sends ApplyLateFee attempts 2 timeout 30 seconds retry after 10 seconds
+    next -> Grace
+    failed -> ApproveWriteOff
+  wait Grace for 3 days
+    resumed -> StillOverdue
+  decide StillOverdue when status == "overdue"
+    "still overdue" -> TagEachLine
+    "settled" -> Close
+  foreach TagEachLine over lineItems parallel 2
+    each -> TagLine
+    completed -> AwaitPayment
+  action TagLine sends TagInvoice
+    next -> AllTagged
+  join AllTagged all
+  wait AwaitPayment for InvoicePaid expires after 14 days
+    resumed -> Close
+    expired -> ApproveWriteOff
+  approval ApproveWriteOff by FinanceController expires after 7 days
+    approved -> WriteOff
+    rejected -> Plan
+    expired -> WriteOff
+  action WriteOff sends WriteOffInvoice
+  action Plan sends RequestPaymentPlan
+  action Close sends TagInvoice
+
+  specification APaidInvoiceEndsTheChase
+    description "The invoice is paid while the process waits, so it only tags the invoice"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    outcome AwaitPayment resumed
+    then sends ApplyLateFee
+    then sends TagInvoice
+    then completes
+
+  specification EveryLineIsTagged
+    description "Each of the two lines is tagged, then the process waits for the payment"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    given InvoiceLineItemAdded
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      lineNumber = 1
+      quantity = 1
+      unitPrice = 100
+    given InvoiceLineItemAdded
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      lineNumber = 2
+      quantity = 1
+      unitPrice = 100
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    then sends ApplyLateFee
+    then sends TagInvoice
+    then sends TagInvoice
+    then waits at AwaitPayment
+
+  specification NoPaymentMeansAWriteOff
+    description "No payment arrives, the finance controller approves and the invoice is written off"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    outcome AwaitPayment expired
+    outcome ApproveWriteOff approved
+    then sends ApplyLateFee
+    then sends WriteOffInvoice
+    then completes
+
+  specification ARejectedWriteOffBecomesAPaymentPlan
+    description "The finance controller rejects the write-off, so the customer is offered a payment plan"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    outcome AwaitPayment expired
+    outcome ApproveWriteOff rejected
+    then sends ApplyLateFee
+    then sends RequestPaymentPlan
+    then completes
+
+  specification AFeeThatCannotBeAppliedGoesToApproval
+    description "The late fee fails twice and the failed outlet asks the finance controller"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    given InvoiceSent
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append InvoiceMarkedOverdue
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      overdueAt = "2026-10-02T09:00:00Z"
+    outcome ApplyFee failed
+    outcome ApproveWriteOff expired
+    then sends ApplyLateFee
+    then sends ApplyLateFee
+    then sends WriteOffInvoice
+    then completes
+
+// ============================================================
 // The module
 // ============================================================
 

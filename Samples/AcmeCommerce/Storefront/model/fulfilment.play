@@ -1,0 +1,425 @@
+// Fulfilment: where an order is in its life, and the process that carries it from payment to the customer's door.
+//
+// The state machine follows the OrderProgress read model: it never decides, it derives the state from what already happened.
+// The workflow is the long-running process one paid order sets off: it sends commands, chooses a path, waits for a fact or a person
+// and gives up after a deadline. Both are top level; they name events, commands and read models of the slices around them.
+
+module Shop
+  feature Fulfilment
+    description "Where an order stands after checkout, and the process that fulfils it"
+
+    slice StateView OrderProgress
+      description "Where each order stands, derived from what happened to it"
+
+      readmodel OrderProgress
+        description "One order's progress as the fulfilment sees it"
+        orderId      OrderId key
+        status       String
+        returnReason String
+        itemsInStock Bool
+        lines        OrderLine[]
+
+      query AllOrderProgress => observable OrderProgress[]
+        description "Every order in fulfilment"
+
+      projection OrderProgressProjection => OrderProgress
+        no automap
+        from CheckoutCompleted
+          status       = "placed"
+          returnReason = ""
+          itemsInStock = true
+          lines        = lines
+        from PaymentCaptured
+          status = "paid"
+        from OrderPacked
+          status = "packed"
+        from OrderHandedToCarrier
+          status = "shipped"
+        from DeliveryConfirmed
+          status = "delivered"
+        from OrderWithdrawn
+          status = "cancelled"
+        from RefundIssued
+          status = "refunded"
+        from ParcelReturned
+          returnReason = returnReason
+        from StockShortageFound
+          itemsInStock = false
+
+      screen OrderProgress
+        description "Every order and where it stands in fulfilment"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader orderProgressHeader
+              property title = "Order progress"
+              property subtitle = "Where every order stands, from payment to the door"
+          list
+            data OrderProgress[] via query AllOrderProgress
+            table OrderProgress
+              column orderId label "Order"
+              column status  label "Status"
+
+      specification TrackingAPlacedOrder
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        then readmodel OrderProgress
+          orderId      = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          status       = "placed"
+          itemsInStock = true
+
+    slice StateChange RecordFulfilmentProgress
+      description "What happens to a paid order after checkout, recorded as it happens (translated from the payment, warehouse and carrier contexts)"
+
+      command CapturePayment
+        orderId OrderId identifier
+        produces PaymentCaptured
+          for orderId
+
+      command PackOrder
+        orderId OrderId identifier
+        produces OrderPacked
+          for orderId
+
+      command HandOrderToCarrier
+        orderId OrderId identifier
+        produces OrderHandedToCarrier
+          for orderId
+
+      command ConfirmDelivery
+        orderId OrderId identifier
+        produces DeliveryConfirmed
+          for orderId
+
+      command IssueRefund
+        orderId OrderId identifier
+        produces RefundIssued
+          for orderId
+
+      command ReturnParcel
+        orderId OrderId identifier
+        returnReason String
+        produces ParcelReturned
+          for orderId
+          returnReason = returnReason
+
+      command ReportStockShortage
+        orderId OrderId identifier
+        produces StockShortageFound
+          for orderId
+
+      event PaymentCaptured
+        description "The shopper's payment was captured"
+
+      event OrderPacked
+        description "The warehouse packed the order"
+
+      event OrderHandedToCarrier
+        description "A carrier collected the parcel"
+
+      event DeliveryConfirmed
+        description "The parcel reached the shopper"
+
+      event RefundIssued
+        description "The shopper was refunded"
+
+      event ParcelReturned
+        description "The parcel came back"
+        returnReason String
+
+      event StockShortageFound
+        description "Part of the order is not on the shelf"
+
+      specification CapturePaymentSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when CapturePayment
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then PaymentCaptured
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PackOrderSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when PackOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification HandOrderToCarrierSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when HandOrderToCarrier
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderHandedToCarrier
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification ConfirmDeliverySpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when ConfirmDelivery
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then DeliveryConfirmed
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification IssueRefundSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when IssueRefund
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then RefundIssued
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification ReturnParcelSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when ReturnParcel
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          returnReason = "damaged"
+        then ParcelReturned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          returnReason = "damaged"
+
+      specification ReportStockShortageSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when ReportStockShortage
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then StockShortageFound
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      screen RecordFulfilmentProgress
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CapturePayment
+              navigate to OrderProgress
+            action PackOrder
+              navigate to OrderProgress
+            action HandOrderToCarrier
+              navigate to OrderProgress
+            action ConfirmDelivery
+              navigate to OrderProgress
+            action IssueRefund
+              navigate to OrderProgress
+            action ReturnParcel
+              navigate to OrderProgress
+            action ReportStockShortage
+              navigate to OrderProgress
+
+    slice StateChange CarryOutFulfilment
+      description "The commands the fulfilment process sends"
+
+      command HoldStock
+        orderId OrderId identifier
+        produces StockHeld
+          for orderId
+
+      command CreateParcel
+        orderId OrderId identifier
+        produces ParcelCreated
+          for orderId
+
+      command NotifyCustomer
+        orderId OrderId identifier
+        produces CustomerNotified
+          for orderId
+
+      command PlaceBackorder
+        orderId OrderId identifier
+        produces BackorderPlaced
+          for orderId
+
+      command WithdrawOrder
+        orderId OrderId identifier
+        produces OrderWithdrawn
+          for orderId
+
+      command EscalateOrder
+        orderId OrderId identifier
+        produces OrderEscalated
+          for orderId
+
+      event StockHeld
+        description "Sets the order's stock aside while it is fulfilled"
+
+      event ParcelCreated
+        description "Prepares the parcel the order will travel in"
+
+      event CustomerNotified
+        description "Tells the shopper where the order is"
+
+      event BackorderPlaced
+        description "Orders the missing stock from the supplier"
+
+      event OrderWithdrawn
+        description "The order is withdrawn before it is delivered"
+
+      event OrderEscalated
+        description "Hands an order that went wrong to a person"
+
+      specification HoldStockSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        when HoldStock
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then StockHeld
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification CreateParcelSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        when CreateParcel
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then ParcelCreated
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification NotifyCustomerSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        when NotifyCustomer
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then CustomerNotified
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PlaceBackorderSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        when PlaceBackorder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then BackorderPlaced
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification WithdrawOrderSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        given CheckoutCompleted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+          customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+          email          = "ada@example.com"
+          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
+          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          deliveryMethod = "standard"
+          total          = 98
+        when WithdrawOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderWithdrawn
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification EscalateOrderSpecification
+        given caller
+          authenticated
+          role "Shopper"
+        when EscalateOrder
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then OrderEscalated
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      screen CarryOutFulfilment
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action HoldStock
+              navigate to OrderProgress
+            action CreateParcel
+              navigate to OrderProgress
+            action NotifyCustomer
+              navigate to OrderProgress
+            action PlaceBackorder
+              navigate to OrderProgress
+            action WithdrawOrder
+              navigate to OrderProgress
+            action EscalateOrder
+              navigate to OrderProgress
