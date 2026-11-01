@@ -82,11 +82,23 @@ jobs:
           version: ${{ github.event.inputs.version }}
           release-notes: ${{ github.event.inputs.release-notes }}
 
+  # Full native editor repair matrix (linux-x64, win-x64, osx-arm64) before anything is published. Only runs when the
+  # release job decided to publish, so merges that release nothing do not pay for it.
+  native-editor-repairs:
+    if: needs.release.outputs.publish == 'true'
+    needs: [release]
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/native-editor-repairs.yml
+    with:
+      release: true
+
   publish:
     if: needs.release.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [release]
+    needs: [release, native-editor-repairs]
 
     steps:
       - name: Checkout code
@@ -145,7 +157,7 @@ jobs:
     if: needs.release.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [release]
+    needs: [release, native-editor-repairs]
     permissions:
       contents: read
       id-token: write
@@ -213,7 +225,7 @@ jobs:
     if: needs.release.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [release]
+    needs: [release, native-editor-repairs]
     permissions:
       # Required for NuGet trusted publishing using OIDC tokens
       id-token: write
@@ -280,7 +292,7 @@ jobs:
     if: needs.release.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [release]
+    needs: [release, native-editor-repairs]
 
     steps:
       - name: Checkout code
@@ -322,7 +334,7 @@ jobs:
 
   publish-desktop:
     if: needs.release.outputs.publish == 'true'
-    needs: [release]
+    needs: [release, native-editor-repairs]
     uses: ./.github/workflows/mcp-desktop.yml
     with:
       version: ${{ needs.release.outputs.version }}
