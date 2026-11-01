@@ -116,3 +116,4 @@
 | [0121](0121-reaction-effect-and-snapshot-performer-provider-contracts.md) | Reaction-effect and snapshot-performer provider contracts on the body-execution seam (#1099 S6) | accepted | implemented | 2026-10-30 | woksin (delegated through L0) |
 | [0122](0122-information-diagnostics-for-redundant-spellings.md) | Report redundant key braces and implicit authorization conjunction as Information | accepted | none | 2026-10-19 | woksin (delegated, L0) |
 | [0123](0123-store-backed-sequences-through-a-chronicle-allocator.md) | Store-backed sequences through a Chronicle allocator (design only, no gapless guarantee) | proposed | none | — | proposed by L73 for woksin's review (Q-168) |
+| [0124](0124-state-machines-and-workflows-esm-v36.md) | Admit state machines and workflows (ESM v36) | accepted | implemented | 2026-11-01 | Einar Ingebrigtsen (requested in #1118 and #1119) |

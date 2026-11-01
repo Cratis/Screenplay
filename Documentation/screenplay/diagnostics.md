@@ -31,6 +31,24 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0830` | Error | An `onboarding` block states the same thing twice: a second `signup`, `legal terms`, `offering`, `emails` or `images`, a second invitation of one kind, or a second template for one email. |
 | `PLAY0831` | Error | An invitation's `as`, `by` or `grant` names a persona nothing declares. Draft authoring reports it as a warning. |
 | `PLAY0832` | Error | The `emails` block names an email onboarding does not send; the emails are `invitation`, `welcome` and `signupDeclined`. |
+| `PLAY0833` | Error | A `statemachine` declaration is malformed: a bad header or unexpected line, a missing or repeated `follows`, a malformed `state`, `entering` or `on` line, a repeated state, or a malformed specification inside it. |
+| `PLAY0834` | Error | A state machine has no `initial` state, or more than one. |
+| `PLAY0835` | Warning | A state can never be reached from the initial state by the transitions written under the states. |
+| `PLAY0836` | Warning | A state that is not `final` has no transition out. |
+| `PLAY0837` | Error | A `final` state declares transitions out. |
+| `PLAY0838` | Error | A transition targets a state the state machine does not declare, or a workflow trigger waits for a state its state machine does not declare. |
+| `PLAY0839` | Error | A state machine names an event, read model, command or workflow that is not declared. |
+| `PLAY0840` | Error | A state machine or workflow condition (or a `foreach` list) reads a property the subject read model does not have. |
+| `PLAY0841` | Error | Two unguarded transitions on the same event leave one state, so the second can never be taken. |
+| `PLAY0842` | Error | A `workflow` declaration is malformed: a bad header, `for`, node or edge line, a missing `for`, a repeated node name, a malformed duration, or a malformed specification inside it. |
+| `PLAY0843` | Error | A workflow declares no `trigger` node, so nothing starts a run. |
+| `PLAY0844` | Warning | A workflow node can never be reached from a trigger. |
+| `PLAY0845` | Error | A workflow edge points at a node the workflow does not declare. |
+| `PLAY0846` | Error | A workflow edge leaves a node by an outlet its node kind does not have, or a `decide` node uses a reserved outlet name. |
+| `PLAY0847` | Error | A `decide` node does not name exactly two outlets, or one of its outlets leads nowhere. |
+| `PLAY0848` | Warning | A `wait` for an event, or an `approval`, has no `expires after`, so a run can wait forever. |
+| `PLAY0849` | Information | A `join` has a single incoming branch, so it joins nothing. |
+| `PLAY0850` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
