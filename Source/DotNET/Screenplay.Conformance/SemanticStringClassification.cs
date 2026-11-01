@@ -25,19 +25,19 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
-        "targets/properties", "mappings/target",
+        "targets/properties", "mappings/target", "workflows/subject", "nodes/items",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "nodes/trigger", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
     };
 
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
     // overloaded names are deliberately absent and resolved by schema context below.
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
     {
-        "alphabet", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
+        "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
         "commandReadMode", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "kind", "label",
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
@@ -89,8 +89,10 @@ internal static class SemanticStringClassification
         throw new SemanticNormalizationFailed($"{owner}/{property}", "the canonical string field has no schema classification");
     }
 
-    static bool IsIdentity(JsonElement container, string owner, string property) =>
-        _identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property);
+    static bool IsIdentity(JsonElement container, string owner, string property) => IsIdentityScoped(container, owner, property, $"{owner}/{property}");
+
+    static bool IsIdentityScoped(JsonElement container, string owner, string property, string scoped) =>
+        !(scoped is "then/target" or "nodes/trigger") && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
 
     static bool VariantIdentity(JsonElement container, string owner, string property) => property switch
     {

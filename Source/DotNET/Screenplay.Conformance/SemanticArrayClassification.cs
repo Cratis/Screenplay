@@ -32,12 +32,13 @@ internal static class SemanticArrayClassification
 
     static readonly string[] _nameSets =
     [
-        "application/policies", "slices/reducers", "slices/constraints", "record/fields", "records/fields", "thenReturns/fields",
+        "application/policies", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
+        "stateMachines/specifications", "workflows/specifications", "slices/reducers", "slices/constraints", "record/fields", "records/fields", "thenReturns/fields",
     ];
 
     static readonly string[] _targetPropertySets =
     [
-        "givenEvents/values", "givenReadModels/values", "thenEvents/values", "thenReadModels/values", "thenInvocations/values",
+        "given/values", "givenEvents/values", "givenReadModels/values", "thenEvents/values", "thenReadModels/values", "thenInvocations/values",
         "results/values", "when/values", "when/generatedValues", "whenAppended/values", "whenTrigger/values",
         "value/properties", "key/properties", "streamId/properties", "operand/properties", "values/properties",
     ];
@@ -58,6 +59,7 @@ internal static class SemanticArrayClassification
         "invokes/mappings", "invokes/onRefused", "onRefused/produces",
         "map/targets", "map/template", "map/translations", "mappings/target",
         "produces/mappings", "produces/tags",
+        "stateMachines/transitions", "states/entering", "workflows/edges", "specifications/given", "specifications/outcomes", "specifications/then",
         "queries/filters", "reactions/triggers", "triggers/invokes", "triggers/produces",
         "route/streamIdParts", "streams/streamIdParts",
         "scope/children", "scope/from", "scope/join", "scope/nested", "scope/removedWith", "scope/removedWithJoin",
