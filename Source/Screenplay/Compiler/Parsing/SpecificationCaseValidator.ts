@@ -21,7 +21,7 @@ const primitives = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 
 
 export function validateSpecificationCases(application: ApplicationSyntax, context: ParserContext, standaloneSpecifications?: readonly SpecificationSyntax[]): void {
     const declarations = new RefusalDeclarations(application);
-    const examples = specificationExamples(application);
+    const examples = specificationExamples(application), destinationType = eventDestinationTypes(application, declarations);
     const knownType = (name: string) => primitives.has(name) || declarations.concepts.has(name) || declarations.types.has(name);
     const composites = new Map([...declarations.types].map(([name, type]) => [name, new Map(type.properties.map(property => [property.name, property]))]));
     const owners = standaloneSpecifications === undefined ? declarations.slices : [{ scope: [], slice: {
@@ -85,7 +85,7 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
                 const route = event.stream == null ? null : new EventSourceCatalog(application).resolve(event.stream.eventSource, event.stream.stream);
                 const source = route?.kind === EventSourceResolutionKind.Unique ? route.sources[0] : undefined;
                 const stream = route?.kind === EventSourceResolutionKind.Unique ? route.streams[0] : undefined;
-                check(event.for, event.stream != null && source === undefined ? undefined : source?.identifier ?? eventDestinationType(event.eventType, slice, application, declarations), 'for');
+                check(event.for, event.stream != null && source === undefined ? undefined : source?.identifier ?? destinationType(event.eventType, slice), 'for');
                 if (event.stream?.streamId != null) check(event.stream.streamId.source, stream?.streamId ?? undefined, 'streamId');
                 for (const part of event.stream?.streamIdParts ?? []) check(part.source, stream?.streamIdParts.find(declaration => declaration.name === part.property)?.type, part.property);
             }
@@ -120,10 +120,21 @@ function uniqueDestinationType(types: readonly TypeRefSyntax[]): TypeRefSyntax |
     return distinct.size === 1 ? [...distinct.values()][0] : undefined;
 }
 
-function eventDestinationType(reference: string, local: SliceSyntax, application: ApplicationSyntax, declarations: RefusalDeclarations): TypeRefSyntax | undefined {
+// Memoized per validation pass by declaring slice and resolved event; unresolved and ambiguous (undefined) results are cached too.
+function eventDestinationTypes(application: ApplicationSyntax, declarations: RefusalDeclarations): (reference: string, local: SliceSyntax) => TypeRefSyntax | undefined {
+    const memo = new Map<SliceSyntax, Map<EventSyntax, TypeRefSyntax | undefined>>();
+    return (reference, local) => {
+        const event = declarations.event(reference, local);
+        if (event === null) return undefined;
+        let events = memo.get(local);
+        if (events === undefined) memo.set(local, events = new Map());
+        if (!events.has(event)) events.set(event, producedDestinationType(event, local, application, declarations));
+        return events.get(event);
+    };
+}
+
+function producedDestinationType(event: EventSyntax, local: SliceSyntax, application: ApplicationSyntax, declarations: RefusalDeclarations): TypeRefSyntax | undefined {
     const resolver = new AuthoringProductionResolver(application);
-    const event = declarations.event(reference, local);
-    if (event === null) return undefined;
     const commandTypes = (event: EventSyntax, owners = declarations.slices): TypeRefSyntax[] => owners.flatMap(({ slice }) => slice.commands.flatMap(command => command.produces
         .filter(produced => resolver.isEventProduction(produced, slice) && declarations.event(produced.event, slice) === event)
         .map(produced => commandDestinationType(command, produced, application, { resolver, slice })).filter((type): type is TypeRefSyntax => type !== null)));

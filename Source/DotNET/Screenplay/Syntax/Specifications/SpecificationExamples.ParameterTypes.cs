@@ -11,6 +11,7 @@ public static partial class SpecificationExamples
 {
     private sealed partial class Expansion
     {
+        readonly Dictionary<object, Dictionary<EventSyntax, TypeRefSyntax?>> _destinationTypes = new(ReferenceEqualityComparer.Instance);
         List<Dictionary<EventSyntax, List<EventSyntax>>>? _foldedEvents;
         EventSyntax[]? _declaredEvents;
 
@@ -94,7 +95,7 @@ public static partial class SpecificationExamples
                         var eventDeclaration = _declarations!.Event(occurrence.EventType, scope);
                         if (eventDeclaration is null) return null;
                         var local = _slices.Find(owner => owner.Scope.Segments.SequenceEqual(scope.Segments)).Slice;
-                        return UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
+                        return DestinationType(eventDeclaration, local);
                     }
                     properties = _declarations!.Event(occurrence.EventType, scope)?.Properties;
                     break;
@@ -135,6 +136,15 @@ public static partial class SpecificationExamples
             }
 
             return _declarations!.Property(properties, property, out _)?.Type;
+        }
+
+        // Memoized per expansion by declaring slice and resolved event; unresolved and ambiguous (null) results are cached too.
+        TypeRefSyntax? DestinationType(EventSyntax eventDeclaration, SliceSyntax? local)
+        {
+            var key = (object?)local ?? _slices;
+            if (!_destinationTypes.TryGetValue(key, out var events)) _destinationTypes[key] = events = new(ReferenceEqualityComparer.Instance);
+            if (events.TryGetValue(eventDeclaration, out var cached)) return cached;
+            return events[eventDeclaration] = UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
         }
 
         IEnumerable<TypeRefSyntax> CommandDestinationTypesFor(EventSyntax eventDeclaration, SliceSyntax? local = null)
