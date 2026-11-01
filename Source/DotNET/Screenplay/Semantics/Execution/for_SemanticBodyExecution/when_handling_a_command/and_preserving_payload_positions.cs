@@ -14,7 +14,7 @@ public class and_preserving_payload_positions : given.a_command_handler
         {
             Configure(Source.Replace("event Recorded\n        name String", "event Recorded", StringComparison.Ordinal));
             Answer = SemanticCommandBodyResult.Produced([Payloads[0], SemanticValue.Composite([])]);
-            ((SemanticAccepted)Execute()).Facts[1].Values.ShouldBeEmpty();
+            ((SemanticAccepted)Execute(TestContext.Current.CancellationToken)).Facts[1].Values.ShouldBeEmpty();
         }
         else
         {
@@ -23,7 +23,7 @@ public class and_preserving_payload_positions : given.a_command_handler
             Answer = SemanticCommandBodyResult.Produced([
                 SemanticValue.Composite([new(property.Id, SemanticValue.Text("First payload"))]),
                 SemanticValue.Composite([new(property.Id, SemanticValue.Text("Second payload"))])]);
-            var result = (SemanticAccepted)Execute();
+            var result = (SemanticAccepted)Execute(TestContext.Current.CancellationToken);
             result.Facts.Length.ShouldEqual(2);
             result.Facts[0].EventContract.ShouldEqual(result.Facts[1].EventContract);
             result.Facts.Select(fact => fact.Values.Single().Value).ShouldEqual([SemanticValue.Text("First payload"), SemanticValue.Text("Second payload")]);

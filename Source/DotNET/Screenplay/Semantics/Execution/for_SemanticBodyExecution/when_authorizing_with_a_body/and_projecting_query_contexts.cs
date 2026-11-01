@@ -33,7 +33,7 @@ public class and_projecting_query_contexts : given.a_policy
         {
             Request = QueryRequest() with { Tenant = null, Occurrence = null };
         }
-        Execute().ShouldBeOfExactType<SemanticAccepted>();
+        Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
         var context = Contexts.Single();
         context.Tenant.ShouldBeNull();
         context.Occurred.ShouldBeNull();

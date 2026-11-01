@@ -40,7 +40,7 @@ public class and_preserving_portable_payloads : given.a_command_handler
         var contract = Plan.Events[Plan.Commands.Values.Single().Produces[0].EventContract];
         var label = contract.Properties.Single(property => property.Name == "label");
         Answer = SemanticCommandBodyResult.Produced([SemanticValue.Composite([.. first.Properties, new(label.Id, items)]), Payloads[1]]);
-        var result = Execute();
+        var result = Execute(TestContext.Current.CancellationToken);
         if (shape == "valid")
         {
             result.ShouldBeOfExactType<SemanticAccepted>();

@@ -27,18 +27,18 @@ public class and_preserving_phase_order : given.a_command_handler
             var generated = Plan.Commands.Values.Single().Properties.Single(property => property.IsGenerated);
             var fixture = new SemanticPropertyValue(generated.Id, SemanticValue.Text("11111111-1111-1111-1111-111111111111"));
             Request = Request with { GeneratedValues = [fixture] };
-            Execute().ShouldBeOfExactType<SemanticAccepted>();
+            Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
             Contexts.Single().Command.Properties.ShouldContain(fixture);
         }
         else if (phase == "mapping-hint")
         {
             Request = Request with { Occurrence = null };
-            Execute().ShouldBeOfExactType<SemanticAccepted>();
+            Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
         }
         else
         {
             if (phase == "authorization") Request = Request with { Caller = null };
-            var result = Execute();
+            var result = Execute(TestContext.Current.CancellationToken);
             if (phase == "missing-generation") ((SemanticUnsupported)result).Capability.ShouldEqual(SemanticExecutionCapability.IdentityAllocation);
             else ((SemanticRejected)result).Category.ShouldEqual(phase == "authorization" ? SemanticRejectionCategory.Unauthorized : SemanticRejectionCategory.Validation);
             Contexts.ShouldBeEmpty();
