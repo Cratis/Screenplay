@@ -11,7 +11,7 @@ internal static class frozen_esm_goldens
 {
     internal static int CurrentVersion => (int)typeof(SemanticVersion).GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(member => member.FieldType == typeof(SemanticVersion))
-        .Select(member => ((SemanticVersion)member.GetValue(null)!).Major).Max();
+        .Max(member => ((SemanticVersion)member.GetValue(null)!).Major);
 
     // Frozen file bytes, not semantic revisions. Add the previous current golden on each ESM version bump.
     internal static IReadOnlyDictionary<int, string> Sha256 { get; } = new Dictionary<int, string>

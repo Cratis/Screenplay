@@ -24,6 +24,6 @@ public class when_a_profile_names_a_root_template_without_a_content_outlet : giv
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_report_the_missing_outlet() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(7);
-    [Fact] void should_name_the_outlet() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Single().Message.ShouldContain("no 'content' outlet");
-    [Fact] void should_report_an_error() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Single().Severity.ShouldEqual(DiagnosticSeverity.Error);
+    [Fact] void should_name_the_outlet() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Message.ShouldContain("no 'content' outlet");
+    [Fact] void should_report_an_error() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Severity.ShouldEqual(DiagnosticSeverity.Error);
 }
