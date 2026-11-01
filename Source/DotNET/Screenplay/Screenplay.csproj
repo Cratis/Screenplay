@@ -15,6 +15,7 @@
         <ProjectReference Include="../Screenplay.Matching/Screenplay.Matching.csproj" />
         <InternalsVisibleTo Include="Cratis.Screenplay.Mcp" />
         <InternalsVisibleTo Include="Cratis.Screenplay.CanonicalVectors.Specs" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.Benchmarks" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)'=='Debug'">

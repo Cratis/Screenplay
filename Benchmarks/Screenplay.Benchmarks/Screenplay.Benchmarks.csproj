@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Benchmarks</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Benchmarks</RootNamespace>
+        <TargetFrameworks />
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <IsTestProject>false</IsTestProject>
+        <IsPackable>false</IsPackable>
+        <IsPublishable>false</IsPublishable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" />
+        <ProjectReference Include="../../Source/DotNET/Screenplay/Screenplay.csproj" />
+    </ItemGroup>
+</Project>
