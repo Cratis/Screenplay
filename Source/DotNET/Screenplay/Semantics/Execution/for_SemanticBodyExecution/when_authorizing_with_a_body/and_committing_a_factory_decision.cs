@@ -59,7 +59,7 @@ public class and_committing_a_factory_decision : given.a_policy
         if (unsupported) ((SemanticUnsupported)result).Capability.ShouldEqual(SemanticExecutionCapability.Authorization);
         else ((SemanticRejected)result).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
         ReferenceEquals(result.World, SemanticWorld.Empty).ShouldBeTrue();
-        factory.Providers.All(provider => provider.Disposals == 1).ShouldBeTrue();
+        factory.Providers.TrueForAll(provider => provider.Disposals == 1).ShouldBeTrue();
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class and_committing_a_factory_decision : given.a_policy
         source.Cancel();
         decision.Commit(SemanticWorld.Empty).ShouldBeOfExactType<SemanticUnsupported>();
         factory.Tokens.ShouldEqual(new[] { source.Token, source.Token });
-        factory.Providers.All(provider => provider.Disposals == 1).ShouldBeTrue();
+        factory.Providers.TrueForAll(provider => provider.Disposals == 1).ShouldBeTrue();
     }
 
     sealed class policy_factory : ISemanticBodyExecutionProviderFactory

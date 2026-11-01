@@ -18,7 +18,7 @@ public class and_preserving_portable_payloads : given.a_command_handler
         const string declarations = "concept Status : Enum\n  active\ntype Details\n  status Status\n  note String optional\n";
         Configure(declarations + Source.Replace("label String optional", "label Details[]", StringComparison.Ordinal));
         var type = Plan.Model.Application.Types.Single();
-        var member = new SemanticPropertyValue(type.Properties.First().Id, shape switch
+        var member = new SemanticPropertyValue(type.Properties[0].Id, shape switch
         {
             "wrong-member" => SemanticValue.Text("unknown"),
             "wrong-primitive" => SemanticValue.Number(1),

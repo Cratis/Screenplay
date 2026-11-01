@@ -133,7 +133,7 @@ public class when_running_event_routes : event_route_models
     {
         var exact = new SemanticSpecificationEvent(Event.Id, []) { EventSource = new(Text, SemanticValue.Text("exact")) };
         var specification = Specification() with { ThenEventsInAnyOrder = true, ThenEvents = [new(Event.Id, []), exact] };
-        var facts = ImmutableArray.Create(Fact(null) with { Destination = SemanticValue.Text("exact"), Context = new(exact.EventSource!) }, Fact(null));
+        var facts = ImmutableArray.Create(Fact(null) with { Destination = SemanticValue.Text("exact"), Context = new(exact.EventSource) }, Fact(null));
         foreach (var legacy in new[] { false, true })
         {
             var plan = Plan(Command with { Route = null }, specifications: [specification], legacy: legacy);

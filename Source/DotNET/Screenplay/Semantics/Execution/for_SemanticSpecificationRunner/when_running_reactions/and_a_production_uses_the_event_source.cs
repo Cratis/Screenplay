@@ -35,6 +35,6 @@ public class and_a_production_uses_the_event_source : given.a_v6_scenario
             """);
         var run = Run("RequestingPicking");
         run.Passed.ShouldBeTrue();
-        ((SemanticAccepted)run.Execution).Facts.Last().Destination.ShouldEqual(SemanticValue.Text("order-42"));
+        ((SemanticAccepted)run.Execution).Facts[^1].Destination.ShouldEqual(SemanticValue.Text("order-42"));
     }
 }

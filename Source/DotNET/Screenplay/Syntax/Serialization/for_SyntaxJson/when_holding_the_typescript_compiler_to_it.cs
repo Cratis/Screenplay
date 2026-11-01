@@ -160,7 +160,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         _ => []
                     };
-                    var kindName = actualKind.GetString()!;
+                    var kindName = actualKind.GetString();
                     foreach (var member in required.Where(member => _exact || !ExactOnly.Contains($"{kindName}.{member}")))
                     {
                         if (!golden.TryGetProperty(member, out _)) _mismatches.Add($"{path}.{member}: the TypeScript syntax omits a required response member");

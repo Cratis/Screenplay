@@ -22,7 +22,7 @@ public class when_rejecting_nested_numeric_directives
         var source = tail == "numbers exact\n" ? "numbers exact\nnumbers exact\n" : "numbers exact\n" + tail;
         var result = _compiler.Parse(source);
         result.Success.ShouldBeFalse();
-        result.Diagnostics.Any(d => d.Code is DiagnosticCodes.InvalidNumericDirective or DiagnosticCodes.DuplicateNumericDirective).ShouldBeTrue();
+        result.Diagnostics.Any(d => string.Equals(d.Code, DiagnosticCodes.InvalidNumericDirective, StringComparison.Ordinal) || string.Equals(d.Code, DiagnosticCodes.DuplicateNumericDirective, StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Theory]

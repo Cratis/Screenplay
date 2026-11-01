@@ -708,7 +708,7 @@ public class when_editing_named_rule_intent
         const string attached = "\n        validate\n          label rule Attached\n            implementation // attached wrapper\n              hint \"Keep\" // attached guidance\n              file B.cs // attached source";
         var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Other\n            implementation\n              hint \"Keep\"" + attached + "\nconcept Label : String\n  validate\n    not empty");
         var blocks = WorkspaceSyntaxIndex.Create(workspace).Entries.Where(entry => entry.Node is DeclarativeValidateSyntax && entry.Handle.Path.StartsWith("/modules/", StringComparison.Ordinal)).ToArray();
-        var source = Prefix + "            file A.cs\n        validate\n          label rule Other\n            ```csharp\n            return true;\n            ```" + attached + "\nconcept Label : String\n  validate\n    not empty";
+        const string source = Prefix + "            file A.cs\n        validate\n          label rule Other\n            ```csharp\n            return true;\n            ```" + attached + "\nconcept Label : String\n  validate\n    not empty";
         var direct = Workspace(source);
         var parsed = new ScreenplayCompiler().Parse(source, "model.play").Value!;
         var replacements = parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.ToArray();

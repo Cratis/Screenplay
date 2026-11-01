@@ -154,12 +154,12 @@ public class when_exporting_action_subject_fixture_packs : Specification
             if (local.Length > 0) scope = scope with { Data = local };
         }
         var children = value.EnumerateObject().SelectMany(property => Subjects(property.Value, $"{path}.{property.Name}", scope));
-        return kind is "ScreenActionSyntax" or "ScreenGuardedActionSyntax" or "ToolbarItemSyntax"
+        return (string.Equals(kind, "ScreenActionSyntax", StringComparison.Ordinal) || string.Equals(kind, "ScreenGuardedActionSyntax", StringComparison.Ordinal) || string.Equals(kind, "ToolbarItemSyntax", StringComparison.Ordinal))
             ? new object[] { new { path, screen = scope.Screen, slice = scope.Slice, data = scope.Data } }.Concat(children)
             : children;
     }
 
-    static bool Relevant(Diagnostic diagnostic) => diagnostic.Code is DiagnosticCodes.InvalidInteractionArgument or DiagnosticCodes.UnknownActionSubjectField or DiagnosticCodes.UnresolvedActionSubject or DiagnosticCodes.InvalidActionSubjectClause or DiagnosticCodes.InferredActionSubject or DiagnosticCodes.ChangedActionSubject or DiagnosticCodes.AmbiguousActionInputBinding or DiagnosticCodes.UnsupportedActionSubjectContext;
+    static bool Relevant(Diagnostic diagnostic) => string.Equals(diagnostic.Code, DiagnosticCodes.InvalidInteractionArgument, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnknownActionSubjectField, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnresolvedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InvalidActionSubjectClause, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InferredActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.ChangedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.AmbiguousActionInputBinding, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnsupportedActionSubjectContext, StringComparison.Ordinal);
 
     static IEnumerable<(string Path, SyntaxNode Node)> Locations(SyntaxNode node, string path)
     {

@@ -39,7 +39,7 @@ public class when_selecting_by_query_filters : Specification
     [Fact]
     void should_not_match_an_instance_without_the_property()
     {
-        var property = _query.Filters.First().Property;
+        var property = _query.Filters[0].Property;
         var world = SemanticWorld.Create([], [.. _world.ReadModels.Select(instance => instance with { Values = [.. instance.Values.Where(value => value.TargetProperty != property)] })]);
         ((SemanticAccepted)Execute(world, [Value("status", SemanticValue.Text("open"))])).Queries.Single().Results.ShouldBeEmpty();
     }

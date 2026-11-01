@@ -38,7 +38,7 @@ public class when_binding_the_invoicing_sample : Specification
 
     [Fact]
     void should_keep_the_anonymous_gate_alone_on_its_path() => _diagnostics.Any(diagnostic =>
-        diagnostic.Code is DiagnosticCodes.AnonymousPolicyUnderEnclosingGate or DiagnosticCodes.AnonymousPolicyInCompositeGate).ShouldBeFalse();
+        string.Equals(diagnostic.Code, DiagnosticCodes.AnonymousPolicyUnderEnclosingGate, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.AnonymousPolicyInCompositeGate, StringComparison.Ordinal)).ShouldBeFalse();
 
     [Fact]
     void should_pin_the_described_command_information() => _diagnostics.Any(diagnostic =>
@@ -89,8 +89,7 @@ public class when_binding_the_invoicing_sample : Specification
     void should_select_the_protected_read_mode() => _application.CommandReadMode.ShouldEqual(CommandReadMode.Protected);
 
     [Fact]
-    void should_not_refuse_the_new_route_or_filter_constructs() => _diagnostics.Where(diagnostic => diagnostic.Code is
-        DiagnosticCodes.ProductionRouteOutsideCommand or DiagnosticCodes.RedundantProductionRoute or DiagnosticCodes.InvalidObserverFilter or DiagnosticCodes.ObserverFilterExcludesEveryProducer).ShouldBeEmpty();
+    void should_not_refuse_the_new_route_or_filter_constructs() => _diagnostics.Where(diagnostic => string.Equals(diagnostic.Code, DiagnosticCodes.ProductionRouteOutsideCommand, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.RedundantProductionRoute, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InvalidObserverFilter, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.ObserverFilterExcludesEveryProducer, StringComparison.Ordinal)).ShouldBeEmpty();
 
     [Fact]
     void should_not_refuse_refusal_branches_or_values() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#433", StringComparison.Ordinal)).ShouldBeFalse();
