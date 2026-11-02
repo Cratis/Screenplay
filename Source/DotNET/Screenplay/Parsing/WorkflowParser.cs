@@ -17,6 +17,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </remarks>
 internal static partial class WorkflowParser
 {
+    static readonly HashSet<string> _triggerKeywords = new(StringComparer.Ordinal) { "on", "when", "every", "at", "manual" };
+
     internal static WorkflowSyntax Parse(ParserContext context, SourceLine header)
     {
         var match = HeaderRegex().Match(header.Content);
@@ -139,8 +141,6 @@ internal static partial class WorkflowParser
         return edges;
     }
 
-    static readonly HashSet<string> TriggerKeywords = new(StringComparer.Ordinal) { "on", "when", "every", "at", "manual" };
-
     static WorkflowNodeSyntax? ParseTrigger(ParserContext context, SourceLine line, int ordinal)
     {
         var match = TriggerRegex().Match(line.Content);
@@ -151,7 +151,7 @@ internal static partial class WorkflowParser
         }
 
         var fallbackName = ordinal == 1 ? "Trigger" : $"Trigger{ordinal.ToString(CultureInfo.InvariantCulture)}";
-        var named = match.Groups[1].Success && !TriggerKeywords.Contains(match.Groups[1].Value);
+        var named = match.Groups[1].Success && !_triggerKeywords.Contains(match.Groups[1].Value);
         var name = named ? match.Groups[1].Value : fallbackName;
         var rest = named ? match.Groups[2].Value : line.Content["trigger".Length..].TrimStart();
         var location = line.Location;
