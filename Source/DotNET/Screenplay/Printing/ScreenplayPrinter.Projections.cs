@@ -269,6 +269,13 @@ public partial class ScreenplayPrinter
     {
         foreach (var mapping in mappings)
         {
+            if (mapping is SetMappingSyntax { Source: ObjectExpressionSyntax or ListExpressionSyntax } structured)
+            {
+                using var anchor = writer.Anchor(mapping);
+                writer.Structured(ReservedWords.Escape(structured.Property, reserved), structured.Source);
+                continue;
+            }
+
             writer.Line(
                 mapping switch
                 {

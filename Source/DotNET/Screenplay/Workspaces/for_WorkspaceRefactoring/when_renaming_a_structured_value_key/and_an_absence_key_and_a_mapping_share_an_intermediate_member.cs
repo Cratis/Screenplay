@@ -10,9 +10,9 @@ public class and_an_absence_key_and_a_mapping_share_an_intermediate_member : giv
     const string Mapping =
         "\n      specification KeptInvoice" +
         "\n        given readmodel InvoiceView" +
-        "\n          invoiceId = {\"id\":\"second\",\"detail\":{\"part\":\"kept\"}}" +
+        "\n          invoiceId\n            id = \"second\"\n            detail\n              part = \"kept\"" +
         "\n        then readmodel InvoiceView" +
-        "\n          invoiceId = {\"id\":\"second\",\"detail\":{\"part\":\"kept\"}}";
+        "\n          invoiceId\n            id = \"second\"\n            detail\n              part = \"kept\"";
 
     WorkspaceAuthoringResult _result = null!;
 
@@ -22,6 +22,6 @@ public class and_an_absence_key_and_a_mapping_share_an_intermediate_member : giv
 
     [Fact] void should_accept_the_rename() => _result.Accepted.ShouldBeTrue();
     [Fact] void should_rename_the_declaration() => Text(_result).ShouldContain("  details InvoicePart");
-    [Fact] void should_rewrite_the_absence_key_and_keep_its_nested_member() => Text(_result).ShouldContain("{\"id\":\"first\",\"details\":{\"part\":\"old\"}}");
-    [Fact] void should_rewrite_both_nested_mappings() => Text(_result).Split("{\"id\":\"second\",\"details\":{\"part\":\"kept\"}}").Length.ShouldEqual(3);
+    [Fact] void should_rewrite_the_absence_key_and_keep_its_nested_member() => Text(_result).ShouldContain(Key("first", detail: "details"));
+    [Fact] void should_rewrite_both_nested_mappings() => Text(_result).Split("details\n              part = \"kept\"").Length.ShouldEqual(3);
 }

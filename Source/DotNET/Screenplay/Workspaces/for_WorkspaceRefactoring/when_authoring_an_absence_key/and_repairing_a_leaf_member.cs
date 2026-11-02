@@ -7,7 +7,7 @@ public class and_repairing_a_leaf_member : given.a_workspace_with_an_absent_read
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith(Source.Replace("\"part\":\"old\"", "\"missing\":\"old\"", StringComparison.Ordinal));
+    void Establish() => CreateWith(Source.Replace("part = \"old\"", "missing = \"old\"", StringComparison.Ordinal));
 
     void Because() => _result = Workspace.ProposeAuthoring(Authoring(WorkspaceAuthoringReferencePolicy.Safe, RenameMember("missing", "part")) with
     {

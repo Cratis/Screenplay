@@ -11,7 +11,7 @@ public class when_a_rename_moves_a_resolved_key_member_along : given.two_revisio
 
     void Because() => _error = Validate(
         Source,
-        Source.Replace("\"part\":\"old\"", "\"segment\":\"old\"", StringComparison.Ordinal).Replace("  part String", "  segment String", StringComparison.Ordinal),
+        Source.Replace("part = \"old\"", "segment = \"old\"", StringComparison.Ordinal).Replace("  part String", "  segment String", StringComparison.Ordinal),
         WorkspaceAuthoringReferencePolicy.Safe,
         (before, after) => new()
         {

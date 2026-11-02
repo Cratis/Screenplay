@@ -79,7 +79,13 @@ module Buying
       specification RecordingDemandFromAConfirmedOrder
         when append OrderConfirmedAtPurchasing
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":3},{"sku":"ACM-2000","quantity":1}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
+            item
+              sku      = "ACM-2000"
+              quantity = 1
         then DemandRecorded
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -95,10 +101,19 @@ module Buying
       specification ARepeatedDeliveryAddsOnlyTheNewLine
         given OrderConfirmedAtPurchasing
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":3}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
         when append OrderConfirmedAtPurchasing
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":3},{"sku":"ACM-2000","quantity":1}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
+            item
+              sku      = "ACM-2000"
+              quantity = 1
         then DemandRecorded
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"

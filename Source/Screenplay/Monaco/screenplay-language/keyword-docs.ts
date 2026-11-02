@@ -10,6 +10,8 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    item: 'One element of a structured list, one per line: `item <value>` for a scalar, a bare `item` with an indented block for an object or nested list, `item none` for an empty list and `item empty` for an object without members. Also a navigation or toolbar entry. Screenplay has no JSON.',
+    none: 'States an empty list in a structured value: `<name> none`. Elsewhere, an explicit empty choice such as `operations none`.',
     parameter: 'A typed value declared by a specification table, or an argument of a named behavior. Table types are required; every case supplies each parameter exactly once.',
     case: 'One named concrete row of a specification table, expanded as <Specification>_<Case>. Use case.<parameter> for a whole step value.',
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
@@ -78,6 +80,13 @@ export const keywordDocs: Record<string, string> = {
     batches: 'Application-root `reaction batches atomic` opts into ESM v22 atomic direct and refusal-branch batches. Invoked commands remain separate transactions.',
     atomic: 'All productions in one reaction trigger occurrence or selected refusal branch are adopted together or not at all. Absence retains legacy per-fact semantics.',
     reaction: 'Behavior that runs when something happens. Lives inside Automation slices. A trigger with no body states intent on its own — `file`/code is optional realization metadata.',
+    statemachine: '`statemachine <Name>` declares where a thing is in its lifecycle, derived from the read model it `follows` (ESM v36). A state allows the targets of the transitions written under it; an event takes the first transition on it whose condition holds and whose target the current state allows, and is otherwise ignored.',
+    follows: '`follows <ReadModel>` names the read model a state machine follows; its key identifies one instance.',
+    entering: '`entering send <Command>` or `entering start <Workflow>` says what entering a state does. It may run again on redelivery, so it must be safe to repeat.',
+    workflow: '`workflow <Name>` declares a durable process (ESM v36): nodes with named outlets joined by edges, one run at a time per subject (`for <ReadModel>`). An unconnected `failed`, `rejected` or `expired` outlet fails the run; any other unconnected outlet ends the branch.',
+    decide: '`decide <Name> when <condition>` chooses between exactly two outlets of your own: the first is taken when the condition over the subject holds.',
+    approval: '`approval <Name> by <Persona or Policy> [expires after <n> <unit>]` waits for a person. Outlets: approved, rejected, expired.',
+    foreach: '`foreach <Name> over <property> [parallel <n>]` runs the `each` branch once per item of a collection property of the subject, then takes `completed`.',
     runs: '`runs as system [role "Role" and role "Role"]` declares the identity for every returned or invoked command of a reaction, not imperative pipeline calls. Admitted by released ESM v10; claims are unknown for this identity. Clock and application triggers have no Stage realization yet.',
     trigger: 'Declares a kind of occurrence a reaction can respond to, and the values it hands the reaction. What makes one occur belongs to whoever provides it, never to the compiler.',
     where: 'Narrows which occurrences actually run the reaction.',
@@ -184,7 +193,7 @@ export const keywordDocs: Record<string, string> = {
     now: 'The current instant (decisions 0106/0107). Offsets such as now + 2 hours and date of now are syntax-only; binding reports PLAY0268 until admitted.',
     calendar: 'Command calendar: calendar "<id>" or calendar from $context.<member>. Syntax-only (decisions 0106/0107); binding reports PLAY0268. A property named calendar remains a property.',
     zone: 'Application time zone "<id>" or time zone configurable default "<id>"; a specification may state given time zone "<id>". Syntax-only (decisions 0106/0107); binding reports PLAY0268.',
-    empty: 'Used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
+    empty: 'Ends a structured value header for an object without members: `<name> empty`. Also used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
     not: 'Negates a validation condition, as in `not empty`.',
     and: 'Both conditions must hold.',
     or: 'Either condition may hold.',

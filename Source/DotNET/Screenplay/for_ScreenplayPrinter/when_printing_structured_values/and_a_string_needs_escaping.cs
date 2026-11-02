@@ -5,13 +5,14 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter.when_printing_structured_values;
 
-public class and_a_string_needs_json_escaping : given.a_printer
+public class and_a_string_needs_escaping : given.a_printer
 {
     const string Source =
         """
         specification Placing
           when Place
-            line = {"sku":"A\"1"}
+            line
+              sku = "A\"1"
         """;
 
     string _printed = string.Empty;
@@ -23,6 +24,6 @@ public class and_a_string_needs_json_escaping : given.a_printer
         _reparsed = _compiler.CompileSpecification(_printed);
     }
 
-    [Fact] void should_preserve_canonical_json() => _printed.TrimEnd().ShouldEqual(Source);
+    [Fact] void should_preserve_the_escaped_string() => _printed.TrimEnd().ShouldEqual(Source);
     [Fact] void should_reparse_the_escaped_string() => _reparsed.Success.ShouldBeTrue();
 }

@@ -139,6 +139,12 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.navigationItems;
         case 'toolbar':
             return scope.toolbarItems;
+        case 'statemachine':
+            return items.stateMachineItems;
+        case 'state':
+            return items.stateItems;
+        case 'workflow':
+            return items.workflowItems;
         case 'system':
             return items.operationItems.filter(item => item.label === 'description');
         case 'operation':

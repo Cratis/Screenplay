@@ -38,7 +38,7 @@ public partial class ScreenplayPrinter
             foreach (var (input, mapping) in operation.Inputs.Zip(mappings))
             {
                 using var inputAnchor = writer.Anchor(input);
-                writer.Line($"{ReservedWords.Escape(input.Name, _operationInputKeywords)} {ScreenplaySyntaxText.TypeRef(input.Type)} = {writer.Expression(mapping.Source)}", mapping);
+                writer.Assignment($"{ReservedWords.Escape(input.Name, _operationInputKeywords)} {ScreenplaySyntaxText.TypeRef(input.Type)}", mapping.Source, mapping);
             }
         }
         if (operation.Execute is not null) WriteOperationPhase(writer, "execute", operation.Execute);

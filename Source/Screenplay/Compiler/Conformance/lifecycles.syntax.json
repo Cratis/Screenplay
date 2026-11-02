@@ -1,0 +1,2225 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "InvoiceId",
+      "type": "Uuid",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Invoices",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RegisterInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "lines",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "lines"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "lines",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "InvoiceLine"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "lines",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "InvoiceLine"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterInvoiceSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "SendInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceSent",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceSent",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "SendInvoiceSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "MarkInvoiceOverdue",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceMarkedOverdue",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceMarkedOverdue",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "MarkInvoiceOverdueSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "PayInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoicePaid",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoicePaid",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "PayInvoiceSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "FlagInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceFlagged",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceFlagged",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "FlagInvoiceSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "ChargeFee",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "LateFeeCharged",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "LateFeeCharged",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "ChargeFeeSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "TagInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceTagged",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceTagged",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "TagInvoiceSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "WriteOff",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceWrittenOff",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceWrittenOff",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "WriteOffSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "OfferPlan",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PaymentPlanOffered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentPlanOffered",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "OfferPlanSlice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "InvoiceView",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Disabled",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "overdue"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lines"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceSent"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceMarkedOverdue"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "overdue"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoiceProjection",
+                  "readModel": "Invoice",
+                  "sequence": null
+                }
+              ],
+              "queries": [],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Invoice",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "overdue",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "lines",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "InvoiceLine"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Billing"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": null,
+      "name": "Controller",
+      "policies": [
+        "IsController"
+      ]
+    }
+  ],
+  "stateMachines": [
+    {
+      "kind": "StateMachineSyntax",
+      "description": "Where an invoice is",
+      "follows": "Invoice",
+      "name": "InvoiceLifecycle",
+      "specifications": [
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "Sending an invoice charges the fee and starts the collection",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "SendingStartsTheCollection",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "State",
+              "target": "Sent"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Starts",
+              "target": "Collect"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceSent",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "AnOverdueInvoiceIsOverdue",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "State",
+              "target": "Overdue"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        }
+      ],
+      "states": [
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": false,
+          "isInitial": true,
+          "name": "Draft",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceSent",
+              "target": "Sent",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Send",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Start",
+              "target": "Collect"
+            }
+          ],
+          "isFinal": false,
+          "isInitial": false,
+          "name": "Sent",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceMarkedOverdue",
+              "target": "Overdue",
+              "when": {
+                "kind": "ComparisonConditionSyntax",
+                "left": "overdue",
+                "operator": "Equal",
+                "right": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": true
+                }
+              }
+            },
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoicePaid",
+              "target": "Paid",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": false,
+          "isInitial": false,
+          "name": "Overdue",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoicePaid",
+              "target": "Paid",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": true,
+          "isInitial": false,
+          "name": "Paid",
+          "transitions": []
+        }
+      ]
+    }
+  ],
+  "systems": [],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": null,
+      "name": "InvoiceLine",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "sku",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "kind": "WorkflowSyntax",
+      "description": "Chases an invoice",
+      "name": "Collect",
+      "nodes": [
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ChargeLateFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Trigger",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": "Overdue",
+          "stateMachine": "InvoiceLifecycle",
+          "timeout": null,
+          "triggerKind": "StateEntered"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ChargeLateFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Daily",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": {
+            "kind": "IntervalTriggerSourceSyntax",
+            "amount": 1,
+            "unit": "Days"
+          },
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Schedule"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ChargeLateFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Weekly",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": {
+            "kind": "ScheduleTriggerSourceSyntax",
+            "dayOfMonth": null,
+            "dayOfWeek": "Monday",
+            "time": "08:00:00.0000000"
+          },
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Schedule"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ChargeLateFee"
+            }
+          ],
+          "event": "InvoiceFlagged",
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Flagged",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Event"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ChargeLateFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Started",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Manual"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": 3,
+          "by": null,
+          "command": "ChargeFee",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Pause"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "failed",
+              "target": "Approve"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "ChargeLateFee",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 5,
+            "unit": "Seconds"
+          },
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 30,
+            "unit": "Seconds"
+          },
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 2,
+            "unit": "Days"
+          },
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "resumed",
+              "target": "Check"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Pause",
+          "nodeKind": "Wait",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "overdue",
+            "operator": "Equal",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": true
+            }
+          },
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "chase",
+              "target": "EachLine"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "settled",
+              "target": "Done"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Check",
+          "nodeKind": "Decide",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "each",
+              "target": "TagLine"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "completed",
+              "target": "Await"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": "lines",
+          "joinCount": null,
+          "joinMode": null,
+          "name": "EachLine",
+          "nodeKind": "ForEach",
+          "parallel": 2,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "TagInvoice",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "AllTagged"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "TagLine",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": "All",
+          "name": "AllTagged",
+          "nodeKind": "Join",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "resumed",
+              "target": "Done"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "expired",
+              "target": "Approve"
+            }
+          ],
+          "event": "InvoicePaid",
+          "expiresAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 7,
+            "unit": "Days"
+          },
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Await",
+          "nodeKind": "Wait",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": "Controller",
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "approved",
+              "target": "Write"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "rejected",
+              "target": "Plan"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "expired",
+              "target": "Write"
+            }
+          ],
+          "event": null,
+          "expiresAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 1,
+            "unit": "Days"
+          },
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Approve",
+          "nodeKind": "Approval",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "WriteOff",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Merge"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Write",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "OfferPlan",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Merge"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Plan",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Final"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": "Any",
+          "name": "Merge",
+          "nodeKind": "Join",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": 2,
+          "joinMode": "AtLeast",
+          "name": "Final",
+          "nodeKind": "Join",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "TagInvoice",
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Done",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        }
+      ],
+      "specifications": [
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "APaidInvoiceIsTagged",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "Await",
+              "outlet": "resumed"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "NoPaymentIsWrittenOff",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "Await",
+              "outlet": "expired"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "Approve",
+              "outlet": "approved"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "WriteOff"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "TheRunWaits",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Waits",
+              "target": "Await"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "AFailedFeeFailsNothingButAsksForApproval",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ChargeLateFee",
+              "outlet": "failed"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "Approve",
+              "outlet": "rejected"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "OfferPlan"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": []
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": null,
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lines",
+                  "source": {
+                    "kind": "ListExpressionSyntax",
+                    "items": [
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "A"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "sku",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "B"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "AStartedRunFails",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ChargeLateFee",
+              "outlet": "failed"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "Approve",
+              "outlet": "expired"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ChargeFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "WriteOff"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": null,
+          "whenStarted": {
+            "kind": "LiteralExpressionSyntax",
+            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+          }
+        }
+      ],
+      "subject": "Invoice"
+    }
+  ]
+}

@@ -44,8 +44,8 @@ public class when_admitting_unused_examples : given.a_semantic_binder
     [InlineData("example Input : Record\n  count = 1.5")]
     [InlineData("example Input : Record\n  id = \"not a uuid\"")]
     [InlineData("example Input : Record\n  count = null")]
-    [InlineData("example Input : Record\n  detail = {\"name\":\"A\"}")]
-    [InlineData("example Input : Record\n  detail = {\"name\":\"A\",\"count\":\"wrong\"}")]
+    [InlineData("example Input : Record\n  detail\n    name = \"A\"")]
+    [InlineData("example Input : Record\n  detail\n    name = \"A\"\n    count = \"wrong\"")]
     [InlineData("example Input : Record\n  generated token = \"not a uuid\"")]
     [InlineData("example Input : Record\n  for \"not a uuid\"")]
     [InlineData("example Fact : Recorded\n  for \"not a uuid\"")]
@@ -96,7 +96,7 @@ public class when_admitting_unused_examples : given.a_semantic_binder
     [Fact]
     void should_not_let_an_override_hide_an_invalid_example_value()
     {
-        var result = Bind("example Input : Record\n  count = \"wrong\"\n" + Declarations + "\n      specification Overrides\n        when Input\n          id = \"11111111-1111-1111-1111-111111111111\"\n          count = 10\n          detail = {\"name\":\"A\",\"count\":1}\n        then Recorded count = 10");
+        var result = Bind("example Input : Record\n  count = \"wrong\"\n" + Declarations + "\n      specification Overrides\n        when Input\n          id = \"11111111-1111-1111-1111-111111111111\"\n          count = 10\n          detail\n            name = \"A\"\n            count = 1\n        then Recorded count = 10");
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnadmittedSpecificationExampleValue);
     }
 }

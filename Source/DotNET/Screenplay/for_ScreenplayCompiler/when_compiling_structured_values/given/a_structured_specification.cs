@@ -28,11 +28,20 @@ public class a_structured_specification : Specification
                 lines Line[]
               specification Placing
                 when Place
-                  lines = [{"sku":"A-1","status":"open"}]
+                  lines
+                    item
+                      sku = "A-1"
+                      status = "open"
                   status = "open"
                 then Placed
-                  lines = [{"sku":"A-1","status":"open"}]
+                  lines
+                    item
+                      sku = "A-1"
+                      status = "open"
         """;
+
+    // The structured 'lines' value under 'when' and 'then', as it sits in the source.
+    protected const string Lines = "lines\n            item\n              sku = \"A-1\"\n              status = \"open\"";
 
     protected readonly ScreenplayCompiler Compiler = new();
 }

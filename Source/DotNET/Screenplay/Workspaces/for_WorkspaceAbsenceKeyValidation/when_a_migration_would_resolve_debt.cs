@@ -10,8 +10,8 @@ public class when_a_migration_would_resolve_debt : given.two_revisions_of_an_abs
     Exception? _error;
 
     void Because() => _error = Validate(
-        Source.Replace("\"part\":\"old\"", "\"segment\":\"old\"", StringComparison.Ordinal),
-        Source.Replace("\"part\":\"old\"", "\"segment\":\"old\"", StringComparison.Ordinal).Replace("  part String", "  segment String", StringComparison.Ordinal),
+        Source.Replace("part = \"old\"", "segment = \"old\"", StringComparison.Ordinal),
+        Source.Replace("part = \"old\"", "segment = \"old\"", StringComparison.Ordinal).Replace("  part String", "  segment String", StringComparison.Ordinal),
         WorkspaceAuthoringReferencePolicy.Draft,
         (before, after) => new()
         {

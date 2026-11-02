@@ -29,8 +29,16 @@ module Shop
           basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email          = "ada@example.com"
-          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           deliveryMethod = "standard"
           total          = 98
         // the public event is the outcome (the appended fact itself is excluded)
@@ -38,6 +46,14 @@ module Shop
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email      = "ada@example.com"
-          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           total      = 98

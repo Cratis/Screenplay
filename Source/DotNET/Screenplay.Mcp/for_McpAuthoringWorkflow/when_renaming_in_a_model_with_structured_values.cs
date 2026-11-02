@@ -42,11 +42,17 @@ public class when_renaming_in_a_model_with_structured_values : given.an_authorin
                 when PlaceOrder
                   orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                   channel = "web"
-                  lines = [{"sku":"A-1","quantity":2}]
+                  lines
+                    item
+                      sku = "A-1"
+                      quantity = 2
                 then OrderPlaced
                   orderId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                   channel = "web"
-                  lines = [{"sku":"A-1","quantity":2}]
+                  lines
+                    item
+                      sku = "A-1"
+                      quantity = 2
         """;
 
     string _orderPath = null!;

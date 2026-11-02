@@ -62,7 +62,9 @@ slice StateChange AssignConsultant
       assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
       consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
-      contact      = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      contact
+        name  = "Ingrid Solberg"
+        email = "ingrid.solberg@fjordline.example"
       hourlyRate   = 1450
     then ConsultantAssigned
       for "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
@@ -92,7 +94,9 @@ slice StateChange AssignConsultant
       assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e32"
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
       consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e922"
-      contact      = {"name":"Marius Dahl","email":"marius.dahl@fjordline.example"}
+      contact
+        name  = "Marius Dahl"
+        email = "marius.dahl@fjordline.example"
       hourlyRate   = 1300
     then error "$strings.engagements.validation.notActive"
 
@@ -105,6 +109,8 @@ slice StateChange AssignConsultant
       assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
       consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
-      contact      = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      contact
+        name  = "Ingrid Solberg"
+        email = "ingrid.solberg@fjordline.example"
       hourlyRate   = 1450
     then denied
