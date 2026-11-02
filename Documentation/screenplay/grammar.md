@@ -27,7 +27,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -74,6 +74,15 @@ NumericPreamble = "numbers", "exact", NL ;
 (* -------------------------------------------------------------- *)
 
 DomainDecl     = "domain", QualifiedName, NL ;
+
+(* Named application time-zone members, authoring only (decision 0132, #824). *)
+ContextDecl    = "context", NL, [ INDENT, { DescriptionDecl | ContextMember }, DEDENT ] ;
+ContextMember  = PropertyName, "time", "zone", NL ;
+(* Exactly one block per application folder, at the application root. Members
+   have unique unescaped names and no body. Names cannot be timeZone or an
+   existing $context root (command, arguments, tenant, causedBy, causation,
+   occurred, identity). Binding the
+   declaration reports PLAY0268 until #824 admits time-zone execution. *)
 
 (* Caller detail authoring metadata, not executable behavior. *)
 IdentityDecl   = "identity", NL, [ INDENT, { DescriptionDecl | IdentityDetail }, DEDENT ] ;

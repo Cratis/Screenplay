@@ -15,6 +15,8 @@ internal static class SyntaxKinds
         typeof(AddMappingSyntax),
         typeof(AllSyntax),
         typeof(ApplicationSyntax),
+        typeof(ApplicationContextSyntax),
+        typeof(ContextMemberSyntax),
         typeof(ApplicationTriggerInteractionTriggerSyntax),
         typeof(ArrangementContainerSyntax),
         typeof(ArrangementOverrideSyntax),

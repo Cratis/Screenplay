@@ -142,6 +142,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         };
 
         return [.. LocalFeatures().Concat(Feature(ClockRefused(node), "calendar and clock operands (#824)"))
+            .Concat(Feature(node is ApplicationContextSyntax or ContextMemberSyntax || (node is ApplicationSyntax && application.Context is not null), "application context members (#824)"))
             .Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))

@@ -3773,4 +3773,16 @@ public static class DiagnosticCodes
 
     /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
     public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>A context block is malformed, repeated or outside the application root.</summary>
+    public const string InvalidContextDeclaration = "PLAY0854";
+
+    /// <summary>A context member has a type other than <c>time zone</c>.</summary>
+    public const string UnknownContextMemberType = "PLAY0855";
+
+    /// <summary>A context block declares the same member name more than once.</summary>
+    public const string DuplicateContextMember = "PLAY0856";
+
+    /// <summary>A context member uses a reserved built-in context name.</summary>
+    public const string ReservedContextMemberName = "PLAY0857";
 }

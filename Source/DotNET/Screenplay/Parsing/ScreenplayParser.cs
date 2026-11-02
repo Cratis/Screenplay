@@ -46,6 +46,7 @@ internal static partial class ScreenplayParser
         CommandReadMode? commandReadMode = null;
         var sawCommandReads = false;
         TimeZoneSyntax? timeZone = null;
+        ApplicationContextSyntax? applicationContext = null;
         var sawTimeZone = false;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
@@ -193,6 +194,9 @@ internal static partial class ScreenplayParser
                     }
 
                     break;
+                case "context":
+                    applicationContext = ApplicationContextParser.Parse(context, line, applicationContext, placement);
+                    break;
                 case "identity":
                     identity = IdentityParser.Parse(context, line, identity);
                     break;
@@ -272,6 +276,7 @@ internal static partial class ScreenplayParser
             ReactionProductionMode = reactionProductionMode,
             CommandReadMode = commandReadMode,
             TimeZone = timeZone,
+            Context = applicationContext,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             StickyNotes = stickyNotes,
@@ -446,7 +451,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, module, seed, trigger, behavior, ui profile, theme, sample data, layout, statemachine or workflow";
+                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data, layout, statemachine or workflow";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 

@@ -169,6 +169,7 @@ sealed class AuthoringSnapshot : IPlayFiles
             ReactionProductionMode = applications.FirstOrDefault(application => application.ReactionProductionMode is not null)?.ReactionProductionMode,
             CommandReadMode = applications.FirstOrDefault(application => application.CommandReadMode is not null)?.CommandReadMode,
             TimeZone = applications.FirstOrDefault(application => application.TimeZone is not null)?.TimeZone,
+            Context = applications.FirstOrDefault(application => application.Context is not null)?.Context,
             Types = applications.SelectMany(application => application.Types ?? []),
             Examples = applications.SelectMany(application => application.Examples),
             Systems = applications.SelectMany(application => application.Systems),

@@ -507,4 +507,8 @@ export const DiagnosticCodes = {
     WorkflowWithoutExpiry: 'PLAY0849',
     WorkflowJoinWithOneBranch: 'PLAY0850',
     UnknownWorkflowReference: 'PLAY0851',
+    InvalidContextDeclaration: 'PLAY0854',
+    UnknownContextMemberType: 'PLAY0855',
+    DuplicateContextMember: 'PLAY0856',
+    ReservedContextMemberName: 'PLAY0857',
 } as const;

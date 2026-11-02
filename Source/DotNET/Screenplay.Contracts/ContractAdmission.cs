@@ -267,6 +267,7 @@ static class ContractAdmission
         new("layout", "layout Shell\n  content\n"),
         new("module", Slice),
         new("numbers", "numbers exact\n"),
+        new("context", "context\n  businessTimeZone time zone\n"),
         new("time", "time zone \"Europe/Oslo\"\n", ["time zone configurable default \"Europe/Oslo\"\n"]),
         new("persona", "persona Person\n"),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),

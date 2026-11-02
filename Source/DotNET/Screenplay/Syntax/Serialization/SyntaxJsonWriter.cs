@@ -18,7 +18,7 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (OmitPossibleEvents(node, member.Name, value)) continue;
-            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "onboarding" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
+            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "context" || member.Name == "onboarding" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
