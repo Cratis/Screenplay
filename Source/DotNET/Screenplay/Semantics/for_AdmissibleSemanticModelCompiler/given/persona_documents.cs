@@ -12,6 +12,26 @@ public class persona_documents : security_documents
     protected const string Personas = "policy Member\n  require authenticated and role \"Member\"\npolicy Extra\n  require claim \"dept\" matches \"Finance\"\npersona Clerk\n  policy Member\n  policy Access\npersona Healthy\n  policy Extra\n  policy Member\n";
     protected readonly List<ApplicationSyntax> _rounds = [];
 
+    protected static string ApprovalSource(string approver, string failingPolicy) => $$"""
+        policy {{failingPolicy}}
+          require claim "department" matches unknown
+        policy {{approver}}
+          require role "{{approver}}"
+        module M
+          feature F
+            slice StateChange Removed
+              command Save
+                authorize {{failingPolicy}}
+            slice StateView Kept
+              readmodel Case
+                id Uuid key
+        workflow Review
+          for Case
+          trigger Started manual
+            -> Approve
+          approval Approve by {{approver}} expires after 1 day
+        """ + "\n";
+
     protected static Diagnostic PolicyError(string message, SourceLocation location, string policy) =>
         Diagnostic.Error(DiagnosticCodes.InvalidSemanticBinding, message, location, DiagnosticArguments.Empty.With("subject", DiagnosticArgument.Declaration("policy", [policy])));
 

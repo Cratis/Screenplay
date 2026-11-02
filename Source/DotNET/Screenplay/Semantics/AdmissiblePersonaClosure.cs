@@ -35,6 +35,9 @@ sealed class AdmissiblePersonaClosure(ApplicationSyntax syntax)
     {
         var personas = (pruned.Personas ?? []).ToArray();
         if (personas.Any(persona => _removed.Contains(persona.Name))) return false;
+        var approvers = pruned.Workflows.SelectMany(workflow => workflow.Nodes)
+            .Where(node => node.NodeKind == WorkflowNodeKind.Approval).Select(node => node.By).OfType<string>();
+        if (approvers.Any(_removed.Contains)) return false;
         var references = remaining.PersonaCallers.Select(caller => caller.Persona)
             .Concat((pruned.Onboarding?.Invitations ?? []).SelectMany(invitation => invitation.By.Concat(invitation.Grant)));
         return references.All(name => !_removed.Contains(name) && personas.Count(persona => persona.Name == name) == 1);
