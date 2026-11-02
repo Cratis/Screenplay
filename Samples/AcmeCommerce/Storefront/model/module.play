@@ -14,3 +14,4 @@ module Shop
   feature Checkout
   feature MyOrders
   feature Account
+  feature Fulfilment

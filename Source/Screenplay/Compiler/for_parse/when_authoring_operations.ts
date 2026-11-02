@@ -36,6 +36,10 @@ describe('when authoring operations', () => {
         [declaration + '      specification T\n        when C\n        then compensated Send\n          ignored = 1\n', 'PLAY0502'],
         [declaration + '      reaction R\n        when Recorded\n          produces Send\n', 'PLAY0499'],
     ])('should reject invalid intent %s', (body, code) => expect(parse(prefix + body).diagnostics.map(diagnostic => diagnostic.code)).toContain(code));
+    it('should refuse an unexpected line in an operation and skip its block', () => {
+        const result = parse(prefix + '      operation Send\n        uses Mailer\n        bogus here\n          nested\n');
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0496');
+    });
     it('should not drain phase siblings', () => {
         const result = parse(prefix + declaration + '        extra String optional\n' + command);
         expect(result.success).toBe(true);

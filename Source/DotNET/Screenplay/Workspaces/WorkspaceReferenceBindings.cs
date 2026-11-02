@@ -120,6 +120,8 @@ sealed class WorkspaceReferenceBindings
                 PersonaSyntax => WorkspaceReferenceDomain.Persona,
                 SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
+                StateMachineSyntax => WorkspaceReferenceDomain.StateMachine,
+                WorkflowSyntax => WorkspaceReferenceDomain.Workflow,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,
                 ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,
                 PropertySyntax when entry.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax => WorkspaceReferenceDomain.Property,

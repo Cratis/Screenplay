@@ -157,6 +157,8 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
             case SampleDataPackSyntax value: Declare("SampleDataPack", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
+            case StateMachineSyntax value: Declare("StateMachine", value.Name, value, value.Description); break;
+            case WorkflowSyntax value: Declare("Workflow", value.Name, value, value.Description); break;
             case ReactionSyntax value: Declare("Reaction", value.Name, value, value.Description); break;
             case ProjectionSyntax value: Declare("Projection", value.Name, value, value.Description); break;
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;

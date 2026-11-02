@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace Cratis.Screenplay.Semantics.Serialization;
 
 /// <summary>
-/// Frozen C(M.0) structural vocabulary for the shipped majors 1–34. The strict per-major
+/// Frozen C(M.0) structural vocabulary for the shipped majors 1–34 and 36 (35 is reserved, decision 0119). The strict per-major
 /// reader/writer supplies baseline field ordering, optionality, variants and array ordering.
 /// These tables identify extension boundaries independently of future semantic knowledge.
 /// The @major and @first-last annotations freeze the strict reader's sinceVersion gates
@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,7 +31,7 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25",
         ["Concept"] = "id name primitive values validations:Validation numbers@12 compliance@13:Compliance generation@15:Generation",
         ["Generation"] = "kind pattern checksum min max requirement size count encoding alphabet prefix case",
         ["Compliance"] = "personal:Personal secret:Secret",
@@ -111,6 +111,16 @@ internal static class EsmBaselineShapes
         ["FixturePart"] = "part value:Value",
         ["ObserverFilter"] = "source stream",
         ["Trigger"] = "id name properties:Property",
+        ["StateMachine"] = "name readModel states:State transitions:StateTransition specifications:LifecycleSpecification",
+        ["State"] = "name initial final entering:StateEntry",
+        ["StateEntry"] = "kind command workflow",
+        ["StateTransition"] = "from event guard:Condition to",
+        ["Workflow"] = "name subject nodes:WorkflowNode edges:WorkflowEdge specifications:LifecycleSpecification",
+        ["LifecycleSpecification"] = "name given:SpecificationEvent whenAppended:SpecificationEvent whenStarted:Value outcomes:LifecycleOutcome then:LifecycleExpectation",
+        ["LifecycleOutcome"] = "node outlet",
+        ["LifecycleExpectation"] = "kind target command",
+        ["WorkflowNode"] = "name kind trigger event stateMachine state every at onDayOfWeek onDayOfMonth command maxAttempts attemptTimeout retryDelay condition:Condition whenTrue whenFalse duration expiresAfter approverKind approver items maxParallel joinMode joinCount",
+        ["WorkflowEdge"] = "from outlet to",
         ["Reaction"] = "id name triggers:ReactionTrigger runsAs@10:ReactionIdentity from@10:ObserverFilter",
         ["ReactionIdentity"] = "kind roles",
         ["ReactionTrigger"] = "kind source every at onDayOfWeek onDayOfMonth where:Condition produces:ProducedEvent invokes:Invocation requirementId",

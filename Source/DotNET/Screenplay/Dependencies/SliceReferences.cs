@@ -29,6 +29,10 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
         ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null,
 
+        // State machines and workflows are top-level declarations owned by no slice, module or feature, so what they name adds no slice dependency.
+        ["follows"] = null, ["entersSend"] = null, ["entersStart"] = null, ["transitionOn"] = null, ["workflowSubject"] = null,
+        ["workflowWait"] = null, ["workflowTrigger"] = null, ["workflowAction"] = null, ["workflowApproval"] = null,
+
         // A consumed public event is produced by another application, so it has no producing slice to depend on here.
         ["sourceEvent"] = null
     };

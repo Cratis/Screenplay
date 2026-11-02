@@ -275,6 +275,22 @@ internal static partial class ScreenplaySyntaxText
         _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
     };
 
+    // 'every 1 day' rather than 'every 1 days' - a schedule is read aloud, and the plural is what the
+    // language accepts on the way in, not what it insists on writing back out.
+    internal static string IntervalUnitText(int amount, IntervalUnit unit)
+    {
+        var plural = unit switch
+        {
+            IntervalUnit.Seconds => "seconds",
+            IntervalUnit.Minutes => "minutes",
+            IntervalUnit.Hours => "hours",
+            IntervalUnit.Days => "days",
+            _ => throw new UnsupportedSyntaxForPrinting("interval unit", unit.ToString())
+        };
+
+        return amount == 1 ? plural[..^1] : plural;
+    }
+
     static string ExpressionCore(ExpressionSyntax expression) => expression switch
     {
         LiteralExpressionSyntax literal => Literal(literal.Value),
@@ -413,22 +429,6 @@ internal static partial class ScreenplaySyntaxText
         NotificationLevel.Error => "error",
         _ => throw new UnsupportedSyntaxForPrinting("notification level", level.ToString())
     };
-
-    // 'every 1 day' rather than 'every 1 days' - a schedule is read aloud, and the plural is what the
-    // language accepts on the way in, not what it insists on writing back out.
-    static string IntervalUnitText(int amount, IntervalUnit unit)
-    {
-        var plural = unit switch
-        {
-            IntervalUnit.Seconds => "seconds",
-            IntervalUnit.Minutes => "minutes",
-            IntervalUnit.Hours => "hours",
-            IntervalUnit.Days => "days",
-            _ => throw new UnsupportedSyntaxForPrinting("interval unit", unit.ToString())
-        };
-
-        return amount == 1 ? plural[..^1] : plural;
-    }
 
     static string Schedule(ScheduleTriggerSourceSyntax schedule)
     {

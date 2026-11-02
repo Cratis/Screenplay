@@ -29,7 +29,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
-               | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
+               | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain, authentication block, onboarding block and identity block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -116,6 +116,74 @@ SystemDecl     = "system", Ident, NL,
    systems without provider types or abilities. Systems, operations and their
    specification steps are authoring-only: binding rejects them with PLAY0268;
    these constructs are not admitted by any supported ESM version yet. *)
+
+(* -------------------------------------------------------------- *)
+(* State machines — ESM v36                                         *)
+(* -------------------------------------------------------------- *)
+
+StateMachineDecl = "statemachine", Ident, NL,
+                   INDENT, [ DescriptionDecl ], "follows", Ident, NL,
+                   { StateDecl | LifecycleSpecDecl }, DEDENT ;
+
+StateDecl      = "state", Ident, { "initial" | "final" }, NL,
+                 [ INDENT, { EnteringDecl | TransitionDecl }, DEDENT ] ;
+
+EnteringDecl   = "entering", ( "send" | "start" ), Ident, NL ;       (* a command, or a workflow *)
+
+TransitionDecl = "on", QualifiedName, [ "when", Condition ], "->", Ident, NL ;
+
+(* Exactly one state is initial; a final state has no transitions. The condition is the
+   condition of "produces when", over the followed read model. A state allows the targets
+   of the transitions written under it; an event takes the first transition on it, in
+   declaration order, whose condition holds and whose target the current state allows.
+   Anything else is ignored. *)
+
+(* -------------------------------------------------------------- *)
+(* Workflows — ESM v36                                              *)
+(* -------------------------------------------------------------- *)
+
+WorkflowDecl   = "workflow", Ident, NL,
+                 INDENT, [ DescriptionDecl ], "for", Ident, NL,
+                 { WorkflowNode | LifecycleSpecDecl }, DEDENT ;
+
+WorkflowNode   = ( TriggerNode | ActionNode | DecideNode | WaitNode | ApprovalNode | ForEachNode | JoinNode ), NL,
+                 [ INDENT, { WorkflowEdge }, DEDENT ] ;
+
+TriggerNode    = "trigger", [ Ident ], ( "on", QualifiedName
+                                       | "when", Ident, "enters", Ident
+                                       | TriggerSchedule                (* "every <n> <unit>" | "at HH:mm ..." *)
+                                       | "manual" ) ;
+ActionNode     = "action", Ident, "sends", Ident,
+                 [ "attempts", Number ], [ "timeout", Duration ], [ "retry", "after", Duration ] ;
+DecideNode     = "decide", Ident, "when", Condition ;
+WaitNode       = "wait", Ident, "for", ( Duration | QualifiedName, [ "expires", "after", Duration ] ) ;
+ApprovalNode   = "approval", Ident, "by", Ident, [ "expires", "after", Duration ] ;
+ForEachNode    = "foreach", Ident, "over", Ident, [ "parallel", Number ] ;
+JoinNode       = "join", Ident, ( "all" | "any" | "at", "least", Number ) ;
+Duration       = Number, ( "second" | "seconds" | "minute" | "minutes" | "hour" | "hours" | "day" | "days" ) ;
+
+WorkflowEdge   = ( Ident | StringLiteral ), "->", Ident, NL      (* outlet -> node *)
+               | "->", Ident, NL ;                               (* a trigger's next *)
+
+(* The node words are contextual: they are read only on the lines directly inside a
+   workflow. A workflow runs once at a time per subject, the key of the "for" read model.
+   Outlets: trigger next; action next, failed; wait resumed, expired; approval approved,
+   rejected, expired; foreach each, completed; join next; a decide names exactly two of
+   its own, the first taken when the condition holds. An unconnected failed, rejected or
+   expired outlet fails the run; any other unconnected outlet ends the branch. *)
+
+(* A specification written inside a state machine or a workflow. *)
+
+LifecycleSpecDecl = "specification", Ident, NL,
+                    INDENT, { DescriptionDecl
+                            | "given", QualifiedName, [ InlineFixtureAssignment ], NL,
+                              [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+                            | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
+                              [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+                            | "when", "start", Expression, NL
+                            | "outcome", Ident, Ident, NL
+                            | "then", ( "is", Ident | "sends", Ident | "starts", Ident | "completes"
+                                      | "fails", "at", Ident | "waits", "at", Ident ), NL }, DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Event sources and streams — ESM v8                              *)
