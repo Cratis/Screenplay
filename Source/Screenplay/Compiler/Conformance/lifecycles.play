@@ -101,7 +101,11 @@ statemachine InvoiceLifecycle
       description "Sending an invoice charges the fee and starts the collection"
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     when append InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     then is Sent
@@ -111,7 +115,11 @@ statemachine InvoiceLifecycle
   specification AnOverdueInvoiceIsOverdue
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     given InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     when append InvoiceMarkedOverdue
@@ -164,7 +172,11 @@ workflow Collect
   specification APaidInvoiceIsTagged
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     given InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     when append InvoiceMarkedOverdue
@@ -179,7 +191,11 @@ workflow Collect
   specification NoPaymentIsWrittenOff
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     given InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     when append InvoiceMarkedOverdue
@@ -195,7 +211,11 @@ workflow Collect
   specification TheRunWaits
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     given InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     when append InvoiceMarkedOverdue
@@ -208,7 +228,11 @@ workflow Collect
   specification AFailedFeeFailsNothingButAsksForApproval
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     given InvoiceSent
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
     when append InvoiceMarkedOverdue
@@ -224,7 +248,11 @@ workflow Collect
   specification AStartedRunFails
     given InvoiceRegistered
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
-      lines = [{"sku":"A"},{"sku":"B"}]
+      lines
+        item
+          sku = "A"
+        item
+          sku = "B"
     when start "9c858901-8a57-4791-81fe-4c455b099bc9"
     outcome ChargeLateFee failed
     outcome Approve expired

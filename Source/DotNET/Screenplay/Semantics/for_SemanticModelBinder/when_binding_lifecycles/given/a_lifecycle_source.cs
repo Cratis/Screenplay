@@ -111,7 +111,11 @@ internal static class a_lifecycle_source
               description "Sending an invoice charges the fee and starts the collection"
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             when append InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             then is Sent
@@ -121,7 +125,11 @@ internal static class a_lifecycle_source
           specification AnOverdueInvoiceIsOverdue
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             given InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
@@ -174,7 +182,11 @@ internal static class a_lifecycle_source
           specification APaidInvoiceIsTagged
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             given InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
@@ -189,7 +201,11 @@ internal static class a_lifecycle_source
           specification NoPaymentIsWrittenOff
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             given InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
@@ -205,7 +221,11 @@ internal static class a_lifecycle_source
           specification TheRunWaits
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             given InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
@@ -218,7 +238,11 @@ internal static class a_lifecycle_source
           specification AFailedFeeFailsNothingButAsksForApproval
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             given InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
@@ -234,7 +258,11 @@ internal static class a_lifecycle_source
           specification AStartedRunFails
             given InvoiceRegistered
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-              lines = [{"sku":"A"},{"sku":"B"}]
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
             when start "9c858901-8a57-4791-81fe-4c455b099bc9"
             outcome ChargeLateFee failed
             outcome Approve expired
