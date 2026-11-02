@@ -114,6 +114,12 @@ public sealed record SemanticApplication(
     /// </summary>
     public ImmutableArray<SemanticApplicationTrigger> Triggers { get; init; } = [];
 
+    /// <summary>Gets the state machines the document declares; empty for models before ESM v36.</summary>
+    public ImmutableArray<SemanticStateMachine> StateMachines { get; init; } = [];
+
+    /// <summary>Gets the workflows the document declares; empty for models before ESM v36.</summary>
+    public ImmutableArray<SemanticWorkflow> Workflows { get; init; } = [];
+
     /// <summary>
     /// Gets the declared event sources, or an empty collection for models without event routes.
     /// </summary>

@@ -219,7 +219,7 @@ public sealed partial class SemanticModelBinder
             return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource, Route = bound.Route };
         }
 
-        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false, bool expectedFact = false)
+        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false, bool expectedFact = false, SemanticTypeReference? subjectKey = null)
         {
             if (value.NoStream is not null && (!expectedFact || value.Stream is not null))
             {
@@ -269,6 +269,9 @@ public sealed partial class SemanticModelBinder
                 var producerTypes = ProducerEventSourceTypes(ShortName(value.EventType), []);
                 type = producerTypes.Length == 1 ? producerTypes[0] : null;
             }
+
+            // A fact about the subject of a state machine or a workflow is keyed by the subject's key, whoever produces it.
+            if (type is null && subjectKey is not null && value.For is not null) type = subjectKey;
 
             if (type is null && @event.Contract.Origin is not null && value.For is not null)
             {

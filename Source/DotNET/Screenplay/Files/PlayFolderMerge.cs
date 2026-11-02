@@ -78,6 +78,8 @@ internal static partial class PlayFolderMerge
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],
+            StateMachines = DeclaredInOneFile(applications.SelectMany(application => application.StateMachines), machine => machine.Name, machine => machine.Location, "state machine", context),
+            Workflows = DeclaredInOneFile(applications.SelectMany(application => application.Workflows), workflow => workflow.Name, workflow => workflow.Location, "workflow", context),
             SampleDataPacks = DeclaredInOneFile(applications.SelectMany(application => application.SampleDataPacks), pack => pack.Name, pack => pack.Location, "sample data pack", context),
             Purposes = DeclaredInOneFile(applications.SelectMany(application => application.Purposes), purpose => purpose.Name, purpose => purpose.Location, "purpose", context),
 

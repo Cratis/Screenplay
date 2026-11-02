@@ -19,3 +19,6 @@ stock components each slot is seeded with - the draft the template editor draws.
 
 Language notes (see the Acme Commerce epic): the basket carries `addedValue` (what its lines were worth when they were added: `add addedValue by unitPrice * quantity`);
 `CheckOut` is not rejected for an out-of-stock *line* (a command cannot read per element of a collection) - `AddToBasket` refuses sold-out products instead.
+
+Fulfilment (`model/fulfilment.play`, `model/lifecycle.play`, ESM v36): `OrderProgress` is the read model of where an order stands. The top-level `statemachine OrderLifecycle` follows it (Placed, Paid, Packed, Shipped, Delivered, Cancelled, Refunded; entering Paid starts the `FulfilOrder` workflow, entering Shipped sends `NotifyCustomer`; a return refunds only when it states a reason). The `workflow FulfilOrder` reserves stock with three attempts, chooses between creating the parcel and a backorder a warehouse clerk must approve within a day, waits two days for the carrier and escalates when anything fails or expires. `RecordFulfilmentProgress` and `CarryOutFulfilment` hold the commands and events the two constructs name. Both constructs carry the specifications that pin them; `screenplay test Samples/AcmeCommerce` runs them with the rest.
+

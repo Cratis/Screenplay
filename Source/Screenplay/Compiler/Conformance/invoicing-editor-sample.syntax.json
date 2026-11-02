@@ -393,7 +393,9 @@
             }
           ]
         }
-      ]
+      ],
+      "x": 110,
+      "y": 150
     }
   ],
   "exposures": [
@@ -17894,6 +17896,245 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "stateMachines": [
+    {
+      "kind": "StateMachineSyntax",
+      "description": "Where an invoice is, from draft to settled",
+      "follows": "InvoiceDetailsReadModel",
+      "name": "InvoiceLifecycle",
+      "specifications": [
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "Going overdue charges the late fee and sets the collection process off",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "AnOverdueInvoiceIsChased",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "State",
+              "target": "Overdue"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Starts",
+              "target": "CollectOverdue"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "A draft that is reported overdue stays a draft: Draft allows no such transition",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "AnUnsentInvoiceCannotGoOverdue",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "State",
+              "target": "Draft"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        }
+      ],
+      "states": [
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": false,
+          "isInitial": true,
+          "name": "Draft",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceSent",
+              "target": "Sent",
+              "when": null
+            },
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceCancelled",
+              "target": "Cancelled",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": false,
+          "isInitial": false,
+          "name": "Sent",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoicePaid",
+              "target": "Paid",
+              "when": null
+            },
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceMarkedOverdue",
+              "target": "Overdue",
+              "when": {
+                "kind": "ComparisonConditionSyntax",
+                "left": "status",
+                "operator": "Equal",
+                "right": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "overdue"
+                }
+              }
+            },
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceCancelled",
+              "target": "Cancelled",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Send",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Start",
+              "target": "CollectOverdue"
+            }
+          ],
+          "isFinal": false,
+          "isInitial": false,
+          "name": "Overdue",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoicePaid",
+              "target": "Paid",
+              "when": null
+            },
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "InvoiceCancelled",
+              "target": "Cancelled",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": true,
+          "isInitial": false,
+          "name": "Paid",
+          "transitions": []
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": true,
+          "isInitial": false,
+          "name": "Cancelled",
+          "transitions": []
+        }
+      ]
+    }
+  ],
   "stickyNotes": [
     {
       "kind": "StickyNoteSyntax",
@@ -17914,6 +18155,36 @@
       "width": 250,
       "x": 380,
       "y": 1130
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "eventsources",
+      "colour": "green",
+      "height": 170,
+      "text": "Payment has two streams on purpose: Transactions is keyed by the invoice, Audit by invoice and payment together.",
+      "width": 260,
+      "x": 500,
+      "y": 150
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "eventsources",
+      "colour": null,
+      "height": 170,
+      "text": "Question: do refunds become their own stream, or events on Transactions?",
+      "width": 260,
+      "x": 500,
+      "y": 350
+    },
+    {
+      "kind": "StickyNoteSyntax",
+      "canvas": "seeddata",
+      "colour": "blue",
+      "height": 170,
+      "text": "The two customers are the ones every specification of the invoice flow starts from.",
+      "width": 260,
+      "x": 1000,
+      "y": 150
     }
   ],
   "systems": [],
@@ -18163,6 +18434,934 @@
           }
         }
       ]
+    }
+  ],
+  "workflows": [
+    {
+      "kind": "WorkflowSyntax",
+      "description": "Chases an overdue invoice: a late fee, a wait for the payment and, failing that, a write-off the finance controller approves",
+      "name": "CollectOverdue",
+      "nodes": [
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ApplyFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Trigger",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": "Overdue",
+          "stateMachine": "InvoiceLifecycle",
+          "timeout": null,
+          "triggerKind": "StateEntered"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ApplyFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Daily",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": {
+            "kind": "IntervalTriggerSourceSyntax",
+            "amount": 1,
+            "unit": "Days"
+          },
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Schedule"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "ApplyFee"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Manual",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Manual"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": 2,
+          "by": null,
+          "command": "ApplyLateFee",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Grace"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "failed",
+              "target": "ApproveWriteOff"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "ApplyFee",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 10,
+            "unit": "Seconds"
+          },
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 30,
+            "unit": "Seconds"
+          },
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 3,
+            "unit": "Days"
+          },
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "resumed",
+              "target": "StillOverdue"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Grace",
+          "nodeKind": "Wait",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "status",
+            "operator": "Equal",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "overdue"
+            }
+          },
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "still overdue",
+              "target": "TagEachLine"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "settled",
+              "target": "Close"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "StillOverdue",
+          "nodeKind": "Decide",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "each",
+              "target": "TagLine"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "completed",
+              "target": "AwaitPayment"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": "lineItems",
+          "joinCount": null,
+          "joinMode": null,
+          "name": "TagEachLine",
+          "nodeKind": "ForEach",
+          "parallel": 2,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "TagInvoice",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "AllTagged"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "TagLine",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": "All",
+          "name": "AllTagged",
+          "nodeKind": "Join",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "resumed",
+              "target": "Close"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "expired",
+              "target": "ApproveWriteOff"
+            }
+          ],
+          "event": "InvoicePaid",
+          "expiresAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 14,
+            "unit": "Days"
+          },
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "AwaitPayment",
+          "nodeKind": "Wait",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": "FinanceController",
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "approved",
+              "target": "WriteOff"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "rejected",
+              "target": "Plan"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "expired",
+              "target": "WriteOff"
+            }
+          ],
+          "event": null,
+          "expiresAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 7,
+            "unit": "Days"
+          },
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "ApproveWriteOff",
+          "nodeKind": "Approval",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "WriteOffInvoice",
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "WriteOff",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "RequestPaymentPlan",
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Plan",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "TagInvoice",
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Close",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        }
+      ],
+      "specifications": [
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "The invoice is paid while the process waits, so it only tags the invoice",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "APaidInvoiceEndsTheChase",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "AwaitPayment",
+              "outlet": "resumed"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "Each of the two lines is tagged, then the process waits for the payment",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceLineItemAdded",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lineNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 1
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "quantity",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 1
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "unitPrice",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 100
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceLineItemAdded",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "lineNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 2
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "quantity",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 1
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "unitPrice",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": 100
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "EveryLineIsTagged",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "TagInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Waits",
+              "target": "AwaitPayment"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "No payment arrives, the finance controller approves and the invoice is written off",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "NoPaymentMeansAWriteOff",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "AwaitPayment",
+              "outlet": "expired"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ApproveWriteOff",
+              "outlet": "approved"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "WriteOffInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "The finance controller rejects the write-off, so the customer is offered a payment plan",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "ARejectedWriteOffBecomesAPaymentPlan",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "AwaitPayment",
+              "outlet": "expired"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ApproveWriteOff",
+              "outlet": "rejected"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "RequestPaymentPlan"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "The late fee fails twice and the failed outlet asks the finance controller",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceSent",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": []
+            }
+          ],
+          "name": "AFeeThatCannotBeAppliedGoesToApproval",
+          "outcomes": [
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ApplyFee",
+              "outlet": "failed"
+            },
+            {
+              "kind": "LifecycleOutcomeSyntax",
+              "node": "ApproveWriteOff",
+              "outlet": "expired"
+            }
+          ],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "ApplyLateFee"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "WriteOffInvoice"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Completes",
+              "target": null
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoiceMarkedOverdue",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        }
+      ],
+      "subject": "InvoiceDetailsReadModel"
     }
   ]
 }

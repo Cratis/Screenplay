@@ -1,0 +1,397 @@
+// The lifecycle of an order and the process it sets off. Top level declarations: they belong to the application, not to a slice.
+
+statemachine OrderLifecycle
+  description "Where an order is, from checkout to delivery"
+  follows OrderProgress
+  state Placed initial
+    on PaymentCaptured -> Paid
+    on OrderWithdrawn -> Cancelled
+  state Paid
+    entering start FulfilOrder
+    on OrderPacked -> Packed
+    on OrderWithdrawn -> Cancelled
+    on RefundIssued -> Refunded
+  state Packed
+    on OrderHandedToCarrier -> Shipped
+  state Shipped
+    entering send NotifyCustomer
+    on DeliveryConfirmed -> Delivered
+    on ParcelReturned when returnReason != "" -> Refunded
+  state Delivered final
+  state Cancelled final
+  state Refunded final
+
+  specification PaymentMovesAnOrderToPaid
+    description "A captured payment moves a placed order to Paid, and Paid sets the fulfilment process off"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    then is Paid
+    then starts FulfilOrder
+
+  specification AHandedOverParcelTellsTheShopper
+    description "Handing the parcel to the carrier moves the order to Shipped, and Shipped notifies the shopper"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderPacked
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append OrderHandedToCarrier
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    then is Shipped
+    then sends NotifyCustomer
+
+  specification AReturnWithAReasonRefundsTheOrder
+    description "A returned parcel with a reason refunds the order"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderPacked
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderHandedToCarrier
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append ParcelReturned
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      returnReason = "damaged"
+    then is Refunded
+
+  specification AReturnWithoutAReasonIsIgnored
+    description "The guard does not hold, so the event is ignored rather than refused: the order stays Shipped"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderPacked
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderHandedToCarrier
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append ParcelReturned
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      returnReason = ""
+    then is Shipped
+
+  specification AnEventTheStateDoesNotAllowIsIgnored
+    description "An order that was delivered cannot be refunded by a late event: Delivered is final"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderPacked
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given OrderHandedToCarrier
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    given DeliveryConfirmed
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append RefundIssued
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    then is Delivered
+
+workflow FulfilOrder
+  description "Reserves stock, ships the order and tells the shopper; a backorder needs a warehouse sign-off"
+  for OrderProgress
+  trigger when OrderLifecycle enters Paid
+    -> ReserveStock
+  action ReserveStock sends HoldStock attempts 3 timeout 1 minute retry after 30 seconds
+    next -> InStock
+    failed -> Escalate
+  decide InStock when itemsInStock == true
+    "in stock" -> CreateParcel
+    "backorder" -> AcceptBackorder
+  action CreateParcel sends CreateParcel
+    next -> ParcelLeaves
+  wait ParcelLeaves for OrderHandedToCarrier expires after 2 days
+    resumed -> TellCustomer
+    expired -> Escalate
+  approval AcceptBackorder by WarehouseClerk expires after 1 day
+    approved -> PlaceBackorder
+    rejected -> CancelOrder
+    expired -> Escalate
+  action PlaceBackorder sends PlaceBackorder
+    next -> ParcelLeaves
+  action CancelOrder sends WithdrawOrder
+  action TellCustomer sends NotifyCustomer
+  action Escalate sends EscalateOrder
+
+
+  specification AnInStockOrderIsShipped
+    description "Stock is held, the parcel is created, and the shopper is told once the carrier has it"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome ParcelLeaves resumed
+    then sends HoldStock
+    then sends CreateParcel
+    then sends NotifyCustomer
+    then completes
+
+  specification AFailedReservationIsEscalated
+    description "The reservation fails three times and the failed outlet hands the order to a person"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome ReserveStock failed
+    then sends HoldStock
+    then sends HoldStock
+    then sends HoldStock
+    then sends EscalateOrder
+    then completes
+
+  specification TheRunWaitsForTheCarrier
+    description "With no word from the carrier the run waits at ParcelLeaves"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    then sends HoldStock
+    then sends CreateParcel
+    then waits at ParcelLeaves
+
+  specification ACarrierThatNeverComesEscalates
+    description "The wait expires after two days and the expired outlet escalates"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome ParcelLeaves expired
+    then sends HoldStock
+    then sends CreateParcel
+    then sends EscalateOrder
+    then completes
+
+  specification ABackorderIsPlacedOnceApproved
+    description "Out of stock, the warehouse approves a backorder and the run continues to the carrier"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given StockShortageFound
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome AcceptBackorder approved
+    outcome ParcelLeaves resumed
+    then sends HoldStock
+    then sends PlaceBackorder
+    then sends NotifyCustomer
+    then completes
+
+  specification ARejectedBackorderWithdrawsTheOrder
+    description "Out of stock, the warehouse rejects the backorder and the order is withdrawn"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given StockShortageFound
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome AcceptBackorder rejected
+    then sends HoldStock
+    then sends WithdrawOrder
+    then completes
+
+  specification AnUnansweredApprovalFailsTheRun
+    description "An approval nobody answers expires; its expired outlet escalates"
+    given CheckoutCompleted
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      email          = "ada@example.com"
+      lines
+        item
+          sku = "ACM-1000"
+          quantity = 2
+          unitPrice = 49
+      shipTo
+        street = "12 Analytical Way"
+        city = "Oslo"
+        postalCode = "0150"
+        country = "NO"
+      deliveryMethod = "standard"
+      total          = 98
+    given StockShortageFound
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    when append PaymentCaptured
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    outcome AcceptBackorder expired
+    then sends HoldStock
+    then sends EscalateOrder
+    then completes

@@ -31,7 +31,9 @@ enum WorkspaceReferenceDomain
     Reaction,
     Constraint,
     Container,
-    SpecificationParameter
+    SpecificationParameter,
+    StateMachine,
+    Workflow
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -163,6 +165,12 @@ static class WorkspaceReferenceMembers
         if (entry.Node is CaptureSourceSettingSyntax setting && setting.Name == CaptureEventsSource.FromSetting && parent?.Node is CaptureSourceSyntax source && CaptureEventsSource.IsEvents(source))
             return [("value", WorkspaceReferenceDomain.Event)];
 
+        if (entry.Node is WorkflowNodeSyntax { By: { } by })
+        {
+            var domain = index.Entries.Any(candidate => candidate.Node is PersonaSyntax persona && persona.Name == by) ? WorkspaceReferenceDomain.Persona : WorkspaceReferenceDomain.Policy;
+            return EventMembers(entry.Node).Concat(OtherMembers(entry, index)).Append(("by", domain));
+        }
+
         return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
     }
 
@@ -181,8 +189,23 @@ static class WorkspaceReferenceMembers
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
+        StateTransitionSyntax => [("event", WorkspaceReferenceDomain.Event)],
+        StateMachineSyntax => [("follows", WorkspaceReferenceDomain.View)],
+        WorkflowSyntax => [("subject", WorkspaceReferenceDomain.View)],
+        StateEntrySyntax { EntryKind: StateEntryKind.Send } => [("target", WorkspaceReferenceDomain.Command)],
+        StateEntrySyntax => [("target", WorkspaceReferenceDomain.Workflow)],
+        LifecycleExpectationSyntax { Expectation: LifecycleExpectationKind.Sends } => [("target", WorkspaceReferenceDomain.Command)],
+        LifecycleExpectationSyntax { Expectation: LifecycleExpectationKind.Starts } => [("target", WorkspaceReferenceDomain.Workflow)],
+        WorkflowNodeSyntax workflowNode => WorkflowMembers(workflowNode),
         _ => []
     };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> WorkflowMembers(WorkflowNodeSyntax node)
+    {
+        if (node.Event is not null) yield return ("event", WorkspaceReferenceDomain.Event);
+        if (node.Command is not null) yield return ("command", WorkspaceReferenceDomain.Command);
+        if (node.StateMachine is not null) yield return ("stateMachine", WorkspaceReferenceDomain.StateMachine);
+    }
 
     static bool IsBehaviorParameter(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index, string text)
     {
