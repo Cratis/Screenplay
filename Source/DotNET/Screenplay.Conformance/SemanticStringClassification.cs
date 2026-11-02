@@ -92,7 +92,7 @@ internal static class SemanticStringClassification
     static bool IsIdentity(JsonElement container, string owner, string property) => IsIdentityScoped(container, owner, property, $"{owner}/{property}");
 
     static bool IsIdentityScoped(JsonElement container, string owner, string property, string scoped) =>
-        !(scoped is "then/target" or "nodes/trigger") && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
+        !(string.Equals(scoped, "then/target", StringComparison.Ordinal) || string.Equals(scoped, "nodes/trigger", StringComparison.Ordinal)) && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
 
     static bool VariantIdentity(JsonElement container, string owner, string property) => property switch
     {
