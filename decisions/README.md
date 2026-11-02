@@ -120,3 +120,4 @@
 | [0129](0129-opt-in-explicit-event-generations-in-projections.md) | Projections and read models may opt in to explicit per-reference event generations; bare names keep their meaning | accepted | none | 2026-10-29 | woksin (ruling on #642) |
 | [0130](0130-value-predicates-alongside-capture-change-guards.md) | Capture `when` guards gain value predicates alongside the existing change guards; backticks are deprecated only after a verified repair | accepted | none | 2026-10-29 | woksin (ruling on #955) |
 | [0131](0131-selection-bound-panes-use-native-named-selection-sources.md) | Selection-bound panes use native named selection sources | accepted | none | 2026-10-30 | woksin (ruling and refinement on #684) |
+| [0132](0132-application-declared-typed-context-members.md) | Applications declare typed-context members, starting with time-zone members, published as sidecar revision 3 | proposed | none | — | proposed for woksin's review (#1120) |
