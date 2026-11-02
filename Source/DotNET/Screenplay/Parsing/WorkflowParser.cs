@@ -139,6 +139,8 @@ internal static partial class WorkflowParser
         return edges;
     }
 
+    static readonly HashSet<string> TriggerKeywords = new(StringComparer.Ordinal) { "on", "when", "every", "at", "manual" };
+
     static WorkflowNodeSyntax? ParseTrigger(ParserContext context, SourceLine line, int ordinal)
     {
         var match = TriggerRegex().Match(line.Content);
@@ -149,8 +151,9 @@ internal static partial class WorkflowParser
         }
 
         var fallbackName = ordinal == 1 ? "Trigger" : $"Trigger{ordinal.ToString(CultureInfo.InvariantCulture)}";
-        var name = match.Groups[1].Success ? match.Groups[1].Value : fallbackName;
-        var rest = match.Groups[2].Value;
+        var named = match.Groups[1].Success && !TriggerKeywords.Contains(match.Groups[1].Value);
+        var name = named ? match.Groups[1].Value : fallbackName;
+        var rest = named ? match.Groups[2].Value : line.Content["trigger".Length..].TrimStart();
         var location = line.Location;
         if (rest == "manual") return new(WorkflowNodeKind.Trigger, name, [], location) { TriggerKind = WorkflowTriggerKind.Manual };
         if (OnEventRegex().Match(rest) is { Success: true } onEvent) return new(WorkflowNodeKind.Trigger, name, [], location) { TriggerKind = WorkflowTriggerKind.Event, Event = onEvent.Groups[1].Value };
@@ -327,7 +330,7 @@ internal static partial class WorkflowParser
     [GeneratedRegex("^(?:\"([^\"]+)\"|([A-Za-z_]\\w*))(?:\\s*->\\s*([A-Za-z_]\\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex EdgeRegex();
 
-    [GeneratedRegex(@"^trigger(?:\s+(?!(?:on|when|every|at|manual)\b)([A-Za-z_]\w*))?\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^trigger\s+(?:([A-Za-z_]\w*)\s+)?(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex TriggerRegex();
 
     [GeneratedRegex(@"^on\s+([A-Za-z_][\w.]*)$", RegexOptions.NonBacktracking)]

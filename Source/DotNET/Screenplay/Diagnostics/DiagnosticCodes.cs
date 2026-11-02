@@ -3719,6 +3719,7 @@ public static class DiagnosticCodes
     /// A value is written as inline JSON (<c>{...}</c> or <c>[...]</c>). Screenplay has no JSON: objects and lists are indented blocks.
     /// </summary>
     public const string InlineJsonValue = "PLAY0833";
+
     /// <summary>A <c>statemachine</c> declaration is malformed: a bad header or an unexpected line, a missing or repeated <c>follows</c>, or a repeated state.</summary>
     public const string InvalidStateMachineDeclaration = "PLAY0834";
 
