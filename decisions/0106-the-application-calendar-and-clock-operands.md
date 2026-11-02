@@ -148,7 +148,7 @@ record are to these revisions.
 
 ## Status notes
 
-**2026-11-02 — open point 1 addressed by a proposed record.** [0132](0132-application-declared-typed-context-members.md) proposes the typed-context contract for application-declared time-zone members (open point 1). It is proposed, not accepted, and the open point stays open until it is accepted.
+**2026-11-02 — open point 1 resolved.** [0132](0132-application-declared-typed-context-members.md) decides the typed-context contract for application-declared time-zone members (open point 1). The form `calendar from $context.<member>` is admitted together with that contract, in the order 0132 sets out.
 
 ## Related
 

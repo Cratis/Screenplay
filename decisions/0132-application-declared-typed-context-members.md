@@ -1,11 +1,12 @@
 ---
 id: 0132
 title: Applications declare typed-context members, starting with time-zone members, published as sidecar revision 3
-status: proposed
+status: accepted
 stage: none
 class: contract
 reversibility: costly
-decider: proposed for woksin's review (Cratis/Screenplay#1120)
+decided: 2026-11-02
+decider: woksin (Q-220, delegated through L0)
 applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/**
@@ -24,9 +25,9 @@ State on `origin/main` at the time of writing:
 
 If nobody chooses, the application zone and a command's `calendar "<id>"` stay the only ways to name a calendar, and `calendar from` stays limited to the one fixed member. An application that needs a zone from its host, such as a per-tenant zone, has no way to say so.
 
-## Decision (proposed)
+## Decision
 
-The five choices below are proposals, each with the options considered. None is accepted until woksin accepts this record.
+The five choices below are accepted as written, each with the options considered.
 
 ### D1. Declaration: a root `context` block with `<name> time zone` lines
 
@@ -45,7 +46,7 @@ context
 
 Options considered:
 
-- **A `context` block that reuses the `identity` block's shape.** Proposed. It follows an existing pattern and keeps a closed type vocabulary.
+- **A `context` block that reuses the `identity` block's shape.** Chosen. It follows an existing pattern and keeps a closed type vocabulary.
 - **`<name> TimeZone` with a new primitive type.** Rejected: it collides with user concepts called `TimeZone` and invites `TimeZone` command properties. Decision 0106 forbids request values as a zone source.
 - **An implicit declaration by use in `calendar from`.** Rejected: a typo would declare a new member and could not fail closed.
 - **Identity claim details as zone sources.** Rejected by 0106: claims are client controlled.
@@ -56,7 +57,7 @@ Options considered:
 
 Options considered:
 
-- **`given time zone` for all members.** Proposed.
+- **`given time zone` for all members.** Chosen.
 - **A new `given context <member> "<id>"` per member.** Not taken now. It is needed only when two declared members must differ inside one specification, and it can be added later without changing this decision.
 
 ### D3. Versioning: sidecar revision 3, a new source kind and a member registry
@@ -69,7 +70,7 @@ Options considered:
 
 Options considered:
 
-- **Revision 3 with `application-context` and `contextMembers`.** Proposed.
+- **Revision 3 with `application-context` and `contextMembers`.** Chosen.
 - **Fold the new members into revision 2 if #1044 has not been released when this lands.** Not taken. It saves a consumer step but ties the meaning of revision 2 to release timing.
 
 ### D4. Record: a new decision, with status notes on 0106 and 0012

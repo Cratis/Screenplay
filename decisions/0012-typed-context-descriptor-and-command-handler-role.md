@@ -68,7 +68,7 @@ Editors and renderers get one source of truth for what a body can see, and #84's
 
 **2026-09-25 — partially implemented, not verified. Shipped in v4.41.0.** Revision-1 typed context descriptors are published as compilation/MCP sidecars for bound reducer, rule and policy requirements and resolvable but unbound command handlers. Command-handler binding and provider-generated wrappers remain pending. Six shape choices were decided under the maintainer's delegation: sidecar (no canonical ESM byte changes), portable type tokens, policy descriptors per use site, derived booleans but no accessor methods as data, context-only unbound handler descriptors, and an independently versioned descriptor contract without changing attachment manifest semantics.
 
-**2026-11-02 — sidecar revision 3 and a new source kind proposed.** [0132](0132-application-declared-typed-context-members.md) proposes sidecar `contractRevision: 3`, a new `application-context` source kind and a `contextMembers` registry for application-declared time-zone members. It is proposed, not accepted, and nothing in this record changes until it is.
+**2026-11-02 — sidecar revision 3 and a new source kind accepted.** [0132](0132-application-declared-typed-context-members.md) adds sidecar `contractRevision: 3`, a new `application-context` source kind and a `contextMembers` registry for application-declared time-zone members. Revisions 1 and 2 keep their meaning and bytes.
 
 ## Related issues
 
