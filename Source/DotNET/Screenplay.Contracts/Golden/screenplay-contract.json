@@ -48862,6 +48862,28 @@
       "title": "A workflow names a command, event, role, state machine, state, read model or property that is not declared.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0852",
+      "name": "UnknownTimeZone",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An application time zone, a command calendar or a specification given time zone names an id that is not a known IANA time zone.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0853",
+      "name": "InvalidCalendarContextMember",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command calendar from $context.\u003Cmember\u003E names a member other than the trusted timeZone member of the command context.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
