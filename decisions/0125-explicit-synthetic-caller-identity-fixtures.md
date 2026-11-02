@@ -47,20 +47,22 @@ applies-to:
 3. **Independent of the clock.** The scenario occurrence combines the clock (if pinned) and the identity (if declared). Each read is satisfied only by its own fixture. Reading the identity without `given identity` keeps today's outcomes (the contract error without an occurrence, `Unsupported` with a time-only occurrence). Reading `occurred` without a clock also keeps its existing outcome. The internal occurrence type stops tying identity to time.
 4. **Propagation.** The fixture is the audit identity of the specification's `when` step: a command, or a `when append`. Events appended by that step carry it as `causedBy`, so mappings, rule bodies (`CausedBy`), projections reading `$eventContext.causedBy` and reaction contexts of those events see the same values. Reaction-invoked commands keep 0043 and the causation rule, so they do not inherit it as a caller. `given` history events carry no identity, as today.
 5. **Replay.** The identity is part of the specification's ESM, so a re-run or replay produces byte-identical event contexts and never consults ambient state.
-6. **Unauthenticated callers (recommended; open for the owner).** The fixture does not depend on authentication. An anonymous scenario that reads the identity either declares explicit values or gets today's `Unsupported`. The language defines no anonymous or "not set" identity of its own. See *Open question*.
+6. **Unauthenticated callers (U1 technical direction; formal acceptance pending).** The fixture does not depend on authentication. An anonymous scenario that reads the identity either declares explicit values or gets today's `Unsupported`. The language defines no anonymous or "not set" identity of its own. See *Delegated-agent technical disposition*.
 7. **Executable model.** `Specification` gains an appended, optional member `givenIdentity@N` with shape `Identity = subject name userName`. It is omitted when absent, so every existing model keeps its bytes. N is allocated at admission (0025). Stage admits it explicitly, and older readers reject the member.
 8. **Syntax tree and parity.** `SpecificationSyntax` gains an init-only `GivenIdentity` (members plus location), omitted from syntax JSON when absent. Both compilers parse, print and diagnose it identically: an empty block, a duplicate member or block, a non-literal value, or an unknown child. Each gets a new code allocated in the implementation slice. Printing puts members in the canonical order `subject`, `name`, `userName` and puts the block straight after the caller line.
 9. **Rendering.** Each target renders the fixture through its own explicit identity seam, never through synthesized claims. The Cratis target sets Chronicle's current identity before the `when` step. Axon sets its own message metadata. A target without such a seam reports a blocking gap.
 
-### Open question
+### Delegated-agent technical disposition
 
-What should an unauthenticated caller's audit identity be?
+**2026-11-02 — U1 selected under L0's standing delegation (Q203).** This is an agent technical decision, not a user answer or formal human acceptance of this record. Status remains `proposed` and stage remains `none`; no accepting human or acceptance date is asserted.
 
-- **U1, recommended:** explicit values only, independent of authentication. This is portable and has no target constant. The cost is that a specification can pair an anonymous caller with a named identity. A live Cratis host can produce that state too: Chronicle's ASP.NET Core identity provider does not check authentication, so an unauthenticated principal that carries a `sub` claim gets a named audit identity (Chronicle `Source/Clients/AspNetCore/Identities/IdentityProvider.cs:22-37` at c27f48316f), while Arc treats unauthenticated callers as anonymous (`Source/DotNET/Arc.Core/Identity/IdentityProvider.cs:135-137` at 0986d097a).
+An unauthenticated caller's audit identity uses explicit synthetic fixture values, independent of caller authentication. There is no implicit target identity constant. Missing fixtures preserve the existing `Unsupported` or contract-error behavior described in item 3. The alternatives and source-backed rationale are retained below.
+
+- **U1, selected technical direction:** explicit values only, independent of authentication. This is portable and has no target constant. The cost is that a specification can pair an anonymous caller with a named identity. A live Cratis host can produce that state too: Chronicle's ASP.NET Core identity provider does not check authentication, so an unauthenticated principal that carries a `sub` claim gets a named audit identity (Chronicle `Source/Clients/AspNetCore/Identities/IdentityProvider.cs:22-37` at c27f48316f), while Arc treats unauthenticated callers as anonymous (`Source/DotNET/Arc.Core/Identity/IdentityProvider.cs:135-137` at 0986d097a).
 - **U2:** the language defines a "not set" identity that a bodyless `given identity not set` selects, using Chronicle's `Identity.NotSet` values. This matches the live Cratis host only for claimless ordinary HTTP requests (requests without an HTTP context get `Identity.System`, `BaseIdentityProvider.cs:26`), and it puts a Chronicle constant into portable semantics, and Axon would have to reproduce it.
 - **U3:** `given identity` with an unauthenticated caller is an error. Strict, but the unauthenticated acceptance case in #1097 can then only show `Unsupported`.
 
-The syntax, binding and propagation slices do not depend on this answer; only the anonymous-case specs and diagnostics do.
+The anonymous-case specifications and diagnostics follow U1's explicit-fixture direction. This technical disposition does not grant formal acceptance of the proposed contract or waive any implementation acceptance gate.
 
 ## Options considered
 
@@ -80,7 +82,7 @@ In scope: the specification fixture, its binding, reference execution, replay an
 
 Implementation slices:
 
-1. This record. Its owner decision settles U1, U2 or U3.
+1. This record. U1 is the resolved technical direction; formal human acceptance remains pending.
 2. Syntax in both parsers, the syntax tree and transport, printer, diagnostics, binder, and the ESM member at a version allocated at admission. Grammar and the specifications page are updated here.
 3. Occurrence construction in `SemanticScenario` from explicit fixtures, propagation to event contexts, replay, and the no-ambient-fallback specs (`for_SemanticModelBinder/when_binding_an_audit_identity_fixture`, `for_SemanticSpecificationRunner/when_running_with_an_audit_identity`).
 4. MCP fixture tools, editors, documentation, and restoring `registeredBy`/`cancelledBy` in the Billing sample.
@@ -94,14 +96,14 @@ Done when slices 2 to 4 are merged and Stage admits the version.
 
 Verify by:
 
-- Specifications cover a named caller with a subject, an unauthenticated caller (per the owner's answer), and a replay with byte-identical event contexts.
+- Specifications cover a named caller with a subject, an unauthenticated caller with an explicit synthetic identity fixture (U1), and a replay with byte-identical event contexts.
 - A spec proves that removing the fixture restores today's `Unsupported` rather than reading any ambient identity.
 - ESM goldens show unchanged bytes for models without `given identity`.
 - Parser-parity fixtures pass in C# and TypeScript.
 
 ## Consequences
 
-Audit fields become provable with complete expected events, and authorization and audit identity stay separate. Authors must state identity explicitly in every specification that reads it. Ambient or persona-derived identities in specifications are ruled out, as is a language-level anonymous identity unless the owner chooses U2.
+Audit fields become provable with complete expected events, and authorization and audit identity stay separate. Authors must state identity explicitly in every specification that reads it. Ambient or persona-derived identities in specifications are ruled out, as is a language-level anonymous identity under U1's technical direction.
 
 [spec-parser]: https://github.com/Cratis/Screenplay/blob/14478619501f0673f8d36051a8045334867d334a/Source/DotNET/Screenplay/Parsing/SpecificationParser.cs#L550-L611
 [spec-parser-ts]: https://github.com/Cratis/Screenplay/blob/14478619501f0673f8d36051a8045334867d334a/Source/Screenplay/Compiler/Parsing/SpecificationParser.ts#L253-L261
