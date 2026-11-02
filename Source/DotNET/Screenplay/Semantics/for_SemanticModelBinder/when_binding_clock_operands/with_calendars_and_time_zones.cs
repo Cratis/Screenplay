@@ -8,12 +8,12 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_clock
 public class with_calendars_and_time_zones : given.a_clock_binder
 {
     [Fact]
-    void should_bind_the_application_time_zone_and_select_36()
+    void should_bind_the_application_time_zone_and_select_37()
     {
         var result = BindClock(Source(string.Empty, "time zone configurable default \"Europe/Oslo\"\n"));
         result.Success.ShouldBeTrue();
         result.Value!.Application.TimeZone.ShouldEqual(new SemanticTimeZone("Europe/Oslo", true));
-        result.Value!.LanguageVersion.Major.ShouldEqual(36u);
+        result.Value!.LanguageVersion.Major.ShouldEqual(37u);
     }
 
     [Fact]
@@ -21,6 +21,14 @@ public class with_calendars_and_time_zones : given.a_clock_binder
     {
         var result = BindClock(Source("        calendar \"Europe/Oslo\"\n"));
         Command(result.Value!).Calendar.ShouldEqual(new SemanticCommandCalendar("Europe/Oslo", null));
+    }
+
+    [Fact]
+    void should_accept_the_exact_iana_id_for_st_johns()
+    {
+        var result = BindClock(Source("        calendar \"America/St_Johns\"\n"));
+        result.Success.ShouldBeTrue();
+        Command(result.Value!).Calendar.ShouldEqual(new SemanticCommandCalendar("America/St_Johns", null));
     }
 
     [Fact]

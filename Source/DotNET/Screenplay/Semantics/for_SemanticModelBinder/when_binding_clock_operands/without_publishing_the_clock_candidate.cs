@@ -57,6 +57,16 @@ public class without_publishing_the_clock_candidate : given.a_clock_binder
     [Fact]
     void should_not_register_the_working_major_in_the_frozen_tables()
     {
-        Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(new LanguageVersion(36, 0), new SemanticVersion(36, 0), BindClock(Source(string.Empty)).Value!.Application));
+        Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(new LanguageVersion(37, 0), new SemanticVersion(37, 0), BindClock(Source(string.Empty)).Value!.Application));
+    }
+
+    [Fact]
+    void should_keep_the_clock_candidate_outside_published_v36_support()
+    {
+        var binding = BindClock(Source(Body)).Value!;
+        binding.LanguageVersion.ShouldEqual(new LanguageVersion(37, 0));
+        binding.SemanticVersion.ShouldEqual(new SemanticVersion(37, 0));
+        EsmSchemaV36Support.Supports(binding.LanguageVersion, binding.SemanticVersion).ShouldBeFalse();
+        Assert.Throws<InvalidSemanticContract>(() => EsmSchemaV36Support.EnsureSupported(binding.LanguageVersion, binding.SemanticVersion));
     }
 }

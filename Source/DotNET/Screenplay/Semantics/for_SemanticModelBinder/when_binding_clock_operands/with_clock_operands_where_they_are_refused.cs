@@ -18,6 +18,16 @@ public class with_clock_operands_where_they_are_refused : given.a_clock_binder
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
     }
 
+    [Theory]
+    [InlineData("today - 7 days")]
+    [InlineData("date of now")]
+    public void should_refuse_offsets_and_date_of_in_validate_property_rules(string operand)
+    {
+        var result = BindClock(Source($"        validate\n          dueDate >= {operand}\n"));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == "PLAY0268");
+    }
+
     [Fact]
     void should_keep_a_property_named_today_a_path()
     {

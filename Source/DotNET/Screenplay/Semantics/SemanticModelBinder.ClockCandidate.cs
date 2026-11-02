@@ -10,12 +10,12 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
-    // The working major of the application calendar and clock operands. It is a candidate only: nothing registers it,
-    // and the number is decided at admission, after ESM 35 publishes (decisions 0025 and 0066).
-    internal static readonly LanguageVersion ClockCandidateLanguageVersion = new(36, 0);
-    internal static readonly SemanticVersion ClockCandidateSemanticVersion = new(36, 0);
+    // The unregistered working major of the application calendar and clock operands, distinct from published ESM 36.
+    // It is a candidate only; the final number is decided at admission (decisions 0025 and 0066).
+    internal static readonly LanguageVersion ClockCandidateLanguageVersion = new(37, 0);
+    internal static readonly SemanticVersion ClockCandidateSemanticVersion = new(37, 0);
 
-    // Deliberately does not run the v1-v35 validators or the canonical serializer on a clock-candidate graph.
+    // Deliberately does not run the published validators or the canonical serializer on a clock-candidate graph.
     internal CompilationResult<ClockOperandsBinding> BindForClockOperands(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
     {
         var admission = CommandProductionAdmission(syntax, out _);
