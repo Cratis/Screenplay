@@ -15,7 +15,7 @@ public class and_repointing_an_assertion_with_unresolved_key : given.a_workspace
             "      query InvoiceById => InvoiceView?",
             "      readmodel OtherView\n        invoiceId InvoiceKey\n      query OtherById => OtherView?\n        by invoiceId InvoiceKey\n      query InvoiceById => InvoiceView?",
             StringComparison.Ordinal)
-        .Replace("\"part\":\"old\"", "\"missing\":\"old\"", StringComparison.Ordinal));
+        .Replace("part = \"old\"", "missing = \"old\"", StringComparison.Ordinal));
 
     void Because()
     {

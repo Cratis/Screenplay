@@ -20,10 +20,18 @@ module Shop
           role "Shopper"
         when EnterShippingAddress
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          shipTo   = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
         then ShippingAddressEntered
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
 
       screen EnterShippingAddressDialog
         template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
@@ -114,7 +122,19 @@ module Shop
               property idField = "sku"
               property titleField = "productName"
               property label = "Checkout lines"
-              property columns = [{"field":"productName","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
+              property columns
+                item
+                  field  = "productName"
+                  header = "Product"
+                item
+                  field  = "quantity"
+                  header = "Qty"
+                  kind   = "number"
+                item
+                  field    = "unitPrice"
+                  header   = "Unit price"
+                  kind     = "currency"
+                  currency = "NOK"
           actions
             action EnterShippingAddress
               label "Enter delivery address"
@@ -130,7 +150,11 @@ module Shop
           role "Shopper"
         given ShippingAddressEntered
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          shipTo = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
         given DeliveryMethodChosen
           for "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method = "express"
@@ -155,7 +179,12 @@ module Shop
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           method   = "standard"
           total    = 98
-          lines    = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 2
+              unitPrice   = 49
 
     // Step 3: review and confirm
     slice StateChange CheckOut
@@ -217,8 +246,16 @@ module Shop
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email      = "ada@example.com"
-          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           method     = "standard"
           total      = 98
         // emptying the basket and telling Sales are the automation's and the translation's, and are specified there
@@ -228,8 +265,16 @@ module Shop
           basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email          = "ada@example.com"
-          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           deliveryMethod = "standard"
           total          = 98
 
@@ -251,8 +296,16 @@ module Shop
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email      = "ada@example.com"
-          lines      = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           method     = "standard"
           total      = 98
         then error "Your basket is empty"
@@ -266,8 +319,12 @@ module Shop
           basketId   = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email      = "ada@example.com"
-          lines      = []
-          shipTo     = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines none
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           method     = "standard"
           total      = 0
         then error "An order needs at least one line"
@@ -319,8 +376,16 @@ module Shop
           basketId       = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email          = "ada@example.com"
-          lines          = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo         = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           deliveryMethod = "standard"
           total          = 98
         // emptying the basket is ClearBasketContents', and is specified there: this slice hands the basket over

@@ -94,8 +94,8 @@ describe('when mapping every construct', () => {
             {
                 customerId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Ada', age: 36,
                 email: '$context.identity.name',
-                tags: '["vip", "early", 3, true, null]',
-                address: '{ "street": "Main 1", "lines": [1.5, -2000], "nested": { "empty": {  } } }',
+                tags: '(item "vip", item "early", item 3, item true, item null)',
+                address: '(street = "Main 1", lines = (item 1.5, item -2000), nested = (empty = empty))',
             },
             slice_named(document, 'Register').command!.id,
         ]);

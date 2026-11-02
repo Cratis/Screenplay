@@ -8,6 +8,10 @@ namespace Cratis.Screenplay.Printing;
 
 public sealed partial class ScreenplayPrinter
 {
+    // An inline value stays on the header line only when it is a scalar; an object or a list moves under the header as a block.
+    static string? ScalarInline(IEnumerable<PropertyMappingSyntax> values, string? inlineProperty) =>
+        inlineProperty is not null && values.SingleOrDefault(value => value.Property == inlineProperty) is { } inline && !ScreenplaySyntaxText.IsStructured(inline.Source) ? inlineProperty : null;
+
     static string SpecificationHeader(ScreenplayWriter writer, string header, IEnumerable<PropertyMappingSyntax> values, string? inlineProperty)
     {
         var inline = inlineProperty is null ? null : values.SingleOrDefault(value => value.Property == inlineProperty);
@@ -27,7 +31,7 @@ public sealed partial class ScreenplayPrinter
             WriteSpecificationValues(writer, example.Values);
             foreach (var fixture in example.GeneratedValues)
             {
-                writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.ResponseValue(fixture.Source)}", fixture);
+                writer.Assignment($"generated {fixture.Property}", fixture.Source, fixture, ScreenplaySyntaxText.ResponseValue);
             }
         }
     }

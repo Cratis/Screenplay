@@ -83,14 +83,14 @@ The reference evaluator replays the facts, folds the followed read model after e
 
 | Code | When |
 | --- | --- |
-| `PLAY0833` | The declaration is malformed. |
-| `PLAY0834` | There is no `initial` state, or more than one. |
-| `PLAY0835` | A state can never be reached from the initial state (warning). |
-| `PLAY0836` | A state that is not final has no way out (warning). |
-| `PLAY0837` | A final state has transitions out. |
-| `PLAY0838` | A transition targets a state the machine does not declare. |
-| `PLAY0839` | An event, read model, command or workflow is not declared. |
-| `PLAY0840` | A condition reads a property the followed read model does not have. |
-| `PLAY0841` | Two unguarded transitions on one event leave the same state. |
+| `PLAY0834` | The declaration is malformed. |
+| `PLAY0835` | There is no `initial` state, or more than one. |
+| `PLAY0836` | A state can never be reached from the initial state (warning). |
+| `PLAY0837` | A state that is not final has no way out (warning). |
+| `PLAY0838` | A final state has transitions out. |
+| `PLAY0839` | A transition targets a state the machine does not declare. |
+| `PLAY0840` | An event, read model, command or workflow is not declared. |
+| `PLAY0841` | A condition reads a property the followed read model does not have. |
+| `PLAY0842` | Two unguarded transitions on one event leave the same state. |
 
 See [Workflows](workflows.md) for the process a state can start, and decision [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) for the full contract.

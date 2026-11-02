@@ -32,7 +32,7 @@ module Inspections
       component Acme.Inspections.Checklist checklist
         id "inspection:checklist"
         property columns = 1
-        property items = []
+        property items none
 
   form RecordInspectionForm for RecordInspection
     generation auto

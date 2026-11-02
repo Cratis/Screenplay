@@ -45,10 +45,22 @@ public class with_a_list_of_objects : for_SemanticSpecificationRunner.given.a_v6
               specification ACopyOfTheWholeOrder
                 when append OrderConfirmed
                   orderId = "o1"
-                  lines = [{ "sku": "a", "quantity": 2 }, { "sku": "b", "quantity": 5 }]
+                  lines
+                    item
+                      sku = "a"
+                      quantity = 2
+                    item
+                      sku = "b"
+                      quantity = 5
                 then ReservationRequested
                   orderId = "o1"
-                  lines = [{ "sku": "a", "quantity": 2 }, { "sku": "b", "quantity": 5 }]
+                  lines
+                    item
+                      sku = "a"
+                      quantity = 2
+                    item
+                      sku = "b"
+                      quantity = 5
                 then LineReserved
                   orderId = "o1"
                   sku = "a"
@@ -60,10 +72,19 @@ public class with_a_list_of_objects : for_SemanticSpecificationRunner.given.a_v6
               specification ARepeatedOrderAddsNoLine
                 given OrderConfirmed
                   orderId = "o1"
-                  lines = [{ "sku": "a", "quantity": 2 }]
+                  lines
+                    item
+                      sku = "a"
+                      quantity = 2
                 when append OrderConfirmed
                   orderId = "o1"
-                  lines = [{ "sku": "a", "quantity": 2 }, { "sku": "b", "quantity": 5 }]
+                  lines
+                    item
+                      sku = "a"
+                      quantity = 2
+                    item
+                      sku = "b"
+                      quantity = 5
                 then LineReserved
                   orderId = "o1"
                   sku = "b"

@@ -74,7 +74,7 @@ The C# binder and reference runner admit routing in executable semantic model (E
 
 ## State machines and workflows
 
-Both Monaco and VS Code highlight [state machines](statemachines.md) and [workflows](workflows.md), complete their top-level keywords, and report the structure diagnostics `PLAY0833` and `PLAY0842` while you type. The words inside the two blocks (`follows`, `state`, `entering`, `on`, `action`, `decide`, `wait`, `approval`, `foreach`, `join`, the outlet names) are contextual and never end a highlighting block. The CLI reports the rest (`PLAY0834` to `PLAY0841`, `PLAY0843` to `PLAY0850`), and the event model board lists the declarations. Rename follows events, commands, read models, state machines, workflows, personas and policies into them; renaming a node or a state is not supported and the state or node names are plain text.
+Both Monaco and VS Code highlight [state machines](statemachines.md) and [workflows](workflows.md), complete their top-level keywords, and report the structure diagnostics `PLAY0834` and `PLAY0843` while you type. The words inside the two blocks (`follows`, `state`, `entering`, `on`, `action`, `decide`, `wait`, `approval`, `foreach`, `join`, the outlet names) are contextual and never end a highlighting block. The CLI reports the rest (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`), and the event model board lists the declarations. Rename follows events, commands, read models, state machines, workflows, personas and policies into them; renaming a node or a state is not supported and the state or node names are plain text.
 
 ## Operation and system intent (syntax-only)
 

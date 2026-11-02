@@ -11,7 +11,11 @@ public class and_the_value_is_nested : given.a_printer
         """
         specification Placing
           when Place
-            lines = [{"sku":"A-1","quantity":2,"tags":[]}]
+            lines
+              item
+                sku = "A-1"
+                quantity = 2
+                tags none
         """;
 
     CompilationResult<SpecificationSyntax> _result;
@@ -26,7 +30,7 @@ public class and_the_value_is_nested : given.a_printer
     }
 
     [Fact] void should_parse_original() => _result.Success.ShouldBeTrue();
-    [Fact] void should_print_inline_json() => _printed.Contains("""[{"sku":"A-1","quantity":2,"tags":[]}]""", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_print_the_indented_block() => _printed.TrimEnd().ShouldEqual(Source);
     [Fact] void should_reparse_without_error() => _reparsed.Success.ShouldBeTrue();
     [Fact] void should_be_stable() => _printer.Print(_reparsed.Value!).ShouldEqual(_printed);
 }

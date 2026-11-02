@@ -12,10 +12,14 @@ import { parseMappingSource } from './ExpressionParser';
 import { containsCaseReference, parseSpecificationValue } from './SpecificationCaseParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
+import { emptyKeyword, noneKeyword, parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
+// The word after 'then returns' that opens a structured scalar response as an indented block.
+export const structuredReturnKeyword = 'value';
 export const thenReturnsPrefix = pattern('^then\\s+returns\\b');
 export const generatedFixturePrefix = pattern('^generated\\s+(?=\\S)(?![=])');
 export const generatedFixturePattern = pattern('^generated\\s+([a-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
+const generatedFixtureBlockPattern = pattern('^generated\\s+([a-z_]\\w*)(?:\\s+(none|empty))?$');
 const fieldPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const quotedValue = pattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`);
 
@@ -37,6 +41,10 @@ export function parseConcrete(context: ParserContext, text: string, location: So
 
 export function parseConcreteMapping(context: ParserContext, line: SourceLine, regex: RegExp, code: string): PropertyMappingSyntax | null {
     const match = regex.exec(line.content);
+    const generated = match === null ? generatedFixtureBlockPattern.exec(line.content) : null;
+    if (generated !== null) return { kind: 'PropertyMappingSyntax', property: generated[1], source: parseStructuredValue(context, line, generated[2] as StructuredMarker), location: locationOf(line) };
+    const structured = match === null ? tryParseStructuredMapping(context, line) : undefined;
+    if (structured !== undefined) return structured;
     if (match === null) {
         context.error(code, 'Expected a named fixture or assertion with exactly one concrete value.', locationOf(line));
         context.skipBlock(line.indent);
@@ -56,6 +64,10 @@ export function parseReturn(context: ParserContext, line: SourceLine): Specifica
     const prefix = thenReturnsPrefix.exec(line.content)![0].length;
     const value = line.content.substring(prefix).trim();
     const location = locationOf(line);
+    // 'then returns value' opens a structured scalar - an object or a list - as an indented block.
+    if (value === structuredReturnKeyword || value === `${structuredReturnKeyword} ${noneKeyword}` || value === `${structuredReturnKeyword} ${emptyKeyword}`) {
+        return { kind: 'ScalarSpecificationReturnSyntax', value: parseStructuredValue(context, line, value.substring(structuredReturnKeyword.length + 1) as StructuredMarker || undefined), location };
+    }
     if (value.length > 0) {
         const concrete = parseConcrete(context, value, { ...location, column: location.column + line.content.indexOf(value, prefix) }, DiagnosticCodes.InvalidReturnExpectation);
         const child = context.peekChild(line.indent);

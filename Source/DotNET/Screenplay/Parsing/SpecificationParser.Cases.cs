@@ -50,6 +50,12 @@ internal static partial class SpecificationParser
         {
             context.Reader.TakeSignificant();
             var assignment = MappingRegex().Match(child.Content);
+            if (!assignment.Success && StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                values.Add(structured);
+                continue;
+            }
+
             if (!assignment.Success)
             {
                 context.Error(DiagnosticCodes.InvalidSpecificationCaseAssignment, "Expected '<parameter> = <concrete value>' in a case.", child.Location);

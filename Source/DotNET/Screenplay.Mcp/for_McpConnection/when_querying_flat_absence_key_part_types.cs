@@ -21,7 +21,9 @@ public class when_querying_flat_absence_key_part_types : given.a_connection
                 method PaymentMethod key
               specification Missing
                 when append Tick
-                then no readmodel Row for {"for":"INV-1","method":"cash"}
+                then no readmodel Row for
+                  for = "INV-1"
+                  method = "cash"
         """);
 
     void Because()

@@ -117,7 +117,7 @@ State machines and workflows are keyed by name, like policies; they get no ident
 
 ### 6. Diagnostics
 
-`PLAY0833` to `PLAY0850` (see the diagnostics page): invalid declaration, initial state, unreachable state, no way out, final state with transitions, unknown state, unknown reference, unknown condition property, ambiguous transitions; invalid workflow, no trigger, unreachable node, unknown node, unknown outlet, decision outlet problems, missing expiry, one-branch join, unknown workflow reference.
+`PLAY0834` to `PLAY0851` (see the diagnostics page): invalid declaration, initial state, unreachable state, no way out, final state with transitions, unknown state, unknown reference, unknown condition property, ambiguous transitions; invalid workflow, no trigger, unreachable node, unknown node, unknown outlet, decision outlet problems, missing expiry, one-branch join, unknown workflow reference.
 
 ## Consequences
 

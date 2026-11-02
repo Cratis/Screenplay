@@ -12,7 +12,7 @@ public class and_a_nested_mapping_member_is_renamed_without_absence : given.a_wo
 
     void Establish() => CreateWith(Source.Replace(
         Assertion,
-        "given readmodel InvoiceView\n          invoiceId = {\"id\":\"first\",\"detail\":{\"part\":\"old\"}}\n        then readmodel InvoiceView\n          invoiceId = {\"id\":\"first\",\"detail\":{\"part\":\"old\"}}",
+        "given readmodel InvoiceView\n          invoiceId\n            id = \"first\"\n            detail\n              part = \"old\"\n        then readmodel InvoiceView\n          invoiceId\n            id = \"first\"\n            detail\n              part = \"old\"",
         StringComparison.Ordinal));
 
     void Because()
@@ -22,7 +22,7 @@ public class and_a_nested_mapping_member_is_renamed_without_absence : given.a_wo
     }
 
     [Fact] void should_accept_the_intermediate_rename() => _intermediate.Accepted.ShouldBeTrue();
-    [Fact] void should_rewrite_both_intermediate_mapping_members() => Text(_intermediate).Split("{\"id\":\"first\",\"details\":{\"part\":\"old\"}}").Length.ShouldEqual(3);
+    [Fact] void should_rewrite_both_intermediate_mapping_members() => Text(_intermediate).Split("details\n              part = \"old\"").Length.ShouldEqual(3);
     [Fact] void should_accept_the_leaf_rename() => _leaf.Accepted.ShouldBeTrue();
-    [Fact] void should_rewrite_both_leaf_mapping_members() => Text(_leaf).Split("{\"id\":\"first\",\"detail\":{\"segment\":\"old\"}}").Length.ShouldEqual(3);
+    [Fact] void should_rewrite_both_leaf_mapping_members() => Text(_leaf).Split("detail\n              segment = \"old\"").Length.ShouldEqual(3);
 }

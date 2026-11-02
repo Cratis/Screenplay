@@ -9,7 +9,7 @@ public class and_the_value_has_the_wrong_shape : given.a_structured_specificatio
 {
     CompilationResult<SemanticCompilation> _result;
 
-    void Because() => _result = Compile(Source.Replace("tags = []", "tags = {}", StringComparison.Ordinal));
+    void Because() => _result = Compile(Source.Replace("tags none", "tags empty", StringComparison.Ordinal));
 
     [Fact] void should_report_play0293_at_the_value() =>
         _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompatibleStructuredValue && diagnostic.Location.Column > 10).ShouldBeTrue();

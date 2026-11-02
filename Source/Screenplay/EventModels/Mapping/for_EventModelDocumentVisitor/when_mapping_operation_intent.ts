@@ -53,15 +53,15 @@ describe('when mapping operation intent', () => {
         }
     });
     it('should display mapping paths, escaped strings, lists and composites as safe authored text', () => {
-        const source = 'system Mailer\ntype Body\n  text String\nmodule M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n        recipient String\n        body Body\n        tags String[] optional\n        @execute String optional\n        compensate\n      command C\n        text String\n        produces Send\n          recipient = text\n          body = { "text": "Ada" }\n          tags = ["a", "b"]\n          execute = "<img src=x onerror=alert(1)>"\n      specification T\n        given operation Send fails\n        when C\n          text = "Ada"\n        then operation Send\n          body = { "text": "Ada" }\n          tags = ["a", "b"]\n          execute = "A\\\\\\"B"\n        then compensated Send\n';
+        const source = 'system Mailer\ntype Body\n  text String\nmodule M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n        recipient String\n        body Body\n        tags String[] optional\n        @execute String optional\n        compensate\n      command C\n        text String\n        produces Send\n          recipient = text\n          body\n            text = "Ada"\n          tags\n            item "a"\n            item "b"\n          execute = "<img src=x onerror=alert(1)>"\n      specification T\n        given operation Send fails\n        when C\n          text = "Ada"\n        then operation Send\n          body\n            text = "Ada"\n          tags\n            item "a"\n            item "b"\n          execute = "A\\\\\\"B"\n        then compensated Send\n';
         const application = parse(source);
         expect(application.diagnostics.filter(diagnostic => diagnostic.severity === 'error')).toEqual([]);
         expect(application.success).toBe(true);
         const slice = toEventModelDocument(application.value, 'Intent').collections[0].modules[0].features[0].slices[0];
         const details = slice.command!.logicDescription;
         expect(details).toContain('recipient = text');
-        expect(details).toContain('body = { "text": "Ada" }');
-        expect(details).toContain('tags = ["a", "b"]');
+        expect(details).toContain('body = (text = "Ada")');
+        expect(details).toContain('tags = (item "a", item "b")');
         expect(details).toContain('execute: String optional');
         expect(details).toContain('execute = "A\\\\\\"B"');
         expect(details).toContain('&lt;img src=x onerror=alert(1)&gt;');

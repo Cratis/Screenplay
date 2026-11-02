@@ -3,8 +3,6 @@
 
 using System.Globalization;
 using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
@@ -23,8 +21,6 @@ namespace Cratis.Screenplay.Printing;
 /// </remarks>
 internal static partial class ScreenplaySyntaxText
 {
-    static readonly JsonSerializerOptions _structuredValueOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-
     /// <summary>
     /// Renders an <see cref="ExpressionSyntax"/> to its surface form.
     /// </summary>
@@ -247,6 +243,24 @@ internal static partial class ScreenplaySyntaxText
         };
     }
 
+    /// <summary>
+    /// Gets whether a value is an object or a list, printed as an indented block rather than on its line.
+    /// </summary>
+    /// <param name="expression">The <see cref="ExpressionSyntax"/> to check.</param>
+    /// <returns>Whether the value is structured.</returns>
+    internal static bool IsStructured(ExpressionSyntax expression) => expression is ObjectExpressionSyntax or ListExpressionSyntax;
+
+    /// <summary>
+    /// Renders the name of an object member as written in a structured block.
+    /// </summary>
+    /// <param name="name">The member name.</param>
+    /// <returns>The bare identifier, <c>@item</c> for a member named <c>item</c>, or a quoted name.</returns>
+    internal static string MemberName(string name)
+    {
+        if (name == "item") return "@item";
+        return MemberIdentifierRegex().IsMatch(name) ? name : StringLiteral.Quote(name);
+    }
+
     internal static string Expression(ExpressionSyntax expression, NumericMode mode)
     {
         SourceNumericModes.Validate(expression, mode);
@@ -280,8 +294,7 @@ internal static partial class ScreenplaySyntaxText
     static string ExpressionCore(ExpressionSyntax expression) => expression switch
     {
         LiteralExpressionSyntax literal => Literal(literal.Value),
-        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
-        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
+        ListExpressionSyntax or ObjectExpressionSyntax => throw new UnsupportedSyntaxForPrinting("structured value on one line (objects and lists are written as indented blocks)", expression.GetType().Name),
         CaseValueExpressionSyntax value => $"case.{value.Parameter}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
@@ -300,9 +313,8 @@ internal static partial class ScreenplaySyntaxText
         _ => throw Unsupported("expression", expression)
     };
 
-    static string StructuredValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
-        ? JsonSerializer.Serialize(text, _structuredValueOptions)
-        : ExpressionCore(expression);
+    [GeneratedRegex(@"^[\p{L}_][\p{L}\p{N}_]*$", RegexOptions.NonBacktracking)]
+    private static partial Regex MemberIdentifierRegex();
 
     static string Literal(object? value) => value switch
     {

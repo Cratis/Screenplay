@@ -98,7 +98,7 @@ internal static partial class ScreenParser
             var parameter = ParameterRegex().Match(child.Content);
             if (parameter.Success)
             {
-                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
+                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child), child.Location));
                 continue;
             }
 
@@ -509,12 +509,15 @@ internal static partial class ScreenParser
     static ComponentPropertySyntax? ParseComponentProperty(ParserContext context, SourceLine line)
     {
         var bound = ComponentPropertyBindingRegex().Match(line.Content);
-        if (bound.Success) return new(bound.Groups[1].Value, UiBindingParser.ParseFromClause(context, bound.Groups[2].Value, line.Location), null, line.Location);
+        if (bound.Success) return new(bound.Groups[1].Value, UiBindingParser.ParseFromClause(context, bound.Groups[2].Value, line), null, line.Location);
 
         var literal = ComponentPropertyLiteralRegex().Match(line.Content);
         if (literal.Success) return new(literal.Groups[1].Value, null, ExpressionParser.ParseMappingSource(context, literal.Groups[2].Value, line.Location), line.Location);
 
-        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component property '{line.Content}' - expected 'property <path> from <binding>' or 'property <path> = <literal|object|array|null>'", line.Location);
+        var structured = ComponentPropertyBlockRegex().Match(line.Content);
+        if (structured.Success) return new(structured.Groups[1].Value, null, StructuredBlockParser.ParseValue(context, line, structured.Groups[2].Success ? structured.Groups[2].Value : null), line.Location);
+
+        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component property '{line.Content}' - expected 'property <path> from <binding>', 'property <path> = <literal>', or 'property <path>' with the object or list as an indented block", line.Location);
         return null;
     }
 
@@ -539,7 +542,7 @@ internal static partial class ScreenParser
             return null;
         }
 
-        return new(match.Groups[1].Value, UiBindingParser.ParseFromClause(context, match.Groups[2].Value, line.Location), line.Location);
+        return new(match.Groups[1].Value, UiBindingParser.ParseFromClause(context, match.Groups[2].Value, line), line.Location);
     }
 
     static ComponentOutletSyntax ParseComponentOutlet(ParserContext context, SourceLine line)
@@ -593,7 +596,7 @@ internal static partial class ScreenParser
             var parameter = ParameterRegex().Match(child.Content);
             if (parameter.Success)
             {
-                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
+                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child), child.Location));
                 continue;
             }
 
@@ -668,6 +671,9 @@ internal static partial class ScreenParser
 
     [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex ComponentPropertyLiteralRegex();
+
+    [GeneratedRegex(@"^property\s+([\w.]+)(?:\s+(none|empty))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex ComponentPropertyBlockRegex();
 
     [GeneratedRegex("^id\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.NonBacktracking)]
     private static partial Regex StableIdRegex();

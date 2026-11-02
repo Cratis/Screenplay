@@ -36,7 +36,10 @@ public class with_a_deferred_child_across_a_command_commit : for_SemanticModelBi
                   orderId = "00000000-0000-0000-0000-000000000001"
                 then readmodel OrderView
                   orderId = "00000000-0000-0000-0000-000000000001"
-                  lines = [{"lineNumber":1,"amount":10}]
+                  lines
+                    item
+                      lineNumber = 1
+                      amount = 10
             slice StateView Lookup
               readmodel OrderView
                 orderId Id

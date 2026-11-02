@@ -794,12 +794,13 @@ CollectionOperation = "add" | "remove" | "reorder" | "edit-fields" ;
 InstanceDecl   = "instance", Ident, NL,
                  INDENT, { InstanceValue }, DEDENT ;
 
-InstanceValue  = "set", ComponentPath, "=", JSONValue, NL
+InstanceValue  = "set", ComponentPath, "=", Scalar, NL
+               | "set", ComponentPath, StructuredBlock
                | "items", ComponentPath, NL,
                  INDENT, { ContributedItem }, DEDENT ;
 
 ContributedItem = "item", ( Ident | String ), NL,
-                 INDENT, { Ident, "=", JSONValue, NL }, DEDENT ;
+                 INDENT, { Ident, "=", Scalar, NL | Ident, StructuredBlock }, DEDENT ;
 
 ComponentPath  = ( Ident | String ), ".", Ident, { ".", Ident } ;
 
@@ -1181,7 +1182,8 @@ CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
    "starts with" for one at the beginning. "starts with" is two words because
    that is the phrase, so an operator is not always a single token.          *)
 
-PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
+PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL
+                | [ "@" ], Ident, StructuredBlock ;
 
 MappingSource  = Ident                         (* command property   *)
                | ContextPath
@@ -1191,18 +1193,25 @@ MappingSource  = Ident                         (* command property   *)
                | StringLiteral
                | Number
                | "true" | "false" | "null"
-               | StructuredValue
                | Expression ;
 
-StructuredValue = "[", [ JSONValue, { ",", JSONValue } ], "]"
-                | "{", [ JSONString, ":", JSONValue,
-                         { ",", JSONString, ":", JSONValue } ], "}" ;
-JSONValue       = StructuredValue | JSONString | Number | "true" | "false" | "null" ;
-JSONString      = (* double-quoted JSON string, including escaped characters *) ;
+(* Screenplay has no JSON. An object or a list is an indented block under the line
+   that names it - see structured-values.md. A value written as inline JSON
+   ({...} or [...]) is PLAY0833.                                         *)
+StructuredBlock = NL, INDENT, ObjectMember, { ObjectMember }, DEDENT    (* object *)
+                | NL, INDENT, ListItem, { ListItem }, DEDENT            (* list   *)
+                | "none", NL                                            (* empty list *)
+                | "empty", NL ;                                         (* object without members *)
+ObjectMember    = MemberName, "=", Scalar, NL
+                | MemberName, StructuredBlock ;
+ListItem        = "item", Scalar, NL
+                | "item", StructuredBlock ;
+MemberName      = [ "@" ], Ident | StringLiteral ;     (* "@item" names a member item *)
+Scalar          = StringLiteral | Number | "true" | "false" | "null" ;
 
-(* Structured values are single-line JSON-shaped data with quoted object keys.
-   They are typed syntax in mapping sources; projection expressions keep their
-   existing expression grammar.                                        *)
+(* A block whose first line is an "item" is a list; otherwise it is an object.
+   Structured values are typed syntax in mapping sources; projection expressions
+   accept them only in exact numeric mode.                               *)
 
 (* The context paths mirror the members of CommandContext / QueryContext -
    see Documentation/screenplay/context.md. Everything after
@@ -1393,11 +1402,14 @@ SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
    its outcome is "then result", "then no result", "then denied", or one
    "then error" asserting a Validation rejection (ESM v18).                *)
 
-GeneratedFixture = "generated", LowerIdent, "=", ConcreteValue, NL ;
+GeneratedFixture = "generated", LowerIdent, "=", ConcreteValue, NL
+                 | "generated", LowerIdent, StructuredBlock ;
 ReturnExpectation = "then", "returns", ConcreteValue, NL
+                  | "then", "returns", "value", StructuredBlock  (* an object or list response *)
                   | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
-ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
-ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
+ReturnField    = LowerIdent, "=", ConcreteValue, NL
+               | LowerIdent, StructuredBlock ;
+ConcreteValue  = ? a completely consumed scalar literal, without raw expressions ? ;
 (* Generated fixtures and return expectations select ESM v7.
    Reached generation without a fixture is Unsupported(IdentityAllocation).
    Generated identifiers use SpecificationEventSource, not GeneratedFixture.
@@ -1419,6 +1431,7 @@ SpecificationThen = ReturnExpectation
                | "then", "readmodel", QualifiedName, [ "exactly" ], [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
+               | "then", "no", "readmodel", Ident, "for", StructuredBlock
                | "then", "query", QualifiedName, [ "exactly" ], NL,
                  [ INDENT, { SpecificationQueryDirective }, DEDENT ]
                | "then", "result", [ "exactly" ], NL,
@@ -1711,7 +1724,8 @@ NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,
 
 NavigateOption = "route", LocalizableString, NL
                | "outlet", Ident, NL
-               | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL ;
+               | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL
+               | "parameter", Ident, "from", "literal", (* modifiers *) StructuredBlock ;
 
 TemplateRef    = "template", TemplateRefName, NL,
                  INDENT, { FilledSlot }, DEDENT ;
@@ -1807,7 +1821,7 @@ LegacyNumber   = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
 ExactNumber    = LegacyNumber, [ Exponent ] ;
 Exponent       = ( "e" | "E" ), [ "+" | "-" ], Digit, { Digit } ;
 (* Select LegacyNumber without a preamble and ExactNumber with "numbers exact"
-   for scalar tokens. Structured values retain strict JSON number grammar.
+   for scalar tokens, including the scalars inside a structured block.
    Exact values must be representable without rounding: after normalization,
    the unsigned coefficient is at most 79228162514264337593543950335 and the
    scale is 0..28. Complete out-of-range tokens are errors, never Double or raw

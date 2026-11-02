@@ -43169,7 +43169,7 @@
       "severities": [
         "error"
       ],
-      "title": "An inline JSON-shaped value is malformed.",
+      "title": "A structured value written as an indented block is malformed.",
       "reserved": false,
       "retired": false
     },
@@ -48656,6 +48656,17 @@
     },
     {
       "code": "PLAY0833",
+      "name": "InlineJsonValue",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A value is written as inline JSON ({...} or [...]). Screenplay has no JSON: objects and lists are indented blocks.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0834",
       "name": "InvalidStateMachineDeclaration",
       "severity": "error",
       "severities": [
@@ -48666,7 +48677,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0834",
+      "code": "PLAY0835",
       "name": "StateMachineInitialState",
       "severity": "error",
       "severities": [
@@ -48677,7 +48688,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0835",
+      "code": "PLAY0836",
       "name": "UnreachableState",
       "severity": "warning",
       "severities": [
@@ -48688,7 +48699,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0836",
+      "code": "PLAY0837",
       "name": "StateWithNoWayOut",
       "severity": "warning",
       "severities": [
@@ -48699,7 +48710,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0837",
+      "code": "PLAY0838",
       "name": "FinalStateWithTransitions",
       "severity": "error",
       "severities": [
@@ -48710,7 +48721,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0838",
+      "code": "PLAY0839",
       "name": "UnknownState",
       "severity": "error",
       "severities": [
@@ -48721,7 +48732,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0839",
+      "code": "PLAY0840",
       "name": "UnknownStateMachineReference",
       "severity": "error",
       "severities": [
@@ -48732,7 +48743,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0840",
+      "code": "PLAY0841",
       "name": "UnknownConditionProperty",
       "severity": "error",
       "severities": [
@@ -48743,7 +48754,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0841",
+      "code": "PLAY0842",
       "name": "AmbiguousStateTransitions",
       "severity": "error",
       "severities": [
@@ -48754,7 +48765,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0842",
+      "code": "PLAY0843",
       "name": "InvalidWorkflowDeclaration",
       "severity": "error",
       "severities": [
@@ -48765,7 +48776,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0843",
+      "code": "PLAY0844",
       "name": "WorkflowWithoutTrigger",
       "severity": "error",
       "severities": [
@@ -48776,7 +48787,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0844",
+      "code": "PLAY0845",
       "name": "UnreachableWorkflowNode",
       "severity": "warning",
       "severities": [
@@ -48787,7 +48798,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0845",
+      "code": "PLAY0846",
       "name": "UnknownWorkflowNode",
       "severity": "error",
       "severities": [
@@ -48798,7 +48809,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0846",
+      "code": "PLAY0847",
       "name": "UnknownWorkflowOutlet",
       "severity": "error",
       "severities": [
@@ -48809,7 +48820,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0847",
+      "code": "PLAY0848",
       "name": "WorkflowDecisionOutletWithoutTarget",
       "severity": "error",
       "severities": [
@@ -48820,7 +48831,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0848",
+      "code": "PLAY0849",
       "name": "WorkflowWithoutExpiry",
       "severity": "warning",
       "severities": [
@@ -48831,7 +48842,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0849",
+      "code": "PLAY0850",
       "name": "WorkflowJoinWithOneBranch",
       "severity": "information",
       "severities": [
@@ -48842,7 +48853,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0850",
+      "code": "PLAY0851",
       "name": "UnknownWorkflowReference",
       "severity": "error",
       "severities": [

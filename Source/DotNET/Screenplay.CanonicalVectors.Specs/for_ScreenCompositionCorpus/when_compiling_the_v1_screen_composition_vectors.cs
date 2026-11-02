@@ -46,10 +46,10 @@ public class when_compiling_the_v1_screen_composition_vectors : Specification
     void should_locate_the_action_subject_advisories_for_the_positive_composition() =>
         ActionSubjectAdvisories.DescribeLocations(_positive.Diagnostics).ShouldEqual(
             "PLAY0818@210 CreateWorkItem",
-            "PLAY0818@236 CreateWorkItem",
-            "PLAY0818@259 RenameWorkItem",
-            "PLAY0818@263 CloseWorkItem",
-            "PLAY0818@293 RenameWorkItem",
+            "PLAY0818@239 CreateWorkItem",
+            "PLAY0818@262 RenameWorkItem",
+            "PLAY0818@266 CloseWorkItem",
+            "PLAY0818@296 RenameWorkItem",
             "PLAY0819@210 CreateWorkItem");
 
     [Fact] void should_carry_screen_contributions() => Screens(_positive.Value!).SelectMany(screen => screen.Contributions).Count().ShouldEqual(2);

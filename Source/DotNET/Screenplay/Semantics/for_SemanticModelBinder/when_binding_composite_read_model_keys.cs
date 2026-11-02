@@ -66,7 +66,9 @@ public class when_binding_composite_read_model_keys : Specification
                 when append Removed
                   invoice = "first"
                   method = "card"
-                then no readmodel Totals for {"method":"card","invoice":"first"}
+                then no readmodel Totals for
+                  method = "card"
+                  invoice = "first"
                 then readmodel Totals
                   invoice = "first"
                   method = "cash"

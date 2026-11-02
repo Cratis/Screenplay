@@ -12,6 +12,7 @@ import { ParserContext } from './ParserContext';
 import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseConcrete } from './SpecificationResponseParser';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 // No 'd' (hasIndices) flag: another extension in the shared VS Code extension host can patch RegExp and fail on it.
 const caseHeader = pattern('^case\\s+([A-Za-z_]\\w*)(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?$');
@@ -71,6 +72,11 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const value = assignment.exec(child.content);
+        const structured = value === null ? tryParseStructuredMapping(context, child) : undefined;
+        if (structured !== undefined) {
+            values.push(structured);
+            continue;
+        }
         if (value === null) {
             context.error(DiagnosticCodes.InvalidSpecificationCaseAssignment, "Expected '<parameter> = <concrete value>' in a case.", locationOf(child));
             context.skipOpaqueBlock(child.indent);

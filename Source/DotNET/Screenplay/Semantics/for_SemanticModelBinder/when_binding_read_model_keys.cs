@@ -43,7 +43,7 @@ public class when_binding_read_model_keys : given.a_semantic_binder
     void should_bind_complete_fixtures_using_a_composite_view()
     {
         const string source = FlatKeySource +
-            "      specification Missing\n        given readmodel Row\n          rowId = \"r\"\n          period = 1\n        then no readmodel Row for {\"rowId\":\"r\",\"period\":1}\n";
+            "      specification Missing\n        given readmodel Row\n          rowId = \"r\"\n          period = 1\n        then no readmodel Row for\n          rowId = \"r\"\n          period = 1\n";
         var result = Bind(source);
         Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(diagnostic => diagnostic.Message)));
     }

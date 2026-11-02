@@ -90,16 +90,16 @@ A `foreach` runs its `each` branch once per item in item order (`parallel` bound
 
 | Code | When |
 | --- | --- |
-| `PLAY0842` | The declaration is malformed. |
-| `PLAY0843` | There is no trigger. |
-| `PLAY0844` | A node can never be reached from a trigger (warning). |
-| `PLAY0845` | An edge points at a node the workflow does not declare. |
-| `PLAY0846` | An edge leaves by an outlet the node kind does not have. |
-| `PLAY0847` | A decision does not have exactly two outlets, or one leads nowhere. |
-| `PLAY0848` | A wait for an event or an approval has no expiry (warning). |
-| `PLAY0849` | A join has a single incoming branch (information). |
-| `PLAY0850` | A command, event, persona or policy, state machine or property is not declared. |
-| `PLAY0838` | A trigger waits for a state its state machine does not declare. |
-| `PLAY0840` | A condition or a foreach reads a property the subject does not have. |
+| `PLAY0843` | The declaration is malformed. |
+| `PLAY0844` | There is no trigger. |
+| `PLAY0845` | A node can never be reached from a trigger (warning). |
+| `PLAY0846` | An edge points at a node the workflow does not declare. |
+| `PLAY0847` | An edge leaves by an outlet the node kind does not have. |
+| `PLAY0848` | A decision does not have exactly two outlets, or one leads nowhere. |
+| `PLAY0849` | A wait for an event or an approval has no expiry (warning). |
+| `PLAY0850` | A join has a single incoming branch (information). |
+| `PLAY0851` | A command, event, persona or policy, state machine or property is not declared. |
+| `PLAY0839` | A trigger waits for a state its state machine does not declare. |
+| `PLAY0841` | A condition or a foreach reads a property the subject does not have. |
 
 See [State machines](statemachines.md) for the lifecycle that can start a workflow, and decision [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) for the full contract.

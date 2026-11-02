@@ -15,13 +15,13 @@ public class and_a_producer_uses_the_key : given.a_workspace_with_a_structured_v
         Order = Document(
             "order",
             "Shop/Orders/PlaceOrder/PlaceOrder.play",
-            OrderSource.Replace("{value}", StructuredValue, StringComparison.Ordinal)
-                .Replace("lines = lines", "lines = [{\"sku\":\"A-1\",\"quantity\":2}]", StringComparison.Ordinal));
+            WithValue(StructuredValue)
+                .Replace("lines = lines", $"lines{StructuredValue}", StringComparison.Ordinal));
         Workspace = ScreenplayWorkspace.Create("Repro", [Concepts, Order], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Repro")));
     }
 
     void Because() => _result = Workspace.ProposeRename(Rename<PropertySyntax>("sku", "stockCode"));
 
     [Fact] void should_accept() => _result.Accepted.ShouldBeTrue();
-    [Fact] void should_rewrite_the_producer_and_both_specification_keys() => _result.Workspace!.Documents.Single(document => document.Id == Order.Id).Text.Split("\"stockCode\"", StringSplitOptions.None).Length.ShouldEqual(4);
+    [Fact] void should_rewrite_the_producer_and_both_specification_keys() => _result.Workspace!.Documents.Single(document => document.Id == Order.Id).Text.Split("stockCode = ", StringSplitOptions.None).Length.ShouldEqual(4);
 }

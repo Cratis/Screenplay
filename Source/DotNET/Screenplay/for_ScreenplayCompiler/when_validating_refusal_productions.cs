@@ -35,8 +35,8 @@ public class when_validating_refusal_productions : given.a_compiler
     [InlineData("Missing", "", DiagnosticCodes.UnknownEvent)]
     [InlineData("Billing.Claims.Handling.Missing", "", DiagnosticCodes.InvalidProductionReference)]
     [InlineData("Refused", "                missing = $refusal.reason", DiagnosticCodes.UnknownEventField)]
-    [InlineData("Refused", "                details = { \"missing\": \"value\" }", DiagnosticCodes.UnknownStructuredValueMember)]
-    [InlineData("Refused", "                details = [\"value\"]", DiagnosticCodes.IncompatibleStructuredValue)]
+    [InlineData("Refused", "                details\n                  missing = \"value\"", DiagnosticCodes.UnknownStructuredValueMember)]
+    [InlineData("Refused", "                details\n                  item \"value\"", DiagnosticCodes.IncompatibleStructuredValue)]
     [InlineData("Refused", "                for id", DiagnosticCodes.PiiNotSupportedOnIdentifier)]
     void should_apply_ordinary_production_validation(string target, string mapping, string code)
     {

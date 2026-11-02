@@ -50,7 +50,15 @@ module Shop
             property name = "Ada Lovelace"
             property role = "Shopper"
             property initials = "AL"
-            property items = [{"label":"Your account","icon":"pi pi-user","targetScreen":"Account"},{"label":"My orders","icon":"pi pi-box","targetScreen":"MyOrders"}]
+            property items
+              item
+                label        = "Your account"
+                icon         = "pi pi-user"
+                targetScreen = "Account"
+              item
+                label        = "My orders"
+                icon         = "pi pi-box"
+                targetScreen = "MyOrders"
 
     content footer
       component Cratis.Blueprint.Default.footer shopFooter

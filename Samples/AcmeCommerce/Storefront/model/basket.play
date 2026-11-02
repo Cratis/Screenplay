@@ -55,10 +55,20 @@ module Shop
           unitPrice   = 49
         then readmodel BasketContents
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 2
+              unitPrice   = 49
         then readmodel CheckoutDraft
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 2
+              unitPrice   = 49
 
       specification RejectingAProductThatIsOutOfStock
         given caller
@@ -139,10 +149,20 @@ module Shop
           quantity = 3
         then readmodel BasketContents
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":3,"unitPrice":49}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 3
+              unitPrice   = 49
         then readmodel CheckoutDraft
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":3,"unitPrice":49}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 3
+              unitPrice   = 49
 
       specification RejectingAZeroQuantity
         given caller
@@ -265,7 +285,19 @@ module Shop
               property titleField = "productName"
               property selectionMode = "single"
               property label = "Basket lines"
-              property columns = [{"field":"productName","header":"Product"},{"field":"quantity","header":"Qty","kind":"number"},{"field":"unitPrice","header":"Unit price","kind":"currency","currency":"NOK"}]
+              property columns
+                item
+                  field  = "productName"
+                  header = "Product"
+                item
+                  field  = "quantity"
+                  header = "Qty"
+                  kind   = "number"
+                item
+                  field    = "unitPrice"
+                  header   = "Unit price"
+                  kind     = "currency"
+                  currency = "NOK"
               on select
                 navigate to Basket
                   with sku from component.basketLines.value
@@ -306,7 +338,17 @@ module Shop
           addedValue = 997
         then readmodel BasketContents
           basketId = "b1a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
-          lines = [{"sku":"ACM-1000","productName":"Acme mug","quantity":2,"unitPrice":49},{"sku":"ACM-2000","productName":"Acme backpack","quantity":1,"unitPrice":899}]
+          lines
+            item
+              sku         = "ACM-1000"
+              productName = "Acme mug"
+              quantity    = 2
+              unitPrice   = 49
+            item
+              sku         = "ACM-2000"
+              productName = "Acme backpack"
+              quantity    = 1
+              unitPrice   = 899
 
     // The count CheckOut decides on. Chronicle's decision reads find a read model's key only in a property named id, and a
     // protected read refuses a view with children or without a removal - so the decision has its own small view, apart from

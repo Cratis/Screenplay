@@ -10,8 +10,8 @@ public class with_a_malformed_value : given.a_structured_specification
 {
     CompilationResult<ApplicationSyntax> _result;
 
-    void Because() => _result = Compiler.Compile(Source.Replace("[{\"sku\":\"A-1\",\"status\":\"open\"}]", "[{sku:1}]", StringComparison.Ordinal));
+    void Because() => _result = Compiler.Compile(Source.Replace("sku = \"A-1\"", "sku : 1", StringComparison.Ordinal));
 
-    [Fact] void should_report_the_invalid_json() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidStructuredValue).ShouldBeTrue();
+    [Fact] void should_report_the_malformed_member() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidStructuredValue).ShouldBeTrue();
     [Fact] void should_fail_compilation() => _result.Success.ShouldBeFalse();
 }
