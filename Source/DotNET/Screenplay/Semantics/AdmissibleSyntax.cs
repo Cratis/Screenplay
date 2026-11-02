@@ -53,6 +53,11 @@ sealed class AdmissibleSyntax(ApplicationSyntax syntax, SemanticIdentityCatalog 
     {
         Imports = [.. syntax.Imports.Where(import => !removed.Contains(import))],
         Policies = [.. syntax.Policies.Where(policy => !removed.Contains(policy))],
+        Personas = syntax.Personas is { } personas ? [.. personas.Where(persona => !removed.Contains(persona))] : null,
+        Onboarding = syntax.Onboarding is { } onboarding ? onboarding with
+        {
+            Invitations = [.. onboarding.Invitations.Where(invitation => !removed.Contains(invitation))]
+        } : null,
         Triggers = syntax.Triggers is { } triggers ? [.. triggers.Where(trigger => !removed.Contains(trigger))] : null,
         Modules = [.. syntax.Modules.Select(module => module with
         {
