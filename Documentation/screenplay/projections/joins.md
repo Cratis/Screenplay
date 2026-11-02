@@ -149,7 +149,11 @@ projection Group => GroupReadModel
         UserEmail = email
 ```
 
-Chronicle does not currently apply joins inside `nested` blocks, even when a join is declared there (current Chronicle runtime limitation, [Cratis/Chronicle#4125](https://github.com/Cratis/Chronicle/issues/4125)). A nested field populated only by such a join is reported as unpopulated by PLAY0284. Joins inside `children` blocks are supported.
+Chronicle 19.99.1 and the reference evaluator support joins inside root-level `nested` objects, including further nested objects. A `from` mapping that sets the nested join reference backfills the latest matching joined event into that object. Later joined events update only existing nested objects whose reference matches; they do not create root instances. Joins inside `children` are also supported, but joins inside nested objects under `children`, children inside nested objects and `remove via join` inside nested objects remain unsupported.
+
+**Reference-evaluator limitation:** Chronicle also backfills when a nested join's `on` property is the nested schema's key or likely key (for example, `details.id`), even if that nested `from` block does not map it. The reference evaluator does not resolve the nested schema's key here: it uses the root read-model identifier for the key-property check. A nested `on` property therefore qualifies for backfill through that `from` block's own mapping of it, not merely because it is named `id`. An already populated nested key alone does not trigger this backfill in the reference evaluator; live joined events still match existing nested objects by their `on` value.
+
+The compiler's population check still reports a required field filled only by a nested join as unpopulated (`PLAY0284`). This check has not yet caught up with Chronicle's nested-join support. Populate a required field from a `from` event that the nested block handles, or move its join out of the nested block.
 
 ## Examples
 
