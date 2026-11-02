@@ -31,6 +31,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0830` | Error | An `onboarding` block states the same thing twice: a second `signup`, `legal terms`, `offering`, `emails` or `images`, a second invitation of one kind, or a second template for one email. |
 | `PLAY0831` | Error | An invitation's `as`, `by` or `grant` names a persona nothing declares. Draft authoring reports it as a warning. |
 | `PLAY0832` | Error | The `emails` block names an email onboarding does not send; the emails are `invitation`, `welcome` and `signupDeclined`. |
+| `PLAY0833` | Error | A value is written as inline JSON (`{...}` or `[...]`). Screenplay has no JSON: write the object or list as an indented block - one `member = value` line per member, one `item` line per list element, and `<name> none` for an empty list. The editors offer a quick fix that writes the block; printing the document converts every occurrence. See [structured values](structured-values.md). |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
@@ -1155,10 +1156,10 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
 | `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
 | `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
-| `PLAY0291` | Error | A mapping value starts with `{` or `[` but is not a valid single-line JSON object or list (keys must be quoted). |
+| `PLAY0291` | Error | A structured value written as an indented block is malformed: an object line is not `member = value`, `member` with a block under it, or `member none`; a list line is not an `item`; a value is not a string, number, `true`, `false` or `null`; or a header has nothing under it and does not end in `none` or `empty`. See [structured values](structured-values.md). |
 | `PLAY0292` | Error | An object key does not name a property of the target's declared composite `type`. Unknown or imported types remain undecided. |
 | `PLAY0293` | Error | A statically known value has the wrong shape for its target: a collection expects a list, a declared composite expects an object, and a scalar cannot accept a list or object. |
-| `PLAY0294` | Error | An inline JSON object repeats a key (including inside a nested object or list); each property may be stated once. |
+| `PLAY0294` | Error | A structured value repeats a member (including inside a nested object or list); each member may be stated once. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 

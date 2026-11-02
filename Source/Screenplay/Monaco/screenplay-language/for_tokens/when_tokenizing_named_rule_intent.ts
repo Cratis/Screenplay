@@ -55,7 +55,7 @@ describe('when Monarch compiles named-rule states', () => {
         }
     });
     it.each(['csharp', 'java'])('should preserve delimiters, metadata and embedded %s fences', language => {
-        const lines = tokenize(['event Done', '  id "old" // pin', '  tags String[] = ["x", "y"]', 'command C', ...body.slice(0, 5), `        \`\`\`${language}`, '        implementation', '        hint "code"', '        ```', '        hint "After"']);
+        const lines = tokenize(['event Done', '  id "old" // pin', '  tags String[] = names', 'command C', ...body.slice(0, 5), `        \`\`\`${language}`, '        implementation', '        hint "code"', '        ```', '        hint "After"']);
         expect(typeAt(lines[1], 2)).toBe('keyword.play');
         expect(typeAt(lines[1], 5)).toBe('string.play');
         expect(typeAt(lines[1], 11)).toBe('comment.play');

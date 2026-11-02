@@ -113,6 +113,12 @@ internal static partial class SpecificationParser
                 continue;
             }
 
+            if (StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                AddFixtureValue(context, body.Values, structured, body.Generated);
+                continue;
+            }
+
             context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 

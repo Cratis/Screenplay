@@ -105,11 +105,12 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
                   specification PresentRecord
                     given capture Records
                       id = "root"
-                      items = {{previous}}
-                      contact = {"name":"before"}
+                      {{Items(previous)}}
+                      contact
+                        name = "before"
                     when capture Records
                       id = "root"
-                      items = {{current}}
+                      {{Items(current)}}
                       {{contact}}
                     then NestedRemoved
             """);
@@ -146,4 +147,6 @@ public class and_capture_presence_and_numeric_identity_are_stable : given.a_v6_s
         })]
         };
     }
+
+    static string Items(string json) => global::Cratis.Screenplay.given.StructuredValueText.Assignment("items", json, 10);
 }

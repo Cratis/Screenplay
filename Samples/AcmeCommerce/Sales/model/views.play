@@ -120,12 +120,42 @@ module Orders
             data PipelineOrder[] via query AllPipelineOrders
             component Cratis.Blueprint.Default.kanbanBoard ordersPipeline
               id "ordersPipeline"
-              property columns = [{"id":"received","label":"Received"},{"id":"approved","label":"Approved"},{"id":"onHold","label":"On hold"},{"id":"confirmed","label":"Confirmed"},{"id":"shipped","label":"Shipped"},{"id":"fulfilled","label":"Fulfilled"},{"id":"rejected","label":"Rejected"},{"id":"cancelled","label":"Cancelled"}]
+              property columns
+                item
+                  id    = "received"
+                  label = "Received"
+                item
+                  id    = "approved"
+                  label = "Approved"
+                item
+                  id    = "onHold"
+                  label = "On hold"
+                item
+                  id    = "confirmed"
+                  label = "Confirmed"
+                item
+                  id    = "shipped"
+                  label = "Shipped"
+                item
+                  id    = "fulfilled"
+                  label = "Fulfilled"
+                item
+                  id    = "rejected"
+                  label = "Rejected"
+                item
+                  id    = "cancelled"
+                  label = "Cancelled"
               property cards from query AllPipelineOrders
               property cardId = "orderId"
               property cardTitle = "orderId"
               property cardColumn = "status"
-              property cardFields = [{"field":"market","label":"Market"},{"field":"quotedTotal","label":"Total"}]
+              property cardFields
+                item
+                  field = "market"
+                  label = "Market"
+                item
+                  field = "quotedTotal"
+                  label = "Total"
               property totalField = "quotedTotal"
               property label = "Orders by status"
 
@@ -138,8 +168,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         given OrderApproved
@@ -313,8 +351,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         given OrderDiscounted
@@ -402,8 +448,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         given OrderShipmentRecorded
@@ -468,8 +522,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 1
+              unitPrice = 899
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 899
         given OrderCancelled
@@ -531,8 +593,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           email       = "grace@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 2
+              unitPrice = 899
+          shipTo
+            street     = "1 Compiler Road"
+            city       = "Bergen"
+            postalCode = "5003"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 1798
         then readmodel WaitingOrder
@@ -591,15 +661,31 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         given OrderConfirmationIssued
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         then readmodel OrderFigure

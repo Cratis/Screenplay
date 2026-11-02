@@ -9,7 +9,7 @@ public class and_an_object_member_is_unknown : given.a_structured_specification
 {
     CompilationResult<SemanticCompilation> _result;
 
-    void Because() => _result = Compile(Source.Replace("\"sku\":\"A-1\"", "\"unknown\":\"A-1\"", StringComparison.Ordinal));
+    void Because() => _result = Compile(Source.Replace("sku = \"A-1\"", "unknown = \"A-1\"", StringComparison.Ordinal));
 
     [Fact] void should_report_play0292_at_the_member() =>
         _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownStructuredValueMember && diagnostic.Location.Column > 10).ShouldBeTrue();

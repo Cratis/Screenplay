@@ -35,19 +35,35 @@ public class a_structured_specification : for_SemanticModelBinder.given.a_semant
               specification SeedingAnOrder
                 given readmodel OrderView
                   id = "00000000-0000-0000-0000-000000000123"
-                  lines = [{"sku":"A-1","detail":{"enabled":true}}]
-                  tags = []
+                  lines
+                    item
+                      sku = "A-1"
+                      detail
+                        enabled = true
+                  tags none
                   note = null
                 then readmodel OrderView
                   id = "00000000-0000-0000-0000-000000000123"
-                  lines = [{"sku":"A-1","detail":{"enabled":true}}]
+                  lines
+                    item
+                      sku = "A-1"
+                      detail
+                        enabled = true
               specification PlacingAnOrder
                 when Place
                   id = "00000000-0000-0000-0000-000000000124"
-                  lines = [{"sku":"A-1","detail":{"enabled":true}}]
+                  lines
+                    item
+                      sku = "A-1"
+                      detail
+                        enabled = true
                 then Placed
                   id = "00000000-0000-0000-0000-000000000124"
-                  lines = [{"sku":"A-1","detail":{"enabled":true}}]
+                  lines
+                    item
+                      sku = "A-1"
+                      detail
+                        enabled = true
         """;
 
     protected CompilationResult<SemanticCompilation> Compile(string source) => Bind(source);

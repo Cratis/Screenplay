@@ -265,6 +265,16 @@
         "keywords": {
             "patterns": [
                 {
+                    "comment": "A structured value element: 'item' alone opens an object or nested list block, 'item <scalar>' is a scalar element, 'item none' an empty nested list and 'item empty' an object without members. Screenplay has no JSON.",
+                    "match": "^\\s*(item)(?=\\s*(?://.*)?$|\\s+(?:none\\b|empty\\b|\"|-?\\d|true\\b|false\\b|null\\b))",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "'<name> none' states an empty list and '<name> empty' an object without members in a structured value.",
+                    "match": "(?<=\\S)\\s+(none|empty)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "constant.language.screenplay" } }
+                },
+                {
                     "comment": "Reaction command identity is syntax-only.",
                     "match": "^\\s*(runs)\\s+(as)\\s+(system)\\b",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }

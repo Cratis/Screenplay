@@ -1585,7 +1585,7 @@ public static class DiagnosticCodes
     public const string RedundantImport = "PLAY0290";
 
     /// <summary>
-    /// An inline JSON-shaped value is malformed.
+    /// A structured value written as an indented block is malformed.
     /// </summary>
     public const string InvalidStructuredValue = "PLAY0291";
 
@@ -3714,4 +3714,9 @@ public static class DiagnosticCodes
     /// The <c>emails</c> block names an email onboarding does not send.
     /// </summary>
     public const string UnknownOnboardingEmail = "PLAY0832";
+
+    /// <summary>
+    /// A value is written as inline JSON (<c>{...}</c> or <c>[...]</c>). Screenplay has no JSON: objects and lists are indented blocks.
+    /// </summary>
+    public const string InlineJsonValue = "PLAY0833";
 }

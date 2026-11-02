@@ -14,14 +14,19 @@ public class when_printing_typed_examples : given.a_printer
         example AcmeInvoice : M.F.InvoiceRegistered
           description "A known invoice"
           for "invoice-1"
-          lines = [{"quantity":2}]
+          lines
+            item
+              quantity = 2
           total = 1000
           generated receipt = "11111111-1111-1111-1111-111111111111"
         specification Registering
           given M.F.AcmeInvoice total = 2000
-            lines = []
+            lines none
           given readmodel M.F.Balance total = 2000
-          when M.F.AcmeInput lines = [{"quantity":3}]
+          when M.F.AcmeInput
+            lines
+              item
+                quantity = 3
             total = 3000
           then M.F.AcmeInvoice total = 3000
           then readmodel M.F.Balance exactly total = 3000

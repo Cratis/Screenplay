@@ -43,7 +43,7 @@ public class when_binding_rule_predicates : given.a_semantic_binder
                 label String
               specification ARejectedOrder
                 when PlaceOrder
-                  items = []
+                  items none
                   label = ""
                 then error "A label is needed"
               specification AnOtherOrder
@@ -95,7 +95,7 @@ public class when_binding_rule_predicates : given.a_semantic_binder
     [Fact] void should_fail_closed_on_a_nested_collection_concept()
     {
         var source = Source.Replace("command OtherOrder\n        id Uuid identifier", "command OtherOrder\n        items Item[]\n        id Uuid identifier", StringComparison.Ordinal)
-            .Replace("when OtherOrder\n          id =", "when OtherOrder\n          items = []\n          id =", StringComparison.Ordinal);
+            .Replace("when OtherOrder\n          id =", "when OtherOrder\n          items none\n          id =", StringComparison.Ordinal);
         var compilation = Bind(source);
         compilation.Diagnostics.ShouldBeEmpty();
         var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;

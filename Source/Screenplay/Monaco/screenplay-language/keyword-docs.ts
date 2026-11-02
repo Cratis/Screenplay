@@ -10,6 +10,8 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    item: 'One element of a structured list, one per line: `item <value>` for a scalar, a bare `item` with an indented block for an object or nested list, `item none` for an empty list and `item empty` for an object without members. Also a navigation or toolbar entry. Screenplay has no JSON.',
+    none: 'States an empty list in a structured value: `<name> none`. Elsewhere, an explicit empty choice such as `operations none`.',
     parameter: 'A typed value declared by a specification table, or an argument of a named behavior. Table types are required; every case supplies each parameter exactly once.',
     case: 'One named concrete row of a specification table, expanded as <Specification>_<Case>. Use case.<parameter> for a whole step value.',
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
@@ -184,7 +186,7 @@ export const keywordDocs: Record<string, string> = {
     now: 'The current instant (decisions 0106/0107). Offsets such as now + 2 hours and date of now are syntax-only; binding reports PLAY0268 until admitted.',
     calendar: 'Command calendar: calendar "<id>" or calendar from $context.<member>. Syntax-only (decisions 0106/0107); binding reports PLAY0268. A property named calendar remains a property.',
     zone: 'Application time zone "<id>" or time zone configurable default "<id>"; a specification may state given time zone "<id>". Syntax-only (decisions 0106/0107); binding reports PLAY0268.',
-    empty: 'Used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
+    empty: 'Ends a structured value header for an object without members: `<name> empty`. Also used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
     not: 'Negates a validation condition, as in `not empty`.',
     and: 'Both conditions must hold.',
     or: 'Either condition may hold.',

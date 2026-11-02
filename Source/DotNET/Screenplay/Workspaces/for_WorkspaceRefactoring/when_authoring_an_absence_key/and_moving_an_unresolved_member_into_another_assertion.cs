@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_authoring_a
 
 public class and_moving_an_unresolved_member_into_another_assertion : given.a_workspace_with_an_absent_read_model_key
 {
-    const string OtherAssertion = "then no readmodel InvoiceView for {\"id\":\"second\",\"detail\":{}}";
+    const string OtherAssertion = "then no readmodel InvoiceView for\n          id = \"second\"\n          detail empty";
 
     WorkspaceAuthoringResult _safe = null!;
     WorkspaceAuthoringResult _draft = null!;
@@ -31,10 +31,10 @@ public class and_moving_an_unresolved_member_into_another_assertion : given.a_wo
     [Fact] void should_report_the_draft_debt() => AbsenceDebt(_draft).Single().ShouldContain("'missing'");
     [Fact] void should_accept_moving_a_resolved_member() => _resolved.Accepted.ShouldBeTrue();
     [Fact] void should_leave_no_debt_for_the_resolved_member() => AbsenceDebt(_resolved).ShouldBeEmpty();
-    [Fact] void should_write_the_resolved_member_into_the_other_assertion() => Text(_resolved).ShouldContain("{\"id\":\"second\",\"detail\":{\"part\":\"old\"}}");
+    [Fact] void should_write_the_resolved_member_into_the_other_assertion() => Text(_resolved).ShouldContain(Key("second"));
 
     static string TwoAssertions(string member) => Source
-        .Replace("\"part\":\"old\"", $"\"{member}\":\"old\"", StringComparison.Ordinal) + $"\n        {OtherAssertion}";
+        .Replace("part = \"old\"", $"{member} = \"old\"", StringComparison.Ordinal) + $"\n        {OtherAssertion}";
 
     WorkspaceAuthoringRequest MoveInto(string member)
     {

@@ -43,12 +43,27 @@ module Merchandising
             data PricedProduct[] via query AllPricedProducts
             component Cratis.Blueprint.Default.kanbanBoard pricingBoard
               id "pricingBoard"
-              property columns = [{"id":"draft","label":"Draft"},{"id":"approved","label":"Approved"},{"id":"withdrawn","label":"Withdrawn"}]
+              property columns
+                item
+                  id    = "draft"
+                  label = "Draft"
+                item
+                  id    = "approved"
+                  label = "Approved"
+                item
+                  id    = "withdrawn"
+                  label = "Withdrawn"
               property cards from query AllPricedProducts
               property cardId = "productId"
               property cardTitle = "name"
               property cardColumn = "status"
-              property cardFields = [{"field":"sku","label":"SKU"},{"field":"price","label":"Price"}]
+              property cardFields
+                item
+                  field = "sku"
+                  label = "SKU"
+                item
+                  field = "price"
+                  label = "Price"
               property label = "Products by status"
 
       specification TheBoardFollowsTheStatus

@@ -719,8 +719,8 @@
             "diagnostics": ["PLAY0519@6"]
         },
         {
-            "name": "A qualified fixture with one structured inline assignment is valid syntax",
-            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Registering", "        given M.F.AcmeInvoice lines = [{\"quantity\":2}]", "        when M.F.AcmeInput total = 5000", "        then readmodel M.F.Balance exactly total = 5000"],
+            "name": "A qualified fixture with a structured value under its header is valid syntax",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Registering", "        given M.F.AcmeInvoice", "          lines", "            item", "              quantity = 2", "        when M.F.AcmeInput total = 5000", "        then readmodel M.F.Balance exactly total = 5000"],
             "diagnostics": []
         },
         {
@@ -1027,7 +1027,7 @@
         {
             "name": "Source identifier fallback refuses an unresolved command destination path",
             "validate": true,
-            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.missing", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.missing", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail", "            id = \"other\""],
             "diagnostics": ["PLAY0550@16"]
         },
         {
@@ -1139,13 +1139,13 @@
         {
             "name": "Source identifier fallback follows composite command destination paths",
             "validate": true,
-            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail", "            id = \"other\""],
             "diagnostics": []
         },
         {
             "name": "Source identifier fallback retains optional composite parents",
             "validate": true,
-            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail optional", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail optional", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail", "            id = \"other\""],
             "diagnostics": ["PLAY0550@15"]
         },
         {
@@ -4128,10 +4128,40 @@
                 "    slice StateChange C",
                 "      specification S",
                 "        given A",
-                "          items = [1, 2"
+                "          items",
+                "            item 1",
+                "            a = 2"
             ],
             "diagnostics": [
-                "PLAY0291@6"
+                "PLAY0291@8"
+            ]
+        },
+        {
+            "name": "inline JSON value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          items = [1, 2]"
+            ],
+            "diagnostics": [
+                "PLAY0833@6"
+            ]
+        },
+        {
+            "name": "inline JSON component property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        component Cratis.Blueprint.Default.list items",
+                "          property columns = [\"a\"]"
+            ],
+            "diagnostics": [
+                "PLAY0833@6"
             ]
         },
         {
@@ -4142,10 +4172,12 @@
                 "    slice StateChange C",
                 "      specification S",
                 "        given A",
-                "          item = {\"a\": 1, \"a\": 2}"
+                "          detail",
+                "            a = 1",
+                "            a = 2"
             ],
             "diagnostics": [
-                "PLAY0294@6"
+                "PLAY0294@8"
             ]
         },
         {

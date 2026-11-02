@@ -77,20 +77,20 @@ public class when_authoring_exact_documents : Specification
     [Fact]
     void should_keep_recursive_tokens_and_envelope_shaped_business_members_lossless()
     {
-        const string Payload = "{\"literalType\":\"ExactNumber\",\"value\":\"1e29\",\"amount\":9007199254740993,\"items\":[-0,1e-28,\"9007199254740993\"]}";
-        var parsed = _compiler.CompileProjection("numbers exact\nprojection P\n  from E\n    amount = " + Payload + "\n");
+        const string Payload = "\n      literalType = \"ExactNumber\"\n      value = \"1e29\"\n      amount = 9007199254740993\n      items\n        item -0\n        item 1e-28\n        item \"9007199254740993\"";
+        var parsed = _compiler.CompileProjection("numbers exact\nprojection P\n  from E\n    amount" + Payload + "\n");
         parsed.Success.ShouldBeTrue();
         var json = SyntaxJson.Serialize(parsed.Value!);
         json.GetRawText().ShouldContain("9007199254740993");
         var restored = (Projections.ProjectionSyntax)SyntaxJson.Deserialize(json);
         var printed = _printer.Print(restored);
         printed.StartsWith("numbers exact\n", StringComparison.Ordinal).ShouldBeTrue();
-        printed.ShouldContain("\"value\":\"1e29\"");
+        printed.ShouldContain("value = \"1e29\"");
         var reparsed = _compiler.CompileProjection(printed);
         reparsed.Success.ShouldBeTrue();
         SyntaxJson.StructurallyEqual(restored, reparsed.Value!).ShouldBeTrue();
-        var bad = _compiler.CompileProjection("numbers exact\nprojection P\n  from E\n    amount = {\"items\":[1e-29]}\n");
-        bad.Diagnostics.Single(value => value.Code == DiagnosticCodes.InexactNumericLiteral).Location.Column.ShouldEqual(24);
+        var bad = _compiler.CompileProjection("numbers exact\nprojection P\n  from E\n    amount\n      items\n        item 1e-29\n");
+        bad.Diagnostics.Single(value => value.Code == DiagnosticCodes.InexactNumericLiteral).Location.Column.ShouldEqual("        item ".Length + 1);
     }
 
     [Fact]

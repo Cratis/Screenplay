@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using System.Text.Json;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Printing;
@@ -14,14 +13,8 @@ internal static partial class ScreenplaySyntaxText
     {
         LiteralExpressionSyntax { Value: ExactNumber exact } => exact.CanonicalText,
         LiteralExpressionSyntax { Value: double number } => ResponseNumber(number),
-        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredResponseValue))}]",
-        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredResponseValue(member.Value)}"))}}}",
         _ => ExpressionCore(expression)
     };
-
-    static string StructuredResponseValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
-        ? JsonSerializer.Serialize(text, _structuredValueOptions)
-        : ResponseValue(expression);
 
     static string ResponseNumber(double number)
     {

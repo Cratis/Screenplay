@@ -24,12 +24,16 @@ public class and_the_members_use_top_level_composites : given.a_model
               specification NonemptyCompositeCollection
                 given readmodel Parent
                   parentId = "parent"
-                  children = [{"value":"child"}]
+                  children
+                    item
+                      value = "child"
                 when query ById
                   parentId = "parent"
                 then result
                   parentId = "parent"
-                  children = [{"value":"child"}]
+                  children
+                    item
+                      value = "child"
         """);
 
     void Because()

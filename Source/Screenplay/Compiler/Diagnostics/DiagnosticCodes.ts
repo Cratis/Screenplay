@@ -488,4 +488,5 @@ export const DiagnosticCodes = {
     DuplicateOnboardingDirective: 'PLAY0830',
     UnknownOnboardingPersona: 'PLAY0831',
     UnknownOnboardingEmail: 'PLAY0832',
+    InlineJsonValue: 'PLAY0833',
 } as const;

@@ -8,12 +8,14 @@ import { pattern } from '../Text/patterns';
 import { parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
+import { parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
 const component = `(?:([A-Za-z_]\\w*)|"(${stringBodyPattern})")\\.(\\w+(?:\\.\\w+)*)`;
 const exposureHeader = pattern('^exposure\\s+for\\s+([A-Za-z_]\\w*)$');
 const instanceHeader = pattern('^instance\\s+([A-Za-z_]\\w*)$');
 const exposedProperty = pattern(`^property\\s+${component}(?:\\s+label\\s+"(${stringBodyPattern})")?(?:\\s+operations\\s+([\\w-]+(?:\\s*,\\s*[\\w-]+)*))?(?:\\s+fields\\s+(\\w+(?:\\s*,\\s*\\w+)*))?(?:\\s+reexposes\\s+([A-Za-z_]\\w*))?$`);
 const setPattern = pattern(`^set\\s+${component}\\s*=\\s*(.+)$`);
+const setBlockPattern = pattern(`^set\\s+${component}(?:\\s+(none|empty))?$`);
 const itemsPattern = pattern(`^items\\s+${component}$`);
 const itemPattern = pattern(`^item\\s+(?:([A-Za-z_][\\w-]*)|"(${stringBodyPattern})")$`);
 const itemValuePattern = pattern('^([A-Za-z_]\\w*)\\s*=\\s*(.+)$');
@@ -85,6 +87,10 @@ function parseContribution(context: ParserContext, line: SourceLine): InstanceCo
         context.skipBlock(line.indent);
         return { kind: 'InstanceContributionSyntax', component: reference(set, 1), path: set[3], value: parseMappingSource(set[4], locationOf(line), context), items: [], location: locationOf(line) };
     }
+    const setBlock = setBlockPattern.exec(line.content);
+    if (setBlock !== null) {
+        return { kind: 'InstanceContributionSyntax', component: reference(setBlock, 1), path: setBlock[3], value: parseStructuredValue(context, line, setBlock[4]?.trim() as StructuredMarker), items: [], location: locationOf(line) };
+    }
     const items = itemsPattern.exec(line.content);
     if (items !== null) {
         const parsed: ContributedItemSyntax[] = [];
@@ -111,6 +117,11 @@ function parseItem(context: ParserContext, line: SourceLine): ContributedItemSyn
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const value = itemValuePattern.exec(child.content);
+        const structured = value === null ? tryParseStructuredMapping(context, child) : undefined;
+        if (structured !== undefined) {
+            values.push({ kind: 'ContributedItemValueSyntax', field: structured.property, value: structured.source, location: locationOf(child) });
+            continue;
+        }
         if (value === null) {
             context.error(DiagnosticCodes.InvalidInstanceContribution, `Invalid item value '${child.content}' - expected '<field> = <value>'`, locationOf(child));
             context.skipBlock(child.indent);

@@ -499,7 +499,8 @@ screen template ProductGrid
   content products
     component Cratis.Blueprint.Default.dataList gridCards
       property variant = "cards"
-      property rowActions = ["Add to basket"]
+      property rowActions
+        item "Add to basket"
       ...
 ```
 

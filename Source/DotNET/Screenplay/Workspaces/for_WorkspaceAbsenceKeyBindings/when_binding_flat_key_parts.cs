@@ -21,7 +21,9 @@ public class when_binding_flat_key_parts : for_WorkspaceRefactoring.given.a_work
                     total Int
                   query Invoices => InvoiceView[]
                   specification NoInvoice
-                    then no readmodel InvoiceView for {"method":"card","invoice":"first"}
+                    then no readmodel InvoiceView for
+                      method = "card"
+                      invoice = "first"
             """);
         var index = WorkspaceSyntaxIndex.Create(Workspace);
         _obligations = [.. new WorkspaceAbsenceKeyBindings(index, new WorkspaceReferenceBindings(index)).Obligations];

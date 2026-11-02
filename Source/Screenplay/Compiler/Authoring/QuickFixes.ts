@@ -19,6 +19,7 @@ import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
 import { prepareTimelineQuickFixes } from './TimelineQuickFixes';
 import { prepareActionSubjectQuickFixes } from './ActionSubjectQuickFixes';
+import { rewriteInlineJson } from './StructuredValueQuickFix';
 
 export interface QuickFixEdit {
     /** Destination document for an application-snapshot repair; absent for a buffer-local edit. */
@@ -58,6 +59,7 @@ const quickFixDiagnosticCodes: ReadonlySet<unknown> = new Set([
     DiagnosticCodes.LegacyProfileLayout,
     DiagnosticCodes.RedundantCompositeKeyBraces,
     DiagnosticCodes.ImplicitAuthorizationConjunction,
+    DiagnosticCodes.InlineJsonValue,
 ]);
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
@@ -97,7 +99,8 @@ function prepareLocalQuickFixes(source: string, options: Pick<QuickFixOptions, '
     const original = parseForAuthoring(source, undefined, options.placement);
     // PLAY0614 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
     // so a document whose only errors are public-event boundary errors stays repairable.
-    const publicEventCodes: ReadonlySet<string> = new Set(Array.from({ length: 14 }, (_, index) => `PLAY0${607 + index}`));
+    // Inline JSON (PLAY0833) is likewise an error its own repair removes.
+    const publicEventCodes: ReadonlySet<string> = new Set([...Array.from({ length: 14 }, (_, index) => `PLAY0${607 + index}`), DiagnosticCodes.InlineJsonValue]);
     const acceptable = (parsed: ReturnType<typeof parseForAuthoring>): boolean => parsed.success || parsed.diagnostics.every(diagnostic => diagnostic.severity !== 'error' || publicEventCodes.has(diagnostic.code));
     const errorCodes = (parsed: ReturnType<typeof parseForAuthoring>): Set<string> => new Set(parsed.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code));
     if (!acceptable(original)) return () => [];
@@ -173,6 +176,13 @@ function prepareLocalQuickFixes(source: string, options: Pick<QuickFixOptions, '
         } else if (diagnostic.code === DiagnosticCodes.RedundantCompositeKeyBraces || diagnostic.code === DiagnosticCodes.ImplicitAuthorizationConjunction) {
             const fix = diagnostic.code === DiagnosticCodes.RedundantCompositeKeyBraces ? redundantKeyBracesFix(source, lines, line.number - 1, diagnostic.code) : implicitAuthorizationFix(source, lines, line.number - 1, diagnostic.code);
             if (fix !== undefined) byLine.set(line.number, { line: line.number, fix });
+        } else if (diagnostic.code === DiagnosticCodes.InlineJsonValue) {
+            const unit = indentationUnit(lines, line.number - 1);
+            const rewrite = rewriteInlineJson(line.raw, unit);
+            if (rewrite !== undefined) {
+                const ending = source.includes('\r\n') ? '\r\n' : '\n';
+                byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: 'Write the value as an indented block', scope: 'occurrence', edits: [{ start: line.startOffset + rewrite.start, length: line.raw.length - rewrite.start, text: rewrite.text.replaceAll('\n', ending) }] } });
+            }
         } else if (diagnostic.code === DiagnosticCodes.RedundantEventId && commentStart(line.raw) < 0) {
             const declaration = events.get(line.number);
             if (declaration?.id !== declaration?.name || declaration === undefined) continue;
@@ -280,6 +290,13 @@ function legacyProfileLayoutFix(lines: readonly { readonly number: number; reado
 }
 
 type QuickFixLine = { readonly number: number; readonly raw: string; readonly indent: number; readonly content: string; readonly startOffset: number };
+
+// The step one level of the document indents by, read from the nearest shallower line above; two spaces otherwise.
+function indentationUnit(lines: readonly QuickFixLine[], index: number): string {
+    const indent = lines[index].indent;
+    const parent = lines.slice(0, index).reverse().find(line => line.content.length > 0 && line.indent < indent);
+    return ' '.repeat(parent === undefined ? 2 : indent - parent.indent);
+}
 
 // One edit from the opening brace to the end of the closing line, so the fix removes exactly one diagnostic. A closing brace that carries a comment is left alone.
 function redundantKeyBracesFix(source: string, lines: readonly QuickFixLine[], keyIndex: number, diagnosticCode: string): QuickFix | undefined {
