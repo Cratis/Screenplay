@@ -488,6 +488,7 @@ export const DiagnosticCodes = {
     DuplicateOnboardingDirective: 'PLAY0830',
     UnknownOnboardingPersona: 'PLAY0831',
     UnknownOnboardingEmail: 'PLAY0832',
-    UnknownTimeZone: 'PLAY0833',
-    InvalidCalendarContextMember: 'PLAY0834',
+    InlineJsonValue: 'PLAY0833',
+    UnknownTimeZone: 'PLAY0834',
+    InvalidCalendarContextMember: 'PLAY0835',
 } as const;

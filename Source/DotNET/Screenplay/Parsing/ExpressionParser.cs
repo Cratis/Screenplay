@@ -164,6 +164,8 @@ internal static partial class ExpressionParser
 
         if (text.StartsWith('{') || text.StartsWith('['))
         {
+            // Screenplay has no JSON. The value is still read so the tree stays whole and printing it writes the block form.
+            context.Error(DiagnosticCodes.InlineJsonValue, "Screenplay has no JSON values - write the object or list as an indented block: one 'member = value' line per member, one 'item' line per list element, and '<name> none' for an empty list", location);
             try
             {
                 var expression = new StructuredValueParser(text, location, context).Parse();

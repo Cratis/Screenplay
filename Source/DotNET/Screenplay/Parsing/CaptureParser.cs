@@ -437,7 +437,13 @@ internal static partial class CaptureParser
         var match = MappingRegex().Match(line.Content);
         if (!match.Success)
         {
-            return false;
+            if (!StructuredBlockParser.TryParseMapping(context, line, out var structured))
+            {
+                return false;
+            }
+
+            mappings.Add(structured);
+            return true;
         }
 
         mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(match.Groups[1].Value), match.Groups[2], line));

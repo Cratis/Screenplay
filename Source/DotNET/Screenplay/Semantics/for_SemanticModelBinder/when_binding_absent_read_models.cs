@@ -129,7 +129,8 @@ public class when_binding_absent_read_models : given.a_semantic_binder
                   query InvoiceById => InvoiceView?
                     by invoiceId InvoiceKey
                   specification NoInvoice
-                    then no readmodel InvoiceView for {"id":"first"}
+                    then no readmodel InvoiceView for
+                      id = "first"
             """);
         result.Success.ShouldBeFalse();
         result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownStructuredValueMember && diagnostic.Message.Contains("declared more than once", StringComparison.Ordinal)).ShouldBeTrue();

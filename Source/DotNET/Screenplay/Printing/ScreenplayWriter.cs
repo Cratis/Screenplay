@@ -98,6 +98,43 @@ internal sealed class ScreenplayWriter
     /// <inheritdoc/>
     public override string ToString() => _builder.ToString().TrimStart('\n').TrimEnd('\n') + '\n';
 
+    /// <summary>
+    /// Writes <c>&lt;target&gt; = &lt;value&gt;</c>, or - for an object or a list - the target followed by the value as an indented block.
+    /// </summary>
+    /// <param name="target">The text before the value, such as the property name.</param>
+    /// <param name="value">The <see cref="ExpressionSyntax"/> to write.</param>
+    /// <param name="node">The node the written lines belong to, or <c>null</c>.</param>
+    /// <param name="scalar">Renders a scalar; defaults to <see cref="Expression(ExpressionSyntax)"/>.</param>
+    internal void Assignment(string target, ExpressionSyntax value, SyntaxNode? node = null, Func<ExpressionSyntax, string>? scalar = null)
+    {
+        if (!ScreenplaySyntaxText.IsStructured(value))
+        {
+            var text = $"{target} = {(scalar ?? Expression)(value)}";
+            if (node is null) Line(text);
+            else Line(text, node);
+            return;
+        }
+
+        if (node is null)
+        {
+            Structured(target, value, scalar);
+            return;
+        }
+
+        using var anchor = Anchor(node);
+        Structured(target, value, scalar);
+    }
+
+    /// <summary>
+    /// Writes a header line followed by an object or a list as an indented block: <c>member = value</c> lines, one
+    /// <c>item</c> line per list element, <c>&lt;header&gt; none</c> for an empty list and <c>&lt;header&gt; empty</c>
+    /// for an object without members.
+    /// </summary>
+    /// <param name="header">The header line text, such as a property name.</param>
+    /// <param name="value">The <see cref="ObjectExpressionSyntax"/> or <see cref="ListExpressionSyntax"/> to write.</param>
+    /// <param name="scalar">Renders a scalar; defaults to <see cref="Expression(ExpressionSyntax)"/>.</param>
+    internal void Structured(string header, ExpressionSyntax value, Func<ExpressionSyntax, string>? scalar = null) => WriteStructured(header, value, scalar ?? Expression);
+
     /// <summary>Tracks a declaration's first line and the end of its printed children.</summary>
     internal NodeScope Anchor(SyntaxNode node) => new(this, node, _line);
 
@@ -207,6 +244,44 @@ internal sealed class ScreenplayWriter
     {
         _fitsSlotAnchors[template] = _line;
         Line(text);
+    }
+
+    void WriteStructured(string header, ExpressionSyntax value, Func<ExpressionSyntax, string> scalar)
+    {
+        if (value is ListExpressionSyntax list && !list.Items.Any())
+        {
+            Line($"{header} none");
+            return;
+        }
+
+        if (value is ObjectExpressionSyntax obj && !obj.Members.Any())
+        {
+            Line($"{header} empty");
+            return;
+        }
+
+        Line(header);
+        using var indent = Indent();
+        switch (value)
+        {
+            case ObjectExpressionSyntax members:
+                foreach (var member in members.Members)
+                {
+                    var name = ScreenplaySyntaxText.MemberName(member.Name);
+                    if (ScreenplaySyntaxText.IsStructured(member.Value)) WriteStructured(name, member.Value, scalar);
+                    else Line($"{name} = {scalar(member.Value)}");
+                }
+
+                break;
+            case ListExpressionSyntax items:
+                foreach (var item in items.Items)
+                {
+                    if (ScreenplaySyntaxText.IsStructured(item)) WriteStructured("item", item, scalar);
+                    else Line($"item {scalar(item)}");
+                }
+
+                break;
+        }
     }
 
     /// <summary>Tracks a syntax owner's printed extent.</summary>

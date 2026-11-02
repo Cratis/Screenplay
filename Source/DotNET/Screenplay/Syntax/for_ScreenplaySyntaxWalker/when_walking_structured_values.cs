@@ -11,7 +11,7 @@ public class when_walking_structured_values : Specification
     void Establish()
     {
         _walker = new();
-        _specification = new ScreenplayCompiler().CompileSpecification("specification Placing\n  when Place\n    lines = [{\"sku\":\"A-1\"}]").Value!;
+        _specification = new ScreenplayCompiler().CompileSpecification("specification Placing\n  when Place\n    lines\n      item\n        sku = \"A-1\"").Value!;
     }
 
     void Because() => _walker.VisitSpecification(_specification);

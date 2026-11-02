@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
-using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Parsing;
@@ -136,12 +135,13 @@ static class WorkspaceTriviaPrinter
         {
             var range = WorkspaceSourceRanges.Bytes([.. tokensByLine[keyStart.Line]], keyStart, keyLength) ?? throw Unsupported(original, change.Path);
             var authored = Encoding.UTF8.GetString(original.Bytes.AsSpan(range.Offset, range.Length));
-            if (JsonSerializer.Deserialize<string>(authored) != change.Before)
+            var name = authored.StartsWith('"') ? StringLiteral.Unescape(authored[1..^1]) : LineText.Unescape(authored);
+            if (name != change.Before || change.After is null)
             {
                 throw Unsupported(original, change.Path);
             }
 
-            return (range.Offset, range.Length, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(change.After)));
+            return (range.Offset, range.Length, Encoding.UTF8.GetBytes(ScreenplaySyntaxText.MemberName(change.After)));
         }
 
         var location = occurrence ?? owner.Location;

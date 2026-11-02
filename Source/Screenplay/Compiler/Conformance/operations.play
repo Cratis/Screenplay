@@ -68,7 +68,9 @@ module Notifications
           compensated = "kept"
         given operation Notify fails
         when Register
-          contact = {"recipient":"Ada","channel":"email"}
+          contact
+            recipient = "Ada"
+            channel   = "email"
         then operation Notify
           contact.recipient = "Ada"
         then operation Welcome

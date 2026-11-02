@@ -16,6 +16,7 @@ import { parseDescription } from './DescriptionParser';
 import { firstWord, splitTopLevel, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 const header = pattern('^projection\\s+(@?[\\w.]+)\\s*(?:=>\\s*([\\w.]+))?$');
 const eventSpecPattern = pattern('^(@?[\\w.]+)(?:\\s+key\\s+(.+))?$');
@@ -385,6 +386,12 @@ function pushMapping(context: ParserContext, line: SourceLine, mappings: Mapping
     const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);
     if (assigned !== null) {
         mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), source: parseProjectionExpression(assigned[2], location, context), location });
+        return;
+    }
+    // Structured literals exist only in exact numeric mode, written as an indented block under the property.
+    const structured = context.sourceOptions.numericMode === 'exact' ? tryParseStructuredMapping(context, line) : undefined;
+    if (structured !== undefined) {
+        mappings.push({ kind: 'SetMappingSyntax', property: structured.property, source: structured.source, location });
     } else if (context.sourceOptions.numericMode === 'exact') {
         context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}'`, location, diagnosticText('text', line.content));
     }

@@ -43,7 +43,7 @@ describe('when checking case value positions', () => {
         expect(parse(source.replace('expected Int', 'expected Decimal')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0587');
     });
     it('accepts whole collections as case values', () => {
-        const source = declarations.replaceAll('amount Int', 'amount Int[]').replace('returns amount', '') + table.replace('expected Int', 'expected Int[]').replace('expected = 10', 'expected = [10,20]').replace('when Record amount = 10', 'when Record amount = case.expected').replace('then returns case.expected', 'then Recorded amount = case.expected');
+        const source = declarations.replaceAll('amount Int', 'amount Int[]').replace('returns amount', '') + table.replace('expected Int', 'expected Int[]').replace('case Small expected = 10', 'case Small\n          expected\n            item 10\n            item 20').replace('when Record amount = 10', 'when Record amount = case.expected').replace('then returns case.expected', 'then Recorded amount = case.expected');
         expect(parse(source).diagnostics).toEqual([]);
         const effective = expandEffectiveSpecificationExamples(parse(source).value).specifications[0].effective;
         expect(effective.when!.values[0].source.kind).toEqual('ListExpressionSyntax');
@@ -78,10 +78,10 @@ describe('when checking case value positions', () => {
         expect(parse(declarations + table.replace('then returns case.expected', 'then returns 10')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0588');
     });
     it('accepts whole structured parameter values', () => {
-        const source = `type Detail\n  value Int\n` + declarations.replaceAll('amount Int', 'amount Detail').replace('returns amount', '') + table.replace('expected Int', 'expected Detail').replace('expected = 10', 'expected = {"value":10}').replace('when Record amount = 10', 'when Record amount = case.expected').replace('then returns case.expected', 'then Recorded amount = case.expected');
+        const source = `type Detail\n  value Int\n` + declarations.replaceAll('amount Int', 'amount Detail').replace('returns amount', '') + table.replace('expected Int', 'expected Detail').replace('case Small expected = 10', 'case Small\n          expected\n            value = 10').replace('when Record amount = 10', 'when Record amount = case.expected').replace('then returns case.expected', 'then Recorded amount = case.expected');
         expect(parse(source).diagnostics).toEqual([]);
     });
-    it.each(['given clock case.instant', 'when clock case.instant', 'given caller\n    role case.role', 'given caller\n    claim "department" = case.value', 'when Record amount = {"value":case.amount}'])('refuses references in excluded positions: %s', step => {
+    it.each(['given clock case.instant', 'when clock case.instant', 'given caller\n    role case.role', 'given caller\n    claim "department" = case.value', 'when Record\n    amount\n      value = case.amount'])('refuses references in excluded positions: %s', step => {
         expect(parseSpecificationSource(`specification Excluded\n  ${step}`).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0584');
     });
     it('does not reserve case words inside quoted literals', () => {

@@ -25,6 +25,8 @@
   href: purposes.md
 - name: Types
   href: types.md
+- name: Structured values
+  href: structured-values.md
 - name: Policies
   href: policies.md
 - name: Personas

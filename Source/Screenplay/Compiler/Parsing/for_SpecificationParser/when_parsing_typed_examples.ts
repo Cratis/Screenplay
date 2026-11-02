@@ -33,9 +33,14 @@ describe('when parsing typed examples', () => {
     it.each(['given', 'when', 'when append', 'then', 'given readmodel', 'then readmodel', 'then readmodel exactly'])('should accept a qualified reference in %s', keyword => {
         const prefix = keyword.endsWith(' exactly') ? keyword.slice(0, -8) : keyword;
         const suffix = keyword.endsWith(' exactly') ? ' exactly' : '';
-        const result = parseSpecificationSource(`specification S\n  ${prefix} M.F.AcmeInvoice${suffix} lines = [{"quantity":2}]\n    total = 5000`);
+        const result = parseSpecificationSource(`specification S\n  ${prefix} M.F.AcmeInvoice${suffix}\n    lines\n      item\n        quantity = 2\n    total = 5000`);
         result.diagnostics.should.deep.equal([]);
-        JSON.stringify(toSyntaxJson(result.value[0])).should.contain('"inlineProperty":"lines"');
+        JSON.stringify(toSyntaxJson(result.value[0])).should.not.contain('"inlineProperty":"lines"');
+    });
+
+    it.each(['given', 'when', 'then readmodel'])('should refuse an inline JSON value on the %s header', keyword => {
+        const result = parseSpecificationSource(`specification S\n  ${keyword} AcmeInvoice lines = [{"quantity":2}]`);
+        result.diagnostics.map(diagnostic => diagnostic.code).should.contain('PLAY0833');
     });
 
     it.each(['given', 'when', 'when append', 'then', 'given readmodel', 'then readmodel'])('should reject a duplicate header assignment in %s', keyword => {

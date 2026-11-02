@@ -54,13 +54,16 @@ public class and_capture_child_identity_is_checked : given.a_v6_scenario
                   specification PresentRecord
                     given capture Records
                       id = "{{previousKey}}"
-                      items = {{previous}}
-                      contact = { "name": "before" }
+                      {{Items(previous)}}
+                      contact
+                        name = "before"
                     when capture Records
                       id = "root"
-                      items = {{current}}
+                      {{Items(current)}}
                     then NestedRemoved
             """);
         return Run("PresentRecord");
     }
+
+    static string Items(string json) => global::Cratis.Screenplay.given.StructuredValueText.Assignment("items", json, 10);
 }

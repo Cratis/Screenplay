@@ -10,7 +10,7 @@ public class with_a_duplicate_key : given.a_structured_specification
 {
     CompilationResult<ApplicationSyntax> _result;
 
-    void Because() => _result = Compiler.Compile(Source.Replace("\"sku\":\"A-1\"", "\"sku\":\"A-1\",\"sku\":\"B-2\"", StringComparison.Ordinal));
+    void Because() => _result = Compiler.Compile(Source.Replace("sku = \"A-1\"", "sku = \"A-1\"\n              sku = \"B-2\"", StringComparison.Ordinal));
 
     [Fact] void should_report_each_duplicate_at_the_key() =>
         _result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.DuplicateStructuredValueMember && diagnostic.Location.Column > 10).ShouldEqual(2);

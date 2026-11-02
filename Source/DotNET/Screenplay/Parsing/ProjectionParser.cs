@@ -666,6 +666,12 @@ internal static partial class ProjectionParser
             return new SetMappingSyntax(Unescape(assignment.Groups[1].Value), source, line.Location);
         }
 
+        // Structured literals exist only in exact numeric mode, written as an indented block under the property.
+        if (context.SourceOptions.NumericMode == NumericMode.Exact && StructuredBlockParser.TryParseMapping(context, line, out var structured))
+        {
+            return new SetMappingSyntax(structured.Property, structured.Source, line.Location);
+        }
+
         context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
         return null;
     }

@@ -24,12 +24,26 @@ public class a_workspace_with_an_absent_read_model_key : a_refactoring_workspace
               query InvoiceById => InvoiceView?
                 by invoiceId InvoiceKey
               specification NoInvoice
-                then no readmodel InvoiceView for {"id":"first","detail":{"part":"old"}}
+                then no readmodel InvoiceView for
+                  id = "first"
+                  detail
+                    part = "old"
         """;
 
-    protected const string Assertion = "then no readmodel InvoiceView for {\"id\":\"first\",\"detail\":{\"part\":\"old\"}}";
+    protected const string Assertion = "then no readmodel InvoiceView for\n          id = \"first\"\n          detail\n            part = \"old\"";
 
     protected WorkspaceDocument Invoice = null!;
+
+    /// <summary>
+    /// Gets the indented key members of an absence assertion as the printer writes them inside the specification.
+    /// </summary>
+    /// <param name="id">The value of the id member.</param>
+    /// <param name="member">The name of the nested detail member.</param>
+    /// <param name="detail">The name of the intermediate member.</param>
+    /// <param name="value">The value of the nested detail member.</param>
+    /// <returns>The key block.</returns>
+    protected static string Key(string id, string member = "part", string detail = "detail", string value = "old") =>
+        $"for\n          id = \"{id}\"\n          {detail}\n            {member} = \"{value}\"";
 
     void Establish() => CreateWith(Source);
 

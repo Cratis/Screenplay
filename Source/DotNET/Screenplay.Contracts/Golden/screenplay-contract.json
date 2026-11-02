@@ -41219,7 +41219,7 @@
       "severities": [
         "error"
       ],
-      "title": "An inline JSON-shaped value is malformed.",
+      "title": "A structured value written as an indented block is malformed.",
       "reserved": false,
       "retired": false
     },
@@ -46701,6 +46701,17 @@
         "error"
       ],
       "title": "The emails block names an email onboarding does not send.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0833",
+      "name": "InlineJsonValue",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A value is written as inline JSON ({...} or [...]). Screenplay has no JSON: objects and lists are indented blocks.",
       "reserved": false,
       "retired": false
     }

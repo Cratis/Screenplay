@@ -18,6 +18,26 @@ internal static partial class UiBindingParser
             : Parse(context, trimmed, location);
     }
 
+    /// <summary>
+    /// Reads a binding clause, where <c>from literal</c> with no value on the line opens the literal as an indented block.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to read a literal block from and report diagnostics to.</param>
+    /// <param name="text">The clause text after the bound name.</param>
+    /// <param name="line">The <see cref="SourceLine"/> holding the clause, already taken from the reader.</param>
+    /// <returns>The parsed <see cref="UiBindingSyntax"/>.</returns>
+    public static UiBindingSyntax ParseFromClause(ParserContext context, string text, SourceLine line)
+    {
+        var structured = StructuredLiteralRegex().Match(text.Trim());
+        if (!structured.Success || (StructuredBlockParser.Marker(structured) is null && !context.TryPeekChild(line.Indent, out _)))
+        {
+            return ParseFromClause(context, text, line.Location);
+        }
+
+        var value = StructuredBlockParser.ParseValue(context, line, StructuredBlockParser.Marker(structured));
+        var binding = Create(UiBindingKind.Literal, string.Empty, line.Location, text.Trim()) with { Literal = value };
+        return ParseModifiers(context, binding, structured.Groups["modifiers"].Value, line.Location);
+    }
+
     public static UiBindingSyntax Parse(ParserContext context, string text, SourceLocation location)
     {
         var trimmed = text.Trim();
@@ -158,6 +178,9 @@ internal static partial class UiBindingParser
 
     [GeneratedRegex(@"^(data|query|component)\s+(\S+)(.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex BindingHeadRegex();
+
+    [GeneratedRegex(@"^(?:from\s+)?literal(?:\s+(?<modifiers>(?:mode|null|expected)\s+.+?))?(?:\s+(?<marker>none|empty))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex StructuredLiteralRegex();
 
     [GeneratedRegex(@"^literal\s+(.+?)(?:\s+(mode\s+.+|null\s+.+|expected\s+.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex LiteralBindingHeadRegex();

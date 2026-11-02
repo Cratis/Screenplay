@@ -8,9 +8,9 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
     [Fact]
     void should_refuse_whole_structured_fields_instead_of_accepting_optional_null()
     {
-        foreach (var value in new[] { "{\"name\":\"present\"}", "[{\"name\":\"present\"}]", "[]" })
+        foreach (var value in new[] { "payload\n  name = \"present\"", "payload\n  item\n    name = \"present\"", "payload none" })
         {
-            var run = Present($"payload = {value}", "String optional");
+            var run = Present(value, "String optional");
             run.Execution.ShouldBeOfExactType<SemanticUnsupported>();
             run.Passed.ShouldBeFalse();
             run.Execution.World.Facts.Length.ShouldEqual(0);
@@ -22,7 +22,7 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
     {
         foreach (var map in new[] { "value = payload", "value = `${payload}`", "split payload by \",\"\n    value" })
         {
-            var run = Present("payload = {\"name\":\"present\"}", "String optional", "value", map);
+            var run = Present("payload\n  name = \"present\"", "String optional", "value", map);
             run.Execution.ShouldBeOfExactType<SemanticUnsupported>();
             run.Passed.ShouldBeFalse();
         }
@@ -30,7 +30,7 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
 
     [Fact]
     void should_refuse_unknown_dotted_traversal_instead_of_treating_it_as_absent() =>
-        Present("payload = {\"name\":\"present\"}", "String optional", "payload.name").Execution.ShouldBeOfExactType<SemanticUnsupported>();
+        Present("payload\n  name = \"present\"", "String optional", "payload.name").Execution.ShouldBeOfExactType<SemanticUnsupported>();
 
     [Fact]
     void should_accept_genuinely_missing_and_explicit_null_optional_fields()
@@ -67,7 +67,10 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
                     when capture Records
                       id = "root"
                       payload = "enclosing"
-                      items = [{"id":1,"payload":null}]
+                      items
+                        item
+                          id = 1
+                          payload = null
                     then Recorded
                       value = "expected"
             """);
@@ -93,7 +96,9 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
                   specification PresentRecord
                     when capture Records
                       id = "root"
-                      contact = {"payload":{"name":"present"}}
+                      contact
+                        payload
+                          name = "present"
                     then Recorded
                       value = "expected"
             """);
@@ -143,7 +148,7 @@ public class and_capture_fields_are_not_discarded : given.a_v6_scenario
                     given clock "1980-01-01T00:00:00Z"
                     when capture Records
                       id = "root"
-                      {{record}}
+                      {{record.Replace("\n", "\n          ", StringComparison.Ordinal)}}
                     then Recorded
             {{assertion}}
             """);

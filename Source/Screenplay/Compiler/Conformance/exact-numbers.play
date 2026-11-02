@@ -10,9 +10,19 @@ policy Café
 seed
     for "global"
         Addéd
-            café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
+            café
+                literalType = "ExactNumber"
+                value
+                    item 9007199254740993
+                    item 1e-28
         Added
-            amount = {"literalType":"ExactNumber","value":9007199254740993,"items":[0e999999999999999999999,1e-28,"1e999999"]}
+            amount
+                literalType = "ExactNumber"
+                value       = 9007199254740993
+                items
+                    item 0e999999999999999999999
+                    item 1e-28
+                    item "1e999999"
 module Numbers
     feature Values
         slice StateChange Change
@@ -52,7 +62,10 @@ module Numbers
                     subtract amount by 9007199254740994
                 children values identified by 9007199254740993
                     from Added
-                        amount = literal {"nested":[9007199254740993,1e-28]}
+                        amount
+                            nested
+                                item 9007199254740993
+                                item 1e-28
                 variant Current
                     enters on Added key 9223372036854775808
                     from Added
@@ -79,7 +92,10 @@ module Numbers
                     map
                         amount = 9223372036854775808
                     append Added
-                        amount = {"nested":[9007199254740993,1e-28]}
+                        amount
+                            nested
+                                item 9007199254740993
+                                item 1e-28
                 nested detail
                     map
                         amount = 9007199254740993
@@ -105,7 +121,8 @@ module Numbers
                     amount = 9007199254740993
                 then readmodel View exactly
                     amount = 1e-28
-                then no readmodel View for {"id":9007199254740993}
+                then no readmodel View for
+                    id = 9007199254740993
                 then query ViewByAmount exactly
                     arguments
                         amount = 9007199254740993
@@ -116,7 +133,10 @@ module Numbers
                 given capture ReadExternal
                     amount = 9007199254740993
                 when capture ReadExternal
-                    amount = {"nested":[9007199254740993,1e-28]}
+                    amount
+                        nested
+                            item 9007199254740993
+                            item 1e-28
                 then Added
                     amount = 1e-28
             specification QueryValues
@@ -142,15 +162,23 @@ module Numbers
             reaction Réact
                 when Addéd
                     invokes Changé
-                        @café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
+                        @café
+                            literalType = "ExactNumber"
+                            value
+                                item 9007199254740993
+                                item 1e-28
             specification Unicodé
                 given Addéd
                     café = 9007199254740993
                 when Changé
-                    café = {"nested":[9007199254740993,1e-28]}
+                    café
+                        nested
+                            item 9007199254740993
+                            item 1e-28
                 then Addéd
                     café = 1e-28
-                then no readmodel Viéw for {"café":9007199254740993}
+                then no readmodel Viéw for
+                    café = 9007199254740993
                 then query ViéwBy exactly
                     arguments
                         café = 9007199254740993

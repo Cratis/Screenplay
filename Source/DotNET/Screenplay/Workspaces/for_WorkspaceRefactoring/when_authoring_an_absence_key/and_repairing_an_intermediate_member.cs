@@ -7,7 +7,7 @@ public class and_repairing_an_intermediate_member : given.a_workspace_with_an_ab
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith(Source.Replace("\"detail\":{", "\"detial\":{", StringComparison.Ordinal));
+    void Establish() => CreateWith(Source.Replace("  detail\n", "  detial\n", StringComparison.Ordinal));
 
     void Because() => _result = Workspace.ProposeAuthoring(Authoring(WorkspaceAuthoringReferencePolicy.Safe, RenameMember("detial", "detail")));
 

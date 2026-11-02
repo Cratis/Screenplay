@@ -20,6 +20,7 @@ import { ParserContext } from './ParserContext';
 import { parseOperation } from './OperationParser';
 import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { parseStructuredValue, trailingMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
 const inlineOperationPrefix = pattern('^produces\\s+operation(?:\\s|$)');
 const inlineHeader = pattern('^produces\\s+event\\s+([A-Za-z_]\\w*)(?:\\s+(generation)(?:\\s+.*)?)?$');
@@ -134,8 +135,18 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             continue;
         }
         const match = (inline === null ? mappingPattern : typedMappingPattern).exec(line.content);
-        let property = match === null || inline === null ? undefined : parseProperty(context, { ...line, content: match[1].trimEnd() });
-        if (match !== null && (inline === null || property !== undefined)) {
+        if (match === null && inline === null) {
+            const structured = tryParseStructuredMapping(context, line);
+            if (structured !== undefined) {
+                mappings.push(structured);
+                continue;
+            }
+        }
+        const marker = trailingMarker(line.content);
+        const structured = match === null && inline !== null && !line.content.includes('=') && !['id', 'description', 'documentation'].includes(keyword) && line.content.includes(' ') && (marker !== undefined || context.peekChild(line.indent) !== undefined);
+        const declaration = structured ? (marker === undefined ? line.content : line.content.substring(0, line.content.length - marker.length - 1)) : match?.[1].trimEnd();
+        let property = declaration === undefined || inline === null ? undefined : parseProperty(context, { ...line, content: declaration });
+        if ((match !== null || structured) && (inline === null || property !== undefined)) {
             if (property !== undefined) {
                 if (property.isIdentifier) {
                     context.error(DiagnosticCodes.IdentifierOnEventProperty, `Property '${property.name}' of event '${name}' cannot be marked identifier - an event never carries its event source id`, location);
@@ -148,7 +159,9 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
                 propertyNames.add(propertyName);
                 properties.push(property);
             }
-            mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], { ...location, column: line.indent + line.content.length - match[2].length + 1 }, context), location });
+            mappings.push(match === null
+                ? { kind: 'PropertyMappingSyntax', property: property!.name, source: parseStructuredValue(context, line, marker), location }
+                : { kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], { ...location, column: line.indent + line.content.length - match[2].length + 1 }, context), location });
         } else if (inline === null || !metadata.tryParse(context, line)) {
             context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid ${inline === null ? '' : 'inline '}property mapping '${line.content}' - expected '<property>${inline === null ? '' : ' <Type>'} = <source>'`, location, diagnosticText('text', line.content));
         }

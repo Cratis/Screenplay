@@ -64,7 +64,10 @@ module Numbers
                     map
                         amount = 18
                     append Added
-                        amount = {"nested":[28,29.5]}
+                        amount
+                            nested
+                                item 28
+                                item 29.5
                 nested detail
                     map
                         amount = 30
@@ -95,7 +98,7 @@ describe('when retaining projection and capture operands', () => {
     });
 
     it('should retain envelope-shaped business members as ordinary structured data', () => {
-        const result = parse(document.replace('{"nested":[28,29.5]}', '{"literalType":"ExactNumber","value":9007199254740993}'));
+        const result = parse(document.replace('nested\n                                item 28\n                                item 29.5', 'literalType = "ExactNumber"\n                            value = 9007199254740993'));
         JSON.stringify(toCompleteSyntaxJson(result.value)).should.contain('9007199254740992');
         const walker = new Values();
         walker.visitApplication(result.value);
