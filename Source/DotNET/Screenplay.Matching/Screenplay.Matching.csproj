@@ -12,6 +12,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="Cratis.Screenplay" />
         <InternalsVisibleTo Include="Cratis.Screenplay.Matching.Specs" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.Specs" />
         <InternalsVisibleTo Include="Cratis.Screenplay.CanonicalVectors.Specs" />
     </ItemGroup>
 
