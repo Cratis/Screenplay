@@ -479,8 +479,8 @@ name capture, opaque impact and unsupported spans. Do not treat a refusal as
 permission to perform a global text replacement. Use explicit typed operations
 and migrations only after resolving the uncertainty.
 
-A structured value such as `lines = [{"sku":"A-1","quantity":2}]` has typed
-object keys. You can rename the declared composite `type` property `sku`; the
+A [structured value](../structured-values.md) - such as `lines` with an `item`
+block holding `sku = "A-1"` and `quantity = 2` - has typed object members. You can rename the declared composite `type` property `sku`; the
 planner rewrites only matching keys bound to that type, preserving other keys,
 string values and source trivia. Other property declarations are not automatic
 rename targets. Opaque expressions, code blocks and imports still block a rename

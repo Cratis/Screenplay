@@ -12,9 +12,8 @@ public class with_a_contradictory_structured_outcome : given.a_structured_specif
 
     void Because()
     {
-        const string value = "[{\"sku\":\"A-1\",\"status\":\"open\"}]";
-        var position = Source.LastIndexOf(value, StringComparison.Ordinal);
-        _result = Compiler.Compile($"{Source[..position]}[]{Source[(position + value.Length)..]}");
+        var position = Source.LastIndexOf(Lines, StringComparison.Ordinal);
+        _result = Compiler.Compile($"{Source[..position]}lines none{Source[(position + Lines.Length)..]}");
     }
 
     [Fact] void should_reject_the_incompatible_outcome() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldBeTrue();

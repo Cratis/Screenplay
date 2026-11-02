@@ -7702,6 +7702,67 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": "Invoices"
                           }
+                        },
+                        {
+                          "kind": "ComponentPropertySyntax",
+                          "binding": null,
+                          "property": "columns",
+                          "value": {
+                            "kind": "ListExpressionSyntax",
+                            "items": [
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "field",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "invoiceNumber"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "label",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "Number"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "field",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "total"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "label",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "Total"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "kind": "ComponentPropertySyntax",
+                          "binding": null,
+                          "property": "rowActions",
+                          "value": {
+                            "kind": "ListExpressionSyntax",
+                            "items": []
+                          }
                         }
                       ],
                       "stableId": null

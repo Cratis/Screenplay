@@ -10,10 +10,22 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class SpecificationParser
 {
+    /// <summary>
+    /// The word after <c>then returns</c> that opens a structured scalar response as an indented block.
+    /// </summary>
+    internal const string StructuredReturnKeyword = "value";
+
     static SpecificationReturnSyntax? ParseReturn(ParserContext context, SourceLine line)
     {
         var prefix = ThenReturnsPrefixRegex().Match(line.Content).Length;
         var value = line.Content[prefix..].Trim();
+
+        // 'then returns value' opens a structured scalar - an object or a list - as an indented block.
+        if (value == StructuredReturnKeyword || value == $"{StructuredReturnKeyword} {StructuredBlockParser.NoneKeyword}" || value == $"{StructuredReturnKeyword} {StructuredBlockParser.EmptyKeyword}")
+        {
+            return new ScalarSpecificationReturnSyntax(StructuredBlockParser.ParseValue(context, line, value == StructuredReturnKeyword ? null : value[(StructuredReturnKeyword.Length + 1)..]), line.Location);
+        }
+
         if (value.Length > 0)
         {
             var concrete = ParseConcrete(context, value, line.LocationAt(line.Content.IndexOf(value, prefix, StringComparison.Ordinal)), DiagnosticCodes.InvalidReturnExpectation);
@@ -42,6 +54,16 @@ internal static partial class SpecificationParser
     static PropertyMappingSyntax? ParseConcreteMapping(ParserContext context, SourceLine line, Regex regex, string code)
     {
         var match = regex.Match(line.Content);
+        if (!match.Success && GeneratedFixtureBlockRegex().Match(line.Content) is { Success: true } generated)
+        {
+            return new PropertyMappingSyntax(generated.Groups["name"].Value, StructuredBlockParser.ParseValue(context, line, StructuredBlockParser.Marker(generated)), line.Location);
+        }
+
+        if (!match.Success && StructuredBlockParser.TryParseMapping(context, line, out var structured))
+        {
+            return structured;
+        }
+
         if (!match.Success)
         {
             context.Error(code, "Expected a named fixture or assertion with exactly one concrete value.", line.Location);
@@ -63,6 +85,11 @@ internal static partial class SpecificationParser
     static SpecificationGeneratedValueSyntax? ParseGivenGenerated(ParserContext context, SourceLine line)
     {
         var match = GivenGeneratedRegex().Match(line.Content);
+        if (!match.Success && GivenGeneratedBlockRegex().Match(line.Content) is { Success: true } block)
+        {
+            return new SpecificationGeneratedValueSyntax(block.Groups[1].Value, block.Groups[2].Value, StructuredBlockParser.ParseValue(context, line, StructuredBlockParser.Marker(block)), line.Location);
+        }
+
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidGeneratedFixture, "Expected 'given generated <Command>.<property> = <value>' with exactly one concrete value.", line.Location);
@@ -107,6 +134,9 @@ internal static partial class SpecificationParser
     static DiagnosticArguments ConcreteArguments(string code, string text) => code == DiagnosticCodes.InvalidSpecificationValue || code == DiagnosticCodes.InvalidSpecificationCaseValue
         ? DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(text)) : DiagnosticArguments.Empty;
 
+    [GeneratedRegex(@"^generated\s+(?<name>[a-z_]\w*)(?:\s+(?<marker>none|empty))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex GeneratedFixtureBlockRegex();
+
     [GeneratedRegex(@"^then\s+returns\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenReturnsPrefixRegex();
 
@@ -115,6 +145,9 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^given\s+generated\s+([A-Z]\w*)\.([a-z_]\w*)\s*=(?:\s+(?<3>.+)|(?<3>[^=>\n].*))$", RegexOptions.NonBacktracking)]
     private static partial Regex GivenGeneratedRegex();
+
+    [GeneratedRegex(@"^given\s+generated\s+([A-Z]\w*)\.([a-z_]\w*)(?:\s+(?<marker>none|empty))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenGeneratedBlockRegex();
 
     [GeneratedRegex(@"^generated\s+[^\s=]", RegexOptions.NonBacktracking)]
     private static partial Regex GeneratedFixturePrefixRegex();

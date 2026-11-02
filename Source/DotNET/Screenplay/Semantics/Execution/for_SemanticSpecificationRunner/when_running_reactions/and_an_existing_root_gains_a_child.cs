@@ -12,11 +12,20 @@ public class and_an_existing_root_gains_a_child : given.a_record_capture
                 given capture Records
                   id = "root"
                   sourceStatus = "sendt"
-                  items = [{"id":"old","value":"before"}]
+                  items
+                    item
+                      id = "old"
+                      value = "before"
                 when capture Records
                   id = "root"
                   sourceStatus = "sendt"
-                  items = [{"id":"old","value":"after"},{"id":"new","value":"after"}]
+                  items
+                    item
+                      id = "old"
+                      value = "after"
+                    item
+                      id = "new"
+                      value = "after"
                 then ChildChanged
                 then ChildAnyChanged
                 then ChildTransitioned

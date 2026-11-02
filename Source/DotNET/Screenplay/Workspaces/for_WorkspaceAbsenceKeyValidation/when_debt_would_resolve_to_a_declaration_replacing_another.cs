@@ -11,7 +11,7 @@ public class when_debt_would_resolve_to_a_declaration_replacing_another : given.
     {
         // The key member 'segment' is debt; the candidate removes 'part' and adds 'segment', which reads as a rename
         // without the migration that would prove it.
-        var debt = Source.Replace("\"part\":\"old\"", "\"segment\":\"old\"", StringComparison.Ordinal);
+        var debt = Source.Replace("part = \"old\"", "segment = \"old\"", StringComparison.Ordinal);
         _error = Validate(debt, debt.Replace("  part String", "  segment String", StringComparison.Ordinal), WorkspaceAuthoringReferencePolicy.Draft);
     }
 

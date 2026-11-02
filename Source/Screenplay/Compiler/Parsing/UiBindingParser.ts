@@ -7,14 +7,25 @@ import { parseMappingSource } from './ExpressionParser';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { locationOf, SourceLine } from './SourceLine';
+import { markerOf, parseStructuredValue } from './StructuredBlockParser';
 
 const bindingHead = pattern('^(data|query|component)\\s+(\\S+)(.*)$');
+const structuredLiteral = pattern('^(?:from\\s+)?literal(?:\\s+(?<modifiers>(?:mode|null|expected)\\s+.+?))?(?:\\s+(?<marker>none|empty))?$');
 const literalBindingHead = pattern('^literal\\s+(.+?)(?:\\s+(mode\\s+.+|null\\s+.+|expected\\s+.+))?$');
 const qualifiedPath = pattern('^([A-Za-z_]\\w*)(?:\\.(.+))?$');
 const requiredQualifiedPath = pattern('^(?:([A-Za-z_]\\w*)|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")\\.(.+)$');
 const mode = pattern('^mode\\s+(oneWay|twoWay)\\b(.*)$');
 const nullBehavior = pattern('^null\\s+(propagate|clear|preserve)\\b(.*)$');
 const expected = pattern('^expected\\s+(\\w+(?:\\.\\w+)*)(.*)$');
+
+// A binding clause on a line, where 'from literal' with no value on the line opens the literal as an indented block.
+export function parseFromClauseOn(context: ParserContext, text: string, line: SourceLine): UiBindingSyntax {
+    const structured = structuredLiteral.exec(text.trim());
+    if (structured === null || (markerOf(structured) === undefined && context.peekChild(line.indent) === undefined)) return parseFromClause(context, text, locationOf(line));
+    const literal = parseStructuredValue(context, line, markerOf(structured));
+    return withModifiers(context, { ...create('Literal', '', locationOf(line)), literal }, structured.groups!.modifiers ?? '', locationOf(line));
+}
 
 export function parseFromClause(context: ParserContext, text: string, location: SourceLocation): UiBindingSyntax {
     const trimmed = text.trim();

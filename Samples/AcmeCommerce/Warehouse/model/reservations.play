@@ -511,12 +511,33 @@ module Stock
             data PickingCard[] via query AllPickingCards
             component Cratis.Blueprint.Default.kanbanBoard pickingBoard
               id "pickingBoard"
-              property columns = [{"id":"toPick","label":"To pick"},{"id":"picking","label":"Picking"},{"id":"packed","label":"Packed"},{"id":"dispatched","label":"Dispatched"}]
+              property columns
+                item
+                  id    = "toPick"
+                  label = "To pick"
+                item
+                  id    = "picking"
+                  label = "Picking"
+                item
+                  id    = "packed"
+                  label = "Packed"
+                item
+                  id    = "dispatched"
+                  label = "Dispatched"
               property cards from query AllPickingCards
               property cardId = "id"
               property cardTitle = "id"
               property cardColumn = "status"
-              property cardFields = [{"field":"sku","label":"SKU"},{"field":"quantity","label":"Qty"},{"field":"carrier","label":"Carrier"}]
+              property cardFields
+                item
+                  field = "sku"
+                  label = "SKU"
+                item
+                  field = "quantity"
+                  label = "Qty"
+                item
+                  field = "carrier"
+                  label = "Carrier"
               property label = "Parcels by stage"
 
       specification AParcelMovesAcrossTheBoard

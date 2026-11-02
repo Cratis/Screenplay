@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_authoring_a
 
 public class and_replacing_a_document_that_keeps_unique_debt : given.a_workspace_with_an_absent_read_model_key
 {
-    const string Debt = "then no readmodel InvoiceView for {\"id\":\"first\",\"detail\":{\"missing\":\"old\"}}";
+    const string Debt = "then no readmodel InvoiceView for\n          id = \"first\"\n          detail\n            missing = \"old\"";
 
     WorkspaceAuthoringResult _result = null!;
 

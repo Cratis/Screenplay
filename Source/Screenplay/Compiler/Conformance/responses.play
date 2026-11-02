@@ -59,9 +59,17 @@ module Projects
           details ResponseDetails = details
       specification ReturnsConcreteDetails
         when ReturnDetails
-          details = {"labels": ["one", "two"], "accepted": true}
+          details
+            labels
+              item "one"
+              item "two"
+            accepted = true
         then returns
-          details = {"labels": ["one", "two"], "accepted": true}
+          details
+            labels
+              item "one"
+              item "two"
+            accepted = true
       command HandlerWithResponse
         name String
         handler

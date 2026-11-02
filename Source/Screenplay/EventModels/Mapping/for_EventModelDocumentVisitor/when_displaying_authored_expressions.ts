@@ -27,9 +27,9 @@ const vectors: [ExpressionSyntax, string][] = [
     [{ kind: 'ClockOffsetExpressionSyntax', clock: 'now', amount: 2, unit: 'hours', location }, 'now + 2 hours'],
     [{ kind: 'DateOfExpressionSyntax', operand: { kind: 'PathExpressionSyntax', path: 'occurred', location }, location }, 'date of occurred'],
     [{ kind: 'RawExpressionSyntax', text: 'not evaluated', location }, 'not evaluated'],
-    [{ kind: 'ListExpressionSyntax', items: [], location }, '[]'],
-    [{ kind: 'ObjectExpressionSyntax', members: [], location }, '{  }'],
-    [{ kind: 'ObjectExpressionSyntax', members: [{ kind: 'ObjectMemberSyntax', name: 'quoted"key', value: { kind: 'ListExpressionSyntax', items: [{ kind: 'LiteralExpressionSyntax', value: 1, location }], location }, location }], location }, '{ "quoted\\"key": [1] }']
+    [{ kind: 'ListExpressionSyntax', items: [], location }, 'none'],
+    [{ kind: 'ObjectExpressionSyntax', members: [], location }, 'empty'],
+    [{ kind: 'ObjectExpressionSyntax', members: [{ kind: 'ObjectMemberSyntax', name: 'quoted"key', value: { kind: 'ListExpressionSyntax', items: [{ kind: 'LiteralExpressionSyntax', value: 1, location }], location }, location }], location }, '("quoted\\"key" = (item 1))']
 ];
 
 describe('when displaying authored expressions', () => {

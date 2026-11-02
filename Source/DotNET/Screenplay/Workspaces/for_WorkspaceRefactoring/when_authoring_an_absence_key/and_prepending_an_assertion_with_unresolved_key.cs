@@ -8,7 +8,7 @@ public class and_prepending_an_assertion_with_unresolved_key : given.a_workspace
     WorkspaceAuthoringResult _safe = null!;
     WorkspaceAuthoringResult _draft = null!;
 
-    void Establish() => CreateWith(Source.Replace("\"part\":\"old\"", "\"missing\":\"old\"", StringComparison.Ordinal));
+    void Establish() => CreateWith(Source.Replace("part = \"old\"", "missing = \"old\"", StringComparison.Ordinal));
 
     void Because()
     {

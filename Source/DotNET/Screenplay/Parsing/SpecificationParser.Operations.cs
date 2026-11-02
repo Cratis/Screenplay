@@ -28,7 +28,12 @@ internal static partial class SpecificationParser
             while (context.TryPeekChild(line.Indent, out var child))
             {
                 context.Reader.TakeSignificant();
-                if (ParseConcreteMapping(context, child, MappingRegex(), DiagnosticCodes.InvalidOperationSpecification) is { } value)
+                var value = ParseConcreteMapping(context, child, MappingRegex(), DiagnosticCodes.InvalidOperationSpecification);
+                if (value is not null && !MappingRegex().IsMatch(child.Content))
+                {
+                    values.Add(value);
+                }
+                else if (value is not null)
                 {
                     var source = MappingRegex().Match(child.Content).Groups[2];
                     var location = child.LocationAt(source.Index);

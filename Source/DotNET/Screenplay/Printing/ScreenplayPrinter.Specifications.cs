@@ -95,21 +95,21 @@ public partial class ScreenplayPrinter
 
             foreach (var generated in specification.GivenGenerated)
             {
-                writer.Line($"given generated {generated.Command}.{generated.Property} = {writer.Expression(generated.Source)}", generated);
+                writer.Assignment($"given generated {generated.Command}.{generated.Property}", generated.Source, generated);
             }
 
             if (specification.When is not null)
             {
-                writer.Line(SpecificationHeader(writer, $"when {specification.When.CommandType}", specification.When.Values, specification.When.InlineProperty), specification.When);
+                writer.Line(SpecificationHeader(writer, $"when {specification.When.CommandType}", specification.When.Values, ScalarInline(specification.When.Values, specification.When.InlineProperty)), specification.When);
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, specification.When.For);
                     foreach (var fixture in specification.When.GeneratedValues)
                     {
-                        writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.ResponseValue(fixture.Source)}", fixture);
+                        writer.Assignment($"generated {fixture.Property}", fixture.Source, fixture, ScreenplaySyntaxText.ResponseValue);
                     }
 
-                    WriteSpecificationValues(writer, specification.When.Values.Where(value => value.Property != specification.When.InlineProperty));
+                    WriteSpecificationValues(writer, specification.When.Values.Where(value => value.Property != ScalarInline(specification.When.Values, specification.When.InlineProperty)));
                 }
             }
 
@@ -244,12 +244,12 @@ public partial class ScreenplayPrinter
     void WriteSpecificationEvent(ScreenplayWriter writer, string keyword, SpecificationEventSyntax @event)
     {
         using var anchor = writer.Anchor(@event);
-        writer.Line(SpecificationHeader(writer, $"{keyword} {@event.EventType}", @event.Values, @event.InlineProperty));
+        writer.Line(SpecificationHeader(writer, $"{keyword} {@event.EventType}", @event.Values, ScalarInline(@event.Values, @event.InlineProperty)));
         using (writer.Indent())
         {
             WriteSpecificationEventSource(writer, @event.For);
             WriteSpecificationRoute(writer, @event.Stream, @event.NoStream);
-            WriteSpecificationValues(writer, @event.Values.Where(value => value.Property != @event.InlineProperty));
+            WriteSpecificationValues(writer, @event.Values.Where(value => value.Property != ScalarInline(@event.Values, @event.InlineProperty)));
         }
     }
 
@@ -270,17 +270,18 @@ public partial class ScreenplayPrinter
     void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)
     {
         using var anchor = writer.Anchor(readModel);
-        writer.Line(SpecificationHeader(writer, $"{keyword} readmodel {readModel.Name}{(readModel.Exactly ? " exactly" : string.Empty)}", readModel.Properties, readModel.InlineProperty));
+        writer.Line(SpecificationHeader(writer, $"{keyword} readmodel {readModel.Name}{(readModel.Exactly ? " exactly" : string.Empty)}", readModel.Properties, ScalarInline(readModel.Properties, readModel.InlineProperty)));
         using (writer.Indent())
         {
-            WriteSpecificationValues(writer, readModel.Properties.Where(value => value.Property != readModel.InlineProperty));
+            WriteSpecificationValues(writer, readModel.Properties.Where(value => value.Property != ScalarInline(readModel.Properties, readModel.InlineProperty)));
         }
     }
 
     void WriteSpecificationAbsentReadModel(ScreenplayWriter writer, SpecificationAbsentReadModelSyntax readModel)
     {
         using var anchor = writer.Anchor(readModel);
-        writer.Line($"then no readmodel {readModel.Name} for {writer.Expression(readModel.Key)}");
+        if (ScreenplaySyntaxText.IsStructured(readModel.Key)) writer.Structured($"then no readmodel {readModel.Name} for", readModel.Key);
+        else writer.Line($"then no readmodel {readModel.Name} for {writer.Expression(readModel.Key)}");
     }
 
     void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)
@@ -334,7 +335,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var value in values)
         {
-            writer.Line($"{value.Property} = {writer.Expression(value.Source)}", value);
+            writer.Assignment(value.Property, value.Source, value);
         }
     }
 }

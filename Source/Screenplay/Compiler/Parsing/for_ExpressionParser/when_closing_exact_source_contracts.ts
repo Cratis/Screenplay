@@ -39,7 +39,7 @@ describe('when closing Exact source contracts', () => {
         ['seed\n  wrong\n', 'PLAY0129'],
         ['seed\n  for "global"\n    wrong\n', 'PLAY0130'],
         [seed('amount ='), 'PLAY0131'],
-        [seed('amount\n        numbers exact'), 'PLAY0131'],
+        [seed('amount\n        numbers exact'), 'PLAY0291'],
         ['policy P\n  numbers exact\n', 'PLAY0113'],
         ['policy wrong-name\n  require authenticated\n', 'PLAY0112'],
         ['policy P\n', 'PLAY0114'],

@@ -42,7 +42,7 @@ public partial class ScreenplayPrinter
                 var target = $"{WriteComponentReference(contribution.Component)}.{contribution.Path}";
                 if (contribution.Value is not null)
                 {
-                    writer.Line($"set {target} = {writer.Expression(contribution.Value)}", contribution);
+                    writer.Assignment($"set {target}", contribution.Value, contribution);
                     continue;
                 }
 
@@ -56,7 +56,7 @@ public partial class ScreenplayPrinter
                         {
                             foreach (var value in item.Values)
                             {
-                                writer.Line($"{value.Field} = {writer.Expression(value.Value)}", value);
+                                writer.Assignment(value.Field, value.Value, value);
                             }
                         }
                     }

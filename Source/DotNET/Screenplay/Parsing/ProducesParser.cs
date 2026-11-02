@@ -185,6 +185,12 @@ internal static partial class ProducesParser
             }
 
             var match = MappingRegex().Match(child.Content);
+            if (!match.Success && StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                mappings.Add(structured);
+                continue;
+            }
+
             if (!match.Success)
             {
                 context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
@@ -252,7 +258,12 @@ internal static partial class ProducesParser
             }
 
             var match = TypedMappingRegex().Match(line.Content);
-            if (match.Success && PropertyLineParser.Parse(context, line with { Content = match.Groups[1].Value.TrimEnd() }) is { } property)
+            var marker = StructuredBlockParser.TrailingMarker(line.Content);
+            var structured = !match.Success && !line.Content.Contains('=') && LineText.FirstWord(line.Content) is not ("id" or "description" or "documentation") && line.Content.Contains(' ')
+                && (marker is not null || context.TryPeekChild(line.Indent, out _));
+            var declaration = match.Groups[1].Value.TrimEnd();
+            if (structured) declaration = marker is null ? line.Content : line.Content[..^(marker.Length + 1)];
+            if ((match.Success || structured) && PropertyLineParser.Parse(context, line with { Content = declaration }) is { } property)
             {
                 property = PropertyLineParser.WithoutKey(context, property);
                 if (property.IsIdentifier)
@@ -267,7 +278,9 @@ internal static partial class ProducesParser
                 }
 
                 properties.Add(property);
-                mappings.Add(ExpressionParser.ParseMapping(context, property.Name, match.Groups[2], line));
+                mappings.Add(structured
+                    ? new PropertyMappingSyntax(property.Name, StructuredBlockParser.ParseValue(context, line, marker), line.Location)
+                    : ExpressionParser.ParseMapping(context, property.Name, match.Groups[2], line));
             }
             else if (!metadata.TryParse(context, line))
             {

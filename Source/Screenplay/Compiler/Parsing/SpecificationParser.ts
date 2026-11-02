@@ -24,6 +24,7 @@ import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcrete, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationInvocationSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
+import { parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
@@ -52,6 +53,7 @@ const thenInvokesPrefix = pattern('^then\\s+invokes\\b');
 const thenInvokesPattern = pattern('^then\\s+invokes\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
 const givenGeneratedPrefix = pattern('^given\\s+generated\\b');
 const givenGeneratedPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
+const givenGeneratedBlockPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)(?:\\s+(none|empty))?$');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
 const whenTriggerPrefix = pattern('^when\\s+trigger\\b');
 const whenCapturePrefix = pattern('^when\\s+capture\\b');
@@ -69,7 +71,7 @@ const whenTriggerPattern = pattern('^when\\s+trigger\\s+([A-Za-z_]\\w*)$');
 const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$');
 const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
-const thenAbsentReadModelPattern = nativePattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
+const thenAbsentReadModelPattern = nativePattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for(?:\\s+(.+))?$');
 const absentKeyStringPattern = nativePattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`);
 const thenQueryPattern = nativePattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
 
@@ -447,7 +449,12 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
             return;
         }
         const match = thenAbsentReadModelPattern.exec(line.content);
-        if (match !== null && !match[2].endsWith(' exactly')) {
+        if (match !== null && match[2] === undefined && context.peekChild(line.indent) !== undefined) {
+            // 'for' ending the line opens the key's members as an indented block.
+            body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key: parseStructuredValue(context.valueContext, line, undefined), location: locationOf(line) });
+            return;
+        }
+        if (match !== null && match[2] !== undefined && !match[2].endsWith(' exactly')) {
             const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
             if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax' || key.kind === 'CaseValueExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
         }
@@ -494,7 +501,10 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
 // The Exact port of C# ParseAbsentReadModel: every malformed part is reported rather than dropped.
 function parseAbsentReadModel(context: ParserContext, line: SourceLine): SpecificationAbsentReadModelSyntax | null {
     const match = thenAbsentReadModelPattern.exec(line.content);
-    if (match === null || match[2].endsWith(' exactly')) {
+    if (match !== null && match[2] === undefined && context.peekChild(line.indent) !== undefined) {
+        return { kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key: parseStructuredValue(context, line, undefined), location: locationOf(line) } as SpecificationAbsentReadModelSyntax;
+    }
+    if (match === null || match[2] === undefined || match[2].endsWith(' exactly')) {
         context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence assertion '${line.content}' - expected 'then no readmodel <ReadModelType> for <key>'`, locationOf(line));
         skipBody(context, line.indent);
         return null;
@@ -531,6 +541,10 @@ function parseClock(context: ParserContext, line: SourceLine, keyword: string): 
 
 function parseGivenGenerated(context: ParserContext, line: SourceLine): SpecificationGeneratedValueSyntax | null {
     const match = givenGeneratedPattern.exec(line.content);
+    const block = match === null ? givenGeneratedBlockPattern.exec(line.content) : null;
+    if (block !== null) {
+        return { kind: 'SpecificationGeneratedValueSyntax', command: block[1], property: block[2], source: parseStructuredValue(context, line, block[3] as StructuredMarker), location: locationOf(line) };
+    }
     if (match === null) {
         context.error(DiagnosticCodes.InvalidGeneratedFixture, "Expected 'given generated <Command>.<property> = <value>' with exactly one concrete value.", locationOf(line));
         context.skipBlock(line.indent);
@@ -613,6 +627,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
     let hasRoute = false;
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
+        let structured: PropertyMappingSyntax | undefined;
         if (generated !== undefined && generatedFixturePrefix.test(child.content)) {
             const fixture = parseConcreteMapping(context, child, generatedFixturePattern, DiagnosticCodes.InvalidGeneratedFixture);
             if (fixture !== null) generated.push(fixture);
@@ -653,6 +668,8 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             } else {
                 eventSource = parseMappingSource(source, locationOf(child), context);
             }
+        } else if ((structured = tryParseStructuredMapping(context, child)) !== undefined) {
+            addFixtureValue(context, values, structured);
         } else {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }
@@ -708,11 +725,12 @@ function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifie
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
         const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
-        if (mapping === null) {
+        const structured = mapping === null ? tryParseStructuredMapping(context, child) : undefined;
+        if (mapping === null && structured === undefined) {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
             continue;
         }
-        const value = mappingOf(context, child, mapping, nativeIdentifiers);
+        const value = structured ?? mappingOf(context, child, mapping!, nativeIdentifiers);
         if (queryArgumentsContext !== undefined) {
             if (values.some(existing => existing.property === value.property)) {
                 queryArgumentsContext.error(DiagnosticCodes.UnknownSpecificationQueryArgument, `Query argument '${value.property}' is repeated.`, value.location, diagnosticText('argument', value.property));

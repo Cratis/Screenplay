@@ -1011,8 +1011,15 @@ module Invoicing
         invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
         customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
         invoiceNumber  = "INV-000123"
-        lines          = [{"lineNumber": 1, "productName": "Consulting", "quantity": 10, "unitPrice": 1200}]
-        billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+        lines
+          item
+            lineNumber  = 1
+            productName = "Consulting"
+            quantity    = 10
+            unitPrice   = 1200
+        billingContact
+          name  = "Ada Lovelace"
+          email = "ada@acme.test"
         currency       = "NOK"
         paymentTerms   = "net30"
         dueDate        = "2026-12-31"
@@ -1046,7 +1053,12 @@ module Invoicing
         when AcmeInvoice isProForma = true
           invoiceId     = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
           invoiceNumber = "INV-000124"
-          lines         = [{"lineNumber": 1, "productName": "License", "quantity": 1, "unitPrice": 500}]
+          lines
+            item
+              lineNumber  = 1
+              productName = "License"
+              quantity    = 1
+              unitPrice   = 500
           currency      = "USD"
           paymentTerms  = "immediate"
         then InvoiceRegistered
@@ -1068,7 +1080,7 @@ module Invoicing
         when RegisterInvoice
           invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceNumber = "INV-000123"
-          lines         = []
+          lines none
         then error "An invoice must have at least one line"
 
       // A bare 'then error' states a rejection whose reason lives in the name.
@@ -1466,7 +1478,8 @@ module Invoicing
           invoiceNumber = "INV-000123"
         when ProcessInvoiceBatch
           batchId    = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
-          invoiceIds = ["9c858901-8a57-4791-81fe-4c455b099bc9"]
+          invoiceIds
+            item "9c858901-8a57-4791-81fe-4c455b099bc9"
           action     = "send"
         then InvoiceBatchProcessingStarted
           for "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
@@ -1483,7 +1496,8 @@ module Invoicing
           role "Accountant"
         when ProcessInvoiceBatch
           batchId    = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
-          invoiceIds = ["9c858901-8a57-4791-81fe-4c455b099bc9"]
+          invoiceIds
+            item "9c858901-8a57-4791-81fe-4c455b099bc9"
           action     = "archive"
         then error "Action must be send or cancel"
 
@@ -1571,7 +1585,9 @@ module Invoicing
           invoiceNumber = "INV-000123"
         when UpdateBillingContact
           invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          billingContact = {"name": "Grace Hopper", "email": "grace@acme.test"}
+          billingContact
+            name  = "Grace Hopper"
+            email = "grace@acme.test"
         then BillingContactUpdated
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           email = "grace@acme.test"
@@ -1582,7 +1598,9 @@ module Invoicing
           role "InvoiceManager"
         when UpdateBillingContact
           invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          billingContact = {"name": "Grace Hopper", "email": "not-an-email"}
+          billingContact
+            name  = "Grace Hopper"
+            email = "not-an-email"
         then error "Must be a valid email address"
 
     slice StateView InvoiceList
@@ -1669,6 +1687,15 @@ module Invoicing
         component Cratis.Components.DataGrid invoiceGrid
           context from query ListInvoices
           property title = "Invoices"
+          // Objects and lists are indented blocks: one 'member = value' per line, one 'item' per element.
+          property columns
+            item
+              field = "invoiceNumber"
+              label = "Number"
+            item
+              field = "total"
+              label = "Total"
+          property rowActions none
           icon invoice
           exposes selectedInvoice from component invoiceGrid.selected
           outlet detail
@@ -3127,7 +3154,9 @@ module Invoicing
           claim "dateOfBirth" = "1980-01-01"
         when RequestPaymentPlan
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          plan      = {"installments": 3, "firstDueDate": "2026-11-01"}
+          plan
+            installments = 3
+            firstDueDate = "2026-11-01"
         then PaymentPlanRequested
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           installments = 3
@@ -3141,7 +3170,9 @@ module Invoicing
           claim "dateOfBirth" = "1980-01-01"
         when RequestPaymentPlan
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          plan      = {"installments": 1, "firstDueDate": "2026-11-01"}
+          plan
+            installments = 1
+            firstDueDate = "2026-11-01"
         then error "A plan has at least two installments"
 
     // Another view with no events behind it - the credit bureau owns the facts.
@@ -3323,7 +3354,9 @@ module Invoicing
             invoiceNumber
             produces InvoiceNotificationSent
               channel  = "email"
-              channels = ["email", "portal"]
+              channels
+                item "email"
+                item "portal"
               subject  = $strings.notifications.invoiceRegistered
               sentAt   = $context.occurred
             file Reactions/NotifyCustomerReaction.cs
@@ -3341,7 +3374,9 @@ module Invoicing
           when append InvoiceRegistered
             for "9c858901-8a57-4791-81fe-4c455b099bc9"
             invoiceNumber  = "INV-000123"
-            billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+            billingContact
+              name  = "Ada Lovelace"
+              email = "ada@acme.test"
           then InvoiceNotificationSent
             channel = "email"
 
