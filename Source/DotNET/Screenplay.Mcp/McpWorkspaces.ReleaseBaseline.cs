@@ -12,25 +12,22 @@ namespace Cratis.Screenplay.Mcp;
 internal sealed partial class McpWorkspaces
 {
     readonly ConditionalWeakTable<IMcpProposal, BaselinePlan> _baselinePlans = [];
+    readonly AsyncLocal<McpAttachmentContents.Request?> _attachmentRequest = new();
     BaselinePlan? _planningBaseline;
+
+    internal McpAttachmentContents.Request? AttachmentRequest => _attachmentRequest.Value;
 
     internal object WithReleaseBaseline(string tool, JsonElement arguments, Func<object> call)
     {
-        if (!PlansProposal(tool))
-        {
-            return call();
-        }
-
-        var workspace = Current();
-        _planningBaseline = ReadBaselinePlan(workspace.IdentityCatalog.Application);
-        CheckBaselinePin(arguments, _planningBaseline.Read);
+        var previous = _attachmentRequest.Value;
+        _attachmentRequest.Value = PlansProposal(tool) ? new() : null;
         try
         {
-            return call();
+            return WithProposalBaseline(tool, arguments, call);
         }
         finally
         {
-            _planningBaseline = null;
+            _attachmentRequest.Value = previous;
         }
     }
 
@@ -86,6 +83,26 @@ internal sealed partial class McpWorkspaces
         violations = baseline.Status == "unreadable" || check?.Failure is not null ? (int?)null : check?.Violations.Length ?? 0,
         checkFailure = check?.Failure
     };
+
+    object WithProposalBaseline(string tool, JsonElement arguments, Func<object> call)
+    {
+        if (!PlansProposal(tool))
+        {
+            return call();
+        }
+
+        var workspace = Current();
+        _planningBaseline = ReadBaselinePlan(workspace.IdentityCatalog.Application);
+        CheckBaselinePin(arguments, _planningBaseline.Read);
+        try
+        {
+            return call();
+        }
+        finally
+        {
+            _planningBaseline = null;
+        }
+    }
 
     BaselinePlan PlanBaseline(IMcpProposal proposal, JsonElement arguments)
     {
