@@ -14,6 +14,7 @@
         { "name": "reaction-identity", "path": "Source/Screenplay/Compiler/Conformance/reaction-identity.play" },
         { "name": "reaction-event-source", "path": "Source/Screenplay/Compiler/Conformance/reaction-event-source.play" },
         { "name": "identity", "path": "Source/Screenplay/Compiler/Conformance/identity.play" },
+        { "name": "application-context", "path": "Source/Screenplay/Compiler/Conformance/application-context.play" },
         { "name": "public-events", "path": "Source/Screenplay/Compiler/Conformance/public-events.play" },
         { "name": "public-events-admission", "path": "Source/Screenplay/Compiler/Conformance/public-events-admission.play" },
         { "name": "event-translations", "path": "Source/Screenplay/Compiler/Conformance/event-translations.play" },

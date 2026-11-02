@@ -1,0 +1,15 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+context
+  description "Calendars supplied to this application"
+  bookingZone time zone
+  @reportingZone time zone // Escaped names retain the same identity.
+
+module Scheduling
+  feature Appointments
+    slice StateChange Book
+      command BookAppointment
+        context String
+        zone String
+        timeZone String

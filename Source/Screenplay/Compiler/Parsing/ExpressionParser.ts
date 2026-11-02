@@ -13,7 +13,7 @@ import { InvalidStructuredValue, StructuredValueParser } from './StructuredValue
 const pathPattern = pattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const nativePathPattern = nativePattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const numberPattern = pattern('^-?\\d+(\\.\\d+)?$');
-const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
+export const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
 const causedByProperties = ['subject', 'name', 'userName'];
 export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
 

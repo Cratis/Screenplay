@@ -15,7 +15,7 @@ import { bmpWordCharacters } from './bmp-word-characters';
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'runs', 'time', 'statemachine', 'workflow']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -70,6 +70,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
+            [/^()(context)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@applicationContextBody.$1' }]],
             [/^(command)(\s+)(reads)(\s+)(protected)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(reaction)(\s+)(batches)(\s+)(atomic)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
@@ -206,6 +207,12 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             { include: '@root' },
         ],
 
+        applicationContextBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(@?[a-z_]\w*)(\s+)(time)(\s+)(zone)(?=\s*(?:\/\/.*)?$)/, ['white', 'identifier', 'white', 'type.identifier', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
         purposeBody: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
             [/^(\s*)(basis|interest|condition|authorization|subjects|retention|recipient|transfer|erasure)(\s+)/, ['white', 'keyword', 'white']],
@@ -328,7 +335,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         defaultToken: '',
         tokenPostfix: '.play',
         ignoreCase: false,
-        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords, ...codeBlockTags],
+        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords.filter(keyword => keyword !== 'context'), ...codeBlockTags],
         sliceTypes,
         primitiveTypes,
         tokenizer,
