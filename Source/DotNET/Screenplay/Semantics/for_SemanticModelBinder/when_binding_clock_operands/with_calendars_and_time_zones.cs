@@ -41,18 +41,28 @@ public class with_calendars_and_time_zones : given.a_clock_binder
     [Theory]
     [InlineData("Mars/Olympus")]
     [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("W. Europe Standard Time")]
     public void should_refuse_an_unknown_zone_without_falling_back_to_utc(string zone)
     {
         var result = BindClock(Source($"        calendar \"{zone}\"\n"));
         result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownTimeZone);
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownTimeZone &&
+            diagnostic.Severity == DiagnosticSeverity.Error &&
+            diagnostic.Message == $"The calendar of command 'C' names '{zone}', which is not a known IANA time zone. There is no fallback to UTC.");
     }
 
-    [Fact]
-    void should_refuse_an_unknown_application_zone()
+    [Theory]
+    [InlineData("Nowhere/Land")]
+    [InlineData("   ")]
+    [InlineData("W. Europe Standard Time")]
+    public void should_refuse_an_unknown_application_zone(string zone)
     {
-        var result = BindClock(Source(string.Empty, "time zone \"Nowhere/Land\"\n"));
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownTimeZone);
+        var result = BindClock(Source(string.Empty, $"time zone configurable default \"{zone}\"\n"));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownTimeZone &&
+            diagnostic.Severity == DiagnosticSeverity.Error &&
+            diagnostic.Message == $"The application time zone names '{zone}', which is not a known IANA time zone. There is no fallback to UTC.");
     }
 
     [Fact]

@@ -37,7 +37,7 @@ internal static class SemanticScenario
         out int actionFacts,
         out ImmutableArray<SemanticRecordedInvocation> invocations)
     {
-        var loop = new SemanticReactionLoop(evaluator, plan, world);
+        var loop = new SemanticReactionLoop(evaluator, plan, world) { GivenTimeZone = expected.GivenTimeZone };
         var result = Perform(plan, evaluator, loop, world, expected, queries, out actionFacts);
         invocations = loop.Invocations;
         return result;

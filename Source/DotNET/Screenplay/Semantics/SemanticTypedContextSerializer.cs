@@ -83,8 +83,10 @@ public static class SemanticTypedContextSerializer
 
     static object? Reference(SemanticTypeReference? type) => type is null ? null : new
     {
-        kind = type.Kind.ToString(), primitive = type.Primitive.ToString(),
+        kind = type.Kind.ToString(),
+        primitive = type.Primitive.ToString(),
         target = type.Kind == SemanticTypeReferenceKind.Primitive ? null : type.Target.ToString(),
-        type.IsCollection, type.IsOptional
+        type.IsCollection,
+        type.IsOptional
     };
 }
