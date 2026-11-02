@@ -46714,6 +46714,28 @@
       "title": "A value is written as inline JSON ({...} or [...]). Screenplay has no JSON: objects and lists are indented blocks.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0834",
+      "name": "UnknownTimeZone",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An application time zone, a command calendar or a specification given time zone names an id that is not a known IANA time zone.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0835",
+      "name": "InvalidCalendarContextMember",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command calendar from $context.\u003Cmember\u003E names a member other than the trusted timeZone member of the command context.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
