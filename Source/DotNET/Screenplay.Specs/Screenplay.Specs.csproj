@@ -34,7 +34,8 @@
         <Using Include="Xunit" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- Debug only, as before the split: several spec contexts under given/ are #if DEBUG, so Release builds an empty assembly. -->
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
         <_InlineSpecExcludes Include="$(SpecifiedProjectDirectory)bin/**;$(SpecifiedProjectDirectory)obj/**" />
 
         <!-- Exactly the files Directory.Build.targets removes from the compiler: each file compiles in one assembly only. -->
