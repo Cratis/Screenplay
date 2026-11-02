@@ -17,10 +17,18 @@ public static class SemanticTypedContextSerializer
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
     {
         if (descriptors.Any(descriptor => descriptor.Result is not null)) throw new InvalidOperationException("Handler result descriptors are not yet portable.");
+        var usesTimeZone = descriptors.Any(descriptor => descriptor.Members.Any(member => member.Type.RuntimeToken == SemanticContextRuntimeTokens.TimeZone));
+        string[] runtimeTokens =
+        [
+            SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
+            SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
+            SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation,
+            .. usesTimeZone ? [SemanticContextRuntimeTokens.TimeZone] : Array.Empty<string>()
+        ];
         return JsonSerializer.SerializeToUtf8Bytes(
             new
             {
-                contractRevision = SemanticTypedContextDescriptor.ContractRevision,
+                contractRevision = usesTimeZone ? SemanticTypedContextDescriptor.TimeZoneContractRevision : SemanticTypedContextDescriptor.ContractRevision,
                 typeKinds = new[] { SemanticContextTypeKinds.Runtime, SemanticContextTypeKinds.Shape, SemanticContextTypeKinds.Model },
                 sourceKinds = new[]
                 {
@@ -30,12 +38,7 @@ public static class SemanticTypedContextSerializer
                     SemanticContextSourceKinds.ValidatedArtifact, SemanticContextSourceKinds.AuthorizedOperation,
                     SemanticContextSourceKinds.CommandIdentifier, SemanticContextSourceKinds.QueryKey, SemanticContextSourceKinds.Unavailable
                 },
-                runtimeTokens = new[]
-                {
-                    SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
-                    SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
-                    SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation
-                },
+                runtimeTokens,
                 descriptors = descriptors.Select(descriptor => new
                 {
                     descriptor.RequirementId,

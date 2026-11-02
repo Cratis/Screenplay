@@ -400,7 +400,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             ValidateComplianceAdmission();
             ValidateClockOperandAdmission();
-            RefuseApplicationTimeZone();
+            var timeZone = BindApplicationTimeZone();
 
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
@@ -427,6 +427,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Triggers = triggers,
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
+                TimeZone = timeZone,
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);

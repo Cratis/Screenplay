@@ -31,6 +31,8 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0830` | Error | An `onboarding` block states the same thing twice: a second `signup`, `legal terms`, `offering`, `emails` or `images`, a second invitation of one kind, or a second template for one email. |
 | `PLAY0831` | Error | An invitation's `as`, `by` or `grant` names a persona nothing declares. Draft authoring reports it as a warning. |
 | `PLAY0832` | Error | The `emails` block names an email onboarding does not send; the emails are `invitation`, `welcome` and `signupDeclined`. |
+| `PLAY0833` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
+| `PLAY0834` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

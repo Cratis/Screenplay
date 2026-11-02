@@ -43,6 +43,9 @@ public static class SemanticContextRuntimeTokens
     public const string Identity = "Identity";
     public const string CausedBy = "CausedBy";
     public const string Causation = "Causation";
+
+    /// <summary>An IANA time zone id supplied by the host; present only for commands whose calendar reads <c>$context.timeZone</c>.</summary>
+    public const string TimeZone = "TimeZone";
 }
 
 /// <summary>A portable type in a code context: either a model type, a shaped declaration, or a named runtime contract.</summary>
@@ -78,6 +81,9 @@ public sealed record SemanticTypedContextDescriptor(
 {
     /// <summary>Independent version of this sidecar contract; not an ESM schema or attachment revision.</summary>
     public const uint ContractRevision = 1;
+
+    /// <summary>The sidecar contract revision written when any descriptor carries the <c>TimeZone</c> runtime token; otherwise <see cref="ContractRevision"/> and its bytes are unchanged.</summary>
+    public const uint TimeZoneContractRevision = 2;
 
     /// <summary>Gets the result-v2 handler contract; null for legacy contexts.</summary>
     public SemanticHandlerResultDescriptor? Result { get; init; }

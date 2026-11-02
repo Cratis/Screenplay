@@ -128,6 +128,11 @@ public sealed record SemanticApplication(
     /// Gets the explicit protected command reads mode; absence preserves legacy refusals.
     /// </summary>
     public SemanticCommandReadMode? CommandReadMode { get; init; }
+
+    /// <summary>
+    /// Gets the application time zone, or null when none is declared (the calendar is then UTC); candidate-only until the application calendar and clock operands are admitted.
+    /// </summary>
+    public SemanticTimeZone? TimeZone { get; init; }
 }
 
 /// <summary>

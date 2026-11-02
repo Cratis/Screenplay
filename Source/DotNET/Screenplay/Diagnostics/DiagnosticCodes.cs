@@ -3714,4 +3714,14 @@ public static class DiagnosticCodes
     /// The <c>emails</c> block names an email onboarding does not send.
     /// </summary>
     public const string UnknownOnboardingEmail = "PLAY0832";
+
+    /// <summary>
+    /// An application <c>time zone</c>, a command <c>calendar</c> or a specification <c>given time zone</c> names an id that is not a known IANA time zone.
+    /// </summary>
+    public const string UnknownTimeZone = "PLAY0833";
+
+    /// <summary>
+    /// A command <c>calendar from $context.&lt;member&gt;</c> names a member other than the trusted <c>timeZone</c> member of the command context.
+    /// </summary>
+    public const string InvalidCalendarContextMember = "PLAY0834";
 }
