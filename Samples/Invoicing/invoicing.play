@@ -3817,10 +3817,13 @@ module Invoicing
         isReserved Bool
 
       projection InvoiceReservations => InvoiceReservationState
-        from InvoiceNumberReserved
+        from InvoiceRegistered
           invoiceId = $eventSourceId
+          isReserved = false
+        from InvoiceNumberReserved
           isReserved = true
-        remove with InvoiceNumberReservationReleased
+        from InvoiceNumberReservationReleased
+          isReserved = false
 
       screen ReserveInvoiceNumberScreen
         template CommandDialog
@@ -3834,9 +3837,9 @@ module Invoicing
         given caller
           authenticated
           role "InvoiceManager"
-        given readmodel InvoiceReservationState
-          invoiceId = "0f8fad5b-d9cb-469f-a165-70867728950e"
-          isReserved = false
+        given InvoiceRegistered
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-000"
         when ReserveInvoiceNumber
           invoiceId = "0f8fad5b-d9cb-469f-a165-70867728950e"
           invoiceNumber = "INV-2026-001"

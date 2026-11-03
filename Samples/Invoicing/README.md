@@ -18,7 +18,7 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 ## Passive decision state
 
-In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from `InvoiceNumberReserved`, with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
+In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
 
 ## Reusable read-model member shapes
 
