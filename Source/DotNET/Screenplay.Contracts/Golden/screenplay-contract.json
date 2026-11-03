@@ -57671,10 +57671,6 @@
         {
           "languageVersion": "34.0",
           "semanticVersion": "34.0"
-        },
-        {
-          "languageVersion": "34.1",
-          "semanticVersion": "34.1"
         }
       ]
     },
@@ -57816,10 +57812,6 @@
         {
           "languageVersion": "34.0",
           "semanticVersion": "34.0"
-        },
-        {
-          "languageVersion": "34.1",
-          "semanticVersion": "34.1"
         },
         {
           "languageVersion": "36.0",

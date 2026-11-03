@@ -11,9 +11,9 @@ internal static class frozen_esm_goldens
 {
     internal static int CurrentVersion => (int)typeof(SemanticVersion).GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(member => member.FieldType == typeof(SemanticVersion))
-        .Max(member => ((SemanticVersion)member.GetValue(null)!).Major);
+        .Select(member => ((SemanticVersion)member.GetValue(null)!).Major).Max();
 
-    // Frozen file bytes, not semantic revisions. All .0 vectors are frozen after introducing a real minor.
+    // Frozen file bytes, not semantic revisions. Add the previous current golden on each ESM version bump.
     internal static IReadOnlyDictionary<int, string> Sha256 { get; } = new Dictionary<int, string>
     {
         [1] = "61CBA39D0156DF5AC7011CAEFB27AEA3E213B09B29C2B11AF2AE0187E2ADBEF4",

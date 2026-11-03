@@ -14,7 +14,6 @@
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
-        <ProjectReference Include="LegacyReader/LegacyReader.csproj" ReferenceOutputAssembly="false" />
         <ProjectReference Include="../Screenplay.Conformance/Screenplay.Conformance.csproj" />
     </ItemGroup>
 

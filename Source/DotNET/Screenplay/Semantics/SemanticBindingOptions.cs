@@ -4,5 +4,5 @@
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>Defines explicitly requested, optional semantic metadata. Defaults preserve historical binding.</summary>
-/// <param name="PreserveReadModelPropertyOrder">Whether to preserve read-model declaration order on a valid ESM 34.0 base.</param>
+/// <param name="PreserveReadModelPropertyOrder">Whether property-order metadata is explicitly requested. Such requests are refused.</param>
 public sealed record SemanticBindingOptions(bool PreserveReadModelPropertyOrder = false);

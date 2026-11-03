@@ -97,7 +97,7 @@ A scope identifies the application, one module, one feature, or one slice. The f
 
 `SemanticModelCompiler` also implements `IAdmissibleSemanticModelCompiler` in `Cratis.Screenplay.Semantics`. Opt in with `CompileAdmissible(applicationName, documents)` to bind the supported subset of a source-valid application without changing the strict `ISemanticModelCompiler.Compile` contract.
 
-The returned `AdmissibleCompilationResult.Compilation` is the usual semantic compilation result. `Exclusions` lists removed specifications, slices, imports, policies and triggers in source-location order, with their addresses, parent identities, authored locations and original binder diagnostics. A failing specification leaves its slice intact; other slice-owned failures remove the whole slice. Dependencies that stop binding are excluded on subsequent passes. A top-level trigger that fails to bind is excluded; reactions and specifications that it sets off stop binding and are excluded on later passes as its dependants. A trigger declared more than once or named `Startup` or `Shutdown` is not pruned. Final warnings remain in `Compilation.Diagnostics`.
+The returned `AdmissibleCompilationResult.Compilation` is the usual semantic compilation result. `Exclusions` lists removed specifications, slices, imports and policies in source-location order, with their addresses, parent identities, authored locations and original binder diagnostics. A failing specification leaves its slice intact; other slice-owned failures remove the whole slice. Dependencies that stop binding are excluded on subsequent passes. Final warnings remain in `Compilation.Diagnostics`.
 
 Each exclusion has a typed `Cause`: `Root` when its own binder errors excluded it, or `Dependent` when earlier exclusions removed a declaration it references or a policy/protected-read closure forced it out. `DependsOn` names the immediate exclusions as `SemanticExclusionReference(Kind, Address)` values, ordered like `Exclusions`; it is empty for a root. Follow those references to reach the roots—every chain ends at a `Root`. A unit with its own errors in the first binding pass remains a root even when it also references an excluded declaration. Causes come from the authored reference graph and closure provenance, never from diagnostic text or arguments.
 
@@ -125,52 +125,9 @@ A successful scoped compilation does not admit the deferred artifacts for execut
 
 [Decision 0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md) adds an opt-in public `UnknownPreservingSemanticModelReader`, beside the unchanged strict reader. The caller supplies an `EsmAdmissionRange` for one major with inclusive minor bounds. Admission requires that range and a shipped frozen baseline descriptor for the major; it is not restricted to the latest major. Unknowns are allowed only above the highest registered minor. Allocation is different: only additive, ignorable additions on the latest published major may receive a minor. No real minor is allocated here.
 
-The read document retains original bytes, wire versions and the full revision, plus a validated known projection and owner-addressable unknown diagnostics. The projection uses the highest registered pair of its major not newer than the wire minor: consumers must classify admission using the **wire** pair, not `Model`'s pair. Unknowns in known authorization/policy/caller/claim, identity, compliance/personal/secret or event-stream-routing positions are security flagged; other unknowns are Unclassified, not automatically unsafe. No unknown semantics execute. Known dangling references, unknown discriminators, noncanonical encoding, wrong hashes or out-of-range pairs refuse the whole document.
+The read document retains original bytes, wire versions and the full revision, plus a validated known projection and owner-addressable unknown diagnostics. The projection uses the highest registered pair of its major: consumers must classify admission using the **wire** pair, not `Model`'s pair. Unknowns in known authorization/policy/caller/claim, identity, compliance/personal/secret or event-stream-routing positions are security flagged; other unknowns are Unclassified, not automatically unsafe. No unknown semantics execute. Known dangling references, unknown discriminators, noncanonical encoding, wrong hashes or out-of-range pairs refuse the whole document.
 
 Canonical bytes use frozen per-major baseline schema ordering plus an ordinal extension region. Inside opaque extensions, object names are ordinal recursively, arrays retain received order, absent and null remain distinct, and existing NFC/ASCII string and decimal encoding applies. Future typed producers must preserve this grammar after promotion. Limits are 64 container depth, 8 MiB input, 64 unknown boundaries per owner, 1,024 per document, 64-character ASCII schema-token names (also nested), and 1 MiB total unknown value bytes. Breaches refuse, never truncate. Canonical/hash integrity is not producer trust, execution or rendering authority.
-
-### Candidate opt-in read-model property order (partial #1110)
-
-The C# `SemanticModelBinder` has an additive options overload. The existing overload, MCP, CLI,
-TypeScript compiler and editors do not request this metadata: their syntax, version selection and
-canonical bytes are unchanged. This is not general declaration-order support or Stage admission.
-
-With a parsed `ApplicationSyntax document` and its matching `SemanticDocumentSet documents`, request it explicitly:
-
-```csharp
-var outcome = new SemanticModelBinder(2026).Bind(
-    "Billing", document, documents,
-    new SemanticBindingOptions(PreserveReadModelPropertyOrder: true));
-```
-
-The overload returns `SemanticBindingOptionsResult`. A successful ordinary bind must already select
-34.0, including a valid `then invokes` expectation. Otherwise an explicit order request returns
-`PropertyOrderMetadataRefusal`, with the selected `BaseVersion` and a readable `Reason`; the
-`Compilation.Value` is absent. It never invents an invocation assertion or silently omits requested
-metadata. V36 models also refuse an explicit property-order request; property order is admitted only
-on a valid V34.0 base. Binding errors retain their existing diagnostics. Disabled options preserve the ordinary result.
-
-For an eligible base, read-model `PropertyOrder` contains all property identities in authored order,
-only when different from canonical identity order. If there is no such order to preserve, the result
-stays 34.0. Otherwise the candidate pair is 34.1 with `schemaVersion: 34`. On the wire, optional
-`propertyOrder` follows the baseline `properties` array in the extension region. `properties` stays
-ID-sorted. Order is a duplicate-free complete permutation, not new key identity or execution meaning.
-The strict reader requires that removing this metadata leaves a valid 34.0 model.
-
-`full-esm-v34.1.json` is the candidate conformance vector. Discover it through
-`EsmGoldenVectors.MinorVersions` and `GetMinor(SemanticVersion.V34_1)`; the public `Versions` and
-`Get(int)` APIs keep the original .0 vectors byte-for-byte. The promotion contract is identical full
-bytes and revision before and after the formerly opaque member becomes typed. An older reader may
-ignore it only under an explicit consumer admission policy; it retains the original wire bytes,
-revision and unknown-member owner while validating the complete 34.0 projection.
-
-**Publication gate:** 34.1 is not allocated as ready by this partial implementation. Producer and
-promotion conformance must pass, as must actual supported consumer admission. The published 4.258.0
-reader probe covers old-reader acceptance on an eligible base, not Stage rendering or execution
-approval. Stage must separately admit this wire pair and ignorable member, preserve full identity,
-prove its rendering and composite-key/query behavior, and refuse unsupported or security-relevant
-unknowns. A package update grants none of that authority. Lower-version order preservation and
-Stage#896 remain outside this slice.
 
 ### Executable semantic model versions
 
@@ -214,13 +171,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 32.0 | Typed event capture keys preserve the agreed source-property identity on capture appends and specification fixtures (released in Screenplay v4.241.0) | 32 | [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) | `full-esm-v32.json` | `EsmGoldenVectors.Get(32)` |
 | 33.0 | An events capture keyed by its event source (`key <property> is event source`) (released in Screenplay v4.242.0) | 33 | [0114](https://github.com/Cratis/Screenplay/blob/main/decisions/0114-events-capture-keys-by-event-source.md) | `full-esm-v33.json` | `EsmGoldenVectors.Get(33)` |
 | 34.0 | A specification stating the commands its slice's reactions invoke (`then invokes <Command>`) (released in Screenplay v4.246.0) | 34 | [0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md) | `full-esm-v34.json` | `EsmGoldenVectors.Get(34)` |
-
-#### Claimed, unreleased version
-
-| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
-| --- | --- | --- | --- | --- | --- |
-| 34.1 | UNRELEASED: opt-in read-model property order; publication gated | 34 | [0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md) | `full-esm-v34.1.json` | `EsmGoldenVectors.GetMinor(SemanticVersion.V34_1)` |
-| 36.0 | State machines and workflows (`stateMachines`, `workflows`; v35 stays reserved for handler result contract v2) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
+| 36.0 | State machines and workflows (`stateMachines`, `workflows`; v35 stays reserved for handler result contract v2) (released in Screenplay 5.1.0) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
 
 Conformance-only footnote: under [decision 0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md#exception-to-0066-conformance-only-reserved-pairs), minor `4294967295` is reserved, never allocated or registered, and is not an ESM version or a table row. Strict readers refuse these pairs. Packaged conformance-vector bytes freeze on first publication; 0066 still freezes their bytes, not a version contract.
 

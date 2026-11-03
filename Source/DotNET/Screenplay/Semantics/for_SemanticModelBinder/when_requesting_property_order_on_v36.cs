@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_lifecycles.given;
-using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
@@ -13,8 +12,14 @@ public class when_requesting_property_order_on_v36 : Specification
 
     void Because()
     {
-        _baseline = property_order_binding.BindDefault(a_lifecycle_source.Source);
-        _result = property_order_binding.Bind(new(PreserveReadModelPropertyOrder: true), a_lifecycle_source.Source);
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Billing"));
+        const string key = "application-document";
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", a_lifecycle_source.Source);
+        var parsed = new ScreenplayCompiler().Parse(a_lifecycle_source.Source);
+        var documents = SemanticDocumentSet.Create([document], catalog);
+        var binder = new SemanticModelBinder(2026);
+        _baseline = binder.Bind("Billing", parsed.Value!, documents);
+        _result = binder.Bind("Billing", parsed.Value!, documents, new(PreserveReadModelPropertyOrder: true));
     }
 
     [Fact] void should_leave_default_binding_successful() => _baseline.Success.ShouldBeTrue();

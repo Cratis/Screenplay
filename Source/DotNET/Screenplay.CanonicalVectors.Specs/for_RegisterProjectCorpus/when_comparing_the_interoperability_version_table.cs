@@ -17,7 +17,7 @@ public class when_comparing_the_interoperability_version_table : Specification
         var text = reader.ReadToEnd();
         var released = Rows(text, "#### Released versions");
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
-        released.Length.ShouldEqual(34);
+        released.Length.ShouldEqual(35);
         (claimed.Length <= 1).ShouldBeTrue();
         var rows = released.Concat(claimed).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
@@ -35,23 +35,12 @@ public class when_comparing_the_interoperability_version_table : Specification
             var version = SemanticVersion.Parse(row[0]);
             row[2].ShouldEqual(version.Major.ToString(System.Globalization.CultureInfo.InvariantCulture));
             row[3].ShouldContain("https://github.com/Cratis/Screenplay/blob/main/decisions/");
-            var filename = version.Minor > 0 ? $"full-esm-v{version}.json" : $"full-esm-v{version.Major}.json";
-            row[4].ShouldEqual($"`{filename}`");
-            SemanticModelSerializer.Deserialize(GoldenBytes(version, filename)).SemanticVersion.ShouldEqual(version);
+            row[4].ShouldEqual($"`full-esm-v{version.Major}.json`");
+            using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v{version.Major}.json")!;
+            using var memory = new MemoryStream();
+            golden.CopyTo(memory);
+            SemanticModelSerializer.Deserialize(memory.ToArray()).SemanticVersion.ShouldEqual(version);
         }
-    }
-
-    static byte[] GoldenBytes(SemanticVersion version, string filename)
-    {
-        if (version.Minor > 0)
-        {
-            return [.. EsmGoldenVectors.GetMinor(version).Bytes];
-        }
-
-        using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.{filename}")!;
-        using var memory = new MemoryStream();
-        golden.CopyTo(memory);
-        return memory.ToArray();
     }
 
     static string[][] Rows(string text, string heading)

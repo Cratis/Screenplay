@@ -398,12 +398,6 @@ public static partial class SemanticModelCanonicalJson
         WriteId(writer, readModel.Id);
         CanonicalJson.WriteString(writer, "name", readModel.Name);
         WriteArray(writer, "properties", readModel.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
-        if (!readModel.PropertyOrder.IsDefaultOrEmpty)
-        {
-            writer.WriteStartArray("propertyOrder");
-            foreach (var id in readModel.PropertyOrder) writer.WriteStringValue(id.ToString());
-            writer.WriteEndArray();
-        }
         writer.WriteEndObject();
     }
 

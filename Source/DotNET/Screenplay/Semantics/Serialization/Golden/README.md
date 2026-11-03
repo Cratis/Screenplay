@@ -8,21 +8,19 @@ Consume the released bytes through `Cratis.Screenplay.CanonicalCorpus`, rather t
 `SemanticRevision` verified by the strict ESM reader. Unknown versions throw `EsmGoldenVectorNotFound`.
 `EsmGoldenVectors.PolicyNegationV7` exposes the separate policy-negation extension described below.
 The package links these ESM files as embedded resources in every build configuration, without copies.
-Adding a new `full-esm-v<N>.json` automatically includes it and exposes its integer version in the next package build.
-A `full-esm-v<M>.<n>.json` is discovered separately as an exact nonzero minor; it never changes `Get(M)`.
+Adding a new `full-esm-v<N>.json` automatically includes it and exposes its version in the next package build.
 Expression, identity-catalog and typed-context sidecars are separate contracts and are not part of this API.
 
-All published .0 goldens, v1–v34, are frozen checked-in contracts. They are not regenerated from
-shared fixtures. Historical builders may still be used for assertions against those exact bytes.
-The candidate `full-esm-v34.1.json` pins only explicitly requested read-model property order on an
-already valid 34.0 base; it is not evidence of allocation or consumer release admission.
-`EsmGoldenVectors.MinorVersions` and `GetMinor(SemanticVersion)` expose nonzero minors separately;
-`Versions` and `Get(int)` continue to expose the original .0 vectors only.
+Full goldens below the current ESM version are frozen: v1–v27 are checked-in contracts, not rebuilt
+from shared fixtures. Their version specs deserialize the frozen bytes, check the selected version and
+feature-specific assertions, and serialize back to identical bytes. Only v28 is compared with its builder.
+The historical fixture descriptions below explain what each vector covers; retained builders serve
+other specs, not regeneration of older full goldens.
 
 `given/frozen_esm_goldens.cs` records the SHA-256 of each frozen file's exact bytes.
-`when_checking_frozen_full_goldens` requires exactly v1 through v34, checks that every file exists,
-and hashes the source files without JSON normalization. Even a one-byte edit fails.
-Restore changed frozen bytes rather than updating their hashes.
+`when_checking_frozen_full_goldens` requires exactly v1 through v(current−1), checks that every file exists,
+and hashes the source files without JSON normalization. It reports 27 checked files at v28; even a
+one-byte edit fails. Restore changed frozen bytes rather than updating their hashes.
 
 These source models originally produced the full vectors:
 
@@ -104,9 +102,9 @@ From a source checkout, update the current version's source model only for an in
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-`1` rewrites only the current candidate full ESM golden (`full-esm-v34.1.json`) plus the four non-ESM sidecars:
-expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=34.1`
-to rewrite only that candidate vector. Older version selectors fail with a frozen-golden message
+`1` rewrites only the current full ESM golden (`full-esm-v28.json`) plus the four non-ESM sidecars:
+expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=28`
+to rewrite only the current full ESM golden. Older version selectors fail with a frozen-golden message
 before writing anything. The legacy `SCREENPLAY_REGENERATE_EVENT_ROUTES=1` switch also fails because v8 is frozen.
 Regeneration deliberately throws `GoldenVectorsRegenerated`; review the diff, rebuild embedded resources,
 and rerun without the variable. None of these switches rewrites the frozen SHA-256 table or source corpora.
@@ -118,8 +116,7 @@ When a new ESM version is added:
 2. Add the new full golden and current builder, and point regeneration at that builder. The helper derives
    the current version from the declared `SemanticVersion` fields and refuses a builder selecting an older version.
 3. Switch the previous current spec to frozen-byte round trips, keep its feature assertions, and remove only
-   builders with no remaining consumers. The manifest check covers every frozen .0 major, including
-   the current major when a new nonzero minor is introduced.
+   builders with no remaining consumers. The manifest check must cover exactly v1..v(new current−1).
 4. Run the compiler and canonical-vector specs. Keep all full goldens and published corpus bytes available.
 
 Regenerate the policy-negation extension independently of the original goldens and corpora:

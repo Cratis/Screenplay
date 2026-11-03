@@ -9,7 +9,7 @@ public sealed partial class SemanticModelBinder
 {
     /// <summary>
     /// Binds with explicitly requested metadata, without changing the historical default overload.
-    /// Property order is admitted only when removing it leaves the already validated ESM 34.0 base.
+    /// Property-order requests are refused until a later version admits them.
     /// </summary>
     /// <param name="applicationName">The application name.</param>
     /// <param name="document">The parsed source.</param>
@@ -19,24 +19,8 @@ public sealed partial class SemanticModelBinder
     public SemanticBindingOptionsResult Bind(string applicationName, ApplicationSyntax document, SemanticDocumentSet documents, SemanticBindingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var assessmentYear = _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year;
-        var result = new SemanticModelBinder(assessmentYear).Bind(applicationName, document, documents);
+        var result = Bind(applicationName, document, documents);
         if (!result.Success || !options.PreserveReadModelPropertyOrder) return new(result);
-        var compilation = result.Value!;
-        if (compilation.Model.SemanticVersion != SemanticVersion.V34)
-        {
-            return new(result with { Value = null }, new(compilation.Model.SemanticVersion));
-        }
-        var application = SemanticReadModelPropertyOrder.Apply(compilation.Model.Application);
-        if (!SemanticReadModelPropertyOrder.IsUsed(application)) return new(result);
-        var model = ExecutableSemanticModel.Create(LanguageVersion.V34_1, SemanticVersion.V34_1, application, assessmentYear);
-        var updated = SemanticCompilation.Create(model, compilation.Documents, compilation.SourceMap)
-            .WithSpecificationOrigins(compilation.SpecificationOrigins)
-            .WithEnvironment(compilation.Environment);
-        return new(result with
-        {
-            Value = updated,
-            TypedContextDescriptors = [.. result.TypedContextDescriptors.Select(value => value with { ModelRevision = model.Revision })]
-        });
+        return new(result with { Value = null }, new(result.Value!.Model.SemanticVersion));
     }
 }
