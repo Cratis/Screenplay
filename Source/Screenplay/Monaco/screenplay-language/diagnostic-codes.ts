@@ -10,6 +10,7 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    repeatedPassiveDirective: 'PLAY0858',
     invalidSemanticBinding: 'PLAY0273',
     unknownMatchPattern: 'PLAY0366',
     invalidMatchPattern: 'PLAY0367',

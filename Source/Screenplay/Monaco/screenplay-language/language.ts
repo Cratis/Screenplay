@@ -103,6 +103,7 @@ export const clauseKeywords = [
     'handler',
     'performer',
     'observable',
+    'passive',
     'identifier',
     'reason',
     'from',

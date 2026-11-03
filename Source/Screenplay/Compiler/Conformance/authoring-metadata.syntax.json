@@ -142,6 +142,7 @@
                   "kind": "ReadModelSyntax",
                   "description": null,
                   "documentation": "This view answers whether issuance happened, not delivery.",
+                  "isPassive": true,
                   "name": "InvoiceStatus",
                   "properties": [
                     {

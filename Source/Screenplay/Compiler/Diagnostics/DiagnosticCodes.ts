@@ -507,4 +507,7 @@ export const DiagnosticCodes = {
     WorkflowWithoutExpiry: 'PLAY0849',
     WorkflowJoinWithOneBranch: 'PLAY0850',
     UnknownWorkflowReference: 'PLAY0851',
+    RepeatedPassiveDirective: 'PLAY0858',
+    PassiveReadModelObserved: 'PLAY0859', // C# only
+    PassiveReadModelNotRead: 'PLAY0860', // C# only
 } as const;
