@@ -98,6 +98,10 @@ ESM v21 generation has only authored pattern/checksum, exact Int64 min/max, or i
 
 `ConceptSyntax.ValueNumbers` is a nullable init-only collection of int32, not a positional constructor parameter. Absent numbers stay null and the syntax JSON omits `valueNumbers`, keeping existing documents' bytes. Populated numbers parallel `values` in authored order; cardinality must match, numbers must be unique, and the concept must be an enum. Preserve the distinction between absent and populated numbers when rewriting. Positional pins retain the original executable bytes; other numbers select ESM v12 and become the optional canonical `numbers` member, parallel to ESM `values`. Consumers must explicitly admit that contract.
 
+## Passive read models
+
+`ReadModelSyntax.IsPassive` is an additive default-false init property, preserving constructor and Deconstruct signatures. Syntax JSON omits false and restores a missing member as false. Preserve it when replacing read-model nodes. It is realization metadata: the binder reports `PLAY0270` and carries canonical identities in `SemanticCompilation.PassiveReadModels`, outside portable ESM. Toggling it changes neither executable bytes nor revision; renderers must hash the sidecar separately. See [Passive decision state](readmodels.md#passive-decision-state).
+
 ## Key and routing members
 
 `PropertySyntax.IsKey`, `QuerySyntax.ByParts`, `ReadsSyntax.ByParts`, `ProducesSyntax.Stream`, `ReactionSyntax.From` and `ReducerSyntax.From` are additive init-only properties. Constructors and Deconstruct signatures stay unchanged. Missing members default to false, empty collections or null. Writers omit those defaults. Preserve authored key-part and mapping order when rewriting nodes.

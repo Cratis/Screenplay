@@ -513,4 +513,7 @@ export const DiagnosticCodes = {
     UnknownContextMemberType: 'PLAY0855',
     DuplicateContextMember: 'PLAY0856',
     ReservedContextMemberName: 'PLAY0857',
+    RepeatedPassiveDirective: 'PLAY0858',
+    PassiveReadModelObserved: 'PLAY0859', // C# only
+    PassiveReadModelNotRead: 'PLAY0860', // C# only
 } as const;

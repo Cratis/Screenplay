@@ -124,3 +124,4 @@
 | [0132](0132-application-declared-typed-context-members.md) | Applications declare typed-context members, starting with time-zone members, published as sidecar revision 3 | accepted | none | 2026-11-02 | woksin (Q-220, delegated through L0) |
 | [0133](0133-derive-hash-sha256-over-utf8-text.md) | `derive` hashes with SHA-256 over UTF-8 text, as lowercase hex, for high-entropy secrets and fingerprints | accepted | none | 2026-11-03 | woksin (delegated through L0) |
 | [0134](0134-per-language-implementation-alternatives.md) | A member carries at most one implementation body per language, written as sibling payloads | accepted | none | 2026-11-01 | woksin (direction accepted on #1086; syntax decided under delegated orchestration) |
+| [0135](0135-passive-read-models-are-realization-metadata.md) | Passive read models are an explicit realization choice outside portable ESM | accepted | none | 2026-11-02 | Accepted Screenplay#1129 implementation plan (delegated) |

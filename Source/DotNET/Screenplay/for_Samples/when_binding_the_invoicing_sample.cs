@@ -133,5 +133,5 @@ public class when_binding_the_invoicing_sample : Specification
         diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal) && diagnostic.Message.Contains("date", StringComparison.Ordinal)).ShouldBeTrue();
 
     [Fact]
-    void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(3);
+    void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(4);
 }

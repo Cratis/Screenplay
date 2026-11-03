@@ -17,6 +17,8 @@ Uuid equality retains the existing comparison syntax nodes. TypeScript parses it
 
 Date comparisons retain the existing comparison and validation syntax nodes. TypeScript parses Date/DateTime command rules and conditions without evaluating them, canonicalizing literals or selecting ESM v26. Native binding owns the position/operand restrictions, `PLAY0268` refusals and `PLAY0273` literal checks; the native reference evaluator compares UTC instants at tick precision and rejects offset-less compared inputs before rules. JavaScript `Date` is not a tick-precision evaluator. The Invoicing syntax conformance vector includes an admitted date-literal rule while its `today` rules remain native binder refusals.
 
+The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
+
 ## Parse a document
 
 `parse` turns the text of one document into an `ApplicationSyntax`, with the diagnostics found on the way:

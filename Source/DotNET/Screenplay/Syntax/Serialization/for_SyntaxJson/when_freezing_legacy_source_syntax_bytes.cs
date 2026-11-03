@@ -439,7 +439,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Contributions = module.Contributions?.Select(WithoutNavigationItem),
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
-            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
+            // The passive read model example (#1129) has its own conformance vector; keep it out of the frozen bytes.
+            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm" && form.Name != "ReserveInvoiceNumberForm").Select(form =>
                 (form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form) with
                 {
                     ColumnMode = FormColumnMode.Unspecified,
@@ -447,7 +448,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
                     Columns = [],
                     Layout = null
                 }),
-            Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
+            Features = module.Features.Where(feature => feature.Name != "InvoiceReservations").Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 // Shared vectors cover both new slices; retain every pre-feature sample byte here.
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft" && slice.Name != "ApplyLateFee").Select(slice => slice.Name switch

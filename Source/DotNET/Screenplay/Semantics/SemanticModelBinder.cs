@@ -302,7 +302,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax));
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -351,6 +351,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<string, BoundEvent> _events = new(StringComparer.Ordinal);
         readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
         readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
+        readonly HashSet<SemanticId> _passiveReadModels = [];
         readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
         readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
@@ -361,6 +362,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
+
+        internal ImmutableHashSet<SemanticId> PassiveReadModels => [.. _passiveReadModels];
 
         internal int UtcAssessmentYear => utcAssessmentYear;
 
@@ -598,6 +601,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 {
                     var bound = BindReadModel(sliceAddress, slice, readModel);
                     _readModelDeclarations.Add(readModel, bound);
+                    if (readModel.IsPassive) _passiveReadModels.Add(bound.Model.Id);
                     _readModelPaths.TryAdd(readModel.Name, [.. sliceAddress.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key), readModel.Name]);
                     if (!_readModels.TryAdd(readModel.Name, bound))
                     {

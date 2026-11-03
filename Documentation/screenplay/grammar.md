@@ -873,7 +873,13 @@ SliceBody      = TranslationDirectionDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PassiveDirective | PropertyLine }, DEDENT ;
+
+PassiveDirective = "passive", NL ;
+(* A bare readmodel body directive, never a header modifier. Defaults to active,
+   never inferred. Repeated passive is idempotent (PLAY0858 Warning).
+   Passive models are command-read-only (PLAY0859 Error); unused ones warn
+   (PLAY0860). This is realization metadata, not portable ESM. *)
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, { DescriptionDecl | ObserverFilter | ReducerRule }, DEDENT ;

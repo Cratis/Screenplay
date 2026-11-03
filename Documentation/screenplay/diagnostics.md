@@ -52,6 +52,13 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
 | `PLAY0852` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
 | `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
+| `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
+| `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
+| `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
+| `PLAY0857` | Error | A context member uses reserved `timeZone` or a built-in `$context` root. The member is not retained. |
+| `PLAY0858` | Warning | A read model repeats the bare `passive` directive; it is idempotent. Keep one directive. Both parsers report this warning. |
+| `PLAY0859` | Error | A query or screen consumes a passive read model. Remove `passive` if the model is a read surface, or keep it private to command reads. C# only. |
+| `PLAY0860` | Warning | No command reads a passive read model. Add the intended command read or remove `passive`; passivity is never inferred. C# only. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

@@ -177,6 +177,9 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
         const eventSourceKeyOutsideEvents = ['module M', '  feature F', '    slice Translate Receive', '      capture Feed', '        source webhook', '          path /feed', '        key id is event source'];
         issues.push(...validateLines(eventSourceKeyOutsideEvents, { compilerDiagnostics: parse(eventSourceKeyOutsideEvents.join('\n')).diagnostics }));
+
+        const repeatedPassive = ['module Billing', '  feature Invoices', '    slice StateChange Reserve', '      readmodel Reservation', '        passive', '        passive', '        number String'];
+        issues.push(...validateLines(repeatedPassive, { compilerDiagnostics: parse(repeatedPassive.join('\n')).diagnostics }));
     });
 
     beforeEach(() => {
