@@ -190,10 +190,7 @@ internal sealed partial class SemanticScopedProjection(
         {
             Apply(target, from.Mappings, level.Targets, _fact, level.Nested.IsEmpty);
             Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact, level.Nested.IsEmpty && scope.Joins.IsEmpty);
-            if (level.Nested.IsEmpty)
-            {
-                BackfillJoins(target, from, scope, level);
-            }
+            BackfillJoins(target, from, scope, level);
         });
     }
 
@@ -221,7 +218,7 @@ internal sealed partial class SemanticScopedProjection(
 
     // Chronicle re-reads the latest joined event when a from event projects (ProjectionFactory.SetupJoinsForFromDefinition,
     // ProjectionFactory.cs:736-784): at a projection's own level for joins on a property the from maps or on the key property,
-    // inside children for joins on the identity.
+    // inside children for joins on the identity. Root-level nested scopes resolve against their own mapped properties.
     void BackfillJoins(Dictionary<SemanticId, SemanticValue> target, SemanticProjectionFrom from, SemanticProjectionScope scope, Level level)
     {
         if (scope.Joins.IsEmpty) return;

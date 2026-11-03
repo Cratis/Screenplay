@@ -45,19 +45,23 @@ static class SemanticScopedProjectionIssues
             yield return Block(projection, "An 'all' block beside removals, children or nested objects has no verified reference semantics.");
         }
 
-        foreach (var issue in Walk(projection, scope, false))
+        foreach (var issue in Walk(projection, scope, false, false))
         {
             yield return issue;
         }
     }
 
-    static IEnumerable<SemanticPlanIssue> Walk(SemanticProjection projection, SemanticProjectionScope scope, bool nested)
+    static IEnumerable<SemanticPlanIssue> Walk(SemanticProjection projection, SemanticProjectionScope scope, bool nested, bool hasParent)
     {
-        // Chronicle's engine wires only from, removals, every and further nested objects inside a nested object
-        // (ProjectionFactory.SetupNestedSubscriptions, ProjectionFactory.cs:415-470); anything else there is dropped.
-        if (nested && (!scope.Joins.IsEmpty || !scope.Children.IsEmpty || !scope.JoinRemovals.IsEmpty))
+        // Chronicle 19.99.1 wires joins inside root-level nested objects, but not nested objects in children.
+        if (nested && hasParent && !scope.Joins.IsEmpty)
         {
-            yield return Block(projection, "A join, children block or 'remove via join' inside a nested object is not wired by Chronicle's engine (ProjectionFactory.cs:415-470).");
+            yield return Block(projection, "A join inside a nested object under children is not wired by Chronicle's engine.");
+        }
+
+        if (nested && (!scope.Children.IsEmpty || !scope.JoinRemovals.IsEmpty))
+        {
+            yield return Block(projection, "A children block or 'remove via join' inside a nested object is not wired by Chronicle's engine.");
         }
 
         if (scope.From.SelectMany(_ => _.Mappings).Any(_ => UnsupportedMapping(_, !nested)) ||
@@ -73,7 +77,7 @@ static class SemanticScopedProjectionIssues
                 "Event context is supported only for event source identity and occurred property assignments in from, every and children scopes; occurred is unsupported in keys, joins, arithmetic, every mappings with joins and nested objects.");
         }
 
-        foreach (var issue in scope.Children.SelectMany(_ => Walk(projection, _.Scope, nested)).Concat(scope.Nested.SelectMany(_ => Walk(projection, _.Scope, true))))
+        foreach (var issue in scope.Children.SelectMany(_ => Walk(projection, _.Scope, nested, true)).Concat(scope.Nested.SelectMany(_ => Walk(projection, _.Scope, true, hasParent))))
         {
             yield return issue;
         }
