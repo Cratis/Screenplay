@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using System.Globalization;
 using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_GoldenVectors;
@@ -21,7 +22,7 @@ public class when_regenerating_the_current_full_golden : Specification
     [InlineData(true)]
     void should_write_only_the_current_full_golden_and_fail_deliberately(bool includeSidecars)
     {
-        var current = frozen_esm_goldens.CurrentVersion;
+        var current = frozen_esm_goldens.CurrentVersion.ToString(CultureInfo.InvariantCulture);
         var request = includeSidecars ? "1" : current;
         var error = Catch.Exception(() => golden_vector_regeneration.Regenerate(request, _directory));
         error.ShouldBeOfExactType<GoldenVectorsRegenerated>();
