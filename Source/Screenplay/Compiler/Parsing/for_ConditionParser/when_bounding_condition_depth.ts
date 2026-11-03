@@ -18,7 +18,7 @@ describe('when bounding condition depth', () => {
         expect(parseCondition(context, group(128), location, strict)).not.toBeNull();
         expect(context.diagnostics).toEqual([]);
         expect(parseCondition(context, group(129), location, strict)).toBeNull();
-        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0852', location }]);
+        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0860', location }]);
         expect(parseCondition(context, leaf, location, strict)).not.toBeNull();
         expect(context.diagnostics).toHaveLength(1);
     });
@@ -27,7 +27,7 @@ describe('when bounding condition depth', () => {
         expect(parseCondition(context, Array<string>(128).fill(leaf).join(` ${operation} `), location)).not.toBeNull();
         expect(context.diagnostics).toEqual([]);
         expect(parseCondition(context, Array<string>(129).fill(leaf).join(` ${operation} `), location)).toBeNull();
-        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0852', location }]);
+        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0860', location }]);
     });
     it('should preserve precedence, grouping and short malformed diagnostics', () => {
         const context = new ParserContext(new LineReader([]));

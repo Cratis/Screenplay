@@ -50,7 +50,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0849` | Warning | A `wait` for an event, or an `approval`, has no `expires after`, so a run can wait forever. |
 | `PLAY0850` | Information | A `join` has a single incoming branch, so it joins nothing. |
 | `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
-| `PLAY0852` | Error | A condition exceeds the supported nesting or constructed expression depth of 128. Simplify the condition or split the requirement into named policies. |
+| `PLAY0860` | Error | A condition exceeds the supported nesting or constructed expression depth of 128. Simplify the condition or split the requirement into named policies. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

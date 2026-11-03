@@ -16,7 +16,7 @@ public class when_condition_nesting_exceeds_the_budget
         var location = new SourceLocation(3, 5);
         ConditionParser.Parse(context, new string('(', 129) + "status == \"open\"" + new string(')', 129), location, strict).ShouldBeNull();
         context.Diagnostics.Count.ShouldEqual(1);
-        context.Diagnostics[0].Code.ShouldEqual("PLAY0852");
+        context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
         context.Diagnostics[0].Location.ShouldEqual(location);
         ConditionParser.Parse(context, new string('(', 128) + "status == \"()\"" + new string(')', 128), location, strict).ShouldNotBeNull();
         ConditionParser.Parse(context, "status == \"open\"", location, strict).ShouldNotBeNull();

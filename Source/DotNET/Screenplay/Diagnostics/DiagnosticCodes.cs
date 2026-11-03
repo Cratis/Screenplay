@@ -3775,5 +3775,5 @@ public static class DiagnosticCodes
     public const string UnknownWorkflowReference = "PLAY0851";
 
     /// <summary>A condition exceeds the supported nesting or constructed expression depth of 128.</summary>
-    public const string ConditionDepthExceeded = "PLAY0852";
+    public const string ConditionDepthExceeded = "PLAY0860";
 }

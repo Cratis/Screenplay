@@ -507,5 +507,5 @@ export const DiagnosticCodes = {
     WorkflowWithoutExpiry: 'PLAY0849',
     WorkflowJoinWithOneBranch: 'PLAY0850',
     UnknownWorkflowReference: 'PLAY0851',
-    ConditionDepthExceeded: 'PLAY0852',
+    ConditionDepthExceeded: 'PLAY0860',
 } as const;

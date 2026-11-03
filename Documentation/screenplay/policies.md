@@ -40,7 +40,7 @@ depth limit applies to the combined gate when several `authorize` lines appear
 on one construct or gates are merged across a folder's files. Each added gate
 joins the existing tree with `and` and counts toward its depth.
 
-Exceeding either limit reports `PLAY0852` at the owning condition or requirement
+Exceeding either limit reports `PLAY0860` at the owning condition or requirement
 and refuses that condition. Simplify it or split the requirement into named
 policies. Parentheses inside quoted values do not count toward nesting.
 

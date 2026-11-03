@@ -18,7 +18,7 @@ describe('when bounding policy depth', () => {
         const parsed = result(refused);
         expect(parsed.value?.policies?.[0]?.condition).toBeNull();
         expect(parsed.value?.policies?.[1]?.condition).toMatchObject({ kind: 'AuthenticatedConditionSyntax' });
-        expect(parsed.diagnostics).toMatchObject([{ code: 'PLAY0852', location: { line: 2, column: 3 } }]);
+        expect(parsed.diagnostics).toMatchObject([{ code: 'PLAY0860', location: { line: 2, column: 3 } }]);
     });
     it('should retain diagnostic-free legacy enrichment below the limit', () => {
         expect(result('(authenticated').diagnostics).toEqual([]);
@@ -26,6 +26,6 @@ describe('when bounding policy depth', () => {
     });
     it('should count grouped negation nesting independently of tree depth', () => {
         expect(result('not '.repeat(64) + group(64)).diagnostics).toEqual([]);
-        expect(result('not '.repeat(64) + group(65)).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0852']);
+        expect(result('not '.repeat(64) + group(65)).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0860']);
     });
 });

@@ -87,7 +87,9 @@ describe('when validating a document with a problem of every coded kind', () => 
 
     beforeEach(() => {
         issues = validateLines(document);
-        issues.push(...validateLines(['policy Access', '  require ' + '('.repeat(129) + 'authenticated' + ')'.repeat(129)]));
+        // PLAY0860 is produced locally and must survive the compiler-to-editor adapter.
+        issues.push(...validateLines(['policy Access', '  require ' + '('.repeat(129) + 'authenticated' + ')'.repeat(129)])
+            .filter(issue => issue.code === diagnosticCodes.conditionDepthExceeded));
         const responses = [
             ['concept Code : String', '  validate', '    matches phone', '    matches "["', '    matches "(?=a)"', '    matches "^(?![\\s\\S]*a)"'],
             ['command C', 'example Fixture : C', '  no stream'],
