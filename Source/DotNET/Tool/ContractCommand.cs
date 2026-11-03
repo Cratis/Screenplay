@@ -26,7 +26,7 @@ static class ContractCommand
             }
             else
             {
-                File.WriteAllText(args[1], json, new UTF8Encoding(false));
+                WriteWhenChanged(args[1], json);
             }
 
             return 0;
@@ -36,5 +36,18 @@ static class ContractCommand
             error.WriteLine($"Could not write the Screenplay contract: {exception.Message}");
             return 2;
         }
+    }
+
+    // Leave an identical file untouched so its timestamp does not invalidate downstream incremental builds.
+    static void WriteWhenChanged(string path, string json)
+    {
+        var encoding = new UTF8Encoding(false);
+        var bytes = encoding.GetBytes(json);
+        if (File.Exists(path) && File.ReadAllBytes(path).AsSpan().SequenceEqual(bytes))
+        {
+            return;
+        }
+
+        File.WriteAllBytes(path, bytes);
     }
 }

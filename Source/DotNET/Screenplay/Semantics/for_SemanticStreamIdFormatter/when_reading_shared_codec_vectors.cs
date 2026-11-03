@@ -80,9 +80,9 @@ public class when_reading_shared_codec_vectors : Specification
     }
 
     static string Input(JsonElement vector) => vector.TryGetProperty("input", out var value) ? value.GetString()!
-        : new string(vector.GetProperty("utf16").EnumerateArray().Select(unit => (char)int.Parse(unit.GetString()!, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray());
+        : new string([.. vector.GetProperty("utf16").EnumerateArray().Select(unit => (char)int.Parse(unit.GetString()!, NumberStyles.HexNumber, CultureInfo.InvariantCulture))]);
     static StreamIdScalarKind Kind(string kind) => kind switch { "String" => StreamIdScalarKind.Text, "Uuid" => StreamIdScalarKind.Uuid, _ => StreamIdScalarKind.WholeNumber };
-    static StreamIdScalarKind[] Kinds(JsonElement vector) => vector.GetProperty("kinds").EnumerateArray().Select(value => Kind(value.GetString()!)).ToArray();
+    static StreamIdScalarKind[] Kinds(JsonElement vector) => [.. vector.GetProperty("kinds").EnumerateArray().Select(value => Kind(value.GetString()!))];
 
     static JsonElement Vectors([CallerFilePath] string path = "")
     {

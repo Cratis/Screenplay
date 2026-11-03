@@ -31,7 +31,18 @@
     <ItemGroup>
         <None Include="$(TargetDir)screenplay-contract.json" Pack="true" PackagePath="/" />
     </ItemGroup>
-    <Target Name="GenerateScreenplayContract" AfterTargets="Build" Condition="'$(Configuration)'=='Release' AND '$(TargetFramework)'!=''">
+    <ItemGroup Condition="'$(Configuration)'=='Release'">
+        <FileWrites Include="$(IntermediateOutputPath)screenplay-contract.stamp" />
+    </ItemGroup>
+    <!-- The contract is produced by reflection over the loaded assemblies only (no files are read at run time), so the tool and its copy-local dlls are the complete input set. -->
+    <Target Name="GenerateScreenplayContract" AfterTargets="Build" Condition="'$(Configuration)'=='Release' AND '$(TargetFramework)'!=''" Inputs="$(TargetPath);@(ReferenceCopyLocalPaths->WithMetadataValue('Extension', '.dll'))" Outputs="$(IntermediateOutputPath)screenplay-contract.stamp">
         <Exec Command="dotnet &quot;$(TargetPath)&quot; contract --output &quot;$(TargetDir)screenplay-contract.json&quot;" />
+        <Touch Files="$(IntermediateOutputPath)screenplay-contract.stamp" AlwaysCreate="true" />
+        <ItemGroup>
+            <FileWrites Include="$(TargetDir)screenplay-contract.json" />
+        </ItemGroup>
+    </Target>
+    <Target Name="RegenerateMissingScreenplayContract" BeforeTargets="GenerateScreenplayContract" Condition="'$(Configuration)'=='Release' AND '$(TargetFramework)'!='' AND !Exists('$(TargetDir)screenplay-contract.json')">
+        <Delete Files="$(IntermediateOutputPath)screenplay-contract.stamp" />
     </Target>
 </Project>

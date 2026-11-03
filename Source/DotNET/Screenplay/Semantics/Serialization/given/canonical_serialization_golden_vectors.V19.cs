@@ -24,11 +24,11 @@ public static partial class canonical_serialization_golden_vectors
             refused.Id,
             null,
             null,
-        [
-            new(Id(10713), new SemanticRefusalExpression("reason", text)),
-            new(Id(10714), new SemanticRefusalExpression("constraint", text)),
-            new(Id(10715), new SemanticRefusalExpression("message", text))
-        ]);
+            [
+                new(Id(10713), new SemanticRefusalExpression("reason", text)),
+                new(Id(10714), new SemanticRefusalExpression("constraint", text)),
+                new(Id(10715), new SemanticRefusalExpression("message", text))
+            ]);
         var invocation = new SemanticInvocation(command.Id, [new(Id(10721), SemanticExpression.FromValue(SemanticValue.Text("claim")))])
         {
             OnRefused = [new("constraint", "ClaimIsUnique", [branch]), new("validation", null, []), new("any", null, []), new("authorization", null, [])]

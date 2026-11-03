@@ -14,7 +14,8 @@ public class with_value_maps : given.an_event_capture
           when status from "sent" to "delivered"
           id = $.id
           status = $.status
-        """, """
+        """,
+        """
         given Arrived
           id = "parcel"
           status = "sendt"

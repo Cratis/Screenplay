@@ -321,8 +321,11 @@ public class when_editing_named_rule_intent
             var owner = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Node is CommandSyntax).Address!;
             var property = SemanticAddress.ForProperty(owner, "label");
             var renamedOwner = SemanticAddress.ForCommand(SemanticAddress.ForSlice(workspace.IdentityCatalog.Application, "M", ["F"], "S"), "Renamed");
-            var catalog = SemanticIdentityCatalog.Create(workspace.IdentityCatalog.Application, [],
-                [new(owner, SemanticId.Create(owner), SemanticIdentityOrigin.Persisted), new(property, SemanticId.Create(property), SemanticIdentityOrigin.Persisted)], []);
+            var catalog = SemanticIdentityCatalog.Create(
+                workspace.IdentityCatalog.Application,
+                [],
+                [new(owner, SemanticId.Create(owner), SemanticIdentityOrigin.Persisted), new(property, SemanticId.Create(property), SemanticIdentityOrigin.Persisted)],
+                []);
             workspace = ScreenplayWorkspace.Create("A", workspace.Documents, catalog);
             renames = [new(owner, renamedOwner), new(property, SemanticAddress.ForProperty(renamedOwner, "label"))];
             source = source.Replace("command C", "command Renamed", StringComparison.Ordinal) + "\n          label rule New";
@@ -705,7 +708,7 @@ public class when_editing_named_rule_intent
         const string attached = "\n        validate\n          label rule Attached\n            implementation // attached wrapper\n              hint \"Keep\" // attached guidance\n              file B.cs // attached source";
         var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Other\n            implementation\n              hint \"Keep\"" + attached + "\nconcept Label : String\n  validate\n    not empty");
         var blocks = WorkspaceSyntaxIndex.Create(workspace).Entries.Where(entry => entry.Node is DeclarativeValidateSyntax && entry.Handle.Path.StartsWith("/modules/", StringComparison.Ordinal)).ToArray();
-        var source = Prefix + "            file A.cs\n        validate\n          label rule Other\n            ```csharp\n            return true;\n            ```" + attached + "\nconcept Label : String\n  validate\n    not empty";
+        const string source = Prefix + "            file A.cs\n        validate\n          label rule Other\n            ```csharp\n            return true;\n            ```" + attached + "\nconcept Label : String\n  validate\n    not empty";
         var direct = Workspace(source);
         var parsed = new ScreenplayCompiler().Parse(source, "model.play").Value!;
         var replacements = parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.ToArray();

@@ -31,8 +31,11 @@ public class a_destination_model
                 name String
         """;
 
-    internal static ScreenplayWorkspace Create(string? source = null) => ScreenplayWorkspace.Create(ApplicationIdentity.Create("Destinations"), "Destinations",
-        [WorkspaceDocument.Create("model", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source ?? Source))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Destinations")));
+    internal static ScreenplayWorkspace Create(string? source = null) => ScreenplayWorkspace.Create(
+        ApplicationIdentity.Create("Destinations"),
+        "Destinations",
+        [WorkspaceDocument.Create("model", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(source ?? Source))],
+        SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Destinations")));
 
     internal static WorkspaceAuthoringRequest Request(ScreenplayWorkspace workspace) => new()
     {

@@ -13,8 +13,10 @@ public class with_whitespace_identity_text : given.event_route_models
     [InlineData("\u3000")]
     void should_preserve_whitespace_as_an_event_source_and_stream_id(string text)
     {
-        var request = SemanticExecutionRequest.Create(Command.Id,
-            [new(Identity.Id, SemanticValue.Text(text)), new(Key.Id, SemanticValue.Text(text))], []);
+        var request = SemanticExecutionRequest.Create(
+            Command.Id,
+            [new(Identity.Id, SemanticValue.Text(text)), new(Key.Id, SemanticValue.Text(text))],
+            []);
         var result = new SemanticEvaluator().Execute(Plan(), SemanticWorld.Empty, request);
         result.ShouldBeOfExactType<SemanticAccepted>();
         var fact = ((SemanticAccepted)result).Facts.Single();

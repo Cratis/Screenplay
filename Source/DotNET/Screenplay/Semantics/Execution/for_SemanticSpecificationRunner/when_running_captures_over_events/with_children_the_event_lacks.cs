@@ -10,7 +10,8 @@ public class with_children_the_event_lacks : given.an_event_capture
         children items identified by id
           append Modified
             when added
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

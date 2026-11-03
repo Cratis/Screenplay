@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
-
 namespace Cratis.Screenplay.Semantics.Execution;
 
 internal sealed class SemanticReactionBodyExecution(ISemanticBodyExecutionProvider? provider, SemanticRuleBodyExecution? bodies)
@@ -57,11 +55,13 @@ internal sealed class SemanticReactionBodyExecution(ISemanticBodyExecutionProvid
 
     // Reactions attach to their nearest addressable parent: the slice, not a reaction address.
     static bool OwnsReaction(SemanticExecutionPlan plan, SemanticReaction reaction, SemanticImplementationRequirement requirement) =>
-        requirement.Owner.Kind == SemanticKind.Slice && plan.Model.Application.Modules.Any(module =>
-            OwnsReaction((module.Name, []), module.Features, reaction, requirement));
+        requirement.Owner.Kind == SemanticKind.Slice &&
+        SemanticModelProvenance.Declares(plan.Model, requirement.Owner, requirement.Source.SemanticId) &&
+        AllSlices(plan.Model.Application).Any(slice => slice.Id == requirement.Source.SemanticId && slice.Reactions.Any(candidate => candidate.Id == reaction.Id));
 
-    static bool OwnsReaction((string Module, ImmutableArray<string> Path) address, ImmutableArray<SemanticFeature> features, SemanticReaction reaction, SemanticImplementationRequirement requirement) =>
-        features.Any(feature => feature.Slices.Any(slice => slice.Id == requirement.Source.SemanticId && slice.Reactions.Any(candidate => candidate.Id == reaction.Id) &&
-            requirement.Owner.Equals(SemanticAddress.ForSlice(requirement.Owner.Application, address.Module, address.Path.Add(feature.Name), slice.Name))) ||
-            OwnsReaction((address.Module, address.Path.Add(feature.Name)), feature.Features, reaction, requirement));
+    static IEnumerable<SemanticSlice> AllSlices(SemanticApplication application) =>
+        application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
+
+    static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) =>
+        feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 }

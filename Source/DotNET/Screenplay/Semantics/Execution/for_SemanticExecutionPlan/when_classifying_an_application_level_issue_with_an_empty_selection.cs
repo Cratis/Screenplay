@@ -14,7 +14,7 @@ public class when_classifying_an_application_level_issue_with_an_empty_selection
 
     void Because() => _blocking = SemanticExecutionPlan.IsBlockingIssue(
         new(_projectNameConceptId, SemanticPlanIssueKind.UnsupportedValidation, "An application-level capability is unavailable."),
-        ImmutableHashSet<SemanticId>.Empty,
+        [],
         new Dictionary<SemanticId, SemanticId> { [_queryId] = _view.Id });
 
     [Fact] void should_block_the_empty_selection() => _blocking.ShouldBeTrue();

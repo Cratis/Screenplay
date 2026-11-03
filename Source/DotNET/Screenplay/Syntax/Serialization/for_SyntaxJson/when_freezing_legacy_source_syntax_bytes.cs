@@ -9,7 +9,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
-public class when_freezing_legacy_source_syntax_bytes
+public partial class when_freezing_legacy_source_syntax_bytes
 {
     static readonly HashSet<string> _featureVectors =
     [
@@ -166,7 +166,7 @@ public class when_freezing_legacy_source_syntax_bytes
             }
 
             // The samples name their shell with root template; the frozen bytes predate it and carry the same name as the legacy layout.
-            text = Regex.Replace(text, "\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", "\"layout\":\"$2\",$1");
+            text = LayoutShell().Replace(text, "\"layout\":\"$2\",$1");
 
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
@@ -185,6 +185,9 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    [GeneratedRegex("\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex LayoutShell();
 
     static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with
     {
@@ -420,6 +423,7 @@ public class when_freezing_legacy_source_syntax_bytes
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
         Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))
             .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
+
         // The anonymous policy, its persona and the public module have their own conformance vector (decision 0103).
         Policies = application.Policies.Where(policy => policy.Name is not ("IsPerson" or "Anyone")),
         Personas = application.Personas.Where(persona => persona.Name is not ("InvoiceDraftCreator" or "Visitor")).Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
@@ -565,6 +569,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+
             // The living sample now guards editing by draft status; retain the pre-feature plain
             // action list only in frozen bytes. Current vectors and native interaction specs cover it.
             ScreenTableSyntax table => table with

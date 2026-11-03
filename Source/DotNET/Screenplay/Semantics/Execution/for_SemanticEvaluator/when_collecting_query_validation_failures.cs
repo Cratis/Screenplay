@@ -40,11 +40,13 @@ public class when_collecting_query_validation_failures : Specification
         {
             Filters = [new(query.Filters[1].Id, SemanticValue.Text("c")), new(query.Filters[0].Id, SemanticValue.Text("s"))]
         };
-        _rejected = (SemanticRejected)new SemanticEvaluator().Execute(plan, SemanticWorld.Empty,
-            new SemanticExecutionRequest(default, [], [request], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+        _rejected = (SemanticRejected)new SemanticEvaluator().Execute(
+            plan,
+            SemanticWorld.Empty,
+            new SemanticExecutionRequest(default, [], [request], []) { IsReadOnly = true });
     }
 
-    [Fact] void should_validate_the_key_then_filters_in_declaration_order() => _rejected.ValidationFailures.Select(failure => failure.Message).ShouldEqual(new[] { "Invalid key", "Invalid status", "Invalid category" });
+    [Fact] void should_validate_the_key_then_filters_in_declaration_order() => _rejected.ValidationFailures.Select(failure => failure.Message).ShouldEqual(["Invalid key", "Invalid status", "Invalid category"]);
     [Fact] void should_report_the_key_failure_first() => _rejected.Details.ShouldEqual("Invalid key");
     [Fact] void should_retain_the_original_world() => _rejected.World.ShouldBeSame(SemanticWorld.Empty);
 }

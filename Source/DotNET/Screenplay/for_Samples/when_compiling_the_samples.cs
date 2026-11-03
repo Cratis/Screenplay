@@ -95,6 +95,7 @@ public partial class when_compiling_the_samples : given.the_samples
             {
                 _slices++;
                 var name = $"{sample}: {module.Name} {slice.Type} {slice.Name}";
+
                 // A state change needs a UI issuer (an action on a screen the persona already works in), not a dialog of its own: the input
                 // surfaces completeness check (PLAY0533) holds it to that. A state view something watches keeps its screen; a support view that only
                 // the commands' protected reads use (no observable query) is state, not a screen.

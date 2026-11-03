@@ -40,7 +40,7 @@ public class and_glob_blocks_cannot_move_safely : given.a_timeline
         var repair = Repair(workspace, "E");
         var operation = (ReplaceWorkspaceNode)repair.Operations.Single();
         var feature = (FeatureSyntax)operation.Node;
-        var changed = feature with { FileImports = feature.FileImports.Where(import => import.Pattern != "right/z.play").ToArray() };
+        var changed = feature with { FileImports = [.. feature.FileImports.Where(import => import.Pattern != "right/z.play")] };
         Propose(workspace, repair with { Operations = [operation with { Node = changed }] }).Accepted.ShouldBeFalse();
     }
 }

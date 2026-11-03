@@ -1,0 +1,27 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Reports;
+using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains.InProcess.Emit;
+
+var artifacts = Environment.GetEnvironmentVariable("SCREENPLAY_BENCHMARK_ARTIFACTS") ??
+    "BenchmarkDotNet.Artifacts";
+
+// Mutate CLI-selected jobs too, so --job dry never generates a project or looks up an executable.
+var config = ManualConfig.Create(DefaultConfig.Instance)
+    .WithArtifactsPath(artifacts)
+    .AddJob(Job.ShortRun.AsDefault())
+    .AddJob(Job.Default.WithToolchain(InProcessEmitToolchain.Instance).AsMutator());
+var summaries = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config).ToArray();
+if (summaries.Length == 0)
+{
+    return 1;
+}
+
+return summaries.Any(Failed) ? 1 : 0;
+
+static bool Failed(Summary summary) =>
+    summary.HasCriticalValidationErrors || summary.Reports.Any(report => !report.Success);

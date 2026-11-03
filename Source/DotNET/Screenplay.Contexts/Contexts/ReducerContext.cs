@@ -62,4 +62,13 @@ public record ReducerContext(
     /// <returns>The event as <typeparamref name="T"/>.</returns>
     /// <exception cref="ContextPayloadTypeMismatch">The event is not a <typeparamref name="T"/>.</exception>
     public T EventAs<T>() => ContextPayload.As<T>((object?)Event, nameof(Event));
+
+    /// <summary>
+    /// Gets the key as text, a UUID, or a key concept with one public string or Guid constructor.
+    /// </summary>
+    /// <typeparam name="T">The read model's single Uuid or Text key type.</typeparam>
+    /// <returns>The converted key as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextKeyNotConvertible">The key is malformed UUID text or the requested type is unsupported.</exception>
+    /// <remarks>UUID text must use N, D, B or P form without whitespace. Concept validation errors propagate unchanged.</remarks>
+    public T KeyAs<T>() => ContextKey.As<T>(Key);
 }

@@ -12,5 +12,4 @@ public class and_the_command_has_generated_values : given.a_policy
     [Fact] void should_not_invent_generated_artifact_members() => Contexts.Single().Artifact.Properties.Length.ShouldEqual(1);
     [Fact] void should_keep_the_explicit_subject() => Contexts.Single().Subject.ShouldEqual("First");
     [Fact] void should_then_refuse_missing_generation_fixtures() => ((SemanticUnsupported)Result).Capability.ShouldEqual(SemanticExecutionCapability.IdentityAllocation);
-
 }

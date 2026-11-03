@@ -38,7 +38,7 @@ public class when_evaluating_an_expression : Specification
 
     static SemanticCaptureExpression.Node Parse(string text)
     {
-        SemanticCaptureExpression.TryParse(text, out var expression);
+        _ = SemanticCaptureExpression.TryParse(text, out var expression);
         return expression;
     }
 }

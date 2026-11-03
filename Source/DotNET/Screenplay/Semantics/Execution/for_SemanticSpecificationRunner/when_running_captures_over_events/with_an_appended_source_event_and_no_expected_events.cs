@@ -9,7 +9,8 @@ public class with_an_appended_source_event_and_no_expected_events : given.an_eve
         append Translated
           id = $.id
           status = $.status
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

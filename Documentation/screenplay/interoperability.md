@@ -171,12 +171,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 32.0 | Typed event capture keys preserve the agreed source-property identity on capture appends and specification fixtures (released in Screenplay v4.241.0) | 32 | [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) | `full-esm-v32.json` | `EsmGoldenVectors.Get(32)` |
 | 33.0 | An events capture keyed by its event source (`key <property> is event source`) (released in Screenplay v4.242.0) | 33 | [0114](https://github.com/Cratis/Screenplay/blob/main/decisions/0114-events-capture-keys-by-event-source.md) | `full-esm-v33.json` | `EsmGoldenVectors.Get(33)` |
 | 34.0 | A specification stating the commands its slice's reactions invoke (`then invokes <Command>`) (released in Screenplay v4.246.0) | 34 | [0115](https://github.com/Cratis/Screenplay/blob/main/decisions/0115-a-specification-runs-its-own-slice-only.md) | `full-esm-v34.json` | `EsmGoldenVectors.Get(34)` |
-
-#### Claimed, unreleased version
-
-| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
-| --- | --- | --- | --- | --- | --- |
-| 36.0 | State machines and workflows (`stateMachines`, `workflows`; v35 stays reserved for handler result contract v2) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
+| 36.0 | State machines and workflows (`stateMachines`, `workflows`; v35 stays reserved for handler result contract v2) (released in Screenplay 5.1.0) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
 
 Conformance-only footnote: under [decision 0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md#exception-to-0066-conformance-only-reserved-pairs), minor `4294967295` is reserved, never allocated or registered, and is not an ESM version or a table row. Strict readers refuse these pairs. Packaged conformance-vector bytes freeze on first publication; 0066 still freezes their bytes, not a version contract.
 

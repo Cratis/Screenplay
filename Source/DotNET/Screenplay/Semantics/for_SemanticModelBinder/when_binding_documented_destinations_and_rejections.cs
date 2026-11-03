@@ -45,6 +45,7 @@ public class when_binding_documented_destinations_and_rejections : given.a_seman
     }
 
     [Fact] void should_bind_the_documented_destination_and_single_rejection() => _accepted.Success.ShouldBeTrue();
+
     // Decision 0098 (#859): from ESM v30 a production may name any required scalar command property as its event source.
     [Fact] void should_bind_fan_out_to_another_required_property_at_v30() => _fanOut.Success.ShouldBeTrue();
     [Fact] void should_select_v30_for_fan_out() => _fanOut.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V30);

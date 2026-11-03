@@ -74,7 +74,7 @@ public class when_closing_phase_a_source_contracts
         var source = new InMemoryPlayDocumentSource(new Dictionary<string, string>(StringComparer.Ordinal) { ["root.play"] = text });
         var (physical, result) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(new ScreenplayLanguageRegistry(["custom"])), ["root.play"], source);
         result.Success.ShouldBeTrue();
-        physical.Select(document => document.Path).ShouldEqual(new[] { "root.play" });
+        physical.Select(document => document.Path).ShouldEqual(["root.play"]);
     }
 
     [Theory]

@@ -86,8 +86,18 @@ public class a_command_handler : Specification
     protected void ChangeCommand(Func<SemanticCommand, SemanticCommand> change)
     {
         var command = Plan.Commands.Values.Single();
-        Plan = new(Plan.Model, Plan.Commands.SetItem(command.Id, change(command)), Plan.Events, Plan.Projections, Plan.ReadModels,
-            Plan.Queries, Plan.Specifications, Plan.Constraints, Plan.Reactions, Plan.Captures, Plan.UnadmittedArtifacts);
+        Plan = new(
+            Plan.Model,
+            Plan.Commands.SetItem(command.Id, change(command)),
+            Plan.Events,
+            Plan.Projections,
+            Plan.ReadModels,
+            Plan.Queries,
+            Plan.Specifications,
+            Plan.Constraints,
+            Plan.Reactions,
+            Plan.Captures,
+            Plan.UnadmittedArtifacts);
     }
 
     protected SemanticExecutionResult Execute() => Execute(TestContext.Current.CancellationToken);

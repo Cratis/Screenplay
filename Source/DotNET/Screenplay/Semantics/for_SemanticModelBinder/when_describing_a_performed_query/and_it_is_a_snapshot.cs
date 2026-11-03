@@ -7,7 +7,7 @@ public class and_it_is_a_snapshot : given.a_performed_query
 {
     SemanticImplementationRequirement[] _requirements;
 
-    void Because() => _requirements = new[] { "CurrentFigures", "LedgerPage", "FiguresInRegion" }.Select(RequirementOf).ToArray();
+    void Because() => _requirements = [.. new[] { "CurrentFigures", "LedgerPage", "FiguresInRegion" }.Select(RequirementOf)];
 
     [Fact] void should_keep_the_first_result_version() => _requirements.ShouldEachConformTo(_ => _.ResultVersion == 1u);
     [Fact] void should_keep_the_first_context_version() => _requirements.ShouldEachConformTo(_ => _.ContextVersion == 1u);

@@ -26,7 +26,7 @@ public class when_evaluating_a_system_identity : Specification
         var identity = new SemanticReactionIdentity(SemanticReactionIdentityKind.System, role.Length == 0 ? [] : [role]);
 
         // Even a supplied caller's claims cannot leak into the reaction's declared identity.
-        var decision = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, new(true, ["Other"], [new("actor", "system")]), new Dictionary<string, SemanticValue>(), null, command.Properties, identity);
+        var decision = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, new(true, ["Other"], [new("actor", "system")]), new Dictionary<string, SemanticValue>(), null, command.Properties, identity, cancellationToken: TestContext.Current.CancellationToken);
         decision.Outcome.ShouldEqual(allowed ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
     }
 }

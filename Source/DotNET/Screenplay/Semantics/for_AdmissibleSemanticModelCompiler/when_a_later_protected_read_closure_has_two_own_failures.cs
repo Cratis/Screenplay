@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.for_AdmissibleSemanticModelCompiler;
 
 public class when_a_later_protected_read_closure_has_two_own_failures : given.security_documents
 {
-    IEnumerable<SemanticExclusion> Readers => _result.Exclusions.Where(value => value.Address is "M/F/Write" or "M/F/Inspect");
+    IEnumerable<SemanticExclusion> Readers => _result.Exclusions.Where(value => string.Equals(value.Address, "M/F/Write", StringComparison.Ordinal) || string.Equals(value.Address, "M/F/Inspect", StringComparison.Ordinal));
 
     void Establish() => Source(AdmittedProtected
         .Replace("  feature F\n", "  feature F\n    slice StateView Removed\n      readmodel EarlierView\n        earlierViewId String\n      query Scoped => EarlierView[]\n        scoped to identity\n", StringComparison.Ordinal)
@@ -28,6 +28,6 @@ public class when_a_later_protected_read_closure_has_two_own_failures : given.se
         if (exclusion.Cause == SemanticExclusionCause.Root) return exclusion.DependsOn.IsEmpty;
         if (!visited.Add(new(exclusion.Kind, exclusion.Address))) return false;
         return !exclusion.DependsOn.IsEmpty && exclusion.DependsOn.All(reference =>
-            ReachesRoot(_result.Exclusions.Single(value => value.Kind == reference.Kind && value.Address == reference.Address), new(visited)));
+            ReachesRoot(_result.Exclusions.Single(value => value.Kind == reference.Kind && value.Address == reference.Address), [.. visited]));
     }
 }

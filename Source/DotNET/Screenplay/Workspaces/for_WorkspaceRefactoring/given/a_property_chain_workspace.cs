@@ -65,7 +65,7 @@ public class a_property_chain_workspace : Specification
 
     protected WorkspaceSyntaxEntry Property(string owner, string name = "name", uint? generation = null) => WorkspaceSyntaxIndex.Create(Workspace).Entries
         .Single(entry => entry.Node is PropertySyntax property && property.Name == name && entry.Parent is { } parent && WorkspaceSyntaxIndex.Create(Workspace).Find(parent) is { } declaration &&
-            WorkspaceReferenceBindings.Name(declaration.Node) == owner && (generation is null || declaration.Node is EventSyntax @event && @event.Generation == generation));
+            WorkspaceReferenceBindings.Name(declaration.Node) == owner && (generation is null || (declaration.Node is EventSyntax @event && @event.Generation == generation)));
 
     protected WorkspacePropertyRequest Request(string owner = "Register", string action = "rename", uint? generation = null, string name = "name") => new()
     {

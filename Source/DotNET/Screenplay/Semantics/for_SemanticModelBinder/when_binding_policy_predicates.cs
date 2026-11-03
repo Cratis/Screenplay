@@ -135,7 +135,8 @@ public class when_binding_policy_predicates : given.a_semantic_binder
                 new(true, [], []),
                 new Dictionary<string, SemanticValue> { ["department"] = SemanticValue.Text("Finance") },
                 null,
-                command.Properties);
+                command.Properties,
+                cancellationToken: TestContext.Current.CancellationToken);
             decision.Outcome.ShouldEqual(expected);
             var request = SemanticExecutionRequest.Create(
                 command.Id,
@@ -174,7 +175,8 @@ public class when_binding_policy_predicates : given.a_semantic_binder
             new(true, [], []),
             new Dictionary<string, SemanticValue>(),
             null,
-            command.Properties);
+            command.Properties,
+            cancellationToken: TestContext.Current.CancellationToken);
         decision.Outcome.ShouldEqual(SemanticPolicyOutcome.Unsupported);
     }
 

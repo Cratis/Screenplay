@@ -15,6 +15,6 @@ public class when_comparing_overload_findings : given.a_declaration
     {
         var syntax = SemanticConceptCheck.Check(Concept("String", new("nanoid", SourceLocation.Start) { Size = 4, Alphabet = "ab" }, Rule(ValidationRuleKind.Matches, pattern)), 2026);
         var semantic = SemanticConceptCheck.Check(syntax.Concept!, 2026);
-        semantic.Findings.ToArray().ShouldEqual(syntax.Findings.ToArray());
+        semantic.Findings.ToArray().ShouldEqual([.. syntax.Findings]);
     }
 }

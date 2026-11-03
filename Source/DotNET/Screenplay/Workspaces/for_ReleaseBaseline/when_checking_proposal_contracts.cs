@@ -26,6 +26,7 @@ public class when_checking_proposal_contracts : given.a_baseline_workspace
     void should_report_a_removed_historical_generation()
     {
         var candidate = Changed(Source.Replace("event Recorded generation 1\n        details Details[]\n      ", string.Empty, StringComparison.Ordinal));
+
         // Removing revision 1 leaves a generation gap, which is also refused by executable binding.
         candidate.Compilation.Success.ShouldBeFalse();
         var check = WorkspaceReleaseBaseline.Check(Workspace, candidate, Read(Baseline));
@@ -49,7 +50,7 @@ public class when_checking_proposal_contracts : given.a_baseline_workspace
 
     ScreenplayWorkspace Renamed(string before, string after)
     {
-        var entry = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is ConceptSyntax { Name: "Protected" } && before == "Protected" || entry.Node is PropertySyntax { Name: "value" } && before == "value");
+        var entry = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => (entry.Node is ConceptSyntax { Name: "Protected" } && before == "Protected") || (entry.Node is PropertySyntax { Name: "value" } && before == "value"));
         var proposal = Workspace.ProposeRename(new()
         {
             ExpectedRevision = Workspace.Revision,

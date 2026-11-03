@@ -8,7 +8,8 @@ public class with_an_expression_condition : given.an_event_capture
     void Because() => RunCapture("""
         append Added
           when `status == "sent"`
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

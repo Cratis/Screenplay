@@ -9,7 +9,8 @@ public class with_an_appended_source_event : given.an_event_capture
         append Translated
           id = $.id
           status = $.status
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

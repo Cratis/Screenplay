@@ -14,7 +14,7 @@ public class when_classifying_an_application_level_issue : a_scoped_execution_mo
 
     void Because() => _blocking = SemanticExecutionPlan.IsBlockingIssue(
         new(_projectNameConceptId, SemanticPlanIssueKind.UnsupportedValidation, "An application-level capability is unavailable."),
-        ImmutableHashSet.Create(_registration.Id),
+        [_registration.Id],
         new Dictionary<SemanticId, SemanticId> { [_queryId] = _view.Id });
 
     [Fact] void should_always_block_the_selection() => _blocking.ShouldBeTrue();

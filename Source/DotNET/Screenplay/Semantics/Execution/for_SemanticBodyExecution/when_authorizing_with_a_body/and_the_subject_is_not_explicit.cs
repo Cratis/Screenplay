@@ -19,7 +19,7 @@ public class and_the_subject_is_not_explicit : given.a_policy
             var property = Plan.Commands.Values.Single().Properties.Single(property => property.IsGenerated);
             Request = Request with { GeneratedValues = [new(property.Id, SemanticValue.Text("11111111-1111-1111-1111-111111111111"))] };
         }
-        Execute().ShouldBeOfExactType<SemanticAccepted>();
+        Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
         Contexts.Single().Subject.ShouldBeNull();
         Contexts.Single().Artifact.Properties.Length.ShouldEqual(1);
     }

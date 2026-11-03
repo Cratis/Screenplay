@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reflection;
+using Cratis.Screenplay.CanonicalCorpus;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_RegisterProjectCorpus;
@@ -16,7 +17,7 @@ public class when_comparing_the_interoperability_version_table : Specification
         var text = reader.ReadToEnd();
         var released = Rows(text, "#### Released versions");
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
-        released.Length.ShouldEqual(34);
+        released.Length.ShouldEqual(35);
         (claimed.Length <= 1).ShouldBeTrue();
         var rows = released.Concat(claimed).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();

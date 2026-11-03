@@ -10,7 +10,8 @@ public class with_nested_scopes_the_event_lacks : given.an_event_capture
         nested contact
           append Modified
             when added
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

@@ -41,5 +41,5 @@ public class with_admitted_operands : given.a_uuid_comparison
     [Fact] void should_bind_the_read_path_operand() => ((SemanticComparison)Condition(_results[6])).Left.Read.ShouldEqual("View");
 
     static SemanticCondition Condition(CompilationResult<SemanticCompilation> result) =>
-        result.Value!.Model.Application.Modules.Single().Features.Single().Slices.First().Commands.Single().Requirements.Single().Condition;
+        result.Value!.Model.Application.Modules.Single().Features.Single().Slices[0].Commands.Single().Requirements.Single().Condition;
 }

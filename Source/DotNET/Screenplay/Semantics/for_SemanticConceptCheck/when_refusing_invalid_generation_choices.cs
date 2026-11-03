@@ -29,6 +29,6 @@ public class when_refusing_invalid_generation_choices : given.a_declaration
         var result = SemanticConceptCheck.Check(Concept(option == "range" ? "Int" : "String", generation, option == "range" ? [] : [Rule(ValidationRuleKind.NotEmpty)]), 2026);
         var finding = result.Findings.Single();
         (finding.Code, finding.Severity, finding.Target, finding.Option, result.Support, result.Proofs.Length)
-            .ShouldEqual((DiagnosticCodes.InvalidGenerationArgument, DiagnosticSeverity.Error, SemanticConceptFindingTarget.Option, option, (GenerationSupport?)null, 0));
+            .ShouldEqual((DiagnosticCodes.InvalidGenerationArgument, DiagnosticSeverity.Error, SemanticConceptFindingTarget.Option, option, null, 0));
     }
 }

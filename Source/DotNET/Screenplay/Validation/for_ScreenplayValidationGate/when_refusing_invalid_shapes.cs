@@ -23,11 +23,11 @@ public class when_refusing_invalid_shapes : given.a_gate_file
             "{\"validation\":{\"openQuestions\":\"ignore\"}}", "{\"validation\":{\"openQuestions\":true}}",
             "{\"validation\":{\"checks\":[]},}", "{/* comment */}", "{} {}"
         ];
-        _results = shapes.Select(shape =>
+        _results = [.. shapes.Select(shape =>
         {
             File.WriteAllText(GatePath, shape);
             return ScreenplayValidationGate.Read(Root);
-        }).ToArray();
+        })];
     }
 
     [Fact] void should_refuse_all_invalid_shapes() => _results.All(result => result.Failure.Kind == ValidationGateFailureKind.Invalid).ShouldBeTrue();

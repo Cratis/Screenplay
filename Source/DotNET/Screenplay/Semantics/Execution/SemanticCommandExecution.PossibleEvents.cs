@@ -11,7 +11,7 @@ internal sealed partial class SemanticCommandExecution
 
     SemanticExecutionResult? HandlePossibleEvents(string requirement)
     {
-        var result = handlers.Handle(command, CreateContext(), cancellationToken);
+        var result = handlers.Handle(plan, command, CreateContext(), cancellationToken);
         var outcome = SemanticHandlerResultValidation.Validate(plan, command, _commandValues, result);
         if (outcome.Unavailable is { } unavailable) return HandlerUnsupported(requirement, unavailable);
         if (outcome.Violation is { } violation) return HandlerUnsupported(requirement, violation.Describe());

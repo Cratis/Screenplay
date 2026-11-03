@@ -30,5 +30,5 @@ public class with_a_rehomed_subset_state : given.a_persisted_model_root
     [Fact] void should_accept_the_subset() => _outcome.Success.ShouldBeTrue();
     [Fact] void should_preserve_the_materialized_catalog() => CatalogOf(_outcome).ShouldEqual(SemanticIdentityCatalogSerializer.Serialize(_rehomed.IdentityCatalog));
     [Fact] void should_keep_the_original_ids_of_present_declarations() =>
-        _outcome.Workspace!.IdentityCatalog.Semantics.All(assignment => Original.IdentityCatalog.Semantics.Contains(assignment)).ShouldBeTrue();
+        _outcome.Workspace!.IdentityCatalog.Semantics.All(Original.IdentityCatalog.Semantics.Contains).ShouldBeTrue();
 }

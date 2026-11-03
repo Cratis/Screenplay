@@ -4,6 +4,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '43 4 * * *'
+  # Release gate called from publish.yml: always the full native matrix, never skipped.
+  workflow_call:
+    inputs:
+      release:
+        description: 'Release gate: run the full matrix and never skip as already ran'
+        default: true
+        type: boolean
   pull_request:
     paths:
       - 'Source/Screenplay/VSCodeExtension/**'
@@ -20,9 +27,11 @@ on:
 permissions:
   contents: read
 
+# A called workflow inherits the caller's github.workflow and ref, so the release gate uses its own group: it can neither
+# cancel or be cancelled by PR runs nor queue behind (deadlock with) publish.yml's own concurrency group.
 concurrency:
-  group: native-editor-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ inputs.release && format('native-editor-release-{0}-{1}', github.ref, github.sha) || format('native-editor-{0}', github.ref) }}
+  cancel-in-progress: ${{ !inputs.release }}
 
 jobs:
   changes:
@@ -36,16 +45,18 @@ jobs:
       skip: ${{ steps.gate.outputs.skip }}
     steps:
       - id: gate
+        # A release must never pass without the repairs having run.
+        if: ${{ !inputs.release }}
         uses: Cratis/Workflows/.github/actions/skip-if-already-ran@main
       - uses: actions/checkout@v4
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && !inputs.release
         with:
           fetch-depth: 0
       - name: Select native repair matrix
         id: matrix
         shell: bash
         env:
-          PR_SMOKE: ${{ github.event_name == 'pull_request' }}
+          PR_SMOKE: ${{ github.event_name == 'pull_request' && !inputs.release }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
         run: |

@@ -48,7 +48,7 @@ public class when_addressing_second_phase_a_review
         };
         var documents = new InMemoryPlayDocumentSource(files);
         var (physical, result) = PlayApplicationAssembly.Compile(compiler, ["root.play"], documents);
-        physical.Select(document => document.Path).ShouldEqual((string[])["root.play", "barrel.play", "child.play"]);
+        physical.Select(document => document.Path).ShouldEqual(["root.play", "barrel.play", "child.play"]);
         result.Success.ShouldBeTrue();
         result.Value!.Concepts.ShouldBeEmpty();
         result.Value.SourceOptions.ShouldEqual(exact ? SourceOptions.Exact : SourceOptions.Legacy);
@@ -73,7 +73,7 @@ public class when_addressing_second_phase_a_review
             ["fake.play"] = "numbers legacy\nconcept Fake : Decimal\n"
         });
         var (documents, diagnostics) = PlayImports.Resolve(["root.play"], source, registry);
-        documents.Select(document => document.Path).ShouldEqual((string[])["root.play", "barrel.play", "child.play"]);
+        documents.Select(document => document.Path).ShouldEqual(["root.play", "barrel.play", "child.play"]);
         diagnostics.ShouldBeEmpty();
         var (_, application) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(registry), ["root.play"], source);
         application.Success.ShouldBeTrue();

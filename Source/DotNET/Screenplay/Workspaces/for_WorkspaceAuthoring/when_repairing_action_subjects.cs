@@ -49,7 +49,7 @@ public class when_repairing_action_subjects : Specification
         result.Accepted.ShouldBeTrue();
         result.Workspace!.Documents.Single().Text.ShouldContain("action Retry for screen");
         _workspace.Documents.Single().Text.ShouldEqual(Source);
-        result.AuthoringDiagnostics.Any(value => value.Code is DiagnosticCodes.InferredActionSubject or DiagnosticCodes.ChangedActionSubject).ShouldBeFalse();
+        result.AuthoringDiagnostics.Any(value => string.Equals(value.Code, DiagnosticCodes.InferredActionSubject, StringComparison.Ordinal) || string.Equals(value.Code, DiagnosticCodes.ChangedActionSubject, StringComparison.Ordinal)).ShouldBeFalse();
     }
 
     [Fact]

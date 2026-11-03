@@ -13,6 +13,8 @@ internal sealed partial class SemanticScopedProjection
     // Chronicle converts with Convert.ChangeType, which rounds half to even for an integral target.
     static decimal Coerce(decimal value, bool whole) => whole ? Math.Round(value, MidpointRounding.ToEven) : value;
 
+    static SemanticValue SourceOf(SemanticFact fact) => fact.Context?.EventSource.Value ?? fact.Destination;
+
     void Apply(
         Dictionary<SemanticId, SemanticValue> target,
         ImmutableArray<SemanticProjectionMapping> mappings,
@@ -111,7 +113,7 @@ internal sealed partial class SemanticScopedProjection
 
     SemanticValue? EventSource()
     {
-        var source = _fact.Context?.EventSource.Value ?? _fact.Destination;
+        var source = SourceOf(_fact);
         if (source is SemanticNullValue)
         {
             Fail($"Projection '{projection.Name}' keys on the event source identity, which this fact does not carry.");

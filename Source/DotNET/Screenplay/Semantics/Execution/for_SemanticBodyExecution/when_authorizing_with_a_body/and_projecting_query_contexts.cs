@@ -25,9 +25,15 @@ public class and_projecting_query_contexts : given.a_policy
             var key = SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, SemanticValue.Text(part.Name)))]);
             Request = SemanticExecutionRequest.ForQueries([new(query.Id, key)]) with { Caller = Request.Caller };
         }
-        else if (shape == "unkeyed") Request = SemanticExecutionRequest.ForQueries([new(query.Id, SemanticValue.Null)]) with { Caller = Request.Caller };
-        else Request = QueryRequest() with { Tenant = null, Occurrence = null };
-        Execute().ShouldBeOfExactType<SemanticAccepted>();
+        else if (shape == "unkeyed")
+        {
+            Request = SemanticExecutionRequest.ForQueries([new(query.Id, SemanticValue.Null)]) with { Caller = Request.Caller };
+        }
+        else
+        {
+            Request = QueryRequest() with { Tenant = null, Occurrence = null };
+        }
+        Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
         var context = Contexts.Single();
         context.Tenant.ShouldBeNull();
         context.Occurred.ShouldBeNull();
@@ -42,6 +48,9 @@ public class and_projecting_query_contexts : given.a_policy
             context.Subject.ShouldBeNull();
             context.Artifact.Properties.ShouldBeEmpty();
         }
-        else context.Subject.ShouldEqual("First");
+        else
+        {
+            context.Subject.ShouldEqual("First");
+        }
     }
 }

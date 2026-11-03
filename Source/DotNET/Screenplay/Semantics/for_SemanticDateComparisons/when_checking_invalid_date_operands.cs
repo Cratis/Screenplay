@@ -7,8 +7,8 @@ public class when_checking_invalid_date_operands : Specification
 {
     Exception?[] _errors;
 
-    void Because() => _errors = new[] { SemanticValue.Text("not a date"), SemanticValue.Number(42) }
-        .Select(value => Catch.Exception(() => SemanticDateComparisons.Check(new(default, SemanticValidationRuleKind.GreaterThan, value, null), SemanticValue.Text("2026-01-01"), SemanticPrimitiveType.Date))).ToArray();
+    void Because() => _errors = [.. new[] { SemanticValue.Text("not a date"), SemanticValue.Number(42) }
+        .Select(value => Catch.Exception(() => SemanticDateComparisons.Check(new(default, SemanticValidationRuleKind.GreaterThan, value, null), SemanticValue.Text("2026-01-01"), SemanticPrimitiveType.Date)))];
 
     [Fact] void should_refuse_malformed_and_incompatible_operands() => _errors.ShouldEachConformTo(error => error is InvalidSemanticContract);
 }

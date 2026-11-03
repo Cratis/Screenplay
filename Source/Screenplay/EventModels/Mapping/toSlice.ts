@@ -10,6 +10,7 @@ import { capturedEvents, consumedEvents } from './consumedEvents';
 import { EventConstraint } from './EventConstraint';
 import { EventOwners } from './EventOwners';
 import { producedEvents } from './producedEvents';
+import { proseOf } from './proseOf';
 import { readModelSchemaFromProjection } from './readModelSchemaFromProjection';
 import { SliceScope } from './SliceScope';
 import { toAutomationTrigger } from './toAutomationTrigger';
@@ -39,6 +40,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         name: slice.name,
         sliceType,
         description: [slice.description ?? '', ...(dependencySourcesOf(slice).reducers ?? []).filter(reducer => reducer.from != null).map(reducer => `Reducer ${reducer.name}: Observes ${reducer.from!.eventSource}${reducer.from!.stream ? `.${reducer.from!.stream}` : ''}`)].filter(Boolean).join('\n'),
+        ...proseOf({ documentation: slice.documentation }),
         status: SliceStatus.notStarted,
         collapsed: false,
         sortOrder,
@@ -83,6 +85,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
     const declared = eventDeclarations(slice).filter(event => event.name.trim().length > 0).map(event => withConstraints({
         id: scope.idOf('event', event.name),
         name: event.name,
+        ...proseOf(event),
         schema: owners.schemas.forProperties(event.properties),
         ...(event.visibility === EventVisibility.Public ? { visibility: EventItemVisibility.public } : {}),
         ...(event.origin != null ? { origin: event.origin } : {}),
@@ -146,6 +149,7 @@ function readModelOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners)
     return {
         id: scope.idOf('readmodel', name),
         name,
+        ...proseOf(declared),
         schema: declared !== undefined ? owners.schemas.forProperties(declared.properties)
             : projection !== undefined ? readModelSchemaFromProjection(projection, event => owners.schemaFor(event)) : {},
         materializes: true,

@@ -47,7 +47,7 @@ public class and_its_shape_is_not_admitted : given.a_semantic_binder
     [Fact]
     void should_name_hints_remaining_in_the_requirement()
     {
-        var source = and_the_inline_body_is_constrained.Source;
+        const string source = and_the_inline_body_is_constrained.Source;
         var command = new ScreenplayCompiler().Compile(source).Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single();
         var requirement = Bind(source).ImplementationRequirements.Single() with { Hints = ["Pending guidance"] };
         DescribedCommandAdmission.IsResolvedBody(requirement).ShouldBeFalse();

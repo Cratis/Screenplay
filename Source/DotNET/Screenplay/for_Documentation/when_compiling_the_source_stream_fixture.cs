@@ -30,7 +30,7 @@ public class when_compiling_the_source_stream_fixture : Specification
         _workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         var streams = _workspace.Compilation.Value.Model.Application.EventSources.Single().Streams;
         streams.Single(stream => stream.Name == "Transactions").StreamIdType.ShouldNotBeNull();
-        streams.Single(stream => stream.Name == "Ledger").StreamIdParts.Select(part => part.Name).ShouldEqual(new[] { "account", "month" });
+        streams.Single(stream => stream.Name == "Ledger").StreamIdParts.Select(part => part.Name).ShouldEqual(["account", "month"]);
         _workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
     }
     [Fact] void should_not_enroll_source_requirements() => _workspace.Compilation.ImplementationRequirements.ShouldBeEmpty();

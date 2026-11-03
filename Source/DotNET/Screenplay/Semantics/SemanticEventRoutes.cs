@@ -208,6 +208,7 @@ static class SemanticEventRouting
             value, [.. stream.StreamIdParts.Select(part => ScalarKind(part.Type, concepts))], out parts, out failure);
     }
 
+    // Producers are commands, reactions, captures and outbound event projections (shared with the unrouted lookup).
     // "none" and "ambiguous" remain distinct so binding can report the right refusal without guessing a type.
     internal static SemanticTypeReference? FixtureSourceType(SemanticApplication application, SemanticFixtureRoute route, SemanticId eventContract, out string failure)
     {
@@ -215,44 +216,16 @@ static class SemanticEventRouting
         failure = string.Empty;
         if (source.IdentifierType is not null) return source.IdentifierType;
         var slices = Slices(application).ToArray();
-        var commands = slices.SelectMany(slice => slice.Commands).ToArray();
-        var triggers = slices.SelectMany(slice => slice.Reactions).SelectMany(reaction => reaction.Triggers).ToArray();
-        var captures = slices.SelectMany(slice => slice.Captures).ToArray();
-        var types = ProducerTypes(eventContract, []).Distinct().ToArray();
+        var types = SemanticModelValidator.DeclaredEventSourceTypes(
+            slices.SelectMany(slice => slice.Commands),
+            slices.SelectMany(slice => slice.Reactions),
+            slices.SelectMany(slice => slice.Captures),
+            slices.SelectMany(slice => slice.Projections),
+            eventContract);
         if (types.Length == 1) return types[0];
         failure = types.Length == 0 ? "none" : "ambiguous";
 
         return null;
-
-        IEnumerable<SemanticTypeReference> ProducerTypes(SemanticId contract, HashSet<SemanticId> visited)
-        {
-            if (!visited.Add(contract)) yield break;
-            foreach (var command in commands)
-            {
-                foreach (var produced in command.Produces.Where(produced => produced.EventContract == contract))
-                {
-                    if (SemanticModelValidator.ProducedEventSourceType(command, produced) is { } type) yield return type;
-                }
-            }
-            foreach (var trigger in triggers)
-            {
-                foreach (var produced in trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces)).Where(produced => produced.EventContract == contract))
-                {
-                    if (produced.DestinationType is { } type)
-                    {
-                        yield return type;
-                    }
-                    else if (trigger.Kind == SemanticReactionTriggerKind.Event)
-                    {
-                        foreach (var inherited in ProducerTypes(trigger.Source, visited)) yield return inherited;
-                    }
-                }
-            }
-            foreach (var append in captures.SelectMany(capture => capture.Appends.Concat(capture.Children.SelectMany(child => child.Appends)).Concat(capture.Nested.SelectMany(nested => nested.Appends))).Where(append => append.EventContract == contract))
-            {
-                yield return append.EventSourceType;
-            }
-        }
     }
 
     static bool TryFormatScalar(StreamIdScalarKind kind, SemanticValue value, out string? formatted, out StreamIdFormatFailure failure)

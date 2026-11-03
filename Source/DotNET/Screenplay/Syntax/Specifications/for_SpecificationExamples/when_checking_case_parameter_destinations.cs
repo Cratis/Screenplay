@@ -126,5 +126,5 @@ public class when_checking_case_parameter_destinations : Specification
         SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse("concept Amount : Int").Value, []).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSpecificationCaseValue);
     }
 
-    static Diagnostic[] TypeDiagnostics(string source) => new ScreenplayCompiler().Compile(source).Diagnostics.Where(diagnostic => diagnostic.Code is DiagnosticCodes.IncompatibleSpecificationParameterType or DiagnosticCodes.OptionalSpecificationParameterTarget).ToArray();
+    static Diagnostic[] TypeDiagnostics(string source) => [.. new ScreenplayCompiler().Compile(source).Diagnostics.Where(diagnostic => string.Equals(diagnostic.Code, DiagnosticCodes.IncompatibleSpecificationParameterType, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.OptionalSpecificationParameterTarget, StringComparison.Ordinal))];
 }

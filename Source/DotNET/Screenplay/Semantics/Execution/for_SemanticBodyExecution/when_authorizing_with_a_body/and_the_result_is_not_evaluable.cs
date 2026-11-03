@@ -25,7 +25,7 @@ public class and_the_result_is_not_evaluable : given.a_policy
             "unsupported" => SemanticPolicyBodyResult.Unsupported("not available"),
             _ => new(default)
         };
-        var result = (SemanticUnsupported)Execute();
+        var result = (SemanticUnsupported)Execute(TestContext.Current.CancellationToken);
         result.Capability.ShouldEqual(SemanticExecutionCapability.Authorization);
         result.Details.ShouldContain("Permitted");
         result.Details.ShouldContain(Bodies.Single().Requirement.RequirementId);
@@ -41,7 +41,7 @@ public class and_the_result_is_not_evaluable : given.a_policy
     {
         Provider.Before = null;
         Provider.Failure = cancel ? new OperationCanceledException("private") : new InvalidOperationException("private");
-        var result = (SemanticUnsupported)Execute();
+        var result = (SemanticUnsupported)Execute(TestContext.Current.CancellationToken);
         result.Details.ShouldContain(Provider.Failure.GetType().Name);
         result.Details.ShouldNotContain("private");
     }

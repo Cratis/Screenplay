@@ -18,16 +18,16 @@ public class and_source_or_provider_is_unavailable : given.a_policy
     void should_refuse_unverified_source_without_invoking_the_provider(string problem)
     {
         var body = Bodies.Single();
-        var bodies = problem switch
+        SemanticImplementationBody[] bodies = problem switch
         {
-            "stale" => new[] { body with { Content = "stale" } },
-            "duplicate" => new[] { body, body },
-            "wrong-role" => new[] { body with { Requirement = body.Requirement with { Role = SemanticImplementationRole.RulePredicate } } },
-            "result-v2" => new[] { body with { Requirement = body.Requirement with { ResultVersion = 2 } } },
-            "context-v2" => new[] { body with { Requirement = body.Requirement with { ContextVersion = 2 } } },
-            "impure" => new[] { body with { Requirement = body.Requirement with { RequiredCapability = "provider-defined" } } },
-            "pending" => new[] { body with { Requirement = body.Requirement with { AttachmentResolution = SemanticAttachmentResolution.Pending } } },
-            "unresolved" => new[] { body with { Requirement = body.Requirement with { AttachmentResolution = SemanticAttachmentResolution.UnresolvedFile } } },
+            "stale" => [body with { Content = "stale" }],
+            "duplicate" => [body, body],
+            "wrong-role" => [body with { Requirement = body.Requirement with { Role = SemanticImplementationRole.RulePredicate } }],
+            "result-v2" => [body with { Requirement = body.Requirement with { ResultVersion = 2 } }],
+            "context-v2" => [body with { Requirement = body.Requirement with { ContextVersion = 2 } }],
+            "impure" => [body with { Requirement = body.Requirement with { RequiredCapability = "provider-defined" } }],
+            "pending" => [body with { Requirement = body.Requirement with { AttachmentResolution = SemanticAttachmentResolution.Pending } }],
+            "unresolved" => [body with { Requirement = body.Requirement with { AttachmentResolution = SemanticAttachmentResolution.UnresolvedFile } }],
             _ => []
         };
         var result = (SemanticUnsupported)new SemanticEvaluator(Provider, bodies).Execute(Plan, SemanticWorld.Empty, Request);

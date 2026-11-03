@@ -83,12 +83,15 @@ public class when_compiling_imported_example_types : Specification
         [
             WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(Importing)),
             WorkspaceDocument.Create("declarations", PortablePlayPath.Parse("declarations.play"), Encoding.UTF8.GetBytes(Declarations))
-        ], catalog);
+        ],
+        catalog);
         _semantic = new SemanticModelCompiler().Compile("Billing", SemanticDocumentSet.Create(
         [
             SemanticSourceDocument.Create(catalog.ResolveDocument("application"), "application", "application.play", Importing),
             SemanticSourceDocument.Create(catalog.ResolveDocument("declarations"), "declarations", "declarations.play", Declarations)
-        ], catalog));
+        ],
+        catalog));
+
         // Named imports remain syntax-only in ESM v1. File imports assemble the same declarations
         // without that admission restriction; fully qualified example types still resolve across documents.
         var fileImporting = Importing
@@ -102,12 +105,14 @@ public class when_compiling_imported_example_types : Specification
         [
             WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(fileImporting)),
             WorkspaceDocument.Create("declarations", PortablePlayPath.Parse("declarations.play"), Encoding.UTF8.GetBytes(Declarations))
-        ], catalog);
+        ],
+        catalog);
         _fileImportSemantic = new SemanticModelCompiler().Compile("Billing", SemanticDocumentSet.Create(
         [
             SemanticSourceDocument.Create(catalog.ResolveDocument("application"), "application", "application.play", fileImporting),
             SemanticSourceDocument.Create(catalog.ResolveDocument("declarations"), "declarations", "declarations.play", Declarations)
-        ], catalog));
+        ],
+        catalog));
         var unresolved = Importing.Replace("import \"declarations.play\"\n", string.Empty, StringComparison.Ordinal);
         (_, _unresolved) = PlayApplicationAssembly.Compile(compiler, ["application.play"], new InMemoryPlayDocumentSource(new Dictionary<string, string>
         {
@@ -116,7 +121,8 @@ public class when_compiling_imported_example_types : Specification
         _unresolvedWorkspace = ScreenplayWorkspace.Create("Billing",
         [
             WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(unresolved))
-        ], catalog);
+        ],
+        catalog);
         (_, _invalidValues) = PlayApplicationAssembly.Compile(compiler, ["application.play"], new InMemoryPlayDocumentSource(new Dictionary<string, string>
         {
             ["application.play"] = Importing.Replace("amount = 10", "missing = 10", StringComparison.Ordinal),

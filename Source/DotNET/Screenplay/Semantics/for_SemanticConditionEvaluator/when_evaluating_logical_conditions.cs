@@ -19,8 +19,8 @@ public class when_evaluating_logical_conditions : Specification
             new(no, SemanticLogicalOperator.Or, no),
             new(new SemanticLogicalCondition(no, SemanticLogicalOperator.Or, yes), SemanticLogicalOperator.And, yes)
         ];
-        _results = conditions.Select(condition => SemanticConditionEvaluator.Evaluate(condition, new Dictionary<SemanticId, SemanticValue>())).ToArray();
+        _results = [.. conditions.Select(condition => SemanticConditionEvaluator.Evaluate(condition, new Dictionary<SemanticId, SemanticValue>()))];
     }
 
-    [Fact] void should_preserve_boolean_grouping() => _results.ShouldEqual(new[] { true, false, true, false, true });
+    [Fact] void should_preserve_boolean_grouping() => _results.ShouldEqual([true, false, true, false, true]);
 }

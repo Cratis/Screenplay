@@ -10,7 +10,7 @@ public class when_opening_with_an_unreadable_source : given.a_persisted_model_ro
     ScreenplayModelRootOutcome[] _outcomes = [];
     Exception? _error;
 
-    void Establish() => File.WriteAllBytes(Path.Combine(RootPath, "utf16.play"), Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes("module M\n")).ToArray());
+    void Establish() => File.WriteAllBytes(Path.Combine(RootPath, "utf16.play"), [.. Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes("module M\n"))]);
 
     void Because() => _error = Catch.Exception(() => _outcomes = [ScreenplayModelRoot.Open(RootPath), ScreenplayModelRoot.OpenForReleaseBaselineCheck(RootPath)]);
 

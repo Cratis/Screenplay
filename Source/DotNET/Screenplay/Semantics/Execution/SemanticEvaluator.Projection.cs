@@ -49,7 +49,7 @@ public sealed partial class SemanticEvaluator
         var instances = current.ReadModels.ToList();
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
-        var validator = new SemanticValueValidator(concepts, types);
+        var validator = new SemanticValueValidator(concepts, types, memoize: true);
         var observed = history.ToList();
         var deferred = current.PendingChildren.ToList();
         var projection = new SemanticFactProjection(plan, validator, instances, observed, deferred);

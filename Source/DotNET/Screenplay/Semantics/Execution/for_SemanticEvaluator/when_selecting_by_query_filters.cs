@@ -39,7 +39,7 @@ public class when_selecting_by_query_filters : Specification
     [Fact]
     void should_not_match_an_instance_without_the_property()
     {
-        var property = _query.Filters.First().Property;
+        var property = _query.Filters[0].Property;
         var world = SemanticWorld.Create([], [.. _world.ReadModels.Select(instance => instance with { Values = [.. instance.Values.Where(value => value.TargetProperty != property)] })]);
         ((SemanticAccepted)Execute(world, [Value("status", SemanticValue.Text("open"))])).Queries.Single().Results.ShouldBeEmpty();
     }
@@ -55,6 +55,8 @@ public class when_selecting_by_query_filters : Specification
 
     SemanticExecutionResult Execute(ImmutableArray<SemanticQueryFilterValue> filters, SemanticKeyedQuery? query = null, SemanticValue? key = null) => Execute(_world, filters, query, key);
 
-    SemanticExecutionResult Execute(SemanticWorld world, ImmutableArray<SemanticQueryFilterValue> filters, SemanticKeyedQuery? query = null, SemanticValue? key = null) => new SemanticEvaluator().Execute(_plan, world,
-        new SemanticExecutionRequest(default, [], [new((query ?? _query).Id, key ?? SemanticValue.Null) { Filters = filters }], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+    SemanticExecutionResult Execute(SemanticWorld world, ImmutableArray<SemanticQueryFilterValue> filters, SemanticKeyedQuery? query = null, SemanticValue? key = null) => new SemanticEvaluator().Execute(
+        _plan,
+        world,
+        new SemanticExecutionRequest(default, [], [new((query ?? _query).Id, key ?? SemanticValue.Null) { Filters = filters }], []) { IsReadOnly = true });
 }
