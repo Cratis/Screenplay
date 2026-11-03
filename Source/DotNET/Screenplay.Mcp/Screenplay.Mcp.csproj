@@ -16,6 +16,8 @@
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" Condition="'$(Configuration)'=='Debug'" />
+        <!-- The MCP specs reuse the compiler's spec contexts and golden vectors. -->
+        <ProjectReference Include="../Screenplay.Specs/Screenplay.Specs.csproj" Condition="'$(Configuration)'=='Debug'" />
         <InternalsVisibleTo Include="Cratis.Screenplay.Tool" />
     </ItemGroup>
 
