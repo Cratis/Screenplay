@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
@@ -31,31 +32,8 @@ public static partial class AttachmentFiles
     /// <summary>Lists every model-selected implementation reference, including missing or refused files.</summary>
     /// <param name="documents">The exact source documents to inspect.</param>
     /// <returns>The same reference manifest used by the attachment loader, before filesystem inspection.</returns>
-    public static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents)
-    {
-        // Each document that is a whole document on its own contributes its references, as always.
-        var references = new ImplementationReferences();
-        var texts = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var document in documents)
-        {
-            texts[document.DisplayPath] = document.Text;
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.DisplayPath);
-            if (parsed.Value is not null) references.VisitApplication(parsed.Value);
-        }
-
-        // A document an import places in a module or feature is not a whole document on its own, so the
-        // set is also assembled the way a folder is: imports resolved, placed files parsed where they belong.
-        var (_, assembled) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts));
-        if (assembled.Value is not null)
-        {
-            var placed = new ImplementationReferences();
-            placed.VisitApplication(assembled.Value);
-            var known = references.Files.Select(Identify).ToHashSet(StringComparer.Ordinal);
-            references.Files.AddRange(placed.Files.Where(file => !known.Contains(Identify(file))));
-        }
-
-        return [.. references.Files];
-    }
+    public static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents) =>
+        References(documents, ScreenplayLanguageRegistry.Default);
 
     /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
     /// <param name="path">The authored file path.</param>
@@ -113,14 +91,46 @@ public static partial class AttachmentFiles
         return true;
     }
 
+    internal static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents, IScreenplayLanguageRegistry languages)
+    {
+        // Each document that is a whole document on its own contributes its references, as always.
+        var references = new ImplementationReferences();
+        var texts = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var document in documents)
+        {
+            texts[document.DisplayPath] = document.Text;
+            var parsed = new ScreenplayCompiler(languages).Parse(document.Text, document.DisplayPath);
+            if (parsed.Value is not null) references.VisitApplication(parsed.Value);
+        }
+
+        // A document an import places in a module or feature is not a whole document on its own, so the
+        // set is also assembled the way a folder is: imports resolved, placed files parsed where they belong.
+        var (_, assembled) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(languages), texts.Keys, new InMemoryPlayDocumentSource(texts));
+        if (assembled.Value is not null)
+        {
+            var placed = new ImplementationReferences();
+            placed.VisitApplication(assembled.Value);
+            var known = references.Files.Select(Identify).ToHashSet(StringComparer.Ordinal);
+            references.Files.AddRange(placed.Files.Where(file => !known.Contains(Identify(file))));
+        }
+
+        return [.. references.Files];
+    }
+
     // A null result means the platform could not establish the file type; never open the attachment in that case.
-    internal static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents, Func<string, bool?> verifyRegularFile)
+    internal static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents, Func<string, bool?> verifyRegularFile) =>
+        LoadReferences(root, References(documents), verifyRegularFile);
+
+    internal static AttachmentFileResult LoadReferences(string root, ImmutableArray<FileReferenceSyntax> references) =>
+        LoadReferences(root, references, IsRegularFile);
+
+    internal static AttachmentFileResult LoadReferences(string root, ImmutableArray<FileReferenceSyntax> references, Func<string, bool?> verifyRegularFile)
     {
         var contents = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var fullRoot = Path.GetFullPath(root);
         var total = 0L;
-        foreach (var reference in References(documents))
+        foreach (var reference in references)
         {
             if (!TryNormalize(reference.Path, out var key, out var reason))
             {
