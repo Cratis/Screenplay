@@ -1,5 +1,5 @@
 ---
-id: 0133
+id: 0135
 title: Passive read models are an explicit realization choice outside portable ESM
 status: accepted
 stage: none
@@ -32,3 +32,7 @@ Renderers must include the flag in hashed render input (the `AuthoringMetadataIn
 Inference from command-only usage was rejected because adding a consumer must not silently change deployment. Adding a portable ESM member was rejected because this is realization metadata, not execution semantics. Making the syntax record positional was rejected to preserve binary compatibility. Editors can parse the choice without claiming semantic validation. Existing active models and their transport bytes stay unchanged.
 
 The parser adds one ordinal keyword comparison beside the existing directive checks, with no allocation, regex, lookahead rescan or extra pass for active models. Managed read-surface skill updates belong in Cratis/AI, not consuming corpus copies.
+
+## Downgrade path
+
+Older tools reject syntax JSON that uses `passive`: their `SyntaxJsonReader` refuses unknown members. Before downgrading, remove the directive or re-export the model with a version that omits it. Portable ESM bytes are unchanged, so only the syntax JSON and `.play` source carry the incompatibility.
