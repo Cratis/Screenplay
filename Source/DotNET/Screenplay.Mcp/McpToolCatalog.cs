@@ -112,8 +112,11 @@ static class McpToolCatalog
         tool.Name.StartsWith("propose", StringComparison.Ordinal) || tool.Name == "expand-layout" || tool.Name == "apply" || tool.Name == "read-proposal"
             ? tool with { Properties = [.. tool.Properties, "expectedReleaseBaselineRevision"] } : tool)];
 
-    // Apply and recover write only journaled, rollback-able proposal plans; they are not destructive in the
-    // host sense, so hosts need not confirm every call. The model still invokes them explicitly.
-    static object Annotations(McpToolDefinition tool) =>
-        new { readOnlyHint = tool.Name != "apply" && tool.Name != "recover-workspace", destructiveHint = false, openWorldHint = false };
+    // Apply and recovery replace or restore workspace source and state. Journaling supports recovery;
+    // hosts still need accurate mutation hints when deciding whether to ask for confirmation.
+    static object Annotations(McpToolDefinition tool)
+    {
+        var writesWorkspace = tool.Name == "apply" || tool.Name == "recover-workspace";
+        return new { readOnlyHint = !writesWorkspace, destructiveHint = writesWorkspace, openWorldHint = false };
+    }
 }
