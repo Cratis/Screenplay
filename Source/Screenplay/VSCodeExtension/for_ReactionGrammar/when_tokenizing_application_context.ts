@@ -44,6 +44,12 @@ describe('when TextMate tokenizes application context', () => {
         }
     });
 
+    it('should still highlight a component data context', () => {
+        const tokens = scopes(['screen S', '  component Cratis.Components.DataGrid grid', '    context from query ListInvoices']);
+        tokens[2](4).should.contain('keyword.other.screenplay');
+        tokens[2](12).should.contain('keyword.other.screenplay');
+    });
+
     it('should not interpret context inside a handler fence', () => {
         const tokens = scopes(['command C', '  handler', '    ```csharp', '    context', '    zone time zone', '    ```']);
         tokens[3](4).should.contain('meta.embedded.block.csharp');

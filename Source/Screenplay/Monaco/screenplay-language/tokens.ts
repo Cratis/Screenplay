@@ -71,6 +71,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^()(context)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@applicationContextBody.$1' }]],
+            [/^(\s*)(context)(\s+)(from)\b/, ['white', 'keyword', 'white', 'keyword']],
             [/^(command)(\s+)(reads)(\s+)(protected)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(reaction)(\s+)(batches)(\s+)(atomic)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],

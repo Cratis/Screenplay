@@ -3,6 +3,7 @@
     "cases": [
         { "name": "Application context declares typed time zones", "source": ["context", "  bookingZone time zone", "  @reportingZone time zone"], "diagnostics": [] },
         { "name": "Application context permits an empty block", "source": ["context"], "diagnostics": [] },
+        { "name": "Application context does not precede the domain", "source": ["context", "  bookingZone time zone", "domain Example"], "diagnostics": ["PLAY0004@3"] },
         { "name": "Application context header has no name", "source": ["context Named", "  zone time zone"], "diagnostics": ["PLAY0854@1"], "messages": ["Declare 'context' once at the application root."] },
         { "name": "Repeated application context", "source": ["context", "context", "  ignored time zone"], "diagnostics": ["PLAY0854@2"] },
         { "name": "Application context members need lower-case names", "source": ["context", "  Zone time zone"], "diagnostics": ["PLAY0854@2"] },
