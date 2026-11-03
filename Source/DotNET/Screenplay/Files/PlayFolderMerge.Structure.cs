@@ -142,7 +142,7 @@ internal static partial class PlayFolderMerge
         {
             var first = kept.Find(earlier =>
                 !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
-                SyntaxJson.StructurallyEqual(earlier, authorization));
+                SameRequirement(earlier.Requirement, authorization.Requirement));
             if (first is not null)
             {
                 context.Warning(
@@ -174,6 +174,29 @@ internal static partial class PlayFolderMerge
             .Select(comment => comment with { Line = line, Placement = SourceCommentPlacement.Leading, AnchorLine = line });
 
         return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
+    }
+
+    // Compare the bounded requirement trees directly: the transport serializer has a lower depth limit.
+    static bool SameRequirement(PolicyRequirementSyntax left, PolicyRequirementSyntax right)
+    {
+        var pending = new Stack<(PolicyRequirementSyntax Left, PolicyRequirementSyntax Right)>();
+        pending.Push((left, right));
+        while (pending.TryPop(out var pair))
+        {
+            if (pair.Left is LogicalPolicyRequirementSyntax first && pair.Right is LogicalPolicyRequirementSyntax second)
+            {
+                if (first.Operator != second.Operator) return false;
+                pending.Push((first.Left, second.Left));
+                pending.Push((first.Right, second.Right));
+            }
+            else if (pair.Left is not PolicyReferenceSyntax firstReference || pair.Right is not PolicyReferenceSyntax secondReference ||
+                !string.Equals(firstReference.Name, secondReference.Name, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // Identical comments in different files are separate occurrences. Other parts' header comments move

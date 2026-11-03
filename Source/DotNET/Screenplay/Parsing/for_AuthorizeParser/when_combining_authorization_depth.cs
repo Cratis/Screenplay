@@ -57,6 +57,19 @@ public class when_combining_authorization_depth
     }
 
     [Theory]
+    [InlineData(96)]
+    [InlineData(128)]
+    public void should_ignore_identical_deep_gates_from_additional_files(int depth)
+    {
+        var compiler = new ScreenplayCompiler();
+        var source = "module Portal\n  authorize " + string.Join(" and ", Enumerable.Repeat("Access", depth));
+        var result = PlayFolderMerge.Merge([compiler.Parse(source, "first.play"), compiler.Parse(source, "second.play")]);
+        result.Value!.Modules.First().Authorize.ShouldNotBeNull();
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0394").ShouldEqual(1);
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0852").ShouldEqual(0);
+    }
+
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     public void should_bound_gates_merged_from_additional_files(int count)
