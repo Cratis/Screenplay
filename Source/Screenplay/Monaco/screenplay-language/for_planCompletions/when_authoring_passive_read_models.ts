@@ -12,14 +12,18 @@ const prefix = ['module Billing', '  feature Invoices', '    slice StateChange R
 describe('when authoring passive read models', () => {
     it('should offer the bare directive only in the readmodel body', () => {
         const lines = [...prefix, '      readmodel RegistrationState', '        '];
-        const item = planCompletions(lines, 4, lines[4], scanDocument(lines)).entries.find(entry => entry.label === 'passive')!;
+        const plan = planCompletions(lines, 4, lines[4], scanDocument(lines));
+        const entries = plan.kind === 'entries' ? plan.entries : [];
+        const item = entries.find(entry => entry.label === 'passive')!;
         item.insertText.should.equal('passive');
         item.documentation.should.contain('never inferred');
     });
 
     it.each(['command RegisterInvoice', 'event InvoiceRegistered', 'projection RegistrationHistory => RegistrationState'])('should not offer passive in %s', header => {
         const lines = [...prefix, `      ${header}`, '        '];
-        planCompletions(lines, 4, lines[4], scanDocument(lines)).entries.some(entry => entry.label === 'passive').should.equal(false);
+        const plan = planCompletions(lines, 4, lines[4], scanDocument(lines));
+        const entries = plan.kind === 'entries' ? plan.entries : [];
+        entries.some(entry => entry.label === 'passive').should.equal(false);
     });
 
     it('should explain passivity and the default in hover text', () => {
