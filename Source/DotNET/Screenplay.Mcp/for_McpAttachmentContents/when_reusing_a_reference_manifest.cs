@@ -7,6 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAttachmentContents;
 
+[PerFactSpecificationLifecycle]
 public class when_reusing_a_reference_manifest : given.an_attachment_request
 {
     ImmutableArray<FileReferenceSyntax> _first;
