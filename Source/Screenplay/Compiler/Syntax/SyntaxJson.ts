@@ -142,6 +142,7 @@ const omittedWhenDefault: Record<string, Record<string, unknown>> = {
     ImportSyntax: { visibility: 'Private' },
     ConceptAttributeSyntax: { criminal: false },
     PropertySyntax: { isSubject: false },
+    ReadModelSyntax: { isPassive: false },
     SpecificationSyntax: { thenNoEvents: false }
 };
 
