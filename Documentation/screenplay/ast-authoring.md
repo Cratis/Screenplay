@@ -17,6 +17,10 @@ Preserve concept attributes and their typed `scope`, `specialCategory` and `crim
 
 `ConceptSyntax.valueNumbers` is optional and nullable. Omit it for an unnumbered enum; otherwise supply unique int32 numbers parallel to `values`. Non-enums and cardinality mismatches are rejected. Replacements must preserve authored numbers. Use `WorkspaceEnumerationRefactorings.ProposeNumberMembers` or MCP `propose-number-enum-members` to pin a wholly unnumbered enum to its current positions, with the concept's revision-bound handle and explicit `CanonicalizeTouchedDocuments` consent. Numbered and mixed enums are never renumbered. The proposal preserves catalog assignments, comments and known executable bytes; review before explicit apply. Pins equal to positions keep the prior executable version, bytes and revision; non-positional numbers bind as ESM v12. Consumers must explicitly admit v12 before accepting these models.
 
+## Passive read models
+
+Preserve optional Boolean `ReadModelSyntax.isPassive` when replacing a read model. The bare body directive opts into replay on demand for command decisions; absence/false means active and writers omit false. It is never inferred. Queries or screen data over the model fail native validation (`PLAY0859`); no command read warns (`PLAY0860`); repetition warns in both parsers (`PLAY0858`). Passivity is realization metadata, not portable ESM. Native consumers use `SemanticCompilation.PassiveReadModels` and must include it in hashed render input, since executable bytes and revision stay unchanged.
+
 ## Keys, production routes and observer filters
 
 `PropertySyntax.isKey` is an optional Boolean. It defaults to false and is omitted when false. `QuerySyntax.byParts` holds ordered query parameters. `ReadsSyntax.byParts` holds ordered property mappings. Each defaults to an empty collection and is mutually exclusive with `by`.

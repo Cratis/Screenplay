@@ -121,3 +121,4 @@
 | [0130](0130-value-predicates-alongside-capture-change-guards.md) | Capture `when` guards gain value predicates alongside the existing change guards; backticks are deprecated only after a verified repair | accepted | none | 2026-10-29 | woksin (ruling on #955) |
 | [0131](0131-selection-bound-panes-use-native-named-selection-sources.md) | Selection-bound panes use native named selection sources | accepted | none | 2026-10-30 | woksin (ruling and refinement on #684) |
 | [0132](0132-application-declared-typed-context-members.md) | Applications declare typed-context members, starting with time-zone members, published as sidecar revision 3 | accepted | none | 2026-11-02 | woksin (Q-220, delegated through L0) |
+| [0133](0133-passive-read-models-are-realization-metadata.md) | Passive read models are an explicit realization choice outside portable ESM | accepted | none | 2026-11-02 | Accepted Screenplay#1129 implementation plan (delegated) |
