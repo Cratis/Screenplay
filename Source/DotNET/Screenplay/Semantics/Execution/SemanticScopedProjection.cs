@@ -36,6 +36,11 @@ internal sealed partial class SemanticScopedProjection(
     SemanticFact _fact = null!;
     string? _failure;
 
+    // Scopes whose 'every include children' mappings already ran for the current fact (Chronicle subscribes them once
+    // per event type to the level's own event stream, ChildEveryEventMappings.cs:55-71). Null during deferred replay.
+    HashSet<SemanticProjectionScope>? _ancestorsApplied;
+    bool _replayingDeferred;
+
     /// <summary>
     /// Projects one fact.
     /// </summary>
@@ -58,6 +63,9 @@ internal sealed partial class SemanticScopedProjection(
 
         if (_failure is null && handled)
         {
+            // Each resolved deferred child gives its event to its ancestors again (ResolveFutures.ProvideToAncestors:207-219).
+            _ancestorsApplied = null;
+            _replayingDeferred = true;
             ResolvePending();
         }
 
@@ -91,30 +99,10 @@ internal sealed partial class SemanticScopedProjection(
 
     bool Process(SemanticProjectionScope scope, Level level)
     {
-        var handled = false;
-        foreach (var from in scope.From.Where(_ => _.EventContract == _fact.EventContract))
-        {
-            handled = true;
-            ApplyFrom(from, scope, level);
-        }
-
-        foreach (var join in scope.Joins.Where(_ => _.EventContract == _fact.EventContract))
-        {
-            handled = true;
-            ApplyJoin(join, scope, level);
-        }
-
-        foreach (var removal in scope.Removals.Where(_ => _.EventContract == _fact.EventContract))
-        {
-            handled = true;
-            ApplyRemoval(removal, scope, level);
-        }
-
-        foreach (var removal in scope.JoinRemovals.Where(_ => _.EventContract == _fact.EventContract))
-        {
-            handled = true;
-            ApplyJoinRemoval(removal, level);
-        }
+        var handled = ProcessFrom(scope, level);
+        handled |= ProcessJoins(scope, level);
+        handled |= ProcessRemovals(scope, level);
+        handled |= ProcessJoinRemovals(scope, level);
 
         foreach (var children in scope.Children)
         {
@@ -125,6 +113,66 @@ internal sealed partial class SemanticScopedProjection(
         {
             var composite = _types[level.Targets[nested.Property].Type.Target];
             handled |= Process(nested.Scope, level with { Nested = [.. level.Nested, nested.Property], Targets = Properties(composite.Properties) });
+        }
+
+        return handled;
+    }
+
+    bool ProcessFrom(SemanticProjectionScope scope, Level level)
+    {
+        var handled = false;
+        foreach (var from in scope.From)
+        {
+            if (from.EventContract == _fact.EventContract)
+            {
+                handled = true;
+                ApplyFrom(from, scope, level);
+            }
+        }
+
+        return handled;
+    }
+
+    bool ProcessJoins(SemanticProjectionScope scope, Level level)
+    {
+        var handled = false;
+        foreach (var join in scope.Joins)
+        {
+            if (join.EventContract == _fact.EventContract)
+            {
+                handled = true;
+                ApplyJoin(join, scope, level);
+            }
+        }
+
+        return handled;
+    }
+
+    bool ProcessRemovals(SemanticProjectionScope scope, Level level)
+    {
+        var handled = false;
+        foreach (var removal in scope.Removals)
+        {
+            if (removal.EventContract == _fact.EventContract)
+            {
+                handled = true;
+                ApplyRemoval(removal, scope, level);
+            }
+        }
+
+        return handled;
+    }
+
+    bool ProcessJoinRemovals(SemanticProjectionScope scope, Level level)
+    {
+        var handled = false;
+        foreach (var removal in scope.JoinRemovals)
+        {
+            if (removal.EventContract == _fact.EventContract)
+            {
+                handled = true;
+                ApplyJoinRemoval(removal, level);
+            }
         }
 
         return handled;
@@ -142,10 +190,7 @@ internal sealed partial class SemanticScopedProjection(
         {
             Apply(target, from.Mappings, level.Targets, _fact, level.Nested.IsEmpty);
             Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact, level.Nested.IsEmpty && scope.Joins.IsEmpty);
-            if (level.Nested.IsEmpty)
-            {
-                BackfillJoins(target, from, scope, level);
-            }
+            BackfillJoins(target, from, scope, level);
         });
     }
 
@@ -173,7 +218,7 @@ internal sealed partial class SemanticScopedProjection(
 
     // Chronicle re-reads the latest joined event when a from event projects (ProjectionFactory.SetupJoinsForFromDefinition,
     // ProjectionFactory.cs:736-784): at a projection's own level for joins on a property the from maps or on the key property,
-    // inside children for joins on the identity.
+    // inside children for joins on the identity. Root-level nested scopes resolve against their own mapped properties.
     void BackfillJoins(Dictionary<SemanticId, SemanticValue> target, SemanticProjectionFrom from, SemanticProjectionScope scope, Level level)
     {
         if (scope.Joins.IsEmpty) return;
@@ -276,12 +321,13 @@ internal sealed partial class SemanticScopedProjection(
     Location? LocateChild(Level level, SemanticValue identity, SemanticValue parentIdentity)
     {
         var parentAddress = level.Address[..^1];
-        var parents = parentAddress.IsEmpty
-            ? _documents.Where(_ => !_.Removed && SemanticValueRules.AreEqual(_.Key, parentIdentity)).Select(_ => new Location(_, [], [])).ToArray()
-            : [.. Elements(parentAddress).Where(_ => SemanticValueRules.AreEqual(_.Steps[^1].Identity, parentIdentity))];
-        if (parents.Length != 1)
+        var parent = parentAddress.IsEmpty
+            ? FindRootParent(parentIdentity, out var count)
+            : FindElementParent(parentAddress, parentIdentity, out count);
+
+        if (count != 1 || parent is null)
         {
-            if (parents.Length > 1)
+            if (count > 1)
             {
                 Fail($"Projection '{projection.Name}' parent identity is ambiguous for a child event.");
             }
@@ -290,12 +336,57 @@ internal sealed partial class SemanticScopedProjection(
         }
 
         var step = level.Address[^1];
-        return parents[0] with { Steps = [.. parents[0].Steps, new(step.Property, step.IdentifiedBy, identity)], Nested = level.Nested };
+        return parent with { Steps = [.. parent.Steps, new(step.Property, step.IdentifiedBy, identity)], Nested = level.Nested };
+    }
+
+    Location? FindRootParent(SemanticValue identity, out int count)
+    {
+        Location? parent = null;
+        count = 0;
+        foreach (var document in _documents)
+        {
+            if (!document.Removed && SemanticValueRules.AreEqual(document.Key, identity))
+            {
+                parent = new(document, [], []);
+                count++;
+            }
+        }
+
+        return parent;
+    }
+
+    Location? FindElementParent(ImmutableArray<ChildStep> address, SemanticValue identity, out int count)
+    {
+        Location? parent = null;
+        count = 0;
+        foreach (var candidate in Elements(address))
+        {
+            if (SemanticValueRules.AreEqual(candidate.Steps[^1].Identity, identity))
+            {
+                parent = candidate;
+                count++;
+            }
+        }
+
+        return parent;
+    }
+
+    Document? FindRootDocument(SemanticValue key)
+    {
+        foreach (var document in _documents)
+        {
+            if (!document.Removed && SemanticValueRules.AreEqual(document.Key, key))
+            {
+                return document;
+            }
+        }
+
+        return null;
     }
 
     Document? RootDocument(SemanticValue key, bool create)
     {
-        var document = _documents.Find(_ => !_.Removed && SemanticValueRules.AreEqual(_.Key, key));
+        var document = FindRootDocument(key);
         if (document is null && create)
         {
             // The instance key is the read model's identifier, as the document key is in Chronicle.

@@ -8,6 +8,9 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>Derives wrapper contracts from bound identities, never from attachment text or display-name joins.</summary>
 internal static class SemanticTypedContextCatalog
 {
+    /// <summary>The <c>$context</c> member a command calendar may read (decision 0106, #1044): the one trusted time-zone member the host supplies.</summary>
+    internal const string CalendarContextMember = "timeZone";
+
     internal static ImmutableArray<SemanticTypedContextDescriptor> Create(
         SemanticApplication application,
         ImmutableArray<SemanticImplementationRequirement> requirements,
@@ -230,15 +233,21 @@ internal static class SemanticTypedContextCatalog
         return definitions.ToImmutable();
     }
 
+    static SemanticTypedContextMember[] CalendarMembers(SemanticCommand command) =>
+        command.Calendar?.ContextMember == CalendarContextMember ? [Fixed("TimeZone", SemanticContextRuntimeTokens.TimeZone)] : [];
+
     static SemanticTypedContextDescriptor HandlerDescriptor(SemanticImplementationRequirement requirement, SemanticCommand command, IEnumerable<SemanticEventContract> events) => Descriptor(
         requirement,
         command.Id,
-        Shaped("Command", command.Id, SemanticContextSourceKinds.Command, command.Properties),
-        Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
-        Fixed("Identity", SemanticContextRuntimeTokens.Identity),
-        Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
-        Fixed("Causation", SemanticContextRuntimeTokens.Causation),
-        Fixed("Occurred", SemanticContextRuntimeTokens.DateTime)) with
+        [
+            Shaped("Command", command.Id, SemanticContextSourceKinds.Command, command.Properties),
+            Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+            Fixed("Identity", SemanticContextRuntimeTokens.Identity),
+            Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
+            Fixed("Causation", SemanticContextRuntimeTokens.Causation),
+            Fixed("Occurred", SemanticContextRuntimeTokens.DateTime),
+            .. CalendarMembers(command)
+        ]) with
     {
         Result = HandlerResult(command, events)
     };

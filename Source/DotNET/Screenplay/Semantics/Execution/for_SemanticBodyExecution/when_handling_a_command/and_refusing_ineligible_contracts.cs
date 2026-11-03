@@ -19,7 +19,7 @@ public class and_refusing_ineligible_contracts : given.a_command_handler
         if (shape == "empty") ChangeCommand(command => command with { Produces = [] });
         if (shape == "conditional") ChangeCommand(command => command with { Produces = [command.Produces[0] with { Condition = SemanticExpression.FromValue(SemanticValue.Boolean(true)) }] });
         if (shape == "result-v2") ChangeCommand(command => command with { Handler = command.Handler! with { ResultVersion = 2 } });
-        Execute().ShouldBeOfExactType<SemanticUnsupported>();
+        Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticUnsupported>();
         Contexts.ShouldBeEmpty();
     }
 }

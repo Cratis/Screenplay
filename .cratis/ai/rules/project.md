@@ -13,3 +13,4 @@ Read every concern below before working in this repository. Together they are th
 - [AI-assisted development](.cratis/ai/rules/project/ai-assisted-development.md)
 - [Samples](.cratis/ai/rules/project/samples.md)
 - [Language changes land on every surface](.cratis/ai/rules/project/language-change-surface.md)
+- [Screenplay has no JSON](.cratis/ai/rules/project/no-json-in-screenplay.md)

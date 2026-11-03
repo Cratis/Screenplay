@@ -19,7 +19,9 @@ public class and_a_nested_record_has_no_previous_value : given.a_record_capture
                         when capture Records
                           id = "root"
                           sourceStatus = "sendt"
-                          contact = {"value":"after","label":"new"}
+                          contact
+                            value = "after"
+                            label = "new"
                         then NestedAdded
                 """);
             var run = Run("NewContact");

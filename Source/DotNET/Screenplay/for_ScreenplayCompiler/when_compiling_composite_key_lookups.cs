@@ -41,7 +41,7 @@ public class when_compiling_composite_key_lookups : given.a_compiler
     void should_refuse_a_partial_screen_lookup() => _compiler.Compile(Source + "      screen Details\n        data Row via query Find by resourceId").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey).ShouldBeTrue();
 
     [Fact]
-    void should_refuse_partial_absence_keys() => _compiler.Compile(Source + "      specification Missing\n        then no readmodel Row for {\"resourceId\":\"r\"}").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey).ShouldBeTrue();
+    void should_refuse_partial_absence_keys() => _compiler.Compile(Source + "      specification Missing\n        then no readmodel Row for\n          resourceId = \"r\"").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey).ShouldBeTrue();
 
     [Fact]
     void should_require_every_part_in_given_readmodel() => _compiler.Compile(Source + "      specification Existing\n        given readmodel Row\n          resourceId = \"r\"\n        when query Find\n          resourceId = \"r\"\n          period = 1\n        then no result").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationReadModelIdentifier && diagnostic.Message.Contains("period", StringComparison.Ordinal)).ShouldBeTrue();

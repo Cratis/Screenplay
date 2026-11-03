@@ -23,7 +23,7 @@ public class and_gates_short_circuit : given.a_policy
             "deny" => SemanticPolicyBodyResult.Deny(),
             _ => SemanticPolicyBodyResult.Unsupported("unavailable")
         };
-        var result = Execute();
+        var result = Execute(TestContext.Current.CancellationToken);
         var outcome = result switch
         {
             SemanticAccepted => "allow",
@@ -45,10 +45,9 @@ public class and_gates_short_circuit : given.a_policy
             .Replace("feature Ordering", "feature Ordering\n    authorize Permitted", StringComparison.Ordinal)
             .Replace("        authorize Permitted", "        authorize Permitted\n        authorize Permitted", StringComparison.Ordinal));
         Request = Request with { Caller = new(authenticated, [], []) };
-        var result = Execute();
+        var result = Execute(TestContext.Current.CancellationToken);
         if (authenticated) result.ShouldBeOfExactType<SemanticAccepted>();
         else ((SemanticRejected)result).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
         Contexts.Count.ShouldEqual(invocations);
     }
-
 }

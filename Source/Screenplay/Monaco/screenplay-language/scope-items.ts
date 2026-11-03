@@ -50,6 +50,7 @@ export const featureScopeItems: CompletionEntry[] = [
 
 export const readModelItems: CompletionEntry[] = [
     documentationItem,
+    { label: 'passive', insertText: 'passive', documentation: 'Opts into replay on demand for command decisions, not materialization. Default active, never inferred; queries and screens cannot observe this model.' },
     { label: 'description', insertText: 'description "${1:what one instance holds}"', documentation: 'A human-readable description.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the file this read model is realized by.' },
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the read model — a name and a type reference.' },

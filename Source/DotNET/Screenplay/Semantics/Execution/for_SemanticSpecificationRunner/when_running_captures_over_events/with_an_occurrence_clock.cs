@@ -8,7 +8,8 @@ public class with_an_occurrence_clock : given.an_event_capture
     void Because() => RunCapture("""
         append Stamped
           occurred = $context.occurred
-        """, """
+        """,
+        """
         given clock "2026-10-02T12:00:00Z"
         when append Arrived
           id = "parcel"

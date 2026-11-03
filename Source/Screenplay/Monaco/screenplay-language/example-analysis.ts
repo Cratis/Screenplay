@@ -167,8 +167,8 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
 function expressionText(expression: ExpressionSyntax): string {
     switch (expression.kind) {
         case 'LiteralExpressionSyntax': return typeof expression.value === 'object' && expression.value !== null ? expression.value.value : JSON.stringify(expression.value);
-        case 'ListExpressionSyntax': return `[${expression.items.map(expressionText).join(', ')}]`;
-        case 'ObjectExpressionSyntax': return `{ ${expression.members.map(member => `${JSON.stringify(member.name)}: ${expressionText(member.value)}`).join(', ')} }`;
+        case 'ListExpressionSyntax': return expression.items.length === 0 ? 'none' : `(${expression.items.map(item => `item ${expressionText(item)}`).join(', ')})`;
+        case 'ObjectExpressionSyntax': return expression.members.length === 0 ? 'empty' : `(${expression.members.map(member => `${memberName(member.name)} = ${expressionText(member.value)}`).join(', ')})`;
         case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;
         case 'DateOfExpressionSyntax': return `date of ${expressionText(expression.operand)}`;
         case 'RawExpressionSyntax': return expression.text;
@@ -186,3 +186,6 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'TemplateExpressionSyntax': return '`' + expression.parts.map(part => part.kind === 'TemplateTextSyntax' ? part.text : '${' + expressionText(part.expression) + '}').join('') + '`';
     }
 }
+
+// A member name as a structured block writes it: an identifier bare, 'item' escaped, anything else quoted.
+const memberName = (name: string): string => name === 'item' ? '@item' : /^[\p{L}_][\p{L}\p{N}_]*$/u.test(name) ? name : JSON.stringify(name);

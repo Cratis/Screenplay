@@ -18,7 +18,7 @@ public class when_closing_phase_a_source_contracts
     [InlineData("seed\n  wrong\n", "PLAY0129")]
     [InlineData("seed\n  for \"global\"\n    wrong\n", "PLAY0130")]
     [InlineData("seed\n  for \"global\"\n    Added\n      amount =\n", "PLAY0131")]
-    [InlineData("seed\n  for \"global\"\n    Added\n      amount\n        numbers exact\n", "PLAY0131")]
+    [InlineData("seed\n  for \"global\"\n    Added\n      amount\n        numbers exact\n", "PLAY0291")]
     [InlineData("seed\n  for \"global\"\n    Add𐐀\n      amount = 1\n", "PLAY0130")]
     [InlineData("policy P\n  numbers exact\n", "PLAY0113")]
     [InlineData("policy wrong-name\n  require authenticated\n", "PLAY0112")]
@@ -74,7 +74,7 @@ public class when_closing_phase_a_source_contracts
         var source = new InMemoryPlayDocumentSource(new Dictionary<string, string>(StringComparer.Ordinal) { ["root.play"] = text });
         var (physical, result) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(new ScreenplayLanguageRegistry(["custom"])), ["root.play"], source);
         result.Success.ShouldBeTrue();
-        physical.Select(document => document.Path).ShouldEqual(new[] { "root.play" });
+        physical.Select(document => document.Path).ShouldEqual(["root.play"]);
     }
 
     [Theory]

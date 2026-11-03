@@ -11,7 +11,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
     [Fact]
     void should_never_satisfy_an_error_assertion_with_an_unsupported_guard()
     {
-        foreach (var record in new[] { "payload = {\"amount\":1}", "payload = [{\"amount\":1}]", "payload = []" })
+        foreach (var record in new[] { "payload\n  amount = 1", "payload\n  item\n    amount = 1", "payload none" })
         {
             foreach (var expression in new[] { "payload.amount > 0", "payload > 0", "!(payload > 0)", "true && payload > 0", "false || payload > 0", "payload.amount > 0 && false", "payload.amount > 0 || true", "payload == null" })
             {
@@ -30,7 +30,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
     {
         foreach (var expression in new[] { "false && payload.amount > 0", "true || payload.amount > 0", "!(true || payload > 0)" })
         {
-            foreach (var run in given.v6_regression_models.Runs(Capture("payload = {\"amount\":1}", $"when `{expression}`")))
+            foreach (var run in given.v6_regression_models.Runs(Capture("payload\n  amount = 1", $"when `{expression}`")))
             {
                 run.Execution.ShouldBeOfExactType<SemanticAccepted>();
                 run.Execution.World.Facts.Length.ShouldEqual(expression.StartsWith("true", StringComparison.Ordinal) ? 1 : 0);
@@ -53,7 +53,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
     {
         foreach (var map in new[] { "value = payload", "value = `${payload}`", "split payload by \",\"\n  value", "value = payload.amount" })
         {
-            foreach (var record in new[] { "payload = {\"amount\":1}", "payload = [{\"amount\":1}]" })
+            foreach (var record in new[] { "payload\n  amount = 1", "payload\n  item\n    amount = 1" })
             {
                 var model = given.v6_regression_models.Compile($$"""
                     module Billing
@@ -70,7 +70,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
                           specification Present
                             when capture Records
                               id = "root"
-                              {{record}}
+                              {{record.Replace("\n", "\n          ", StringComparison.Ordinal)}}
                             then error
                     """);
                 foreach (var run in given.v6_regression_models.Runs(model))
@@ -87,8 +87,8 @@ public class when_evaluating_unsupported_capture_sources : Specification
     {
         foreach (var (scope, record) in new[]
         {
-            ("nested contact", "contact = {\"payload\":{\"amount\":1}}"),
-            ("children items identified by id", "items = [{\"id\":1,\"payload\":[{\"amount\":1}]}]")
+            ("nested contact", "contact\n  payload\n    amount = 1"),
+            ("children items identified by id", "items\n  item\n    id = 1\n    payload\n      item\n        amount = 1")
         })
         {
             var model = given.v6_regression_models.Compile($$"""
@@ -104,7 +104,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
                       specification Present
                         when capture Records
                           id = "root"
-                          {{record}}
+                          {{record.Replace("\n", "\n          ", StringComparison.Ordinal)}}
                         then error
                 """);
             foreach (var run in given.v6_regression_models.Runs(model))
@@ -158,8 +158,8 @@ public class when_evaluating_unsupported_capture_sources : Specification
     {
         foreach (var (scope, record) in new[]
         {
-            ("nested contact", "contact = {\"payload\":{\"amount\":1}}"),
-            ("children items identified by id", "items = [{\"id\":1,\"payload\":[{\"amount\":1}]}]")
+            ("nested contact", "contact\n  payload\n    amount = 1"),
+            ("children items identified by id", "items\n  item\n    id = 1\n    payload\n      item\n        amount = 1")
         })
         {
             var model = given.v6_regression_models.Compile($$"""
@@ -176,7 +176,7 @@ public class when_evaluating_unsupported_capture_sources : Specification
                       specification Present
                         when capture Records
                           id = "root"
-                          {{record}}
+                          {{record.Replace("\n", "\n          ", StringComparison.Ordinal)}}
                         then error
                 """);
             foreach (var run in given.v6_regression_models.Runs(model))
@@ -206,7 +206,8 @@ public class when_evaluating_unsupported_capture_sources : Specification
                   specification Present
                     when capture Records
                       id = "root"
-                      payload = {"amount":1}
+                      payload
+                        amount = 1
                     then error
             """);
         foreach (var run in given.v6_regression_models.Runs(model))
@@ -217,7 +218,9 @@ public class when_evaluating_unsupported_capture_sources : Specification
         }
     }
 
-    static ExecutableSemanticModel Capture(string record, string guard) => given.v6_regression_models.Compile($$"""
+    static ExecutableSemanticModel Capture(string record, string guard) => Compile(record.Replace("\n", "\n          ", StringComparison.Ordinal), guard);
+
+    static ExecutableSemanticModel Compile(string record, string guard) => given.v6_regression_models.Compile($$"""
         module Billing
           feature Import
             slice Translate Records

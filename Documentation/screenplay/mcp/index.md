@@ -47,6 +47,13 @@ identities. See [identity state and recovery](recovery.md).
 
 ## For tool authors and hosts
 
+`apply` and `recover-workspace` report `readOnlyHint: false` and
+`destructiveHint: true`: they can replace or restore workspace source and state.
+Journaled recovery makes those writes recoverable, not non-destructive. Hosts
+should use these hints in their confirmation flow; the server does not add a
+second confirmation parameter. Non-writing tools retain non-destructive hints,
+and all tools keep `openWorldHint: false`.
+
 These pages describe the server's tools directly, for people building a client or a
 host, or debugging what an assistant did:
 

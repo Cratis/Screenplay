@@ -21,6 +21,14 @@ sealed class AdmissibleSecuritySyntax : ScreenplaySyntaxWalker
     internal List<ViewReference> References { get; } = [];
     internal List<ViewReference> Reads { get; } = [];
     internal List<ViewReference> Views { get; } = [];
+    internal List<(SpecificationSyntax Owner, string Persona)> PersonaCallers { get; } = [];
+
+    /// <inheritdoc/>
+    public override void VisitSpecification(SpecificationSyntax syntax)
+    {
+        if (syntax.GivenCallerPersona is { } caller) PersonaCallers.Add((syntax, caller.Name));
+        base.VisitSpecification(syntax);
+    }
 
     /// <inheritdoc/>
     public override void VisitNode(SyntaxNode node)

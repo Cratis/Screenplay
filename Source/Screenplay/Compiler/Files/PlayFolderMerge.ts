@@ -9,12 +9,11 @@ import { LineReader } from '../Parsing/LineReader';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { combineAuthorize } from '../Parsing/AuthorizeParser';
+import { authorizationWasRefused, combineAuthorize } from '../Parsing/AuthorizeParser';
 import { CompilationResult } from '../ScreenplayCompiler';
-import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
-import { toSyntaxJson } from '../Syntax/SyntaxJson';
 import { invalidSourceOptions, isAuthoredDocument, legacySourceOptions, SourceOptions, validatedSourceOptions } from '../Syntax/SourceOptions';
 import { InvalidSyntaxJson } from '../Syntax/InvalidSyntaxJson';
 
@@ -50,6 +49,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
     for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
+    const contexts = applications.flatMap(application => application.context == null ? [] : [application.context]);
+    for (const extra of contexts.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
+        `The folder already declares a context block in '${describe(contexts[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     const readModes = applications.filter(application => application.commandReadMode != null);
     for (const extra of readModes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidCommandReadsDeclaration,
         "Declare 'command reads protected' once at the application root.", extra.location));
@@ -78,12 +80,15 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...(readModes.length === 0 ? {} : { commandReadMode: readModes[0].commandReadMode }),
         ...(zones.length === 0 ? {} : { timeZone: zones[0].timeZone }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
+        ...(contexts.length === 0 ? {} : { context: contexts[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
         types,
         examples: applications.flatMap(application => application.examples ?? []),
         systems: applications.flatMap(application => application.systems ?? []),
+        ...(applications.some(application => (application.stateMachines?.length ?? 0) > 0) ? { stateMachines: applications.flatMap(application => application.stateMachines ?? []) } : {}),
+        ...(applications.some(application => (application.workflows?.length ?? 0) > 0) ? { workflows: applications.flatMap(application => application.workflows ?? []) } : {}),
         purposes: declaredInOneFile(applications.flatMap(application => application.purposes ?? []), 'purpose', diagnostics),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
@@ -110,7 +115,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }
@@ -126,7 +131,9 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
-            authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
+            authorize: parts.some(part => authorizationWasRefused(part.fileImports))
+                ? null
+                : combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
             dependsOn: groupDependencies(parts),
         }, parts, diagnostics);
         return mergeStructuralInteractions({ ...owner, features: mergeFeatures(parts.flatMap(part => part.features), diagnostics) }, [owner]);
@@ -144,7 +151,9 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
-            authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
+            authorize: parts.some(part => authorizationWasRefused(part.fileImports))
+                ? null
+                : combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
             dependsOn: groupDependencies(parts),
         }, parts, diagnostics);
         return mergeStructuralInteractions({ ...owner,
@@ -176,7 +185,7 @@ function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[],
     const kept: AuthorizeSyntax[] = [];
     for (const authorization of declarations.filter(declaration => declaration !== null)) {
         const first = kept.find(earlier => earlier.location.path !== authorization.location.path
-            && JSON.stringify(toSyntaxJson(earlier)) === JSON.stringify(toSyntaxJson(authorization)));
+            && sameRequirement(earlier.requirement, authorization.requirement));
         if (first !== undefined) {
             diagnostics.push(warning(DiagnosticCodes.DuplicateAuthorizationAcrossFiles,
                 `An identical authorization is already declared on the ${owner} in '${describe(first.location.path)}' - this repeated gate is ignored`, authorization.location));
@@ -184,7 +193,30 @@ function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[],
         }
         kept.push(authorization);
     }
-    return kept.reduce<AuthorizeSyntax | null>((combined, next) => combineAuthorize(combined, next), null);
+    const context = new ParserContext(new LineReader([]));
+    let combined: AuthorizeSyntax | null = null;
+    for (const next of kept) {
+        combined = combineAuthorize(combined, next, context);
+        if (combined === null) break;
+    }
+    diagnostics.push(...context.diagnostics);
+    return combined;
+}
+
+function sameRequirement(first: PolicyRequirementSyntax, second: PolicyRequirementSyntax): boolean {
+    const pending = [{ first, second }];
+    while (pending.length > 0) {
+        const pair = pending.pop()!;
+        if (pair.first.kind === 'PolicyReferenceSyntax' && pair.second.kind === 'PolicyReferenceSyntax') {
+            if (pair.first.name !== pair.second.name) return false;
+        } else if (pair.first.kind === 'LogicalPolicyRequirementSyntax' && pair.second.kind === 'LogicalPolicyRequirementSyntax') {
+            if (pair.first.operator !== pair.second.operator) return false;
+            pending.push({ first: pair.first.left, second: pair.second.left }, { first: pair.first.right, second: pair.second.right });
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 function firstOfEach<T>(items: readonly T[], key: (item: T) => string): T[] {

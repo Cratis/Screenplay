@@ -17,6 +17,8 @@ Uuid equality retains the existing comparison syntax nodes. TypeScript parses it
 
 Date comparisons retain the existing comparison and validation syntax nodes. TypeScript parses Date/DateTime command rules and conditions without evaluating them, canonicalizing literals or selecting ESM v26. Native binding owns the position/operand restrictions, `PLAY0268` refusals and `PLAY0273` literal checks; the native reference evaluator compares UTC instants at tick precision and rejects offset-less compared inputs before rules. JavaScript `Date` is not a tick-precision evaluator. The Invoicing syntax conformance vector includes an admitted date-literal rule while its `today` rules remain native binder refusals.
 
+The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
+
 ## Parse a document
 
 `parse` turns the text of one document into an `ApplicationSyntax`, with the diagnostics found on the way:
@@ -116,6 +118,7 @@ The compiler reads what an event model is made of:
 - the domain, imports, concepts and types
 - application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only)
 - systems, operations and their phase/specification intent (syntax-only)
+- [state machines](statemachines.md) and [workflows](workflows.md), with the specifications written inside them (syntax shared with C# ESM v36 admission). The TypeScript compiler reads and validates their structure (`PLAY0834`, `PLAY0843` and the parse-time checks); the cross-reference checks (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`) and the run of their specifications are C# only
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
 - fenced Markdown documentation on modules, features, slices, commands, read models and reactions, and quoted or fenced-text specification descriptions (report-only authoring metadata)

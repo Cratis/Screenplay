@@ -7,7 +7,7 @@ public class when_parsing_explicit_instants : Specification
 {
     (bool Parsed, DateTimeOffset Instant)[] _results;
 
-    void Because() => _results = new[]
+    void Because() => _results = [.. new[]
     {
         "2026-01-01T02:00:00.1234567+02:00",
         "2026-01-01T00:00:00.1234567Z",
@@ -18,7 +18,7 @@ public class when_parsing_explicit_instants : Specification
         "2026-01-01T00:00:00.1Z",
         "2026-01-01T02:00:00+0200",
         "2026-01-01T02:00:00+2:00"
-    }.Select(value => (SemanticDateComparisons.TryParseInstant(value, out var instant), instant)).ToArray();
+    }.Select(value => (SemanticDateComparisons.TryParseInstant(value, out var instant), instant))];
 
     [Fact] void should_accept_all_four_formats_optional_fractions_and_offset_spellings() => _results.ShouldEachConformTo(result => result.Parsed);
     [Fact] void should_preserve_tick_precision() => _results[0].Instant.UtcTicks.ShouldEqual(_results[1].Instant.UtcTicks);

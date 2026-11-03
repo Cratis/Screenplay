@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { DependencyMap, DependencyOverlay } from '@cratis/screenplay-event-models';
+import type { BoardDensity, BoardTextSize } from '@cratis/event-models';
 
 // What the extension tells the board webview, and what the webview tells it back. Both sides import this,
 // so a message cannot be renamed on one side only.
@@ -30,6 +31,8 @@ export interface BoardViewOptions {
     readonly detailLevel: 'full' | 'overview';
     readonly showProperties: boolean;
     readonly visualizationMode: 'simplified' | 'fillLines';
+    readonly density: BoardDensity;
+    readonly textSize: BoardTextSize;
 }
 
 // The view options to show the board with - sent when the board is ready, and when another board changes them.

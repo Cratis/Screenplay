@@ -11,12 +11,36 @@ A [projection](projections/index.md) says how state is built from events, and un
 
 A read model can also carry one nonempty fenced `markdown` `documentation` block to explain why this view has its chosen shape or excludes certain facts. It is authoring-only (`PLAY0270`), with no executable effect. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
 
+## Passive decision state
+
+A bare `passive` line opts a read model into replay on demand for command decisions instead of materializing it in a sink. The default is active: passivity is never inferred from how a model happens to be used. Properties named `passive` still work (`passive Bool`); `readmodel Name passive` and `passive true` are not directives.
+
+```screenplay
+module Billing
+  feature Invoices
+    slice StateChange Register
+      readmodel RegistrationState
+        passive
+        invoiceId Uuid
+        registered Bool
+      command RegisterInvoice
+        invoiceId Uuid identifier
+        reads RegistrationState by invoiceId
+```
+
+Only commands may read a passive model. A query returning it, including collections, optional and observable results, or a screen binding it as data is Error `PLAY0859`. A passive model no command reads is Warning `PLAY0860`; repeating the directive is an idempotent Warning `PLAY0858`. These usage checks run in C#; the TypeScript parser retains the directive and reports repeats but does not run the usage checks.
+
+This is realization metadata, not portable execution semantics. Syntax JSON carries `isPassive: true` and omits false; absent means active. The native binder reports Information `PLAY0270` and exposes canonical read-model identities through `SemanticCompilation.PassiveReadModels`, not `SemanticReadModel`. Toggling the directive changes neither ESM bytes, canonical JSON nor revision. Consumers must carry the sidecar in hashed render input (the `AuthoringMetadataInput` pattern) and runtime `ApplicationRealization`. A portable ESM alone does not preserve it. Stage maps it to Chronicle sink `None`, `IsActive=false` and `[Passive]`; Screenplay performs no Chronicle realization.
+
+**Downgrading.** Older tools reject syntax JSON that uses `passive`, because their syntax JSON reader refuses unknown members. Before downgrading, remove the `passive` directive or re-export the model with a version that omits it. ESM bytes are unchanged either way.
+
 ## Syntax
 
 ```screenplay
 readmodel <Name>
   [description "<text>"]
   [file <path>]
+  [passive]
   <property> <Type> [optional]
   ...
 ```
@@ -141,6 +165,7 @@ A rule's body compiles against `ReducerContext`, in scope as `context`, and answ
 | `State` | the read model before this event — **`null` for the first event on an instance** |
 | `Event` | the event being folded in |
 | `Key` | the identity of the instance being built |
+| `KeyAs<T>()` | `Key` as the read model's single key type; see [Context](context.md) |
 | `Tenant` | the tenant the events are being reduced for |
 | `Occurred` | when the event occurred |
 | `SequenceNumber` | the event's position in its sequence |

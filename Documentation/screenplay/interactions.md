@@ -115,7 +115,16 @@ screen ReviewBoard
   data TalkSummary[] via query AllTalks
 
   component Cratis.Blueprint.Default.kanbanBoard talkBoard
-    property columns = [{"id":"submitted","label":"Submitted"},{"id":"accepted","label":"Accepted"},{"id":"withdrawn","label":"Withdrawn"}]
+    property columns
+      item
+        id    = "submitted"
+        label = "Submitted"
+      item
+        id    = "accepted"
+        label = "Accepted"
+      item
+        id    = "withdrawn"
+        label = "Withdrawn"
     property cards from query AllTalks
     property cardId = "talkId"
     property cardColumn = "status"

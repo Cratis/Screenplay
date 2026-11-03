@@ -22,7 +22,7 @@ describe('when parsing clock operands', () => {
         }
         const walker = new Walker();
         walker.visitApplication(result.value);
-        for (const kind of ['TimeZoneSyntax', 'CommandCalendarSyntax', 'SpecificationTimeZoneSyntax', 'ClockOffsetExpressionSyntax', 'DateOfExpressionSyntax']) {
+        for (const kind of ['ApplicationContextSyntax', 'ContextMemberSyntax', 'TimeZoneSyntax', 'CommandCalendarSyntax', 'SpecificationTimeZoneSyntax', 'ClockOffsetExpressionSyntax', 'DateOfExpressionSyntax']) {
             expect(walker.kinds.has(kind)).toBe(true);
         }
     });

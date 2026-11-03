@@ -87,6 +87,16 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
     /// Gets the protected read name when the property belongs to its view rather than the command.
     /// </summary>
     public string? Read { get; init; }
+
+    /// <summary>
+    /// Gets the clock operand (decision 0106) when this operand is <c>today</c>, <c>now</c> or an offset of them; the property and constant are then unset.
+    /// </summary>
+    public SemanticClockOperand? Clock { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating that the operand is the <c>Date</c> of the referenced <see cref="Property"/> (<c>date of createdAt</c>).
+    /// </summary>
+    public bool DateOf { get; init; }
 }
 
 /// <summary>

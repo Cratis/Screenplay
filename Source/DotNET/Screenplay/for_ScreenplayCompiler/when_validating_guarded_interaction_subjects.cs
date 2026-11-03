@@ -10,7 +10,7 @@ public class when_validating_guarded_interaction_subjects : given.a_compiler
     [Fact]
     void should_validate_named_behaviors_at_each_attachment()
     {
-        var source = """
+        const string source = """
             behavior Pick
               on click
                 when item.status == "open"
@@ -34,7 +34,7 @@ public class when_validating_guarded_interaction_subjects : given.a_compiler
     [Fact]
     void should_not_infer_a_subject_from_component_context()
     {
-        var source = """
+        const string source = """
             module Work
               feature Items
                 slice StateView Details
@@ -56,7 +56,7 @@ public class when_validating_guarded_interaction_subjects : given.a_compiler
     [Fact]
     void should_resolve_child_collection_row_fields()
     {
-        var source = """
+        const string source = """
             type Row
               status String
             module Work

@@ -29,6 +29,7 @@ internal sealed partial class SemanticCommandExecution(
     readonly ImmutableArray<SemanticFact>.Builder _facts = ImmutableArray.CreateBuilder<SemanticFact>();
     readonly Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>> _reads = new(StringComparer.Ordinal);
     readonly IReadOnlyDictionary<SemanticId, SemanticPrimitiveType> _dateTypes = SemanticDateComparisons.Participants(plan.Model.Application, command);
+    SemanticClockContext? _clock;
     Dictionary<SemanticId, SemanticValue> _commandValues = [];
     Dictionary<SemanticCommandRoute, SemanticEventRoute> _routes = new(ReferenceEqualityComparer.Instance);
     SemanticStateChangeDestination? _defaultDestination;
@@ -84,6 +85,7 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         if (RefuseInvalidDateTimeInput() is { } invalidDateTime) return invalidDateTime;
+        if (ResolveClock() is { } clockFailure) return clockFailure;
 
         if (RefuseOpaqueValidation() is { } opaque)
         {
@@ -126,6 +128,14 @@ internal sealed partial class SemanticCommandExecution(
                 $"{rule} has an opaque validation predicate and requires a target provider.")
             : null;
 
+    // A command using a clock operand evaluates one instant in one resolved zone; a missing or unknown zone is a Contract, never UTC.
+    SemanticRejected? ResolveClock()
+    {
+        if (!SemanticClockUsage.UsesCommand(command)) return null;
+        _clock = SemanticCalendar.Resolve(plan.Model.Application, command, request, out var failure);
+        return _clock is null ? Contract(failure!) : null;
+    }
+
     SemanticRejected? RefuseInvalidDateTimeInput()
     {
         if (request.Values.IsDefault) return null;
@@ -152,7 +162,7 @@ internal sealed partial class SemanticCommandExecution(
 
     SemanticExecutionResult? Validate()
     {
-        var failures = SemanticEvaluator.ValidateRules(plan, command, request.Values).ToBuilder();
+        var failures = SemanticEvaluator.ValidateRules(plan, command, request.Values, _clock).ToBuilder();
         if (ValidateBodies(failures) is { } unsupported) return unsupported;
         _commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
 
@@ -189,7 +199,7 @@ internal sealed partial class SemanticCommandExecution(
     {
         foreach (var requirement in command.Requirements)
         {
-            if (!SemanticConditionEvaluator.Evaluate(requirement.Condition, _commandValues, _dateTypes, _reads))
+            if (!SemanticConditionEvaluator.Evaluate(requirement.Condition, new(_commandValues, _dateTypes, _reads, _clock)))
             {
                 failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
             }
@@ -236,7 +246,7 @@ internal sealed partial class SemanticCommandExecution(
             : SemanticEvaluator.Evaluate(expression, SemanticExpressionRootKind.Command, _commandValues, occurrence);
 
     bool IsSkipped(SemanticProducedEvent produced) =>
-        (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, _commandValues, dateTypes: _dateTypes)) ||
+        (produced.When is not null && !SemanticConditionEvaluator.Evaluate(produced.When, new(_commandValues, _dateTypes, Clock: _clock))) ||
         (produced.Condition is not null && Evaluate(produced.Condition) is SemanticBooleanValue { Value: false });
 
     SemanticExecutionResult? Produce(SemanticProducedEvent produced, ImmutableArray<SemanticPropertyValue>? handlerValues = null, SemanticValue? destinationValue = null)

@@ -9,13 +9,14 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
-public class when_freezing_legacy_source_syntax_bytes
+public partial class when_freezing_legacy_source_syntax_bytes
 {
     static readonly HashSet<string> _featureVectors =
     [
         "command-reads",
         "reaction-batches",
         "identity",
+        "application-context",
         "reaction-identity",
         "reaction-event-source",
         "declaration-descriptions",
@@ -73,6 +74,7 @@ public class when_freezing_legacy_source_syntax_bytes
         "clock-operands",
         "event-source-capture-keys",
         "then-invokes",
+        "lifecycles",
     ];
 
     [Fact]
@@ -118,7 +120,7 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
                 // baseline for every existing concept, rather than rewriting protected historical bytes.
-                legacy = legacy with { Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
+                legacy = legacy with { StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
@@ -165,7 +167,7 @@ public class when_freezing_legacy_source_syntax_bytes
             }
 
             // The samples name their shell with root template; the frozen bytes predate it and carry the same name as the legacy layout.
-            text = Regex.Replace(text, "\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", "\"layout\":\"$2\",$1");
+            text = LayoutShell().Replace(text, "\"layout\":\"$2\",$1");
 
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
@@ -184,6 +186,9 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    [GeneratedRegex("\"layout\":null,(\"name\":\"[^\"]*\",\"packages\":\\[[^\\]]*\\],\"platforms\":\\[[^\\]]*\\]),\"root\":\\{\"kind\":\"RootTemplateSyntax\",\"blueprint\":null,\"name\":\"([^\"]*)\",\"options\":\\[\\],\"version\":null\\}", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex LayoutShell();
 
     static ApplicationSyntax WithoutTemplateCategories(ApplicationSyntax application) => application with
     {
@@ -419,6 +424,7 @@ public class when_freezing_legacy_source_syntax_bytes
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
         Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))
             .Select(concept => concept.Name == "CurrencyCode" ? concept with { Validations = [] } : concept),
+
         // The anonymous policy, its persona and the public module have their own conformance vector (decision 0103).
         Policies = application.Policies.Where(policy => policy.Name is not ("IsPerson" or "Anyone")),
         Personas = application.Personas.Where(persona => persona.Name is not ("InvoiceDraftCreator" or "Visitor")).Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
@@ -433,7 +439,8 @@ public class when_freezing_legacy_source_syntax_bytes
             Contributions = module.Contributions?.Select(WithoutNavigationItem),
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
-            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
+            // The passive read model example (#1129) has its own conformance vector; keep it out of the frozen bytes.
+            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm" && form.Name != "ReserveInvoiceNumberForm").Select(form =>
                 (form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form) with
                 {
                     ColumnMode = FormColumnMode.Unspecified,
@@ -441,7 +448,7 @@ public class when_freezing_legacy_source_syntax_bytes
                     Columns = [],
                     Layout = null
                 }),
-            Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
+            Features = module.Features.Where(feature => feature.Name != "InvoiceReservations").Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 // Shared vectors cover both new slices; retain every pre-feature sample byte here.
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft" && slice.Name != "ApplyLateFee").Select(slice => slice.Name switch
@@ -564,6 +571,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+
             // The living sample now guards editing by draft status; retain the pre-feature plain
             // action list only in frozen bytes. Current vectors and native interaction specs cover it.
             ScreenTableSyntax table => table with

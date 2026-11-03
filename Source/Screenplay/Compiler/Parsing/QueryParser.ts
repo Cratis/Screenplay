@@ -44,6 +44,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     let description: string | null = null;
     let scope: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
+    let authorizationDepthExceeded = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -79,7 +80,12 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
                 filters.push(filter);
             }
         } else if (keyword === 'authorize') {
-            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
+            const next = parseAuthorize(context, child);
+            if (!authorizationDepthExceeded) {
+                const previous = authorize;
+                authorize = combineAuthorize(authorize, next, context);
+                authorizationDepthExceeded = previous !== null && authorize === null;
+            }
         } else if (keyword === 'scoped') {
             scope = parseScope(context, child, scope, name) ?? scope;
         } else if (opaqueDirectives.has(keyword)) {

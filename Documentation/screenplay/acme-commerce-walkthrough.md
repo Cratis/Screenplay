@@ -27,6 +27,10 @@ At the time of writing the application is 56 `.play` files:
 
 The shell adds the `Application` module (2 slices, 4 screens, 2 specifications). Together that is 169 specifications.
 
+## An order's lifecycle and the process it sets off
+
+Storefront also shows the two top-level lifecycle constructs, both in ESM v36 ([state machines](statemachines.md), [workflows](workflows.md)). `OrderLifecycle` is a `statemachine` that follows the `OrderProgress` read model and moves an order from Placed through Paid, Packed and Shipped to Delivered, or to Cancelled or Refunded; entering Paid starts the `FulfilOrder` workflow and entering Shipped sends `NotifyCustomer`. `FulfilOrder` is a `workflow` for the same read model: it reserves stock with three attempts, decides between creating the parcel and a backorder that a `WarehouseClerk` must approve within a day, waits two days for the carrier, and escalates on a failure or an expiry. Both live in `Storefront/model/lifecycle.play` and carry the specifications that pin them; the commands and events they name are in `Storefront/model/fulfilment.play`. `screenplay test Samples/AcmeCommerce` runs the specifications with the rest.
+
 ## Where to find it
 
 | What | Where |
@@ -499,7 +503,8 @@ screen template ProductGrid
   content products
     component Cratis.Blueprint.Default.dataList gridCards
       property variant = "cards"
-      property rowActions = ["Add to basket"]
+      property rowActions
+        item "Add to basket"
       ...
 ```
 

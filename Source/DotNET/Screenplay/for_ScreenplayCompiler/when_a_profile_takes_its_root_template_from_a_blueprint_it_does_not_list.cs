@@ -24,6 +24,6 @@ public class when_a_profile_takes_its_root_template_from_a_blueprint_it_does_not
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_report_each_unlisted_blueprint() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootBlueprint).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(5, 7);
-    [Fact] void should_name_the_blueprint() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootBlueprint).First().Message.ShouldContain("'Cratis.Blueprint.Default'");
+    [Fact] void should_name_the_blueprint() => _result.Diagnostics.First(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootBlueprint).Message.ShouldContain("'Cratis.Blueprint.Default'");
     [Fact] void should_not_ask_for_an_own_template() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownRootTemplate).ShouldBeEmpty();
 }

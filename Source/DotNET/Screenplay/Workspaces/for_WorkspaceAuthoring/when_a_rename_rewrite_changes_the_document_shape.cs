@@ -26,7 +26,7 @@ public class when_a_rename_rewrite_changes_the_document_shape : Specification
     {
         var before = Index(Source);
         var after = Index($"{Source}\n  code String");
-        _error = Catch.Exception(() => WorkspaceAuthoringTransaction.RequireShape(before, after, before.Entries.First().Handle.Document));
+        _error = Catch.Exception(() => WorkspaceAuthoringTransaction.RequireShape(before, after, before.Entries[0].Handle.Document));
     }
 
     [Fact] void should_refuse_the_rewrite() => _error.ShouldBeOfExactType<InvalidWorkspaceAuthoring>();

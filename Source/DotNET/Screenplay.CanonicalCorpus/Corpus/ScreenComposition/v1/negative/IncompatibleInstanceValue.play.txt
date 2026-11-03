@@ -2,7 +2,7 @@ exposure for FeatureShell
   property "shell:header".actions operations add
 
 instance WorkItemList
-  set "shell:header".actions = []
+  set "shell:header".actions none
 
 module Workspaces
   screen template FeatureShell

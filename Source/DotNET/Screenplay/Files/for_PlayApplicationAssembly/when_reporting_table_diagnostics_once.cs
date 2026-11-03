@@ -27,7 +27,7 @@ public class when_reporting_table_diagnostics_once : Specification
     [Fact]
     void should_report_a_bad_case_route_value_once_across_two_steps()
     {
-        var source = "eventsource Account\n  identifier String\n  stream Main\n    streamId String\nmodule M\n  feature F\n    slice StateView S\n      event E\n      specification Appending\n        parameter key String\n        case Bad key = \"e\u0301\"\n        given E\n          for \"event\"\n          stream Account.Main\n            streamId = case.key\n        when append E\n          for \"event\"\n          stream Account.Main\n            streamId = case.key\n        then E";
+        const string source = "eventsource Account\n  identifier String\n  stream Main\n    streamId String\nmodule M\n  feature F\n    slice StateView S\n      event E\n      specification Appending\n        parameter key String\n        case Bad key = \"e\u0301\"\n        given E\n          for \"event\"\n          stream Account.Main\n            streamId = case.key\n        when append E\n          for \"event\"\n          stream Account.Main\n            streamId = case.key\n        then E";
         var result = new ScreenplayCompiler().Compile(source);
         var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSpecificationStreamRoute);
         diagnostic.Location.Line.ShouldEqual(11);

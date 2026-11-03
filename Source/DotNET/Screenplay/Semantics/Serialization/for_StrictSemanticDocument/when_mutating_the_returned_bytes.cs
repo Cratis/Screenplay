@@ -15,19 +15,19 @@ public class when_mutating_the_returned_bytes : Specification
 
     void Establish()
     {
-        using var json = JsonDocument.Parse(canonical_serialization_golden_vectors.EsmV34Bytes);
+        using var json = JsonDocument.Parse(canonical_serialization_golden_vectors.EsmV36Bytes);
         _expectedRevision = SemanticRevision.Parse(json.RootElement.GetProperty("revision").GetString()!);
     }
 
     void Because()
     {
-        _document = StrictSemanticDocument.Read(canonical_serialization_golden_vectors.EsmV34Bytes);
+        _document = StrictSemanticDocument.Read(canonical_serialization_golden_vectors.EsmV36Bytes);
         _first = _document.CopyBytes();
         Array.Fill(_first, (byte)0);
         _second = _document.CopyBytes();
     }
 
-    [Fact] void should_keep_the_original_bytes() => _second.ShouldEqual(canonical_serialization_golden_vectors.EsmV34Bytes);
+    [Fact] void should_keep_the_original_bytes() => _second.ShouldEqual(canonical_serialization_golden_vectors.EsmV36Bytes);
     [Fact] void should_return_a_new_array() => _second.ShouldNotBeSame(_first);
     [Fact] void should_keep_the_document_revision() => _document.Revision.ShouldEqual(_expectedRevision);
 }

@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_proje
 
 // Whatever the reference evaluator cannot execute blocks the plan instead of binding and being ignored:
 // - a projection-level 'remove via join', which Chronicle's engine wires as a child removal (ProjectionFactory.cs:297-308);
-// - a join inside a nested object, which Chronicle's engine does not wire (ProjectionFactory.cs:415-470);
+// Root-level nested joins are wired by Chronicle 19.99.1 and must be admitted.
 // - event-context values other than admitted event source identity and occurred assignments.
 // A fact without an event source fails when a transition keys on it.
 public class unsupported_combinations : given.a_scoped_projection_plan
@@ -27,7 +27,7 @@ public class unsupported_combinations : given.a_scoped_projection_plan
     }
 
     [Fact] void should_block_a_projection_level_join_removal() => _rootJoinRemoval.Issues.Single().Kind.ShouldEqual(SemanticPlanIssueKind.UnsupportedProjectionBlock);
-    [Fact] void should_block_a_join_inside_a_nested_object() => _joinInNested.Issues.Single().Kind.ShouldEqual(SemanticPlanIssueKind.UnsupportedProjectionBlock);
+    [Fact] void should_admit_a_join_inside_a_root_nested_object() => _joinInNested.Issues.ShouldBeEmpty();
     [Fact] void should_block_event_context_values() => _eventContext.Issues.Single().Kind.ShouldEqual(SemanticPlanIssueKind.UnsupportedEventContext);
     [Fact] void should_fail_a_fact_without_an_event_source() => _failure.ShouldContain("event source identity");
 }

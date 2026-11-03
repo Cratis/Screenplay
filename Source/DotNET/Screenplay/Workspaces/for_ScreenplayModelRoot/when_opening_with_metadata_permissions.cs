@@ -16,8 +16,7 @@ public class when_opening_with_metadata_permissions : given.a_persisted_model_ro
         var directory = Path.Combine(RootPath, ".screenplay");
         File.SetUnixFileMode(directory, (UnixFileMode)permissions);
         var before = Snapshot();
-        var outcomes = new[] { ScreenplayModelRoot.Open(RootPath), ScreenplayModelRoot.OpenForReleaseBaselineCheck(RootPath) };
-        foreach (var outcome in outcomes)
+        foreach (var outcome in new[] { ScreenplayModelRoot.Open(RootPath), ScreenplayModelRoot.OpenForReleaseBaselineCheck(RootPath) })
         {
             outcome.Success.ShouldEqual(accepted);
             if (accepted)

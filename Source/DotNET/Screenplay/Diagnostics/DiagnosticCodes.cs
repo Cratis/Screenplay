@@ -1585,7 +1585,7 @@ public static class DiagnosticCodes
     public const string RedundantImport = "PLAY0290";
 
     /// <summary>
-    /// An inline JSON-shaped value is malformed.
+    /// A structured value written as an indented block is malformed.
     /// </summary>
     public const string InvalidStructuredValue = "PLAY0291";
 
@@ -3714,4 +3714,97 @@ public static class DiagnosticCodes
     /// The <c>emails</c> block names an email onboarding does not send.
     /// </summary>
     public const string UnknownOnboardingEmail = "PLAY0832";
+
+    /// <summary>
+    /// A value is written as inline JSON (<c>{...}</c> or <c>[...]</c>). Screenplay has no JSON: objects and lists are indented blocks.
+    /// </summary>
+    public const string InlineJsonValue = "PLAY0833";
+
+    /// <summary>A <c>statemachine</c> declaration is malformed: a bad header or an unexpected line, a missing or repeated <c>follows</c>, or a repeated state.</summary>
+    public const string InvalidStateMachineDeclaration = "PLAY0834";
+
+    /// <summary>A state machine has no <c>initial</c> state, or more than one.</summary>
+    public const string StateMachineInitialState = "PLAY0835";
+
+    /// <summary>A state can never be reached from the initial state.</summary>
+    public const string UnreachableState = "PLAY0836";
+
+    /// <summary>A state that is not <c>final</c> has no transition out.</summary>
+    public const string StateWithNoWayOut = "PLAY0837";
+
+    /// <summary>A <c>final</c> state declares transitions out.</summary>
+    public const string FinalStateWithTransitions = "PLAY0838";
+
+    /// <summary>A transition, or a workflow trigger that names a state machine state, targets a state the state machine does not declare.</summary>
+    public const string UnknownState = "PLAY0839";
+
+    /// <summary>A state machine names an event, read model, command or workflow that is not declared.</summary>
+    public const string UnknownStateMachineReference = "PLAY0840";
+
+    /// <summary>A state machine or workflow condition reads a property the subject read model does not have.</summary>
+    public const string UnknownConditionProperty = "PLAY0841";
+
+    /// <summary>Two unguarded transitions on the same event leave one state, so the second can never be taken.</summary>
+    public const string AmbiguousStateTransitions = "PLAY0842";
+
+    /// <summary>A <c>workflow</c> declaration is malformed: a bad header or node line, a missing <c>for</c>, a repeated node name or an unreadable duration.</summary>
+    public const string InvalidWorkflowDeclaration = "PLAY0843";
+
+    /// <summary>A workflow declares no <c>trigger</c> node.</summary>
+    public const string WorkflowWithoutTrigger = "PLAY0844";
+
+    /// <summary>A workflow node can never be reached from a trigger.</summary>
+    public const string UnreachableWorkflowNode = "PLAY0845";
+
+    /// <summary>A workflow edge points at a node the workflow does not declare.</summary>
+    public const string UnknownWorkflowNode = "PLAY0846";
+
+    /// <summary>A workflow edge leaves a node by an outlet its node kind does not have.</summary>
+    public const string UnknownWorkflowOutlet = "PLAY0847";
+
+    /// <summary>A <c>decide</c> node does not name exactly two outlets, or an outlet leads nowhere.</summary>
+    public const string WorkflowDecisionOutletWithoutTarget = "PLAY0848";
+
+    /// <summary>A <c>wait</c> for an event or an <c>approval</c> has no expiry, so a run can wait forever.</summary>
+    public const string WorkflowWithoutExpiry = "PLAY0849";
+
+    /// <summary>A <c>join</c> node has a single incoming branch, so it joins nothing.</summary>
+    public const string WorkflowJoinWithOneBranch = "PLAY0850";
+
+    /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
+    public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>
+    /// An application <c>time zone</c>, a command <c>calendar</c> or a specification <c>given time zone</c> names an id that is not a known IANA time zone.
+    /// </summary>
+    public const string UnknownTimeZone = "PLAY0852";
+
+    /// <summary>
+    /// A command <c>calendar from $context.&lt;member&gt;</c> names a member other than the trusted <c>timeZone</c> member of the command context.
+    /// </summary>
+    public const string InvalidCalendarContextMember = "PLAY0853";
+
+    /// <summary>A context block is malformed, repeated or outside the application root.</summary>
+    public const string InvalidContextDeclaration = "PLAY0854";
+
+    /// <summary>A context member has a type other than <c>time zone</c>.</summary>
+    public const string UnknownContextMemberType = "PLAY0855";
+
+    /// <summary>A context block declares the same member name more than once.</summary>
+    public const string DuplicateContextMember = "PLAY0856";
+
+    /// <summary>A context member uses a reserved built-in context name.</summary>
+    public const string ReservedContextMemberName = "PLAY0857";
+
+    /// <summary>A read model repeats the idempotent <c>passive</c> directive.</summary>
+    public const string RepeatedPassiveDirective = "PLAY0858";
+
+    /// <summary>A query or screen consumes a passive read model, which only commands may read.</summary>
+    public const string PassiveReadModelObserved = "PLAY0859";
+
+    /// <summary>A passive read model is not read by any command.</summary>
+    public const string PassiveReadModelNotRead = "PLAY0860";
+
+    /// <summary>A condition exceeds the supported nesting or constructed expression depth of 128.</summary>
+    public const string ConditionDepthExceeded = "PLAY0861";
 }

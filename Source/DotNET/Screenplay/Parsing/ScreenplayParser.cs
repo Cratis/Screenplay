@@ -46,6 +46,7 @@ internal static partial class ScreenplayParser
         CommandReadMode? commandReadMode = null;
         var sawCommandReads = false;
         TimeZoneSyntax? timeZone = null;
+        ApplicationContextSyntax? applicationContext = null;
         var sawTimeZone = false;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
@@ -63,6 +64,8 @@ internal static partial class ScreenplayParser
         var layouts = new List<LayoutSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var systems = new List<SystemSyntax>();
+        var stateMachines = new List<StateMachineSyntax>();
+        var workflows = new List<WorkflowSyntax>();
         var eventSources = new List<EventSourceSyntax>();
         var examples = new List<SpecificationExampleSyntax>();
         var templates = new List<TemplateAssignmentSyntax>();
@@ -108,7 +111,7 @@ internal static partial class ScreenplayParser
                     sawReactionBatches = true;
                     break;
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || onboarding is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || applicationContext is not null || onboarding is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
                     break;
                 case "import" when FileImportParser.IsFileImport(line.Content):
                     // A top level import belongs to whatever the document's top level is - the application, or the
@@ -160,6 +163,12 @@ internal static partial class ScreenplayParser
                 case "system":
                     systems.Add(OperationParser.ParseSystem(context, line));
                     break;
+                case "statemachine":
+                    stateMachines.Add(StateMachineParser.Parse(context, line));
+                    break;
+                case "workflow":
+                    workflows.Add(WorkflowParser.Parse(context, line));
+                    break;
                 case "concept":
                     concepts.Add(ParseConcept(context, line));
                     break;
@@ -184,6 +193,9 @@ internal static partial class ScreenplayParser
                         stickyNotes.Add(stickyNote);
                     }
 
+                    break;
+                case "context":
+                    applicationContext = ApplicationContextParser.Parse(context, line, applicationContext, placement);
                     break;
                 case "identity":
                     identity = IdentityParser.Parse(context, line, identity);
@@ -264,11 +276,14 @@ internal static partial class ScreenplayParser
             ReactionProductionMode = reactionProductionMode,
             CommandReadMode = commandReadMode,
             TimeZone = timeZone,
+            Context = applicationContext,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             StickyNotes = stickyNotes,
             Examples = examples,
             Systems = systems,
+            StateMachines = stateMachines,
+            Workflows = workflows,
             SampleDataPacks = sampleDataPacks,
             EventSources = eventSources,
             Behaviors = behaviors,
@@ -436,7 +451,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout";
+                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data, layout, statemachine or workflow";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 

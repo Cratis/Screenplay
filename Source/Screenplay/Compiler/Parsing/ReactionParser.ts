@@ -24,6 +24,7 @@ import { dependencySources, ReadsSyntax, TriggerDataSyntax } from '../Syntax/Dep
 import { parseReads } from './ReadsParser';
 import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 const header = pattern('^reaction\\s+([A-Za-z_]\\w*)$');
 const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
@@ -154,7 +155,9 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                         continue;
                     }
                     const mapped = mappingPattern.exec(value.content);
+                    const structured = mapped === null ? tryParseStructuredMapping(context.valueContext, value) : undefined;
                     if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
+                    else if (structured !== undefined) mappings.push(structured);
                     else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value), diagnosticText('text', value.content));
                 }
                 invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, onRefused, location: locationOf(child) });

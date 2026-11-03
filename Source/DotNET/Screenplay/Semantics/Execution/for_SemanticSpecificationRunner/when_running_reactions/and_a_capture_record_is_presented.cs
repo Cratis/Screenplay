@@ -85,15 +85,29 @@ public class and_a_capture_record_is_presented : given.a_v6_scenario
                   status         = "sendt"
                   contactName    = "Lovelace, Ada"
                   overdue        = true
-                  lineItems      = [{ "lineNumber": 1, "name": "Pens" }, { "lineNumber": 2, "name": "Paper" }]
-                  billingContact = { "email": "ada@example.com" }
+                  lineItems
+                    item
+                      lineNumber = 1
+                      name = "Pens"
+                    item
+                      lineNumber = 2
+                      name = "Paper"
+                  billingContact
+                    email = "ada@example.com"
                 when capture LegacyInvoiceCapture
                   id             = "inv-42"
                   status         = "betalt"
                   contactName    = "Lovelace, Ada"
                   overdue        = true
-                  lineItems      = [{ "lineNumber": 1, "name": "Pens" }, { "lineNumber": 3, "name": "Ink" }]
-                  billingContact = { "email": "ada@lovelace.org" }
+                  lineItems
+                    item
+                      lineNumber = 1
+                      name = "Pens"
+                    item
+                      lineNumber = 3
+                      name = "Ink"
+                  billingContact
+                    email = "ada@lovelace.org"
                 then LegacyStatusChanged
                   for "inv-42"
                   status    = "paid"

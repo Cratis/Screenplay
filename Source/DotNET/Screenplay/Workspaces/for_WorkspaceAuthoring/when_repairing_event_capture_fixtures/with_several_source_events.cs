@@ -14,7 +14,8 @@ public class with_several_source_events : given.an_event_capture_workspace
           id = "one"
         then Local
           id = "one"
-        """, severalSources: true);
+        """,
+        severalSources: true);
 
     void Because() => _repairs = WorkspaceDiagnosticRepairs.Find(_index, _workspace.Revision, _diagnostic);
 

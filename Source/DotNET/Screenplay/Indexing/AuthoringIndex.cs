@@ -52,6 +52,15 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitApplicationContext(ApplicationContextSyntax syntax)
+    {
+        Declare("Context", "context", syntax, syntax.Description, new { authoringMetadata = true, syntaxOnly = Readiness.SyntaxOnly(syntax), executionReadiness = Readiness.ExecutionReadiness(syntax) });
+        _scope.Add("context");
+        base.VisitApplicationContext(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
     public override void VisitIdentity(IdentitySyntax syntax)
     {
         Declare("Identity", "identity", syntax, syntax.Description, new { syntaxOnly = true, authoringMetadata = true });
@@ -147,6 +156,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case TypeSyntax value: Declare("Type", value.Name, value); break;
             case PolicySyntax value: Declare("Policy", value.Name, value, value.Description); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;
+            case ContextMemberSyntax value: Declare("ContextMember", value.Name, value, details: new { type = "time zone", syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case IdentityDetailSyntax value: Declare("IdentityDetail", value.Name, value, details: new { value.Type, value.Source, syntaxOnly = true, authoringMetadata = true }); break;
             case LayoutSyntax value: Declare("Layout", value.Name, value); break;
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;
@@ -157,6 +167,8 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
             case SampleDataPackSyntax value: Declare("SampleDataPack", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
+            case StateMachineSyntax value: Declare("StateMachine", value.Name, value, value.Description); break;
+            case WorkflowSyntax value: Declare("Workflow", value.Name, value, value.Description); break;
             case ReactionSyntax value: Declare("Reaction", value.Name, value, value.Description); break;
             case ProjectionSyntax value: Declare("Projection", value.Name, value, value.Description); break;
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;

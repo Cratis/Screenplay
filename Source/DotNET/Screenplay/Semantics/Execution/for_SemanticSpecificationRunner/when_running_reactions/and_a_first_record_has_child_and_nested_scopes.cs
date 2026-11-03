@@ -13,8 +13,13 @@ public class and_a_first_record_has_child_and_nested_scopes : given.a_record_cap
                   id = "root"
                   sourceStatus = "sendt"
                   label = "new"
-                  items = [{"id":"child","value":"after"}]
-                  contact = {"value":"after","label":"new"}
+                  items
+                    item
+                      id = "child"
+                      value = "after"
+                  contact
+                    value = "after"
+                    label = "new"
                 then Added
                   for "root"
                   status = "sent"

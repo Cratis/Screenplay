@@ -15,6 +15,7 @@ import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 // The grammar Legacy already modeled keeps its original patterns; native patterns apply to Exact documents.
 const grammar = (source: string): { legacy: RegExp; native: RegExp } => ({ legacy: legacyPattern(source), native: pattern(source) });
@@ -174,7 +175,9 @@ function pushAppend(context: ParserContext, line: SourceLine, appends: CaptureAp
             return;
         }
         const mapped = mappingPattern.exec(child.content);
+        const structured = mapped === null ? tryParseStructuredMapping(context.valueContext, child) : undefined;
         if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: unescapeIdentifier(mapped[1]), source: parseMappingSource(mapped[2], location, context.valueContext), location });
+        else if (structured !== undefined) mappings.push(structured);
         else context.error(nested ? DiagnosticCodes.InvalidPropertyMapping : DiagnosticCodes.UnknownAppendDirective, `Unexpected '${child.content}' in append body`, location, nested ? diagnosticText('text', child.content) : {});
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {

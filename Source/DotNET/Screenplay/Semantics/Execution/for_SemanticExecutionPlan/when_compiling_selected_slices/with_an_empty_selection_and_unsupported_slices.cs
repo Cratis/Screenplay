@@ -35,7 +35,7 @@ public class with_an_empty_selection_and_unsupported_slices : a_scoped_execution
 
     [Fact] void should_create_the_plan() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_blocking_issues() => _result.Issues.ShouldBeEmpty();
-    [Fact] void should_defer_every_slice_issue() => _result.UnselectedIssues.ShouldContainOnly(_wholeModel.Issues.ToArray());
+    [Fact] void should_defer_every_slice_issue() => _result.UnselectedIssues.ShouldContainOnly([.. _wholeModel.Issues]);
     [Fact] void should_report_both_unsupported_declarations() => _result.UnselectedIssues.Length.ShouldEqual(2);
     [Fact] void should_keep_the_original_model() => ReferenceEquals(_result.Plan!.Model, _model).ShouldBeTrue();
     [Fact] void should_keep_the_original_revision() => _result.Plan!.Revision.ShouldEqual(_model.Revision);

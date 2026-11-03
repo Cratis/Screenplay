@@ -43,9 +43,9 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_report_an_earlier_constraint_rejection_before_an_unreached_structured_mapping()
     {
-        foreach (var payload in new[] { "{\"value\":1}", "\"ok\"" })
+        foreach (var payload in new[] { "\n  value = 1", " = \"ok\"" })
         {
-            foreach (var run in Runs(Model("payload = " + payload, "given First\n          for \"root\"")))
+            foreach (var run in Runs(Model("payload" + payload, "given First\n          for \"root\"")))
             {
                 Rejected(run, SemanticRejectionCategory.Constraint, 1);
                 ((SemanticRejected)run.Execution).Code.ShouldEqual("Once");
@@ -57,9 +57,9 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_retain_an_accepted_prefix_and_projection_when_a_later_mapping_is_unsupported()
     {
-        foreach (var payload in new[] { "{\"value\":1}", "[{\"value\":1}]", "[]" })
+        foreach (var payload in new[] { "\n  value = 1", "\n  item\n    value = 1", " none" })
         {
-            foreach (var run in Runs(Model("payload = " + payload)))
+            foreach (var run in Runs(Model("payload" + payload)))
             {
                 Unsupported(run, 1);
                 ((SemanticUnsupported)run.Execution).Details.ShouldContain("payload");
@@ -124,7 +124,7 @@ public class when_disposing_capture_appends_in_order : Specification
     {
         foreach (var seed in new[] { "", "given First\n          for \"root\"" })
         {
-            var source = Text("payload = {\"value\":1}", seed)
+            var source = Text("payload\n  value = 1", seed)
                 .Replace("append Later\n          value", "append Later\n          when `payload == null`\n            value", StringComparison.Ordinal);
             foreach (var run in Runs(given.v6_regression_models.Compile(source)))
             {
@@ -138,7 +138,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_keep_root_and_earlier_child_facts_before_a_reached_child_map_is_unsupported()
     {
-        var source = Text("items = [{\"id\":1,\"payload\":\"ok\"},{\"id\":2,\"payload\":{\"value\":1}}]")
+        var source = Text("items\n  item\n    id = 1\n    payload = \"ok\"\n  item\n    id = 2\n    payload\n      value = 1")
             .Replace("        append Later\n          value = $.payload", "        children items identified by id\n          map\n            value = payload\n          append Later\n            value = $.value", StringComparison.Ordinal);
         foreach (var run in Runs(given.v6_regression_models.Compile(source)))
         {
@@ -151,7 +151,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_keep_root_and_child_facts_before_a_reached_nested_mapping_is_unsupported()
     {
-        var source = Text("items = [{\"id\":1,\"payload\":\"ok\"}]\n          contact = {\"payload\":{\"value\":1}}", "given capture Records\n          id = \"root\"\n          items = [{\"id\":2,\"payload\":\"removed\"}]\n          contact = {\"payload\":\"before\"}")
+        var source = Text("items\n  item\n    id = 1\n    payload = \"ok\"\ncontact\n  payload\n    value = 1", "given capture Records\n          id = \"root\"\n          items\n            item\n              id = 2\n              payload = \"removed\"\n          contact\n            payload = \"before\"")
             .Replace("        append Later\n          value = $.payload", "        children items identified by id\n          append Later\n            value = $.payload\n          append Removed\n            when removed\n              value = $.payload\n        nested contact\n          append Later\n            value = $.payload", StringComparison.Ordinal)
             .Replace("      event First", "      event Removed\n        value String optional\n      event First", StringComparison.Ordinal);
         var model = given.v6_regression_models.Compile(source);
@@ -171,7 +171,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_refuse_all_effects_for_invalid_later_child_shapes_identities_or_duplicates()
     {
-        foreach (var record in new[] { "items = 1", "items = [{\"payload\":\"ok\"}]", "items = [{\"id\":1},{\"id\":1.00}]", "contact = 1" })
+        foreach (var record in new[] { "items = 1", "items\n  item\n    payload = \"ok\"", "items\n  item\n    id = 1\n  item\n    id = 1.00", "contact = 1" })
         {
             var source = Text(record).Replace("        append Later\n          value = $.payload", "        children items identified by id\n          append Later\n            value = $.payload\n        nested contact\n          append Later\n            value = $.payload", StringComparison.Ordinal);
             foreach (var run in Runs(given.v6_regression_models.Compile(source)))
@@ -185,7 +185,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_settle_an_earlier_append_reaction_before_evaluating_a_later_unsupported_mapping()
     {
-        var source = Text("payload = {\"value\":1}") + "\n" + """
+        var source = Text("payload\n  value = 1") + "\n" + """
               reaction Follow
                 when First
                   produces Followed
@@ -202,7 +202,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_report_an_earlier_reaction_constraint_rejection_before_a_later_capture_mapping()
     {
-        var source = Text("payload = {\"value\":1}", "given Followed\n          for \"root\"") + "\n" + """
+        var source = Text("payload\n  value = 1", "given Followed\n          for \"root\"") + "\n" + """
               reaction Follow
                 when First
                   produces Followed
@@ -221,9 +221,9 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_not_advance_supplied_last_seen_records_on_success_or_terminal_failure()
     {
-        foreach (var payload in new[] { "\"ok\"", "{\"value\":1}", "1" })
+        foreach (var payload in new[] { " = \"ok\"", "\n  value = 1", " = 1" })
         {
-            var model = Model("payload = " + payload, "given capture Records\n          id = \"root\"\n          payload = \"before\"");
+            var model = Model("payload" + payload, "given capture Records\n          id = \"root\"\n          payload = \"before\"");
             var bytes = SemanticModelSerializer.Serialize(model);
             var first = Runs(model).ToArray();
             var second = Runs(model).ToArray();
@@ -240,7 +240,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_stop_at_the_shared_reaction_fact_limit_before_reaching_a_later_capture_mapping()
     {
-        var source = Text("payload = {\"value\":1}") + "\n" + """
+        var source = Text("payload\n  value = 1") + "\n" + """
               reaction Follow
                 when First
                   produces Looped
@@ -260,7 +260,7 @@ public class when_disposing_capture_appends_in_order : Specification
     [Fact]
     void should_report_earlier_projection_overflow_before_later_mapping_unsupported()
     {
-        var source = Text("payload = {\"value\":1}", "given First\n          for \"root\"")
+        var source = Text("payload\n  value = 1", "given First\n          for \"root\"")
             .Replace("      constraint Once\n        unique event First\n", "", StringComparison.Ordinal)
             .Replace("add count by 1", "add count by 70000000000000000000000000000", StringComparison.Ordinal);
         foreach (var run in Runs(given.v6_regression_models.Compile(source)))
@@ -290,7 +290,7 @@ public class when_disposing_capture_appends_in_order : Specification
         run.Execution.World.Facts.Length.ShouldEqual(facts);
     }
 
-    static string Text(string record, string given = "", string expectation = "then error") => Source.Replace("GIVEN", given, StringComparison.Ordinal).Replace("RECORD", record, StringComparison.Ordinal).Replace("EXPECTATION", expectation, StringComparison.Ordinal);
+    static string Text(string record, string given = "", string expectation = "then error") => Source.Replace("GIVEN", given, StringComparison.Ordinal).Replace("RECORD", record.Replace("\n", "\n          ", StringComparison.Ordinal), StringComparison.Ordinal).Replace("EXPECTATION", expectation, StringComparison.Ordinal);
 
     static ExecutableSemanticModel Model(string record, string seed = "", string expectation = "then error") => given.v6_regression_models.Compile(Text(record, seed, expectation));
 

@@ -73,6 +73,11 @@ public record ApplicationSyntax(
     public TimeZoneSyntax? TimeZone { get; init; }
 
     /// <summary>
+    /// Gets the application's named time-zone context members.
+    /// </summary>
+    public ApplicationContextSyntax? Context { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
@@ -106,6 +111,16 @@ public record ApplicationSyntax(
     /// Gets the application-scoped external systems.
     /// </summary>
     public IEnumerable<SystemSyntax> Systems { get; init; } = [];
+
+    /// <summary>
+    /// Gets the state machines the document declares: where a subject is in its lifecycle, derived from the read model they follow.
+    /// </summary>
+    public IEnumerable<StateMachineSyntax> StateMachines { get; init; } = [];
+
+    /// <summary>
+    /// Gets the workflows the document declares: durable graphs of actions, decisions, waits and approvals that run once per subject.
+    /// </summary>
+    public IEnumerable<WorkflowSyntax> Workflows { get; init; } = [];
 
     /// <summary>
     /// Gets the report-only processing purposes declared in the application.

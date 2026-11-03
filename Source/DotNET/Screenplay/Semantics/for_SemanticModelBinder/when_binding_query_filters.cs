@@ -15,7 +15,7 @@ public class when_binding_query_filters : given.a_semantic_binder
 
     [Fact] void should_select_v14() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V14);
     [Fact] void should_bind_both_argument_spellings() => _result.Success.ShouldBeTrue();
-    [Fact] void should_bind_optional_omission() => Queries.Single(query => query.Name == "Filtered").Filters.Last().Type.IsOptional.ShouldBeTrue();
+    [Fact] void should_bind_optional_omission() => Queries.Single(query => query.Name == "Filtered").Filters[^1].Type.IsOptional.ShouldBeTrue();
     [Fact] void should_map_filter_source_locations() => Queries.SelectMany(query => query.Filters).All(filter => _result.Value!.SourceMap.Entries.Any(entry => entry.SemanticId == filter.Id)).ShouldBeTrue();
 
     [Fact]

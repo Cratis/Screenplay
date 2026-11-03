@@ -106,6 +106,12 @@ internal static partial class CompositionParser
             return new(ComponentReference(set, 1), set.Groups[3].Value, ExpressionParser.ParseMappingSource(context, set.Groups[4].Value, line.Location), [], line.Location);
         }
 
+        var setBlock = SetBlockRegex().Match(line.Content);
+        if (setBlock.Success)
+        {
+            return new(ComponentReference(setBlock, 1), setBlock.Groups[3].Value, StructuredBlockParser.ParseValue(context, line, setBlock.Groups[4].Success ? setBlock.Groups[4].Value : null), [], line.Location);
+        }
+
         var items = ItemsRegex().Match(line.Content);
         if (items.Success)
         {
@@ -142,6 +148,12 @@ internal static partial class CompositionParser
         {
             context.Reader.TakeSignificant();
             var value = ItemValueRegex().Match(child.Content);
+            if (!value.Success && StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                values.Add(new(structured.Property, structured.Source, child.Location));
+                continue;
+            }
+
             if (!value.Success)
             {
                 context.Error(DiagnosticCodes.InvalidInstanceContribution, $"Invalid item value '{child.Content}' - expected '<field> = <value>'", child.Location);
@@ -171,6 +183,9 @@ internal static partial class CompositionParser
 
     [GeneratedRegex("^set\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)\\s*=\\s*(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SetRegex();
+
+    [GeneratedRegex("^set\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)(?:\\s+(none|empty))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex SetBlockRegex();
 
     [GeneratedRegex("^items\\s+(?:([A-Za-z_]\\w*)|\"(" + StringLiteral.BodyPattern + ")\")\\.(\\w+(?:\\.\\w+)*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemsRegex();

@@ -64,8 +64,8 @@ public class when_binding_reactions : given.a_semantic_binder
     [Fact] void should_invoke_the_command() => Triggers[1].Invokes.Single().Mappings.Length.ShouldEqual(2);
     [Fact] void should_count_an_interval_in_seconds() => Triggers[3].Every.ShouldEqual(900L);
     [Fact] void should_append_a_clock_reaction_to_a_literal_event_source() => Triggers[3].Produces.Single().DestinationType.ShouldEqual(SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text));
-    [Fact] void should_schedule_a_weekday() => (Triggers[4].At, Triggers[4].OnDayOfWeek).ShouldEqual((27_000, (int?)1));
-    [Fact] void should_schedule_a_day_of_the_month() => (Triggers[5].At, Triggers[5].OnDayOfMonth).ShouldEqual((21_600, (int?)1));
+    [Fact] void should_schedule_a_weekday() => (Triggers[4].At, Triggers[4].OnDayOfWeek).ShouldEqual((27_000, 1));
+    [Fact] void should_schedule_a_day_of_the_month() => (Triggers[5].At, Triggers[5].OnDayOfMonth).ShouldEqual((21_600, 1));
 
     SemanticReactionTrigger[] Triggers => [.. _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single(_ => _.Name == "Payments").Reactions.SelectMany(reaction => reaction.Triggers)];
 }

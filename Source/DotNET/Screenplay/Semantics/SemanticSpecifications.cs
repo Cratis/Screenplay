@@ -183,6 +183,11 @@ public sealed record SemanticSpecification(
     public string? GivenClock { get; init; }
 
     /// <summary>
+    /// Gets the IANA time zone the scenario evaluates its calendar in, and the value of the <c>$context.timeZone</c> member; candidate-only.
+    /// </summary>
+    public string? GivenTimeZone { get; init; }
+
+    /// <summary>
     /// Gets the records each capture saw last, per key, before the action.
     /// </summary>
     public ImmutableArray<SemanticSpecificationCapture> GivenCaptures { get; init; } = [];

@@ -30,7 +30,7 @@ public class when_validating_query_filters : Specification
     void should_refuse_invalid_declarations(string kind)
     {
         var query = _slice.Queries.Single(value => value.Name == "Filtered");
-        var filter = query.Filters.First();
+        var filter = query.Filters[0];
         query = kind switch
         {
             "property" => query with { Filters = [filter with { Property = query.Id }] },
@@ -38,8 +38,8 @@ public class when_validating_query_filters : Specification
             "type" => query with { Filters = [filter with { Type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean) }] },
             "collection" => query with { Filters = [filter with { Type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isCollection: true) }] },
             "cardinality" => query with { Cardinality = SemanticQueryCardinality.ZeroOrOne },
-            "duplicate" => query with { Filters = [filter, filter with { Id = query.Filters.Last().Id }] },
-            "by" => query with { Argument = new(query.Filters.Last().Id, filter.Name, filter.Type), KeyProperty = filter.Property, Filters = [filter] },
+            "duplicate" => query with { Filters = [filter, filter with { Id = query.Filters[^1].Id }] },
+            "by" => query with { Argument = new(query.Filters[^1].Id, filter.Name, filter.Type), KeyProperty = filter.Property, Filters = [filter] },
             _ => query
         };
         Refuse(_slice with { Queries = [.. _slice.Queries.Select(value => value.Name == query.Name ? query : value)] }).ShouldBeOfExactType<InvalidSemanticContract>();
@@ -80,7 +80,7 @@ public class when_validating_query_filters : Specification
     {
         var specification = _slice.Specifications.Single(value => value.Name == "DistinctCalls");
         var result = specification.ThenQueries[0];
-        var optional = _slice.Queries.Single(query => query.Id == result.Query).Filters.Last();
+        var optional = _slice.Queries.Single(query => query.Id == result.Query).Filters[^1];
         Refuse(_slice with { Specifications = [specification with { ThenQueries = [result, result with { Filters = result.Filters.Add(new(optional.Id, SemanticValue.Text("x"))) }] }] }).ShouldBeNull();
     }
 

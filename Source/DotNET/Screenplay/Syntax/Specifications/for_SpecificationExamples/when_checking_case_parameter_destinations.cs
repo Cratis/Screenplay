@@ -86,12 +86,12 @@ public class when_checking_case_parameter_destinations : Specification
     }
 
     [Theory]
-    [InlineData("Amount", "1")]
-    [InlineData("Detail", "{\"value\":1}")]
-    [InlineData("Status", "\"future\"")]
+    [InlineData("Amount", " = 1")]
+    [InlineData("Detail", "\n      value = 1")]
+    [InlineData("Status", " = \"future\"")]
     void should_defer_unavailable_standalone_parameter_types(string type, string value)
     {
-        var source = $"specification Recording\n  parameter amount {type}\n  case One amount = {value}\n  when Record amount = case.amount";
+        var source = $"specification Recording\n  parameter amount {type}\n  case One\n    amount{value}\n  when Record amount = case.amount";
         var compiler = new ScreenplayCompiler();
         var parsed = compiler.CompileSpecification(source);
         parsed.Diagnostics.ShouldBeEmpty();
@@ -126,5 +126,5 @@ public class when_checking_case_parameter_destinations : Specification
         SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse("concept Amount : Int").Value, []).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSpecificationCaseValue);
     }
 
-    static Diagnostic[] TypeDiagnostics(string source) => new ScreenplayCompiler().Compile(source).Diagnostics.Where(diagnostic => diagnostic.Code is DiagnosticCodes.IncompatibleSpecificationParameterType or DiagnosticCodes.OptionalSpecificationParameterTarget).ToArray();
+    static Diagnostic[] TypeDiagnostics(string source) => [.. new ScreenplayCompiler().Compile(source).Diagnostics.Where(diagnostic => string.Equals(diagnostic.Code, DiagnosticCodes.IncompatibleSpecificationParameterType, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.OptionalSpecificationParameterTarget, StringComparison.Ordinal))];
 }

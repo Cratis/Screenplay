@@ -29,7 +29,7 @@
                   "authorize": null,
                   "calendar": {
                     "kind": "CommandCalendarSyntax",
-                    "contextMember": "zone",
+                    "contextMember": "timeZone",
                     "id": null
                   },
                   "description": null,

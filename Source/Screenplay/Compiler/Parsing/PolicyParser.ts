@@ -12,6 +12,7 @@ import { parseCode, parseFile } from './ImplementationParser';
 import { firstWord } from './LineText';
 import { parseDescription } from './DescriptionParser';
 import { ParserContext } from './ParserContext';
+import { ConditionDepthBudget } from './ConditionDepthBudget';
 import { locationOf, SourceLine } from './SourceLine';
 
 const headerPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
@@ -25,6 +26,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     let code: CodeBlockSyntax | null = null;
     let file: FileReferenceSyntax | null = null;
     let hasRequire = false;
+    let depthExceeded = false;
     let description: string | null = null;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
@@ -39,7 +41,9 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
             const tokens = tokenizePolicyCondition(context, text);
             // Negation is newly admitted syntax, not diagnostic-free enrichment of legacy fields.
             if (tokens.includes('not')) context = diagnosticContext;
-            const parsed = parsePolicyCondition(context, tokens, locationOf(line), diagnosticContext);
+            const budget = new ConditionDepthBudget(diagnosticContext, locationOf(line));
+            const parsed = parsePolicyCondition(context, tokens, locationOf(line), diagnosticContext, budget);
+            depthExceeded ||= budget.exceeded;
             validateAnonymous(diagnosticContext, parsed, name, locationOf(line));
             if (hasRequire) context.error(DiagnosticCodes.RepeatedPolicyRequirement, `Policy '${name}' has more than one require line; combine the conditions with and/or in one require`, locationOf(line));
             else condition = parsed;
@@ -58,7 +62,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
         }
     }
     if (condition !== null && (code !== null || file !== null)) context.error(DiagnosticCodes.MixedPolicyImplementation, `Policy '${name}' cannot combine 'require' with a file or inline code block`, locationOf(header));
-    if (condition === null && code === null && file === null) context.error(DiagnosticCodes.PolicyWithoutRequirement, `Policy '${name}' must declare a 'require' condition, a file reference or an inline code block`, locationOf(header));
+    if (condition === null && code === null && file === null && !depthExceeded) context.error(DiagnosticCodes.PolicyWithoutRequirement, `Policy '${name}' must declare a 'require' condition, a file reference or an inline code block`, locationOf(header));
     return { kind: 'PolicySyntax', name, condition, code, file, description, location: locationOf(header) };
 }
 
@@ -67,23 +71,26 @@ function tokenizePolicyCondition(context: ParserContext, text: string): string[]
     return [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
 }
 
-function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation, expressionContext: ParserContext): PolicyConditionSyntax | null {
+function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation, expressionContext: ParserContext, budget: ConditionDepthBudget): PolicyConditionSyntax | null {
     const reportDiagnostics = context.sourceOptions.numericMode === 'exact' || tokens.includes('not');
     let position = 0;
     const quoted = (token: string | undefined): token is string => token !== undefined && token.startsWith('"') && token.endsWith('"');
     const unquote = (token: string): string => unescapeString(token.substring(1, token.length - 1));
     const group = (): PolicyConditionSyntax | null => {
-        if (tokens[position] === 'not') {
-            position++;
-            const operand = group();
-            return operand === null ? null : { kind: 'NotPolicyConditionSyntax', operand, location };
-        }
-        if (tokens[position] === '(') {
-            position++;
-            const result = or();
-            if (tokens[position] === ')') position++;
-            else if (reportDiagnostics) context.error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
-            return result;
+        if (tokens[position] === 'not' || tokens[position] === '(') {
+            if (!budget.enter()) return null;
+            const negated = tokens[position++] === 'not';
+            try {
+                if (negated) {
+                    const operand = group();
+                    return operand === null ? null : budget.build<PolicyConditionSyntax>([operand], () => ({ kind: 'NotPolicyConditionSyntax', operand, location }));
+                }
+                const result = or();
+                if (budget.exceeded) return null;
+                if (tokens[position] === ')') position++;
+                else if (reportDiagnostics) context.error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
+                return result;
+            } finally { budget.leave(); }
         }
         const token = tokens[position++];
         if (token === 'authenticated') return { kind: 'AuthenticatedConditionSyntax', location };
@@ -111,12 +118,20 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
     };
     const and = (): PolicyConditionSyntax | null => {
         let left = group();
-        while (left !== null && tokens[position] === 'and') { position++; const right = group(); if (right === null) return null; left = { kind: 'LogicalPolicyConditionSyntax', left, operator: 'And', right, location }; }
+        while (left !== null && tokens[position] === 'and') {
+            position++; const right = group(); if (right === null) return null;
+            const previous: PolicyConditionSyntax = left;
+            left = budget.build<PolicyConditionSyntax>([previous, right], () => ({ kind: 'LogicalPolicyConditionSyntax', left: previous, operator: 'And', right, location }));
+        }
         return left;
     };
     const or = (): PolicyConditionSyntax | null => {
         let left = and();
-        while (left !== null && tokens[position] === 'or') { position++; const right = and(); if (right === null) return null; left = { kind: 'LogicalPolicyConditionSyntax', left, operator: 'Or', right, location }; }
+        while (left !== null && tokens[position] === 'or') {
+            position++; const right = and(); if (right === null) return null;
+            const previous: PolicyConditionSyntax = left;
+            left = budget.build<PolicyConditionSyntax>([previous, right], () => ({ kind: 'LogicalPolicyConditionSyntax', left: previous, operator: 'Or', right, location }));
+        }
         return left;
     };
     const condition = or();

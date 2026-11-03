@@ -75,6 +75,10 @@ Specs under `Source/DotNET/Screenplay/Semantics/Execution/for_SemanticBodyExecut
 `Screenplay.Mcp/for_ScreenplayMcpServer/when_supplying_a_reaction_effect_provider`. Canonical vectors are
 unchanged. Package validation passes against the 4.0.0 baseline.
 
+## Implementation note — #1107
+
+Before provider invocation, execution verifies the full slice owner address and semantic ID against the declaration map recorded by `SemanticCompilation.Create`, including its identity catalog's application identity. An internal side table binds that provenance to the exact model instance; copied, deserialized and hand-built models lack the binding and fail closed. This hardening changes no public API, ESM, DTO, canonical vector or version.
+
 ## Related
 
 0005, 0006, 0078, 0082, 0097, 0113, 0117, 0119, 0120; Screenplay#1099.

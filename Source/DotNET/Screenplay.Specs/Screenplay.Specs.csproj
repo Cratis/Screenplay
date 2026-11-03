@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        The inline specs of the compiler (when_*/, for_*/, given/ and Specs/ under ../Screenplay) compile here,
+        not into Cratis.Screenplay. The files stay where they are, so their namespaces, fully qualified names and
+        paths do not change; only the assembly that compiles them does. Editing the compiler no longer recompiles
+        its specs unless the compiler's reference assembly changes, and editing a spec no longer recompiles the compiler.
+    -->
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Specs</AssemblyName>
+        <!-- The specs' root namespace keeps the embedded resource names they load unchanged. -->
+        <RootNamespace>Cratis.Screenplay</RootNamespace>
+        <IsTestProject>true</IsTestProject>
+        <IsPackable>false</IsPackable>
+        <DedicatedSpecsProject>true</DedicatedSpecsProject>
+        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks></TargetFrameworks>
+        <EnablePackageValidation>false</EnablePackageValidation>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <SpecifiedProjectDirectory>$(MSBuildProjectDirectory)/../Screenplay/</SpecifiedProjectDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.Matching/Screenplay.Matching.csproj" />
+        <PackageReference Include="NSubstitute" />
+        <!-- The MCP specs reuse spec contexts with internal members. -->
+        <InternalsVisibleTo Include="Cratis.Screenplay.Mcp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Cratis.Screenplay.Matching" />
+        <Using Include="Cratis.Specifications" />
+        <Using Include="NSubstitute" />
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+    <!-- Debug only, as before the split: several spec contexts under given/ are #if DEBUG, so Release builds an empty assembly. -->
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+        <_InlineSpecExcludes Include="$(SpecifiedProjectDirectory)bin/**;$(SpecifiedProjectDirectory)obj/**" />
+
+        <!-- Exactly the files Directory.Build.targets removes from the compiler: each file compiles in one assembly only. -->
+        <_SpecifiedProjectSources Include="$(SpecifiedProjectDirectory)**/*.cs" Exclude="@(_InlineSpecExcludes)" />
+        <_SpecifiedProjectProductionSources Include="@(_SpecifiedProjectSources)" />
+        <_SpecifiedProjectProductionSources Remove="$(SpecifiedProjectDirectory)**/when_*/**/*.cs" />
+        <_SpecifiedProjectProductionSources Remove="$(SpecifiedProjectDirectory)**/for_*/**/*.cs" />
+        <_SpecifiedProjectProductionSources Remove="$(SpecifiedProjectDirectory)**/given/**/*.cs" />
+        <_SpecifiedProjectProductionSources Remove="$(SpecifiedProjectDirectory)Specs/*.cs" />
+        <Compile Include="@(_SpecifiedProjectSources)" Exclude="@(_SpecifiedProjectProductionSources)" />
+
+        <!-- The specs load these through their own assembly; Link keeps each manifest resource name as it was. -->
+        <EmbeddedResource Include="$(SpecifiedProjectDirectory)**/*.play" Exclude="@(_InlineSpecExcludes)" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+        <!-- WithCulture=false keeps <base>.<locale>.strings samples in the main assembly instead of a satellite. -->
+        <EmbeddedResource Include="$(SpecifiedProjectDirectory)**/*.strings" Exclude="@(_InlineSpecExcludes)" Link="%(RecursiveDir)%(Filename)%(Extension)" WithCulture="false" />
+        <EmbeddedResource Include="$(SpecifiedProjectDirectory)Semantics/Serialization/Golden/*.json" Link="Semantics/Serialization/Golden/%(Filename)%(Extension)" WithCulture="false" />
+    </ItemGroup>
+</Project>

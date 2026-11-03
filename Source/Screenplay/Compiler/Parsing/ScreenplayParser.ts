@@ -8,6 +8,7 @@ import { GenerationSyntax } from '../Syntax/GenerationSyntax';
 import { parseGeneration } from './GenerationParser';
 import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
+import { parseApplicationContext } from './ApplicationContextParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
@@ -17,7 +18,7 @@ import { PersonaSyntax, StickyNoteSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { TimeZoneSyntax } from '../Syntax/Calendar';
-import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { ApplicationContextSyntax, ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
 import { parseComplianceDirective, parseComplianceMarkers } from './ConceptComplianceParser';
@@ -39,6 +40,9 @@ import { parsePurpose } from './PurposeParser';
 import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
+import { parseStateMachine } from './StateMachineParser';
+import { parseWorkflow } from './WorkflowParser';
+import { StateMachineSyntax, WorkflowSyntax } from '../Syntax/Lifecycles';
 import { EventVisibility } from '../Syntax/EventVisibility';
 import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
@@ -81,6 +85,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const featureBody = placement.length > 1 ? new FeatureBody(placement[placement.length - 1]) : undefined;
     const placedBody = moduleBody ?? featureBody;
     let identity: IdentitySyntax | null = null;
+    let applicationContext: ApplicationContextSyntax | null = null;
     let reactionProductionMode: ReactionProductionMode | null = null;
     let sawReactionBatches = false;
     let commandReadMode: CommandReadMode | null = null;
@@ -93,6 +98,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
     const systems: SystemSyntax[] = [];
+    const stateMachines: StateMachineSyntax[] = [];
+    const workflows: WorkflowSyntax[] = [];
     const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
@@ -176,6 +183,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             eventSources.push(parseEventSource(context, line));
         } else if (keyword === 'system') {
             systems.push(parseSystem(context, line));
+        } else if (keyword === 'statemachine') {
+            stateMachines.push(parseStateMachine(context, line));
+        } else if (keyword === 'workflow') {
+            workflows.push(parseWorkflow(context, line));
         } else if (keyword === 'concept') {
             concepts.push(parseConcept(context, line));
         } else if (keyword === 'type') {
@@ -195,6 +206,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             placedBody.tryParse(context, line);
         } else if (keyword === 'purpose') {
             purposes.push(parsePurpose(context, line));
+        } else if (keyword === 'context') {
+            applicationContext = parseApplicationContext(context, line, applicationContext, placement);
         } else if (keyword === 'identity') {
             identity = parseIdentity(context, line, identity);
         } else if (keyword === 'policy') {
@@ -224,7 +237,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(applicationContext === null ? {} : { context: applicationContext }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...(stateMachines.length > 0 ? { stateMachines } : {}), ...(workflows.length > 0 ? { workflows } : {}), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -237,7 +250,8 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
         return isDocumentPlacement(placement);
     }
     if (keyword === 'identity') return line.content === 'identity';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
+    if (keyword === 'context') return line.content === 'context';
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -263,7 +277,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
+            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);

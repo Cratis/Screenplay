@@ -34,6 +34,7 @@ internal sealed class FeatureBody(string name)
     string? _description;
     string? _documentation;
     AuthorizeSyntax? _authorize;
+    bool _authorizationDepthExceeded;
 
     /// <summary>
     /// Parses one already consumed line of the body.
@@ -67,7 +68,22 @@ internal sealed class FeatureBody(string name)
                 PurposeParser.ParseReference(context, line, _purposes);
                 return true;
             case "authorize":
-                _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
+                var diagnosticCount = context.Diagnostics.Count;
+                var next = AuthorizeParser.Parse(context, line);
+                if (next is null && context.Diagnostics.Skip(diagnosticCount).Any(diagnostic => diagnostic.Code == DiagnosticCodes.ConditionDepthExceeded))
+                {
+                    _authorize = null;
+                    _authorizationDepthExceeded = true;
+                }
+
+                if (!_authorizationDepthExceeded)
+                {
+                    var previous = _authorize;
+                    _authorize = AuthorizeParser.Combine(_authorize, next, context);
+                    _authorizationDepthExceeded = previous is not null && _authorize is null;
+                }
+
+                if (_authorizationDepthExceeded) AuthorizeParser.RecordOwnerRefusal(_fileImports);
                 return true;
             case "import":
                 FileImportParser.Parse(context, line, _fileImports);

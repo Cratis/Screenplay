@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
         if (application.Modules.SelectMany(module => module.Features).SelectMany(PossibleEventSlices).SelectMany(slice => slice.Commands).Any(command => command.Handler is { ResultVersion: 2 })) return (new(35, 0), new(35, 0));
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
         if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
@@ -252,7 +253,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV34Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV36Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -301,7 +302,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax));
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -350,6 +351,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<string, BoundEvent> _events = new(StringComparer.Ordinal);
         readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
         readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
+        readonly HashSet<SemanticId> _passiveReadModels = [];
         readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
         readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
@@ -360,6 +362,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
+
+        internal ImmutableHashSet<SemanticId> PassiveReadModels => [.. _passiveReadModels];
 
         internal int UtcAssessmentYear => utcAssessmentYear;
 
@@ -400,7 +404,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             ValidateComplianceAdmission();
             ValidateClockOperandAdmission();
-            RefuseApplicationTimeZone();
+            var timeZone = BindApplicationTimeZone();
+            RefuseApplicationContext();
 
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
@@ -413,6 +418,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var eventSources = BindEventSources(concepts);
             if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
+            var (stateMachines, workflows) = BindLifecycles(modules);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
@@ -425,8 +431,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             {
                 Policies = policies,
                 Triggers = triggers,
+                StateMachines = stateMachines,
+                Workflows = workflows,
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
+                TimeZone = timeZone,
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
@@ -592,6 +601,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 {
                     var bound = BindReadModel(sliceAddress, slice, readModel);
                     _readModelDeclarations.Add(readModel, bound);
+                    if (readModel.IsPassive) _passiveReadModels.Add(bound.Model.Id);
                     _readModelPaths.TryAdd(readModel.Name, [.. sliceAddress.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key), readModel.Name]);
                     if (!_readModels.TryAdd(readModel.Name, bound))
                     {

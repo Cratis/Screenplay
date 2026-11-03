@@ -54,7 +54,9 @@ public class when_comparing_uuid_key_parts : given.a_flat_key_model
                 when append Removed
                   first = "{{upper}}"
                   second = "b"
-                then no readmodel Row for {"second":"b","first":"{{upper}}"}
+                then no readmodel Row for
+                  second = "b"
+                  first = "{{upper}}"
                 then readmodel Row
                   first = "{{lower}}"
                   second = "b"

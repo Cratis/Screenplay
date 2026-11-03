@@ -541,6 +541,8 @@ is canonicalized.
 
 ## Execute specifications
 
+`run-specifications` also runs the `specification` blocks written inside [state machines](../statemachines.md) and [workflows](../workflows.md) (ESM v36). Their results are addressed `<StateMachineOrWorkflow>.<Specification>` and carry no semantic id; a document-scoped run does not include them.
+
 `run-specifications` is read-only. It executes scenarios through the in-memory reference evaluator without applying or mutating proposals, writing files, executing attached code or contacting external services. With no `proposalId`, it runs the current model: an opened workspace keeps its identities; reopen it after source edits. Without an opened workspace, the tool reads the current root and its persisted identity state.
 
 With `proposalId`, it runs that outstanding proposal's retained candidate, including its identity catalog and planned renames or advancements. The snapshot is not refreshed from disk: an externally changed base still runs the candidate you proposed, not the newer current model. This does not make a stale proposal applicable. Unknown, discarded or applied proposals return `UnknownProposal`; reopening the workspace also discards outstanding proposals.
@@ -1312,7 +1314,8 @@ event contracts, identities and dependant records. Allowed values are:
 `DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
 `Layout`, `Module`, `Operation`, `Persona`, `Policy`, `Projection`, `Property`,
 `Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `SampleDataPack`,
-`Screen`, `ScreenTemplate`, `Slice`, `Specification`, `System`, `Theme`, `Trigger`, `Type`,
+`Screen`, `ScreenTemplate`, `Slice`, `Specification`, `StateMachine`, `System`, `Theme`, `Trigger`, `Type`,
+`Workflow`,
 and `UiProfile`. Event contracts use `Event`, and composite types use `Type`;
 `eventContractId` distinguishes event-contract identity records. A property's
 aggregated dependants retain `kind: "Property"`, not the owner's kind.

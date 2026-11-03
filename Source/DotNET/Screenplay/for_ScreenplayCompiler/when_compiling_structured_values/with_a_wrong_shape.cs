@@ -10,7 +10,7 @@ public class with_a_wrong_shape : given.a_structured_specification
 {
     CompilationResult<ApplicationSyntax> _result;
 
-    void Because() => _result = Compiler.Compile(Source.Replace("lines = [{\"sku\":\"A-1\",\"status\":\"open\"}]", "lines = 3", StringComparison.Ordinal));
+    void Because() => _result = Compiler.Compile(Source.Replace(Lines, "lines = 3", StringComparison.Ordinal));
 
     [Fact] void should_report_the_expected_list() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompatibleStructuredValue).ShouldBeTrue();
 }

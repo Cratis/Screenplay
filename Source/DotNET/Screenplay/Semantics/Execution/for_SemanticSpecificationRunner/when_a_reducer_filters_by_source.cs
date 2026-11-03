@@ -44,7 +44,9 @@ public class when_a_reducer_filters_by_source : event_route_models
     {
         var application = Plan().Model.Application;
         var readModelAddress = SemanticAddress.ForReadModel(SliceAddress, "Balance");
-        var readModel = new SemanticReadModel(SemanticId.Create(readModelAddress), "Balance",
+        var readModel = new SemanticReadModel(
+            SemanticId.Create(readModelAddress),
+            "Balance",
             [new(SemanticId.Create(SemanticAddress.ForProperty(readModelAddress, "id")), "id", Text, true)]);
         var reducer = new SemanticReducer("Fold", readModel.Id, [new(Event.Id, "opaque-transition")]) { From = new(Source.Id) };
         var module = application.Modules[0];

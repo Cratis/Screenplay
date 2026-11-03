@@ -74,8 +74,13 @@ module Billing
           id = "root"
           sourceStatus = "betalt"
           label = "new"
-          items = [{"id":"child","value":"after"}]
-          contact = {"value":"after","label":"new"}
+          items
+            item
+              id    = "child"
+              value = "after"
+          contact
+            value = "after"
+            label = "new"
         then Added
           for "root"
           status = "paid"
@@ -118,13 +123,24 @@ module Billing
         given capture Records
           id = "root"
           sourceStatus = "sendt"
-          items = [{"id":"known","value":"before"}]
+          items
+            item
+              id    = "known"
+              value = "before"
           contact = null
         when capture Records
           id = "root"
           sourceStatus = "sendt"
-          items = [{"id":"known","value":"after"},{"id":"new","value":"after"}]
-          contact = {"value":"after","label":"new"}
+          items
+            item
+              id    = "known"
+              value = "after"
+            item
+              id    = "new"
+              value = "after"
+          contact
+            value = "after"
+            label = "new"
         then Observed
           status = "sent"
         then ChildChanged

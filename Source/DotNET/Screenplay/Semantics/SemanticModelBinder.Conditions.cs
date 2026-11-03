@@ -20,8 +20,8 @@ public sealed partial class SemanticModelBinder
                     left, logical.Operator == LogicalOperator.And ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, rightCondition);
             }
 
-            var comparison = AdmitClockFreeComparison(syntax);
-            if (comparison is null) return null;
+            var comparison = AdmitOrdinaryComparison(syntax, position, properties);
+            if (comparison is null) return BindClockConditionOrNull(syntax, position, properties);
 
             if (comparison.Left.StartsWith('$'))
             {

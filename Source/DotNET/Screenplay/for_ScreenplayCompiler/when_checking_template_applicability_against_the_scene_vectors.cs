@@ -16,19 +16,19 @@ public class when_checking_template_applicability_against_the_scene_vectors : gi
 {
     // template scopes line, where it is used, the slice type of the target, whether Scene's ApplicableTemplates offers it there.
     [Theory]
-    [InlineData("scopes feature", "feature", "StateView", true)]                                                  // pinned dashboard at Feature
-    [InlineData("scopes feature", "module", "StateView", false)]                                                  // explicit scopes override the default
-    [InlineData("scopes subfeature", "feature", "StateView", false)]                                              // subfeature is its own scope
-    [InlineData("scopes slice stateview", "slice", "StateView", true)]                                            // state view slice lists data display fragments
-    [InlineData("scopes slice stateview", "slice", "StateChange", false)]                                         // ... and not on a state change slice
-    [InlineData("scopes slice statechange", "slice", "StateChange", true)]                                        // state change slice lists dialog and form templates
+    [InlineData("scopes feature", "feature", "StateView", true)] // pinned dashboard at Feature
+    [InlineData("scopes feature", "module", "StateView", false)] // explicit scopes override the default
+    [InlineData("scopes subfeature", "feature", "StateView", false)] // subfeature is its own scope
+    [InlineData("scopes slice stateview", "slice", "StateView", true)] // state view slice lists data display fragments
+    [InlineData("scopes slice stateview", "slice", "StateChange", false)] // ... and not on a state change slice
+    [InlineData("scopes slice statechange", "slice", "StateChange", true)] // state change slice lists dialog and form templates
     [InlineData("scopes slice statechange", "slice", "StateView", false)]
     [InlineData("scopes slice statechange|stateview", "slice", "StateView", true)]
-    [InlineData("scopes slice", "slice", "StateChange", true)]                                                    // no kinds declared: any slice that presents something
+    [InlineData("scopes slice", "slice", "StateChange", true)] // no kinds declared: any slice that presents something
     [InlineData("scopes slice", "slice", "StateView", true)]
-    [InlineData("scopes slice", "slice", "Automation", false)]                                                    // an automation slice has no presentation
+    [InlineData("scopes slice", "slice", "Automation", false)] // an automation slice has no presentation
     [InlineData("scopes slice statechange|stateview", "slice", "Automation", false)]
-    [InlineData("scopes none", "module", "StateView", false)]                                                     // an explicitly empty list applies nowhere
+    [InlineData("scopes none", "module", "StateView", false)] // an explicitly empty list applies nowhere
     [InlineData("scopes none", "slice", "StateView", false)]
     [InlineData("scopes module, feature, subfeature", "subfeature", "StateView", true)]
     void should_agree_with_the_applicable_templates_of_scene(string scopes, string where, string sliceType, bool offered)

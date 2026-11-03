@@ -55,7 +55,11 @@ internal static partial class OperationParser
         {
             context.Reader.TakeSignificant();
             var typed = TypedMappingRegex().Match(line.Content);
-            var propertyLine = inline && typed.Success ? line with { Content = typed.Groups[1].Value.TrimEnd() } : line;
+            var marker = inline && !typed.Success ? StructuredBlockParser.TrailingMarker(line.Content) : null;
+            var propertyLine = line;
+            if (inline && typed.Success) propertyLine = line with { Content = typed.Groups[1].Value.TrimEnd() };
+            else if (marker is not null) propertyLine = line with { Content = line.Content[..^(marker.Length + 1)] };
+            var structured = inline && !typed.Success && (marker is not null || context.TryPeekChild(line.Indent, out _));
             if (!typed.Success && _eventMetadata.Contains(LineText.FirstWord(line.Content)))
             {
                 context.Error(DiagnosticCodes.InvalidOperationDeclaration, "Operations cannot declare event routing or metadata; escape a keyword-named input with @.", line.Location);
@@ -67,7 +71,7 @@ internal static partial class OperationParser
             if (!UsesRegex().IsMatch(line.Content) && PropertyLineParser.TryParse(propertyLine) is not null)
             {
                 var property = PropertyLineParser.Parse(context, propertyLine)!;
-                if (inline && !typed.Success)
+                if (inline && !typed.Success && !structured)
                 {
                     context.Error(DiagnosticCodes.InvalidOperationMapping, "An inline operation input requires '<property> <Type> = <source>'.", line.Location);
                 }
@@ -82,6 +86,7 @@ internal static partial class OperationParser
                 if (!names.Add(property.Name)) context.Error(DiagnosticCodes.DuplicateDeclaration, $"Operation '{name}' already declares input '{property.Name}'.", line.Location);
                 inputs.Add(property);
                 if (inline && typed.Success) mappings.Add(ExpressionParser.ParseMapping(context, property.Name, typed.Groups[2], line));
+                if (structured) mappings.Add(new(property.Name, StructuredBlockParser.ParseValue(context, line, marker), line.Location));
                 RejectChildren(context, line, DiagnosticCodes.InvalidOperationDeclaration, "An operation input cannot have children.");
                 continue;
             }

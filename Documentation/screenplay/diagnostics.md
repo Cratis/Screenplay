@@ -31,6 +31,35 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0830` | Error | An `onboarding` block states the same thing twice: a second `signup`, `legal terms`, `offering`, `emails` or `images`, a second invitation of one kind, or a second template for one email. |
 | `PLAY0831` | Error | An invitation's `as`, `by` or `grant` names a persona nothing declares. Draft authoring reports it as a warning. |
 | `PLAY0832` | Error | The `emails` block names an email onboarding does not send; the emails are `invitation`, `welcome` and `signupDeclined`. |
+| `PLAY0833` | Error | A value is written as inline JSON (`{...}` or `[...]`). Screenplay has no JSON: write the object or list as an indented block - one `member = value` line per member, one `item` line per list element, and `<name> none` for an empty list. The editors offer a quick fix that writes the block; printing the document converts every occurrence. See [structured values](structured-values.md). |
+| `PLAY0834` | Error | A `statemachine` declaration is malformed: a bad header or unexpected line, a missing or repeated `follows`, a malformed `state`, `entering` or `on` line, a repeated state, or a malformed specification inside it. |
+| `PLAY0835` | Error | A state machine has no `initial` state, or more than one. |
+| `PLAY0836` | Warning | A state can never be reached from the initial state by the transitions written under the states. |
+| `PLAY0837` | Warning | A state that is not `final` has no transition out. |
+| `PLAY0838` | Error | A `final` state declares transitions out. |
+| `PLAY0839` | Error | A transition targets a state the state machine does not declare, or a workflow trigger waits for a state its state machine does not declare. |
+| `PLAY0840` | Error | A state machine names an event, read model, command or workflow that is not declared. |
+| `PLAY0841` | Error | A state machine or workflow condition (or a `foreach` list) reads a property the subject read model does not have. |
+| `PLAY0842` | Error | Two unguarded transitions on the same event leave one state, so the second can never be taken. |
+| `PLAY0843` | Error | A `workflow` declaration is malformed: a bad header, `for`, node or edge line, a missing `for`, a repeated node name, a malformed duration, or a malformed specification inside it. |
+| `PLAY0844` | Error | A workflow declares no `trigger` node, so nothing starts a run. |
+| `PLAY0845` | Warning | A workflow node can never be reached from a trigger. |
+| `PLAY0846` | Error | A workflow edge points at a node the workflow does not declare. |
+| `PLAY0847` | Error | A workflow edge leaves a node by an outlet its node kind does not have, or a `decide` node uses a reserved outlet name. |
+| `PLAY0848` | Error | A `decide` node does not name exactly two outlets, or one of its outlets leads nowhere. |
+| `PLAY0849` | Warning | A `wait` for an event, or an `approval`, has no `expires after`, so a run can wait forever. |
+| `PLAY0850` | Information | A `join` has a single incoming branch, so it joins nothing. |
+| `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
+| `PLAY0852` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
+| `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
+| `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
+| `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
+| `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
+| `PLAY0857` | Error | A context member uses reserved `timeZone` or a built-in `$context` root. The member is not retained. |
+| `PLAY0858` | Warning | A read model repeats the bare `passive` directive; it is idempotent. Keep one directive. Both parsers report this warning. |
+| `PLAY0859` | Error | A query or screen consumes a passive read model. Remove `passive` if the model is a read surface, or keep it private to command reads. C# only. |
+| `PLAY0860` | Warning | No command reads a passive read model. Add the intended command read or remove `passive`; passivity is never inferred. C# only. |
+| `PLAY0861` | Error | A condition exceeds the supported nesting or constructed expression depth of 128. Simplify the condition or split the requirement into named policies. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
@@ -1094,7 +1123,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`), application time zones, command calendars, `given time zone` and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
@@ -1155,10 +1184,10 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
 | `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
 | `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
-| `PLAY0291` | Error | A mapping value starts with `{` or `[` but is not a valid single-line JSON object or list (keys must be quoted). |
+| `PLAY0291` | Error | A structured value written as an indented block is malformed: an object line is not `member = value`, `member` with a block under it, or `member none`; a list line is not an `item`; a value is not a string, number, `true`, `false` or `null`; or a header has nothing under it and does not end in `none` or `empty`. See [structured values](structured-values.md). |
 | `PLAY0292` | Error | An object key does not name a property of the target's declared composite `type`. Unknown or imported types remain undecided. |
 | `PLAY0293` | Error | A statically known value has the wrong shape for its target: a collection expects a list, a declared composite expects an object, and a scalar cannot accept a list or object. |
-| `PLAY0294` | Error | An inline JSON object repeats a key (including inside a nested object or list); each property may be stated once. |
+| `PLAY0294` | Error | A structured value repeats a member (including inside a nested object or list); each member may be stated once. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 
@@ -1665,6 +1694,17 @@ Decisions 0106 and 0107 add the application calendar and clock operands. Both co
 | `PLAY0812` | Error | A `time zone "<id>"` or `time zone configurable default "<id>"` declaration is repeated, malformed or outside the application root. Declare it once at the application root. |
 | `PLAY0813` | Error | A command declares `calendar` more than once, or the line is neither `calendar "<id>"` nor `calendar from $context.<member>`. |
 | `PLAY0814` | Error | A specification declares `given time zone` more than once, or the line is not `given time zone "<id>"`. |
+
+## Application-declared context members
+
+Decision 0132 adds the [application-root `context` block](context.md#application-declared-context-members). It is parsed but refused at binding with `PLAY0268` until #824 admits execution. One block is allowed per application folder across its files; a second file's block reports `PLAY0172`, as with `identity`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
+| `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
+| `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
+| `PLAY0857` | Error | A context member uses reserved `timeZone` or a built-in `$context` root. The member is not retained. |
 
 ## Specification case tables
 

@@ -11,7 +11,8 @@ public class with_two_source_events : given.an_event_capture
           id = $.id
           status = $.status
           label = $.label
-        """, """
+        """,
+        """
         given Arrived
           id = "parcel"
           status = "sent"

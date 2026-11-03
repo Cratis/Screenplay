@@ -18,9 +18,7 @@ internal static partial class SemanticModelValidator
         IEnumerable<SemanticProjection> projections,
         SemanticId eventContract)
     {
-        var sources = new ProducerSources([.. commands], [.. reactions], [.. captures], [.. projections]);
-        var producerTypes = ProducerTypes(sources, eventContract, [])
-            .Distinct().ToArray();
+        var producerTypes = DeclaredEventSourceTypes(commands, reactions, captures, projections, eventContract);
         if (producerTypes.Length != 1)
         {
             throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
@@ -28,6 +26,14 @@ internal static partial class SemanticModelValidator
 
         return producerTypes[0];
     }
+
+    internal static SemanticTypeReference[] DeclaredEventSourceTypes(
+        IEnumerable<SemanticCommand> commands,
+        IEnumerable<SemanticReaction> reactions,
+        IEnumerable<SemanticCapture> captures,
+        IEnumerable<SemanticProjection> projections,
+        SemanticId eventContract) =>
+        [.. ProducerTypes(new ProducerSources([.. commands], [.. reactions], [.. captures], [.. projections]), eventContract, []).Distinct()];
 
     internal static SemanticTypeReference? ProducedEventSourceType(SemanticCommand command, SemanticProducedEvent produced) =>
         produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route &&
@@ -51,18 +57,37 @@ internal static partial class SemanticModelValidator
         types.AddRange(sources.Captures.SelectMany(CaptureAppends)
             .Where(append => append.EventContract == eventContract)
             .Select(append => append.EventSourceType));
-        foreach (var source in sources.Projections
+        var publishers = sources.Projections
             .Where(projection => projection.Target == SemanticProjectionTargetKind.Event && projection.ReadModel == eventContract && projection.Scope is not null)
-            .SelectMany(projection => projection.Scope!.From))
+            .Select(projection => projection.Scope!)
+            .ToArray();
+        var folded = publishers.SelectMany(scope => scope.From).Select(source => source.EventContract);
+
+        // SemanticEventPublication.TryPublish folds any fact when Every is set, so every producible fact can be a source.
+        if (publishers.Any(scope => scope.Every is not null))
         {
-            if (!visited.Contains(source.EventContract))
+            folded = folded.Concat(ProducibleContracts(sources));
+        }
+
+        foreach (var source in folded.Distinct().ToArray())
+        {
+            if (!visited.Contains(source))
             {
-                types.AddRange(ProducerTypes(sources, source.EventContract, visited));
+                types.AddRange(ProducerTypes(sources, source, visited));
             }
         }
 
         return types;
     }
+
+    static IEnumerable<SemanticId> ProducibleContracts(ProducerSources sources) =>
+        sources.Commands.SelectMany(command => command.Produces)
+            .Concat(sources.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger =>
+                trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces))))
+            .Select(produced => produced.EventContract)
+            .Concat(sources.Captures.SelectMany(CaptureAppends).Select(append => append.EventContract))
+            .Concat(sources.Projections.Where(projection => projection.Target == SemanticProjectionTargetKind.Event).Select(projection => projection.ReadModel))
+            .Distinct();
 
     static List<SemanticTypeReference> CommandProducerTypes(SemanticCommand[] commands, SemanticId eventContract) =>
         [.. commands.SelectMany(command => command.Produces

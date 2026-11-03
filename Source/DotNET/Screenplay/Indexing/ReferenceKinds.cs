@@ -18,6 +18,12 @@ static class ReferenceKinds
         QueryIdentitySourceSyntax value => [(value.Query, ["Query"], "identitySource")],
         SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
         OperationSyntax value => [(value.Uses, ["System"], "uses")],
+        StateMachineSyntax value => [(value.Follows, ["ReadModel"], "follows")],
+        StateEntrySyntax { EntryKind: StateEntryKind.Send } value => [(value.Target, ["Command"], "entersSend")],
+        StateEntrySyntax value => [(value.Target, ["Workflow"], "entersStart")],
+        StateTransitionSyntax value => [(value.Event, _eventKinds, "transitionOn")],
+        WorkflowSyntax value => [(value.Subject, ["ReadModel"], "workflowSubject")],
+        WorkflowNodeSyntax value => WorkflowReferences(value),
         CommandStreamSyntax value => [(value.EventSource, ["EventSource"], "commandEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "commandStream")],
         SpecificationStreamSyntax value => [(value.EventSource, ["EventSource"], "specificationEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "specificationStream")],
         SpecificationOperationSyntax value => [(value.Operation, ["Operation"], "thenOperation")],
@@ -72,4 +78,12 @@ static class ReferenceKinds
         SeedEventSyntax value => [(value.Event, ["Event"], "seed")],
         _ => []
     };
+
+    static IEnumerable<(string Name, string[] Kinds, string Role)> WorkflowReferences(WorkflowNodeSyntax node)
+    {
+        if (node.Event is not null) yield return (node.Event, _eventKinds, node.NodeKind == WorkflowNodeKind.Wait ? "workflowWait" : "workflowTrigger");
+        if (node.StateMachine is not null) yield return (node.StateMachine, ["StateMachine"], "workflowTrigger");
+        if (node.Command is not null) yield return (node.Command, ["Command"], "workflowAction");
+        if (node.By is not null) yield return (node.By, ["Persona", "Policy"], "workflowApproval");
+    }
 }

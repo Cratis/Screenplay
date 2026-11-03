@@ -53,7 +53,8 @@ export interface CompletionScope {
 const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
 
 function topLevelEntries(document: readonly string[]): CompletionEntry[] {
-    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')) && !(item.label === 'onboarding' && declaredIn(document, 'onboarding')) && !(item.label === 'identity' && declaredIn(document, 'identity')));
+    const singularDeclarations = ['domain', 'authentication', 'onboarding', 'identity', 'context'];
+    return items.topLevelItems.filter(item => !singularDeclarations.includes(item.label) || !declaredIn(document, item.label));
 }
 
 const isTemplate = (header: string | undefined) => /^(?:screen|dialog)\s+template\b/.test(header ?? '');
@@ -102,6 +103,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.behaviorItems;
         case 'persona':
             return scope.personaItems;
+        case 'context':
+            return items.applicationContextItems;
         case 'identity':
             return chain.includes('ui') ? scope.profileIdentityItems : items.identityItems;
         case 'authentication':
@@ -139,6 +142,12 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.navigationItems;
         case 'toolbar':
             return scope.toolbarItems;
+        case 'statemachine':
+            return items.stateMachineItems;
+        case 'state':
+            return items.stateItems;
+        case 'workflow':
+            return items.workflowItems;
         case 'system':
             return items.operationItems.filter(item => item.label === 'description');
         case 'operation':

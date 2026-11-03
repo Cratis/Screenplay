@@ -10,6 +10,7 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
 public class when_exporting_action_subject_fixture_packs : Specification
 {
+    static readonly JsonSerializerOptions _indented = new() { WriteIndented = true };
     readonly Dictionary<string, JsonElement> _exports = [];
     ApplicationSyntax _raw;
     ApplicationSyntax _effective;
@@ -113,7 +114,7 @@ public class when_exporting_action_subject_fixture_packs : Specification
         foreach (var (name, value) in _exports)
         {
             var path = Path.Combine(_directory, $"native.{name}.json");
-            if (regenerate) File.WriteAllText(path, JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true }) + "\n");
+            if (regenerate) File.WriteAllText(path, JsonSerializer.Serialize(value, _indented) + "\n");
             else Assert.True(JsonElement.DeepEquals(value, JsonDocument.Parse(File.ReadAllText(path)).RootElement), path);
         }
         Assert.False(regenerate, "Fixture pack regenerated; review and rerun without SCREENPLAY_REGENERATE_ACTION_SUBJECT_FIXTURES");
@@ -154,12 +155,12 @@ public class when_exporting_action_subject_fixture_packs : Specification
             if (local.Length > 0) scope = scope with { Data = local };
         }
         var children = value.EnumerateObject().SelectMany(property => Subjects(property.Value, $"{path}.{property.Name}", scope));
-        return kind is "ScreenActionSyntax" or "ScreenGuardedActionSyntax" or "ToolbarItemSyntax"
+        return (string.Equals(kind, "ScreenActionSyntax", StringComparison.Ordinal) || string.Equals(kind, "ScreenGuardedActionSyntax", StringComparison.Ordinal) || string.Equals(kind, "ToolbarItemSyntax", StringComparison.Ordinal))
             ? new object[] { new { path, screen = scope.Screen, slice = scope.Slice, data = scope.Data } }.Concat(children)
             : children;
     }
 
-    static bool Relevant(Diagnostic diagnostic) => diagnostic.Code is DiagnosticCodes.InvalidInteractionArgument or DiagnosticCodes.UnknownActionSubjectField or DiagnosticCodes.UnresolvedActionSubject or DiagnosticCodes.InvalidActionSubjectClause or DiagnosticCodes.InferredActionSubject or DiagnosticCodes.ChangedActionSubject or DiagnosticCodes.AmbiguousActionInputBinding or DiagnosticCodes.UnsupportedActionSubjectContext;
+    static bool Relevant(Diagnostic diagnostic) => string.Equals(diagnostic.Code, DiagnosticCodes.InvalidInteractionArgument, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnknownActionSubjectField, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnresolvedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InvalidActionSubjectClause, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InferredActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.ChangedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.AmbiguousActionInputBinding, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnsupportedActionSubjectContext, StringComparison.Ordinal);
 
     static IEnumerable<(string Path, SyntaxNode Node)> Locations(SyntaxNode node, string path)
     {
@@ -202,7 +203,10 @@ public class when_exporting_action_subject_fixture_packs : Specification
             Assert.True(actual.GetArrayLength() == expected.GetArrayLength(), path);
             for (var index = 0; index < expected.GetArrayLength(); index++) Compare(expected[index], actual[index], $"{path}[{index}]");
         }
-        else Assert.True(JsonElement.DeepEquals(expected, actual), path);
+        else
+        {
+            Assert.True(JsonElement.DeepEquals(expected, actual), path);
+        }
     }
 
     static string Fixtures([CallerFilePath] string path = "")

@@ -74,7 +74,7 @@ public class when_holding_operation_regressions_to_shared_vectors : given.a_comp
     [Fact]
     void should_reject_programmatic_nonconcrete_assertions_even_when_the_target_shape_is_unknown()
     {
-        var syntax = _compiler.Parse("import External.Payload\nsystem Mailer\nmodule M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n        payload Payload\n      command C\n        produces Send\n          payload = {}\n      specification T\n        when C\n        then operation Send\n          payload.unknown = null\n").Value!;
+        var syntax = _compiler.Parse("import External.Payload\nsystem Mailer\nmodule M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n        payload Payload\n      command C\n        produces Send\n          payload empty\n      specification T\n        when C\n        then operation Send\n          payload.unknown = null\n").Value!;
         var module = syntax.Modules.Single();
         var feature = module.Features.Single();
         var slice = feature.Slices.Single();

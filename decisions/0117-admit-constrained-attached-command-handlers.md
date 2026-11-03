@@ -79,3 +79,7 @@ under the frozen described-command corpus is regenerated.
 ## Implementation note — #1099 S5
 
 An explicitly supplied reference-run provider may now execute the already-admitted constrained attachment after the existing authorization, validation, reads, routing and generated-fixture phases. The default executor and pending/missing/unresolved/stale bodies still refuse with ImplementationBody and the RequirementId. Handler outputs obey decision 0082's payload-only result v1; event envelopes and append behavior remain declarative. Validation, policy and reducer requirements keep their `pure` capability checks; only CommandHandler accepts `provider-defined`. The host owns language admission, compilation, isolation and time limits. This execution seam changes no parser admission, canonical ESM, serialized ABI or version. Verification is pending the #1099 gate.
+
+## Implementation note — #1107
+
+Before provider invocation, execution verifies the full command owner address and semantic ID against the declaration map recorded by `SemanticCompilation.Create`, including its identity catalog's application identity. An internal side table binds that provenance to the exact model instance; copied, deserialized and hand-built models lack the binding and fail closed. This hardening changes no public API, ESM, DTO, canonical vector or version.
