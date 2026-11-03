@@ -38,7 +38,11 @@ internal static partial class McpSpecificationExecution
         var selected = declarations.Where(assignment =>
             (specification is null || assignment.Address == specification || assignment.Id.ToString() == specification || TableAddress(compilation, assignment.Id, assignment.Address) == specification) &&
             (scope is null || assignment.Address == scope || assignment.Address.StartsWith($"{scope}.", StringComparison.Ordinal) || TableAddress(compilation, assignment.Id, assignment.Address) == scope)).ToArray();
-        if ((specification is not null || scope is not null) && selected.Length == 0)
+        var allLifecycle = SemanticLifecycleRunner.RunAll(compilation.Model);
+        var lifecycle = allLifecycle
+            .Where(result => documents is null && (specification is null || $"{result.Owner}.{result.Name}" == specification) && (scope is null || result.Owner == scope || $"{result.Owner}.{result.Name}".StartsWith($"{scope}.", StringComparison.Ordinal)))
+            .ToArray();
+        if ((specification is not null || scope is not null) && selected.Length == 0 && lifecycle.Length == 0)
         {
             throw new McpFailure("UnknownSpecificationSelection: no specification matches the exact address, semantic id or scope.", -32602);
         }
@@ -46,13 +50,15 @@ internal static partial class McpSpecificationExecution
         var admitted = SemanticExecutionPlan.CompileForSpecifications(compilation.Model);
         using var bodyRun = new SemanticBodyExecutionRun(execution.Factory, compilation.Model.Application, execution.Factory is null ? [] : McpRuleBodies.Resolve(workspace), execution.CancellationToken);
         var context = new McpSpecificationRun(compilation, admitted, new SemanticSpecificationRunner(bodyRun.Evaluator), execution.CancellationToken);
-        var results = selected.Select(assignment => Evaluate(context, assignment)).ToArray();
+        var results = selected.Select(assignment => Evaluate(context, assignment))
+            .Concat(lifecycle.Select(result => new McpSpecificationResult($"{result.Owner}.{result.Name}", string.Empty, result.Passed ? "passed" : "failed", result.Passed ? "accepted" : "rejected", [.. result.Failures], null, null)))
+            .ToArray();
         var passed = results.Count(result => result.Outcome == "passed");
         var failed = results.Count(result => result.Outcome == "failed");
         var unsupportedCount = results.Count(result => result.Outcome == "unsupported");
         var outcome = Outcome(failed == 0, unsupportedCount > 0 || admitted.Plan is null);
 
-        return new(revision, outcome, declarations.Length, selected.Length, passed + failed, passed, failed, unsupportedCount, [.. workspace.Compilation.Diagnostics], [.. admitted.Issues, .. admitted.UnselectedIssues], results);
+        return new(revision, outcome, declarations.Length + allLifecycle.Length, results.Length, passed + failed, passed, failed, unsupportedCount, [.. workspace.Compilation.Diagnostics], [.. admitted.Issues, .. admitted.UnselectedIssues], results);
     }
 
     static string? TableAddress(SemanticCompilation compilation, SemanticId id, string address) =>

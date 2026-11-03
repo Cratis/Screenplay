@@ -39,6 +39,9 @@ import { parsePurpose } from './PurposeParser';
 import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
+import { parseStateMachine } from './StateMachineParser';
+import { parseWorkflow } from './WorkflowParser';
+import { StateMachineSyntax, WorkflowSyntax } from '../Syntax/Lifecycles';
 import { EventVisibility } from '../Syntax/EventVisibility';
 import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
@@ -93,6 +96,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
     const systems: SystemSyntax[] = [];
+    const stateMachines: StateMachineSyntax[] = [];
+    const workflows: WorkflowSyntax[] = [];
     const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
@@ -176,6 +181,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             eventSources.push(parseEventSource(context, line));
         } else if (keyword === 'system') {
             systems.push(parseSystem(context, line));
+        } else if (keyword === 'statemachine') {
+            stateMachines.push(parseStateMachine(context, line));
+        } else if (keyword === 'workflow') {
+            workflows.push(parseWorkflow(context, line));
         } else if (keyword === 'concept') {
             concepts.push(parseConcept(context, line));
         } else if (keyword === 'type') {
@@ -224,7 +233,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...(stateMachines.length > 0 ? { stateMachines } : {}), ...(workflows.length > 0 ? { workflows } : {}), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -237,7 +246,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
         return isDocumentPlacement(placement);
     }
     if (keyword === 'identity') return line.content === 'identity';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {

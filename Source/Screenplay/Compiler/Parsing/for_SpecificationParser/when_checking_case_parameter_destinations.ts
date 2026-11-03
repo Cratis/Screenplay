@@ -62,8 +62,8 @@ describe('when checking case parameter destinations', () => {
         typeDiagnostics(source + history).should.deep.equal([]);
     });
     it('should leave an undeclared event destination unknown', () => typeDiagnostics(declarations + append.replaceAll('Received', 'Unknown')).should.deep.equal([]));
-    it.each([['Amount', '1'], ['Detail', '{"value":1}'], ['Status', '"future"']])('should defer unavailable standalone type %s', (type, value) => {
-        const result = parseSpecificationSource(`specification Recording\n  parameter amount ${type}\n  case One amount = ${value}\n  when Record amount = case.amount`);
+    it.each([['Amount', ' = 1'], ['Detail', '\n      value = 1'], ['Status', ' = "future"']])('should defer unavailable standalone type %s', (type, value) => {
+        const result = parseSpecificationSource(`specification Recording\n  parameter amount ${type}\n  case One\n    amount${value}\n  when Record amount = case.amount`);
         result.success.should.equal(true);
         result.diagnostics.should.deep.equal([]);
     });

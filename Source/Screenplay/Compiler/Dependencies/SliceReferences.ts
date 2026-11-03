@@ -27,6 +27,9 @@ export const referenceClassifications: Readonly<Record<string, DependencyKind | 
     dataReadModel: null, type: null, exampleType: null, contributes: null, template: null, specificationReadModel: null,
     thenAbsentReadModel: null, thenReadModel: null, givenReadModel: null, thenQuery: null,
     compositeKeyType: null, builds: null, buildsVariant: null, appends: null, seed: null,
+    // State machines and workflows are top-level declarations owned by no slice, so what they name adds no slice dependency.
+    follows: null, entersSend: null, entersStart: null, transitionOn: null, workflowSubject: null,
+    workflowWait: null, workflowTrigger: null, workflowAction: null, workflowApproval: null,
 };
 // No resolution or expression/code interpretation: this is the same role inventory as C# SliceReferences.
 export function sliceReferences(slice: SliceSyntax): CollectedSliceReferences {

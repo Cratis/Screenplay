@@ -65,9 +65,9 @@ describe('when authoring typed examples', () => {
         expect(hover(mismatched, 'given RegisterInvoice total = 3000', 'RegisterInvoice')?.includes('Example kind mismatch') ?? false).toBe(false);
     });
     it('should display structured values and overridden destinations without inventing omitted properties', () => {
-        const source = ['type Address', '  street String', 'event E', '  address Address', '  amount Int', 'example One : E', '  address = { "street": "first" }', '  for "one"', 'specification S', '  when append One amount = 42', '    for "two"'];
+        const source = ['type Address', '  street String', 'event E', '  address Address', '  amount Int', 'example One : E', '  address', '    street = "first"', '  for "one"', 'specification S', '  when append One amount = 42', '    for "two"'];
         const content = hover(source, 'when append One amount = 42', 'One');
-        expect(content).toContain('address = { "street": "first" } — example One');
+        expect(content).toContain('address = (street = "first") — example One');
         expect(content).toContain('amount = 42 — authored');
         expect(content).toContain('for "two" — override (replaces "one" from One)');
     });

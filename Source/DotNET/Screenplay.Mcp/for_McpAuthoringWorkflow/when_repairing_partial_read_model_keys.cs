@@ -35,7 +35,7 @@ public class when_repairing_partial_read_model_keys : given.an_authoring_connect
     void should_resolve_each_composite_absence_part_type()
     {
         var source = Source.Replace("        reads Row by id\n", string.Empty, StringComparison.Ordinal) +
-            "      specification Missing\n        then no readmodel Row for {\"id\":\"r\",\"period\":1}\n";
+            "      specification Missing\n        then no readmodel Row for\n          id = \"r\"\n          period = 1\n";
         File.WriteAllText(Path.Combine(RootPath, "keys.play"), source);
         Initialize();
         Open();

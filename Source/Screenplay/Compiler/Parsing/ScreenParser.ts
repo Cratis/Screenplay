@@ -24,9 +24,10 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { isValidTemplateVersionRange, parseBlueprintReference, startsBlueprintReference } from './TemplateReferenceText';
 import { parseTypeRef } from './PropertyLineParser';
-import { parseFromClause } from './UiBindingParser';
+import { parseFromClause, parseFromClauseOn } from './UiBindingParser';
 import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
 import { locationOf, SourceLine } from './SourceLine';
+import { parseStructuredValue, StructuredMarker } from './StructuredBlockParser';
 
 // Parses 'screen' declarations the way the C# ScreenParser does - intent level directives, the template
 // whose slots they fill, and inline code. Interaction bodies remain opaque in the AST, but 'on' alternatives
@@ -47,6 +48,7 @@ const component = pattern('^component\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\s
 const stableId = pattern(`^id\\s+(?:"(${stringBodyPattern})"|(\\S+))$`);
 const componentPropertyBinding = pattern('^property\\s+([\\w.]+)\\s+from\\s+(.+)$');
 const componentPropertyLiteral = pattern('^property\\s+([\\w.]+)\\s*=\\s+(.+)$');
+const componentPropertyBlock = pattern('^property\\s+([\\w.]+)(?:\\s+(none|empty))?$');
 const exposes = pattern('^exposes\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const presentation = pattern(`^presentation\\s+([A-Za-z_]\\w*)\\s+${operand}$`);
 const confirmPattern = pattern(`^confirm\\s+${operand}$`);
@@ -222,7 +224,7 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
         context.reader.takeSignificant();
         const parameterMatch = parameter.exec(child.content);
         if (parameterMatch !== null) {
-            parameters.push({ kind: 'ScreenNavigationParameterSyntax', name: parameterMatch[1], binding: parseFromClause(context, parameterMatch[2], locationOf(child)), location: locationOf(child) });
+            parameters.push({ kind: 'ScreenNavigationParameterSyntax', name: parameterMatch[1], binding: parseFromClauseOn(context, parameterMatch[2], child), location: locationOf(child) });
             continue;
         }
         const routeMatch = route.exec(child.content);
@@ -384,7 +386,7 @@ function parseUiContext(context: ParserContext, line: SourceLine) {
 function parseComponentProperty(context: ParserContext, line: SourceLine, properties: ComponentPropertySyntax[]): void {
     const bound = componentPropertyBinding.exec(line.content);
     if (bound !== null) {
-        properties.push({ kind: 'ComponentPropertySyntax', property: bound[1], binding: parseFromClause(context, bound[2], locationOf(line)), value: null, location: locationOf(line) });
+        properties.push({ kind: 'ComponentPropertySyntax', property: bound[1], binding: parseFromClauseOn(context, bound[2], line), value: null, location: locationOf(line) });
         return;
     }
     const literal = componentPropertyLiteral.exec(line.content);
@@ -392,7 +394,12 @@ function parseComponentProperty(context: ParserContext, line: SourceLine, proper
         properties.push({ kind: 'ComponentPropertySyntax', property: literal[1], binding: null, value: parseMappingSource(literal[2], locationOf(line), context), location: locationOf(line) });
         return;
     }
-    context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component property '${line.content}' - expected 'property <path> from <binding>' or 'property <path> = <literal|object|array|null>'`, locationOf(line));
+    const structured = componentPropertyBlock.exec(line.content);
+    if (structured !== null) {
+        properties.push({ kind: 'ComponentPropertySyntax', property: structured[1], binding: null, value: parseStructuredValue(context, line, structured[2] as StructuredMarker), location: locationOf(line) });
+        return;
+    }
+    context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component property '${line.content}' - expected 'property <path> from <binding>', 'property <path> = <literal>', or 'property <path>' with the object or list as an indented block`, locationOf(line));
 }
 
 function parseStableId(context: ParserContext, line: SourceLine): string | null {
@@ -410,7 +417,7 @@ function parseExposedValue(context: ParserContext, line: SourceLine, values: Com
         context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid exposed value '${line.content}' - expected 'exposes <name> from <binding>'`, locationOf(line));
         return;
     }
-    values.push({ kind: 'ComponentExposedValueSyntax', name: match[1], binding: parseFromClause(context, match[2], locationOf(line)), location: locationOf(line) });
+    values.push({ kind: 'ComponentExposedValueSyntax', name: match[1], binding: parseFromClauseOn(context, match[2], line), location: locationOf(line) });
 }
 
 function parsePresentationValue(context: ParserContext, line: SourceLine, values: PresentationValueSyntax[]): void {
@@ -550,7 +557,7 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
         }
         const parameterMatch = parameter.exec(child.content);
         if (parameterMatch !== null) {
-            parameters.push({ kind: 'ScreenNavigationParameterSyntax', name: parameterMatch[1], binding: parseFromClause(context, parameterMatch[2], locationOf(child)), location: locationOf(child) });
+            parameters.push({ kind: 'ScreenNavigationParameterSyntax', name: parameterMatch[1], binding: parseFromClauseOn(context, parameterMatch[2], child), location: locationOf(child) });
             continue;
         }
         if (firstWord(child.content) === 'icon') {

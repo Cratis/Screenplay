@@ -1,0 +1,276 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_lifecycles.given;
+
+// An invoice that is sent, goes overdue and is collected: a state machine and a workflow with every node kind.
+internal static class a_lifecycle_source
+{
+    internal const string Source =
+        """
+        concept InvoiceId : Uuid
+        type InvoiceLine
+          sku String
+        policy IsController
+          require role "Controller"
+        persona Controller
+          policy IsController
+        module Billing
+          feature Invoices
+            slice StateChange RegisterInvoiceSlice
+              command RegisterInvoice
+                invoiceId InvoiceId identifier
+                lines InvoiceLine[]
+                produces InvoiceRegistered
+                  for invoiceId
+                  lines = lines
+              event InvoiceRegistered
+                lines InvoiceLine[]
+            slice StateChange SendInvoiceSlice
+              command SendInvoice
+                invoiceId InvoiceId identifier
+                produces InvoiceSent
+                  for invoiceId
+              event InvoiceSent
+            slice StateChange MarkInvoiceOverdueSlice
+              command MarkInvoiceOverdue
+                invoiceId InvoiceId identifier
+                produces InvoiceMarkedOverdue
+                  for invoiceId
+              event InvoiceMarkedOverdue
+            slice StateChange PayInvoiceSlice
+              command PayInvoice
+                invoiceId InvoiceId identifier
+                produces InvoicePaid
+                  for invoiceId
+              event InvoicePaid
+            slice StateChange FlagInvoiceSlice
+              command FlagInvoice
+                invoiceId InvoiceId identifier
+                produces InvoiceFlagged
+                  for invoiceId
+              event InvoiceFlagged
+            slice StateChange ChargeFeeSlice
+              command ChargeFee
+                invoiceId InvoiceId identifier
+                produces LateFeeCharged
+                  for invoiceId
+              event LateFeeCharged
+            slice StateChange TagInvoiceSlice
+              command TagInvoice
+                invoiceId InvoiceId identifier
+                produces InvoiceTagged
+                  for invoiceId
+              event InvoiceTagged
+            slice StateChange WriteOffSlice
+              command WriteOff
+                invoiceId InvoiceId identifier
+                produces InvoiceWrittenOff
+                  for invoiceId
+              event InvoiceWrittenOff
+            slice StateChange OfferPlanSlice
+              command OfferPlan
+                invoiceId InvoiceId identifier
+                produces PaymentPlanOffered
+                  for invoiceId
+              event PaymentPlanOffered
+            slice StateView InvoiceView
+              readmodel Invoice
+                invoiceId InvoiceId key
+                status    String
+                overdue   Bool
+                lines     InvoiceLine[]
+              projection InvoiceProjection => Invoice
+                no automap
+                from InvoiceRegistered
+                  status  = "draft"
+                  overdue = false
+                  lines   = lines
+                from InvoiceSent
+                  status = "sent"
+                from InvoiceMarkedOverdue
+                  overdue = true
+                from InvoicePaid
+                  status = "paid"
+
+        statemachine InvoiceLifecycle
+          description "Where an invoice is"
+          follows Invoice
+          state Draft initial
+            on InvoiceSent -> Sent
+          state Sent
+            entering send ChargeFee
+            entering start Collect
+            on InvoiceMarkedOverdue when overdue == true -> Overdue
+            on InvoicePaid -> Paid
+          state Overdue
+            on InvoicePaid -> Paid
+          state Paid final
+
+          specification SendingStartsTheCollection
+              description "Sending an invoice charges the fee and starts the collection"
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            when append InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            then is Sent
+            then sends ChargeFee
+            then starts Collect
+
+          specification AnOverdueInvoiceIsOverdue
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            given InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            when append InvoiceMarkedOverdue
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            then is Overdue
+
+        workflow Collect
+          description "Chases an invoice"
+          for Invoice
+          trigger when InvoiceLifecycle enters Overdue
+            -> ChargeLateFee
+          trigger Daily every 1 days
+            -> ChargeLateFee
+          trigger Weekly at 08:00 on Monday
+            -> ChargeLateFee
+          trigger Flagged on InvoiceFlagged
+            -> ChargeLateFee
+          trigger Started manual
+            -> ChargeLateFee
+          action ChargeLateFee sends ChargeFee attempts 3 timeout 30 seconds retry after 5 seconds
+            next -> Pause
+            failed -> Approve
+          wait Pause for 2 days
+            resumed -> Check
+          decide Check when overdue == true
+            "chase" -> EachLine
+            "settled" -> Done
+          foreach EachLine over lines parallel 2
+            each -> TagLine
+            completed -> Await
+          action TagLine sends TagInvoice
+            next -> AllTagged
+          join AllTagged all
+          wait Await for InvoicePaid expires after 7 days
+            resumed -> Done
+            expired -> Approve
+          approval Approve by Controller expires after 1 day
+            approved -> Write
+            rejected -> Plan
+            expired -> Write
+          action Write sends WriteOff
+            next -> Merge
+          action Plan sends OfferPlan
+            next -> Merge
+          join Merge any
+            next -> Final
+          join Final at least 2
+          action Done sends TagInvoice
+
+          specification APaidInvoiceIsTagged
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            given InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            when append InvoiceMarkedOverdue
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            outcome Await resumed
+            then sends ChargeFee
+            then sends TagInvoice
+            then sends TagInvoice
+            then sends TagInvoice
+            then completes
+
+          specification NoPaymentIsWrittenOff
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            given InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            when append InvoiceMarkedOverdue
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            outcome Await expired
+            outcome Approve approved
+            then sends ChargeFee
+            then sends TagInvoice
+            then sends TagInvoice
+            then sends WriteOff
+            then completes
+
+          specification TheRunWaits
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            given InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            when append InvoiceMarkedOverdue
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            then sends ChargeFee
+            then sends TagInvoice
+            then sends TagInvoice
+            then waits at Await
+
+          specification AFailedFeeFailsNothingButAsksForApproval
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            given InvoiceSent
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            when append InvoiceMarkedOverdue
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            outcome ChargeLateFee failed
+            outcome Approve rejected
+            then sends ChargeFee
+            then sends ChargeFee
+            then sends ChargeFee
+            then sends OfferPlan
+            then completes
+
+          specification AStartedRunFails
+            given InvoiceRegistered
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+              lines
+                item
+                  sku = "A"
+                item
+                  sku = "B"
+            when start "9c858901-8a57-4791-81fe-4c455b099bc9"
+            outcome ChargeLateFee failed
+            outcome Approve expired
+            then sends ChargeFee
+            then sends ChargeFee
+            then sends ChargeFee
+            then sends WriteOff
+            then completes
+
+        """;
+}

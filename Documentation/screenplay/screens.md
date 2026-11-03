@@ -231,7 +231,18 @@ screen BrowseInvoices
     property pageSize from literal 25
     property title = "Invoices"
     property selectable = true
-    property emptyState = {"title":"No invoices","actions":["create"]}
+    property emptyState
+      title = "No invoices"
+      actions
+        item "create"
+    property columns
+      item
+        field = "number"
+        label = "Invoice"
+      item
+        field = "total"
+        label = "Total"
+    property rowActions none
     property noSelection = null
     icon table
     presentation density "compact"
@@ -248,12 +259,21 @@ Bindings are typed. A legacy bare binding such as `context selectedInvoice` is s
 | Data context | `from data <path>` | Reads from the inherited data context for the element. |
 | Query result | `from query <QueryName>[.<path>]` | Reads from the latest result of a named screen query. |
 | Component output | `from component <stableInstanceId>.<outputPath>` or `from component "<stableInstanceId>".<outputPath>` | Reads an exposed value from another stable component instance. Use the quoted form when the stable id contains punctuation. |
-| Literal binding | `from literal <value>` | Supplies a typed literal as a binding value. |
-| Literal property | `property <name> = <value>` | Assigns a typed literal property value, not a binding. |
+| Literal binding | `from literal <value>`, or `from literal` with an indented block | Supplies a typed literal as a binding value. |
+| Literal property | `property <name> = <value>` | Assigns a typed scalar property value, not a binding. |
+| Structured property | `property <name>` with an indented block, or `property <name> none` | Assigns an object or a list, written as a [structured value](structured-values.md). |
 
 A component may declare `id "<stable-id>"` to preserve the exact stable instance id Studio and Stage use for bindings. If it omits `id`, the authored component name remains the stable id. The compiler does not normalize quoted ids.
 
-Literal values are typed: strings, numbers, booleans, `null`, arrays and objects all round-trip as literal syntax nodes. They are not lossy strings.
+Literal values are typed: strings, numbers, booleans, `null`, lists and objects all round-trip as literal syntax nodes. They are not lossy strings.
+
+Screenplay has no JSON. An object or a list is written as an indented block under the property, one level of indentation per level of the hierarchy - the same [structured value](structured-values.md) form specifications, seeds and productions use:
+
+- an object holds one `member = value` line per member; a member that is itself an object or a list opens another indented block;
+- a list holds one `item` line per element - `item <value>` for a scalar, a bare `item` with a block under it for an object;
+- `property <name> none` is an empty list, and `property <name> empty` an object without members.
+
+Writing `property columns = [{"field":"number"}]` is an error (`PLAY0833`).
 
 A binding may carry `mode oneWay`, `mode twoWay`, `null propagate`, `null clear`, `null preserve` and `expected <Type>`. Unsupported modifiers, malformed query bindings and malformed component bindings are reported as diagnostics and the raw authored text is preserved in the AST so an authoring tool can show and repair it. The compiler does not guess Stage-specific prefixes or reinterpret an invalid string.
 

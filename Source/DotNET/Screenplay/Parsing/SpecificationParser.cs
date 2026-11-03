@@ -706,11 +706,18 @@ internal static partial class SpecificationParser
     static SpecificationAbsentReadModelSyntax? ParseAbsentReadModel(ParserContext context, SourceLine line)
     {
         var match = ThenAbsentReadModelRegex().Match(line.Content);
-        if (!match.Success || match.Groups[2].Value.EndsWith(" exactly", StringComparison.Ordinal))
+        var block = match.Success && !match.Groups[2].Success && context.TryPeekChild(line.Indent, out _);
+        if (!match.Success || (!match.Groups[2].Success && !block) || match.Groups[2].Value.EndsWith(" exactly", StringComparison.Ordinal))
         {
             context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, $"Invalid absence assertion '{line.Content}' - expected 'then no readmodel <ReadModelType> for <key>'", line.Location);
             SkipBody(context, line.Indent);
             return null;
+        }
+
+        if (block)
+        {
+            // 'for' ending the line opens the key's members as an indented block.
+            return new(match.Groups[1].Value, StructuredBlockParser.ParseValue(context, line, marker: null), line.Location);
         }
 
         var keyGroup = match.Groups[2];
@@ -912,6 +919,12 @@ internal static partial class SpecificationParser
                 continue;
             }
 
+            if (StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                AddFixtureValue(context, values, structured);
+                continue;
+            }
+
             context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 
@@ -985,13 +998,14 @@ internal static partial class SpecificationParser
         {
             context.Reader.TakeSignificant();
             var match = MappingRegex().Match(child.Content);
-            if (!match.Success)
+            PropertyMappingSyntax? value = null;
+            if (!match.Success && !StructuredBlockParser.TryParseMapping(context, child, out value))
             {
                 context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
                 continue;
             }
 
-            var value = ParseSpecificationMapping(context, match.Groups[1].Value, match.Groups[2], child);
+            value ??= ParseSpecificationMapping(context, match.Groups[1].Value, match.Groups[2], child);
             if (queryArguments)
             {
                 if (values.Exists(existing => existing.Property == value.Property))
@@ -1095,7 +1109,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^then\s+no\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenNoPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for(?:\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ThenAbsentReadModelRegex();
 
     [GeneratedRegex("^(?:\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*')$", RegexOptions.NonBacktracking)]

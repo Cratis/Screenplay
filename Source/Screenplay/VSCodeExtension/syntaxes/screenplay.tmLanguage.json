@@ -37,6 +37,7 @@
         { "include": "#stream-id-parts" },
         { "include": "#declared-dependency" },
         { "include": "#action-subjects" },
+        { "include": "#lifecycles" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
@@ -262,8 +263,87 @@
                 "3": { "name": "entity.name.type.screenplay" }
             }
         },
+        "lifecycles": {
+            "comment": "A statemachine or workflow block. Their words are contextual, so they are matched only inside the block (an indented body under the header), never as bare keywords elsewhere.",
+            "patterns": [
+                {
+                    "begin": "^([ ]*)(statemachine|workflow)(\\s+)([A-Za-z_]\\w*)\\s*$",
+                    "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "4": { "name": "entity.name.type.screenplay" } },
+                    "end": "^(?!\\1[ ]+\\S|[ ]*$)",
+                    "patterns": [
+                        { "include": "#comment" },
+                        { "include": "#lifecycle-body" },
+                        { "include": "#keywords" },
+                        { "include": "#common" }
+                    ]
+                }
+            ]
+        },
+        "lifecycle-body": {
+            "comment": "statemachine and workflow bodies. Their words are contextual: they are matched only in the shapes below, never as bare keywords.",
+            "patterns": [
+                {
+                    "match": "^\\s*(follows)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(state)\\s+([A-Za-z_]\\w*)((?:\\s+(?:initial|final))*)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "constant.language.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(entering)\\s+(send|start)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(on)\\s+([A-Za-z_][\\w.]*)(?=\\s|$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(trigger)(?:\\s+(?!(?:on|when|every|at|manual)\\b)([A-Za-z_]\\w*))?\\s+(on|when|every|at|manual)\\b",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(action|decide|wait|approval|foreach|join)\\s+([A-Za-z_]\\w*)(?=\\s+(?:sends|when|for|by|over|all|any|at)\\b)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(for)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(outcome)\\s+([A-Za-z_]\\w*)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "constant.language.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(then)\\s+(is|sends|starts|completes|fails\\s+at|waits\\s+at)\\b",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "\\b(sends|enters|attempts|timeout|retry\\s+after|expires\\s+after|parallel|at\\s+least)\\b(?=\\s+[\\w\"]|\\s*$)",
+                    "name": "keyword.other.screenplay"
+                },
+                {
+                    "match": "^\\s*(next|failed|resumed|expired|approved|rejected|each|completed)(?=\\s*->)",
+                    "captures": { "1": { "name": "constant.language.screenplay" } }
+                },
+                {
+                    "match": "->",
+                    "name": "keyword.operator.screenplay"
+                }
+            ]
+        },
         "keywords": {
             "patterns": [
+                {
+                    "comment": "A structured value element: 'item' alone opens an object or nested list block, 'item <scalar>' is a scalar element, 'item none' an empty nested list and 'item empty' an object without members. Screenplay has no JSON.",
+                    "match": "^\\s*(item)(?=\\s*(?://.*)?$|\\s+(?:none\\b|empty\\b|\"|-?\\d|true\\b|false\\b|null\\b))",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "'<name> none' states an empty list and '<name> empty' an object without members in a structured value.",
+                    "match": "(?<=\\S)\\s+(none|empty)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "constant.language.screenplay" } }
+                },
                 {
                     "comment": "Reaction command identity is syntax-only.",
                     "match": "^\\s*(runs)\\s+(as)\\s+(system)\\b",

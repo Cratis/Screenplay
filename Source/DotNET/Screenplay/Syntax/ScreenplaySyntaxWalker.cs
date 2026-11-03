@@ -77,6 +77,8 @@ public abstract partial class ScreenplaySyntaxWalker
 
         if (syntax.TimeZone is not null) VisitTimeZone(syntax.TimeZone);
         foreach (var system in syntax.Systems) VisitSystem(system);
+        foreach (var machine in syntax.StateMachines) VisitStateMachine(machine);
+        foreach (var workflow in syntax.Workflows) VisitWorkflow(workflow);
         foreach (var source in syntax.EventSources) VisitEventSource(source);
 
         foreach (var concept in syntax.Concepts)

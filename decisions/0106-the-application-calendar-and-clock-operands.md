@@ -146,6 +146,10 @@ record are to these revisions.
 4. Whether a redelivered reaction should keep the zone of its first evaluation instead of resolving it again. Today the
    zone is resolved again.
 
+## Status notes
+
+**2026-11-02 — open point 1 resolved.** [0132](0132-application-declared-typed-context-members.md) decides the typed-context contract for application-declared time-zone members (open point 1). The form `calendar from $context.<member>` is admitted together with that contract, in the order 0132 sets out.
+
 ## Related
 
 Decisions 0004, 0006, 0009, 0012, 0025, 0066 and 0087; Screenplay #824; the record that lifts the freeze (0105 on branch

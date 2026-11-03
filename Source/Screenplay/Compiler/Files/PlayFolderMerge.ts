@@ -84,6 +84,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         types,
         examples: applications.flatMap(application => application.examples ?? []),
         systems: applications.flatMap(application => application.systems ?? []),
+        ...(applications.some(application => (application.stateMachines?.length ?? 0) > 0) ? { stateMachines: applications.flatMap(application => application.stateMachines ?? []) } : {}),
+        ...(applications.some(application => (application.workflows?.length ?? 0) > 0) ? { workflows: applications.flatMap(application => application.workflows ?? []) } : {}),
         purposes: declaredInOneFile(applications.flatMap(application => application.purposes ?? []), 'purpose', diagnostics),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
@@ -110,7 +112,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

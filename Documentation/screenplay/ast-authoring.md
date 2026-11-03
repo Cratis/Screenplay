@@ -133,8 +133,8 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   matching the Legacy parser. Other admitted numeric CLR literal types use typed
   `literalType`/`value` envelopes to retain precision and type. Exact source trees
   require the `ExactNumber` envelope described below; no implicit conversion occurs.
-- Inline JSON-shaped objects and lists have typed value nodes and individually
-  addressable keys. Existing code blocks and raw expressions remain language
+- Objects and lists - written in source as indented [structured values](structured-values.md),
+  never as JSON - have typed value nodes and individually addressable members. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.
 
 Being a well-typed AST does not guarantee that every hand-built combination can
@@ -340,8 +340,8 @@ for explicit coordinated edits outside the automatic planner's supported cases.
 Opaque syntax (freeform raw expressions, code blocks, imports, file references,
 capture sources and template triggers, and form `compose using` callbacks)
 refuses a rename only when its text contains the current or new name as a whole
-identifier. The scan includes strings and keys inside *opaque* text, but valid
-JSON-shaped mapping values are typed: renaming a composite-type property rewrites
+identifier. The scan includes strings and keys inside *opaque* text, but structured
+mapping values are typed: renaming a composite-type property rewrites
 only its bound object keys, not string values or keys of another type. The conflict names the document path, line and
 column, the syntax pointer, and the matched name.
 

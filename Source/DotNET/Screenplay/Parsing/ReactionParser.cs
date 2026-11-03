@@ -294,6 +294,12 @@ internal static partial class ReactionParser
             }
 
             var mapping = MappingRegex().Match(child.Content);
+            if (!mapping.Success && StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                mappings.Add(structured);
+                continue;
+            }
+
             if (!mapping.Success)
             {
                 context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));

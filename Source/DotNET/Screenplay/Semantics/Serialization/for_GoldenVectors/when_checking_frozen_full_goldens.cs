@@ -14,7 +14,9 @@ public class when_checking_frozen_full_goldens(ITestOutputHelper output) : Speci
     void should_pin_every_byte_of_every_version_below_current()
     {
         var manifest = frozen_esm_goldens.Sha256;
-        var expected = Enumerable.Range(1, frozen_esm_goldens.CurrentVersion).ToArray();
+
+        // Versions are numbered at admission (0025): a reserved number such as v35 (0119) has no golden until it is admitted.
+        var expected = EsmSchemaV36Support.SemanticVersions.Where(version => version.Minor == 0).Select(version => (int)version.Major).Order().ToArray();
         expected.ShouldNotBeEmpty();
         manifest.Keys.Order().ShouldEqual(expected);
         foreach (var version in expected)

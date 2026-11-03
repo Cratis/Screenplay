@@ -22,7 +22,10 @@ public class and_the_key_is_declared : given.an_authoring_connection
                 lines Line[]
               specification Placing
                 when Place
-                  lines = [{"sku":"A-1","quantity":2}]
+                  lines
+                    item
+                      sku = "A-1"
+                      quantity = 2
         """;
 
     JsonElement _proposal;
@@ -57,6 +60,6 @@ public class and_the_key_is_declared : given.an_authoring_connection
 
     [Fact] void should_propose_the_rename() => _proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
     [Fact] void should_apply_the_rename() => _applied.GetProperty("success").GetBoolean().ShouldBeTrue();
-    [Fact] void should_rewrite_the_key() => File.ReadAllText(_orderPath).Contains("\"stockCode\":\"A-1\"", StringComparison.Ordinal).ShouldBeTrue();
-    [Fact] void should_keep_unrelated_keys() => File.ReadAllText(_orderPath).Contains("\"quantity\":2", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_rewrite_the_key() => File.ReadAllText(_orderPath).Contains("stockCode = \"A-1\"", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_keep_unrelated_keys() => File.ReadAllText(_orderPath).Contains("quantity = 2", StringComparison.Ordinal).ShouldBeTrue();
 }
