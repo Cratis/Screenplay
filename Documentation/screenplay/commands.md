@@ -31,7 +31,7 @@ These forms are **syntax-only**: both parsers preserve them, but executable bind
 reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM
 version or introduce runtime behavior. Zone ids are retained, not validated against the
 host's time-zone database. No machine-local calendar is inferred. The
-[clock preview fixture](fixtures/clock-preview.play)
+[clock preview fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
 is the warning-free authoring example for #824; executable Invoicing intentionally does not use these forms.
 Authoring tools preserve these forms while model and affected-member readiness report syntax-only;
 unrelated members and properties named `today` or `now` remain unaffected.
