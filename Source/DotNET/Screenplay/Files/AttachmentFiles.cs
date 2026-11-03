@@ -118,17 +118,18 @@ public static partial class AttachmentFiles
     }
 
     // A null result means the platform could not establish the file type; never open the attachment in that case.
-    internal static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents, Func<string, bool?> verifyRegularFile) =>
-        LoadReferences(root, References(documents), verifyRegularFile);
+    internal static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents, Func<string, bool?> verifyRegularFile, Action<string>? beforeOpen = null) =>
+        LoadReferences(root, References(documents), verifyRegularFile, beforeOpen);
 
     internal static AttachmentFileResult LoadReferences(string root, ImmutableArray<FileReferenceSyntax> references) =>
         LoadReferences(root, references, IsRegularFile);
 
-    internal static AttachmentFileResult LoadReferences(string root, ImmutableArray<FileReferenceSyntax> references, Func<string, bool?> verifyRegularFile)
+    internal static AttachmentFileResult LoadReferences(string root, ImmutableArray<FileReferenceSyntax> references, Func<string, bool?> verifyRegularFile, Action<string>? beforeOpen = null)
     {
         var contents = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var fullRoot = Path.GetFullPath(root);
+        using var unixRoot = OpenUnixRoot(fullRoot);
         var total = 0L;
         foreach (var reference in references)
         {
@@ -238,20 +239,31 @@ public static partial class AttachmentFiles
                     continue;
                 }
 
-                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                beforeOpen?.Invoke(path);
+                var length = 0L;
+                using var stream = OperatingSystem.IsWindows()
+                    ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
+                    : OpenUnixAttachment(unixRoot, key, out length, out reason);
+                if (stream is null)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' {reason}.", reference.Location));
+                    continue;
+                }
+
                 if (!stream.CanSeek)
                 {
                     diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not seekable.", reference.Location));
                     continue;
                 }
 
-                if (stream.Length > MaximumFileBytes || stream.Length > MaximumBytes - total)
+                if (OperatingSystem.IsWindows()) length = stream.Length;
+                if (length > MaximumFileBytes || length > MaximumBytes - total)
                 {
                     diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentTooLarge, $"File attachment '{reference.Path}' exceeds the per-file or total byte limit.", reference.Location));
                     continue;
                 }
 
-                var bytes = new byte[checked((int)stream.Length)];
+                var bytes = new byte[checked((int)length)];
                 stream.ReadExactly(bytes);
                 if (stream.ReadByte() != -1 || HasLink(fullRoot, key))
                 {
