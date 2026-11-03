@@ -46,6 +46,7 @@ public partial class when_opening_changed_files : Specification
         if (!duringLoad) Replace(path);
         var result = AttachmentFiles.Load(_root, [Document("nested/implementation/handler.cs")], _ => true, duringLoad ? Replace : null);
         AssertRefused(result, duringLoad ? DiagnosticCodes.AttachmentUnreadable : DiagnosticCodes.AttachmentLinkRefused);
+        if (duringLoad) result.Diagnostics.Single().Message.ShouldContain("cannot be opened");
     }
 
     [Theory]
@@ -64,6 +65,38 @@ public partial class when_opening_changed_files : Specification
         if (!duringLoad) Replace(path);
         var result = AttachmentFiles.Load(_root, [Document("nested/implementation/handler.cs")], _ => true, duringLoad ? Replace : null);
         AssertRefused(result, duringLoad ? DiagnosticCodes.AttachmentUnreadable : DiagnosticCodes.AttachmentLinkRefused);
+        if (duringLoad) result.Diagnostics.Single().Message.ShouldContain("cannot be opened");
+    }
+
+    [Fact]
+    void should_not_read_outside_contents_when_the_model_root_is_replaced()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        Directory.CreateDirectory(Path.Combine(_outside, "nested", "implementation"));
+        File.WriteAllText(Path.Combine(_outside, "nested", "implementation", "handler.cs"), "other contents");
+        var result = AttachmentFiles.Load(_root, [Document("nested/implementation/handler.cs")], _ => true, _ =>
+        {
+            Directory.Move(_root, _root + ".saved");
+            Directory.CreateSymbolicLink(_root, _outside);
+        });
+        if (result.Contents.TryGetValue("nested/implementation/handler.cs", out var content))
+        {
+            content.ShouldEqual("regular contents");
+            result.Diagnostics.ShouldBeEmpty();
+        }
+        else
+        {
+            AssertRefused(result, DiagnosticCodes.AttachmentUnreadable);
+        }
+    }
+
+    [Fact]
+    void should_report_a_file_removed_before_opening()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        var result = AttachmentFiles.Load(_root, [Document("nested/implementation/handler.cs")], _ => true, File.Delete);
+        AssertRefused(result, DiagnosticCodes.AttachmentUnreadable);
+        result.Diagnostics.Single().Message.ShouldContain("cannot be opened");
     }
 
     [Fact]
@@ -120,6 +153,7 @@ public partial class when_opening_changed_files : Specification
     void Destroy()
     {
         Directory.Delete(_root, true);
+        if (Directory.Exists(_root + ".saved")) Directory.Delete(_root + ".saved", true);
         Directory.Delete(_outside, true);
     }
 }

@@ -66,8 +66,9 @@ public static partial class AttachmentFiles
     static FileStream? OpenUnixAttachment(SafeFileHandle? root, string key, out long length, out string reason)
     {
         length = 0;
-        reason = "cannot be read as UTF-8 text";
+        reason = "cannot verify the file type on this platform";
         if (root is null) return null;
+        reason = "cannot be opened";
         SafeFileHandle? handle = null;
         try
         {
