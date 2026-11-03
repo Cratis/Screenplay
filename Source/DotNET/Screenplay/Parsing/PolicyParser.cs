@@ -34,6 +34,7 @@ internal static partial class PolicyParser
 
         PolicyConditionSyntax? condition = null;
         var hasRequire = false;
+        var depthExceeded = false;
         CodeBlockSyntax? code = null;
         FileReferenceSyntax? file = null;
         string? description = null;
@@ -52,7 +53,9 @@ internal static partial class PolicyParser
                     text += $" {continuation.Content}";
                 }
 
-                var parsed = ParseCondition(context, text, line.Location);
+                var budget = new ConditionDepthBudget(context, line.Location);
+                var parsed = ParseCondition(context, text, line.Location, budget);
+                depthExceeded |= budget.Exceeded;
                 ValidateAnonymous(context, parsed, name.Groups[1].Value, line.Location);
                 if (hasRequire)
                 {
@@ -100,7 +103,7 @@ internal static partial class PolicyParser
             context.Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{name.Groups[1].Value}' cannot combine 'require' with a file or inline code block", header.Location);
         }
 
-        if (condition is null && code is null && file is null)
+        if (condition is null && code is null && file is null && !depthExceeded)
         {
             context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
         }
@@ -108,7 +111,7 @@ internal static partial class PolicyParser
         return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations };
     }
 
-    static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location) =>
+    static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location, ConditionDepthBudget budget) =>
         LogicalConditionParser.Parse<PolicyConditionSyntax>(
             context,
             Tokenize(text, context.SourceOptions.NumericMode),
@@ -116,7 +119,8 @@ internal static partial class PolicyParser
             ParseOperand,
             static (left, @operator, right, location) => new LogicalPolicyConditionSyntax(left, @operator, right, location),
             _diagnostics,
-            static (operand, location) => new NotPolicyConditionSyntax(operand, location));
+            static (operand, location) => new NotPolicyConditionSyntax(operand, location),
+            budget);
 
     static PolicyConditionSyntax? ParseOperand(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {

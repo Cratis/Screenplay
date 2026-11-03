@@ -3804,4 +3804,7 @@ public static class DiagnosticCodes
 
     /// <summary>A passive read model is not read by any command.</summary>
     public const string PassiveReadModelNotRead = "PLAY0860";
+
+    /// <summary>A condition exceeds the supported nesting or constructed expression depth of 128.</summary>
+    public const string ConditionDepthExceeded = "PLAY0861";
 }

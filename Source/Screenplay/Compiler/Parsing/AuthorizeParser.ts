@@ -4,13 +4,22 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, LogicalOperator, PolicyRequirementSyntax } from '../Syntax/Authorization';
+import { FileImportSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
+import { ConditionDepthBudget } from './ConditionDepthBudget';
 import { locationOf, SourceLine } from './SourceLine';
 
 const continuationPattern = pattern('^(?:(?:or|and)\\s+)?[A-Za-z_(][\\w\\s()]*$');
 const tokenPattern = new RegExp(pattern('\\(|\\)|[A-Za-z_]\\w*').source, 'gu');
 const namePattern = pattern('^[A-Z]\\w*$');
+
+// Each owner's import list retains its identity through syntax copies without adding public metadata.
+const refusedOwners = new WeakSet<readonly FileImportSyntax[]>();
+
+export function recordAuthorizationRefusal(imports: readonly FileImportSyntax[]): void { refusedOwners.add(imports); }
+
+export function authorizationWasRefused(imports: readonly FileImportSyntax[]): boolean { return refusedOwners.has(imports); }
 
 // The port of the C# AuthorizeParser: the requirement may continue on the lines below the 'authorize', and
 // two operands written side by side are joined by an implicit 'and'.
@@ -33,14 +42,29 @@ export function parseAuthorize(context: ParserContext, line: SourceLine): Author
 }
 
 // Several 'authorize' lines on one construct all have to hold, so they combine with 'and'.
-export function combineAuthorize(first: AuthorizeSyntax | null, next: AuthorizeSyntax | null): AuthorizeSyntax | null {
+export function combineAuthorize(first: AuthorizeSyntax | null, next: AuthorizeSyntax | null, context: ParserContext): AuthorizeSyntax | null {
     if (first === null) return next;
     if (next === null) return first;
+    const depth = 1 + Math.max(requirementDepth(first.requirement), requirementDepth(next.requirement));
+    if (!new ConditionDepthBudget(context, next.location).allowsDepth(depth)) return null;
     return {
         kind: 'AuthorizeSyntax',
         requirement: { kind: 'LogicalPolicyRequirementSyntax', left: first.requirement, operator: 'And', right: next.requirement, location: first.location },
         location: first.location,
     };
+}
+
+function requirementDepth(requirement: PolicyRequirementSyntax): number {
+    const pending = [{ requirement, depth: 1 }];
+    let maximum = 1;
+    while (pending.length > 0) {
+        const current = pending.pop()!;
+        maximum = Math.max(maximum, current.depth);
+        if (current.requirement.kind === 'LogicalPolicyRequirementSyntax') {
+            pending.push({ requirement: current.requirement.left, depth: current.depth + 1 }, { requirement: current.requirement.right, depth: current.depth + 1 });
+        }
+    }
+    return maximum;
 }
 
 function tokenize(text: string): string[] {
@@ -79,8 +103,11 @@ const isOperandStart = (token: string): boolean => token === '(' || isName(token
 // The port of the C# LogicalConditionParser: 'or' over 'and' over a group or a policy name.
 class RequirementParser {
     #position = 0;
+    readonly #budget: ConditionDepthBudget;
 
-    constructor(private readonly context: ParserContext, private readonly tokens: readonly string[], private readonly location: SourceLocation) {}
+    constructor(private readonly context: ParserContext, private readonly tokens: readonly string[], private readonly location: SourceLocation) {
+        this.#budget = new ConditionDepthBudget(context, location);
+    }
 
     parse(): PolicyRequirementSyntax | null {
         const requirement = this.#or();
@@ -106,7 +133,8 @@ class RequirementParser {
             if (right === null) {
                 return null;
             }
-            left = { kind: 'LogicalPolicyRequirementSyntax', left, operator, right, location: this.location };
+            const previous: PolicyRequirementSyntax = left;
+            left = this.#budget.build<PolicyRequirementSyntax>([previous, right], () => ({ kind: 'LogicalPolicyRequirementSyntax', left: previous, operator, right, location: this.location }));
         }
         return left;
     }
@@ -115,14 +143,18 @@ class RequirementParser {
         if (this.tokens[this.#position] !== '(') {
             return this.#reference();
         }
+        if (!this.#budget.enter()) return null;
         this.#position++;
-        const requirement = this.#or();
-        if (this.tokens[this.#position] === ')') {
-            this.#position++;
-        } else {
-            this.context.error(DiagnosticCodes.UnclosedAuthorizeGroup, 'Expected \')\' in authorize', this.location);
-        }
-        return requirement;
+        try {
+            const requirement = this.#or();
+            if (this.#budget.exceeded) return null;
+            if (this.tokens[this.#position] === ')') {
+                this.#position++;
+            } else {
+                this.context.error(DiagnosticCodes.UnclosedAuthorizeGroup, 'Expected \')\' in authorize', this.location);
+            }
+            return requirement;
+        } finally { this.#budget.leave(); }
     }
 
     #reference(): PolicyRequirementSyntax | null {

@@ -11,6 +11,7 @@
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
     repeatedPassiveDirective: 'PLAY0858',
+    conditionDepthExceeded: 'PLAY0861',
     invalidSemanticBinding: 'PLAY0273',
     unknownMatchPattern: 'PLAY0366',
     invalidMatchPattern: 'PLAY0367',

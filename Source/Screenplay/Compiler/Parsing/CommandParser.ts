@@ -106,6 +106,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     let description: string | null = null;
     let documentation: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
+    let authorizationDepthExceeded = false;
     let handler: HandlerSyntax | null = null;
     const handlers: { handler: HandlerSyntax | null; location: SourceLocation }[] = [];
     let stream: CommandStreamSyntax | null = null;
@@ -156,7 +157,12 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'documentation') {
             documentation = parseDocumentation(context, child, documentation, `Command '${name}'`);
         } else if (keyword === 'authorize') {
-            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
+            const next = parseAuthorize(context, child);
+            if (!authorizationDepthExceeded) {
+                const previous = authorize;
+                authorize = combineAuthorize(authorize, next, context);
+                authorizationDepthExceeded = previous !== null && authorize === null;
+            }
         } else if (keyword === 'validate') {
             const validate = parseValidate(context, child, 'command', name);
             if (validate !== undefined) {
@@ -273,7 +279,8 @@ export function parseValidate(context: ParserContext, line: SourceLine, owner: '
                 }
             }
             if (firstWord(child.content) === 'require') {
-                const condition = parseCondition(owner === 'concept' ? context.valueContext : context, child.content.substring('require'.length).trim(), locationOf(child));
+                // Keep legacy operand enrichment quiet, but never discard the depth refusal.
+                const condition = parseCondition(owner === 'concept' ? context.valueContext : context, child.content.substring('require'.length).trim(), locationOf(child), false, context);
                 let message: string | null = null;
                 let severity: ValidationSeverity = 'Error';
                 let hasSeverity = false;
