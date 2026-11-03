@@ -178,11 +178,6 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V34 = new(34, 0);
 
     /// <summary>
-    /// Gets the candidate language version for opt-in read-model property order on a valid v34 base.
-    /// </summary>
-    public static readonly LanguageVersion V34_1 = new(34, 1);
-
-    /// <summary>
     /// Gets the language version admitting state machines and workflows (decision 0124). Version 35 stays reserved for handler result contract v2 (decision 0119).
     /// </summary>
     public static readonly LanguageVersion V36 = new(36, 0);
@@ -386,11 +381,6 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting the invocations a specification states with <c>then invokes</c>.
     /// </summary>
     public static readonly SemanticVersion V34 = new(34, 0);
-
-    /// <summary>
-    /// Gets the candidate semantic version for opt-in read-model property order on a valid v34 base.
-    /// </summary>
-    public static readonly SemanticVersion V34_1 = new(34, 1);
 
     /// <summary>
     /// Gets the semantic version admitting state machines and workflows (decision 0124). Version 35 stays reserved for handler result contract v2 (decision 0119).

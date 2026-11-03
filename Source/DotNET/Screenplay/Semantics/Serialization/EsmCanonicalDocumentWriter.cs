@@ -20,11 +20,10 @@ internal sealed class EsmCanonicalDocumentWriter(uint major, uint registeredMino
 
     static bool IsVersionProperty(string name) => name == "languageVersion" || name == "semanticVersion";
 
-    void WriteExtensions(Utf8JsonWriter writer, JsonElement value, EsmBaselineShape shape, ImmutableDictionary<string, EsmBaselineShape> fields)
+    static void WriteExtensions(Utf8JsonWriter writer, JsonElement value, ImmutableDictionary<string, EsmBaselineShape> fields)
     {
         foreach (var property in value.EnumerateObject().Where(property => !fields.ContainsKey(property.Name)).OrderBy(property => property.Name, StringComparer.Ordinal))
         {
-            if (projection && !EsmMinorMembers.IsPromoted(major, registeredMinor, shape, property.Name)) continue;
             writer.WritePropertyName(property.Name);
             EsmOpaqueJson.Write(writer, property.Value);
         }
@@ -65,7 +64,7 @@ internal sealed class EsmCanonicalDocumentWriter(uint major, uint registeredMino
             else WriteKnown(writer, value, shape, property);
         }
 
-        WriteExtensions(writer, value, shape, fields);
+        if (!projection) WriteExtensions(writer, value, fields);
         writer.WriteEndObject();
     }
 

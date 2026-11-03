@@ -428,14 +428,7 @@ public sealed record SemanticCommand(
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="Properties">The read model properties.</param>
-public sealed record SemanticReadModel(SemanticId Id, string Name, ImmutableArray<SemanticProperty> Properties)
-{
-    /// <summary>
-    /// Gets optional property identities in declaration order, when different from canonical identity order.
-    /// This presentation metadata does not change key identity or execution.
-    /// </summary>
-    public ImmutableArray<SemanticId> PropertyOrder { get; init; } = [];
-}
+public sealed record SemanticReadModel(SemanticId Id, string Name, ImmutableArray<SemanticProperty> Properties);
 
 /// <summary>
 /// Represents the deterministic identity of read model instances affected by a transition.
