@@ -43,7 +43,7 @@ internal static partial class PlayFolderMerge
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"module '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
-            Authorize = parts.Any(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
+            Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
                 ? null
                 : CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
@@ -106,7 +106,7 @@ internal static partial class PlayFolderMerge
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"feature '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
-            Authorize = parts.Any(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
+            Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
                 ? null
                 : CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],

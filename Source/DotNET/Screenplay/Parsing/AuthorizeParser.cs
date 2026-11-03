@@ -21,10 +21,6 @@ internal static partial class AuthorizeParser
         DiagnosticCodes.UnclosedAuthorizeGroup,
         "authorize");
 
-    internal static void RecordOwnerRefusal(IEnumerable<FileImportSyntax> imports) => _refusedOwners.GetOrCreateValue(imports);
-
-    internal static bool OwnerWasRefused(IEnumerable<FileImportSyntax> imports) => _refusedOwners.TryGetValue(imports, out _);
-
     /// <summary>
     /// Parses an <c>authorize</c> declaration from its already consumed first line.
     /// </summary>
@@ -66,6 +62,10 @@ internal static partial class AuthorizeParser
 
         return requirement is null ? null : new AuthorizeSyntax(requirement, line.Location);
     }
+
+    internal static void RecordOwnerRefusal(IEnumerable<FileImportSyntax> imports) => _refusedOwners.GetOrCreateValue(imports);
+
+    internal static bool OwnerWasRefused(IEnumerable<FileImportSyntax> imports) => _refusedOwners.TryGetValue(imports, out _);
 
     internal static AuthorizeSyntax? Combine(AuthorizeSyntax? first, AuthorizeSyntax? next, ParserContext context)
     {
