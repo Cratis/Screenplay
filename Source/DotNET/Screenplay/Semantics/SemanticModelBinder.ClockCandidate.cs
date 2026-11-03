@@ -75,18 +75,8 @@ public sealed partial class SemanticModelBinder
         static bool IsDateComparisonRule(SemanticValidationRuleKind kind, ValidationSubject subject) =>
             SemanticDateComparison.IsComparison(kind) && subject.IsDate && !subject.IsCollection;
 
-        static ClockSide ClockOperandSide(ClockOffsetExpressionSyntax offset, bool dateOf)
-        {
-            var kind = offset.Clock == "today" ? SemanticClockKind.Today : SemanticClockKind.Now;
-            var unit = offset.Unit.TrimEnd('s') switch
-            {
-                "hour" => SemanticClockUnit.Hour,
-                "minute" => SemanticClockUnit.Minute,
-                _ => SemanticClockUnit.Day
-            };
-            var primitive = kind == SemanticClockKind.Today || dateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
-            return new(new(default, null) { Clock = new SemanticClockOperand(kind, offset.Amount, unit) { DateOf = dateOf } }, primitive);
-        }
+        static SemanticPrimitiveType ClockPrimitive(SemanticClockKind kind, bool dateOf) =>
+            kind == SemanticClockKind.Today || dateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
 
         static string Describe(SemanticPrimitiveType primitive) => primitive == SemanticPrimitiveType.Date ? "date" : "date-time";
 
@@ -99,6 +89,24 @@ public sealed partial class SemanticModelBinder
             ComparisonOperator.LessThan => SemanticComparisonOperator.LessThan,
             _ => SemanticComparisonOperator.LessThanOrEqual
         };
+
+        ClockSide? ClockOperandSide(ClockOffsetExpressionSyntax offset, bool dateOf)
+        {
+            var kind = offset.Clock == "today" ? SemanticClockKind.Today : SemanticClockKind.Now;
+            var unit = offset.Unit.TrimEnd('s') switch
+            {
+                "hour" => SemanticClockUnit.Hour,
+                "minute" => SemanticClockUnit.Minute,
+                _ => SemanticClockUnit.Day
+            };
+            if (kind == SemanticClockKind.Today && unit != SemanticClockUnit.Day)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "'today' is offset in whole days; use 'now' for hours or minutes.", offset.Location);
+                return null;
+            }
+
+            return new(new(default, null) { Clock = new SemanticClockOperand(kind, offset.Amount, unit) { DateOf = dateOf } }, ClockPrimitive(kind, dateOf));
+        }
 
         // The clock binding of a condition the clock-free path declined, or null when it is not a clock comparison.
         SemanticComparison? BindClockConditionOrNull(ConditionSyntax syntax, string position, Dictionary<string, SemanticProperty> properties) =>
@@ -156,6 +164,8 @@ public sealed partial class SemanticModelBinder
                     return ClockOperandSide(new ClockOffsetExpressionSyntax(path.Path, 0, "day", path.Location), dateOf: false);
                 case DateOfExpressionSyntax { Operand: ClockOffsetExpressionSyntax inner }:
                     return ClockOperandSide(inner, dateOf: true);
+                case DateOfExpressionSyntax { Operand: PathExpressionSyntax path } when IsBareClock(path, properties):
+                    return ClockOperandSide(new ClockOffsetExpressionSyntax(path.Path, 0, "day", path.Location), dateOf: true);
                 case DateOfExpressionSyntax { Operand: PathExpressionSyntax path } when properties.TryGetValue(path.Path, out var property):
                     return BindPropertySide(property, location, dateOf: true);
                 case PathExpressionSyntax path when properties.TryGetValue(path.Path, out var property):

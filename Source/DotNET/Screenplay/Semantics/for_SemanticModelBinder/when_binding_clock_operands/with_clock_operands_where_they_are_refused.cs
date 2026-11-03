@@ -28,6 +28,23 @@ public class with_clock_operands_where_they_are_refused : given.a_clock_binder
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == "PLAY0268");
     }
 
+    [Theory]
+    [InlineData("require dueDate >= today + 2 hours")]
+    [InlineData("require dueDate >= today - 30 minutes")]
+    [InlineData("require dueDate >= date of today + 2 hours")]
+    [InlineData("require dueDate >= date of today - 30 minutes")]
+    [InlineData("produces when dueDate >= today + 2 hours\n          Done\n            for id")]
+    [InlineData("produces when dueDate >= today - 30 minutes\n          Done\n            for id")]
+    public void should_refuse_sub_day_offsets_on_today(string condition)
+    {
+        var body = condition.StartsWith("require", StringComparison.Ordinal)
+            ? $"        validate\n          {condition}\n"
+            : $"        {condition}\n";
+        var result = BindClock(Source(body));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message == "'today' is offset in whole days; use 'now' for hours or minutes.");
+    }
+
     [Fact]
     void should_keep_a_property_named_today_a_path()
     {

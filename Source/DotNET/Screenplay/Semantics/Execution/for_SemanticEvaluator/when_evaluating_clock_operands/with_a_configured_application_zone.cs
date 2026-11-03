@@ -24,6 +24,19 @@ public class with_a_configured_application_zone : given.a_clock_command
 
     [Fact] void should_let_the_configured_zone_beat_the_declared_default() => _configured.ShouldBeOfExactType<SemanticAccepted>();
     [Fact] void should_use_the_declared_default_when_none_is_supplied() => _default.ShouldBeOfExactType<SemanticRejected>();
-    [Fact] void should_refuse_an_empty_configured_zone() => _empty.ShouldBeOfExactType<SemanticRejected>();
-    [Fact] void should_refuse_an_unknown_configured_zone() => _unknown.ShouldBeOfExactType<SemanticRejected>();
+    [Fact]
+    void should_refuse_an_empty_configured_zone()
+    {
+        _empty.ShouldBeOfExactType<SemanticRejected>();
+        ((SemanticRejected)_empty).Category.ShouldEqual(SemanticRejectionCategory.Contract);
+        ((SemanticRejected)_empty).Details.ShouldEqual("The configured application time zone is empty; supply an IANA time zone id or none.");
+    }
+
+    [Fact]
+    void should_refuse_an_unknown_configured_zone()
+    {
+        _unknown.ShouldBeOfExactType<SemanticRejected>();
+        ((SemanticRejected)_unknown).Category.ShouldEqual(SemanticRejectionCategory.Contract);
+        ((SemanticRejected)_unknown).Details.ShouldEqual("The calendar time zone 'Mars/Olympus' is not a known IANA time zone.");
+    }
 }
