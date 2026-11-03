@@ -43,22 +43,54 @@ export function staticFolderOf(resolvedPattern: string): string {
 
 // Whether a normalized portable path is a .play file a resolved pattern names.
 export function matchesPlayPattern(resolvedPattern: string, path: string): boolean {
-    return path.toLowerCase().endsWith('.play') && toRegularExpression(resolvedPattern).test(path);
+    if (!path.toLowerCase().endsWith('.play')) return false;
+    const parts = path.split('/').map(part => [...part]);
+    let reachable = Array<boolean>(parts.length + 1).fill(false);
+    reachable[0] = true;
+    const segments = resolvedPattern.split('/');
+    for (let index = 0; index < segments.length; index++) {
+        const segment = segments[index]!;
+        if (segment === '**' && index === segments.length - 1) return matchesTrailingGlobstar(parts, reachable);
+        reachable = advanceSegment(segment, parts, reachable);
+    }
+    return reachable[parts.length]!;
 }
 
-function toRegularExpression(pattern: string): RegExp {
-    let expression = '^';
-    const segments = pattern.split('/');
-    segments.forEach((segment, index) => {
-        const last = index === segments.length - 1;
+// The old trailing '.*' excludes line separators, unlike a folder globstar.
+function matchesTrailingGlobstar(parts: readonly (readonly string[])[], reachable: readonly boolean[]): boolean {
+    let suffixMatches = true;
+    for (let part = parts.length; part >= 0; part--) {
+        if (part < parts.length) suffixMatches &&= !parts[part]!.some(character => '\n\r\u2028\u2029'.includes(character));
+        if (reachable[part] && suffixMatches) return true;
+    }
+    return false;
+}
+
+function advanceSegment(segment: string, parts: readonly (readonly string[])[], reachable: readonly boolean[]): boolean[] {
+    const next = Array<boolean>(parts.length + 1).fill(false);
+    for (let part = 0; part < parts.length; part++) {
         if (segment === '**') {
-            expression += last ? '.*' : '(?:[^/]+/)*';
-            return;
+            next[part] = reachable[part]! || (part > 0 && next[part - 1]! && parts[part - 1]!.length > 0);
+        } else {
+            next[part + 1] = reachable[part]! && matchesSegment(segment, parts[part]!);
         }
-        for (const character of segment) {
-            expression += character === '*' ? '[^/]*' : character === '?' ? '[^/]' : character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    return next;
+}
+
+// Rolling dynamic-programming rows keep matching polynomial without recursive wildcard retries.
+function matchesSegment(pattern: string, characters: readonly string[]): boolean {
+    let reachable = Array<boolean>(characters.length + 1).fill(false);
+    reachable[0] = true;
+    for (const token of pattern) {
+        const next = Array<boolean>(characters.length + 1).fill(false);
+        next[0] = token === '*' && reachable[0]!;
+        for (let index = 1; index <= characters.length; index++) {
+            next[index] = token === '*'
+                ? reachable[index]! || next[index - 1]!
+                : reachable[index - 1]! && (token === '?' || token === characters[index - 1]);
         }
-        if (!last) expression += '/';
-    });
-    return new RegExp(`${expression}$`, 'u');
+        reachable = next;
+    }
+    return reachable[characters.length]!;
 }
