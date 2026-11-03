@@ -87,6 +87,7 @@ describe('when validating a document with a problem of every coded kind', () => 
 
     beforeEach(() => {
         issues = validateLines(document);
+        issues.push(...validateLines(['policy Access', '  require ' + '('.repeat(129) + 'authenticated' + ')'.repeat(129)]));
         const responses = [
             ['concept Code : String', '  validate', '    matches phone', '    matches "["', '    matches "(?=a)"', '    matches "^(?![\\s\\S]*a)"'],
             ['command C', 'example Fixture : C', '  no stream'],
