@@ -3783,4 +3783,16 @@ public static class DiagnosticCodes
     /// A command <c>calendar from $context.&lt;member&gt;</c> names a member other than the trusted <c>timeZone</c> member of the command context.
     /// </summary>
     public const string InvalidCalendarContextMember = "PLAY0853";
+
+    /// <summary>A context block is malformed, repeated or outside the application root.</summary>
+    public const string InvalidContextDeclaration = "PLAY0854";
+
+    /// <summary>A context member has a type other than <c>time zone</c>.</summary>
+    public const string UnknownContextMemberType = "PLAY0855";
+
+    /// <summary>A context block declares the same member name more than once.</summary>
+    public const string DuplicateContextMember = "PLAY0856";
+
+    /// <summary>A context member uses a reserved built-in context name.</summary>
+    public const string ReservedContextMemberName = "PLAY0857";
 }

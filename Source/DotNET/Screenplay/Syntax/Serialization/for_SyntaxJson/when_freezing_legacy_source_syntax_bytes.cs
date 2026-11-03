@@ -16,6 +16,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "command-reads",
         "reaction-batches",
         "identity",
+        "application-context",
         "reaction-identity",
         "reaction-event-source",
         "declaration-descriptions",

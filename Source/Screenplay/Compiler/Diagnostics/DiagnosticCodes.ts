@@ -509,4 +509,8 @@ export const DiagnosticCodes = {
     UnknownWorkflowReference: 'PLAY0851',
     UnknownTimeZone: 'PLAY0852',
     InvalidCalendarContextMember: 'PLAY0853',
+    InvalidContextDeclaration: 'PLAY0854',
+    UnknownContextMemberType: 'PLAY0855',
+    DuplicateContextMember: 'PLAY0856',
+    ReservedContextMemberName: 'PLAY0857',
 } as const;

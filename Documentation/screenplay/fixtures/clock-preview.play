@@ -1,5 +1,9 @@
 // Syntax-only preview (#824), decisions 0106/0107. Execution reports PLAY0268.
 time zone configurable default "Europe/Oslo"
+context
+  description "Time zones the business reasons in."
+  businessTimeZone time zone
+  customerTimeZone time zone
 module Clocks
   feature Scheduling
     slice StateChange Schedule

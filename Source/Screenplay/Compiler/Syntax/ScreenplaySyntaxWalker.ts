@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
+import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import { IdentitySyntax } from './IdentitySyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -54,6 +55,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         if (syntax.domain !== null) this.visitDomain(syntax.domain);
         if (syntax.timeZone != null) this.visitTimeZone(syntax.timeZone);
+        if (syntax.context != null) this.visitApplicationContext(syntax.context);
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         syntax.systems?.forEach(node => this.visitSystem(node));
@@ -282,6 +284,13 @@ export abstract class ScreenplaySyntaxWalker {
         }
         if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
+
+    visitApplicationContext(syntax: ApplicationContextSyntax): void {
+        this.visitNode(syntax);
+        syntax.members.forEach(member => this.visitContextMember(member));
+    }
+
+    visitContextMember(syntax: ContextMemberSyntax): void { this.visitNode(syntax); }
 
     visitTimeZone(syntax: TimeZoneSyntax): void { this.visitNode(syntax); }
 

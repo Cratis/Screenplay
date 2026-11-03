@@ -73,6 +73,11 @@ public record ApplicationSyntax(
     public TimeZoneSyntax? TimeZone { get; init; }
 
     /// <summary>
+    /// Gets the application's named time-zone context members.
+    /// </summary>
+    public ApplicationContextSyntax? Context { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];

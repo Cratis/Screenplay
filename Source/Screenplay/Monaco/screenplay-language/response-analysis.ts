@@ -44,7 +44,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona|identity|time\s+zone|reaction\s+batches|command\s+reads(?=\s+(?!\/\/)\S))\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona|identity|context|time\s+zone|reaction\s+batches|command\s+reads(?=\s+(?!\/\/)\S))\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;

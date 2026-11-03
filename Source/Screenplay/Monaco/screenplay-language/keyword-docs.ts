@@ -40,6 +40,7 @@ export const keywordDocs: Record<string, string> = {
     colour: 'The colour of a sticky note: yellow, pink, green or blue.',
     size: 'How big a persona or sticky note is on its canvas: `size <width> <height>` in whole canvas units.',
     position: 'Where a persona, event source or sticky note sits on its canvas: `position <x> <y>` in whole canvas units.',
+    context: 'Declares named application context inputs: `context` with `<name> time zone` members (decision 0132). At most one application-root block; optional description. Syntax-only: binding reports PLAY0268 (#824). No defaults, values, sources or optional modifiers.',
     identity: 'Declares typed additional caller details from a claim, a keyed single-result query, inline code or a file. Authoring metadata only; executable use of `$identity.<detail>` reports PLAY0268 until admitted (#600).',
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'An identity provider within `authentication`: `provider <Kind>` or `provider <Kind> name <Alias>`. How to reach it is configured where the application runs, never in the model.',

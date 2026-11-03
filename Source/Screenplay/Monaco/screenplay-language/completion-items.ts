@@ -38,7 +38,13 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
     return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
 }
 
+export const applicationContextItems: CompletionEntry[] = [
+    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A named application time-zone input. Only time zone members are currently declared; binding reports PLAY0268 (#824).' },
+    { label: 'description', insertText: 'description "${1:context intent}"', documentation: 'Describes the application context; does not supply a runtime value.' },
+];
+
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application context members (decision 0132). Syntax-only; binding reports PLAY0268 (#824). At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'Application calendar (decisions 0106/0107). Syntax-only; binding reports PLAY0268. Never falls back to the machine zone.' },
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'Configurable application calendar default. Syntax-only; binding reports PLAY0268.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },

@@ -199,6 +199,7 @@ public sealed partial class ScreenplayPrinter :
         }
 
         WriteTimeZone(writer, application.TimeZone);
+        WriteApplicationContext(writer, application.Context);
 
         WriteFileImports(writer, application.FileImports);
     }
