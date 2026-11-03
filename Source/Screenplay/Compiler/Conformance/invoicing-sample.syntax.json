@@ -17633,7 +17633,7 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceNumberReserved"
+                          "event": "InvoiceRegistered"
                         }
                       ],
                       "mappings": [
@@ -17648,8 +17648,34 @@
                       ]
                     },
                     {
-                      "kind": "RemoveWithSyntax",
-                      "event": "InvoiceNumberReservationReleased"
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceNumberReserved"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "isReserved"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceNumberReservationReleased"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "isReserved"
+                        }
+                      ]
                     }
                   ],
                   "name": "InvoiceReservations",
@@ -17733,7 +17759,26 @@
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
-                  "given": [],
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2026-000"
+                          }
+                        }
+                      ]
+                    }
+                  ],
                   "givenCaller": {
                     "kind": "SpecificationCallerSyntax",
                     "authenticated": true,
@@ -17745,31 +17790,7 @@
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
-                  "givenReadModels": [
-                    {
-                      "kind": "SpecificationReadModelSyntax",
-                      "exactly": false,
-                      "name": "InvoiceReservationState",
-                      "properties": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "isReserved",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": false
-                          }
-                        }
-                      ]
-                    }
-                  ],
+                  "givenReadModels": [],
                   "name": "ReservingAnInvoiceNumber",
                   "thenCompensated": [],
                   "thenDenied": null,
