@@ -19,7 +19,7 @@ public class when_negation_exceeds_the_budget
         context.Diagnostics.Count.ShouldEqual(accepted ? 0 : 1);
         if (!accepted)
         {
-            context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
+            context.Diagnostics[0].Code.ShouldEqual("PLAY0861");
         }
     }
 
@@ -51,7 +51,7 @@ public class when_negation_exceeds_the_budget
         context.Diagnostics.Count.ShouldEqual(accepted ? 0 : 1);
         if (!accepted)
         {
-            context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
+            context.Diagnostics[0].Code.ShouldEqual("PLAY0861");
         }
     }
 }

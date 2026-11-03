@@ -17,6 +17,6 @@ public class when_a_flat_chain_exceeds_tree_depth
         context.Diagnostics.ShouldBeEmpty();
         ConditionParser.Parse(context, string.Join($" {operation} ", Enumerable.Repeat("status == \"open\"", 129)), SourceLocation.Start).ShouldBeNull();
         context.Diagnostics.Count.ShouldEqual(1);
-        context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
+        context.Diagnostics[0].Code.ShouldEqual("PLAY0861");
     }
 }

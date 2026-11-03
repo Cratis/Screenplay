@@ -7,7 +7,7 @@ import { parse } from '../../ScreenplayCompiler';
 describe('when compiling concept requirement depth', () => {
     it.each([128, 129])('should report the owning diagnostic for %s groups', count => {
         const result = parse('concept Label : String\n  validate\n    require ' + '('.repeat(count) + 'value == "open"' + ')'.repeat(count), 'concept.play');
-        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860');
+        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861');
         expect(diagnostics).toHaveLength(count === 129 ? 1 : 0);
         if (count === 129) {
             expect(result.success).toBe(false);

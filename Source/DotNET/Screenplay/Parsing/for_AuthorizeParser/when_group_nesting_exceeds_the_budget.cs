@@ -17,7 +17,7 @@ public class when_group_nesting_exceeds_the_budget
         var refused = accepted + $" {operation} Access";
         AuthorizeParser.Parse(context, new SourceLine(7, refused, 0, refused)).ShouldBeNull();
         context.Diagnostics.Count.ShouldEqual(1);
-        context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
+        context.Diagnostics[0].Code.ShouldEqual("PLAY0861");
         const string later = "authorize Access";
         AuthorizeParser.Parse(context, new SourceLine(8, later, 0, later)).ShouldNotBeNull();
         context.Diagnostics.Count.ShouldEqual(1);
@@ -35,7 +35,7 @@ public class when_group_nesting_exceeds_the_budget
         context.Diagnostics.Count.ShouldEqual(accepted ? 0 : 1);
         if (!accepted)
         {
-            context.Diagnostics[0].Code.ShouldEqual("PLAY0860");
+            context.Diagnostics[0].Code.ShouldEqual("PLAY0861");
             context.Diagnostics[0].Location.Line.ShouldEqual(7);
         }
     }

@@ -18,7 +18,7 @@ public class when_combining_authorization_depth
         var result = new ScreenplayCompiler().Parse(source, "command.play");
         var gate = result.Value!.Modules.First().Features.First().Slices.First().Commands.First().Authorize;
         (gate is null).ShouldEqual(count > 128);
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0860").ToArray();
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0861").ToArray();
         diagnostics.Length.ShouldEqual(count > 128 ? 1 : 0);
         if (count > 128)
         {
@@ -41,7 +41,7 @@ public class when_combining_authorization_depth
         var gate = owner == "module" ? module.Authorize : owner == "feature" ? module.Features.First().Authorize : module.Features.First().Slices.First().Queries.First().Authorize;
         gate.ShouldBeNull();
         result.Value.Modules.ElementAt(1).Authorize.ShouldNotBeNull();
-        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0860").ShouldEqual(1);
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0861").ShouldEqual(1);
     }
 
     [Theory]
@@ -53,7 +53,7 @@ public class when_combining_authorization_depth
         var source = "module Portal\n  authorize " + chain + "\n" + string.Join('\n', Enumerable.Repeat("  authorize Access", count));
         var result = new ScreenplayCompiler().Parse(source, "module.play");
         (result.Value!.Modules.First().Authorize is null).ShouldEqual(count == 2);
-        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0860").ShouldEqual(count == 2 ? 1 : 0);
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0861").ShouldEqual(count == 2 ? 1 : 0);
     }
 
     [Theory]
@@ -66,7 +66,7 @@ public class when_combining_authorization_depth
         var result = PlayFolderMerge.Merge([compiler.Parse(source, "first.play"), compiler.Parse(source, "second.play")]);
         result.Value!.Modules.First().Authorize.ShouldNotBeNull();
         result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0394").ShouldEqual(1);
-        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0860").ShouldEqual(0);
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0861").ShouldEqual(0);
     }
 
     [Theory]
@@ -87,7 +87,7 @@ public class when_combining_authorization_depth
             compiler.Parse(prefix + indent + "authorize Access", "b.play")]);
         var module = result.Value!.Modules.First();
         (feature ? module.Features.First().Authorize : module.Authorize).ShouldBeNull();
-        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0860");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0861");
         diagnostic.Location.Path.ShouldEqual("a.play");
     }
 
@@ -102,7 +102,7 @@ public class when_combining_authorization_depth
             .Prepend(compiler.Parse("module Portal\n  authorize " + chain, "0.play")).ToArray();
         var result = PlayFolderMerge.Merge(documents);
         (result.Value!.Modules.First().Authorize is null).ShouldEqual(count == 2);
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0860").ToArray();
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0861").ToArray();
         diagnostics.Length.ShouldEqual(count == 2 ? 1 : 0);
         if (count == 2)
         {

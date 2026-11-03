@@ -11,7 +11,7 @@ public class when_compiling_concept_requirement_depth
     public void should_report_the_owning_diagnostic(int count)
     {
         var result = new ScreenplayCompiler().Compile("concept Label : String\n  validate\n    require " + new string('(', count) + "value == \"open\"" + new string(')', count));
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0860").ToArray();
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0861").ToArray();
         diagnostics.Length.ShouldEqual(count == 129 ? 1 : 0);
         if (count == 129) diagnostics[0].Location.Line.ShouldEqual(3);
     }

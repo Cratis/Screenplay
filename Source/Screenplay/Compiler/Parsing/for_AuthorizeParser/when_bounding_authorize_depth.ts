@@ -19,7 +19,7 @@ describe('when bounding authorize depth', () => {
         expect(parseAuthorize(context, header(accepted))).not.toBeNull();
         expect(context.diagnostics).toEqual([]);
         expect(parseAuthorize(context, header(refused))).toBeNull();
-        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0860', location: { line: 7, column: 1 } }]);
+        expect(context.diagnostics).toMatchObject([{ code: 'PLAY0861', location: { line: 7, column: 1 } }]);
         expect(parseAuthorize(context, header('Access'))).not.toBeNull();
         expect(context.diagnostics).toHaveLength(1);
     });

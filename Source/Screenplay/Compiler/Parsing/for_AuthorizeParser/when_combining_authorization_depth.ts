@@ -13,7 +13,7 @@ describe('when combining authorization depth', () => {
         const result = parse(source, 'command.play');
         const gate = result.value.modules[0].features[0].slices[0].commands[0].authorize;
         expect(gate === null).toBe(count > 128);
-        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860');
+        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861');
         expect(diagnostics).toHaveLength(count > 128 ? 1 : 0);
         if (count > 128) expect(diagnostics[0].location).toMatchObject({ path: 'command.play', line: 133 });
     });
@@ -26,20 +26,20 @@ describe('when combining authorization depth', () => {
         const gate = owner === 'module' ? module.authorize : owner === 'feature' ? module.features[0].authorize : module.features[0].slices[0].queries[0].authorize;
         expect(gate).toBeNull();
         expect(result.value.modules[1].authorize).not.toBeNull();
-        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860')).toHaveLength(1);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861')).toHaveLength(1);
     });
     it.each([1, 2])('should budget a deep line combined with %s more gates', count => {
         const source = 'module Portal\n  authorize ' + chain + '\n' + Array<string>(count).fill('  authorize Access').join('\n');
         const result = parse(source, 'module.play');
         expect(result.value.modules[0].authorize === null).toBe(count === 2);
-        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860')).toHaveLength(count === 2 ? 1 : 0);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861')).toHaveLength(count === 2 ? 1 : 0);
     });
     it.each([96, 128])('should ignore identical deep gates from additional files at depth %s', depth => {
         const source = 'module Portal\n  authorize ' + Array<string>(depth).fill('Access').join(' and ');
         const result = parseFolder([{ path: 'a.play', source }, { path: 'b.play', source }]);
         expect(result.value.modules[0].authorize).not.toBeNull();
         expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0394')).toHaveLength(1);
-        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860')).toHaveLength(0);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861')).toHaveLength(0);
     });
     it.each([
         ['module', false], ['feature', false], ['module', true], ['feature', true],
@@ -55,7 +55,7 @@ describe('when combining authorization depth', () => {
         ]);
         const module = result.value.modules[0];
         expect(owner === 'module' ? module.authorize : module.features[0].authorize).toBeNull();
-        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860');
+        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861');
         expect(diagnostics).toHaveLength(1);
         expect(diagnostics[0].location.path).toBe('a.play');
     });
@@ -65,7 +65,7 @@ describe('when combining authorization depth', () => {
             ...Array.from({ length: count }, (_, index) => ({ path: `${index + 1}.play`, source: `module Portal\n  authorize Extra${index}` })),
         ]);
         expect(result.value.modules[0].authorize === null).toBe(count === 2);
-        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0860');
+        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0861');
         expect(diagnostics).toHaveLength(count === 2 ? 1 : 0);
         if (count === 2) expect(diagnostics[0].location).toMatchObject({ path: '2.play', line: 2, column: 3 });
     });
