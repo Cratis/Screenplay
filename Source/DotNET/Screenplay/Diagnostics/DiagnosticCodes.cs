@@ -3773,4 +3773,7 @@ public static class DiagnosticCodes
 
     /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
     public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>A condition exceeds the supported nesting or constructed expression depth of 128.</summary>
+    public const string ConditionDepthExceeded = "PLAY0852";
 }

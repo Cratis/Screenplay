@@ -6,6 +6,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, LogicalOperator, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
+import { ConditionDepthBudget } from './ConditionDepthBudget';
 import { locationOf, SourceLine } from './SourceLine';
 
 const continuationPattern = pattern('^(?:(?:or|and)\\s+)?[A-Za-z_(][\\w\\s()]*$');
@@ -79,8 +80,11 @@ const isOperandStart = (token: string): boolean => token === '(' || isName(token
 // The port of the C# LogicalConditionParser: 'or' over 'and' over a group or a policy name.
 class RequirementParser {
     #position = 0;
+    readonly #budget: ConditionDepthBudget;
 
-    constructor(private readonly context: ParserContext, private readonly tokens: readonly string[], private readonly location: SourceLocation) {}
+    constructor(private readonly context: ParserContext, private readonly tokens: readonly string[], private readonly location: SourceLocation) {
+        this.#budget = new ConditionDepthBudget(context, location);
+    }
 
     parse(): PolicyRequirementSyntax | null {
         const requirement = this.#or();
@@ -106,7 +110,8 @@ class RequirementParser {
             if (right === null) {
                 return null;
             }
-            left = { kind: 'LogicalPolicyRequirementSyntax', left, operator, right, location: this.location };
+            const previous: PolicyRequirementSyntax = left;
+            left = this.#budget.build<PolicyRequirementSyntax>([previous, right], () => ({ kind: 'LogicalPolicyRequirementSyntax', left: previous, operator, right, location: this.location }));
         }
         return left;
     }
@@ -115,14 +120,18 @@ class RequirementParser {
         if (this.tokens[this.#position] !== '(') {
             return this.#reference();
         }
+        if (!this.#budget.enter()) return null;
         this.#position++;
-        const requirement = this.#or();
-        if (this.tokens[this.#position] === ')') {
-            this.#position++;
-        } else {
-            this.context.error(DiagnosticCodes.UnclosedAuthorizeGroup, 'Expected \')\' in authorize', this.location);
-        }
-        return requirement;
+        try {
+            const requirement = this.#or();
+            if (this.#budget.exceeded) return null;
+            if (this.tokens[this.#position] === ')') {
+                this.#position++;
+            } else {
+                this.context.error(DiagnosticCodes.UnclosedAuthorizeGroup, 'Expected \')\' in authorize', this.location);
+            }
+            return requirement;
+        } finally { this.#budget.leave(); }
     }
 
     #reference(): PolicyRequirementSyntax | null {

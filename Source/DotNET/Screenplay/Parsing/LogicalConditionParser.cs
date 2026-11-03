@@ -53,7 +53,8 @@ internal static class LogicalConditionParser
     /// <param name="combine">Builds the construct's node for two conditions combined with an operator.</param>
     /// <param name="diagnostics">The <see cref="LogicalConditionDiagnostics"/> the construct reports.</param>
     /// <param name="negate">Builds a unary negation node when the construct admits <c>not</c>.</param>
-    /// <returns>The parsed condition, or <c>null</c> when it is malformed.</returns>
+    /// <param name="budget">The requirement's budget, or <c>null</c> to start a fresh budget.</param>
+    /// <returns>The parsed condition, or <c>null</c> when it is malformed or exceeds the supported depth.</returns>
     public static T? Parse<T>(
         ParserContext context,
         IReadOnlyList<string> tokens,
@@ -61,11 +62,13 @@ internal static class LogicalConditionParser
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
         LogicalConditionDiagnostics diagnostics,
-        Func<T, SourceLocation, T>? negate = null)
+        Func<T, SourceLocation, T>? negate = null,
+        ConditionDepthBudget? budget = null)
         where T : class
     {
         var position = 0;
-        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate);
+        budget ??= new(context, location);
+        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
         if (condition is not null && position < tokens.Count)
         {
             context.Error(diagnostics.UnexpectedToken, $"Unexpected '{tokens[position]}' in {diagnostics.Subject}", location);
@@ -82,20 +85,18 @@ internal static class LogicalConditionParser
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
         LogicalConditionDiagnostics diagnostics,
-        Func<T, SourceLocation, T>? negate)
+        Func<T, SourceLocation, T>? negate,
+        ConditionDepthBudget budget)
         where T : class
     {
-        var left = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate);
+        var left = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
         while (left is not null && position < tokens.Count && tokens[position] == "or")
         {
             position++;
-            var right = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate);
-            if (right is null)
-            {
-                return null;
-            }
-
-            left = combine(left, LogicalOperator.Or, right, location);
+            var right = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
+            if (right is null) return null;
+            var previous = left;
+            left = budget.Build(() => combine(previous, LogicalOperator.Or, right, location), previous, right);
         }
 
         return left;
@@ -109,20 +110,18 @@ internal static class LogicalConditionParser
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
         LogicalConditionDiagnostics diagnostics,
-        Func<T, SourceLocation, T>? negate)
+        Func<T, SourceLocation, T>? negate,
+        ConditionDepthBudget budget)
         where T : class
     {
-        var left = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
+        var left = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
         while (left is not null && position < tokens.Count && tokens[position] == "and")
         {
             position++;
-            var right = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
-            if (right is null)
-            {
-                return null;
-            }
-
-            left = combine(left, LogicalOperator.And, right, location);
+            var right = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
+            if (right is null) return null;
+            var previous = left;
+            left = budget.Build(() => combine(previous, LogicalOperator.And, right, location), previous, right);
         }
 
         return left;
@@ -136,32 +135,42 @@ internal static class LogicalConditionParser
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
         LogicalConditionDiagnostics diagnostics,
-        Func<T, SourceLocation, T>? negate)
+        Func<T, SourceLocation, T>? negate,
+        ConditionDepthBudget budget)
         where T : class
     {
-        if (negate is not null && position < tokens.Count && tokens[position] == "not")
-        {
-            position++;
-            var negated = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
-            return negated is null ? null : negate(negated, location);
-        }
-
-        if (position >= tokens.Count || tokens[position] != "(")
+        var isNegation = negate is not null && position < tokens.Count && tokens[position] == "not";
+        if (!isNegation && (position >= tokens.Count || tokens[position] != "("))
         {
             return operand(context, tokens, ref position, location);
         }
 
+        if (!budget.Enter()) return null;
         position++;
-        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate);
-        if (position < tokens.Count && tokens[position] == ")")
+        try
         {
-            position++;
-        }
-        else
-        {
-            context.Error(diagnostics.UnclosedGroup, $"Expected ')' in {diagnostics.Subject}", location);
-        }
+            if (isNegation)
+            {
+                var negated = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
+                return negated is null ? null : budget.Build(() => negate!(negated, location), negated);
+            }
 
-        return condition;
+            var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate, budget);
+            if (budget.Exceeded) return null;
+            if (position < tokens.Count && tokens[position] == ")")
+            {
+                position++;
+            }
+            else
+            {
+                context.Error(diagnostics.UnclosedGroup, $"Expected ')' in {diagnostics.Subject}", location);
+            }
+
+            return condition;
+        }
+        finally
+        {
+            budget.Leave();
+        }
     }
 }
