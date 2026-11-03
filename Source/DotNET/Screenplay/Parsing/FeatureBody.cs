@@ -68,7 +68,6 @@ internal sealed class FeatureBody(string name)
                 PurposeParser.ParseReference(context, line, _purposes);
                 return true;
             case "authorize":
-            {
                 var next = AuthorizeParser.Parse(context, line);
                 if (!_authorizationDepthExceeded)
                 {
@@ -78,7 +77,6 @@ internal sealed class FeatureBody(string name)
                 }
 
                 return true;
-            }
             case "import":
                 FileImportParser.Parse(context, line, _fileImports);
                 return true;

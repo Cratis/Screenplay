@@ -135,7 +135,6 @@ internal static partial class CommandParser
                     documentation = DocumentationParser.Parse(context, line, documentation, $"Command '{name.Groups[1].Value}'", directiveLocations);
                     break;
                 case "authorize":
-                {
                     var next = AuthorizeParser.Parse(context, line);
                     if (!authorizationDepthExceeded)
                     {
@@ -145,7 +144,6 @@ internal static partial class CommandParser
                     }
 
                     break;
-                }
                 case "concurrency":
                     concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
                     break;

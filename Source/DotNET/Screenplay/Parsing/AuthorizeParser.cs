@@ -69,24 +69,6 @@ internal static partial class AuthorizeParser
         return new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location);
     }
 
-    static int RequirementDepth(PolicyRequirementSyntax requirement)
-    {
-        var pending = new Stack<(PolicyRequirementSyntax Requirement, int Depth)>();
-        pending.Push((requirement, 1));
-        var maximum = 1;
-        while (pending.TryPop(out var current))
-        {
-            maximum = Math.Max(maximum, current.Depth);
-            if (current.Requirement is LogicalPolicyRequirementSyntax logical)
-            {
-                pending.Push((logical.Left, current.Depth + 1));
-                pending.Push((logical.Right, current.Depth + 1));
-            }
-        }
-
-        return maximum;
-    }
-
     /// <summary>
     /// Finds where an implicit conjunction sits between adjacent operands in one line of an authorize.
     /// </summary>
@@ -115,6 +97,24 @@ internal static partial class AuthorizeParser
     /// <param name="content">The comment-free content of the following line.</param>
     /// <returns>True when the line is a continuation.</returns>
     internal static bool IsContinuation(string content) => ContinuationRegex().IsMatch(content);
+
+    static int RequirementDepth(PolicyRequirementSyntax requirement)
+    {
+        var pending = new Stack<(PolicyRequirementSyntax Requirement, int Depth)>();
+        pending.Push((requirement, 1));
+        var maximum = 1;
+        while (pending.TryPop(out var current))
+        {
+            maximum = Math.Max(maximum, current.Depth);
+            if (current.Requirement is LogicalPolicyRequirementSyntax logical)
+            {
+                pending.Push((logical.Left, current.Depth + 1));
+                pending.Push((logical.Right, current.Depth + 1));
+            }
+        }
+
+        return maximum;
+    }
 
     static PolicyRequirementSyntax? ParseReference(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {

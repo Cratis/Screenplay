@@ -112,7 +112,6 @@ internal static partial class QueryParser
 
                     break;
                 case "authorize":
-                {
                     var next = AuthorizeParser.Parse(context, line);
                     if (!authorizationDepthExceeded)
                     {
@@ -122,7 +121,6 @@ internal static partial class QueryParser
                     }
 
                     break;
-                }
                 case "performer":
                     performer = ParsePerformer(context, line, performer, name);
                     break;
