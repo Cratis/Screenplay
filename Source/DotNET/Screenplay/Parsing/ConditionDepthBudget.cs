@@ -27,16 +27,14 @@ internal sealed class ConditionDepthBudget(ParserContext context, SourceLocation
         where T : class
     {
         var depth = 1 + children.Max(child => _depths.GetValueOrDefault(child, 1));
-        if (depth > Limit)
-        {
-            Refuse();
-            return null;
-        }
+        if (!AllowsDepth(depth)) return null;
 
         var node = create();
         _depths.Add(node, depth);
         return node;
     }
+
+    public bool AllowsDepth(int depth) => depth <= Limit || Refuse();
 
     bool Refuse()
     {

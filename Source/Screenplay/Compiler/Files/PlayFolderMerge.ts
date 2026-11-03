@@ -186,7 +186,14 @@ function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[],
         }
         kept.push(authorization);
     }
-    return kept.reduce<AuthorizeSyntax | null>((combined, next) => combineAuthorize(combined, next), null);
+    const context = new ParserContext(new LineReader([]));
+    let combined: AuthorizeSyntax | null = null;
+    for (const next of kept) {
+        combined = combineAuthorize(combined, next, context);
+        if (combined === null) break;
+    }
+    diagnostics.push(...context.diagnostics);
+    return combined;
 }
 
 function firstOfEach<T>(items: readonly T[], key: (item: T) => string): T[] {

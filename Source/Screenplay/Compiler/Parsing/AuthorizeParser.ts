@@ -34,14 +34,29 @@ export function parseAuthorize(context: ParserContext, line: SourceLine): Author
 }
 
 // Several 'authorize' lines on one construct all have to hold, so they combine with 'and'.
-export function combineAuthorize(first: AuthorizeSyntax | null, next: AuthorizeSyntax | null): AuthorizeSyntax | null {
+export function combineAuthorize(first: AuthorizeSyntax | null, next: AuthorizeSyntax | null, context: ParserContext): AuthorizeSyntax | null {
     if (first === null) return next;
     if (next === null) return first;
+    const depth = 1 + Math.max(requirementDepth(first.requirement), requirementDepth(next.requirement));
+    if (!new ConditionDepthBudget(context, next.location).allowsDepth(depth)) return null;
     return {
         kind: 'AuthorizeSyntax',
         requirement: { kind: 'LogicalPolicyRequirementSyntax', left: first.requirement, operator: 'And', right: next.requirement, location: first.location },
         location: first.location,
     };
+}
+
+function requirementDepth(requirement: PolicyRequirementSyntax): number {
+    const pending = [{ requirement, depth: 1 }];
+    let maximum = 1;
+    while (pending.length > 0) {
+        const current = pending.pop()!;
+        maximum = Math.max(maximum, current.depth);
+        if (current.requirement.kind === 'LogicalPolicyRequirementSyntax') {
+            pending.push({ requirement: current.requirement.left, depth: current.depth + 1 }, { requirement: current.requirement.right, depth: current.depth + 1 });
+        }
+    }
+    return maximum;
 }
 
 function tokenize(text: string): string[] {

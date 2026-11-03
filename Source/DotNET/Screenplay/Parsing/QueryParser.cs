@@ -46,6 +46,7 @@ internal static partial class QueryParser
         var byParts = new List<QueryParameterSyntax>();
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
+        var authorizationDepthExceeded = false;
         PerformerSyntax? performer = null;
         string? description = null;
         string? scope = null;
@@ -111,8 +112,17 @@ internal static partial class QueryParser
 
                     break;
                 case "authorize":
-                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
+                {
+                    var next = AuthorizeParser.Parse(context, line);
+                    if (!authorizationDepthExceeded)
+                    {
+                        var previous = authorize;
+                        authorize = AuthorizeParser.Combine(authorize, next, context);
+                        authorizationDepthExceeded = previous is not null && authorize is null;
+                    }
+
                     break;
+                }
                 case "performer":
                     performer = ParsePerformer(context, line, performer, name);
                     break;

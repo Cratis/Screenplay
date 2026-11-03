@@ -35,7 +35,10 @@ Conditions support at most 128 nested parentheses or unary `not` operators and a
 constructed expression depth of 128 (a leaf has depth 1). Grouping counts toward
 nesting, not tree depth. Flat `and`/`or` chains are left-associative and count
 toward tree depth too. Each condition or `authorize` requirement gets its own
-budget, including policy `require` lines and ordinary conditions.
+budget, including policy `require` lines and ordinary conditions. The same tree
+depth limit applies to the combined gate when several `authorize` lines appear
+on one construct or gates are merged across a folder's files. Each added gate
+joins the existing tree with `and` and counts toward its depth.
 
 Exceeding either limit reports `PLAY0852` at the owning condition or requirement
 and refuses that condition. Simplify it or split the requirement into named

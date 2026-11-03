@@ -158,7 +158,9 @@ internal static partial class PlayFolderMerge
         var requirement = WithoutComments(kept[0].Requirement);
         foreach (var next in kept.Skip(1))
         {
-            requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, WithoutComments(next.Requirement), requirement.Location);
+            var combined = AuthorizeParser.Combine(new AuthorizeSyntax(requirement, requirement.Location), next with { Requirement = WithoutComments(next.Requirement) }, context);
+            if (combined is null) return null;
+            requirement = combined.Requirement;
         }
 
         // Every gate - kept or ignored - may carry comments on itself and on its requirements, for

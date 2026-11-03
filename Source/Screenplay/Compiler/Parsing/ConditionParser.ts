@@ -16,8 +16,8 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 
 // The existing C# condition grammar: comparisons, left-associative and/or, and grouped conditions.
 // Previously omitted Legacy operands gain structure, not new parser diagnostics.
-export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false): ConditionSyntax | null {
-    const budget = new ConditionDepthBudget(context, location);
+export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false, budgetContext: ParserContext = context): ConditionSyntax | null {
+    const budget = new ConditionDepthBudget(budgetContext, location);
     const clockContext = context;
     if (!strict) context = context.valueContext;
     const whitespace = strict ? dotNetWhitespace : '\\s';

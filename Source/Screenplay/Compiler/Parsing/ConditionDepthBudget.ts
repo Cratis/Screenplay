@@ -23,13 +23,14 @@ export class ConditionDepthBudget {
 
     build<T extends object>(children: readonly object[], create: () => T): T | null {
         const depth = 1 + Math.max(...children.map(child => this.#depths.get(child) ?? 1));
-        if (depth > 128) {
-            this.#refuse();
-            return null;
-        }
+        if (!this.allowsDepth(depth)) return null;
         const node = create();
         this.#depths.set(node, depth);
         return node;
+    }
+
+    allowsDepth(depth: number): boolean {
+        return depth <= 128 || this.#refuse();
     }
 
     #refuse(): false {

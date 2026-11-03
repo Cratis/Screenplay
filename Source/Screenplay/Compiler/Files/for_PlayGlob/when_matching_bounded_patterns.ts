@@ -19,9 +19,21 @@ describe('when matching bounded patterns', () => {
         `;
         expect(() => execFileSync(process.execPath, ['--experimental-strip-types', '--input-type=module', '-e', script, new URL('../PlayGlob.ts', import.meta.url).href], { timeout: 5000, stdio: 'pipe' })).not.toThrow();
     });
+    it('should stream long candidates within a pattern-sized working set', () => {
+        const script = `
+            import assert from 'node:assert/strict';
+            const { matchesPlayPattern } = await import(process.argv[1]);
+            assert.equal(matchesPlayPattern('*.play', '😀'.repeat(1_500_000) + '.play'), true);
+            assert.equal(matchesPlayPattern('**/x.play', 'a/'.repeat(750_000) + 'x.play'), true);
+        `;
+        expect(() => execFileSync(process.execPath, ['--max-old-space-size=64', '--max-semi-space-size=4', '--experimental-strip-types', '--input-type=module', '-e', script, new URL('../PlayGlob.ts', import.meta.url).href], { timeout: 5000, stdio: 'pipe' })).not.toThrow();
+    });
     it.each([
         ['**/*.play', 'root.play', true], ['**/*.play', 'a/b.play', true],
         ['a/**', 'a/b/c.PLAY', true], ['a/**', 'a/b.txt', false],
+        ['x.play/**', 'x.play', false],
+        ['Sales/*/**', 'Sales/Orders.play', false],
+        ['**/*/**', 'x.play', false],
         ['*.play', 'a/b.play', false], ['?.play', '😀.play', true],
         ['[a](x)+.play', '[a](x)+.play', true], ['[a].play', 'a.play', false],
         ['A/*.play', 'a/b.play', false], ['**/B.play', 'a/b.play', false],

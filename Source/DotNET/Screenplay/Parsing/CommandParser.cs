@@ -38,6 +38,7 @@ internal static partial class CommandParser
         var properties = new List<PropertySyntax>();
         var responses = new List<(SourceLine Line, PropertySyntax? Candidate, CommandResponseSyntax? Response)>();
         AuthorizeSyntax? authorize = null;
+        var authorizationDepthExceeded = false;
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
         var reads = new List<ReadsSyntax>();
@@ -134,8 +135,17 @@ internal static partial class CommandParser
                     documentation = DocumentationParser.Parse(context, line, documentation, $"Command '{name.Groups[1].Value}'", directiveLocations);
                     break;
                 case "authorize":
-                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
+                {
+                    var next = AuthorizeParser.Parse(context, line);
+                    if (!authorizationDepthExceeded)
+                    {
+                        var previous = authorize;
+                        authorize = AuthorizeParser.Combine(authorize, next, context);
+                        authorizationDepthExceeded = previous is not null && authorize is null;
+                    }
+
                     break;
+                }
                 case "concurrency":
                     concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
                     break;

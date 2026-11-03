@@ -45,6 +45,7 @@ export class FeatureBody {
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
+    #authorizationDepthExceeded = false;
 
     constructor(readonly name: string) {}
 
@@ -68,9 +69,15 @@ export class FeatureBody {
             case 'purpose':
                 parsePurposeReference(context, line, this.#purposes);
                 return true;
-            case 'authorize':
-                this.#authorize = combineAuthorize(this.#authorize, parseAuthorize(context, line));
+            case 'authorize': {
+                const next = parseAuthorize(context, line);
+                if (!this.#authorizationDepthExceeded) {
+                    const previous = this.#authorize;
+                    this.#authorize = combineAuthorize(this.#authorize, next, context);
+                    this.#authorizationDepthExceeded = previous !== null && this.#authorize === null;
+                }
                 return true;
+            }
             case 'import':
                 parseFileImport(context, line, this.#fileImports);
                 return true;

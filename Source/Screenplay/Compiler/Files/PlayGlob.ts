@@ -43,54 +43,64 @@ export function staticFolderOf(resolvedPattern: string): string {
 
 // Whether a normalized portable path is a .play file a resolved pattern names.
 export function matchesPlayPattern(resolvedPattern: string, path: string): boolean {
-    if (!path.toLowerCase().endsWith('.play')) return false;
-    const parts = path.split('/').map(part => [...part]);
-    let reachable = Array<boolean>(parts.length + 1).fill(false);
+    if (path.slice(-5).toLowerCase() !== '.play') return false;
+    const states = patternStates(resolvedPattern);
+    let reachable = Array<boolean>(states.length + 1).fill(false);
+    let next = Array<boolean>(states.length + 1).fill(false);
     reachable[0] = true;
-    const segments = resolvedPattern.split('/');
-    for (let index = 0; index < segments.length; index++) {
-        const segment = segments[index]!;
-        if (segment === '**' && index === segments.length - 1) return matchesTrailingGlobstar(parts, reachable);
-        reachable = advanceSegment(segment, parts, reachable);
-    }
-    return reachable[parts.length]!;
-}
-
-// The old trailing '.*' excludes line separators, unlike a folder globstar.
-function matchesTrailingGlobstar(parts: readonly (readonly string[])[], reachable: readonly boolean[]): boolean {
-    let suffixMatches = true;
-    for (let part = parts.length; part >= 0; part--) {
-        if (part < parts.length) suffixMatches &&= !parts[part]!.some(character => '\n\r\u2028\u2029'.includes(character));
-        if (reachable[part] && suffixMatches) return true;
-    }
-    return false;
-}
-
-function advanceSegment(segment: string, parts: readonly (readonly string[])[], reachable: readonly boolean[]): boolean[] {
-    const next = Array<boolean>(parts.length + 1).fill(false);
-    for (let part = 0; part < parts.length; part++) {
-        if (segment === '**') {
-            next[part] = reachable[part]! || (part > 0 && next[part - 1]! && parts[part - 1]!.length > 0);
-        } else {
-            next[part + 1] = reachable[part]! && matchesSegment(segment, parts[part]!);
+    // Epsilon transitions only advance, so one forward pass closes each rolling state set.
+    for (const character of path) {
+        next.fill(false);
+        for (let state = 0; state < states.length; state++) {
+            if (!reachable[state]) continue;
+            const { skip, consume } = states[state]!;
+            if (skip > 0) reachable[state + skip] = true;
+            const target = consume(character);
+            if (target >= 0) next[target] = true;
         }
-    }
-    return next;
-}
-
-// Rolling dynamic-programming rows keep matching polynomial without recursive wildcard retries.
-function matchesSegment(pattern: string, characters: readonly string[]): boolean {
-    let reachable = Array<boolean>(characters.length + 1).fill(false);
-    reachable[0] = true;
-    for (const token of pattern) {
-        const next = Array<boolean>(characters.length + 1).fill(false);
-        next[0] = token === '*' && reachable[0]!;
-        for (let index = 1; index <= characters.length; index++) {
-            next[index] = token === '*'
-                ? reachable[index]! || next[index - 1]!
-                : reachable[index - 1]! && (token === '?' || token === characters[index - 1]);
-        }
+        const previous = reachable;
         reachable = next;
+        next = previous;
     }
-    return reachable[characters.length]!;
+    for (let state = 0; state < states.length; state++) {
+        if (reachable[state] && states[state]!.skip > 0) reachable[state + states[state]!.skip] = true;
+    }
+    return reachable[states.length]!;
+}
+
+function patternStates(pattern: string): { skip: number; consume: (character: string) => number }[] {
+    const states: { skip: number; consume: (character: string) => number }[] = [];
+    const segments = pattern.split('/');
+    for (let segment = 0; segment < segments.length; segment++) {
+        const index = states.length;
+        const last = segment === segments.length - 1;
+        if (segments[segment] === '**') {
+            if (last) {
+                // Like the former trailing `.*`, this loop does not cross line separators.
+                states.push({ skip: 1, consume: character => '\n\r\u2028\u2029'.includes(character) ? -1 : index });
+            } else {
+                // (?:[^/]+/)*: skipping consumes no folder; entering requires a nonempty one.
+                states.push({ skip: 2, consume: character => character === '/' ? -1 : index + 1 });
+                states.push({ skip: 0, consume: character => character === '/' ? index : index + 1 });
+            }
+            continue;
+        }
+        for (const token of segments[segment]!) {
+            const position = states.length;
+            states.push({
+                skip: token === '*' ? 1 : 0,
+                consume: character => {
+                    if (character === '/') return -1;
+                    if (token === '*') return position;
+                    return token === '?' || character === token ? position + 1 : -1;
+                },
+            });
+        }
+        // An ordinary segment always consumes its separator, including before a trailing **.
+        if (!last) {
+            const position = states.length;
+            states.push({ skip: 0, consume: character => character === '/' ? position + 1 : -1 });
+        }
+    }
+    return states;
 }

@@ -59,12 +59,33 @@ internal static partial class AuthorizeParser
         return requirement is null ? null : new AuthorizeSyntax(requirement, line.Location);
     }
 
-    internal static AuthorizeSyntax? Combine(AuthorizeSyntax? first, AuthorizeSyntax? next) => (first, next) switch
+    internal static AuthorizeSyntax? Combine(AuthorizeSyntax? first, AuthorizeSyntax? next, ParserContext context)
     {
-        (null, _) => next,
-        (_, null) => first,
-        _ => new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location)
-    };
+        if (first is null) return next;
+        if (next is null) return first;
+        var depth = 1 + Math.Max(RequirementDepth(first.Requirement), RequirementDepth(next.Requirement));
+        if (!new ConditionDepthBudget(context, next.Location).AllowsDepth(depth)) return null;
+
+        return new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location);
+    }
+
+    static int RequirementDepth(PolicyRequirementSyntax requirement)
+    {
+        var pending = new Stack<(PolicyRequirementSyntax Requirement, int Depth)>();
+        pending.Push((requirement, 1));
+        var maximum = 1;
+        while (pending.TryPop(out var current))
+        {
+            maximum = Math.Max(maximum, current.Depth);
+            if (current.Requirement is LogicalPolicyRequirementSyntax logical)
+            {
+                pending.Push((logical.Left, current.Depth + 1));
+                pending.Push((logical.Right, current.Depth + 1));
+            }
+        }
+
+        return maximum;
+    }
 
     /// <summary>
     /// Finds where an implicit conjunction sits between adjacent operands in one line of an authorize.

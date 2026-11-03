@@ -38,6 +38,7 @@ internal sealed class ModuleBody(string name)
     string? _description;
     string? _documentation;
     AuthorizeSyntax? _authorize;
+    bool _authorizationDepthExceeded;
 
     /// <summary>
     /// Parses one already consumed line of the body.
@@ -71,8 +72,17 @@ internal sealed class ModuleBody(string name)
                 PurposeParser.ParseReference(context, line, _purposes);
                 return true;
             case "authorize":
-                _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
+            {
+                var next = AuthorizeParser.Parse(context, line);
+                if (!_authorizationDepthExceeded)
+                {
+                    var previous = _authorize;
+                    _authorize = AuthorizeParser.Combine(_authorize, next, context);
+                    _authorizationDepthExceeded = previous is not null && _authorize is null;
+                }
+
                 return true;
+            }
             case "import":
                 FileImportParser.Parse(context, line, _fileImports);
                 return true;
