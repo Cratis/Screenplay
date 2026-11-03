@@ -22,6 +22,7 @@ describe('when authoring passive read models', () => {
     it.each(['command RegisterInvoice', 'event InvoiceRegistered', 'projection RegistrationHistory => RegistrationState'])('should not offer passive in %s', header => {
         const lines = [...prefix, `      ${header}`, '        '];
         const plan = planCompletions(lines, 4, lines[4], scanDocument(lines));
+        plan.kind.should.equal('entries');
         const entries = plan.kind === 'entries' ? plan.entries : [];
         entries.some(entry => entry.label === 'passive').should.equal(false);
     });
