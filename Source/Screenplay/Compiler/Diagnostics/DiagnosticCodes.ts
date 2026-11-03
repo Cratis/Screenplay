@@ -507,4 +507,6 @@ export const DiagnosticCodes = {
     WorkflowWithoutExpiry: 'PLAY0849',
     WorkflowJoinWithOneBranch: 'PLAY0850',
     UnknownWorkflowReference: 'PLAY0851',
+    UnknownTimeZone: 'PLAY0852',
+    InvalidCalendarContextMember: 'PLAY0853',
 } as const;

@@ -40,6 +40,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     public SemanticWorld World { get; private set; } = world;
 
     /// <summary>
+    /// Gets the IANA time zone a specification pins with <c>given time zone</c>; commands that reactions invoke read it as the scenario and context zone.
+    /// </summary>
+    public string? GivenTimeZone { get; init; }
+
+    /// <summary>
     /// Gets every fact appended through the loop, in order.
     /// </summary>
     public ImmutableArray<SemanticFact> Facts => [.. _facts];
@@ -201,7 +206,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             return null;
         }
 
-        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
+        var occurrence = Occurrence(cause, occurred);
         if (trigger.RequirementId is not null)
         {
             return FireBody(reaction, trigger, cause, occurrence);
@@ -226,6 +231,13 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         }
 
         return null;
+    }
+
+    // A reaction-invoked command reads the triggering instant when the model uses the clock (decision 0107); other models keep the scenario clock.
+    SemanticCommandOccurrence? Occurrence(SemanticFact? cause, DateTimeOffset? occurred)
+    {
+        var instant = SemanticClockUsage.Uses(plan.Model.Application) ? cause?.Occurred ?? occurred : occurred;
+        return instant is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
     }
 
     SemanticExecutionResult? Produce(
@@ -323,6 +335,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
             Occurrence = occurrence,
+            ContextTimeZone = GivenTimeZone,
+            ScenarioTimeZone = GivenTimeZone,
             CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
         };
         var result = RunInvoked(reaction, command, request);

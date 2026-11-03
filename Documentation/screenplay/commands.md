@@ -11,10 +11,21 @@ Commands are input definitions — imperative intents. A command declares its pr
 
 Decisions 0106/0107 introduce application-root `time zone "Europe/Oslo"` (or
 `time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
-(or `calendar from $context.zone`), and specification `given time zone "Europe/Oslo"`.
+(or `calendar from $context.timeZone`), and specification `given time zone "Europe/Oslo"`.
 Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
 `now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
 Bare `today` and `now` remain ordinary paths, preserving properties with those names.
+
+The internal clock candidate supports offsets and `date of` only in conditions
+(`validate` / `require` and `produces when`), including bare `date of now` and
+`date of today`. Properties named `now` or `today` still shadow those clocks inside
+`date of`. Offsets on `today` must be whole days; hours and minutes are refused
+with `PLAY0268` — use `now` for sub-day offsets. A `validate` property rule can compare
+against bare `today`, but `dueDate >= today - 7 days` and `dueDate >= date of now`
+are refused with `PLAY0268`. Use a `require` condition for those operands in the candidate;
+this does not change the syntax-only public boundary described below.
+In the internal candidate, ids resolve through the host's time-zone database, so alias
+support and case sensitivity follow the host. Models should use the canonical, exact-case IANA id.
 
 These forms are **syntax-only**: both parsers preserve them, but executable binding
 reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM

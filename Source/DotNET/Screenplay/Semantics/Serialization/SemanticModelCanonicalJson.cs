@@ -60,6 +60,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticRevision? revision,
         SemanticApplication application)
     {
+        RefuseUnpublishedClock(application);
         try
         {
             var buffer = new ArrayBufferWriter<byte>();

@@ -5,7 +5,7 @@ module Clocks
     slice StateChange Schedule
       command ScheduleAppointment
         occurred DateTime
-        calendar from $context.zone
+        calendar from $context.timeZone
         produces when date of occurred <= date of now + 2 hours
           AppointmentScheduled
       event AppointmentScheduled

@@ -50,6 +50,8 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0849` | Warning | A `wait` for an event, or an `approval`, has no `expires after`, so a run can wait forever. |
 | `PLAY0850` | Information | A `join` has a single incoming branch, so it joins nothing. |
 | `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
+| `PLAY0852` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
+| `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

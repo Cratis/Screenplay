@@ -3773,4 +3773,14 @@ public static class DiagnosticCodes
 
     /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
     public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>
+    /// An application <c>time zone</c>, a command <c>calendar</c> or a specification <c>given time zone</c> names an id that is not a known IANA time zone.
+    /// </summary>
+    public const string UnknownTimeZone = "PLAY0852";
+
+    /// <summary>
+    /// A command <c>calendar from $context.&lt;member&gt;</c> names a member other than the trusted <c>timeZone</c> member of the command context.
+    /// </summary>
+    public const string InvalidCalendarContextMember = "PLAY0853";
 }
