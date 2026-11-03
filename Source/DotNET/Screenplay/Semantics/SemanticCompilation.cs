@@ -47,6 +47,13 @@ public sealed class SemanticCompilation
     public EnvironmentRequirements Environment { get; private init; } = EnvironmentRequirements.None;
 
     /// <summary>
+    /// Gets the explicitly passive read-model identities, or an empty set when none were authored.
+    /// This realization sidecar is not part of ESM bytes or its revision. Renderers must include it
+    /// in hashed render input, and runtimes must carry it through application realization.
+    /// </summary>
+    public ImmutableHashSet<SemanticId> PassiveReadModels { get; private init; } = [];
+
+    /// <summary>
     /// Creates a compilation after cross-checking the model, identity catalog, documents, and source map.
     /// </summary>
     /// <param name="model">The validated executable semantic model.</param>
@@ -105,10 +112,13 @@ public sealed class SemanticCompilation
     }
 
     internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = origins, Environment = Environment };
+        new(Model, Documents, SourceMap) { SpecificationOrigins = origins, Environment = Environment, PassiveReadModels = PassiveReadModels };
 
     internal SemanticCompilation WithEnvironment(EnvironmentRequirements environment) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = environment };
+        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = environment, PassiveReadModels = PassiveReadModels };
+
+    internal SemanticCompilation WithPassiveReadModels(ImmutableHashSet<SemanticId> passiveReadModels) =>
+        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = Environment, PassiveReadModels = passiveReadModels };
 }
 
 sealed class SemanticCompilationIndex

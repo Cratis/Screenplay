@@ -3773,4 +3773,13 @@ public static class DiagnosticCodes
 
     /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
     public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>A read model repeats the idempotent <c>passive</c> directive.</summary>
+    public const string RepeatedPassiveDirective = "PLAY0858";
+
+    /// <summary>A query or screen consumes a passive read model, which only commands may read.</summary>
+    public const string PassiveReadModelObserved = "PLAY0859";
+
+    /// <summary>A passive read model is not read by any command.</summary>
+    public const string PassiveReadModelNotRead = "PLAY0860";
 }

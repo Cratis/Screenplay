@@ -309,6 +309,7 @@
     "parallel",
     "parameter",
     "parent",
+    "passive",
     "pattern",
     "performer",
     "persona",
@@ -48860,6 +48861,39 @@
         "error"
       ],
       "title": "A workflow names a command, event, role, state machine, state, read model or property that is not declared.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0858",
+      "name": "RepeatedPassiveDirective",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A read model repeats the idempotent passive directive.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0859",
+      "name": "PassiveReadModelObserved",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A query or screen consumes a passive read model, which only commands may read.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0860",
+      "name": "PassiveReadModelNotRead",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A passive read model is not read by any command.",
       "reserved": false,
       "retired": false
     }

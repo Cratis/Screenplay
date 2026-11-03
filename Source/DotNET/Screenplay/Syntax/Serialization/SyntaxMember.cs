@@ -22,6 +22,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
     internal Type? ElementType { get; } = CollectionElement(property.PropertyType);
 
     internal bool Required => Type != typeof(SourceOptions) && ElementType is null && !Nullable && Parameter?.HasDefaultValue != true &&
+        !(Property.DeclaringType == typeof(ReadModelSyntax) && Property.Name == nameof(ReadModelSyntax.IsPassive)) &&
         !(Property.DeclaringType == typeof(ConceptAttributeSyntax) && Property.Name == nameof(ConceptAttributeSyntax.Criminal)) &&
         !(Property.DeclaringType == typeof(PropertySyntax) && (Property.Name == nameof(PropertySyntax.IsGenerated) || Property.Name == nameof(PropertySyntax.IsSubject) || Property.Name == nameof(PropertySyntax.IsKey))) &&
         !(Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) &&
@@ -35,6 +36,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
         get
         {
             if (Type == typeof(SourceOptions)) return SourceOptions.Legacy;
+            if (Property.DeclaringType == typeof(ReadModelSyntax) && Property.Name == nameof(ReadModelSyntax.IsPassive)) return false;
             if (Property.DeclaringType == typeof(ConceptSyntax) && Property.Name == nameof(ConceptSyntax.ValueNumbers)) return null;
             if (Property.DeclaringType == typeof(ConceptAttributeSyntax) && Property.Name == nameof(ConceptAttributeSyntax.Criminal)) return false;
             if (Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) return false;

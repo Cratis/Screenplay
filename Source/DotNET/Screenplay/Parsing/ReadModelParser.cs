@@ -31,6 +31,7 @@ internal static partial class ReadModelParser
         string? documentation = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
+        var passive = false;
         int? bodyIndent = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -49,6 +50,22 @@ internal static partial class ReadModelParser
             else if (LineText.FirstWord(line.Content) == "documentation" && PropertyLineParser.TryParse(line) is null)
             {
                 documentation = DocumentationParser.Parse(context, line, documentation, $"Read model '{name.Groups[1].Value}'", directiveLocations);
+            }
+            else if (line.Content == "passive")
+            {
+                if (passive)
+                {
+                    context.Warning(DiagnosticCodes.RepeatedPassiveDirective, "A read model repeats 'passive'; the directive is idempotent.", line.Location);
+                }
+                else
+                {
+                    passive = true;
+                    directiveLocations["passive"] = line.Location;
+                }
+            }
+            else if (LineText.FirstWord(line.Content) == "passive" && line.Content["passive".Length..].Trim() is "true" or "false")
+            {
+                context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
             else if (FileReferenceParser.IsDirectiveAmongProperties(line))
             {
@@ -74,7 +91,7 @@ internal static partial class ReadModelParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, DirectiveLocations = directiveLocations };
+        return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, IsPassive = passive, DirectiveLocations = directiveLocations };
     }
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
