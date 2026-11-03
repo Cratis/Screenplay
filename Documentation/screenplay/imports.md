@@ -185,6 +185,10 @@ silently apply a saved-file proposal.
 
 ## Patterns
 
+Import patterns use bounded, non-recursive matching. A whole-segment `**` matches
+zero or more folders; `*` and `?` stay within one path segment. Matching remains
+case-sensitive (only the `.play` extension check is case-insensitive).
+
 A path is relative to the folder of the file that writes the import.
 
 | Pattern | Matches |

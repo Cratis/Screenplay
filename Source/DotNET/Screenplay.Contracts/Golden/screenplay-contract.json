@@ -49405,6 +49405,17 @@
       "title": "A passive read model is not read by any command.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0861",
+      "name": "ConditionDepthExceeded",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A condition exceeds the supported nesting or constructed expression depth of 128.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

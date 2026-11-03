@@ -42,7 +42,7 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: github.event_name == 'pull_request' && !inputs.release
         with:
           fetch-depth: 0
@@ -78,12 +78,13 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
+          package-manager-cache: false
       # yarn.lock is not committed, so setup-node's yarn cache cannot key on it; cache like publish.yml does.
-      - uses: actions/cache@v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .yarn/cache
@@ -95,7 +96,7 @@ jobs:
           corepack enable
           yarn install
           yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: screenplay-event-model-board
           path: Source/Screenplay/McpApp/dist/event-model-board.html
@@ -114,13 +115,38 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: '10.0.x'
-      - uses: actions/setup-node@v4
+      - name: Resolve native NuGet SDK cohort
+        id: native-nuget-context
+        run: |
+          sdk="$(dotnet --version)"
+          test -n "$sdk"
+          printf 'sdk=%s\n' "$sdk" >> "$GITHUB_OUTPUT"
+      - name: Cache native NuGet packages
+        id: native-nuget
+        uses: Cratis/Workflows/.github/actions/dotnet-cache@3f8a8a7ef75f72b6b089638b68ec2f9af8f593e3 # Workflows snapshot 2026-11-01 (issue #1139)
+        with:
+          path: ~/.nuget/packages
+          key-prefix: native-nuget-v1-${{ matrix.rid }}-${{ runner.arch }}-sdk${{ steps.native-nuget-context.outputs.sdk }}
+          key-files: |
+            **/packages.lock.json
+            **/*.props
+            **/*.targets
+            **/*.csproj
+            **/[Nn]u[Gg]et.[Cc]onfig
+            **/*.slnx
+            **/*.sln
+            **/global.json
+            .github/workflows/mcp-desktop.yml
+            .github/workflows/native-editor-repairs.yml
+          mode: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'save' || 'restore' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
+          package-manager-cache: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -132,7 +158,7 @@ jobs:
         run: python -m unittest discover -s Source/DotNET/Screenplay.Mcp/Packaging -p 'test_*.py'
       # Screenplay.Mcp.csproj embeds this file only when it exists, so a missing board would not fail the build.
       - name: Download embedded event model board
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: screenplay-event-model-board
           path: Source/Screenplay/McpApp/dist
@@ -150,7 +176,7 @@ jobs:
           python Source/DotNET/Screenplay.Mcp/Packaging/build.py --publish Artifacts/Desktop/publish --output Artifacts/Desktop/packages --version "$VERSION" --rid "$RID"
       - name: Smoke test both unpacked packages on the native OS
         run: python Source/DotNET/Screenplay.Mcp/Packaging/smoke.py Artifacts/Desktop/packages/*.mcpb Artifacts/Desktop/packages/*-plugin.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: screenplay-desktop-${{ matrix.rid }}
           path: |
@@ -167,7 +193,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: screenplay-desktop-*
           merge-multiple: true

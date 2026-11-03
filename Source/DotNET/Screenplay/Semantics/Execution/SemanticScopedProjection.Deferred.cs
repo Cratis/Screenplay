@@ -147,10 +147,7 @@ internal sealed partial class SemanticScopedProjection
         {
             Apply(target, deferred.From!.Mappings, deferred.Level.Targets, deferred.Fact, deferred.Level.Nested.IsEmpty);
             Apply(target, deferred.Scope.Every?.Mappings ?? [], deferred.Level.Targets, deferred.Fact, deferred.Level.Nested.IsEmpty && deferred.Scope.Joins.IsEmpty);
-            if (deferred.Level.Nested.IsEmpty)
-            {
-                BackfillJoins(target, deferred.From!, deferred.Scope, deferred.Level);
-            }
+            BackfillJoins(target, deferred.From!, deferred.Scope, deferred.Level);
         });
     }
 

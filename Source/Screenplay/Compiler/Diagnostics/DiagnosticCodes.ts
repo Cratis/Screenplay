@@ -516,4 +516,5 @@ export const DiagnosticCodes = {
     RepeatedPassiveDirective: 'PLAY0858',
     PassiveReadModelObserved: 'PLAY0859', // C# only
     PassiveReadModelNotRead: 'PLAY0860', // C# only
+    ConditionDepthExceeded: 'PLAY0861',
 } as const;

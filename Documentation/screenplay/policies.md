@@ -29,6 +29,21 @@ policy <Name>
 
 Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`. A policy may have a `require` condition or one implementation (`file` or inline code), never both. Mixing `require` with an implementation reports `PLAY0440`.
 
+## Condition limits
+
+Conditions support at most 128 nested parentheses or unary `not` operators and a
+constructed expression depth of 128 (a leaf has depth 1). Grouping counts toward
+nesting, not tree depth. Flat `and`/`or` chains are left-associative and count
+toward tree depth too. Each condition or `authorize` requirement gets its own
+budget, including policy `require` lines and ordinary conditions. The same tree
+depth limit applies to the combined gate when several `authorize` lines appear
+on one construct or gates are merged across a folder's files. Each added gate
+joins the existing tree with `and` and counts toward its depth.
+
+Exceeding either limit reports `PLAY0861` at the owning condition or requirement
+and refuses that condition. Simplify it or split the requirement into named
+policies. Parentheses inside quoted values do not count toward nesting.
+
 ## Authorization scopes
 
 Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.

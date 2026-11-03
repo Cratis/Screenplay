@@ -59,6 +59,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0858` | Warning | A read model repeats the bare `passive` directive; it is idempotent. Keep one directive. Both parsers report this warning. |
 | `PLAY0859` | Error | A query or screen consumes a passive read model. Remove `passive` if the model is a read surface, or keep it private to command reads. C# only. |
 | `PLAY0860` | Warning | No command reads a passive read model. Add the intended command read or remove `passive`; passivity is never inferred. C# only. |
+| `PLAY0861` | Error | A condition exceeds the supported nesting or constructed expression depth of 128. Simplify the condition or split the requirement into named policies. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
