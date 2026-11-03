@@ -10,6 +10,7 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    repeatedPassiveDirective: 'PLAY0858',
     invalidSemanticBinding: 'PLAY0273',
     unknownMatchPattern: 'PLAY0366',
     invalidMatchPattern: 'PLAY0367',
@@ -49,6 +50,10 @@ export const diagnosticCodes = {
     enumerationNumberOutsideInt32: 'PLAY0669',
     malformedEnumerationNumber: 'PLAY0670',
     unpinnedStoredEnumeration: 'PLAY0671',
+    invalidContextDeclaration: 'PLAY0854',
+    unknownContextMemberType: 'PLAY0855',
+    duplicateContextMember: 'PLAY0856',
+    reservedContextMemberName: 'PLAY0857',
     invalidIdentityDeclaration: 'PLAY0633',
     duplicateIdentity: 'PLAY0634',
     invalidIdentityDetail: 'PLAY0635',

@@ -73,6 +73,7 @@ internal static partial class PlayFolderMerge
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
             CommandReadMode = MergeCommandReadMode(applications, context),
             TimeZone = MergeTimeZone(applications, context),
+            Context = OnlyOne(applications.Select(application => application.Context), value => value.Location, "context block", context),
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             Onboarding = OnlyOne(applications.Select(application => application.Onboarding), onboarding => onboarding.Location, "onboarding block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),

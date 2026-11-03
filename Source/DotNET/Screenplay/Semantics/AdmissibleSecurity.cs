@@ -12,6 +12,7 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     readonly AdmissibleSecuritySyntax _security = new();
     readonly HashSet<string> _policies = new(StringComparer.Ordinal);
     readonly HashSet<string> _reads = new(StringComparer.Ordinal);
+    readonly AdmissiblePersonaClosure _personas = new(syntax);
 
     internal bool TryPlan(IReadOnlyList<Diagnostic> errors, AdmissibleExclusions plan)
     {
@@ -56,7 +57,7 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
         if (declarations.Length != 1) return false;
         if (_security.Authorizations.Exists(use => !AdmissibleSecuritySyntax.Known(use.Syntax.Requirement))) return false;
         var reason = $"Excluded policy '{name}' and all declarations protected by it.";
-        if (!plan.Add(declarations[0], [diagnostic], reason)) return false;
+        if (!_personas.Close(declarations[0], diagnostic, plan, _security)) return false;
         _policies.Add(name);
         foreach (var use in _security.Authorizations.Where(use => use.Syntax.References().Any(reference => reference.Name == name)))
         {
@@ -135,7 +136,7 @@ sealed class AdmissibleSecurity(ApplicationSyntax syntax, AdmissibleSyntax index
     {
         var remaining = new AdmissibleSecuritySyntax();
         remaining.VisitApplication(pruned);
-        if (RetainsExcludedPolicy(pruned, remaining)) return false;
+        if (RetainsExcludedPolicy(pruned, remaining) || !_personas.IsClosed(pruned, remaining)) return false;
         return !remaining.References.Concat(remaining.Views).Any(reference => _reads.Contains(reference.Name));
     }
 

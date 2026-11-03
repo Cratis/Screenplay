@@ -91,6 +91,23 @@ These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screen
 
 A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body. Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran. Resolved, nonempty file/inline handlers with unconditional `produces` use the same v23 context/result v1 descriptor; their sidecars carry a language, content hash and span or file reference, not pending hints. Reference execution remains Unsupported at the body, and target-language admission is separate.
 
+## Application-declared context members
+
+Decision 0132 adds an application-root `context` block for named business time zones:
+
+```play
+context
+  description "Time zones the business reasons in."
+  businessTimeZone time zone
+  customerTimeZone time zone
+```
+
+This declaration is **syntax-only**. It is parsed, printed, serialized and indexed, but binding any document that declares it reports `PLAY0268` until #824 admits time-zone execution. It does not extend today's executable `$context` roots or change an existing command calendar operand.
+
+Declare at most one block per application folder, across all its files, as with `identity`. The block may be empty and may have one description. Members have a lower-case-leading name and the type `time zone`; no other type or member body is supported. Names are unique after removing an `@` escape. `timeZone` and every existing `$context` root (`command`, `arguments`, `tenant`, `causedBy`, `causation`, `occurred` and `identity`) are reserved. Escape a member named `description` as `@description`; the printer retains that escape.
+
+The printer places `context` immediately after an application `time zone` declaration when one exists. The block declares names, not runtime values or time-zone defaults. See the [grammar](grammar.md) and [context diagnostics](diagnostics.md#application-declared-context-members).
+
 ## Implementation wrapper support
 
 | Owner | Authoring wrapper | Executable contract |

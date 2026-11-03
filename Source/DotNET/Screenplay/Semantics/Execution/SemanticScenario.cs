@@ -37,7 +37,7 @@ internal static class SemanticScenario
         out int actionFacts,
         out ImmutableArray<SemanticRecordedInvocation> invocations)
     {
-        var loop = new SemanticReactionLoop(evaluator, plan, world);
+        var loop = new SemanticReactionLoop(evaluator, plan, world) { GivenTimeZone = expected.GivenTimeZone };
         var result = Perform(plan, evaluator, loop, world, expected, queries, out actionFacts);
         invocations = loop.Invocations;
         return result;
@@ -70,7 +70,7 @@ internal static class SemanticScenario
             switch (expected)
             {
                 case { When: { } when }:
-                    var executed = evaluator.Execute(plan, world, CommandRequest(when) with { Caller = expected.GivenCaller, Occurrence = occurrence });
+                    var executed = evaluator.Execute(plan, world, CommandRequest(when) with { Caller = expected.GivenCaller, Occurrence = occurrence, ContextTimeZone = expected.GivenTimeZone, ScenarioTimeZone = expected.GivenTimeZone });
                     if (executed is not SemanticAccepted accepted)
                     {
                         return executed;

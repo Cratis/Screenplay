@@ -3773,4 +3773,35 @@ public static class DiagnosticCodes
 
     /// <summary>A workflow names a command, event, role, state machine, state, read model or property that is not declared.</summary>
     public const string UnknownWorkflowReference = "PLAY0851";
+
+    /// <summary>
+    /// An application <c>time zone</c>, a command <c>calendar</c> or a specification <c>given time zone</c> names an id that is not a known IANA time zone.
+    /// </summary>
+    public const string UnknownTimeZone = "PLAY0852";
+
+    /// <summary>
+    /// A command <c>calendar from $context.&lt;member&gt;</c> names a member other than the trusted <c>timeZone</c> member of the command context.
+    /// </summary>
+    public const string InvalidCalendarContextMember = "PLAY0853";
+
+    /// <summary>A context block is malformed, repeated or outside the application root.</summary>
+    public const string InvalidContextDeclaration = "PLAY0854";
+
+    /// <summary>A context member has a type other than <c>time zone</c>.</summary>
+    public const string UnknownContextMemberType = "PLAY0855";
+
+    /// <summary>A context block declares the same member name more than once.</summary>
+    public const string DuplicateContextMember = "PLAY0856";
+
+    /// <summary>A context member uses a reserved built-in context name.</summary>
+    public const string ReservedContextMemberName = "PLAY0857";
+
+    /// <summary>A read model repeats the idempotent <c>passive</c> directive.</summary>
+    public const string RepeatedPassiveDirective = "PLAY0858";
+
+    /// <summary>A query or screen consumes a passive read model, which only commands may read.</summary>
+    public const string PassiveReadModelObserved = "PLAY0859";
+
+    /// <summary>A passive read model is not read by any command.</summary>
+    public const string PassiveReadModelNotRead = "PLAY0860";
 }

@@ -26,6 +26,7 @@ module Billing
         produces event InvoiceIssued
           note String = documentation
       readmodel InvoiceStatus
+        passive
         documentation String
         documentation
           ```markdown

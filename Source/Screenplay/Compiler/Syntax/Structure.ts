@@ -103,10 +103,22 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly isPlacement: boolean;
 }
 
+export interface ApplicationContextSyntax extends SyntaxNode {
+    readonly kind: 'ApplicationContextSyntax';
+    readonly members: readonly ContextMemberSyntax[];
+    readonly description: string | null;
+}
+
+export interface ContextMemberSyntax extends SyntaxNode {
+    readonly kind: 'ContextMemberSyntax';
+    readonly name: string;
+}
+
 export interface ApplicationSyntax extends SyntaxNode {
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
     readonly timeZone?: TimeZoneSyntax | null;
+    readonly context?: ApplicationContextSyntax | null;
     readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';

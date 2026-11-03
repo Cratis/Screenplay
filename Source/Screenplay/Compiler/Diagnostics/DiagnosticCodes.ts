@@ -507,4 +507,13 @@ export const DiagnosticCodes = {
     WorkflowWithoutExpiry: 'PLAY0849',
     WorkflowJoinWithOneBranch: 'PLAY0850',
     UnknownWorkflowReference: 'PLAY0851',
+    UnknownTimeZone: 'PLAY0852',
+    InvalidCalendarContextMember: 'PLAY0853',
+    InvalidContextDeclaration: 'PLAY0854',
+    UnknownContextMemberType: 'PLAY0855',
+    DuplicateContextMember: 'PLAY0856',
+    ReservedContextMemberName: 'PLAY0857',
+    RepeatedPassiveDirective: 'PLAY0858',
+    PassiveReadModelObserved: 'PLAY0859', // C# only
+    PassiveReadModelNotRead: 'PLAY0860', // C# only
 } as const;

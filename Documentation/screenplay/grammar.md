@@ -9,9 +9,9 @@ description: "Reference for Screenplay syntax details: declarative file use, key
 
 > [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths remain refused with `PLAY0268`, and attached file/inline handler routes require a constrained implementation attachment (`PLAY0800`). Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Flat composite read-model keys, complete caller-supplied optional single-instance queries by parts, and root projection/removal parts keys select ESM v27. Collection by-block queries, context-sourced parts and non-optional single-instance returns remain `PLAY0268`. New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 
-> Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, explicit query scopes and performers remain unadmitted (`PLAY0268`). Collection specification rows compare without regard to order. See [Queries](queries.md).
+> Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, and explicit query scopes remain unadmitted (`PLAY0268`). A query a performer answers is opaque realization metadata (`PLAY0270`, informational): it is left out of executable queries and specifications rather than refused. Collection specification rows compare without regard to order. See [Queries](queries.md).
 
-Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern, random and rule parse but remain unadmitted; sequence is reserved. Rules on generated concepts select ESM V20 and report Proven, Refuted (`PLAY0688`) or Unproven (`PLAY0689`) consistency. Explicit generation with compliance markers remains refused. See [Generated values](generated-values.md).
+Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern (String), random (Int) and constrained `generate rule` are admitted at ESM v21; a named rule needs an unmarked String concept and exactly one file or tagged inline body, and binds as an implementation requirement. Sequence is reserved. Generation breadth is tracked in [#614](https://github.com/Cratis/Screenplay/issues/614). Rules on generated concepts select ESM V20 and report Proven, Refuted (`PLAY0688`) or Unproven (`PLAY0689`) consistency. Explicit generation with compliance markers remains refused. See [Generated values](generated-values.md).
 
 Event `id` pins that differ from the display name select ESM v16 and carry the effective stored type name as `storedName`; equal-name pins keep the earlier version and bytes. Invalid identifier pins, generation disagreements and duplicate stored names are binding errors. See [Events](events.md).
 
@@ -27,7 +27,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -74,6 +74,15 @@ NumericPreamble = "numbers", "exact", NL ;
 (* -------------------------------------------------------------- *)
 
 DomainDecl     = "domain", QualifiedName, NL ;
+
+(* Named application time-zone members, authoring only (decision 0132, #824). *)
+ContextDecl    = "context", NL, [ INDENT, { DescriptionDecl | ContextMember }, DEDENT ] ;
+ContextMember  = PropertyName, "time", "zone", NL ;
+(* Exactly one block per application folder, at the application root. Members
+   have unique unescaped names and no body. Names cannot be timeZone or an
+   existing $context root (command, arguments, tenant, causedBy, causation,
+   occurred, identity). Binding the
+   declaration reports PLAY0268 until #824 admits time-zone execution. *)
 
 (* Caller detail authoring metadata, not executable behavior. *)
 IdentityDecl   = "identity", NL, [ INDENT, { DescriptionDecl | IdentityDetail }, DEDENT ] ;
@@ -864,7 +873,13 @@ SliceBody      = TranslationDirectionDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PassiveDirective | PropertyLine }, DEDENT ;
+
+PassiveDirective = "passive", NL ;
+(* A bare readmodel body directive, never a header modifier. Defaults to active,
+   never inferred. Repeated passive is idempotent (PLAY0858 Warning).
+   Passive models are command-read-only (PLAY0859 Error); unused ones warn
+   (PLAY0860). This is realization metadata, not portable ESM. *)
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, { DescriptionDecl | ObserverFilter | ReducerRule }, DEDENT ;

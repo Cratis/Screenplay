@@ -199,6 +199,7 @@ public sealed partial class ScreenplayPrinter :
         }
 
         WriteTimeZone(writer, application.TimeZone);
+        WriteApplicationContext(writer, application.Context);
 
         WriteFileImports(writer, application.FileImports);
     }
@@ -494,6 +495,7 @@ public sealed partial class ScreenplayPrinter :
             WriteDescription(writer, readModel.Description, readModel);
             WriteDocumentation(writer, readModel.Documentation, readModel);
             WriteFile(writer, readModel.File);
+            if (readModel.IsPassive) writer.Line("passive");
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
     }

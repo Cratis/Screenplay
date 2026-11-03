@@ -61,7 +61,8 @@ public sealed partial class SemanticEvaluator
     internal static ImmutableArray<SemanticValidationFailure> ValidateRules(
         SemanticExecutionPlan plan,
         SemanticCommand command,
-        ImmutableArray<SemanticPropertyValue> values)
+        ImmutableArray<SemanticPropertyValue> values,
+        SemanticClockContext? clock = null)
     {
         var valuesByTarget = values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
         var dateTypes = SemanticDateComparisons.Participants(plan.Model.Application, command);
@@ -69,7 +70,12 @@ public sealed partial class SemanticEvaluator
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            var check = SemanticDateComparisons.Check(validation, value, dateTypes.GetValueOrDefault(validation.Property));
+            var check = validation.ClockOperand is { } clockOperand
+                ? SemanticDateComparisons.Check(
+                    validation with { Operand = (clock ?? throw new InvalidSemanticContract("A clock operand needs the instant and calendar zone of the command.")).Value(clockOperand), ClockOperand = null },
+                    value,
+                    clock.Primitive(clockOperand))
+                : SemanticDateComparisons.Check(validation, value, dateTypes.GetValueOrDefault(validation.Property));
             if (check.Status == SemanticRuleStatus.Failed)
             {
                 failures.Add(new(check.Message, validation.Severity));

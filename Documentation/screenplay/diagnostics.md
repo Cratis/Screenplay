@@ -50,6 +50,15 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0849` | Warning | A `wait` for an event, or an `approval`, has no `expires after`, so a run can wait forever. |
 | `PLAY0850` | Information | A `join` has a single incoming branch, so it joins nothing. |
 | `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
+| `PLAY0852` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
+| `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
+| `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
+| `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
+| `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
+| `PLAY0857` | Error | A context member uses reserved `timeZone` or a built-in `$context` root. The member is not retained. |
+| `PLAY0858` | Warning | A read model repeats the bare `passive` directive; it is idempotent. Keep one directive. Both parsers report this warning. |
+| `PLAY0859` | Error | A query or screen consumes a passive read model. Remove `passive` if the model is a read surface, or keep it private to command reads. C# only. |
+| `PLAY0860` | Warning | No command reads a passive read model. Add the intended command read or remove `passive`; passivity is never inferred. C# only. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
@@ -1113,7 +1122,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated properties whose concepts declare validation rules, and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`), application time zones, command calendars, `given time zone` and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
@@ -1684,6 +1693,17 @@ Decisions 0106 and 0107 add the application calendar and clock operands. Both co
 | `PLAY0812` | Error | A `time zone "<id>"` or `time zone configurable default "<id>"` declaration is repeated, malformed or outside the application root. Declare it once at the application root. |
 | `PLAY0813` | Error | A command declares `calendar` more than once, or the line is neither `calendar "<id>"` nor `calendar from $context.<member>`. |
 | `PLAY0814` | Error | A specification declares `given time zone` more than once, or the line is not `given time zone "<id>"`. |
+
+## Application-declared context members
+
+Decision 0132 adds the [application-root `context` block](context.md#application-declared-context-members). It is parsed but refused at binding with `PLAY0268` until #824 admits execution. One block is allowed per application folder across its files; a second file's block reports `PLAY0172`, as with `identity`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
+| `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
+| `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
+| `PLAY0857` | Error | A context member uses reserved `timeZone` or a built-in `$context` root. The member is not retained. |
 
 ## Specification case tables
 

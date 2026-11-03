@@ -7,7 +7,7 @@ jump to the slice that uses it.
 
 ```text
 Invoicing/
-  invoicing.play         the whole application - 34 slices in one module
+  invoicing.play         the whole application - 36 slices in two modules
   invoicing.en.strings   English text for every $strings key the document references
   invoicing.nb.strings   the same keys in Norwegian
 ```
@@ -15,6 +15,10 @@ Invoicing/
 Processing purposes are declared at the top level: Billing covers the module, Bookkeeping is added on Auditing, and PaymentDisputes on CollectionsBoard. Their union is report-only; it does not enforce retention or make a legal-compliance claim. Concept reasons describe the value rather than its lawful basis.
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
+
+## Passive decision state
+
+In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
 
 ## Reusable read-model member shapes
 
@@ -103,6 +107,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
 | Auditing | | CancelledInvoices, SystemActivity | | |
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory, MarkInvoicePaidFromLegacyPayment | LegacyInvoiceSync, InvoiceSentPublication |
+| InvoiceReservations | ReserveInvoiceNumber | | | |
 | PublicVerification › InvoiceVerification | | VerifyingAnInvoice | | |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
@@ -149,7 +154,8 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$identity.*`, `$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
-| `reads … as … by` and `require` over read state | RecordPayment |
+| `reads … as … by` and `require` over read state | RecordPayment, ReserveInvoiceNumber |
+| `readmodel` with explicit `passive`, consumed only by a command `reads` | InvoiceReservations |
 | Pending `handler implementation` with hint and unconditional `produces`; attached inline/file handlers; `concurrency` | ApplyLateFee (ESM v23 result contract), ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |

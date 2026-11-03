@@ -11,10 +11,21 @@ Commands are input definitions — imperative intents. A command declares its pr
 
 Decisions 0106/0107 introduce application-root `time zone "Europe/Oslo"` (or
 `time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
-(or `calendar from $context.zone`), and specification `given time zone "Europe/Oslo"`.
+(or `calendar from $context.timeZone`), and specification `given time zone "Europe/Oslo"`.
 Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
 `now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
 Bare `today` and `now` remain ordinary paths, preserving properties with those names.
+
+The internal clock candidate supports offsets and `date of` only in conditions
+(`validate` / `require` and `produces when`), including bare `date of now` and
+`date of today`. Properties named `now` or `today` still shadow those clocks inside
+`date of`. Offsets on `today` must be whole days; hours and minutes are refused
+with `PLAY0268` — use `now` for sub-day offsets. A `validate` property rule can compare
+against bare `today`, but `dueDate >= today - 7 days` and `dueDate >= date of now`
+are refused with `PLAY0268`. Use a `require` condition for those operands in the candidate;
+this does not change the syntax-only public boundary described below.
+In the internal candidate, ids resolve through the host's time-zone database, so alias
+support and case sensitivity follow the host. Models should use the canonical, exact-case IANA id.
 
 These forms are **syntax-only**: both parsers preserve them, but executable binding
 reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM
@@ -550,7 +561,7 @@ command Submit
 
 This is a command fragment; the file link selects ordinary team-owned predicate source. A wrapper accepts ordered nonblank quoted `hint` lines and at most one `file` or registered-language tagged fence. Direct forms remain valid. The rule owns its File/Code; metadata owns only hints. Do not mix direct and wrapped sources or repeat the wrapper.
 
-An empty or hints-only wrapper is pending intent: it is valid authoring syntax but executable binding fails with `PLAY0268`. Attached wrappers bind to the existing `RulePredicate` contract, exactly like direct source. Adding, editing or reordering hints does not change canonical ESM bytes, requirement identity, context/result versions, capability or source content hash. Source coordinates move with the text. Reached opaque predicates remain unsupported by the reference runner, never a passing test or confirmation.
+An empty or hints-only wrapper is pending intent: it is valid authoring syntax but executable binding fails with `PLAY0268`. Attached wrappers bind to the existing `RulePredicate` contract, exactly like direct source. Adding, editing or reordering hints does not change canonical ESM bytes, requirement identity, context/result versions, capability or source content hash. Source coordinates move with the text. Reached opaque predicates remain unsupported by the standalone reference runner, never a passing test or confirmation. A host that supplies a body-execution provider can evaluate a resolved predicate body (see [What the executable model admits](#what-the-executable-model-admits)); without a provider the predicate stays unsupported.
 
 Concept predicates, builtin property rules and whole-command `require`/`validate` bodies do not accept this wrapper. Handler and operation-phase wrappers have their own [support boundaries](context.md#implementation-wrapper-support). Realization, committed locks, drift checks, confirmation and AI actions remain deferred under [#307](https://github.com/Cratis/Screenplay/issues/307); builds never invoke AI.
 
